@@ -5,6 +5,12 @@
 - Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
+- Title screen
+  - music still not right
+  - music plays while animating
+  - animations don't stop in some cases
+  - animations don't work if screen clearing is enabled
+  - title screen doesn't stop and yield to attract mode
 
 ## P2 — Game feel / calibration / timing
 
@@ -33,7 +39,6 @@
 - Sort all params by register
 - Fix Claude referring to ROM all the time
 - Audit "Conv: added" vars
-- Stage5 bitmap data has a load of cruft at the end of it - delete
 - Match up menu funcs for string printing with the main code - are they the same code?
 
 ## P6 — Features / extras

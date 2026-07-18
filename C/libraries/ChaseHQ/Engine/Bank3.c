@@ -62,13 +62,13 @@
  */
 typedef struct glyph_blit_geometry
 {
-  int        H;               /* destination screen address high byte (was D) */
-  int        L;               /* destination screen address low byte (was E) */
-  const u8  *HLsrc;            /* glyph bitmap pointer (was HL) */
-  int        B_height_pairs;   /* scanline-pairs remaining to draw (was B) */
-  int        C_width_select;   /* width selector, 1-7 (was C) */
-  int        carry_initial;    /* true: Y was within range, nothing to skip (was Carry) */
-  u8         A_excess;         /* Y clamp excess; valid only when !carry_initial (was A') */
+  int       H;              /* destination screen address high byte (was D) */
+  int       L;              /* destination screen address low byte (was E) */
+  const u8 *HLsrc;          /* glyph bitmap pointer (was HL) */
+  int       B_height_pairs; /* scanline-pairs remaining to draw (was B) */
+  int       C_width_select; /* width selector, 1-7 (was C) */
+  int       carry_initial;  /* true: Y was within range, nothing to skip (was Carry) */
+  u8        A_excess;       /* Y clamp excess; valid only when !carry_initial (was A') */
 } glyph_blit_geometry_t;
 
 /* ----------------------------------------------------------------------- */
@@ -620,7 +620,7 @@ static void advance_channel_pattern(chqstate_t           *state,
       IX_channel->note_index = A_note;
 
       if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
-        state->title_music.shared_note_value = A_note; /* $EC79 (SM) */
+        state->bank3.title_music.shared_note_value = A_note; /* $EC79 (SM) */
 
       HL_ptr = IX_channel->pitch_offset_default;    /* +$09/$0A */
       IX_channel->pitch_offset_cur = HL_ptr;        /* +$0B/$0C: reset to loop start */
@@ -684,30 +684,30 @@ static void advance_channel_pattern(chqstate_t           *state,
         continue;
 
       case PCMD_SET_DRIVER_FLAG:
-        state->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
+        state->bank3.title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
         continue;
 
       case PCMD_SET_MIXER_BITS_HIGH3:
         A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
-        A_mix ^= state->title_music.pending_mixer_bits;
+        A_mix ^= state->bank3.title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
-        A_mix ^= state->title_music.pending_mixer_bits;
-        state->title_music.pending_mixer_bits = A_mix;
+        A_mix ^= state->bank3.title_music.pending_mixer_bits;
+        state->bank3.title_music.pending_mixer_bits = A_mix;
         IX_channel->slide_update_flag = 0;
         continue;
 
       case PCMD_SET_MIXER_BITS_LOW3:
         A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_TONE_MASK);
-        A_mix ^= state->title_music.pending_mixer_bits;
+        A_mix ^= state->bank3.title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
-        A_mix ^= state->title_music.pending_mixer_bits;
-        state->title_music.pending_mixer_bits = A_mix;
+        A_mix ^= state->bank3.title_music.pending_mixer_bits;
+        state->bank3.title_music.pending_mixer_bits = A_mix;
         IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
         continue;
 
       case PCMD_CLEAR_MIXER_BITS:
-        state->title_music.pending_mixer_bits =
-          (u8) (~IX_channel->mixer_mask & state->title_music.pending_mixer_bits);
+        state->bank3.title_music.pending_mixer_bits =
+          (u8) (~IX_channel->mixer_mask & state->bank3.title_music.pending_mixer_bits);
         IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
         continue;
 
@@ -738,7 +738,7 @@ static void advance_channel_pattern(chqstate_t           *state,
       }
     } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
       /* $EE6F: set the tune tempo/speed byte. */
-      state->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
+      state->bank3.title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
       continue;
     } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE) {
       /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
@@ -972,8 +972,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   A_mixer_test = (u8) ~A_status_new & (CHSTATUS_TOGGLE | CHSTATUS_BIT1);
   if (A_mixer_test == 0) {
     /* Every 4th call. */
-    A_shared = state->title_music.shared_note_value ^ 0x08; // $EC79
-    state->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
+    A_shared = state->bank3.title_music.shared_note_value ^ 0x08; // $EC79
+    state->bank3.title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = CHMIXER_TONE_MASK;
   } else {
     // Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
@@ -981,15 +981,15 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     // 0x00 here permanently forces every channel's noise-enable bit on,
     // producing constant harsh noise; the real driver patches this operand
     // via advance_channel_pattern's mixer-bit commands.
-    A_mixer_val = state->title_music.pending_mixer_bits; // $EF7A (SM)
+    A_mixer_val = state->bank3.title_music.pending_mixer_bits; // $EF7A (SM)
   }
 
   /* Replace-bits-under-mask: merge this channel's tone-enable bits into the
    * shared mixer cache without disturbing the other channels' bits. */
-  A_mixer_val ^= state->title_ay_regs.mixer;
+  A_mixer_val ^= state->bank3.title_ay_regs.mixer;
   A_mixer_val &= IX_channel->mixer_mask;
-  A_mixer_val ^= state->title_ay_regs.mixer;
-  state->title_ay_regs.mixer = A_mixer_val;
+  A_mixer_val ^= state->bank3.title_ay_regs.mixer;
+  state->bank3.title_ay_regs.mixer = A_mixer_val;
 
   A_mute_flag = IX_channel->mute_pending;
   if ((s8) A_mute_flag < 0) {
@@ -999,9 +999,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
 
     A_noise_mask = IX_channel->mixer_mask & CHMIXER_NOISE_MASK;
     A_noise_mask = (u8) ~A_noise_mask;
-    state->title_ay_regs.mixer &= A_noise_mask;
+    state->bank3.title_ay_regs.mixer &= A_noise_mask;
 
-    state->title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
+    state->bank3.title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
   }
 
   *A_volume_out = IX_channel->volume;
@@ -1084,8 +1084,8 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   u16                   DE_pattern_addr; /* raw Z80 address of this channel's pattern-data block, read from the tune-select table (was DE) */
 
   /* $EB9E-$EBA4: clear the tune-active flag and its companion byte. */
-  state->title_music.tune_active           = 0;
-  state->title_music.tune_active_companion = 0;
+  state->bank3.title_music.tune_active           = 0;
+  state->bank3.title_music.tune_active_companion = 0;
 
   /* $EBA6-$EBB1: HL -> this tune's entry in the tune-select table. Conv:
    * indexes tune_t directly rather than computing a 7-byte
@@ -1094,7 +1094,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   HL_tune_entry = &tunes[A_tune];
 
   /* $EBB2-$EBB6: tempo/speed byte, saved for later use. */
-  state->title_music.tune_tempo = HL_tune_entry->tempo;
+  state->bank3.title_music.tune_tempo = HL_tune_entry->tempo;
 
   /* $EBB7-$EBBD: IX -> first channel-tracker record; BC = 37 (record
    * stride, folded into array indexing below). */
@@ -1102,7 +1102,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   /* $EBBD-$EBF4 stu_channel_loop: initialise all 3 channel-tracker
    * records. */
   for (channel_index = 0; channel_index < 3; channel_index++) {
-    IX_channel = &state->title_music.channel[channel_index];
+    IX_channel = &state->bank3.title_music.channel[channel_index];
 
     /* $EBBF-$EBC2: read this channel's pattern-data pointer from the tune
      * table. */
@@ -1158,13 +1158,13 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   }
 
   /* $EBF6: clear a driver-internal flag. */
-  state->title_music.pattern_driver_flag = 0;
+  state->bank3.title_music.pattern_driver_flag = 0;
 
   /* $EBF9-$EBFA: mark the tempo counter for an immediate refresh. */
-  state->title_music.tempo_counter = 1;
+  state->bank3.title_music.tempo_counter = 1;
 
   /* $EBFD: flag the tune as active. */
-  state->title_music.tune_active = 1;
+  state->bank3.title_music.tune_active = 1;
 }
 
 /**
@@ -1190,7 +1190,7 @@ static void write_title_ay_registers(chqstate_t *state)
   u8            regno;  /* AY register index, 11 down to 0 (was A) */
 
   speccy = state->speccy;
-  values = &state->title_ay_regs.env_fine;
+  values = &state->bank3.title_ay_regs.env_fine;
   regno  = 11;
   do {
     speccy->out(speccy, port_AY_REGISTER, regno);
@@ -1234,48 +1234,48 @@ static void ts_music_service(chqstate_t *state)
 
   /* $EC71-$EC75: tune-active flag; skip straight to the output guard when no
    * tune is playing. */
-  if (state->title_music.tune_active) {
+  if (state->bank3.title_music.tune_active) {
     /* $EC78-$EC7A: clear a driver-internal flag (consumed elsewhere in the
      * pattern processing, not traced in the skool). */
-    state->title_music.driver_internal_flag = 0; /* $ECC6 (SM) */
+    state->bank3.title_music.driver_internal_flag = 0; /* $ECC6 (SM) */
 
     /* $EC7D-$EC81: decrement the tempo counter; only re-process the tracker
      * patterns when it reaches zero. */
-    if (--state->title_music.tempo_counter == 0) {
+    if (--state->bank3.title_music.tempo_counter == 0) {
       /* $EC84-$EC88: advance channel 1's pattern by one tracker row. */
-      IX_channel = &state->title_music.channel[0];
+      IX_channel = &state->bank3.title_music.channel[0];
       advance_channel_pattern(state, IX_channel);
 
       /* $EC8B-$EC8F: channel 2. */
-      IX_channel = &state->title_music.channel[1];
+      IX_channel = &state->bank3.title_music.channel[1];
       advance_channel_pattern(state, IX_channel);
 
       /* $EC92-$EC96: channel 3. */
-      IX_channel = &state->title_music.channel[2];
+      IX_channel = &state->bank3.title_music.channel[2];
       advance_channel_pattern(state, IX_channel);
 
       /* $EC99-$EC9B: reset the tempo counter (see Conv note above). */
-      state->title_music.tempo_counter = 1;
+      state->bank3.title_music.tempo_counter = 1;
     }
 
     /* $EC9E-$ECA8 tms_refresh_registers: recompute the AY register values
      * for channel 1 from its current tracker state. */
-    IX_channel = &state->title_music.channel[0];
+    IX_channel = &state->bank3.title_music.channel[0];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_a_pitch = HL_period;
-    state->title_ay_regs.chan_a_vol   = A_volume;
+    state->bank3.title_ay_regs.chan_a_pitch = HL_period;
+    state->bank3.title_ay_regs.chan_a_vol   = A_volume;
 
     /* $ECAB-$ECB5: channel 2. */
-    IX_channel = &state->title_music.channel[1];
+    IX_channel = &state->bank3.title_music.channel[1];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_b_pitch = HL_period;
-    state->title_ay_regs.chan_b_vol   = A_volume;
+    state->bank3.title_ay_regs.chan_b_pitch = HL_period;
+    state->bank3.title_ay_regs.chan_b_vol   = A_volume;
 
     /* $ECB8-$ECC2: channel 3. */
-    IX_channel = &state->title_music.channel[2];
+    IX_channel = &state->bank3.title_music.channel[2];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_c_pitch = HL_period;
-    state->title_ay_regs.chan_c_vol   = A_volume;
+    state->bank3.title_ay_regs.chan_c_pitch = HL_period;
+    state->bank3.title_ay_regs.chan_c_vol   = A_volume;
 
     /* $ECC5-$ECC7: the operand of this "LD A,$00" is $ECC6 --
      * driver_internal_flag -- the same self-modified byte that
@@ -1284,14 +1284,14 @@ static void ts_music_service(chqstate_t *state)
      * value was last patched there rather than actually loading a literal 0;
      * see the Conv note above and the driver_internal_flag field comment in
      * State.h. */
-    state->title_ay_regs.noise_pitch = state->title_music.driver_internal_flag;
+    state->bank3.title_ay_regs.noise_pitch = state->bank3.title_music.driver_internal_flag;
   }
 
   /* $ECCA-$ECCE tms_output_registers: re-check the tune-active flag -- see
    * Conv note above -- registers are only ever written while a tune is
    * active. */
   /* $ECCF-$ECE2: output the cached register block. */
-  if (state->title_music.tune_active)
+  if (state->bank3.title_music.tune_active)
     write_title_ay_registers(state);
 }
 
@@ -1619,7 +1619,7 @@ static void object_script_step(chqstate_t *state)
                                      * flag out of the $C72E DEC-chain) */
 
   for (obj = 0; obj < 9; obj++) {
-    rec = &state->title_objects[obj];
+    rec = &state->bank3.title_objects[obj];
 
     for (;;) { /* models the "JP $C70E" re-entry after fetching a new opcode */
       if (rec->opcode == 0) {
@@ -1845,7 +1845,7 @@ static void ts_animate_frame(chqstate_t *state)
   state->speccy->stamp(state->speccy);
 
   for (obj = 0; obj < 6; obj++) { /* $C6C7-$C6E0: 6 foreground objects */
-    rec = &state->title_objects[obj];
+    rec = &state->bank3.title_objects[obj];
     compute_glyph_blit_params(state, rec->y, rec->x, rec->row);
   }
 
@@ -1854,7 +1854,7 @@ static void ts_animate_frame(chqstate_t *state)
   clear_playfield_buffer(state);
 
   for (obj = 6; obj < 9; obj++) { /* $C6EA-$C700: 3 background objects */
-    rec = &state->title_objects[obj];
+    rec = &state->bank3.title_objects[obj];
     compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row);
   }
 
@@ -2435,10 +2435,10 @@ static void title_screen_driver(chqstate_t *state)
     /* $C5A1-$C5A9: read the stored animation index, rotate (shift) it left,
      * mask to 5 bits, and force it to 1 if that leaves zero -- then store
      * the new value for the next restart. */
-    A_anim = (state->title_animation << 1) & 0x1F;
+    A_anim = (state->bank3.title_animation << 1) & 0x1F;
     if (A_anim == 0)
       A_anim = 1;
-    state->title_animation = A_anim;
+    state->bank3.title_animation = A_anim;
 
     /* $C5AC-$C5C7: pick one of 5 scene tables by testing successive bits of
      * A via RRA; the first bit found set selects the table, defaulting to
@@ -2465,17 +2465,17 @@ static void title_screen_driver(chqstate_t *state)
      * accesses at $C740-$C7AC, not the (misleading) inline comment at
      * $C5DB-$C5E3, which names the wrong offsets for the script pointer). */
     for (obj = 0; obj < 9; obj++) {
-      state->title_objects[obj].opcode = 0;
-      state->title_objects[obj].wait   = 0;
-      state->title_objects[obj].x_step = 0;
-      state->title_objects[obj].y_step = 0;
+      state->bank3.title_objects[obj].opcode = 0;
+      state->bank3.title_objects[obj].wait   = 0;
+      state->bank3.title_objects[obj].x_step = 0;
+      state->bank3.title_objects[obj].y_step = 0;
 
-      state->title_objects[obj].x   = HL_scene_table[0];
-      state->title_objects[obj].y   = HL_scene_table[1];
-      state->title_objects[obj].row = HL_scene_table[2];
+      state->bank3.title_objects[obj].x   = HL_scene_table[0];
+      state->bank3.title_objects[obj].y   = HL_scene_table[1];
+      state->bank3.title_objects[obj].row = HL_scene_table[2];
 
       DE_pscript = wordat(HL_scene_table + 3);
-      state->title_objects[obj].script = &title_scene_data[DE_pscript - TITLE_SCENE_DATA_BASE];
+      state->bank3.title_objects[obj].script = &title_scene_data[DE_pscript - TITLE_SCENE_DATA_BASE];
 
       HL_scene_table += 5;
     }
@@ -2576,7 +2576,7 @@ static u8 ts_wait_loop(chqstate_t *state)
 
     sfx_music_service(state);
 
-    if (!state->title_music.tune_active) {
+    if (!state->bank3.title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
        * iteration) before falling through to the coin/name-table refresh
        * tail at ts_refresh_name_table.
@@ -2590,6 +2590,7 @@ static u8 ts_wait_loop(chqstate_t *state)
        * state->title_music.tune_active). The SFX-script-table setup itself
        * is out of scope -- see sfx_music_service/start_tune_and_sfx_table's
        * own TODO for the digitised-sample SFX subsystem. */
+
       /* TODO: CALL stst_load_sfx_script ($F7DB) -- SFX-table setup for
        * tune #4, out of scope (digitised-sample SFX subsystem). */
 
@@ -2909,24 +2910,24 @@ rescan:
 
   B_dup_count = (u8) (C_control_index - 1);
   for (dup_i = 0; dup_i < B_dup_count; dup_i++) {
-    if (A_key_code == state->control_keys[dup_i])
+    if (A_key_code == state->bank3.control_keys[dup_i])
       goto rescan; /* $FF45 JR Z,$FF2E: duplicate -- rescan */
   }
 
-  state->control_keys[C_control_index - 1] = A_key_code;
+  state->bank3.control_keys[C_control_index - 1] = A_key_code;
 
   index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3);
   char0 = control_key_names[index_bytes];
   char1 = control_key_names[index_bytes + 1] | EOS;
 
-  state->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
+  state->bank3.options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
                                          * $FD97; never rewritten by this
                                          * routine (see key-name-table
                                          * comment in the skool). */
-  setwordat(&state->options_key_string[1], *DE_screen);
-  state->options_key_string[3] = char0;
-  state->options_key_string[4] = char1;
-  print_character(state, &state->options_key_string[0]);
+  setwordat(&state->bank3.options_key_string[1], *DE_screen);
+  state->bank3.options_key_string[3] = char0;
+  state->bank3.options_key_string[4] = char1;
+  print_character(state, &state->bank3.options_key_string[0]);
 
   *DE_screen = advance_key_label_column(*DE_screen);
   if (B_remaining == 4)
@@ -3004,7 +3005,7 @@ static void redefine_keys_screen(chqstate_t *state)
     } while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) {
-      if (state->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
+      if (state->bank3.control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
         return; /* $FEEE RET NZ: mismatch -- ordinary case, keep the new mapping */
     }
 
@@ -3036,7 +3037,7 @@ static void run_title_tune(chqstate_t *state)
   sfx_music_service(state);
 
   /* restart the tune if it's finished */
-  if (!state->title_music.tune_active)
+  if (!state->bank3.title_music.tune_active)
     start_tune_and_sfx_table(state, 0);
 }
 
@@ -3366,7 +3367,7 @@ poll: /* $FBAB omd_service_and_read_keys */
   goto redraw;
 
 install_joystick_keys:
-  memcpy(state->control_keys, HL_ctrl_list, 5);
+  memcpy(state->bank3.control_keys, HL_ctrl_list, 5);
   A_flag = 0;
 
 shared_tail:

@@ -785,113 +785,6 @@ struct chqstate {
     u8        drum_speed;
   } music;
 
-  // $EC01-$F224 (128K bank 3 only) -- title-screen tune engine channel
-  // trackers and self-modifying scratch bytes. Same numeric address range as
-  // `music` above but a different bank/context; kept as a distinct struct
-  // rather than aliased onto it (see compute_channel_ay_registers,
-  // $EE9E@bank3).
-  struct {
-    struct title_tune_channel channel[3]; // $EC01/$EC26/$EC4B
-
-    // $EC70 (128K bank 3): per-tick tempo countdown, decremented by
-    // ts_music_service ($EC71) each call; the 3
-    // channels' patterns only advance one row when it reaches zero, after
-    // which it always reloads to a fixed 1 -- per the skool's own comment at
-    // $EC99, *not* the tune's stored tempo/speed byte (tune_tempo, $EC9A),
-    // so the driver appears to always tick every other call regardless of
-    // the selected tune. Set to 1 by start_tune ($EBF9-$EBFA) so the very
-    // first service call after a tune starts always advances.
-    u8        tempo_counter;
-
-    // $EC79 (SM): operand of "LD A,$00" at $EC78 in ts_music_service
-    // ($EC71@bank3); written by advance_channel_pattern
-    // ($EDF6@bank3); read by compute_channel_ay_registers.
-    // Purpose not established elsewhere in bank 3 (see skool comment at $EE9E).
-    u8        shared_note_value;
-
-    // $EC9A (128K bank 3): tune tempo/speed byte. Written by start_tune
-    // ($EBB3, not yet translated) and by advance_channel_pattern's
-    // decode_pattern_command cascade ($EE71); not currently read anywhere in
-    // bank 3 (see the skool comment at $EC9B in ts_music_service).
-    u8        tune_tempo;
-
-    // $ECC6 (SM): operand of "LD A,$00" at $ECC5 in ts_music_service
-    // ($EC71@bank3). Written within compute_channel_ay_registers (forced to
-    // a computed value or to $41 on the mute transition); also written
-    // directly to 0 by ts_music_service itself at $EC7A on entry. Read back
-    // by ts_music_service at $ECC5 -- the "LD A,$00" instruction there
-    // executes with whatever value was last patched into its own operand
-    // byte, so it is not actually loading a literal 0 once
-    // compute_channel_ay_registers has run -- and stored into the
-    // noise_pitch AY register cache ($EFB5). Purpose beyond that plumbing
-    // not established.
-    u8        driver_internal_flag;
-
-    // $EED1 (128K bank 3): driver-internal flag. Write-only, set by
-    // advance_channel_pattern's pcmd_set_driver_flag handler ($ED87) from a
-    // pattern-stream operand byte; cleared to 0 by start_tune ($EBF6, not yet
-    // translated); never read anywhere in bank 3. Purpose not established.
-    u8        pattern_driver_flag;
-
-    // $EF7A (SM): operand of "LD A,$00" at $EF79 in
-    // compute_channel_ay_registers ($EE9E@bank3), phase 5. Merged into by
-    // advance_channel_pattern's mixer-bit pattern-command handlers
-    // ($ED36/$ED4B/$ED5F) using the same replace-bits-under-mask idiom as
-    // the $EFB6 mixer cache. Read back every frame at $EF79 -- the
-    // "LD A,$00" instruction there executes with whatever value was last
-    // patched into its own operand byte, so on any frame where the JR NZ at
-    // $EF7B is taken (skipping the $EC79-derived $07 path), the mixer merge
-    // uses this self-modified value rather than a literal 0. Confirmed
-    // against a genuine ChaseHQ.ay dump (SlopAY project corpus): the
-    // pristine snapshot's static operand byte is 0x00 (the pre-pattern-data
-    // startup default), but the real tune patches it via the pattern
-    // commands above, driving the AY mixer's noise-enable bits.
-    u8        pending_mixer_bits;
-
-    // $F223 (128K bank 3): tune-active flag. Tested by ts_music_service
-    // ($EC71/$ECCA) to decide whether to advance
-    // patterns / recompute and flush AY registers at all; also tested
-    // directly by the title-screen driver at $C621. Armed to 1 by start_tune
-    // ($EBFD) once the 3 channel-tracker records are initialised; cleared to
-    // 0 both by start_tune's own entry (so a tune restart is briefly
-    // inactive while re-initialising) and by the stop routine at $ED0B (not
-    // yet translated).
-    u8        tune_active;
-
-    // $F224 (128K bank 3): cleared to 0 alongside tune_active by start_tune
-    // ($EBA1, "its companion byte"); never read anywhere in bank 3. Purpose
-    // not established beyond being cleared in lockstep with tune_active.
-    u8        tune_active_companion;
-  } title_music;
-
-  // $EFAF-$EFBA (128K bank 3 only) -- per-frame AY register cache for the
-  // title-tune engine, refreshed by compute_channel_ay_registers ($EE9E) and
-  // flushed to the AY chip by ts_music_service ($EC71) via
-  // write_title_ay_registers.
-  // Separate from the in-game AY block at $A213 above (same numeric address
-  // range, different bank/context) -- do not alias the two.
-  struct {
-    u16       chan_a_pitch; // $EFAF/$EFB0
-    u16       chan_b_pitch; // $EFB1/$EFB2
-    u16       chan_c_pitch; // $EFB3/$EFB4
-    u8        noise_pitch;  // $EFB5
-    u8        mixer;        // $EFB6 -- read-modify-written by compute_channel_ay_registers
-    u8        chan_a_vol;   // $EFB7
-    u8        chan_b_vol;   // $EFB8
-    u8        chan_c_vol;   // $EFB9
-    u8        env_fine;     // $EFBA
-  } title_ay_regs;
-
-  // $C5A2 (SM, 128K bank 3 only): title-screen scene selector, rotated and
-  // tested bit-by-bit by title_screen_driver to pick one of the 5 scene
-  // tables each time the title screen restarts.
-  u8                 title_animation;
-
-  // $BB00-$BB4F (128K bank 3 only): the 9 animated-object records populated
-  // from the chosen scene table by title_screen_driver, drawn each frame by
-  // ts_animate_frame, and advanced by object_script_step ($C705).
-  struct title_object title_objects[9];
-
   // $EF5E — drum 1 PCM sample; playdrum_go's RLC (HL) rotates the bytes in
   // place, so like sfx_crash_table this is a mutable copy of a template
   u8        drum1[252];
@@ -901,19 +794,129 @@ struct chqstate {
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
 
-  // $FD97-$FD9B (128K bank 3): print_character scratch record built by
-  // read_new_key_definition ($FF2C) each time a control's key name is
-  // drawn. Not fixed ROM data -- same role as messages_key_string for the
-  // 48K equivalent (define_a_key).
-  u8        options_key_string[5];
+  struct {
+    // $EC01-$F224 (128K bank 3 only) -- title-screen tune engine channel
+    // trackers and self-modifying scratch bytes. Same numeric address range as
+    // `music` above but a different bank/context; kept as a distinct struct
+    // rather than aliased onto it (see compute_channel_ay_registers,
+    // $EE9E@bank3).
+    struct {
+      struct title_tune_channel channel[3]; // $EC01/$EC26/$EC4B
 
-  // $FFF7-$FFFE (128K bank 3): live scan-key-code buffer for the currently
-  // active control scheme. Not fixed ROM data -- installed from the
-  // Sinclair/Cursor joystick key lists by options_menu_driver ($FBDC), or
-  // written key-by-key by read_new_key_definition ($FF2C).
-  // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),
-  // [5..7] = quit/pause/turbo (keyboard-only).
-  u8        control_keys[8];
+      // $EC70 (128K bank 3): per-tick tempo countdown, decremented by
+      // ts_music_service ($EC71) each call; the 3
+      // channels' patterns only advance one row when it reaches zero, after
+      // which it always reloads to a fixed 1 -- per the skool's own comment at
+      // $EC99, *not* the tune's stored tempo/speed byte (tune_tempo, $EC9A),
+      // so the driver appears to always tick every other call regardless of
+      // the selected tune. Set to 1 by start_tune ($EBF9-$EBFA) so the very
+      // first service call after a tune starts always advances.
+      u8        tempo_counter;
+
+      // $EC79 (SM): operand of "LD A,$00" at $EC78 in ts_music_service
+      // ($EC71@bank3); written by advance_channel_pattern
+      // ($EDF6@bank3); read by compute_channel_ay_registers.
+      // Purpose not established elsewhere in bank 3 (see skool comment at $EE9E).
+      u8        shared_note_value;
+
+      // $EC9A (128K bank 3): tune tempo/speed byte. Written by start_tune
+      // ($EBB3, not yet translated) and by advance_channel_pattern's
+      // decode_pattern_command cascade ($EE71); not currently read anywhere in
+      // bank 3 (see the skool comment at $EC9B in ts_music_service).
+      u8        tune_tempo;
+
+      // $ECC6 (SM): operand of "LD A,$00" at $ECC5 in ts_music_service
+      // ($EC71@bank3). Written within compute_channel_ay_registers (forced to
+      // a computed value or to $41 on the mute transition); also written
+      // directly to 0 by ts_music_service itself at $EC7A on entry. Read back
+      // by ts_music_service at $ECC5 -- the "LD A,$00" instruction there
+      // executes with whatever value was last patched into its own operand
+      // byte, so it is not actually loading a literal 0 once
+      // compute_channel_ay_registers has run -- and stored into the
+      // noise_pitch AY register cache ($EFB5). Purpose beyond that plumbing
+      // not established.
+      u8        driver_internal_flag;
+
+      // $EED1 (128K bank 3): driver-internal flag. Write-only, set by
+      // advance_channel_pattern's pcmd_set_driver_flag handler ($ED87) from a
+      // pattern-stream operand byte; cleared to 0 by start_tune ($EBF6, not yet
+      // translated); never read anywhere in bank 3. Purpose not established.
+      u8        pattern_driver_flag;
+
+      // $EF7A (SM): operand of "LD A,$00" at $EF79 in
+      // compute_channel_ay_registers ($EE9E@bank3), phase 5. Merged into by
+      // advance_channel_pattern's mixer-bit pattern-command handlers
+      // ($ED36/$ED4B/$ED5F) using the same replace-bits-under-mask idiom as
+      // the $EFB6 mixer cache. Read back every frame at $EF79 -- the
+      // "LD A,$00" instruction there executes with whatever value was last
+      // patched into its own operand byte, so on any frame where the JR NZ at
+      // $EF7B is taken (skipping the $EC79-derived $07 path), the mixer merge
+      // uses this self-modified value rather than a literal 0. Confirmed
+      // against a genuine ChaseHQ.ay dump (SlopAY project corpus): the
+      // pristine snapshot's static operand byte is 0x00 (the pre-pattern-data
+      // startup default), but the real tune patches it via the pattern
+      // commands above, driving the AY mixer's noise-enable bits.
+      u8        pending_mixer_bits;
+
+      // $F223 (128K bank 3): tune-active flag. Tested by ts_music_service
+      // ($EC71/$ECCA) to decide whether to advance
+      // patterns / recompute and flush AY registers at all; also tested
+      // directly by the title-screen driver at $C621. Armed to 1 by start_tune
+      // ($EBFD) once the 3 channel-tracker records are initialised; cleared to
+      // 0 both by start_tune's own entry (so a tune restart is briefly
+      // inactive while re-initialising) and by the stop routine at $ED0B (not
+      // yet translated).
+      u8        tune_active;
+
+      // $F224 (128K bank 3): cleared to 0 alongside tune_active by start_tune
+      // ($EBA1, "its companion byte"); never read anywhere in bank 3. Purpose
+      // not established beyond being cleared in lockstep with tune_active.
+      u8        tune_active_companion;
+    } title_music;
+
+    // $EFAF-$EFBA (128K bank 3 only) -- per-frame AY register cache for the
+    // title-tune engine, refreshed by compute_channel_ay_registers ($EE9E) and
+    // flushed to the AY chip by ts_music_service ($EC71) via
+    // write_title_ay_registers.
+    // Separate from the in-game AY block at $A213 above (same numeric address
+    // range, different bank/context) -- do not alias the two.
+    struct {
+      u16       chan_a_pitch; // $EFAF/$EFB0
+      u16       chan_b_pitch; // $EFB1/$EFB2
+      u16       chan_c_pitch; // $EFB3/$EFB4
+      u8        noise_pitch;  // $EFB5
+      u8        mixer;        // $EFB6 -- read-modify-written by compute_channel_ay_registers
+      u8        chan_a_vol;   // $EFB7
+      u8        chan_b_vol;   // $EFB8
+      u8        chan_c_vol;   // $EFB9
+      u8        env_fine;     // $EFBA
+    } title_ay_regs;
+
+    // $C5A2 (SM, 128K bank 3 only): title-screen scene selector, rotated and
+    // tested bit-by-bit by title_screen_driver to pick one of the 5 scene
+    // tables each time the title screen restarts.
+    u8                 title_animation;
+
+    // $BB00-$BB4F (128K bank 3 only): the 9 animated-object records populated
+    // from the chosen scene table by title_screen_driver, drawn each frame by
+    // ts_animate_frame, and advanced by object_script_step ($C705).
+    struct title_object title_objects[9];
+
+    // $FD97-$FD9B (128K bank 3): print_character scratch record built by
+    // read_new_key_definition ($FF2C) each time a control's key name is
+    // drawn. Not fixed ROM data -- same role as messages_key_string for the
+    // 48K equivalent (define_a_key).
+    u8        options_key_string[5];
+
+    // $FFF7-$FFFE (128K bank 3): live scan-key-code buffer for the currently
+    // active control scheme. Not fixed ROM data -- installed from the
+    // Sinclair/Cursor joystick key lists by options_menu_driver ($FBDC), or
+    // written key-by-key by read_new_key_definition ($FF2C).
+    // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),
+    // [5..7] = quit/pause/turbo (keyboard-only).
+    u8        control_keys[8];
+  }
+  bank3;
 };
 
 #endif /* CHASEHQ_STATE_H */
