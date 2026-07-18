@@ -306,9 +306,9 @@ const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes
 const u16 outward_bend_table[32];
 const u16 curvature_to_xpos[96];
 
-const u8 persp_y_scale[8][22];
-const u8 persp_x_scale_right[8][22];
-const u8 persp_x_delta_left[8][22];
+const u8 persp_y_scale[8][PERSP_TABLE_COLS];
+const u8 persp_x_scale_right[8][PERSP_TABLE_COLS];
+const u8 persp_x_delta_left[8][PERSP_TABLE_COLS];
 
 typedef struct {
   u8        nframes; // stores nframes+1

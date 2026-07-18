@@ -692,7 +692,7 @@ struct chqstate {
   // $E300
   u8        height_table[32]; // [0]=$60 sentinel, [1..21]=perspective heights, [22]=$A0 terminal, [23..31]=unused
   // $E320
-  u8        curvature_table[22]; // per-depth curvature adjustment (22 entries); built by build_curve_table
+  u8        curvature_table[PERSP_TABLE_COLS]; // per-depth curvature adjustment; built by build_curve_table
   // $E336
   u8        clamped_heights[21]; // running-minimum clamp of height_table[1..21]; built by build_height_table
   // $E34B

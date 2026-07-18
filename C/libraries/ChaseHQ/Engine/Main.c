@@ -530,10 +530,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 /* Perspective table stuff */
 
-/** Number of columns in each perspective scaling table (persp_y_scale,
- * persp_x_scale_right, persp_x_delta_left). */
-#define PERSP_TABLE_COLS (22)
-
 /** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset
  * (multiples of PERSP_TABLE_COLS). */
 #define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
@@ -3874,13 +3870,13 @@ static void draw_scene_objects(chqstate_t *state)
   Biterations = 21;
   do {
     assert(HLheight_table >= &state->height_table[0]
-           && HLheight_table < &state->height_table[22]);
+           && HLheight_table < &state->height_table[PERSP_TABLE_COLS]);
     assert(DEclamped_heights >= &state->clamped_heights[0]
            && DEclamped_heights < &state->clamped_heights[21]);
     *HLheight_table++ += 32;
     *DEclamped_heights++ += 32;
   } while (--Biterations > 0);
-  assert(HLheight_table == &state->height_table[22]);
+  assert(HLheight_table == &state->height_table[PERSP_TABLE_COLS]);
   assert(DEclamped_heights == &state->clamped_heights[21]);
 
   IYheight_table = &state->height_table[21];
@@ -3902,7 +3898,7 @@ static void draw_scene_objects(chqstate_t *state)
     assert(HLroadbuf >= state->roadbuf_start
            && HLroadbuf < state->roadbuf_end);
     assert(IYheight_table >= &state->height_table[0]
-           && IYheight_table < &state->height_table[22]);
+           && IYheight_table < &state->height_table[PERSP_TABLE_COLS]);
     assert(IXtable_ea00 >= &state->xpos_road_centre[0]
            && IXtable_ea00 < &state->xpos_road_centre[128]);
 
@@ -12354,7 +12350,7 @@ static void layout_road(chqstate_t *state)
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
   // $B9F9: Count the distance to the forked road
-  Biterations = 22;
+  Biterations = PERSP_TABLE_COLS;
   Ldistance_to_fork = 0;
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
@@ -13709,7 +13705,7 @@ dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer add
    * so COUNTER_TO_PERSP_Y_ROW operates on E (fast_counter & $E0), not on 128-B. */
   A = E - (E >> 2) - (E >> 4); /* map (0,32,64,...,224) to (0,22,44,...,154) */
   A += (IYheight - &state->height_table[0]); /* was IYl */
-  DE = &persp_y_scale[A / 22][A % 22];
+  DE = &persp_y_scale[A / PERSP_TABLE_COLS][A % PERSP_TABLE_COLS];
   B = *IYheight - B;
   A = *DE;
   E = A;
@@ -13933,7 +13929,7 @@ static void draw_road_lanes_change(chqstate_t *state,
 
   // $C2E7
   A_dist = *IY_heightptr - &state->height_table[0];
-  assert(A_dist < 22);
+  assert(A_dist < PERSP_TABLE_COLS);
   if (A_dist < 19) { /* JP NC,$C43B: exit when IYl >= 19 */
     // $C2EE -- bank A_dist
     // EX AF,AF'
@@ -15987,7 +15983,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   IX_lanes = &curvature_to_xpos[A_scratch]; // table is 16-bit
 
   DE_output = &state->curvature_table[0];
-  B_iterations = 22;
+  B_iterations = PERSP_TABLE_COLS;
   // EXX Bank
   // Conv: (s16) cast: during a fork layout_road temporarily sets road_pos to
   // road_pos ± fork_distance, which can go negative. The Z80 works mod 65536
@@ -16074,7 +16070,7 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   HL_rowptr = &persp_x_delta_left[FAST_COUNTER_PERSP_ROW(state)][0];
   DE_curvature = &state->curvature_table[0];
-  for (Bdash_iterations = 22; Bdash_iterations > 0; Bdash_iterations--)
+  for (Bdash_iterations = PERSP_TABLE_COLS; Bdash_iterations > 0; Bdash_iterations--)
     *DE_curvature++ += *HL_rowptr++;
 
   DEdash_roadpos = (s16)state->scenedata.road_pos - 295; // vanishing point config (for left hand); (s16): see above

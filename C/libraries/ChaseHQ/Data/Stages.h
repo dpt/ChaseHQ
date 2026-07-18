@@ -29,6 +29,13 @@
 
 /* ----------------------------------------------------------------------- */
 
+/** Number of per-depth entries in the perspective/curvature tables
+ * (persp_y_scale, persp_x_scale_right, persp_x_delta_left, curvature_table,
+ * and the 1..21 valid range of height_table, terminated at index 22). */
+#define PERSP_TABLE_COLS (22)
+
+/* ----------------------------------------------------------------------- */
+
 // Conv: The C version uses IDs for strings and blocks rather than inline
 // addresses.
 
