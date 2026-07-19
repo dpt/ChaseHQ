@@ -206,7 +206,7 @@ struct zxspectrum
    *
    * \param[in] duration Elapsed time in T-states.
    */
-  void (*addtime)(zxspectrum_t *state, int duration);
+  void (*logtime)(zxspectrum_t *state, int duration);
 
   zxscreen_t screen;
 };
@@ -239,7 +239,7 @@ typedef struct zxconfig
 
   /** App callback called to sound the speaker. 'tstates' is the virtual
    *  T-state clock at the moment of the OUT, advanced by the game via
-   *  addtime; it gives the callback the inter-toggle spacing that
+   *  logtime; it gives the callback the inter-toggle spacing that
    *  wall-clock time cannot (the C "delay loops" run in no time). */
   void (*speaker)(int on_off, uint64_t tstates, void *opaque);
 

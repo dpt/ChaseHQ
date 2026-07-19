@@ -125,7 +125,7 @@ typedef struct zxspectrum_private
 
   unsigned int    prev_border;
 
-  uint64_t        tstates; // virtual Z80 clock; game thread only (see addtime)
+  uint64_t        tstates; // virtual Z80 clock; game thread only (see logtime)
 
   mutex_t         lock;
   zxbox_t         dirty;
@@ -353,7 +353,7 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
   prv->pub.draw          = zx_draw;
   prv->pub.stamp         = zx_stamp;
   prv->pub.sleep         = zx_sleep;
-  prv->pub.addtime       = zx_addtime;
+  prv->pub.logtime       = zx_addtime;
   prv->pub.screen.width  = config->width;
   prv->pub.screen.height = config->height;
 
