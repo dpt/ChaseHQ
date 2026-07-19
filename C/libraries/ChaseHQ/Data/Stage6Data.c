@@ -142,7 +142,7 @@ static const u8 stage6_perp_description[7] = {
 };
 
 static const char *stage6_chatter_strings[4] = {
-  "FO SHIZZLE MY NIZZLES\xAE",
+  "THIS IS A TEST LEVEL\xAE",
 };
 
 // $C1E6
