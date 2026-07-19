@@ -1763,18 +1763,17 @@ static void main_loop(chqstate_t *state)
           start_sfx(state, EFFECT_BIP, 4); /* priority 4 */
           silence_audio_hook(state);
 
-          RR(keys); // Is bit 0 set? (key 1 to restart the level)
-          if (carry)
+          /* RR keys x3, testing carry each time: each carry_out depends only
+           * on the tested bit of the original byte, not on carry-in. */
+          if (keys & 0x01) // Is bit 0 set? (key 1 to restart the level)
             break;
 
-          RR(keys); // Is bit 1 set? (key 2 to load the next level)
-          if (carry) {
+          if (keys & 0x02) { // Is bit 1 set? (key 2 to load the next level)
             state->wanted_stage_number++;
             break;
           }
 
-          RR(keys); // Is bit 2 set? (key 3 to load the end screen)
-          if (carry) {
+          if (keys & 0x04) { // Is bit 2 set? (key 3 to load the end screen)
             state->wanted_stage_number = 6; // stage 6
             break;
           }
@@ -3071,10 +3070,7 @@ phase4:
   L = D + '0';
 
   if (state->retry_count) {
-    RLC(D);
-    RLC(D);
-    RLC(D);
-    RLC(D);
+    D = (D << 4) | (D >> 4); /* RLC D x4: swap nibbles */
 
     H = L;
     L = ' ';
@@ -3084,21 +3080,14 @@ phase4:
   state->score_messages[0x8C6F - SCORE_MESSAGES_BASE] = L;
   state->score_messages[0x8C70 - SCORE_MESSAGES_BASE] = H;
 
-  RLC(D);
-  RLC(D);
-  RLC(D);
-  RLC(D);
+  D = (D << 4) | (D >> 4); /* RLC D x4: swap nibbles */
   increment_score(state, 0, 0, D);
 
   A = state->session.time_bcd;
   state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
     A; // Write to TIME BONUS line
   C = A;
-  RLC(A);
-  RLC(A);
-  RLC(A);
-  RLC(A);
-  A &= 0x0F;
+  A = (A >> 4) & 0x0F; /* RLC A x4; AND 0x0F: high nibble */
   if (A)
     goto have_high_digit;
 
@@ -3143,11 +3132,7 @@ store_time_bonus_low:
   HLscore = &state->score_messages[0x8CA8 - SCORE_MESSAGES_BASE];
   do {
     A = *DE;
-    RLC(A);
-    RLC(A);
-    RLC(A);
-    RLC(A);
-    A &= 0x0F;
+    A = (A >> 4) & 0x0F; /* RLC A x4; AND 0x0F: high nibble */
     if (A)
       goto score_have_high_digit;
 
@@ -4659,8 +4644,7 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     // 2 bits with $FC before rotating. Here bits rotated off the bottom wrap
     // into bits 7-6, so a plain >>= 2 silently drops them instead of setting
     // them (pitfall: rotate mistranslated as shift).
-    RRC(Awidth_bytes);
-    RRC(Awidth_bytes);
+    Awidth_bytes = ((Awidth_bytes >> 2) | (Awidth_bytes << 6)) & 0xFF; /* RRCA x2 */
     state->doc_shift_select = Awidth_bytes;
     Awidth_bytes = Ebitmap_stride - 1;
     // Conv: if width_bytes == 1, Awidth_bytes == 0 → nothing to draw.
@@ -6275,16 +6259,12 @@ static void plot_face_attributes(chqstate_t *state,
   static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
     176, 144, 208, 184
   };
-  int carry;      /* carry from RRC and ADD operations (carry) */
   u8  A_attrhi;  /* screen high byte, rotated to extract band, then biased to $58 (was A) */
   int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
   int A_rowadv;  /* low-byte row-stride computation: (screen & 0xFF) + 0x1C (was A) */
 
   A_attrhi = screen >> 8;
-  RRC(A_attrhi);
-  RRC(A_attrhi);
-  RRC(A_attrhi);
-  A_attrhi &= 3; // extract band
+  A_attrhi = (A_attrhi >> 3) & 3; /* RRC A x3; AND 3 */
   A_attrhi += 0x58;
   screen = (A_attrhi << 8) | (screen & 0xFF);
   screen -= SCREEN_ATTRIBUTES_START_ADDRESS; // Conv: address -> offset
@@ -6424,21 +6404,19 @@ static void plot_mini_font_char(chqstate_t *state,
   // Turn ASCII into glyph IDs
   ascii2 = ascii; // remove ascii2 later
   screen |= 0x4500; // high byte of screen addr
-  gid = 26;
-  if (ascii2 == '.') goto pmf_have_glyph_id;
-  gid++;
-  if (ascii2 == ',') goto pmf_have_glyph_id;
-  gid++;
-  if (ascii2 == '!') goto pmf_have_glyph_id;
-  gid++;
-  if (ascii2 == ' ') goto pmf_have_glyph_id;
-  gid++;
-  if (ascii2 == '\'') goto pmf_have_glyph_id;
-  if (ascii2 >= ';') { sgid = ascii2; goto pmf_have_ascii; }
-  assert(0);
-  gid += ascii2 - '/'; // not convinced this is ever used in the game
+  switch (ascii2) {
+  case '.':  gid = 26; break;
+  case ',':  gid = 27; break;
+  case '!':  gid = 28; break;
+  case ' ':  gid = 29; break;
+  case '\'': gid = 30; break;
+  default:
+    if (ascii2 >= ';') { sgid = ascii2; goto pmf_have_ascii; }
+    assert(0);
+    gid = 30 + ascii2 - '/'; // not convinced this is ever used in the game
+    break;
+  }
 
-pmf_have_glyph_id:
   sgid = gid + 'A'; // Turn the glyph ID in #REGc into ASCII in #REGa
 
 pmf_have_ascii:
@@ -7668,23 +7646,17 @@ dc_return:
  */
 static u8 keyscan(chqstate_t *state)
 {
-  int carry;          /* carry from RRC operations when rotating keyboard bits (carry) */
   int Akempston;      /* raw Kempston joystick reading, 5 bits active-high (was A) */
   int Akeys;          /* keyboard scan result used for left/right conflict check (was A) */
   int Ekeys;          /* merged input byte: keyboard bits and/or Kempston bits (was E) */
   u8  Aleft_and_right;/* left and right bits isolated for simultaneous-press check (was A) */
   u8  Aorig;          /* working copy of Ekeys during conflict stripping (was A) */
 
-  carry = 0;
-
   if (state->kempston_flag) {
     Akempston = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     // PUSH AF
     Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x20); // 3 bits max
-    RRC(Akeys);
-    RRC(Akeys);
-    RRC(Akeys);
-    Akeys &= 0xE0; // mask off collected key bits
+    Akeys = (Akeys & 0x07) << 5; /* RRC A x3; AND 0xE0 */
     // POP DE
     Ekeys = Akeys | Akempston;
   } else {
@@ -8648,10 +8620,7 @@ pb_a7be:
   if (state->retry_count) {
     Abonus_rotate = Dbonus_hi;
     Dbonus_hi = Ebonus_mid;
-    RLC(Abonus_rotate);
-    RLC(Abonus_rotate);
-    RLC(Abonus_rotate);
-    RLC(Abonus_rotate);
+    Abonus_rotate = (Abonus_rotate << 4) | (Abonus_rotate >> 4); /* RLC x4: swap nibbles */
     Ebonus_mid = Abonus_rotate;
   }
   add_bonus(state, 0, Ebonus_mid, Dbonus_hi);
@@ -12050,12 +12019,8 @@ static void scroll_horizon(chqstate_t *state)
     // (spawn_cars, cycle_counters, play_engine_or_siren_sfx_hook,
     // build_height_table) execute EX AF,AF', so it survives unclobbered.
     // Conv: $B854: EX AF,AF' banks current_curvature; $B855: RR H gives carry
-    carry = (speed >> 8) & 1;
-    Adash = state->curvature_scroll_shadow;
-    RL(Adash);
-    RL(Adash);
-    RL(Adash);
-    Adash &= 6; // get top two bits of speed, scaled up by 2
+    /* RL Adash x3; AND 6: top two bits of speed, scaled up by 2 */
+    Adash = ((state->curvature_scroll_shadow >> 6) & 2) | (((speed >> 8) & 1) << 2);
     /* $B864: HL = horizon_table; $B867: HL += BC; $B868: B=(HL); $B869: INC HL; $B86A: C=(HL) */
     Bhorizon_table_value = horizon_table[state->horizon_curve_index + Adash];
     Chorizon_x_delta     = horizon_table[state->horizon_curve_index + Adash + 1];
@@ -12329,7 +12294,6 @@ url_B9C5:
  */
 static void layout_road(chqstate_t *state)
 {
-  int       carry;             /* carry flag */
   u8       *DElanedata_base;   /* base of lane data in road buffer, for wrap-around (was DE) */
   u8       *DElanedata;        /* advancing pointer through lane data entries (was DE) */
   int       Biterations;       /* entries to scan; counts down 20→0 (was B) */
@@ -12356,8 +12320,6 @@ static void layout_road(chqstate_t *state)
   int       HLroadpos_saved;   /* saved road_pos restored after both fork curve builds (was HL) */
   s16      *SMveryright;       /* pointer to current xpos_road_fork_right input slot (was SM) */
   s16      *SMroadright;       /* pointer to current xpos_road_right output slot (was SM) */
-
-  carry = 0;
 
   // $B9F4: Point at lane data
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
@@ -12477,13 +12439,9 @@ lr_check_spawning:
 lr_set_var_a16d_from_c:
   state->session.spawn_accumulator = C_spawn_accum;
 lr_no_car_spawning:
-  carry = state->session.spawn_accumulator & 1; // CHECK
-  Aiterations = state->fast_counter;
-  RL(Aiterations);
-  RL(Aiterations);
-  RL(Aiterations);
-  RL(Aiterations);
-  Aiterations &= 0x0F; // $BAD7: keep rotated-in bits only
+  /* RL A x4; AND 0x0F: low nibble = (fast_counter >> 5) | (spawn_accumulator & 1) << 3 */
+  Aiterations = ((state->fast_counter >> 5) & 0x07) |
+                ((state->session.spawn_accumulator & 1) << 3); // $BAD7
   Aiterations -= 0x10; // sets top nibble to $F
   // Conv: Z80 $BADB LD E,A; LD D,$FF forms signed DE = 0xFF00|A ∈ {−16..−1}
   HLforkdistance += (s16)(0xFF00 | (u8)Aiterations);
@@ -16529,7 +16487,6 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
 const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 {
   u8   C_attribute; /* attribute byte; top bit is double-height flag (was C) */
-  int  carry;       /* carry flag; receives top bit of C_attribute via RL */
   int  banked_carry; /* double-height flag saved across EX AF,AF' (was F') */
   u16  DEscr;       /* ZX Spectrum screen address read from string (was DE) */
   u16  HLattr;      /* ZX Spectrum attribute address derived from DEscr (was HL) */
@@ -16537,12 +16494,10 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
   u8  *DEscr_ptr;   /* C pointer form of DEscr for each character draw (was DE') */
   u8  *HLattr_ptr;  /* C pointer form of HLattr for each character draw (was HL') */
 
-  carry = 0;
   C_attribute = *HLstring;
-  RL(C_attribute);   /* $EC00: RL C — rotate left; top bit → carry (double-height) */
-  banked_carry = carry;
-  // Conv: $EC02 EX AF,AF' — Z80 banks carry into A'/F'; C saves to banked_carry
-  SRL(C_attribute);  /* $EC03: SRL C — strip the top bit from the attribute byte */
+  /* $EC00-$EC03: RL C; EX AF,AF'; SRL C -- top bit -> banked_carry, then stripped */
+  banked_carry = C_attribute >> 7;
+  C_attribute &= 0x7F;
   HLstring++;
   DEscr = wordat(HLstring);
   HLstring += 2;
@@ -17591,7 +17546,6 @@ static void play_speech_128k(chqstate_t *state, int index)
   };
 
   zxspectrum_t *speccy;           /* cached speccy pointer (Conv: extracted) */
-  int           carry;            /* carry from RR nibble rotations (carry) */
   int           Cport_lo;         /* low byte of AY port address: $FD (was C) */
   int           Hff;              /* AY select port high byte: $FF → port $FFFD (was H) */
   int           Lbf;              /* AY write port high byte: $BF → port $BFFD (was L) */
@@ -17604,7 +17558,6 @@ static void play_speech_128k(chqstate_t *state, int index)
   int           Aregno;           /* AY register number: 8, 9, 10 for channels A, B, C (was A) */
 
   speccy = state->speccy;
-  carry = 0;
 
   assert(index >= 1 && index < SAMPLE__LIMIT); // 1-indexed, matching Z80 $F32E
 
@@ -17625,11 +17578,8 @@ static void play_speech_128k(chqstate_t *state, int index)
   do {
     Cdash_iterations = 2;
     Asample = *HLdash_samples;
-    // Get high nibble
-    RR(Asample);
-    RR(Asample);
-    RR(Asample);
-    RR(Asample);
+    /* RR A x4: bits 0-3 of result = original bits 4-7, independent of carry-in */
+    Asample >>= 4; // Get high nibble
     do {
       speccy->stamp(speccy); // stamp at $F36E, start of the per-nibble body
 
