@@ -74,8 +74,8 @@ static void chq_initialise(chqstate_t *state)
   state->test_mode = 1;
 
   // $8007
-  state->wanted_stage_number   = 1;
-  state->current_stage_number  = 1;
+  state->wanted_stage_number   = MINSTAGE;
+  state->current_stage_number  = MINSTAGE;
 
   // $8244, $8249, $8251 — engine sfx SM operands as assembled: 3 iterations
   // with zero (= 256 via DJNZ) delay counts until setup_engine_sfx_48k

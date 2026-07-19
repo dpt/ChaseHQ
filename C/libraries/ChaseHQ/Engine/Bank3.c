@@ -2594,11 +2594,11 @@ static u8 ts_wait_loop(chqstate_t *state)
       /* TODO: CALL stst_load_sfx_script ($F7DB) -- SFX-table setup for
        * tune #4, out of scope (digitised-sample SFX subsystem). */
 
-      B_wait = 0xB4;
+      B_wait = 180;
       do {
         state->speccy->stamp(state->speccy);
         sfx_music_service(state);
-        state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+        state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
       } while (--B_wait);
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */
@@ -2659,8 +2659,8 @@ static u8 ts_wait_loop(chqstate_t *state)
       state->score_bcd[1] = 0x43;
       state->score_bcd[2] = 0x65;
       state->score_bcd[3] = 0x87;
-      state->wanted_stage_number = 0x06;
-      state->retry_count = 0x03;
+      state->wanted_stage_number = 6;
+      state->retry_count = 3;
 
       /* TODO: CALL stop_music_and_silence ($ED0B) -- clears tune_active
        * and the AY mixer/noise register cache; AY driver internals not
@@ -3070,9 +3070,9 @@ static u8 detect_kempston_joystick(chqstate_t *state)
     if (A_sample != C_baseline)
       return 0;
 
-    run_title_tune(state);
-    state->speccy->sleep(state->speccy, STANDARD_SLEEP);
     state->speccy->stamp(state->speccy);
+    run_title_tune(state);
+    state->speccy->sleep(state->speccy, KEMPSTON_MUSIC_TSTATES);
   } while (--B_count);
 
   return 1;
@@ -3336,11 +3336,9 @@ poll: /* $FBAB omd_service_and_read_keys */
   do {
     state->speccy->stamp(state->speccy);
     run_title_tune(state);
+    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES); // keyscan sleep
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-
-    if (A_key_mask == 0)
-      state->speccy->sleep(state->speccy, STANDARD_SLEEP); // keyscan sleep
   } while (A_key_mask == 0);
 
   if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
@@ -3384,8 +3382,9 @@ shared_tail:
   do {
     state->speccy->stamp(state->speccy);
     run_title_tune(state);
+    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
+
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-    state->speccy->sleep(state->speccy, STANDARD_SLEEP); // keyscan sleep
     /* debounce: wait for the selection key to be released before proceeding */
   } while (A_key_mask != 0);
 
@@ -3466,7 +3465,7 @@ static void play_success_music(chqstate_t *state)
   do {
     state->speccy->stamp(state->speccy);
     sfx_music_service(state);
-    state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+    state->speccy->sleep(state->speccy, SUCCESS_MUSIC_TSTATES);
   } while (--B_wait);
 }
 

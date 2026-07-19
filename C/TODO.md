@@ -2,7 +2,6 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
@@ -53,9 +52,8 @@
 ## IDEAS (backlog)
 
 - VSync
-- Factor the 22 depth levels value out to a constant
+- Factor out more constants (e.g. 21)
 - Scan for type problems
-- Build a tiny test level
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)
 - Hoist out all interesting Z80 addresses to constants

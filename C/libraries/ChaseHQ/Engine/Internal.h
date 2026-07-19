@@ -24,130 +24,262 @@
 
 /* Configuration constants */
 
+#define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
+#define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
+#define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
+#define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
+#define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
+
+#define INITIAL_TIME_BCD          (0x60) /* catch-up time allocation (BCD seconds) */
+#define CHASE_TIME_BCD            (0x60) /* chase-down time allocation (BCD seconds) */
+#define RESTART_TIME_BCD          (0x60) /* restarted chase-down time allocation (BCD seconds) */
+#define LOW_TIME_WARNING_BCD      (0x15) /* low time warning (BCD seconds) */
+
 #define INITIAL_BOOSTS               (3) /* number of boosts player starts each stage with */
 #define RESTART_BOOSTS               (3) /* number of boosts player receives on restart */
 
-#define INITIAL_TIME_BCD          (0x60) /* seconds in BCD */
-#define CHASE_TIME_BCD            (0x60)
-#define RESTART_TIME_BCD          (0x60)
-#define LOW_TIME_WARNING          (0x15)
+#define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
 
 #define MINSTAGE                     (1)
 #define MAXSTAGE                     (6) /* five original stages plus a test level */
 
-// Long term this should vanish.
-#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
+#define SUBSECOND_TICKS_PER_SECOND  (15) /* used to calibrate the 60s game countdown */
 
 /* ----------------------------------------------------------------------- */
 
-#define BACKBUFFER_WIDTH      (256)
-#define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
-#define BACKBUFFER_HEIGHT     (128)
-#define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
-#define BACKBUFFER_START_ADDRESS 0xF000
-#define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
+/* Timing configuration constants */
+
+#define MAIN_LOOP_TSTATES       (354955) /* calibrated so in-game timer is 60s */
+#define ATTRACT_TSTATES         (348173)
+#define PREGAME_TSTATES         (288192)
+#define ESCAPE_SCENE_TSTATES    (283239)
+#define TITLE_MUSIC_TSTATES     (100000) // TODO: Calibrate
+#define KEMPSTON_MUSIC_TSTATES  (100000) // TODO: Calibrate
+#define OMD_MUSIC_TSTATES       (100000) // TODO: Calibrate
+#define SUCCESS_MUSIC_TSTATES   (100000) // TODO: Calibrate
+
+/* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
+ * summed from the skool T-state counts. Covers the three OUT (C),A triplets
+ * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole
+ * per-nibble output rate, not just the explicit delay. */
+#define SPEECH_NIBBLE_TSTATES      (375) // TODO: Calibrate
+
+/* 48K beeper sfx timing. The Z80 pitches its bit-banged speaker output with
+ * busy-wait delay loops; the C translations do no busy-waiting and instead
+ * advance the speccy's virtual T-state clock via speccy->logtime so the host
+ * can reconstruct the pulse spacing. Costs are summed from the skool
+ * listings and exclude the OUT ($FE) itself (11 T-states, accounted
+ * centrally in zx_out). */
+/* TODO: Calibrate these against the original beeper sfx. */
+#define DJNZ_LOOP_TSTATES(b)  (((b) - 1) * 13 + 8)  /* DJNZ-to-self, b >= 1 iterations */
+#define DECJR_LOOP_TSTATES(n) (((n) - 1) * 16 + 11) /* DEC r; JR NZ,-3 self-loop, n >= 1 iterations */
+#define RNG_TSTATES                (143) /* CALL $961B (17) + rng body (126) */
+
+/* ----------------------------------------------------------------------- */
+
+/* Screen layout constants */
+
+#define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
+#define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
+
+#define MARQUEE_HEIGHT           (8 * 8) // rows
+#define PLAYFIELD_HEIGHT        (16 * 8) // rows
+
+#define SCREEN_PLAYFIELD_BITMAP_ADDR (0x4800) // first playfield scan line (char row 8)
+#define SCREEN_PLAYFIELD_ATTRS_ADDR  (0x5900) // first playfield attribute (char row 8)
+
+#define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
+#define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
+
+/* ----------------------------------------------------------------------- */
+
+/* Backbuffer layout constants */
+
+#define BACKBUFFER_WIDTH           (256)
+#define BACKBUFFER_ROWBYTES        (BACKBUFFER_WIDTH / 8)
+#define BACKBUFFER_HEIGHT          (128)
+#define BACKBUFFER_LENGTH          (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
+#define BACKBUFFER_START_ADDRESS   (0xF000)
+#define BACKBUFFER_END_ADDRESS     (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 // draw_char writes rows at stride 256; addresses near the end of the buffer
 // overflow past 0xFFFF in Z80 address space, wrapping into ROM (harmless).
 // In C there is no wrap, so pad the allocation to absorb those writes.
-#define BACKBUFFER_OVERFLOW   (BACKBUFFER_LENGTH)
-
-#define MAXHAZARDS            (6)
-
-#define TURBOWIDTH            (16) // pixels
-#define TURBOROWBYTES         (TURBOWIDTH / 8)
-#define TURBOHEIGHT           (14)
-#define TURBOFRAMELENGTH      (TURBOROWBYTES * TURBOHEIGHT * 2) // masked
-#define TURBOFRAMES           (3)
-
-#define FACEWIDTH             (32)
-#define FACEROWBYTES          (FACEWIDTH / 8)
-#define FACEHEIGHT            (40)
-#define FACEBITMAPBYTES       (FACEROWBYTES * FACEHEIGHT)
-#define FACEATTRWIDTH         (FACEWIDTH / 8)
-#define FACEATTRHEIGHT        (5)
-#define FACEATTRBYTES         (FACEATTRWIDTH * FACEATTRHEIGHT)
-#define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
-
-#define NFACES                (3)
+#define BACKBUFFER_OVERFLOW        (BACKBUFFER_LENGTH)
 
 /* ----------------------------------------------------------------------- */
 
-#define MARQUEE_HEIGHT                     (8 * 8) // rows
-#define PLAYFIELD_HEIGHT                  (16 * 8) // rows
-#define SCREEN_PLAYFIELD_BITMAP_ADDR      (0x4800) // first playfield scan line (char row 8)
-#define SCREEN_PLAYFIELD_ATTRS_ADDR       (0x5900) // first playfield attribute (char row 8)
+#define MAXHAZARDS                   (6)
 
-#define DRAWCHARSTYLE_SCREEN                   (1)
-#define DRAWCHARSTYLE_SINGLE                   (2)
-#define DRAWCHARSTYLE_DOUBLE                   (3)
-#define DRAWCHARSTYLE_SINGLE_INVERTED          (4)
-#define DRAWCHARSTYLE_DOUBLE_INVERTED          (5)
-#define DRAWCHARSTYLE__LIMIT                   (5)
+#define TURBOWIDTH                  (16) /* pixels */
+#define TURBOHEIGHT                 (14)
+#define TURBOFRAMES                  (3)
 
-#define HAZARD_USED                         (0xFF)
-#define HAZARD_UNUSED                       (0x00)
+#define TURBOROWBYTES               (TURBOWIDTH / 8)
+#define TURBOFRAMELENGTH            (TURBOROWBYTES * TURBOHEIGHT * 2) // masked
 
-/* ----------------------------------------------------------------------- */
+#define FACEWIDTH                   (32)
+#define FACEHEIGHT                  (40)
 
-#define BITMAPFLAG_DEFAULT                (0 << 0)
-#define BITMAPFLAG_MASKED                 (1 << 0)
-#define BITMAPFLAG_FLIPPED                (1 << 1)
+#define FACEROWBYTES                (FACEWIDTH / 8)
+#define FACEATTRHEIGHT              (FACEHEIGHT / 8)
+#define FACEBITMAPBYTES             (FACEROWBYTES * FACEHEIGHT)
+#define FACEATTRWIDTH               (FACEWIDTH / 8)
+#define FACEATTRBYTES               (FACEATTRWIDTH * FACEATTRHEIGHT)
+#define FACEBYTES                   (FACEBITMAPBYTES + FACEATTRBYTES)
 
-#define TRANSITIONCONTROL_STOP                 (0)
-#define TRANSITIONCONTROL_DRAW_MUGSHOTS        (1)
-#define TRANSITIONCONTROL_OVERLAY_MESSAGES     (2)
-#define TRANSITIONCONTROL_FILL_ATTRIBUTES      (3)
-#define TRANSITIONCONTROL_FADE                 (4)
-
-#define DRAWOVERLAY_STOP                       (0)
-
-#define STRETCHY_TYPE_END                      (1) // terminator (set=NULL)
-#define STRETCHY_TYPE_FIXED                    (2) // height = bitmap->width_bytes - 2, no perspective scaling
-#define STRETCHY_TYPE_150PC                    (3) // height = 150% of perspective scale
-#define STRETCHY_TYPE_50PC                     (4) // height =  50%
-#define STRETCHY_TYPE_113PC                    (5) // height = 112.5%
-#define STRETCHY_TYPE_38PC                     (6) // height =  37.5%
-#define STRETCHY_TYPE_75PC                     (7) // height =  75%
-#define STRETCHY_TYPE_25PC                     (8) // height =  25%
-#define STRETCHY_TYPE_100PC                    (9) // height = 100%
-#define STRETCHY_TYPE_200PC                   (10) // height = 200%; Z80 dispatch ADD A,A fall-through
+#define NFACES                       (3)
 
 /* ----------------------------------------------------------------------- */
 
-/* Flag constants */
+#define HAZARD_USED                  (0xFF)
+#define HAZARD_UNUSED                (0x00)
 
-#define KEYDEF_QUIT                            (0)
-#define KEYDEF_PAUSE                           (1)
-#define KEYDEF_BOOST                           (2)
-#define KEYDEF_GEAR                            (3)
-#define KEYDEF_ACCELERATE                      (4)
-#define KEYDEF_BRAKE                           (5)
-#define KEYDEF_LEFT                            (6)
-#define KEYDEF_RIGHT                           (7)
+#define DRAWOVERLAY_STOP             (0)
 
-#define USERINPUT_RIGHT                        (0)
-#define USERINPUT_LEFT                         (1)
-#define USERINPUT_DOWN                         (2) /* aka brake */
-#define USERINPUT_UP                           (3) /* aka accelerate */
-#define USERINPUT_FIRE                         (4) /* aka gear */
-#define USERINPUT_BOOST                        (5)
-#define USERINPUT_PAUSE                        (6)
-#define USERINPUT_QUIT                         (7)
+/* ----------------------------------------------------------------------- */
 
-#define USERINPUTFLAG_RIGHT (1 << USERINPUT_RIGHT)
-#define USERINPUTFLAG_LEFT  (1 << USERINPUT_LEFT )
-#define USERINPUTFLAG_DOWN  (1 << USERINPUT_DOWN )
-#define USERINPUTFLAG_UP    (1 << USERINPUT_UP   )
-#define USERINPUTFLAG_FIRE  (1 << USERINPUT_FIRE )
-#define USERINPUTFLAG_BOOST (1 << USERINPUT_BOOST)
-#define USERINPUTFLAG_PAUSE (1 << USERINPUT_PAUSE)
-#define USERINPUTFLAG_QUIT  (1 << USERINPUT_QUIT )
+/* Bitmap constants */
 
-#define USERINPUTFLAGMASK_NONE              (0x00)
-#define USERINPUTFLAGMASK_NOT_QUIT          (0x7F) /* mask of all input bits except QUIT */
+#define BITMAPFLAG_DEFAULT           (0 << 0)
+#define BITMAPFLAG_MASKED            (1 << 0)
+#define BITMAPFLAG_FLIPPED           (1 << 1)
 
-#define USERINPUTFLAGMASK_ALLOW_NONE        (0x00)
-#define USERINPUTFLAGMASK_ALLOW_ALL         (0xFF)
+#define STRETCHY_TYPE_END            (1) // terminator (set=NULL)
+#define STRETCHY_TYPE_FIXED          (2) // height = bitmap->width_bytes - 2, no perspective scaling
+#define STRETCHY_TYPE_150PC          (3) // height = 150% of perspective scale
+#define STRETCHY_TYPE_50PC           (4) // height =  50%
+#define STRETCHY_TYPE_113PC          (5) // height = 112.5%
+#define STRETCHY_TYPE_38PC           (6) // height =  37.5%
+#define STRETCHY_TYPE_75PC           (7) // height =  75%
+#define STRETCHY_TYPE_25PC           (8) // height =  25%
+#define STRETCHY_TYPE_100PC          (9) // height = 100%
+#define STRETCHY_TYPE_200PC         (10) // height = 200%; Z80 dispatch ADD A,A fall-through
+
+/* ----------------------------------------------------------------------- */
+
+/* Key/Input constants */
+
+#define KEYDEF_QUIT                  (0)
+#define KEYDEF_PAUSE                 (1)
+#define KEYDEF_BOOST                 (2)
+#define KEYDEF_GEAR                  (3)
+#define KEYDEF_ACCELERATE            (4)
+#define KEYDEF_BRAKE                 (5)
+#define KEYDEF_LEFT                  (6)
+#define KEYDEF_RIGHT                 (7)
+
+#define USERINPUT_RIGHT              (0)
+#define USERINPUT_LEFT               (1)
+#define USERINPUT_DOWN               (2) /* aka brake */
+#define USERINPUT_UP                 (3) /* aka accelerate */
+#define USERINPUT_FIRE               (4) /* aka gear */
+#define USERINPUT_BOOST              (5)
+#define USERINPUT_PAUSE              (6)
+#define USERINPUT_QUIT               (7)
+
+#define USERINPUTFLAG_RIGHT          (1 << USERINPUT_RIGHT)
+#define USERINPUTFLAG_LEFT           (1 << USERINPUT_LEFT )
+#define USERINPUTFLAG_DOWN           (1 << USERINPUT_DOWN )
+#define USERINPUTFLAG_UP             (1 << USERINPUT_UP   )
+#define USERINPUTFLAG_FIRE           (1 << USERINPUT_FIRE )
+#define USERINPUTFLAG_BOOST          (1 << USERINPUT_BOOST)
+#define USERINPUTFLAG_PAUSE          (1 << USERINPUT_PAUSE)
+#define USERINPUTFLAG_QUIT           (1 << USERINPUT_QUIT )
+
+#define USERINPUTFLAGMASK_NONE       (0x00)
+#define USERINPUTFLAGMASK_NOT_QUIT   (0x7F) /* mask of all input bits except QUIT */
+
+#define USERINPUTFLAGMASK_ALLOW_NONE (0x00)
+#define USERINPUTFLAGMASK_ALLOW_ALL  (0xFF)
+
+/* ----------------------------------------------------------------------- */
+
+/* Memory constants */
+
+#define STAGEDATA_BASE               (0x5C00) /* first byte of paged stage data in Z80 address space */
+#define STAGEDATA_END                (0x7FFF) /* last byte of paged stage data, inclusive */
+#define STAGEDATA_LENGTH             (STAGEDATA_END + 1 - STAGEDATA_BASE)
+
+/* ----------------------------------------------------------------------- */
+
+/* Enumeration constants */
+
+#define QUITSTATE_IDLE               (0)
+#define QUITSTATE_START              (1)
+#define QUITSTATE_DONE               (2)
+
+#define EFFECT_SQUEAL                (1)
+#define EFFECT_LANDING               (2) /* hero car landing after a jump */
+#define EFFECT_CAR_HIT               (3)
+#define EFFECT_SCENERY_HIT           (4)
+#define EFFECT_HAZARD_HIT            (5)
+#define EFFECT_WALL_HIT              (6)
+#define EFFECT_CORNERING             (7) /* tyre screech when cornering */
+#define EFFECT_BIP                   (8) /* high-pitched countdown beep */
+#define EFFECT_BOW                   (9) /* low-pitched countdown beep */
+
+#define TIMEUPSTATE_INIT             (0)
+#define TIMEUPSTATE_CHECK_TIME_UP    (1)
+#define TIMEUPSTATE_CHECK_CREDITS    (2)
+#define TIMEUPSTATE_CHECK_RESTART    (3)
+#define TIMEUPSTATE_WAITING          (4) /* game-over countdown running; waiting to expire */
+
+#define CHATTERSTATE_IDLE            (0)
+#define CHATTERSTATE_START           (1)
+#define CHATTERSTATE_RUN             (2)
+#define CHATTERSTATE_STOP            (3)
+
+#define HANDFLAG_NONE                (0) /* no hand visible */
+#define HANDFLAG_ANIMATING           (1) /* cherry light animating onto roof */
+#define HANDFLAG_STOP                (2) /* static "stop" hand */
+
+#define PERPCAUGHTPHASE_NONE         (0)
+#define PERPCAUGHTPHASE_ALIGNING     (1)
+#define PERPCAUGHTPHASE_STOPPING     (2)
+#define PERPCAUGHTPHASE_STOPPED      (3) /* car has stopped; engine off; smash bar is removed */
+#define PERPCAUGHTPHASE_SCORE        (4)
+#define PERPCAUGHTPHASE_FADING       (5)
+#define PERPCAUGHTPHASE_ADVANCING    (6) /* transition */
+
+#define DRAWCHARSTYLE_SCREEN         (1)
+#define DRAWCHARSTYLE_SINGLE         (2)
+#define DRAWCHARSTYLE_DOUBLE         (3)
+#define DRAWCHARSTYLE_SINGLE_INVERTED (4)
+#define DRAWCHARSTYLE_DOUBLE_INVERTED (5)
+#define DRAWCHARSTYLE__LIMIT         (5)
+
+#define TRANSITIONCONTROL_STOP       (0)
+#define TRANSITIONCONTROL_DRAW_MUGSHOTS (1)
+#define TRANSITIONCONTROL_OVERLAY_MESSAGES (2)
+#define TRANSITIONCONTROL_FILL_ATTRIBUTES (3)
+#define TRANSITIONCONTROL_FADE       (4)
+
+/* ----------------------------------------------------------------------- */
+
+/* Other constants */
+
+#define TRANSITIONSTRIDE_FORWARD     (8) /* screen wipe step: attribute rows per frame, top-to-bottom */
+#define TRANSITIONSTRIDE_REVERSE    (-8) /* screen wipe step: attribute rows per frame, bottom-to-top */
+
+// Note: road_pos left..right is high..low
+#define ROAD_RIGHTMOST          (0x00F5) /* road_pos value at rightmost road edge */
+#define ROAD_LEFTMOST           (0x0105) /* road_pos value at leftmost road edge */
+#define ROAD_126                (0x0126) /* road_pos cap applied during car bounce */
+
+#define ROADBUF_CURVATURE_OFFSET  (0<<5)
+#define ROADBUF_HEIGHT_OFFSET     (1<<5)
+#define ROADBUF_LANES_OFFSET      (2<<5)
+#define ROADBUF_RIGHTOBJS_OFFSET  (3<<5)
+#define ROADBUF_LEFTOBJS_OFFSET   (4<<5)
+#define ROADBUF_HAZARDS_OFFSET    (5<<5)
+
+#define PREGAMECMD_STOP           (0x00)
+#define PREGAMECMD_REPEAT         (0x1F) /* repeat previous command */
+#define PREGAMECMD_SET_BG_0       (0xD0) /* set background colour; low nibble = index (0xD0..0xDF) */
+#define PREGAMECMD_DRAW_BASE      (0xE0) /* draw base sprite */
+#define PREGAMECMD_DRAW_HZ        (0xE1) /* draw horizontal element */
+#define PREGAMECMD_DRAW_VT        (0xE2) /* draw vertical element */
+#define PREGAMECMD_SET_ADDR       (0xF0) /* set draw address; low nibble = index (0xF0..0xFF) */
 
 /* ----------------------------------------------------------------------- */
 

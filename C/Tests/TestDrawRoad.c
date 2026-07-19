@@ -87,7 +87,7 @@ static chqstate_t *make_road_state(void)
   assert(state != NULL);
 
   /* Load stage 1. */
-  state->wanted_stage_number  = 1;
+  state->wanted_stage_number  = MINSTAGE;
   state->current_stage_number = 0; /* force load */
   chq_test_load_stage(state);
   assert(state->stage != NULL);
@@ -390,7 +390,7 @@ static void test_set_up_stage_resets_lane_data(void)
   state = chq_create(&g_speccy);
   assert(state != NULL);
 
-  state->wanted_stage_number  = 1;
+  state->wanted_stage_number  = MINSTAGE;
   state->current_stage_number = 0;
   chq_test_load_stage(state);
 

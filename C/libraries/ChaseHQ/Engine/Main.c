@@ -409,125 +409,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 /* ----------------------------------------------------------------------- */
 
-/* Configuration constants */
-
-#define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
-#define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
-#define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
-#define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
-
-#define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
-#define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
-
-#define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
-
-/* TODO: Individually calibrate each of these _SLEEP values. */
-#define MAIN_LOOP_SLEEP   STANDARD_SLEEP
-#define ATTRACT_SLEEP     STANDARD_SLEEP
-#define PREGAME_SLEEP     STANDARD_SLEEP
-#define ESCAPE_SLEEP      STANDARD_SLEEP
-
-/* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
- * summed from the skool T-state counts. Covers the three OUT (C),A triplets
- * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole
- * per-nibble output rate, not just the explicit delay. */
-#define SPEECH_NIBBLE_TSTATES     (419) // TODO: Calibrate (~375 sounds correct)
-
-/* 48K beeper sfx timing. The Z80 pitches its bit-banged speaker output with
- * busy-wait delay loops; the C translations do no busy-waiting and instead
- * advance the speccy's virtual T-state clock via speccy->logtime so the host
- * can reconstruct the pulse spacing. Costs are summed from the skool
- * listings and exclude the OUT ($FE) itself (11 T-states, accounted
- * centrally in zx_out). */
-/* TODO: Calibrate these against the original beeper sfx. */
-#define DJNZ_LOOP_TSTATES(b)  (((b) - 1) * 13 + 8)  /* DJNZ-to-self, b >= 1 iterations */
-#define DECJR_LOOP_TSTATES(n) (((n) - 1) * 16 + 11) /* DEC r; JR NZ,-3 self-loop, n >= 1 iterations */
-#define RNG_TSTATES           (143) /* CALL $961B (17) + rng body (126) */
-
-/* ----------------------------------------------------------------------- */
-
-/* Memory constants */
-
-#define STAGEDATA_BASE          (0x5C00) /* first byte of paged stage data in Z80 address space */
-#define STAGEDATA_END           (0x7FFF) /* last byte of paged stage data, inclusive */
-#define STAGEDATA_LENGTH        (STAGEDATA_END + 1 - STAGEDATA_BASE)
-
-#define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
-#define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
-
-/* ----------------------------------------------------------------------- */
-
-/* Enumeration constants */
-
-#define QUITSTATE_IDLE               (0)
-#define QUITSTATE_START              (1)
-#define QUITSTATE_DONE               (2)
-
-#define EFFECT_SQUEAL                (1)
-#define EFFECT_LANDING               (2) /* hero car landing after a jump */
-#define EFFECT_CAR_HIT               (3)
-#define EFFECT_SCENERY_HIT           (4)
-#define EFFECT_HAZARD_HIT            (5)
-#define EFFECT_WALL_HIT              (6)
-#define EFFECT_CORNERING             (7) /* tyre screech when cornering */
-#define EFFECT_BIP                   (8) /* high-pitched countdown beep */
-#define EFFECT_BOW                   (9) /* low-pitched countdown beep */
-
-#define SUBSECOND_TICKS_PER_SECOND  (15)
-
-#define TIMEUPSTATE_INIT             (0)
-#define TIMEUPSTATE_CHECK_TIME_UP    (1)
-#define TIMEUPSTATE_CHECK_CREDITS    (2)
-#define TIMEUPSTATE_CHECK_RESTART    (3)
-#define TIMEUPSTATE_WAITING          (4) /* game-over countdown running; waiting to expire */
-
-#define CHATTERSTATE_IDLE            (0)
-#define CHATTERSTATE_START           (1)
-#define CHATTERSTATE_RUN             (2)
-#define CHATTERSTATE_STOP            (3)
-
-#define HANDFLAG_NONE                (0) /* no hand visible */
-#define HANDFLAG_ANIMATING           (1) /* cherry light animating onto roof */
-#define HANDFLAG_STOP                (2) /* static "stop" hand */
-
-#define PERPCAUGHTPHASE_NONE         (0)
-#define PERPCAUGHTPHASE_ALIGNING     (1)
-#define PERPCAUGHTPHASE_STOPPING     (2)
-#define PERPCAUGHTPHASE_STOPPED      (3) /* car has stopped; engine off; smash bar is removed */
-#define PERPCAUGHTPHASE_SCORE        (4)
-#define PERPCAUGHTPHASE_FADING       (5)
-#define PERPCAUGHTPHASE_ADVANCING    (6) /* transition */
-
-/* ----------------------------------------------------------------------- */
-
-/* Other constants */
-
-#define TRANSITIONSTRIDE_FORWARD     (8) /* screen wipe step: attribute rows per frame, top-to-bottom */
-#define TRANSITIONSTRIDE_REVERSE    (-8) /* screen wipe step: attribute rows per frame, bottom-to-top */
-
-// Note: road_pos left..right is high..low
-#define ROAD_RIGHTMOST          (0x00F5) /* road_pos value at rightmost road edge */
-#define ROAD_LEFTMOST           (0x0105) /* road_pos value at leftmost road edge */
-#define ROAD_126                (0x0126) /* road_pos cap applied during car bounce */
-
-#define ROADBUF_CURVATURE_OFFSET  (0<<5)
-#define ROADBUF_HEIGHT_OFFSET     (1<<5)
-#define ROADBUF_LANES_OFFSET      (2<<5)
-#define ROADBUF_RIGHTOBJS_OFFSET  (3<<5)
-#define ROADBUF_LEFTOBJS_OFFSET   (4<<5)
-#define ROADBUF_HAZARDS_OFFSET    (5<<5)
-
-#define PREGAMECMD_STOP           (0x00)
-#define PREGAMECMD_REPEAT         (0x1F) /* repeat previous command */
-#define PREGAMECMD_SET_BG_0       (0xD0) /* set background colour; low nibble = index (0xD0..0xDF) */
-#define PREGAMECMD_DRAW_BASE      (0xE0) /* draw base sprite */
-#define PREGAMECMD_DRAW_HZ        (0xE1) /* draw horizontal element */
-#define PREGAMECMD_DRAW_VT        (0xE2) /* draw vertical element */
-#define PREGAMECMD_SET_ADDR       (0xF0) /* set draw address; low nibble = index (0xF0..0xFF) */
-
-/* ----------------------------------------------------------------------- */
-
 /* Perspective table stuff */
 
 /** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset
@@ -1634,7 +1515,7 @@ static void bootstrap(chqstate_t *state)
     state->retry_count = 0;
 
     // Reset wanted_stage_number and credits.
-    state->wanted_stage_number = 1;
+    state->wanted_stage_number = MINSTAGE;
     state->credits = 2;
 
     // Run the main game loop.
@@ -1755,7 +1636,7 @@ static void main_loop(chqstate_t *state)
       play_regular_sfx_hook(state);
       update_screen(state);
       exit_fork(state);
-      state->speccy->sleep(state->speccy, MAIN_LOOP_SLEEP);
+      state->speccy->sleep(state->speccy, MAIN_LOOP_TSTATES);
 
       if (state->test_mode) {
         keys = ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
@@ -1868,7 +1749,7 @@ static void drive_attract_demo(chqstate_t *state)
   draw_scene_objects(state);
   animate_hero_car(state); /* tail call */
 
-  state->speccy->sleep(state->speccy, ATTRACT_SLEEP);
+  state->speccy->sleep(state->speccy, ATTRACT_TSTATES);
 }
 
 /**
@@ -1955,7 +1836,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   }
 
 exit:
-  state->speccy->sleep(state->speccy, PREGAME_SLEEP);
+  state->speccy->sleep(state->speccy, PREGAME_TSTATES);
   return rc; // loop
 }
 
@@ -2266,7 +2147,7 @@ static void escape_scene(chqstate_t *state)
     drive_chatter(state);
     transition(state);
     update_screen(state);
-    state->speccy->sleep(state->speccy, ESCAPE_SLEEP);
+    state->speccy->sleep(state->speccy, ESCAPE_SCENE_TSTATES);
 
     // Loop unless the tunnel has appeared - and is right size?
     if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
@@ -6563,7 +6444,7 @@ update_remaining_time:
   state->session.time_bcd = time_bcd = DAA_sub(state->session.time_bcd - 1, half_borrow, NULL);
 
   // When 15s remain Nancy warns that time is running out.
-  if (time_bcd == LOW_TIME_WARNING)
+  if (time_bcd == LOW_TIME_WARNING_BCD)
     // Note: This passes time_bcd as the priority which is 21.
     start_chatter(state, time_bcd,
                   chatterblk_nancy_time_running_out); /* tail call */
