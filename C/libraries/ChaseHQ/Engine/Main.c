@@ -8819,7 +8819,7 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
  */
 void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 {
-  int       carry;              /* carry from RL min_lane, selects left/right slide direction (carry) */
+  int       carry;              /* current_lane < lane, selects left/right slide direction (carry) */
   int       spawn_lanes;        /* packed return from get_spawn_lanes: high byte=min, low byte=max (was BC) */
   u8        min_lane;           /* minimum valid lane for this hazard's road position (was B) */
   int       max_lane;           /* maximum valid lane for this hazard's road position (was C) */
@@ -8828,7 +8828,6 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
   int       horz_pos;           /* hazard's horizontal position, slid ±5 toward target each frame (was A) */
   int       hit_timer;          /* hit_timer from hazard slot; non-zero triggers a crash (was A) */
   const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the target lane column (was HL) */
-  carry = 0;
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
     IXhazard->speed = 0x1FF;
@@ -8845,12 +8844,12 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 
   current_lane = IXhazard->current_lane;
   if (current_lane != IXhazard->hazard_lane_OR_perp_dist_hi) {
-    RL(min_lane); // captures the CP borrow from the current_lane vs.
-                  // assigned-lane compare above through the round trip to
-                  // RR below; see $A900-$A90B
+    // $A8FB CP (IX+$11) borrow, carried through the RL/RR B round trip
+    // ($A900-$A90B); min_lane itself is never read again, so the round
+    // trip collapses to the comparison it was shuttling.
+    carry = current_lane < lane;
     phazard_pos_speed = &hazard_pos_speed[current_lane - 1];
     horz_pos = IXhazard->horz_pos_on_road;
-    RR(min_lane);
     if (carry) {
       horz_pos -= 5;
       if (horz_pos < *phazard_pos_speed) {
