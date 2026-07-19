@@ -49,7 +49,7 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ/Engine/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/libraries/ChaseHQ/Engine/Tests.h`. When adding a new test hook, add the wrapper to `Main.c` and declare it in `Tests.h`.
+Tests live in `C/Tests/` (`TestDrawRoad.c`, `RenderStretchyObject.c`). They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ/Engine/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/libraries/ChaseHQ/Engine/Tests.h`. When adding a new test hook, add the wrapper to `Main.c` and declare it in `Tests.h`.
 
 ## C Implementation Architecture
 
@@ -57,31 +57,33 @@ Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which
 - `C/include/<Module>/`: public headers (the interface other modules or the app consume) — `C99/Types.h`, `ZXSpectrum/*.h` (all but `Screen.h`), `ChaseHQ/ChaseHQ.h`
 - `C/libraries/<Module>/`: sources and internal-only headers
   - `libraries/ZXSpectrum/`: ZX facade implementation, plus `Screen.h` (internal)
-  - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Create.c`, `State.h`, `Internal.h`, `Tests.h`)
-  - `libraries/ChaseHQ/Data/`: read-only stage/sound tables (`Stages.*`, `Stage1-6Data.*`, `CommonData.*`, `SoundSamples.*`)
+  - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Bank3.h`, `Bank3State.h`, `Create.c`, `State.h`, `Internal.h`, `Tests.h`, `Types.h`)
+  - `libraries/ChaseHQ/Data/`: read-only stage/sound/title/bank-3 tables (`Stages.*`, `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `TitleScreenData.*`, `Bank3Data.*`)
 - `C/SDLMain.c` and `C/Tests/`: the app entry point and test driver, not modules themselves
 
 ### Entry point and lifecycle
-`C/SDLMain.c` owns the SDL window and event loop. Each frame it calls `chq_main(state->game)`. The public game API is in `C/include/ChaseHQ/ChaseHQ.h`:
+`C/SDLMain.c` owns the SDL window and a dedicated game thread. The runtime lifecycle is:
 
 ```
-chq_create → chq_setup → chq_main (repeated) → chq_destroy
+chq_create → chq_setup (blocks via longjmp until quit signal) → chq_stop → chq_destroy
 ```
+
+`chq_setup()` calls `bootstrap()` which runs the internal game loop via `longjmp` until a quit signal arrives. `chq_main()` is declared in the public API but not wired into the runtime path — it exists for future modular use.
 
 ### Layers
 - **Host** (`C/SDLMain.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
 - **ZX emulation facade** (`C/libraries/ZXSpectrum/Spectrum.*`): exposes `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL directly
-- **Game** (`C/libraries/ChaseHQ/Engine/Main.c`): translation-oriented, heavily commented with Z80 addresses; many TODOs and partial stubs
+- **Game** (`C/libraries/ChaseHQ/Engine/Main.c`): translation-oriented, heavily commented with Z80 addresses (~1194 `$`-prefixed lines); ~17 TODO/stub markers concentrated in SFX and title-screen code
 - **State** (`C/libraries/ChaseHQ/Engine/State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
-- **Stage data** (`C/libraries/ChaseHQ/Data/Stages.h`, `Stage1Data.*`, `CommonData.*`): read-only game tables consumed by game logic
+- **Stage data** (`C/libraries/ChaseHQ/Data/Stages.h`, `Stage{1-6}Data.*`, `CommonData.*`): read-only game tables consumed by game logic
 
 ### Data flow
 - **Rendering**: game mutates `state->speccy->screen` → ZX facade tracks dirty regions → `draw_handler` in `Main.c` calls `zxspectrum_claim_screen` → SDL texture update
 - **Input**: SDL keys → `zxkeyset_t`/`zxkempston_t` → `key_handler` → Spectrum IN ports (`port_KEYBOARD_*`, `port_KEMPSTON_JOYSTICK`)
-- **Audio/border**: hooks are connected but most are placeholder NOPs in `Main.c`
+- **Audio/border**: audio hooks (`play_regular_sfx_hook`, `play_engine_sfx_hook`, `play_speech_hook`) are functional with sample-accurate playback. Border colour handling is a TODO.
 
 ### Stage status
-All 5 stages currently map to `stage1` data in `Stages.c`. Per-stage data beyond stage 1 does not exist yet.
+Six per-stage data structs exist (`stage1`–`stage6`), each with its own `.c`/`.h` pair in `C/libraries/ChaseHQ/Data/`. `Stages.c` maps them into the `stages[]` array: index 1 = `stage1`, 2 = `stage2`, 3 = `stage3`, 4 = `stage4`, 5 = `stage5`, 6 = `stage6`, 7 = end-sequence reload (falls back to `stage5`). Per-stage road layouts, objects, and sprites are present for all six stages.
 
 ## Coding Conventions
 
@@ -90,7 +92,7 @@ All 5 stages currently map to `stage1` data in `Stages.c`. Per-stage data beyond
 - **`(SM)` fields**: each field annotated `(SM)` in `chqstate` corresponds to a Z80 self-modifying instruction at the given address — these are correctness-critical; do not remove or rename carelessly
 - **`Conv:` comments**: mark where the C version intentionally diverges from a direct Z80 translation; preserve them
 - **Address semantics**: macros like `ADDRTOSCREEN`, `BACKBUFTOOFFSET`, `ROADBUFPTR` are correctness-critical
-- **Formatting**: K&R style, 2-space indent, 80 columns, pointer aligned to name (`.astylerc`)
+- **Formatting**: K&R style, 2-space indent, 80 columns, pointer aligned to name (`.clang-format`)
 - **C standard**: Target C89/C90. Avoid C99 constructs: no compound literals `(T){…}`, no VLAs, no in-loop declarations (`for (int i = …)`). Single-line `//` comments and `<stdint.h>` types are accepted as widely-supported extensions.
 
 ### Variable naming in Z80 translations
@@ -355,9 +357,9 @@ that value. Trace back to the flag-setting instruction before the original
 
 All road-marking access sites use `&edge_markings[((0xE4 << 8) | Ldash) - 0xE400]` = `&edge_markings[Ldash]`. There is no separate `lane_markings` array. `dr_edge_graphic_offset` ∈ {`0x10`, `0x30`, `0x50`, `0x70`, `0x90`, `0xB0`} and `dr_stripe_table_offset` ∈ {`0x00`, `0xD0`, `0xE0`, `0xF0`} are low bytes of Z80 HL and index directly into this array.
 
-## Known test failure
+## Tests
 
-All five tests pass.
+All tests pass.
 
 ## Safe Editing
 
