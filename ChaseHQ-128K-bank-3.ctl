@@ -435,7 +435,7 @@ C $C6E6,3 Clear the playfield bitmap ready for the next frame
 C $C6EA,4 Background objects start at record 6 ($BB00 + 6*9)
 C $C6EE,2 3 background objects
 @ $C6F0 label=ts_draw_bg_objects
-N $C705 Object animation script interpreter: advances all 9 objects' scripts by one frame. Each object record (9 bytes, offsets relative to IX): +$00 current opcode / countdown-active flag (0 = idle, fetch next op) +$01 countdown value for the "wait N frames" opcode +$02 X velocity/step, +$03 Y velocity/step +$04/+$05 script pointer (low/high) -- the object's byte-code cursor +$06 screen row/position byte consumed by the blitters +$07/+$08 current X/Y screen position The script byte-code (fetched at #R$C740) is a simple state machine: opcode bytes >= $80 (sign bit set) are treated as immediate 2-axis step deltas (#R$C868); opcodes $C8-$D0 select a movement/velocity mode (constant velocity, decelerate-to-stop via the #R$D272@bank1 lookup table, accelerate, or a literal position jump) and may consume further operand bytes from the script stream. $D1 is not one of these -- it is never tested by either dispatch chain below, so an object whose script emits it (this happens in every one of the 5 title scenes, always right after an initial constant-velocity burst) gets $D1 stored as its active opcode by chain 2 and then permanently frozen by chain 1: chain 1's #R$C70E dispatch matches none of $C9-$CF for $D1, so it jumps straight to #R$C73B without ever reaching #R$C731's countdown decrement, and the object can never go idle (opcode -> 0) to fetch a new instruction again. This is a genuine quirk of the original data/interpreter, not a disassembly error -- see #R$CCF2 for object 0's example. Two separate dispatch chains share this state machine: 1. #R$C70E (the per-object per-frame entry): dispatches on the *active* opcode already stored at +$00 ($C9-$CF, one of the six movement modes below) and performs one frame's worth of incremental movement. An idle object (+$00 = 0) instead falls through to #R$C740 to fetch a fresh opcode from the script stream. 2. #R$C746 (oss_fetch_opcode_cont): dispatches on the *next script byte* fetched from the stream ($C8-$D2, or an immediate step if bit 7 is clear), reads that opcode's operand bytes from the stream, and stores them into +$00-+$03 ready for chain 1 to act on next frame. The six active movement modes (chain 1) are: constant velocity ($C9, #R$C78D -- position += velocity every frame, no countdown); decelerate X/Y ($CA/$CB, #R$C7ED/#R$C812 -- apply the current step, then look up the next speed from #R$D272@bank1 indexed by the +$01/+$03 countdown value, negate it into the other axis's velocity, and count the countdown up toward zero); and three accelerate-X variants ($CC/$CD/$CE, #R$C827/ #R$C853/#R$C83E -- apply the current step, look up the next speed from #R$D272@bank1 the same way, and count +$02 down/up/down respectively). The "wait N frames" opcode ($CF) has no chain-1 handler of its own: chain 1 falls through to #R$C731 (oss_countdown), which just decrements +$01 and goes idle (opcode -> 0) when it reaches zero. #R$D272@bank1 (oss_lookup_speed, #R$C804) is a 256-byte deceleration/ acceleration curve table indexed by the countdown value passed in C (B is temporarily zeroed for the table-relative add and shuttled through A so the caller's B -- the outer object-loop DJNZ counter -- survives the call); table[C] >> 2 gives that countdown step's velocity magnitude, shared by all five countdown-driven modes.
+N $C705 Object animation script interpreter: advances all 9 objects' scripts by one frame. Each object record (9 bytes, offsets relative to IX): +$00 current opcode / countdown-active flag (0 = idle, fetch next op) +$01 countdown value for the "wait N frames" opcode +$02 X velocity/step, +$03 Y velocity/step +$04/+$05 script pointer (low/high) -- the object's byte-code cursor +$06 screen row/position byte consumed by the blitters +$07/+$08 current X/Y screen position The script byte-code (fetched at #R$C740) is a simple state machine: opcode bytes >= $80 (sign bit set) are treated as immediate 2-axis step deltas (#R$C868); opcodes $C8-$D0 select a movement/velocity mode (constant velocity, decelerate-to-stop via the #R$D272@bank1 lookup table, accelerate, or a literal position jump) and may consume further operand bytes from the script stream. $D1 is not one of these -- it is never tested by either dispatch chain below, so an object whose script emits it (this happens in every one of the 5 title scenes, always right after an initial constant-velocity burst) gets $D1 stored as its active opcode by chain 2 and then permanently frozen by chain 1: chain 1's #R$C70E dispatch matches none of $C9-$CF for $D1, so it jumps straight to #R$C73B without ever reaching #R$C731's countdown decrement, and the object can never go idle (opcode -> 0) to fetch a new instruction again. This is a genuine quirk of the original data/interpreter, not a disassembly error -- see $CCF2 for object 0's example. Two separate dispatch chains share this state machine: 1. #R$C70E (the per-object per-frame entry): dispatches on the *active* opcode already stored at +$00 ($C9-$CF, one of the six movement modes below) and performs one frame's worth of incremental movement. An idle object (+$00 = 0) instead falls through to #R$C740 to fetch a fresh opcode from the script stream. 2. #R$C746 (oss_fetch_opcode_cont): dispatches on the *next script byte* fetched from the stream ($C8-$D2, or an immediate step if bit 7 is clear), reads that opcode's operand bytes from the stream, and stores them into +$00-+$03 ready for chain 1 to act on next frame. The six active movement modes (chain 1) are: constant velocity ($C9, #R$C78D -- position += velocity every frame, no countdown); decelerate X/Y ($CA/$CB, #R$C7ED/#R$C812 -- apply the current step, then look up the next speed from #R$D272@bank1 indexed by the +$01/+$03 countdown value, negate it into the other axis's velocity, and count the countdown up toward zero); and three accelerate-X variants ($CC/$CD/$CE, #R$C827/ #R$C853/#R$C83E -- apply the current step, look up the next speed from #R$D272@bank1 the same way, and count +$02 down/up/down respectively). The "wait N frames" opcode ($CF) has no chain-1 handler of its own: chain 1 falls through to #R$C731 (oss_countdown), which just decrements +$01 and goes idle (opcode -> 0) when it reaches zero. #R$D272@bank1 (oss_lookup_speed, #R$C804) is a 256-byte deceleration/ acceleration curve table indexed by the countdown value passed in C (B is temporarily zeroed for the table-relative add and shuttled through A so the caller's B -- the outer object-loop DJNZ counter -- survives the call); table[C] >> 2 gives that countdown step's velocity magnitude, shared by all five countdown-driven modes.
 @ $C705 label=object_script_step
 @ $C70E label=oss_object_loop
 C $C70E,3 Opcode 0 = idle -> fetch the next script opcode
@@ -1193,6 +1193,7 @@ C $EDD1,3 +$1F = 0 (B is 0 here); likely unmutes this
 C $EDD4,2 channel
 N $EDD6 Advance one channel's pattern by one tracker row. Decrements the per-row wait counter (+$10); while it is still counting down, only #R$EE38 (envelope/portamento upkeep) runs. Once it reaches zero, reads and processes the next byte(s) from the pattern stream via #R$EDE4.
 @ $EDD6 label=advance_channel_pattern
+N $EDE4 This entry point is used by the routine at #R$F1AE.
 @ $EDE4 label=acp_read_pattern_byte
 C $EDE7,3 Bit 7 set = command/effect byte, decode via #R$EE49; bit 7 clear = a note value, handled below
 @ $EE22 label=acp_reset_row_counter
@@ -1212,88 +1213,56 @@ D $EFAF $EFAF-$EFBA (12 bytes): the per-frame AY register cache, refreshed each 
 R $EFAF $EFBC onward: an AY tone-period lookup table (2 bytes/entry, one per
 R $EFAF note), indexed by note number via #R$EE9E ($EEF1 LD HL,$EFBC).
 N $EFAF Further sub-tables referenced elsewhere in this driver, contents not decoded byte-by-byte (raw lookup data, not algorithmic): $F07C (indexed pointer table, see #R$EE5A), $F123 (indexed pointer table, see #R$EE7E). $F225 onward: the per-tune channel-pointer table used by #R$EB9E, 7 bytes/entry -- see #R$EB9E for the layout.
-B $EFAF,511,8
+B $EFAF,511,8*63,7
 c $F1AE Phrase-pointer table walker for a channel's pattern stream, reached via the computed jump at #R$ED33 (pattern command byte $87). Traced mechanically below (explicit instruction lengths, to avoid the auto-disassembler misreading the DD-prefixed IX-offset forms). Confirmed against a working build (see #R$EE9E's C translation, advance_channel_phrase). The phrase-pointer table read from $F1D5 onward is a sequence of little-endian words, each either a literal marker or a raw address: marker $0000 means the table is exhausted (restart from this channel's own header word); marker $0001 is followed by a 1-byte transpose override then another table word; marker $0002 is followed by a 1-byte repeat count and a 2-byte pointer (a "repeating" phrase); anything else is a plain phrase-pointer word, used directly.
+D $F1AE Used by the routine at #R$EC71.
 @ $F1AE label=advance_channel_phrase
 C $F1AE,3 BC = (IX+$05)/(IX+$06), this channel's byte offset into its own phrase-pointer table
-C $F1B1,3
 @ $F1B4 label=acph_repeat_loop
 C $F1B4,3 HL = (IX+$03)/(IX+$04)
-C $F1B7,3
 C $F1BA,1 HL = HL + BC (-> this table position)
 C $F1BB,3 A = (IX+$21) (the repeat count for the phrase in (IX+$22)/(IX+$23)); A -= 1
-C $F1BE,1
 C $F1BF,3 if A < 0, jump to $F1D1 (repeats exhausted -- read a new table word)
 C $F1C2,3 else (IX+$21) = A (store the decremented repeat count)
 C $F1C5,3 DE = (IX+$22)/(IX+$23) (the phrase pointer this repeat count belongs to)
-C $F1C8,3
 C $F1CB,2 if A (the value decremented at $F1BE, tested via the Z flag it left behind -- $F1C2-$F1C8 are LD (IX+d),reg/LD reg,(IX+d) and do not affect flags) != 0, jump to $F1E8 (repeats remain -- resume this phrase)
 C $F1CD,1 else BC += 2 (repeat count reached exactly 0 -- this slot is done; advance to the next table word)
-C $F1CE,1
 C $F1CF,2 and loop back to $F1B4 (re-add BC to HL)
 @ $F1D1 label=acph_new_word
 C $F1D1,4 (IX+$20) = 0 (clear this phrase's transpose override)
 @ $F1D5 label=acph_read_word
 C $F1D5,1 A = (HL); HL += 1
-C $F1D6,1
 C $F1D7,1 D = (HL); E = A (DE = the table word just read)
-C $F1D8,1
 C $F1D9,1 if DE != $0000 (not the table-exhausted marker), jump to $F1F3
-C $F1DA,2
 C $F1DC,3 else HL = (IX+$03)/(IX+$04) (table exhausted -- re-read this channel's own header word)
-C $F1DF,3
 C $F1E2,3 BC = 2 (table offset resets to just past the header)
 C $F1E5,1 E = (HL); HL += 1; D = (HL) (DE = the header word, used as the resume pointer)
-C $F1E6,1
-C $F1E7,1
 @ $F1E8 label=acph_finalize
 C $F1E8,3 (IX+$05) = C; (IX+$06) = B (persist the table offset cursor)
-C $F1EB,3
 C $F1EE,2 B = 0
 C $F1F0,3 jump to $EDE4 (acp_read_pattern_byte), resuming the pattern stream from DE
 @ $F1F3 label=acph_check_transpose
 C $F1F3,1 DE -= 1 (test for the transpose-prefix marker, value $0001)
 C $F1F4,1 if DE != 0 (word was not $0001), jump to $F204
-C $F1F5,1
-C $F1F6,2
 C $F1F8,1 else HL += 1; A = (HL) (read the inline transpose override byte)
-C $F1F9,1
 C $F1FA,3 (IX+$20) = A
 C $F1FD,1 HL += 1; BC += 3; DE += 1
-C $F1FE,1
-C $F1FF,1
-C $F200,1
-C $F201,1
 C $F202,2 and loop back to $F1D5 to read the next table word
 @ $F204 label=acph_check_repeat
 C $F204,1 DE -= 1 (test for the repeating-entry marker, value $0002; DE already holds word-1 from $F1F3)
 C $F205,1 if DE != 0 (word was not $0002), jump to $F21F
-C $F206,1
-C $F207,1
-C $F208,1
-C $F209,2
 C $F20B,1 else HL += 1; A = (HL); (IX+$21) = A (repeat count operand)
-C $F20C,1
-C $F20D,3
 C $F210,1 HL += 1; E = (HL); (IX+$22) = E (phrase pointer operand, low byte)
-C $F211,1
-C $F212,3
 C $F215,1 HL += 1; D = (HL); (IX+$23) = D (phrase pointer operand, high byte)
-C $F216,1
-C $F217,3
 C $F21A,1 BC += 3
-C $F21B,1
-C $F21C,1
 C $F21D,2 and jump to $F1E8 (DE = the new phrase pointer, used as the resume cursor)
 @ $F21F label=acph_plain_pointer
 C $F21F,1 BC += 2 (word was a plain phrase-pointer, not a marker)
-C $F220,1
 C $F221,2 and jump to $F1E8 (DE = the table word itself, used as the resume cursor)
 C $F223,1 padding (unreachable)
-C $F224,1
 b $F225 Per-tune channel-pointer table and pattern/phrase byte data
 D $F225 $F225-$F240 (28 bytes, 7 bytes/entry): the per-tune channel-pointer table used by #R$EB9E, see #R$EB9E for the layout. $F241 onward: pattern/phrase byte streams and per-channel phrase-pointer tables referenced by #R$F1AE and the channel tracker records set up by #R$EB9E; not decoded byte-by-byte.
-B $F225,1413,8
+B $F225,1413,8*176,5
 c $F7AA Sets up the classic ZX Spectrum IM2 "257-byte table" interrupt vector trick
 D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
 R $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.

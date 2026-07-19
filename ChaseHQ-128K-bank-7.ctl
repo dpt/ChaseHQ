@@ -1709,4 +1709,375 @@ B $DAA1,20,4 Bitmap data (masked) 4 bytes x 5
 B $DAB5,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
 B $DAC9,16,4 Bitmap data (masked) 4 bytes x 4
 B $DAD9,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
-B $DAE9,9495,8*1186,7
+b $DAE9 [Stage 5] Unidentified data (gap before end screen)
+B $DAE9,1303,8*162,7
+c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
+@ $E000 label=end_screen
+C $E000,3 Call es_e499_clear
+C $E003,3 source $F7EF
+C $E006,3 in backbuf
+C $E009,3 768 bytes
+C $E00C,2 Copy
+N $E00E $A16D = $5CFE [$E0FE here]
+C $E00E,9 $A16D -> script_data [$5CFE]
+C $E017,1 $A16F C is zero
+C $E019,2 $A170
+C $E01C,2 $A171
+C $E01E,3 Call bank7_setup_interrupts
+C $E021,3 Call play_turbo_sfx_128k
+C $E024,1 Enable interrupts
+C $E025,1 Wait for an interrupt
+@ $E026 label=es_loop
+C $E026,3 Call (two bytes earlier than) play_speech_128k
+C $E029,4 Decrement $A170
+C $E02D,3 Call run_script
+C $E030,3 Call <self modified>
+C $E033,4 Decrement $A171
+C $E037,2 Loop while > 0
+C $E039,2 Reset $A171 to 5
+C $E03B,3 Call drive_chatter
+C $E03E,3 Call keyscan
+C $E041,4 Loop while key not pressed
+C $E045,4 AND user input with user input mask
+C $E049,2 Jump if masked key remains pressed
+C $E04B,1 Increment mask? Odd - probably not
+C $E052,6 Set script data pointer to $5DE3 [$E1E3]
+C $E058,3 Call drive_chatter_stop
+C $E05B,3 Call keyscan
+C $E05E,4 Loop while key pressed
+C $E062,2 Loop
+C $E065,4 Set interrupt vector table base to $8000
+C $E069,3 Call drive_chatter_stop
+b $E06C Data block at E06C
+N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by routine_e42e ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
+@ $E06C label=data_e06c
+B $E06C,2,1 Trigger flags (see note above)
+N $E06E Still unidentified (3 bytes, values $01,$3F,$96) -- confirmed dead end: grepped for literal $5C6E/$5C6F/$5C70 operands across the full static bank-7 disassembly and the entire trace-end-screen.log execution capture, zero hits either way. Not reached by any direct-addressed instruction in the code disassembled so far; either accessed only via computed/indexed addressing not yet spotted, read by common-RAM code outside bank 7, or genuinely unused padding
+@ $E06E label=data_e06e
+B $E06E,3,1
+N $E071 Pointer table for the congratulations text: three pointers packed tight ($E071-$E076), then a 2-byte gap, then a fourth pointer ($E079-$E07A), then a trailing byte. Bytes at $E071-$E072, $E073-$E074, $E075-$E076, $E079-$E07A are little-endian relocated pointers $5C7C/$5CA5/$5CD0/$5CE8 -- relocating back (+$8400) gives $E07C/$E0A5/$E0D0/$E0E8, an exact match to the four text strings below
+W $E071,6,2 Pointers 1-3 (tight-packed)
+N $E077 Gap between pointer 3 and pointer 4 ($FF,$03) -- same confirmed dead end as $E06E: no literal $5C77/$5C78 operand anywhere in bank 7's static disassembly or trace-end-screen.log. $FF matches the terminator convention seen elsewhere (see $F8F5 SFX table), possibly a record separator/duration byte rather than table padding, but unproven
+B $E077,2,1
+W $E079,2,2 Pointer 4
+B $E07B,1,1 Terminator
+T $E07C,41,40:n1 "I WOULD LIKE TO CONGRATULATE YOU FOR YOUR"
+T $E0A5,43,42:n1 "HEROISM AND BRAVERY. YOU WILL BE REMEMBERED"
+T $E0D0,24,23:n1 "FOR A LONG TIME TO COME."
+T $E0E8,22,21:n1 "PRESS GEAR TO CONTINUE"
+b $E0FE Script data
+@ $E0FE label=script_data
+B $E0FE,1,1
+W $E0FF,2,2
+B $E101,3,2,1
+W $E104,2,2 bitmap_endshot_1
+B $E106,7,7
+W $E10D,2,2 bitmap_endshot_2
+B $E10F,7,7
+W $E116,2,2 bitmap_endshot_3
+B $E118,7,7
+W $E11F,2,2 bitmap_endshot_4
+B $E121,7,7
+W $E128,2,2 bitmap_endshot_1
+B $E12A,6,6
+W $E130,2,2 bitmap_endshot_2
+B $E132,6,6
+W $E138,2,2 bitmap_endshot_3
+B $E13A,6,6
+W $E140,2,2 bitmap_endshot_4
+@ $E1E3 label=possible_data_block_e1e3
+B $E142,200,13,8*18,4*2,8*4,3
+c $E20A Command interpreter (confirmed live by trace-end-screen.log: reads script bytes via $A16D, dispatches on a DEC A/JP Z chain; self-modifies the CALL operand at $E030 (live addr $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran)
+@ $E20A label=run_script
+C $E20A,3 Load script pointer
+@ $E20D label=rs_loop
+C $E20D,1 Load a command? byte
+C $E20E,1 Advance script program counter
+C $E20F,4 If command == 0 goto routine_e2d9
+C $E213,4 If command == 1 goto routine_e2de
+C $E217,3 -> routine_e42e
+C $E21D,3 E2CD
+C $E220,3 -> routine_e472
+C $E227,3 -> routine_e3b7
+C $E230,3 -> routine_e46d
+C $E24F,2 e256
+C $E254,2 Loop
+@ $E256 label=e256
+@ $E2CD label=rs_exit
+C $E2CD,3 Update script pointer
+C $E2D4,4 Store func ptr in E031
+c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
+N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
+@ $E2D9 label=routine_e2d9
+@ $E2DE label=routine_e2de
+@ $E328 label=e328
+N $E381 This entry point is used by the routine at #R$E3A5.
+b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
+N $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte: ; -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly
+@ $E3A5 label=handshake_table
+B $E3A5,1,1
+W $E3A6,2,2 37, handshake_1
+B $E3A8,1,1
+W $E3A9,2,2 35, handshake_2
+B $E3AB,1,1
+W $E3AC,2,2 34, handshake_3
+B $E3AE,1,1
+W $E3AF,2,2 32, handshake_4
+B $E3B1,1,1
+W $E3B2,2,2 34, handshake_3
+B $E3B4,1,1
+W $E3B5,2,2 35, handshake_2
+c $E3B7 Routine at E3B7
+@ $E3B7 label=routine_e3b7
+c $E42E Glyph-plot routine (draws a character/digit into the backbuffer; called via the interpreter's self-modified $E030 dispatch)
+@ $E42E label=routine_e42e
+C $E42E,3 HL -> data_e06c [$E06C]
+C $E431,2 50-50 pattern, rotate in place
+C $E433,1 Return when bit set
+C $E434,3 Middle band of attributes
+C $E437,3 Backbuffer
+C $E43A,2 Testing BRIGHT bit?
+@ $E452 label=e452
+c $E46D Routine at E46D
+@ $E46D label=routine_e46d
+@ $E472 label=routine_e472
+@ $E499 label=es_e499_clear
+C $E499,3 Call clear_playfield
+C $E49C,12 Zero first 512 bytes of the backbuffer
+C $E4A8,1 Return
+c $E4A9 Draws an end-game montage shot to the backbuffer (attrs -> screen)
+D $E4A9 I:HL Address of image to plot
+@ $E4A9 label=draw_endshot
+C $E4A9,1 Preserve destination in backbuf
+C $E4AA,2 Counter = 64 rows
+C $E4AC,1 Preserve counter
+C $E4AD,3 13 bytes to transfer
+C $E4B0,1 Perverve destination
+C $E4B1,2 Copy
+C $E4B3,1 Restore destination
+C $E4B4,16 Scanline increment
+C $E4C4,1 Restore counter
+C $E4C5,2 Loop while counter
+C $E4C7,1 Restore destination
+C $E4C8,9 Form attribute address?
+C $E4D1,2 8 rows of attributes
+@ $E4D3 label=e4d3_loop
+C $E4D3,5 Copy 13 attribute bytes
+C $E4D8,5 DE += 19  (a gap value - 13+19 = 32)
+C $E4DD,1 A--
+C $E4DE,2 Loop
+C $E4E0,1 Return
+b $E4E1 [Graphics] Images
+D $E4E1 $60E1 once relocated.
+N $E4E1 End-game montage shot 1 (104x64)
+N $E4E1 #HTML[#CALL(endshot($E4E1))]
+@ $E4E1 label=bitmap_endshot_1
+B $E4E1,832,8 Bitmap data
+B $E821,104,8 Attribute bytes
+N $E889 End-game montage shot 2 (104x64)
+N $E889 #HTML[#CALL(endshot($E889))]
+@ $E889 label=bitmap_endshot_2
+B $E889,832,8 Bitmap data
+B $EBC9,104,8 Attribute bytes
+N $EC31 End-game montage shot 3 (104x64)
+N $EC31 #HTML[#CALL(endshot($EC31))]
+@ $EC31 label=bitmap_endshot_3
+B $EC31,832,8 Bitmap data
+B $EF71,112,8 Attribute bytes
+N $EFE1 End-game montage shot 4 (104x64)
+N $EFE1 #HTML[#CALL(endshot($EFE1))]
+@ $EFE1 label=bitmap_endshot_4
+B $EFE1,824,8 Bitmap data
+B $F319,104,8 Attribute bytes
+N $F381 End-game handshake frame 1 (64x37)
+N $F381 #HTML[#CALL(graphic($F381,64,37,0,0))]
+@ $F381 label=handshake_1
+B $F381,296,8 Bitmap data
+N $F4A9 End-game handshake frame 2 (64x35)
+N $F4A9 #HTML[#CALL(graphic($F4A9,64,35,0,0))]
+@ $F4A9 label=handshake_2
+B $F4A9,280,8 Bitmap data {
+N $F5C1 End-game handshake frame 3 (64x34)
+N $F5C1 #HTML[#CALL(graphic($F5C1,64,34,0,0))]
+@ $F5C1 label=handshake_3
+B $F5C1,272,8 Bitmap data
+N $F6D1 End-game handshake frame 4 (64x32)
+N $F6D1 #HTML[#CALL(graphic($F6D1,64,32,0,0))]
+@ $F6D1 label=handshake_4
+B $F6D1,256,8 Bitmap data
+c $F7D1 Interrupt setup
+D $F7D1 Almost the same as #R$EE40@main
+@ $F7D1 label=bank7_setup_interrupts
+C $F7D1,1 Disable interrupts
+C $F7D2,3 Load address of interrupt vector table
+C $F7D5,1 Interrupt vector table high byte
+N $F7D6 Point the 128 interrupt vector table words at $FD00 to $FEFE.
+C $F7D6,2 256 iterations
+C $F7D8,2 #REGc = $FE
+@ $F7DA label=b7si_fill
+C $F7DA,2 *HL++ = $FE
+C $F7DC,2 Loop
+N $F7DE Now store an additional byte since the IVT needs to be 257 bytes long.
+C $F7DE,1 Store final $FE
+C $F7DF,2 Set interrupt vector table base to $FD00
+C $F7E1,2 Set interrupt mode 2
+N $F7E3 Set $FEFE to be "JP $F3C1".
+C $F7E3,5 $FEFE = Opcode for JP
+C $F7E8,6 $FEFF = $F3C1
+C $F7EE,1 Return
+c $F7EF Reset music
+D $F7EF Almost the same as #R$EE5E@main
+@ $F7EF label=bank7_reset_music
+C $F7EF,1 A = 0
+C $F7F0,3 Self modify '...'  -- clear <drum is playing> flag
+C $F7F3,3 Self modify '...'  -- in ?
+C $F7F6,3 Self modify '...'  -- in ?
+C $F7F9,3 Load address of music patterns
+C $F7FC,3 Jump to (np_start_at_hl)
+c $F7FF Setup the next music pattern
+D $F7FF Almost the same as #R$EE6E@main
+N $F7FF Keep playing current pattern until this counter becomes zero.
+@ $F7FF label=bank7_next_pattern
+C $F7FF,2 Load number of pattern repetitions. Self modified by #R$F80F below.
+C $F801,1 Decrease
+C $F802,3 Self modify #R$F7FF above
+C $F805,1 Return if non-zero
+@ $F806 label=b7np_next
+C $F806,3 Load address of current pattern. Self modified by #R$F814 below.
+@ $F809 label=b7np_start_at_hl
+C $F809,2 Read new repetition count
+C $F80B,4 Jump to #R$F829 if it's $FF (end of patterns)
+C $F80F,3 Self modify #R$F7FF above with new repetition count
+C $F812,2 Read music data offset
+C $F814,3 Self modify #R$F806 above (pattern addr)
+N $F817 Calculate address of music data.
+C $F817,2 #REGbc = #REGc
+C $F819,3 Load address of base of music data
+C $F81C,1 Combine with offset
+C $F81D,2 A = *HL++ -- load first byte of music data
+C $F81F,3 Self modify R$???? (first byte of pattern)
+C $F822,3 Self modify R$???? (first byte of pattern)
+C $F825,3 Self modify R$???? (addr of second music data byte in pattern)
+C $F828,1 Return
+@ $F829 label=b7np_restart
+C $F829,4 HL = wordat(HL); HL++
+C $F82D,2 Jump to b7np_start_at_hl
+c $F82F Play menu music (48K mode only)
+D $F82F Almost the same as #R$EE9E@main.
+@ $F82F label=b7_play_music_48k
+C $F82F,4 Clear <interrupt flag> at R$????
+C $F833,3 counter?
+C $F836,1 Set flags
+C $F837,2 Jump to ???? is non-zero
+C $F839,2 Counter, self-modified by #R$F83F below
+C $F83B,1 Set flags
+C $F83E,4 Otherwise increment and self modify R$????
+C $F842,2 Jump to R$????
+@ $F844 label=b7pm_delay_1
+C $F844,2 Self modified by R$????, cycles 5,4?,3,2,1  (set to first music data byte)
+C $F846,1 Decrement and set flags
+C $F847,3 Jump to b7pm_delay_complete if zero
+C $F84A,3 Self modify 'LD A' @ R$???? above  (store decremented)
+C $F84D,3 Jump to b7pm_zero_or_456
+@ $F850 label=b7pm_delay_complete
+C $F850,2 Self modified by R$????  (set to first music data byte - value for when resetting)
+C $F852,3 Self modify 'LD A' @ R$???? above  (reset it)
+C $F855,3 Self modified below, cycles $F12x .. $F2xx ish  <addr of next music byte>
+N $F858 Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is argument, iii is instrument index)
+@ $F858 label=b7pm_loop
+C $F858,1 Fetch a music byte
+C $F859,1 Temporarily decrement for testing (will undo later)
+C $F85A,3 Jump to pm_continue_pattern if the byte is NOT 1 - the terminating byte of the music data
+C $F85D,3 Call bank7_next_pattern ($F310 when reloc, $F7FF here)
+@ $F860 label=b7pm_reset_pattern
+C $F860,3 Self modified by R$????  (set to address of second music data byte)
+C $F863,3 *$???? = HL  (Resetting <addr of next music byte> above when we loop)
+C $F866,3 Loop
+@ $F869 label=b7pm_continue_pattern
+C $F869,1 Advance
+C $F86A,3 Update <addr of next music byte> above
+C $F86D,1 Compensate for earlier decrement
+C $F86E,4 Jump if music byte < 128
+N $F872 A byte of the form 0b1aaaaiii (1 is delay bit)
+C $F872,2 Isolate delay bit
+C $F874,1 Bank
+C $F875,5 Self modify 'LD A' @ R$????  (setting <delay data byte thing> to 1)
+C $F87A,3 Self modify 'LD A' @ R$???? below
+C $F87D,1 Unbank
+N $F87E A byte now of the form 0b0aaaaiii
+@ $F87E label=b7pm_play_inst
+C $F87E,1 Save a copy of the byte
+C $F87F,2 Extract bottom 3 instrument bits  -- must be the command
+C $F881,2 Jump to pm_zero_or_456 if they're zero
+C $F883,1 Save the instrument
+C $F884,7 Extract the four argument bits
+C $F88B,4 Jump to R$???? if instrument is 1  -- drum 2
+C $F88F,4 Jump to R$???? if instrument is 2  -- drum 1
+C $F893,4 Jump to R$???? if instrument is 3  -- noise
+@ $F897 label=b7pm_zero_or_456
+C $F897,2 Self modified by R$???? above, R$???? below  (set to <delay data byte thing>)
+C $F899,1 Set flags
+C $F89A,2 Jump to pm_start_drums if zero (no delay)
+C $F89C,4 Self modify 'LD A' @ R$????  (decrementing initial delay counter)
+C $F8A0,4 Self modify 'LD A' @ R$???? above
+@ $F8A4 label=b7pm_start_drums
+C $F8A4,2 Load <drum is playing flag>  -- Self modified by R$????
+C $F8A6,1 Decrement
+C $F8A7,3 Jump to b7pd_bank_go if zero  -- resuming?
+@ $F8AA label=b7pm_wait_for_interrupt
+C $F8AA,5 Loop while waiting for this <interrupt flag> to be set
+C $F8AF,1 Return
+c $F8B0 Interrupt entry point
+D $F8B0 R$???? builds a table at $FD00 containing 257 occurrences of $FE. Address $FEFE contains a JP $???? to here.
+@ $F8B0 label=b7_interrupt_entry
+C $F8B0,1 Preserve registers
+C $F8B1,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ R$????
+C $F8B6,1 Restore registers
+C $F8B7,1 Enable interrupts
+C $F8B8,1 Return
+c $F8B9 Drum sample players
+D $F8B9 Used by the routine at R$????.
+R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+@ $F8B9 label=b7_playdrum_X
+C $F8B9,3 Load address of drum X data
+C $F8BC,2 94 sample bytes
+C $F8BE,2 Jump to b7pd_start
+@ $F8C0 label=b7_playdrum_Y
+C $F8C0,3 Load address of drum Y data
+C $F8C3,2 160 sample bytes
+@ $F8C5 label=b7pd_start
+C $F8C5,3 Self modify 'LD B' @ R$???? <speed value> to be #REGa as passed in
+C $F8C8,5 Self modify 'LD A' @ R$???? <drum is playing flag> to be 1
+C $F8CD,2 Jump to b7pd_go
+@ $F8CF label=b7pd_bank_go
+C $F8CF,1 Bank
+@ $F8D0 label=b7pd_go
+C $F8D0,2 <speed value> iterations -- Self modified by R$????
+@ $F8D2 label=b7pd_loop
+C $F8D2,2 Set speaker flag
+C $F8D4,1 Delay
+C $F8D5,2 Test a sample bit
+C $F8D7,4 Set speaker flag to match sample bit
+@ $F8DB label=b7pd_output_bit
+C $F8DB,2 Output it
+C $F8DD,2 Rotate sample byte in-place
+C $F8DF,2 Loop to pd_loop while #REGb
+C $F8E1,1 Move to next sample byte
+C $F8E2,1 Decrement sample bytes remaining
+C $F8E3,2 Jump to pd_end_of_sample if no bytes remain
+C $F8E5,3 Read A from 'LD A' @ R$????  -- <interrupt flag>
+C $F8E8,1 Set flags
+C $F8E9,3 Loop to pd_go if clear
+C $F8EC,1 Otherwise unbank
+C $F8ED,1 Return
+@ $F8EE label=b7pd_end_of_sample
+C $F8EE,4 Self modify 'LD A' @ R$???? <drum is playing flag> to be 0 -- zeroed when playing stops
+C $F8F2,3 Jump to pm_wait_for_interrupt
+b $F8F5 Data block at F8F5
+@ $F8F5 label=b7_drum2
+B $F8F5,94,8*11,6 Drum ? sample/data
+B $F953,162,2,8 }?
+B $F9F5,248,8
+B $FAED,3,3 }
+b $FAF0 Bank 7 tail (unidentified)
+B $FAF0,1296,8

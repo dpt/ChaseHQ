@@ -5730,7 +5730,7 @@ B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each over
 B $A13D,1,1 Number of credits remaining (2 for a new game)
 N $A13E Data copied to $A16D+.
 @ $A13E label=saved_game_state
-B $A13E,1,1 Copied to var_a16d
+B $A13E,1,1 Copied to spawn_accumulator
 B $A13F,1,1 Copied to idle_timer
 B $A140,1,1 Copied to user_input_mask
 B $A141,1,1 Copied to turbos
@@ -5762,7 +5762,7 @@ B $A16A,1,1 Copied to hazards[0].17 (distance high byte)
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
 N $A16D Usually 1. Oscillates 0/1 when the road forks. Adjusts horizontal position of the untaken road.
-@ $A16D label=var_a16d
+@ $A16D label=spawn_accumulator
 B $A16D,1,1 Used by #R$BC36
 @ $A16E label=idle_timer
 B $A16E,1,1 Idle timer. Counts down from 100. Recommences whenever the hero car is stopped. When it hits zero Raymond will say "LET'S GET MOVIN' MAN!" and it will be reset to 100.
@@ -9066,7 +9066,7 @@ C $BAAF,1 Restore HL (holds fork_distance)
 C $BAB0,3 Load allow_spawning (0/1/2)
 C $BAB3,3 Jump to lr_no_car_spawning if zero
 N $BAB6 allow_spawning is non-zero.
-C $BAB6,5 A = allow_spawning + var_a16d
+C $BAB6,5 A = allow_spawning + spawn_accumulator
 C $BABB,1 C = A  -- copy so we can destroy A
 C $BABC,2 A -= 2
 C $BABE,2 Jump if A < 2
@@ -9075,9 +9075,9 @@ C $BAC0,1 C = A
 N $BAC1 Adjusting this delta will cause the forked road effect to proceed faster (higher values) or slower (lower values).
 C $BAC1,7 Increase fork_distance by 16
 @ $BAC8 label=lr_set_var_a16d_from_c
-C $BAC8,4 var_a16d = C
+C $BAC8,4 spawn_accumulator = C
 @ $BACC label=lr_no_car_spawning
-C $BACC,3 A = var_a16d
+C $BACC,3 A = spawn_accumulator
 C $BACF,1 this must extract the bottom bit to carry
 C $BAD0,3 A = fast_counter
 C $BAD3,1 A = (A << 1) | carry
@@ -9241,7 +9241,7 @@ C $BC29,3 fork_in_progress    = 0
 C $BC2C,3 fork_taken          = 0
 C $BC2F,3 fork_visible        = 0
 C $BC32,4 no_objects_counter = 1
-C $BC36,3 var_a16d            = 1
+C $BC36,3 spawn_accumulator   = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
