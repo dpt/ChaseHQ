@@ -18,6 +18,8 @@ set(INCLUDE_DIRS include libraries)
 
 set(SOURCE_FILES
         SDLMain.c
+        CRTShader.c
+        CRTShader.h
         include/ZXSpectrum/Kempston.h
         include/ZXSpectrum/Keyboard.h
         include/ZXSpectrum/Macros.h
