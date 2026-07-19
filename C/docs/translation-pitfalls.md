@@ -232,6 +232,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 - `build_curve_table`'s sign extension used `|= 0xFF00` on a rounded multiply result that could be a positive `int` ≥ 128, producing a 65536-unit drift in the road-position accumulator.
 - `build_curve_table_fill` (`bct_endbit_A`) masked `Atotal &= 0xFF` inside the inner loop but not after `Atotal -= Ldash` at the outer boundary, corrupting x-position table values when that subtraction went negative.
 - `layout_road`'s forked-road path started `Aiterations = 0x30` with `+= 2` then `-- Aiterations > 0` (net +1 per iteration); it ran 207 iterations instead of 104, visiting each index twice and letting the second write silently overwrite the first.
+- `draw_helicoper_part`'s `Abot` (models A after `ADD A,B`) was declared `int`; near a screen edge it reached up to 509 instead of wrapping mod 256, sending `draw_object_left_width_entrypt`'s `Awidth_bytes` branch down the wrong path and flipping the sprite to the opposite edge. Fix: declare `u8`. (`6ba1edc`)
 
 **Fix:** Cast the result of any 8-bit-wrapping op back to `u8` immediately (`(u8)(-A)`, `(u8)(a+b)`, `(u8)(a-b)`); for sign extension, cast the low byte through `(s8)`/`(s16)` rather than OR-ing in `0xFFnn`; mask/cast accumulators back into range after every operation that could push them outside `[0,255]`, including at loop boundaries. For an `INC A;…;JP NZ` loop, drop the `--` from the condition entirely — `u8` wrap to 0 terminates it naturally: `do { … A += n; } while (A != 0);`.
 
@@ -248,6 +249,8 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 **Fix:** Expand to seven entries: index 0 = `&stage1` (pregame), 1–5 = `&stage1`–`&stage5`, 6 = `&stage5` (end-sequence backstop). Whenever `load_stage` indexes `stages[wanted]`, confirm the maximum reachable `wanted` (including end-of-game transitions) stays within bounds.
 
 **Related bug — table addressed via `base − 2` for 1-indexed access:** `car_jump_params` (`$B059`): the Z80 forms `HL = $B057 + 2A` — the table base minus 2, so that 1-indexed `A` lands on pair `A−1`. The C used `(Adiff * 2) − 1` (always odd, misaligned into the second half of each pair) instead of `(Adiff − 1) * 2`. Additionally `Adiff` can reach 6 (height byte −8 at top speed), where even the Z80 reads the two *code* bytes following the table at `$B063` — the C clamps to 5 (longest jump) with a `Conv:` note. When the skool loads a table pointer at `table ± k`, derive the C index from the computed landing offset, not from the loop variable's face value.
+
+**Same pattern, single-entry stride:** `hazard_handler`'s slide-target lookup (`$A902–$A907`) bases HL at `hazard_pos_speed − 1` before adding the 1-based `current_lane`. The C indexed `hazard_pos_speed[current_lane]` directly — one column right of the intended lane — so a car clamped out of a 3-lane tunnel's rightmost slot still slid toward the 4-lane road's rightmost x-position. Fix: `hazard_pos_speed[current_lane - 1]`. (`2bf6d5e`)
 
 ---
 
@@ -495,3 +498,15 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Rule:** Give the banked side its own variable (`Ldash`, per the CLAUDE.md EXX convention), assigned at the bank point every pass, and afterwards audit every `L--`/`L -= n` in the function for which bank it belongs to.
 
 **Commits:** `c5b6347`, `1c611dd`
+
+---
+
+## 33. `EX AF,AF'` banked in one function, read in another — the shadow value needs a persistent state field, not a local
+
+**Root cause:** Section 23 covers `EX AF,AF'` mistranslated *within* one function's local shadow variable. Here the bank and the unbank are in two different functions, separated in time by a frame's worth of other calls. A Z80 shadow register survives across the whole intervening call chain (nothing else touches AF'); the C port has no equivalent unless the banked byte is stored in `chqstate_t` at the bank site and read back at the unbank site.
+
+**Bug:** `move_hero_car` banks `BCcount_scaled` via `EX AF,AF'` at `$B296`; `scroll_horizon` unbanks it at `$B854` to pick one of four `horizon_table` rows for the curve x-scroll rate. The C treated the unbank site as if the value were unknowable (`Adash = 0`), reaching only two of the four table rows and producing a periodic stutter in curved-road scrolling. Fix: add `state->curvature_scroll_shadow`, written at the bank site and read at the unbank site — after confirming, from the skool, that no call on the path between the two (`spawn_cars`, `cycle_counters`, `play_engine_or_siren_sfx_hook`, `build_height_table`) executes `EX AF,AF'` itself.
+
+**Rule:** Before writing off a cross-function shadow read as "uninitialised, approximate with 0", grep every call on the path between bank and unbank for `EX AF,AF'` — if none appears, the value is not approximate, it is the exact byte banked upstream, and needs a dedicated `chqstate_t` field to carry it.
+
+**Commit:** `cf269e4`
