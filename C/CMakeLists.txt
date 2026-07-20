@@ -17,9 +17,9 @@ find_package(SDL3 REQUIRED)
 set(INCLUDE_DIRS include libraries)
 
 set(SOURCE_FILES
-        SDLMain.c
-        CRTShader.c
-        CRTShader.h
+        apps/sdl3/SDLMain.c
+        apps/sdl3/CRTShader.c
+        apps/sdl3/CRTShader.h
         include/ZXSpectrum/Kempston.h
         include/ZXSpectrum/Keyboard.h
         include/ZXSpectrum/Macros.h
