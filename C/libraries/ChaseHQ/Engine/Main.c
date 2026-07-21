@@ -98,6 +98,7 @@
 #include "Types.h"
 #include "State.h"
 #include "Bank3.h"
+#include "Bank7.h"
 
 #include "ChaseHQ/ChaseHQ.h"
 
@@ -505,7 +506,6 @@ typedef void draw_object_entrypt_t(chqstate_t       *state,
 
 /* ----------------------------------------------------------------------- */
 
-static void show_end_screen(chqstate_t *state);
 
 static void load_stage(chqstate_t *state);
 
@@ -1095,22 +1095,6 @@ static void reset_paging_128k(chqstate_t *state);
 static void attract_mode_128k(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
-
-/**
- * $5C00: Show the end screen
- *
- * Displays the end-of-game results screen.
- *
- * Conv: Not yet implemented; the Z80 version drives a full results/credits
- * sequence. This stub returns immediately.
- *
- * \param[in] state Pointer to game state.
- */
-static void show_end_screen(chqstate_t *state)
-{
-  // TODO: Write this.
-  NOT_USED(state);
-}
 
 /**
  * $8014: Switch the active stage data to the wanted stage
