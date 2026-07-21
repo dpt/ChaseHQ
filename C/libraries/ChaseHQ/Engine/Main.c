@@ -17224,7 +17224,6 @@ static void play_siren_sfx_128k(chqstate_t *state)
 
 set_regs:
   // Arrive here if new fine pitch is 90..139.
-  // CHECK Need to preserve high byte?
   state->ay_regs.chan_a_pitch = (state->ay_regs.chan_a_pitch & 0xFF00) | pitch;
   state->ay_regs.chan_b_pitch = (state->ay_regs.chan_b_pitch & 0xFF00) | (pitch - 4);
   state->ay_regs.mixer &= 0x3C; // enable tone A & B
