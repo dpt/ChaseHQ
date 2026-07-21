@@ -353,6 +353,27 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define ROADBUF_FWD2PTR(N) \
   (&state->roadbuf_start[ROADBUF_FWD2IDX(N)])
 
+/**
+ * Fill 'count' bytes of the (256-byte, ring-wrapped) road buffer starting
+ * 'offset' bytes ahead of roadbufptr. Splits at the wrap point into at most
+ * two memsets rather than one, since the run may cross the end of the array
+ * and continue from offset 0.
+ */
+static void roadbuf_fill(chqstate_t *state, int offset, u8 value, int count)
+{
+  int idx;    /* wrapped start index for this fill */
+  int first;  /* bytes available before the buffer wraps */
+
+  idx   = ROADBUF_FWD2IDX(offset);
+  first = 256 - idx;
+  if (first > count)
+    first = count;
+
+  memset(&state->roadbuf_start[idx], value, first);
+  if (first < count)
+    memset(&state->roadbuf_start[0], value, count - first);
+}
+
 /* ----------------------------------------------------------------------- */
 
 /* Perspective table stuff */
@@ -12354,7 +12375,6 @@ static void exit_fork(chqstate_t *state)
   int D_curve_type;   /* curvature byte to fill: +4 (right turn) or -4 (left) (was D) */
   int E_lanes_type;   /* lanes byte to fill: 0x03 (right fork) or 0x01 (left) (was E) */
   int C_obj_offset;   /* extra road-buffer offset for zeroing object bytes (was C) */
-  int Bfill;        /* fill-loop iteration counter; models DJNZ with B=32 (was B) */
 
   /* $BB69: return if fork_distance high byte is zero */
   if ((state->fork_distance & 0xFF00) == 0)
@@ -12409,15 +12429,13 @@ static void exit_fork(chqstate_t *state)
   state->scenedata.road_height_ptr    = forked_road_exit_height - 1;
   state->scenedata.road_hazard_ptr    = forked_road_exit_hazards - 1;
 
-  /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed) */
-  /* Conv: Z80 uses three DJNZ loops (B=32 each); C counts up 0..31 instead */
-  // TODO: use memset
-  for (Bfill = 0; Bfill < 32; Bfill++)
-    *ROADBUF_FWD2PTR(ROADBUF_CURVATURE_OFFSET + Bfill) = D_curve_type;
-  for (Bfill = 0; Bfill < 32; Bfill++)
-    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + Bfill) = E_lanes_type;
-  for (Bfill = 0; Bfill < 32; Bfill++)
-    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + C_obj_offset + Bfill) = 0;
+  /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed).
+   * Conv: Z80 uses three DJNZ loops (B=32 each); the buffer wraps modulo 256
+   * (ROADBUF_FWD2IDX), so each fill goes through roadbuf_fill's two-memset
+   * split rather than one straight memset. */
+  roadbuf_fill(state, ROADBUF_CURVATURE_OFFSET, D_curve_type, 32);
+  roadbuf_fill(state, ROADBUF_LANES_OFFSET, E_lanes_type, 32);
+  roadbuf_fill(state, ROADBUF_LANES_OFFSET + C_obj_offset, 0, 32);
 
   /* $BC15: reset per-frame road state */
   state->curvature_byte            = 0;
