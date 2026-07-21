@@ -46,7 +46,6 @@
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
 - Audit TODO/CHECK markers
-- `Main.c:15201` `endptr++` unused in inner loop, hoist candidate
 - `Main.c:6105` hoist to next-attr-row macro?
 - `State.h:317` `keydefs[8]` needs symbolic names
 - `Spectrum.h:164` FIXME struct should be private, expose `.screen` via accessor

@@ -15215,8 +15215,8 @@ static void pre_shift_backdrop(chqstate_t *state)
       assert(bmptr < &state->pre_shifted_backdrop[BACKDROP_LENGTH]);
       RRD(pix, bmptr);
       bmptr++;
-      endptr++; // TODO: Not used in inner loop - could hoist
     } while (--col > 0);
+    endptr += BACKDROP_WIDTH; // advance to the last byte of the next row
   } while (--row > 0);
 }
 
