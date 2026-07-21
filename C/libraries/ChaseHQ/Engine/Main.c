@@ -7434,7 +7434,8 @@ dc_single_height: // seems to store 9 rows
     dst--; // could drop
     dst += 256;
   }
-  *dst = 0; // leave gap at bottom
+  if (dst < &state->backbuffer[BACKBUFFER_LENGTH]) /* Conv: avoid scribble */
+    *dst = 0; // leave gap at bottom
 
 dc_set_single_attrs:
   dst = orig + 1; /* was POP dst, INC E */
