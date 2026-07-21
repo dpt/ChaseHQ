@@ -41,7 +41,6 @@
 
 // Configuration
 //
-#define FPS                 (15)
 #define GAMEWIDTH          (256)
 #define GAMEHEIGHT         (192)
 #define BORDER              (32)
@@ -685,8 +684,6 @@ static void chq_sdl_main_loop(void *opaque)
       SDL_RenderPresent(state->renderer);
     }
 #endif
-
-    SDL_Delay(1000 / FPS);
   }
 }
 
