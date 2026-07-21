@@ -10753,7 +10753,7 @@ ahc_load_flip_flag:
     if (Aturn_speed >= 2) {
       if (state->flip_car)
         Cflipping++; // 2 -> 3
-      Cflipping++; // 2/3 -> 3/4 // FIXME This isn't used...
+      Cflipping++; // 2/3 -> 3/4
     }
 
     // EXX - bank
