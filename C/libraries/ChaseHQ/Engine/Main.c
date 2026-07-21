@@ -737,10 +737,10 @@ static void play_start_noise(chqstate_t *state);
 
 static void speed_score(chqstate_t *state);
 
-static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi);
+static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md);
 static int bonus_digit(int Adigit, int *pCzeroflag, char **pHLoutput);
 
-static void increment_score(chqstate_t *state, int A_lo, int E_md, int D_hi);
+static void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
 
 static void calc_overtake_bonus(chqstate_t *state);
 
@@ -786,7 +786,7 @@ static void draw_char(chqstate_t *state,
                       u8        **new_attrs);
 
 static u8 keyscan(chqstate_t *state);
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, u8 Estopbit);
+static u8 keyscan_keydefs(chqstate_t *state, u8 Estopbit, const u8 *HLkeydefs);
 static int keyscan_inner(const chqstate_t *state, int Ainput);
 
 static void check_scenery_collisions(chqstate_t *state);
@@ -964,8 +964,9 @@ static void draw_road_lanes_change(chqstate_t *state,
                                    const u8  **IY_heightptr);
 
 static void draw_road(chqstate_t *state);
-static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
-                          int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow);
+static void dr_read_lanes(chqstate_t *state, int Bfill_pattern, int Ccounter,
+                          int DEbackbuf, int Lrow, u8 *IXlanesptr,
+                          const u8 *IYheightptr);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int Ccounter, int DEbackbuf, int Lrow,
                                  u8 **IXlanesptr, const u8 **IYheightptr);
@@ -1010,17 +1011,18 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
 static void pre_shift_backdrop(chqstate_t *state);
 
-static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight,
-                             int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow);
+static void draw_forked_road(chqstate_t *state, int Bfill_pattern, int Ccounter,
+                             int DEbackbuf, int Lrow, const u8 *IXlanes,
+                             const u8 *IYheight);
 
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow);
 static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
+                                   int         DEroadpos,
                                    s16        *HLtableend,
-                                   int         Bdash_alwayszero,
-                                   int         DEroadpos);
+                                   int         Bdash_alwayszero);
 
 static void build_height_table(chqstate_t *state);
 
@@ -2911,7 +2913,7 @@ phase4:
   state->score_messages[0x8C70 - SCORE_MESSAGES_BASE] = H;
 
   D = (D << 4) | (D >> 4); /* RLC D x4: swap nibbles */
-  increment_score(state, 0, 0, D);
+  increment_score(state, 0, D, 0);
 
   A = state->session.time_bcd;
   state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
@@ -2929,7 +2931,7 @@ have_high_digit:
   A += '0';
   Adash = A;
   do
-    increment_score(state, 0, 0x00, 0x05); // 50,000 lo,mid,hi
+    increment_score(state, 0, 0x05, 0x00); // 50,000 lo,hi,mid
   while (--Biterations > 0);
 
 store_time_bonus_high:
@@ -2947,7 +2949,7 @@ store_time_bonus_high:
   Biterations = A;
   Adash = A;
   do
-    increment_score(state, 0, 0x50, 0x00); // 5,000 lo,mid,hi
+    increment_score(state, 0, 0x00, 0x50); // 5,000 lo,hi,mid
   while (--Biterations > 0);
 
 store_time_bonus_low:
@@ -6556,10 +6558,10 @@ static void speed_score(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  * \param[in] A_lo Low two BCD digits of the bonus. (was A)
- * \param[in] E_md Middle two BCD digits of the bonus. (was E)
  * \param[in] D_hi High two BCD digits of the bonus. (was D)
+ * \param[in] E_md Middle two BCD digits of the bonus. (was E)
  */
-static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi)
+static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md)
 {
   char *HLoutput;  /* pointer walking bonus_string right-to-left (was HL) */
   int   Czeroflag; /* $FF until first non-zero digit is seen, then 0 (was C) */
@@ -6581,7 +6583,7 @@ static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi)
 
   state->SM_address_of_score_digits = (const u8 *)HLoutput;
   state->trigger_bonus_flag         = 1;
-  increment_score(state, A_lo, E_md, D_hi); /* Conv: Z80 falls through to $9D17 */
+  increment_score(state, A_lo, D_hi, E_md); /* Conv: Z80 falls through to $9D17 */
 }
 
 /**
@@ -6640,10 +6642,10 @@ bd_store:
  *
  * \param[in] state Pointer to game state.
  * \param[in] A_lo Low two BCD digits of the increment. (was A)
- * \param[in] E_md Middle two BCD digits of the increment. (was E)
  * \param[in] D_hi High two BCD digits of the increment. (was D)
+ * \param[in] E_md Middle two BCD digits of the increment. (was E)
  */
-static void increment_score(chqstate_t *state, int A_lo, int E_md, int D_hi)
+static void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md)
 {
   int  carry;        /* carry flag propagated between BCD additions (was carry flag) */
   u8  *HLscore_bcd; /* pointer walking state->score_bcd (was HL) */
@@ -6690,7 +6692,7 @@ static void calc_overtake_bonus(chqstate_t *state)
     Acounter = DAA_add(*HLbcd + 2, NULL); /* ADD A,$02; DAA */
     if (Acounter >= 0x80) Acounter = 0x80;
     *HLbcd = Acounter;
-    add_bonus(state, 0, Acounter, 0); /* bonus = Acounter * 100 */
+    add_bonus(state, 0, 0, Acounter); /* bonus = Acounter * 100 */
   } while (--Biterations > 0);
 
   state->overtake_bonus_counter = 0;
@@ -7485,12 +7487,12 @@ static u8 keyscan(chqstate_t *state)
   if (state->kempston_flag) {
     Akempston = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     // PUSH AF
-    Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x20); // 3 bits max
+    Akeys = keyscan_keydefs(state, 0x20, &state->keydefs[0]); // 3 bits max
     Akeys = (Akeys & 0x07) << 5; /* RRC A x3; AND 0xE0 */
     // POP DE
     Ekeys = Akeys | Akempston;
   } else {
-    Ekeys = Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x01); // 8 bits max
+    Ekeys = Akeys = keyscan_keydefs(state, 0x01, &state->keydefs[0]); // 8 bits max
   }
 
   Aleft_and_right = Akeys & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT);
@@ -7516,15 +7518,15 @@ static u8 keyscan(chqstate_t *state)
  * stop bit's initial position and bit 8.
  *
  * \param[in] state Pointer to game state.
- * \param[in] HLkeydefs Pointer to the keydef byte array. (was HL)
  * \param[in] Estopbit Sentinel: $01 for 8-key scan, $20 for 3-key scan;
  * scanning stops when this bit rotates out of the byte. (was E)
+ * \param[in] HLkeydefs Pointer to the keydef byte array. (was HL)
  * \return Packed key state in bits 7..0 (or 7..5 for the 3-key path).
  *
  * Conv: Z80 CCF inverts carry after CALL keyscan_inner (active-low result); C
  * uses logical NOT on the return value instead.
  */
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, u8 Estopbit)
+static u8 keyscan_keydefs(chqstate_t *state, u8 Estopbit, const u8 *HLkeydefs)
 {
   int carry; /* carry from RL(Estopbit): set when the stop bit rotates out (carry) */
 
@@ -8453,7 +8455,7 @@ pb_a7be:
     Abonus_rotate = (Abonus_rotate << 4) | (Abonus_rotate >> 4); /* RLC x4: swap nibbles */
     Ebonus_mid = Abonus_rotate;
   }
-  add_bonus(state, 0, Ebonus_mid, Dbonus_hi);
+  add_bonus(state, 0, Dbonus_hi, Ebonus_mid);
   state->pb_delay = 5; // set delay counter to 5 turns
   start_chatter(state, 5, &chatterblk_raymond_smash[0]);
   start_sfx(state, EFFECT_CAR_HIT, 1); /* priority 1 */ /* tail call */
@@ -12246,7 +12248,7 @@ lr_forked_road:
     // Incorrect fork taken
     state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
     // Q. Why is a bonus awarded for going the wrong way?
-    add_bonus(state, 0, 0, state->wanted_stage_number + 4);
+    add_bonus(state, 0, state->wanted_stage_number + 4, 0);
     HLchatterblk = &chatterblk_raymond_wrong_way[0];
   }
   start_chatter(state, 20, HLchatterblk);
@@ -14050,8 +14052,8 @@ static void draw_road(chqstate_t *state)
   DEbackbuf = 0x0100; /* a wrapped-around ROM address since we draw by PUSHing! */
   state->dr_fill_pattern = Bfill_pattern;
 
-  dr_read_lanes(state, IXlanesptr, IYheightptr, Bfill_pattern, Ccounter,
-                DEbackbuf, Lrow); // was FALLTHROUGH
+  dr_read_lanes(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, IXlanesptr,
+                IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -14066,18 +14068,18 @@ static void draw_road(chqstate_t *state)
  * dr_dispatch; set with bit 7 set = dirt track or forked road.
  *
  * \param[in,out] state Pointer to game state.
- * \param[in]     IXlanesptr Pointer into road_buffer at the current lane byte.
- *   (was IX)
- * \param[in]     IYheightptr Pointer into height_table at the current row.
- *   (was IY)
  * \param[in]     Bfill_pattern Road fill pattern for this scanline. (was B)
  * \param[in]     Ccounter Horizon scanline counter. (was C)
  * \param[in]     DEbackbuf Back-buffer row address. (was DE)
  * \param[in]     Lrow Row index within the x-position table page. (was L)
+ * \param[in]     IXlanesptr Pointer into road_buffer at the current lane byte.
+ *   (was IX)
+ * \param[in]     IYheightptr Pointer into height_table at the current row.
+ *   (was IY)
  */
-static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
-                          int Bfill_pattern, int Ccounter, int DEbackbuf,
-                          int Lrow)
+static void dr_read_lanes(chqstate_t *state, int Bfill_pattern, int Ccounter,
+                          int DEbackbuf, int Lrow, u8 *IXlanesptr,
+                          const u8 *IYheightptr)
 {
   int carry;                /* carry from SLA of lane byte; indicates left-side occupancy (carry) */
   int Aleft_offset;         /* left-offset field of the lane byte (was A) */
@@ -14162,8 +14164,8 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
 
       if (Ldash_lanes & (1 << 6)) {
         /* If bit 5 was set then it's a forked road. */
-        draw_forked_road(state, IXlanesptr, IYheightptr,
-                         Bfill_pattern, Ccounter, DEbackbuf, Lrow); /* tail call */
+        draw_forked_road(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow,
+                         IXlanesptr, IYheightptr); /* tail call */
       } else {
         /* If bit 5 was clear then it's a dirt track section. */
         /* Note: This is a mystery. There's a check here which sets conditionally
@@ -14954,13 +14956,13 @@ dr_small_negative_delta:
   if (Anew_diff <= 0)
     goto dr_decreasing;
   Ccounter = Anew_diff;
-  dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr, Bfill_pattern, Ccounter, DEbackbuf, Lrow); /* tail call */
+  dr_read_lanes(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, *IXlanesptr, (u8 *)*IYheightptr); /* tail call */
   return;
 
 dr_increasing:
   Ccounter = Aheight_diff;
   if ((u8)Aheight_diff < 0x50) {
-    dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr, Bfill_pattern, Ccounter, DEbackbuf, Lrow); /* tail call */
+    dr_read_lanes(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, *IXlanesptr, (u8 *)*IYheightptr); /* tail call */
     return;
   }
 
@@ -15227,16 +15229,17 @@ static void pre_shift_backdrop(chqstate_t *state)
  * road-marking update ($CA68–$CB2E) is implemented.
  *
  * \param[in]     state Pointer to game state.
- * \param[in]     IXlanes Road-buffer lanes pointer (was IX).
- * \param[in,out] IYheight Height table pointer; advanced once per block
- *   (was IY).
  * \param[in]     Bfill_pattern Banked initial B: fill pattern byte (was B).
  * \param[in]     Ccounter Banked initial C: horizon scanline counter (was C).
  * \param[in]     DEbackbuf Banked initial DE: back-buffer address (was DE).
  * \param[in]     Lrow Banked initial L: row index (was L).
+ * \param[in]     IXlanes Road-buffer lanes pointer (was IX).
+ * \param[in,out] IYheight Height table pointer; advanced once per block
+ *   (was IY).
  */
-static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight,
-                             int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow)
+static void draw_forked_road(chqstate_t *state, int Bfill_pattern, int Ccounter,
+                             int DEbackbuf, int Lrow, const u8 *IXlanes,
+                             const u8 *IYheight)
 {
   u8  sm_CB65;    /* road edge thickness countdown (was $CB65) */
   u8  sm_CB36;    /* stripe-pair toggle state (was $CB36) */
@@ -15875,9 +15878,9 @@ static void build_curve_table(chqstate_t *state, int forked)
   B_iterations = 0; // init counter
   // EXX Bank
   build_curve_table_fill(state,
+                         DE_roadpos,
                          H_righttab_end, // table1 is $EE00 or $ED00 (right hand table)
-                         B_iterations,
-                         DE_roadpos);
+                         B_iterations);
 
   // repeat of above code - generate left hand table
 
@@ -15891,16 +15894,16 @@ static void build_curve_table(chqstate_t *state, int forked)
   Bdash_iterations = 0; // init counter
   // EXX Unbank
   build_curve_table_fill(state,
+                         DEdash_roadpos,
                          L_lefttab_end, // table2 is $EC00 or $E900 (left hand table)
-                         Bdash_iterations,
-                         DEdash_roadpos);
+                         Bdash_iterations);
 }
 
 // HL -> points past end of destination table we're filling
 static void build_curve_table_fill(chqstate_t *state,
+                                   int         DEroadpos,
                                    s16        *HLtableend,
-                                   int         Bdash_alwayszero,
-                                   int         DEroadpos)
+                                   int         Bdash_alwayszero)
 {
   u8  *IYheight_table;
   int  Biterations;
