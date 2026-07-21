@@ -6107,7 +6107,6 @@ static void plot_face_attributes(chqstate_t *state,
   };
   u8  A_attrhi;  /* screen high byte, rotated to extract band, then biased to $58 (was A) */
   int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
-  int A_rowadv;  /* low-byte row-stride computation: (screen & 0xFF) + 0x1C (was A) */
 
   A_attrhi = screen >> 8;
   A_attrhi = (A_attrhi >> 3) & 3; /* RRC A x3; AND 3 */
@@ -6123,11 +6122,11 @@ static void plot_face_attributes(chqstate_t *state,
     if (counter == 0)
       break;
 
-    // TODO Hoist to next-attr-row macro?
-    A_rowadv = (screen & 0xFF) + 0x1C;
-    screen = (screen & 0xFF00) | (A_rowadv & 0xFF);
-    if (A_rowadv >= 0x100)
-      screen += 256;
+    /* Conv: Z80 moves down a row via byte-split ADD A,$1C + carry-into-D,
+     * because it walks real $58xx-$5Axx addresses. screen is already a flat
+     * offset into attributes[] here, so the equivalent move is a plain +32
+     * (this +0x1C plus the +4 already applied above). */
+    screen += 0x1C;
   }
   state->speccy->draw(state->speccy, &face_box); /* Conv: added */
 }
