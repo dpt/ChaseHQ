@@ -36,6 +36,26 @@ typedef struct
 }
 chq_CRT_shader_t;
 
+// Tunable shader knobs, pushed to the fragment shader as a uniform each
+// frame. Layout must match the MSL Params struct in CRTShader.c exactly
+// (plain floats, same order, no padding).
+typedef struct
+{
+  float curvature;          // barrel distortion strength
+  float bloom_threshold;    // luminance level above which bloom kicks in
+  float bloom_intensity;    // bloom contribution scale
+  float brightness;         // post-contrast multiplicative brightness
+  float contrast;           // contrast around mid-grey
+  float saturation;         // 1.0 = full colour, 0.0 = greyscale
+  float scanline_intensity; // base scanline darkening amount
+  float vignette_strength;  // corner darkening strength
+}
+chq_CRT_params_t;
+
+// Defaults re-tuned by eye against this game's screen; see CRTShader.c.
+#define CHQ_CRT_PARAMS_DEFAULT \
+  { 0.025f, 0.5f, 0.025f, 1.1f, 1.1f, 1.0f, 0.75f, 0.3f }
+
 /**
  * Creates the GPU device, texture, sampler and shader pipeline. Must be
  * called once, after the SDL window is created.
@@ -64,16 +84,18 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
  * \param[in] h Destination viewport height, in pixels.
  * \param[in] game_width Width in pixels of the game's screen buffer.
  * \param[in] game_height Height in pixels of the game's screen buffer.
+ * \param[in] params Shader tuning parameters for this frame.
  */
-void chq_CRT_shader_render(chq_CRT_shader_t *shader,
-                           SDL_Window        *window,
-                           zxspectrum_t      *zx,
-                           int                x,
-                           int                y,
-                           int                w,
-                           int                h,
-                           int                game_width,
-                           int                game_height);
+void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
+                           SDL_Window             *window,
+                           zxspectrum_t           *zx,
+                           int                     x,
+                           int                     y,
+                           int                     w,
+                           int                     h,
+                           int                     game_width,
+                           int                     game_height,
+                           const chq_CRT_params_t *params);
 
 /**
  * Releases everything created by chq_CRT_shader_create.

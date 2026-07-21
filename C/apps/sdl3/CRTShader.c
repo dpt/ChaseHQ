@@ -51,16 +51,29 @@ static const char *const chq_crt_vertex_msl =
 // flicker are dropped - rgbShift defaults to 0.0 (a no-op in the source
 // shader too), and flicker needs no game logic to justify the per-frame
 // uniform push it would otherwise require.
+// Must match chq_CRT_params_t in CRTShader.h field-for-field: plain floats,
+// same order, no padding.
 static const char *const chq_crt_fragment_msl =
   "#include <metal_stdlib>\n"
   "using namespace metal;\n"
   "struct VSOut { float4 position [[position]]; float2 uv; };\n"
+  "struct Params {\n"
+  "  float curvature;\n"
+  "  float bloomThreshold;\n"
+  "  float bloomIntensity;\n"
+  "  float brightness;\n"
+  "  float contrast;\n"
+  "  float saturation;\n"
+  "  float scanlineIntensity;\n"
+  "  float vignetteStrength;\n"
+  "};\n"
   "fragment float4 fs_main(VSOut in [[stage_in]],\n"
   "                         texture2d<float> tex [[texture(0)]],\n"
-  "                         sampler samp [[sampler(0)]]) {\n"
+  "                         sampler samp [[sampler(0)]],\n"
+  "                         constant Params& p [[buffer(0)]]) {\n"
   // curveRemapUV: barrel distortion via dot(coord,coord) radial distance.
   "  float2 coord = in.uv * 2.0 - 1.0;\n"
-  "  coord *= 1.0 + dot(coord, coord) * 0.025;\n"
+  "  coord *= 1.0 + dot(coord, coord) * p.curvature;\n"
   "  float2 uv = coord * 0.5 + 0.5;\n"
   // Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
   // which otherwise aliases into a jagged edge along the curvature.
@@ -77,24 +90,24 @@ static const char *const chq_crt_fragment_msl =
   "  float3 bs = tex.sample(samp, clamp(uvc - float2(0.0, texel.y), 0.0, 1.0)).rgb;\n"
   "  float3 be = tex.sample(samp, clamp(uvc + float2(texel.x, 0.0), 0.0, 1.0)).rgb;\n"
   "  float3 bw = tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, 1.0)).rgb;\n"
-  "  if (max(bc.r, max(bc.g, bc.b)) > 0.5) bloom += bc;\n"
-  "  if (max(bn.r, max(bn.g, bn.b)) > 0.5) bloom += bn;\n"
-  "  if (max(bs.r, max(bs.g, bs.b)) > 0.5) bloom += bs;\n"
-  "  if (max(be.r, max(be.g, be.b)) > 0.5) bloom += be;\n"
-  "  if (max(bw.r, max(bw.g, bw.b)) > 0.5) bloom += bw;\n"
-  "  c.rgb += bloom * 0.025;\n"
+  "  if (max(bc.r, max(bc.g, bc.b)) > p.bloomThreshold) bloom += bc;\n"
+  "  if (max(bn.r, max(bn.g, bn.b)) > p.bloomThreshold) bloom += bn;\n"
+  "  if (max(bs.r, max(bs.g, bs.b)) > p.bloomThreshold) bloom += bs;\n"
+  "  if (max(be.r, max(be.g, be.b)) > p.bloomThreshold) bloom += be;\n"
+  "  if (max(bw.r, max(bw.g, bw.b)) > p.bloomThreshold) bloom += bw;\n"
+  "  c.rgb += bloom * p.bloomIntensity;\n"
   // brightness / contrast / saturation.
-  "  c.rgb = (c.rgb - 0.5) * 1.1 + 0.5;\n"
-  "  c.rgb *= 1.1;\n"
+  "  c.rgb = (c.rgb - 0.5) * p.contrast + 0.5;\n"
+  "  c.rgb *= p.brightness;\n"
   "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
-  "  c.rgb = mix(float3(lum), c.rgb, 1.0);\n"
+  "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
   // scanlines, intensity adapted to local luminance.
   "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
-  "  float adaptive = mix(0.75, 0.75 * (1.0 - lum), 0.5);\n"
+  "  float adaptive = mix(p.scanlineIntensity, p.scanlineIntensity * (1.0 - lum), 0.5);\n"
   "  c.rgb *= 1.0 - adaptive * scan;\n"
   // vignetteApprox: Chebyshev (max-component) distance falloff.
   "  float2 d = abs(uv - 0.5) * 2.0;\n"
-  "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * 0.3;\n"
+  "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * p.vignetteStrength;\n"
   "  c.rgb *= vignette;\n"
   "  return c;\n"
   "}\n";
@@ -191,8 +204,9 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   shader_info.code_size    = strlen(chq_crt_fragment_msl);
   shader_info.entrypoint   = "fs_main";
   shader_info.format       = SDL_GPU_SHADERFORMAT_MSL;
-  shader_info.stage        = SDL_GPU_SHADERSTAGE_FRAGMENT;
-  shader_info.num_samplers = 1;
+  shader_info.stage               = SDL_GPU_SHADERSTAGE_FRAGMENT;
+  shader_info.num_samplers        = 1;
+  shader_info.num_uniform_buffers = 1;
 
   fragment_shader = SDL_CreateGPUShader(shader->gpu, &shader_info);
   if (fragment_shader == NULL)
@@ -228,15 +242,16 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   return 1;
 }
 
-void chq_CRT_shader_render(chq_CRT_shader_t *shader,
-                           SDL_Window        *window,
-                           zxspectrum_t      *zx,
-                           int                x,
-                           int                y,
-                           int                w,
-                           int                h,
-                           int                game_width,
-                           int                game_height)
+void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
+                           SDL_Window             *window,
+                           zxspectrum_t           *zx,
+                           int                     x,
+                           int                     y,
+                           int                     w,
+                           int                     h,
+                           int                     game_width,
+                           int                     game_height,
+                           const chq_CRT_params_t *params)
 {
   SDL_GPUViewport             viewport;
   uint32_t                    *pixels;
@@ -302,6 +317,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t *shader,
     tex_binding.texture = shader->texture;
     tex_binding.sampler = shader->sampler;
     SDL_BindGPUFragmentSamplers(render_pass, 0, &tex_binding, 1);
+    SDL_PushGPUFragmentUniformData(upload_cmdbuf, 0, params, sizeof(*params));
 
     SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
 

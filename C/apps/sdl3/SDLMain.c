@@ -16,6 +16,7 @@
  */
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -175,6 +176,8 @@ typedef struct
   SDL_Window              *window;
 #if CHQ_CRT_SHADER
   chq_CRT_shader_t         crt;
+  chq_CRT_params_t         crt_params;
+  int                      crt_param_index; // which crt_params field +/- adjusts
 #else
   SDL_Renderer            *renderer;
   SDL_Texture             *texture;
@@ -522,6 +525,44 @@ static int chq_game_thread(void *opaque)
   return 0;
 }
 
+#if CHQ_CRT_SHADER
+
+// CRT shader tuning knobs, cycled with TAB and adjusted with PAGEUP/PAGEDOWN
+// (see chq_sdl_key_pressed). offset indexes into chq_CRT_params_t so one
+// table drives all the controls instead of one keybinding per field.
+typedef struct
+{
+  const char *name;
+  size_t      offset;
+  float       step;
+  float       min;
+  float       max;
+}
+chq_crt_param_desc_t;
+
+static const chq_crt_param_desc_t chq_crt_param_descs[] =
+{
+  { "curvature",          offsetof(chq_CRT_params_t, curvature),          0.005f, 0.0f, 0.2f },
+  { "bloom threshold",    offsetof(chq_CRT_params_t, bloom_threshold),    0.05f,  0.0f, 1.0f },
+  { "bloom intensity",    offsetof(chq_CRT_params_t, bloom_intensity),    0.005f, 0.0f, 0.2f },
+  { "brightness",         offsetof(chq_CRT_params_t, brightness),        0.05f,  0.5f, 2.0f },
+  { "contrast",           offsetof(chq_CRT_params_t, contrast),          0.05f,  0.5f, 2.0f },
+  { "saturation",         offsetof(chq_CRT_params_t, saturation),        0.05f,  0.0f, 2.0f },
+  { "scanline intensity", offsetof(chq_CRT_params_t, scanline_intensity), 0.05f,  0.0f, 1.0f },
+  { "vignette strength",  offsetof(chq_CRT_params_t, vignette_strength),  0.05f,  0.0f, 1.0f },
+};
+
+#define CHQ_CRT_PARAM_COUNT \
+  (int) (sizeof(chq_crt_param_descs) / sizeof(chq_crt_param_descs[0]))
+
+static float *chq_crt_param_field(chq_CRT_params_t          *params,
+                                  const chq_crt_param_desc_t *desc)
+{
+  return (float *) ((char *) params + desc->offset);
+}
+
+#endif // CHQ_CRT_SHADER
+
 /* ----------------------------------------------------------------------- */
 
 static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
@@ -581,6 +622,50 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     }
     return;
   }
+
+#if CHQ_CRT_SHADER
+  if (sym == SDLK_TAB)
+  {
+    if (k->down && !k->repeat)
+    {
+      const chq_crt_param_desc_t *desc;
+
+      state->crt_param_index = (state->crt_param_index + 1) % CHQ_CRT_PARAM_COUNT;
+      desc = &chq_crt_param_descs[state->crt_param_index];
+      printf("CRT param: %s = %g\n", desc->name,
+            *chq_crt_param_field(&state->crt_params, desc));
+    }
+    return;
+  }
+
+  if (sym == SDLK_PAGEUP || sym == SDLK_PAGEDOWN)
+  {
+    if (k->down)
+    {
+      const chq_crt_param_desc_t *desc;
+      float                      *field;
+
+      desc  = &chq_crt_param_descs[state->crt_param_index];
+      field = chq_crt_param_field(&state->crt_params, desc);
+      *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
+                     desc->min, desc->max);
+      printf("CRT param: %s = %g\n", desc->name, *field);
+    }
+    return;
+  }
+
+  if (sym == SDLK_R)
+  {
+    if (k->down && !k->repeat)
+    {
+      chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
+
+      state->crt_params = defaults;
+      printf("CRT params reset to defaults\n");
+    }
+    return;
+  }
+#endif
 
   switch (sym)
   {
@@ -674,7 +759,8 @@ static void chq_sdl_main_loop(void *opaque)
 
 #if CHQ_CRT_SHADER
     chq_CRT_shader_render(&state->crt, state->window, state->zx,
-                         x, y, w, h, GAMEWIDTH, GAMEHEIGHT);
+                         x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
+                         &state->crt_params);
 #else
     /* Update the texture from the game's converted screen buffer. */
     {
@@ -731,6 +817,14 @@ int main(void)
   state.quit      = 0;
   state.scale     = SCALE_DEFAULT;
   state.speed     = SPEED_DEFAULT;
+#if CHQ_CRT_SHADER
+  {
+    chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
+
+    state.crt_params = defaults;
+  }
+  state.crt_param_index = 0;
+#endif
   // state.menu      = 1;
 
 #ifdef __APPLE__
