@@ -14346,7 +14346,7 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
   if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
     DEbackbuf = 0xFFE0;
   state->dr_backbuf_1 = (u16)DEbackbuf;
-  Bneg_lane_count = -1; // CHECK
+  Bneg_lane_count = -1;
 
   // EXX - BANK
 

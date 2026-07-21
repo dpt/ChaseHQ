@@ -46,7 +46,6 @@
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
 - Audit TODO/CHECK markers
-- `Main.c:14349` `Bneg_lane_count = -1; // CHECK` verify against skool
 - `Main.c:10756` `Cflipping++` FIXME — appears unused, check
 - `Main.c:12414` could use `memset`
 - `Main.c:15201` `endptr++` unused in inner loop, hoist candidate
