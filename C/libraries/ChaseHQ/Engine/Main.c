@@ -73,11 +73,6 @@
  * game.
  */
 
-/* TODOs
- * - Decide how to drive the main loop(s).
- * - Promote variables to int from u8/s8/u16/s16 where possible.
- */
-
 #include <stdio.h>
 #include <assert.h>
 #include <stddef.h>
@@ -242,7 +237,7 @@ static int z80screentooffset(chqstate_t *state, const u8 *ptr, int left, int rig
   return off;
 }
 
-#define SCREENTOOFFSET_LR(ptr, left, right) z80screentooffset(state, ptr, left, right)
+#define SCREENTOOFFSET(ptr) z80screentooffset(state, ptr, 0, 0)
 
 /** Return byte offset of an attributes[] pointer. */
 #define ATTRSTOOFFSET_M(ptr) \
@@ -262,7 +257,6 @@ static int z80backbuftooffset(chqstate_t *state, const u8 *ptr, int left, int ri
 }
 
 #define BACKBUFTOOFFSET(ptr)                 z80backbuftooffset(state, ptr, 0, 0)
-#define BACKBUFTOOFFSET_LR(ptr, left, right) z80backbuftooffset(state, ptr, left, right)
 
 /* Pointer-to-address converters */
 
@@ -2022,7 +2016,7 @@ dp_repeat_or_plot_tile:
 
       // dp_direction
       if (state->draw_pregame_direction != 1) {
-        bufoffset = BACKBUFTOOFFSET_LR(backbuf, 0, 256);
+        bufoffset = BACKBUFTOOFFSET_M(backbuf);
         // vertical
         if ((bufoffset & 0x0F00) == 0) {
           bufoffset -= 0x1000; // undoing overflow?
@@ -12507,21 +12501,21 @@ static void update_screen(chqstate_t *state)
       memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
       memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
       memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
-      bufoffset = BACKBUFTOOFFSET_LR(HLbuf, 0, 256); // Conv: convert back to offset
+      bufoffset = BACKBUFTOOFFSET_M(HLbuf); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
     // Conv: $BCBE-$BCC7: advance both pointers to the right-half start.
     // $BCC8-$BD27 ds_loop_14bytes: 14-byte copy per scanline (bytes 2-15).
     HLbuf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
-    screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07F2;
+    screen_off = SCREENTOOFFSET_M(HLscr) - 0x07F2;
     HLscr = OFFSETTOSCREEN(screen_off);
     do {
       memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
       memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
       memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
       memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
-      bufoffset = BACKBUFTOOFFSET_LR(HLbuf, 0, 256); // Conv: convert back to offset
+      bufoffset = BACKBUFTOOFFSET_M(HLbuf); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
@@ -12565,14 +12559,14 @@ static void update_screen(chqstate_t *state)
       HLbuf = ADDRTOBACKBUF((H_bufpage << 8) | L_nextlo); // next row-group
 
       if (!overflow) {
-        screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07EE;
+        screen_off = SCREENTOOFFSET_M(HLscr) - 0x07EE;
         HLscr = OFFSETTOSCREEN(screen_off);
       } else {
         // 64-row midpoint: jump to the ZX screen's bottom third
         HLscr = ADDRTOSCREEN(0x5011); // (136, 128)
       }
     } else {
-      screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07EE;
+      screen_off = SCREENTOOFFSET_M(HLscr) - 0x07EE;
       HLscr = OFFSETTOSCREEN(screen_off);
       HLbuf -= 16;
     }
@@ -14053,7 +14047,7 @@ static void draw_road(chqstate_t *state)
   state->dr_fill_pattern = Bfill_pattern;
 
   dr_read_lanes(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, IXlanesptr,
-                IYheightptr); // was FALLTHROUGH
+                IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14208,7 +14202,7 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
   state->dr_neg_lane_count = -4;
 
   dr_set_lane_callback(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow,
-                       dr_dispatch, IXlanesptr, IYheightptr); // was FALLTHROUGH
+                       dr_dispatch, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14233,7 +14227,7 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
-  dr_dispatch(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, IXlanesptr, IYheightptr); // was FALLTHROUGH
+  dr_dispatch(state, Bfill_pattern, Ccounter, DEbackbuf, Lrow, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14271,7 +14265,7 @@ static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
   // EXX - UNBANK
 
   // EX AF,AF' - BANK
-  dr_advance_unfilled(state, Ccounter, DEbackbuf, Lrow, Afill_pattern /* as A' */, IXlanesptr, IYheightptr); // was FALLTHROUGH
+  dr_advance_unfilled(state, Ccounter, DEbackbuf, Lrow, Afill_pattern /* as A' */, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14309,7 +14303,7 @@ static void dr_advance_unfilled(chqstate_t *state,
     return;
   }
 
-  dr_write_scanline_unfilled(state, Ccounter, DEbackbuf, Lrow, Adash_fill_pattern, IXlanesptr, IYheightptr); // was FALLTHROUGH
+  dr_write_scanline_unfilled(state, Ccounter, DEbackbuf, Lrow, Adash_fill_pattern, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14457,7 +14451,7 @@ static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounte
   // EXX - UNBANK
 
   // EX AF,AF' - BANK
-  dr_advance_filled(state, Ccounter, DEbackbuf, Lrow, Afill_pattern /*in A'*/, IXlanesptr, IYheightptr); // was FALLTHROUGH
+  dr_advance_filled(state, Ccounter, DEbackbuf, Lrow, Afill_pattern /*in A'*/, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**
@@ -14490,7 +14484,7 @@ static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
     return;
   }
 
-  dr_fill(state, Ccounter, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); // was FALLTHROUGH
+  dr_fill(state, Ccounter, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); /* was FALLTHROUGH */
 }
 
 /**

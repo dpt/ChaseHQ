@@ -20,6 +20,7 @@
 ## P3 — Incomplete / missing content
 
 - Complete decoding of all stage data (via the level converter script)
+- Split the main loop up into menu/main phases
 
 ## P4 — Polish / visual correctness
 
@@ -27,14 +28,23 @@
 - Ensure partial screen updates are correct
 - Draw road pipeline: merge `draw_road` back into one big unholy lump
 - 'TEST' marker not drawn when in test mode
+- Fix all warnings pass
+- Audit TODO/CHECK markers
 
 ## P5 — Clarity pass
 
 - Fix `Awidth_bytes` vars which seem to be x coords
 - Remove Z80 macros where it clarifies
-- Sort all params by register
 - Audit "Conv: added" vars
 - Match up menu funcs for string printing with the main code - are they the same code?
+- Big reformat pass once happy with code
+- Sort macros
+- Update summaries of major functions to docs/
+- Hoist out all interesting Z80 addresses to constants
+- Factor out more constants (e.g. 21)
+- Scan for type problems
+- Identify missing cases where wraparound is required
+- Remove as much casting as possible (Claude tends to add it)
 
 ## P6 — Features / extras
 
@@ -46,25 +56,24 @@
 - Investigate Claude fixes in case they've made the C diverge from the asm
 - Why don't watchpoints work in CLion?
 
+## FOR WRITEUP / NOTES
+
+- Document the game from start until first frame built
+- Explain that it's "Actual C code" designed to be read by humans - not machine generated grot
+- Also it omits unneeded ops - it should be efficient (but nowhere near the original)
+- Document how functions are created from source Z80
+- Add deep dives for each area of the game
+- Discuss black screen edges and overdraw
+- Claude on medium effort + advisor notes
+- Example: creating a whole new stage + backporting to Speccy
+
 ## IDEAS (backlog)
 
-- VSync
-- Factor out more constants (e.g. 21)
-- Scan for type problems
-- Identify missing cases where wraparound is required
-- Remove as much casting as possible (Claude tends to add it)
-- Hoist out all interesting Z80 addresses to constants
 - Lots more unit tests
-- Fix all warnings pass
-- Update summaries of major functions to docs/
-- Sort macros
 - Design a text format for holding stages
 - Annotate all state members to show which functions consume/mutate them
-- Document the game from start until first frame built
 - Is fixing the keypress thread race important?
-- Document `road_pos` valid range
-- Big reformat pass once happy with code
-- Add new level(s)
+- Add new level(s) - actual good one, not just test
 - Fix all the rough masks to improve the look
 - Arcade machine based on this code
 - Just Tony and Raymond having a chat
@@ -75,14 +84,4 @@
 - Diagram generation for stretchy graphics
 - Emscripten build
 - Pull across the demo version of the game
-
-## FOR WRITEUP / NOTES
-
-- Explain that it's "Actual C code" designed to be read by humans - not machine generated grot
-- Also it omits unneeded ops - it should be efficient (but nowhere near the original)
-- Document how functions are created from source Z80
-- Add deep dives for each area of the game
-- Discuss black screen edges and overdraw
-- Claude on medium effort + advisor notes
-- Example: creating a whole new stage + backporting to Speccy
 
