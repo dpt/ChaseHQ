@@ -15052,10 +15052,9 @@ dr_c7db:
     Ascroll = state->dr_horizon_x_scroll;
     carry = Ascroll & 1; // low bit becomes choice between original and shifted version
     Ascroll >>= 1; // halve the actual shift
-    /* TODO(unverified): direction of this carry-selected choice between
-     * stage->backdrop and pre_shifted_backdrop has not been confirmed
-     * against the skool disassembly at $C7F1. Do not treat as settled
-     * until checked. */
+    /* $C7E9-$C7EF: carry clear (bit 0 of shift was 0) selects the
+     * pre-shifted backdrop ($5B00); carry set selects the regular
+     * backdrop ($5C00). */
     HLbackdrop = carry ? &state->stage->backdrop[BC_backdrop_offset] : &state->pre_shifted_backdrop[BC_backdrop_offset];
     Ajump = (u8)(18 - (int)(u8)Ascroll * 2);
     state->dr_backdrop_copy_jump = (u8)Ajump;
