@@ -102,6 +102,13 @@ The main per-scanline rendering function for filled (kerb-stripe) scanlines.
 Fills the left verge, then overlays road edge markings and lane dashes.
 
 1. **Left verge fill** — `memset` of `(15 - jump_index) * 2` bytes with the fill pattern, starting at `SPoutput`.
+
+   Each two-byte edge/lane write below is `INC E` in the Z80: the low byte
+   of the backbuffer column wraps at 0xFF with no carry into the high byte
+   (row). The C port must recompute the second byte's address via
+   `ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF))`, not a
+   raw pointer increment — a plain `ptr++` runs past the row boundary (and
+   off the end of `backbuffer[]`) whenever the column offset is 0xFF.
 2. **Left outer edge** ($C643) — looks up the left xpos (from
    `dr_left_table_hi_1` page). Builds a pointer into `edge_markings[]` using
    `((xpos & 7) << 2) + dr_edge_graphic_offset` as the low byte within the

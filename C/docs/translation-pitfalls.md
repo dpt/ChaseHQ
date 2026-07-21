@@ -510,3 +510,17 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Rule:** Before writing off a cross-function shadow read as "uninitialised, approximate with 0", grep every call on the path between bank and unbank for `EX AF,AF'` — if none appears, the value is not approximate, it is the exact byte banked upstream, and needs a dedicated `chqstate_t` field to carry it.
 
 **Commit:** `cf269e4`
+
+---
+
+## 34. `INC E` wraps only the low byte — a raw pointer `++` carries into the row and overruns the buffer
+
+**Root cause:** `dr_fill_left_stripe`'s two-byte edge/lane writes are `LD (DE),A` then `INC E; LD (DE),A` in the Z80 — `INC E` wraps 0xFF to 0x00 with no carry into D, so the second byte always lands in the *same* backbuffer row, wrapping to column 0. A C `u8 *ptr; *ptr++ = …; *ptr = …` instead carries into the next row's memory (and, at the last row, off the end of `backbuffer[]`) whenever the column offset is 0xFF.
+
+**Secondary bug, same commit:** `Ldash_backbuf` (the low byte of `DEdash_backbuf + 31`) was declared `int` instead of `u8`; the unmasked +31 column computation could then exceed 255 and corrupt the high byte (row) when recombined into a backbuffer address, rather than wrapping as the Z80's 8-bit `L'` would.
+
+**Fix:** Recompute the second byte's address as `ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF))` rather than incrementing the pointer, and declare any C variable standing in for an 8-bit Z80 register (`L'`, `E`, …) as `u8`, never `int`, even when it is only ever used as an offset.
+
+**Rule:** Any Z80 `INC r` (single 8-bit register, not a register pair) that feeds a second memory access must be modelled as masked-low-byte arithmetic, not pointer increment — check whether the register is a pair (`INC DE`, carries) or a single register (`INC E`, wraps) before translating.
+
+**Commit:** `275014e`
