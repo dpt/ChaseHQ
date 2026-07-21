@@ -33,6 +33,9 @@
 
 #include "ChaseHQ/ChaseHQ.h"
 
+#include "ChaseHQ/Data/Bank7Data.h"
+
+#include "Types.h"
 #include "Internal.h"
 #include "State.h"
 #include "Bank7State.h"
@@ -53,7 +56,7 @@ u8 call_bank_7_128k(chqstate_t *state, int HLroutine)
  * $E499: Clear the playfield ready for the end screen
  *
  * Zeros the on-screen playfield (attributes and bitmap) plus the first 512
- * bytes of the backbuffer, which alias the attribute portion of the
+ * bytes of the "backbuffer" area, which alias the attribute portion of the
  * end-screen montage/glyph drawing area ($F000 = &state->backbuffer[0]).
  *
  * \param[in] state Pointer to game state.
@@ -65,15 +68,15 @@ static void es_clear(chqstate_t *state)
 }
 
 /* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
-#define ESCMD_DRAW_FRAME      (1)  /* -> $E2D9 routine_e2d9, runs immediately */
-#define ESCMD_DRAW_WORD       (2)  /* -> $E2DE routine_e2de, runs immediately */
-#define ESCMD_GLYPH_A         (3)  /* -> $E42E routine_e42e via rs_exit, reload 16 */
-#define ESCMD_GLYPH_B         (4)  /* -> $E472 routine_e472 via rs_exit, reload 16 */
-#define ESCMD_HANDSHAKE       (5)  /* -> $E3B7 routine_e3b7 via rs_exit, reload 16 */
-#define ESCMD_GLYPH_C         (6)  /* -> $E46D routine_e46d via rs_exit, reload 32 */
-#define ESCMD_IDLE            (7)  /* -> rs_exit, handler = no-op, reload = script byte */
-#define ESCMD_SET_A172        (8)  /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
-#define ESCMD_HANDSHAKE_AGAIN (9)  /* -> rs_exit, handler = handshake, reload = script byte */
+#define ESCMD_DRAW_FRAME       (1) /* -> $E2D9 es_handler_draw_frame, runs immediately */
+#define ESCMD_DRAW_WORD        (2) /* -> $E2DE es_handler_draw_word, runs immediately */
+#define ESCMD_GLYPH_A          (3) /* -> $E42E routine_e42e via rs_exit, reload 16 */
+#define ESCMD_GLYPH_B          (4) /* -> $E472 routine_e472 via rs_exit, reload 16 */
+#define ESCMD_HANDSHAKE        (5) /* -> $E3B7 routine_e3b7 via rs_exit, reload 16 */
+#define ESCMD_GLYPH_C          (6) /* -> $E46D routine_e46d via rs_exit, reload 32 */
+#define ESCMD_IDLE             (7) /* -> rs_exit, handler = no-op, reload = script byte */
+#define ESCMD_SET_A172         (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
+#define ESCMD_HANDSHAKE_AGAIN  (9) /* -> rs_exit, handler = handshake, reload = script byte */
 #define ESCMD_10              (10) /* -> $E2F0 (undecoded) */
 #define ESCMD_11              (11) /* -> $E2C0-style entry (undecoded) */
 #define ESCMD_CALL_WORD       (12) /* -> $E2B2, runs immediately */
@@ -92,32 +95,57 @@ static void es_clear(chqstate_t *state)
  * the raw data only, not yet validated end-to-end against a real script
  * run.
  *
- * Conv: not const -- es_handler_render_score patches the "GBP________ PTS"
+ * Conv: not const -- es_handler_draw_score patches the "GBP________ PTS"
  * placeholder text in-place (offset 0xFD, matching $5DFB relocated) with the
  * player's formatted score, exactly as the original self-modifies its own
  * script_data at that address.
  */
 static u8 script_data[] = {
   0x0C,
-  0x6E, 0x5C,
+  TWOBYTES(0x5C6E), // -> data_e06e
   0x07, 0xC0,
-  0x01,
-  0xE1, 0x60,
-  0x89, 0x48, 0x03, 0x07, 0xA0, 0x04, 0x01,
-  0x89, 0x64,
-  0x89, 0x48, 0x03, 0x07, 0xA0, 0x04, 0x01,
-  0x31, 0x68,
-  0x89, 0x48, 0x03, 0x07, 0xA0, 0x04, 0x01,
-  0xD9, 0x6B,
-  0x89, 0x48, 0x03, 0x07, 0xA0, 0x04, 0x01,
-  0xE1, 0x60,
-  0x02, 0x48, 0x03, 0x07, 0x50, 0x02,
-  0x89, 0x64,
-  0x11, 0x48, 0x03, 0x07, 0x50, 0x02,
-  0x31, 0x68,
-  0x02, 0x50, 0x03, 0x07, 0x50, 0x02,
-  0xD9, 0x6B,
-  0x11, 0x50, 0x03, 0x07, 0x50, 0x08, 0xC0, 0x09, 0xB0, 0x05, 0x09, 0xB0, 0x04,
+
+  ESCMD_DRAW_FRAME,
+  TWOBYTES(0x60E1), // -> bitmap_endshot_1
+  TWOBYTES(0x4889), // screen dst
+  0x03, 0x07, 0xA0, 0x04,
+
+  ESCMD_DRAW_FRAME,
+  TWOBYTES(0x6489), // -> bitmap_endshot_2
+  TWOBYTES(0x4889), // screen dst
+  0x03, 0x07, 0xA0, 0x04,
+
+  ESCMD_DRAW_FRAME,
+  TWOBYTES(0x6831), // -> bitmap_endshot_3
+  TWOBYTES(0x4889), // screen dst
+  0x03, 0x07, 0xA0, 0x04,
+
+  ESCMD_DRAW_FRAME,
+  TWOBYTES(0x6BD9), // -> bitmap_endshot_4
+  TWOBYTES(0x4889), // screen dst
+  0x03, 0x07, 0xA0, 0x04,
+
+  ESCMD_DRAW_FRAME,
+  TWOBYTES(0x60E1), // -> bitmap_endshot_1
+  TWOBYTES(0x4802), // screen dst
+  0x03, 0x07, 0x50,
+
+  0x02,
+  TWOBYTES(0x6489), // -> bitmap_endshot_2
+  TWOBYTES(0x4811), // screen dst
+  0x03, 0x07, 0x50,
+
+  0x02,
+  TWOBYTES(0x6831), // -> bitmap_endshot_3
+  TWOBYTES(0x5002), // screen dst
+  0x03, 0x07, 0x50,
+
+  0x02,
+  TWOBYTES(0x6BD9), // -> bitmap_endshot_4
+  TWOBYTES(0x5011), // screen dst
+  0x03, 0x07, 0x50,
+
+  0x08, 0xC0, 0x09, 0xB0, 0x05, 0x09, 0xB0, 0x04,
   0x0B, 0x47, 0x48, 0x48, 0x43, 0x4F, 0x4E, 0x47,
   0x52, 0x41, 0x54, 0x55, 0x4C, 0x41, 0x54, 0x49,
   0x4F, 0x4E, 0x53, 0xA1, 0x03, 0x07, 0x08, 0x0A,
@@ -146,17 +174,121 @@ static u8 script_data[] = {
 };
 
 /**
- * $E2D9/$E2DE (stub): Draw an end-screen graphic frame
+ * $E4A9: Blit an end-game montage shot to the screen
  *
- * TODO: not yet ported (bitmap/glyph blit phase). Reads a byte then a word
- * pointer from the script (e.g. one of the bitmap_endshot_N pointers) and
- * blits it via draw_endshot ($E4A9).
+ * Copies a 13-byte-wide bitmap, 64 rows tall, from image into the screen at
+ * screen_addr, then 8 rows of attribute bytes into the corresponding
+ * attribute third. Row addressing mimics the Z80's raw D/E screen-address
+ * increment: within a character row D climbs through its low 3 bits: when
+ * that wraps, E jumps on by 32 (next character column pair... actually next
+ * character row) and D drops back by 8 unless E itself carried into the next
+ * screen third.
  *
- * \param[in] state Pointer to game state.
+ * Conv: operates on the raw 16-bit Z80 screen address (screen_addr) and
+ * calls ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer,
+ * so the row-wrap arithmetic can mirror the Z80 exactly.
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] image       Bitmap+attribute source blob (was HL).
+ * \param[in] screen_addr Top-left destination screen address (was DE).
  */
-static void es_handler_draw_frame(chqstate_t *state)
+static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 {
-  NOT_USED(state);
+  int  row;      /* bitmap row counter, 64 down to 1 (was B) */
+  u16  DE;       /* current screen row address (was DE) */
+  u8   Dhi;      /* screen address high byte after +1 scanline (was D via A) */
+  u8   Elo;      /* screen address low byte after +32 column step (was E via A) */
+  u8   Dattr;    /* attribute row address high byte (was D after RRCA x3) */
+  u16  attraddr; /* current attribute row address (was DE in the attr loop) */
+  int  attrrow;  /* attribute row counter, 8 down to 1 (was A) */
+
+  DE = screen_addr;
+
+  for (row = 64; row != 0; row--) {
+    memcpy(ADDRTOSCREEN(DE), image, 13);
+    image += 13;
+
+    Dhi = (u8) ((DE >> 8) + 1);
+    if ((Dhi & 0x07) != 0) {
+      DE = (u16) ((Dhi << 8) | (DE & 0xFF));
+    } else {
+      Elo = (u8) ((DE & 0xFF) + 0x20);
+      if (Elo < 0x20) /* carry out of E: stay in the next screen third */
+        DE = (u16) ((Dhi << 8) | Elo);
+      else
+        DE = (u16) (((Dhi - 0x08) << 8) | Elo);
+    }
+  }
+
+  Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
+  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
+  attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
+
+  for (attrrow = 8; attrrow != 0; attrrow--) {
+    memcpy(ADDRTOSCREEN(attraddr), image, 13);
+    image += 13;
+    attraddr = (u16) (attraddr + 19);
+  }
+}
+
+/**
+ * Resolve a script-embedded end-shot bitmap address to its C data array.
+ *
+ * Conv: the original walks a real (relocated) Z80 pointer; script_data only
+ * ever encodes these four literal addresses (see the ESCMD_DRAW_FRAME
+ * entries above), so a small lookup replaces pointer arithmetic into
+ * relocated bank memory the C port does not model byte-for-byte.
+ *
+ * \param[in] addr Raw address word read from the script (was HL).
+ * \return Matching bitmap_endshot_N array.
+ */
+static const u8 *resolve_endshot(u16 addr)
+{
+  switch (addr) {
+  case 0x60E1: return bitmap_endshot_1;
+  case 0x6489: return bitmap_endshot_2;
+  case 0x6831: return bitmap_endshot_3;
+  case 0x6BD9: return bitmap_endshot_4;
+  default:     return bitmap_endshot_1; /* ponytail: script_data never encodes any other value */
+  }
+}
+
+/**
+ * $E2DE es_handler_draw_word: Read an image+destination pair from the
+ * script and blit it, without the backbuffer-clear prefix.
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] script Script read pointer (was HL); advanced past the two
+ *                        words consumed.
+ */
+static void es_draw_frame_common(chqstate_t *state, const u8 **script)
+{
+  const u8 *HLscript; /* script read pointer (was HL) */
+  u16       image_addr;  /* raw bitmap address word read from script */
+  u16       screen_addr; /* destination screen address word read from script */
+
+  HLscript = *script;
+
+  image_addr  = (u16) (HLscript[0] | (HLscript[1] << 8));
+  screen_addr = (u16) (HLscript[2] | (HLscript[3] << 8));
+  HLscript += 4;
+
+  draw_endshot(state, resolve_endshot(image_addr), screen_addr);
+
+  *script = HLscript;
+}
+
+/**
+ * $E2D9: Clear the backbuffer, then draw an end-screen graphic frame
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] script Script read pointer (was HL); advanced past the two
+ *                        words consumed.
+ */
+static void es_handler_draw_frame(chqstate_t *state, const u8 **script)
+{
+  es_clear(state);
+  es_draw_frame_common(state, script);
 }
 
 /**
@@ -197,7 +329,7 @@ static void es_handler_idle(chqstate_t *state)
 }
 
 /**
- * $E256: Tally the bonus into the score, then render the final score text
+ * $E256: Tally the bonus into the score, then draw the final score text
  *
  * First runs a 1000-iteration bonus-tally animation: each iteration adds
  * 5,000 to the score (increment_score), redraws the scoreboard LED digits
@@ -216,14 +348,14 @@ static void es_handler_idle(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  */
-static void es_handler_render_score(chqstate_t *state)
+static void es_handler_draw_score(chqstate_t *state)
 {
   int       tally;   /* bonus-tally animation iteration counter (was BC) */
-  const u8 *DEbcd;    /* packed-BCD score pointer, walked backwards (was DE) */
-  u8       *HLdst;    /* destination ASCII bytes in script_data (was HL) */
-  u8        Cseen;    /* sticky "non-blank digit already printed" flag (was C) */
-  int       pair;     /* BCD byte-pair iteration counter (was B) */
-  u8        Anibble;  /* nibble being converted to ASCII (was A) */
+  const u8 *DEbcd;   /* packed-BCD score pointer, walked backwards (was DE) */
+  u8       *HLdst;   /* destination ASCII bytes in script_data (was HL) */
+  u8        Cseen;   /* sticky "non-blank digit already printed" flag (was C) */
+  int       pair;    /* BCD byte-pair iteration counter (was B) */
+  u8        Anibble; /* nibble being converted to ASCII (was A) */
 
   for (tally = 1000; tally != 0; tally--) {
     increment_score(state, 0, 0x00, 0x50);
@@ -258,7 +390,7 @@ static void es_handler_render_score(chqstate_t *state)
     DEbcd--;
   }
 
-  HLdst[-1] |= 0x80; /* SET 7,(HL): mark this text run's terminator byte */
+  HLdst[-1] |= EOS; /* SET 7,(HL): mark this text run's terminator byte */
 }
 
 /**
@@ -298,7 +430,7 @@ static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
  *
  * Reads and dispatches script command bytes from state->es_script_ptr in a
  * DEC A/JP Z chain matching the ESCMD_* constants above. "Immediate" commands
- * (draw frame, call word, render score) run their handler stub straight away
+ * (draw frame, call word, draw score) run their handler stub straight away
  * and loop for the next command in the same call; all other commands instead
  * arm state->es_handler/es_frame_count via es_set_dispatch and return,
  * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
@@ -322,13 +454,13 @@ static void run_script(chqstate_t *state)
 
     switch (Acmd) {
     case ESCMD_DRAW_FRAME:
-      es_handler_draw_frame(state);
+      es_handler_draw_frame(state, &HLscript);
       continue;
 
     case ESCMD_DRAW_WORD:
-      /* Conv: $E2DE is $E2D9's tail half, entered directly for this command
-       * (skipping E2D9's own backbuffer-clear prefix). Same stub for now. */
-      es_handler_draw_frame(state);
+      /* $E2DE is $E2D9's tail half, entered directly for this command
+       * (skipping E2D9's own backbuffer-clear prefix). */
+      es_draw_frame_common(state, &HLscript);
       continue;
 
     case ESCMD_GLYPH_A:
@@ -366,7 +498,7 @@ static void run_script(chqstate_t *state)
       continue;
 
     case ESCMD_RENDER_SCORE:
-      es_handler_render_score(state);
+      es_handler_draw_score(state);
       continue;
 
     default:

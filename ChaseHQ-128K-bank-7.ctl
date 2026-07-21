@@ -1715,7 +1715,7 @@ c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
 @ $E000 label=end_screen
 C $E000,3 Call es_e499_clear
 C $E003,3 source $F7EF
-C $E006,3 in backbuf
+C $E006,3 in (backbuffer?)
 C $E009,3 768 bytes
 C $E00C,2 Copy
 N $E00E $A16D = $5CFE [$E0FE here]
@@ -1768,7 +1768,7 @@ T $E0E8,22,21:n1 "PRESS GEAR TO CONTINUE"
 b $E0FE Script data
 @ $E0FE label=script_data
 B $E0FE,1,1
-W $E0FF,2,2
+W $E0FF,2,2 -> data_e06e
 B $E101,3,2,1
 W $E104,2,2 bitmap_endshot_1
 B $E106,7,7
@@ -1793,14 +1793,25 @@ C $E20A,3 Load script pointer
 @ $E20D label=rs_loop
 C $E20D,1 Load a command? byte
 C $E20E,1 Advance script program counter
-C $E20F,4 If command == 0 goto routine_e2d9
-C $E213,4 If command == 1 goto routine_e2de
+C $E20F,4 If command == 1 goto es_handler_draw_frame
+C $E213,4 If command == 2 goto es_handler_draw_word
 C $E217,3 -> routine_e42e
-C $E21D,3 E2CD
+C $E21A,2 16
+C $E21C,4 If command == 3 goto $E2CD/rs_exit
 C $E220,3 -> routine_e472
+C $E223,4 If command == 4 goto $E2CD/rs_exit
 C $E227,3 -> routine_e3b7
+C $E22A,4 If command == 5 goto $E2CD/rs_exit
+C $E22E,2 32
 C $E230,3 -> routine_e46d
-C $E24F,2 e256
+C $E233,4 If command == 6 goto ...
+C $E237,4 If command == 7 goto ...
+C $E23B,4 If command == 8 goto ...
+C $E23F,4 If command == 9 goto ...
+C $E243,4 If command == 10 goto ...
+C $E247,4 If command == 11 goto ...
+C $E24B,3 If command == 12 goto ...
+C $E24E,3 If command == 13 goto $E256
 C $E254,2 Loop
 @ $E256 label=e256
 @ $E2CD label=rs_exit
@@ -1808,8 +1819,9 @@ C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
 c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
 N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
-@ $E2D9 label=routine_e2d9
-@ $E2DE label=routine_e2de
+@ $E2D9 label=es_handler_draw_frame
+C $E2DA,3 Call $E49C (buffer zeroing thing)
+@ $E2DE label=es_handler_draw_word
 @ $E328 label=e328
 N $E381 This entry point is used by the routine at #R$E3A5.
 b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
@@ -1829,7 +1841,7 @@ B $E3B4,1,1
 W $E3B5,2,2 35, handshake_2
 c $E3B7 Routine at E3B7
 @ $E3B7 label=routine_e3b7
-c $E42E Glyph-plot routine (draws a character/digit into the backbuffer; called via the interpreter's self-modified $E030 dispatch)
+c $E42E Glyph-plot routine (draws a character/digit into the (backbuffer/screen?); called via the interpreter's self-modified $E030 dispatch)
 @ $E42E label=routine_e42e
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
@@ -1843,12 +1855,12 @@ c $E46D Routine at E46D
 @ $E472 label=routine_e472
 @ $E499 label=es_e499_clear
 C $E499,3 Call clear_playfield
-C $E49C,12 Zero first 512 bytes of the backbuffer
+C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
-c $E4A9 Draws an end-game montage shot to the backbuffer (attrs -> screen)
+c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
 D $E4A9 I:HL Address of image to plot
 @ $E4A9 label=draw_endshot
-C $E4A9,1 Preserve destination in backbuf
+C $E4A9,1 Preserve destination in screen
 C $E4AA,2 Counter = 64 rows
 C $E4AC,1 Preserve counter
 C $E4AD,3 13 bytes to transfer

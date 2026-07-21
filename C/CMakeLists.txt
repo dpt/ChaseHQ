@@ -64,6 +64,8 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/TitleScreenData.h
         libraries/ChaseHQ/Data/Bank3Data.c
         libraries/ChaseHQ/Data/Bank3Data.h
+        libraries/ChaseHQ/Data/Bank7Data.c
+        libraries/ChaseHQ/Data/Bank7Data.h
         libraries/ChaseHQ/Engine/Types.h
         libraries/ChaseHQ/Engine/Bank3.h
         libraries/ChaseHQ/Engine/Bank3State.h
