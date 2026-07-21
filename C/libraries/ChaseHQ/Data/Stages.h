@@ -363,6 +363,13 @@ typedef struct obj {
 
 typedef struct scenedata {
   // $A26C
+  // Normal range: ROAD_RIGHTMOST (0x00F5) .. ROAD_LEFTMOST (0x0105), capped
+  // to ROAD_126 (0x0126) during car bounce (see Internal.h). During fork
+  // layout, layout_road temporarily sets this to road_pos +/- fork_distance,
+  // which can go negative; the Z80 wraps mod 65536, so the u16 storage is
+  // correct as-is but every consumer must read it through an (s16) cast
+  // while a fork is being laid out (see the (s16) casts in build_curve_table
+  // in Main.c).
   u16       road_pos;
   // $A26E
   const u8 *road_curvature_ptr;
