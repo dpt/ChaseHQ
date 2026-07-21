@@ -12995,19 +12995,21 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
 
       DE_lanes_ptr++;
       A_lanes_byte = *DE_lanes_ptr++;
-      if (A_lanes_byte != MAP_CMDCODE_GOTO) { /* not 0 */
-        if (A_lanes_byte != MAP_CMDCODE_FORK_END) { /* not 1 */
-          // $BEF5 - Split command (2)
-          state->rm_leftfork_lanes  = wordat(DE_lanes_ptr + 0);
-          state->rm_rightfork_lanes = wordat(DE_lanes_ptr + 2);
-          DE_lanes_ptr = &forked_road_lanes[0];
-        } else {
-          // $BF09 - Fork end command (1)
-          DE_lanes_ptr = state->rm_lanes_fork_end_ptr;
-        }
-      } else {
+      switch (A_lanes_byte) {
+      case MAP_CMDCODE_GOTO:
         // $BF0E - Goto command (0)
         DE_lanes_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_lanes_ptr));
+        break;
+      case MAP_CMDCODE_FORK_END:
+        // $BF09 - Fork end command (1)
+        DE_lanes_ptr = state->rm_lanes_fork_end_ptr;
+        break;
+      default:
+        // $BEF5 - Split command (2)
+        state->rm_leftfork_lanes  = wordat(DE_lanes_ptr + 0);
+        state->rm_rightfork_lanes = wordat(DE_lanes_ptr + 2);
+        DE_lanes_ptr = &forked_road_lanes[0];
+        break;
       }
 
       // $BF12-$BF13: the reload lands in A_lanes_counter — the Z80 keeps the
@@ -16959,9 +16961,11 @@ pm_reset_pattern:
     if (B) {
       Aparam = D >> 3; // general parameter
       // the call-return setup needs analysing here
-      if (B == 1) { playdrum_2(state, Aparam); return; }
-      if (B == 2) { playdrum_1(state, Aparam); return; }
-      if (B == 3) { play_noise(state, Aparam); return; }
+      switch (B) {
+      case 1: playdrum_2(state, Aparam); return;
+      case 2: playdrum_1(state, Aparam); return;
+      case 3: play_noise(state, Aparam); return;
+      }
     }
   }
 
