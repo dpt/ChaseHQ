@@ -545,7 +545,6 @@ static void check_user_input(chqstate_t *state);
 static void check_user_input_quit_key(chqstate_t *state);
 
 static void clear_playfield_attrs(chqstate_t *state);
-static void clear_playfield(chqstate_t *state);
 
 static void start_sfx(chqstate_t *state, int index, int priority);
 static void drive_sfx(chqstate_t *state);
@@ -715,8 +714,6 @@ static void start_chatter(chqstate_t       *state,
                           chatterpriority_t priority,
                           const u8         *chatterblk);
 
-static void drive_chatter(chqstate_t *state);
-static void drive_chatter_stop(chqstate_t *state);
 
 static void print_chatter(chqstate_t *state);
 static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk);
@@ -800,7 +797,6 @@ static void draw_char(chqstate_t *state,
                       u8        **new_screen,
                       u8        **new_attrs);
 
-static u8 keyscan(chqstate_t *state);
 static u8 keyscan_keydefs(chqstate_t *state, u8 Estopbit, const u8 *HLkeydefs);
 static int keyscan_inner(const chqstate_t *state, int Ainput);
 
@@ -1088,7 +1084,6 @@ static void write_audio_registers_128k(chqstate_t *state);
 static void engine_sfx_from_speed_128k(chqstate_t *state);
 static void setup_turbo_sfx_128k(chqstate_t *state);
 static void play_engine_or_turbo_sfx_128k(chqstate_t *state);
-static void play_speech_128k(chqstate_t *state, int index);
 static void handle_perp_caught_128k(chqstate_t *state);
 static void page_128k(chqstate_t *state);
 static void reset_paging_128k(chqstate_t *state);
@@ -2419,7 +2414,7 @@ static void clear_playfield_attrs(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  */
-static void clear_playfield(chqstate_t *state)
+void clear_playfield(chqstate_t *state)
 {
   static const zxbox_t playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
@@ -5680,7 +5675,7 @@ static void start_chatter(chqstate_t       *state,
  * Conv: The idle cursor blink byte ($AA/$55 alternator) was self-modified at
  * $9982; C reads and writes state->chatter_cursor_blink instead.
  */
-static void drive_chatter(chqstate_t *state)
+void drive_chatter(chqstate_t *state)
 {
   int          carry;         /* carry from RRC/RR operations (carry) */
   int          chatter_state; /* FSM state at entry, decremented to dispatch (was A) */
@@ -5792,7 +5787,7 @@ exit:
  *
  * \param[in] state Pointer to game state.
  */
-static void drive_chatter_stop(chqstate_t *state)
+void drive_chatter_stop(chqstate_t *state)
 {
   state->noise_counter = 4;
   state->chatter_state = CHATTERSTATE_STOP;
@@ -7474,7 +7469,7 @@ dc_return:
  * Conv: Z80 PUSH AF/POP DE to shuttle the Kempston reading past the
  * keyscan_keydefs call; C uses a local variable Akempston instead.
  */
-static u8 keyscan(chqstate_t *state)
+u8 keyscan(chqstate_t *state)
 {
   int Akempston;      /* raw Kempston joystick reading, 5 bits active-high (was A) */
   int Akeys;          /* keyboard scan result used for left/right conflict check (was A) */
@@ -17383,7 +17378,7 @@ static void play_engine_or_turbo_sfx_128k(chqstate_t *state)
  * Conv: The Z80 uses EX AF,AF'/EXX to bank registers across the inner loops; C
  * passes the values as function parameters and locals instead.
  */
-static void play_speech_128k(chqstate_t *state, int index)
+void play_speech_128k(chqstate_t *state, int index)
 {
   /* $F32E: speech sample table */
   static const struct {

@@ -289,6 +289,14 @@ u8   *z80addrtoattrs(chqstate_t *state, int addr, int left, int right);
 u16   wordat(const u8 *addr);
 void  setwordat(u8 *addr, int value);
 
+/* Shared with Bank7.c */
+
+void  clear_playfield(chqstate_t *state);
+void  drive_chatter(chqstate_t *state);
+void  drive_chatter_stop(chqstate_t *state);
+u8    keyscan(chqstate_t *state);
+void  play_speech_128k(chqstate_t *state, int index);
+
 /* ----------------------------------------------------------------------- */
 
 typedef void obj_handler_t(chqstate_t *state,
