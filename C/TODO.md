@@ -32,8 +32,6 @@
 
 - Fix `Awidth_bytes` vars which seem to be x coords
 - Remove Z80 macros where it clarifies
-- Remove any vars which could be local from state
-- Sort all decls by order of use
 - Sort all params by register
 - Audit "Conv: added" vars
 - Match up menu funcs for string printing with the main code - are they the same code?

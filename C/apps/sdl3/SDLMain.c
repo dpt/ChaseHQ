@@ -49,6 +49,11 @@
 #define SCALE_MIN            (1)
 #define SCALE_MAX            (4)
 
+#define SPEED_DEFAULT      (100) // percent
+#define SPEED_MIN           (25)
+#define SPEED_MAX         (1000)
+#define SPEED_STEP          (25)
+
 // Set to 0 to fall back to the plain SDL_Renderer blit (no shader, any GPU
 // backend, nearest-neighbour scaling); set to 1 for the SDL3 GPU/Metal CRT
 // post-effect pipeline (Metal only). Override with -DCHQ_CRT_SHADER=1.
@@ -124,6 +129,7 @@ typedef struct
   // int                  menu; // bool
 
   int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
+  int                speed; // game speed, percent, SPEED_MIN..SPEED_MAX
 
   struct timeval     stamps[MAXSTAMPS];
   int                nstamps;
@@ -246,8 +252,8 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
       // 'duration' tells us how long the operation should take since the previous mark call.
       // Turn T-state duration into seconds
       duration = durationTStates / tstatesPerSec;
-      // Adjust the game speed
-      //duration = duration * 100 / state->speed;
+      // Adjust the game speed: higher speed -> shorter sleep
+      duration = duration * 100 / state->speed;
 
       then = &state->stamps[state->nstamps];
     }
@@ -547,11 +553,8 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       int scale;
 
-      scale = state->scale + (sym == SDLK_MINUS ? -1 : 1);
-      if (scale < SCALE_MIN)
-        scale = SCALE_MIN;
-      if (scale > SCALE_MAX)
-        scale = SCALE_MAX;
+      scale = CLAMP(state->scale + (sym == SDLK_MINUS ? -1 : 1),
+                    SCALE_MIN, SCALE_MAX);
 
       if (scale != state->scale)
       {
@@ -560,6 +563,21 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
                           chq_window_width(scale),
                           chq_window_height(scale));
       }
+    }
+    return;
+  }
+
+  if (sym == SDLK_LEFTBRACKET || sym == SDLK_RIGHTBRACKET)
+  {
+    if (k->down && !k->repeat)
+    {
+      int speed;
+
+      speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
+                   SPEED_MIN, SPEED_MAX);
+
+      state->speed = speed;
+      printf("Speed: %d%%\n", speed);
     }
     return;
   }
@@ -712,6 +730,7 @@ int main(void)
   state.paused    = 0;
   state.quit      = 0;
   state.scale     = SCALE_DEFAULT;
+  state.speed     = SPEED_DEFAULT;
   // state.menu      = 1;
 
 #ifdef __APPLE__
