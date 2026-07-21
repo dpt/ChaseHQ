@@ -6106,11 +6106,9 @@ static void plot_face(chqstate_t *state,
   saved_screen = screen;
   screen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   for (;;) {
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    screen -= 4; // replaces PUSH/POP
+    memcpy(&state->speccy->screen.pixels[screen], face, 4); /* Conv: memcpy */
+    face    += 4;
+    counter -= 4;
     if (counter == 0)
       break;
     screen = next_scr_row(screen);
@@ -6151,10 +6149,10 @@ static void plot_face_attributes(chqstate_t *state,
   screen -= SCREEN_ATTRIBUTES_START_ADDRESS; // Conv: address -> offset
   counter = FACEATTRBYTES;
   for (;;) {
-    state->speccy->screen.attributes[screen++] = *face++; counter--;
-    state->speccy->screen.attributes[screen++] = *face++; counter--;
-    state->speccy->screen.attributes[screen++] = *face++; counter--;
-    state->speccy->screen.attributes[screen++] = *face++; counter--;
+    memcpy(&state->speccy->screen.attributes[screen], face, 4); /* Conv: memcpy */
+    screen  += 4;
+    face    += 4;
+    counter -= 4;
     if (counter == 0)
       break;
 
