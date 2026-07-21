@@ -296,6 +296,10 @@ void  drive_chatter(chqstate_t *state);
 void  drive_chatter_stop(chqstate_t *state);
 u8    keyscan(chqstate_t *state);
 void  play_speech_128k(chqstate_t *state, int index);
+void  increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
+void  ptad_led_digits(int iterations, const u8 *digits, u8 *stored,
+                       u8 *screen);
+void  sfx_bipbow(chqstate_t *state, int param1, int param2);
 
 /* ----------------------------------------------------------------------- */
 

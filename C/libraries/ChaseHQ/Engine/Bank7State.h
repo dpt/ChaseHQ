@@ -37,8 +37,8 @@
  * are reachable only from within Bank7.c.
  */
 struct chq_bank7_state {
-  // $A16D (SM): run_script's script program counter. NULL until script_data
-  // ($E0FE) is ported -- see run_script's NULL guard.
+  // $A16D (SM): run_script's script program counter. Points at script_data
+  // (Bank7.c).
   const u8    *es_script_ptr;
 
   // $A170 (SM): per-command frame-delay countdown; show_end_screen's loop
@@ -49,6 +49,15 @@ struct chq_bank7_state {
   // run_script's rs_exit tail ($E2D4 LD ($5C31),DE) each time a command hands
   // off to a delayed handler instead of running immediately.
   void       (*es_handler)(chqstate_t *state);
+
+  // $A16F: dual-purpose fire-button/tally-done flag. show_end_screen's loop
+  // uses it as a 0/1 "has the first fire press been consumed" latch;
+  // es_handler_render_score unconditionally sets it to 1 once the score
+  // tally finishes, so the very next fire press ends the end screen instead
+  // of merely arming the exit (confirmed via skool cross-reference: $E017
+  // clears it, $E045/$E04C are show_end_screen's own mask logic, $E272 is
+  // render_score's unconditional set).
+  u8           es_input_mask;
 };
 
 /* ----------------------------------------------------------------------- */

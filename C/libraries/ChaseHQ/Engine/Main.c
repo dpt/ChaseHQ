@@ -552,7 +552,7 @@ static void sfx_crash(chqstate_t *state, int param1, int param2);
 static void sfx_thud(chqstate_t *state, int param1, int param2);
 static void sfx_cornering(chqstate_t *state, int param1, int param2);
 static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2);
-static void sfx_bipbow(chqstate_t *state, int param1, int param2);
+void sfx_bipbow(chqstate_t *state, int param1, int param2);
 
 static int handle_perp_caught(chqstate_t *state);
 static void hpc_set_perp_speed(chqstate_t *state, int speed);
@@ -752,7 +752,7 @@ static void speed_score(chqstate_t *state);
 static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md);
 static int bonus_digit(int Adigit, int *pCzeroflag, char **pHLoutput);
 
-static void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
+void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
 
 static void calc_overtake_bonus(chqstate_t *state);
 
@@ -761,10 +761,10 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
-static void ptad_led_digits(int         iterations,
-                            const u8   *digits,
-                            u8         *stored,
-                            u8         *screen);
+void ptad_led_digits(int         iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen);
 
 static u8 *ledfont_plot(int ord, u8 *screen);
 
@@ -2710,7 +2710,7 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
  * write via speccy->out and models the delay loops as speccy->logtime so the
  * host can reconstruct the pulse timing.
  */
-static void sfx_bipbow(chqstate_t *state, int param1, int param2)
+void sfx_bipbow(chqstate_t *state, int param1, int param2)
 {
   zxspectrum_t *speccy; /* hoisted state->speccy (Conv: added) */
   int           j;      /* outer iteration counter, 20 down to 1 (was C) */
@@ -6638,7 +6638,7 @@ bd_store:
  * \param[in] D_hi High two BCD digits of the increment. (was D)
  * \param[in] E_md Middle two BCD digits of the increment. (was E)
  */
-static void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md)
+void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md)
 {
   int  carry;        /* carry flag propagated between BCD additions (was carry flag) */
   u8  *HLscore_bcd; /* pointer walking state->score_bcd (was HL) */
@@ -7081,10 +7081,10 @@ ptad_turbo_setup:
  * \param[in,out] screen Pointer to the screen column for the first digit;
  * advanced one column per plotted or skipped digit. (was DE')
  */
-static void ptad_led_digits(int         iterations,
-                            const u8   *digits,
-                            u8         *stored,
-                            u8         *screen)
+void ptad_led_digits(int         iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen)
 {
   int Adigits; /* packed BCD digit pair read from the digits buffer (was A) */
   int Cdigits; /* saved copy of Adigits for the low-nibble pass (was C) */
