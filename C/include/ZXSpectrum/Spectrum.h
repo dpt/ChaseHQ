@@ -160,9 +160,6 @@ zxscreen_t;
 
 /**
  * The current state of the machine.
- *
- * FIXME: Ought to make this structure private and expose .screen via an
- *        accessor function.
  */
 struct zxspectrum
 {

@@ -446,7 +446,6 @@ struct chqstate {
   u8        distance_bcd[2];
 
   // $A258
-  // TODO check signed use of incline
   s8        incline; // $FD..$03 = climbing/level/descending
   // $A259
   s8        prev_road_height;

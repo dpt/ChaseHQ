@@ -16,11 +16,27 @@
 - Restart bip-bow ticking twice as fast as it should
 - Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
+- Calibrate `TITLE_MUSIC_TSTATES`, `KEMPSTON_MUSIC_TSTATES`, `OMD_MUSIC_TSTATES`, `SUCCESS_MUSIC_TSTATES`, `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder values
+- Title jingle T-state count is a guess, tune by ear (`Bank3.c:3458`)
 
 ## P3 — Incomplete / missing content
 
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
+- `Stage3Data.c` / `Stage5Data.c`: decode `addrof_helicopter_stuff_1`/`addrof_helicopter_stuff_2`, currently NULL raw data
+- Border colour not implemented, always black (`SDLMain.c:297`, `SDLMain.c:780`)
+- `Bank3.c` SFX subsystem gaps (out of scope stubs, need wiring):
+  - SFX trigger-table setup (`$F7DB`-`$F82C`) and `stst_load_sfx_script` call
+  - digitised-sample SFX subsystem (`$F837`/`$F895`/`$F8A2`)
+  - `stop_music_and_silence` (`$ED0B`) calls not wired (3 sites)
+  - coin-slot input read (`$800E`) not wired
+  - high-score check (`$C00C`), not disassembled
+  - high-score name/rank copy from `$C403`
+  - active-control-config header write at (`$8008`)
+  - scene-selector SM operand seed with `A_anykey`
+  - "fire pressed -> start game via `$FBA2`" wiring
+  - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
+- `Main.c:1090` stub function body, "Write this"
 
 ## P4 — Polish / visual correctness
 
@@ -30,6 +46,15 @@
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
 - Audit TODO/CHECK markers
+- `Main.c:17227` CHECK need to preserve high byte?
+- `Main.c:15055` unverified: direction of carry-selected choice
+- `Main.c:14349` `Bneg_lane_count = -1; // CHECK` verify against skool
+- `Main.c:10756` `Cflipping++` FIXME — appears unused, check
+- `Main.c:12414` could use `memset`
+- `Main.c:15201` `endptr++` unused in inner loop, hoist candidate
+- `Main.c:6105` hoist to next-attr-row macro?
+- `State.h:317` `keydefs[8]` needs symbolic names
+- `Spectrum.h:164` FIXME struct should be private, expose `.screen` via accessor
 
 ## P5 — Clarity pass
 
