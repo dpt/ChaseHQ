@@ -19,7 +19,6 @@
 /* ----------------------------------------------------------------------- */
 
 /* Stage 4 object type macros */
-#define MAP_OBJ_S4_NONE_VAL  (0)
 #define MAP_OBJ_S4_TUNNEL_LIGHT_VAL  (1)
 #define MAP_OBJ_S4_OBJ2_VAL  (2)
 #define MAP_OBJ_S4_SHORT_POLE_VAL  (3)
@@ -36,7 +35,7 @@
 #define MAP_OBJ_S4_OBJ14_VAL  (14)
 #define MAP_OBJ_S4_OBJ15_VAL  (15)
 
-#define MAP_OBJ_S4_NONE(D)   (((D) << 4) | MAP_OBJ_S4_NONE_VAL)
+#define MAP_OBJ_S4_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S4_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S4_TUNNEL_LIGHT_VAL)
 #define MAP_OBJ_S4_OBJ2(D)   (((D) << 4) | MAP_OBJ_S4_OBJ2_VAL)
 #define MAP_OBJ_S4_SHORT_POLE(D)   (((D) << 4) | MAP_OBJ_S4_SHORT_POLE_VAL)

@@ -17,10 +17,9 @@
 /* ----------------------------------------------------------------------- */
 
 /* Stage 6 object type macros */
-#define MAP_OBJ_S6_NONE_VAL          (0)
 #define MAP_OBJ_S6_TUNNEL_LIGHT_VAL  (1)
 
-#define MAP_OBJ_S6_NONE(D)           (((D) << 4) | MAP_OBJ_S6_NONE_VAL)
+#define MAP_OBJ_S6_NONE(D)           (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S6_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S6_TUNNEL_LIGHT_VAL)
 
 /* ----------------------------------------------------------------------- */

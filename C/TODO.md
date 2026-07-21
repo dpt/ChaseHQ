@@ -31,7 +31,6 @@
 ## P5 — Clarity pass
 
 - Fix `Awidth_bytes` vars which seem to be x coords
-- Document expected values/ranges for e.g. xpos arrays
 - Remove Z80 macros where it clarifies
 - Remove any vars which could be local from state
 - Sort all decls by order of use

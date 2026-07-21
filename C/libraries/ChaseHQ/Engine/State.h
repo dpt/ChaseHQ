@@ -717,6 +717,10 @@ struct chqstate {
   u8        horizon_attr_pad;
   // $E34F
   u8        object_positions[21];
+  // Horizontal pixel positions per screen row (index = row, 0..127, only the
+  // visible depth range is populated per frame). 0..255 is on-screen; values
+  // outside that range are off-screen left/right during curves and are
+  // clamped when consumed (see docs/draw-road-internals.md).
   // $E800 - Left outer edge (verge/road boundary)
   s16       xpos_road_left[128];
   // $E900 - Left inner edge / centre-left

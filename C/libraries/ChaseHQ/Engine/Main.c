@@ -110,9 +110,6 @@
 
 /* Z80 ish macros */
 
-/** Return an 8-bit value `v` rotated right by `sh` bits */
-#define ROR_8(v,sh) (((v) >> (sh)) | ((v) << (8 - (sh)))
-
 /** Return `t`+`d` but only alter the low byte. */
 #define LO_ADD(t,d) ((t) = (((t) & ~0xFF) | (((t) + (d)) & 0xFF)))
 
@@ -167,8 +164,6 @@
 #define VALID_BACKBUF_ADDR_LR(addr, left, right) \
 ((addr) >= BACKBUFFER_START_ADDRESS - (left) && (addr) < BACKBUFFER_END_ADDRESS + (right))
 
-#define VALID_SCREEN_ADDR(addr)  VALID_SCREEN_ADDR_LR(addr, 0, 0)
-#define VALID_ATTRS_ADDR(addr)   VALID_ATTRS_ADDR_LR(addr, 0, 0)
 #define VALID_BACKBUF_ADDR(addr) VALID_BACKBUF_ADDR_LR(addr, 0, 0)
 
 /* Offset validators */
@@ -177,17 +172,10 @@
 #define VALID_SCREEN_OFFSET_LR(off, left, right) \
 ((off) >= -(left) && (off) < SCREEN_BITMAP_LENGTH + (right))
 
-/** Return if off is a valid screen attributes byte offset, extended by left/right. */
-#define VALID_ATTRS_OFFSET_LR(off, left, right) \
-((off) >= -(left) && (off) < SCREEN_ATTRIBUTES_LENGTH + (right))
-
 /** Return if off is a valid backbuffer byte offset, extended by left/right. */
 #define VALID_BACKBUF_OFFSET_LR(off, left, right) \
 ((off) >= -(left) && (off) < BACKBUFFER_LENGTH + (right))
 
-#define VALID_SCREEN_OFFSET(off)  VALID_SCREEN_OFFSET_LR(off, 0, 0)
-#define VALID_ATTRS_OFFSET(off)   VALID_ATTRS_OFFSET_LR(off, 0, 0)
-#define VALID_BACKBUF_OFFSET(off) VALID_BACKBUF_OFFSET_LR(off, 0, 0)
 
 /* Address-to-pointer converters */
 
@@ -205,7 +193,6 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
 }
 
 #define ADDRTOSCREEN(addr)                 z80addrtoscreen(state, addr, 0, 0)
-#define ADDRTOSCREEN_LR(addr, left, right) z80addrtoscreen(state, addr, left, right)
 
 /** Return attributes pointer given a Z80 address. */
 #define ADDRTOATTRS_M(addr) \
@@ -221,7 +208,6 @@ u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 }
 
 #define ADDRTOATTRS(addr)                 z80addrtoattrs(state, addr, 0, 0)
-#define ADDRTOATTRS_LR(addr, left, right) z80addrtoattrs(state, addr, left, right)
 
 /** Return backbuffer[] pointer given a Z80 address. */
 #define ADDRTOBACKBUF_M(addr) \
@@ -256,24 +242,11 @@ static int z80screentooffset(chqstate_t *state, const u8 *ptr, int left, int rig
   return off;
 }
 
-#define SCREENTOOFFSET(ptr)                 z80screentooffset(state, ptr, 0, 0)
 #define SCREENTOOFFSET_LR(ptr, left, right) z80screentooffset(state, ptr, left, right)
 
 /** Return byte offset of an attributes[] pointer. */
 #define ATTRSTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.attributes[0])
-
-static int z80attrstooffset(chqstate_t *state, const u8 *ptr, int left, int right)
-{
-  int off;
-  assert(VALID_ATTRS_LR(ptr, left, right));
-  off = ATTRSTOOFFSET_M(ptr);
-  assert(VALID_ATTRS_OFFSET_LR(off, left, right));
-  return off;
-}
-
-#define ATTRSTOOFFSET(ptr)                 z80attrstooffset(state, ptr, 0, 0)
-#define ATTRSTOOFFSET_LR(ptr, left, right) z80attrstooffset(state, ptr, left, right)
 
 /** Return byte offset of a backbuffer[] pointer. */
 #define BACKBUFTOOFFSET_M(ptr) \
@@ -307,7 +280,6 @@ static int z80screentoaddr(chqstate_t *state, const u8 *ptr, int left, int right
 }
 
 #define SCREENTOADDR(ptr)                 z80screentoaddr(state, ptr, 0, 0)
-#define SCREENTOADDR_LR(ptr, left, right) z80screentoaddr(state, ptr, left, right)
 
 /** Return a Z80 address of an attributes[] pointer. */
 #define ATTRSTOADDR_M(ptr) \
@@ -323,7 +295,6 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
 }
 
 #define ATTRSTOADDR(ptr)                 z80attrstoaddr(state, ptr, 0, 0)
-#define ATTRSTOADDR_LR(ptr, left, right) z80attrstoaddr(state, ptr, left, right)
 
 /** Return a Z80 address of a backbuffer[] pointer. */
 #define BACKBUFTOADDR_M(ptr) \
@@ -339,7 +310,6 @@ static int z80backbuftoaddr(chqstate_t *state, const u8 *ptr, int left, int righ
 }
 
 #define BACKBUFTOADDR(ptr)                 z80backbuftoaddr(state, ptr, 0, 0)
-#define BACKBUFTOADDR_LR(ptr, left, right) z80backbuftoaddr(state, ptr, left, right)
 
 /* Offset-to-pointer converters */
 
@@ -357,23 +327,6 @@ static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
 }
 
 #define OFFSETTOSCREEN(off)                 z80offsettoscreen(state, off, 0, 0)
-#define OFFSETTOSCREEN_LR(off, left, right) z80offsettoscreen(state, off, left, right)
-
-/** Return attributes[] pointer given byte offset. */
-#define OFFSETTOATTRS_M(off) \
-  (&state->speccy->screen.attributes[off])
-
-static u8 *z80offsettoattrs(chqstate_t *state, int off, int left, int right)
-{
-  u8 *ptr;
-  assert(VALID_ATTRS_OFFSET_LR(off, left, right));
-  ptr = OFFSETTOATTRS_M(off);
-  assert(VALID_ATTRS_LR(ptr, left, right));
-  return ptr;
-}
-
-#define OFFSETTOATTRS(off)                 z80offsettoattrs(state, off, 0, 0)
-#define OFFSETTOATTRS_LR(off, left, right) z80offsettoattrs(state, off, left, right)
 
 /** Return backbuffer[] pointer given byte offset. */
 #define OFFSETTOBACKBUF_M(off) \
@@ -389,7 +342,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 }
 
 #define OFFSETTOBACKBUF(off)                 z80offsettobackbuf(state, off, 0, 0)
-#define OFFSETTOBACKBUF_LR(off, left, right) z80offsettobackbuf(state, off, left, right)
 
 /* ----------------------------------------------------------------------- */
 

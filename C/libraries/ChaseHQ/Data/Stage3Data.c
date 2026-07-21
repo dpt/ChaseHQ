@@ -19,7 +19,6 @@
 /* ----------------------------------------------------------------------- */
 
 /* Stage 3 object type macros */
-#define MAP_OBJ_S3_NONE_VAL  (0)
 #define MAP_OBJ_S3_TUNNEL_LIGHT_VAL  (1)
 #define MAP_OBJ_S3_OVERHEAD_BRIDGE_VAL  (2)
 #define MAP_OBJ_S3_SHORT_POLE_VAL  (3)
@@ -36,7 +35,7 @@
 #define MAP_OBJ_S3_OBJ14_VAL  (14)
 #define MAP_OBJ_S3_OBJ15_VAL  (15)
 
-#define MAP_OBJ_S3_NONE(D)   (((D) << 4) | MAP_OBJ_S3_NONE_VAL)
+#define MAP_OBJ_S3_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S3_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S3_TUNNEL_LIGHT_VAL)
 #define MAP_OBJ_S3_OVERHEAD_BRIDGE(D)   (((D) << 4) | MAP_OBJ_S3_OVERHEAD_BRIDGE_VAL)
 #define MAP_OBJ_S3_SHORT_POLE(D)   (((D) << 4) | MAP_OBJ_S3_SHORT_POLE_VAL)

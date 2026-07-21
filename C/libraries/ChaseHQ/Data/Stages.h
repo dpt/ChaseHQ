@@ -253,10 +253,8 @@
 //
 // These names are valid for Stage 1 but I'm not yet sure which ones are the
 // same across all stages.
-#define MAP_OBJ_NONE_VAL                (0) // common to all stages?
-#define MAP_OBJ_SHORT_POLE_VAL          (3) // common to all stages?
+#define MAP_OBJ_NONE_VAL                (0)
 
-#define MAP_OBJ_S1_NONE_VAL             (0) // perhaps a dupe/common across all levels
 #define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
 #define MAP_OBJ_S1_UNKNOWN_2_VAL        (2) // unused
 #define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe/common
@@ -267,7 +265,7 @@
 #define MAP_OBJ_S1_TURN_SIGN_L_VAL      (8)
 #define MAP_OBJ_S1_TURN_SIGN_R_VAL      (9)
 
-#define MAP_OBJ_S1_NONE(D)              ((D << 4) | MAP_OBJ_S1_NONE_VAL)
+#define MAP_OBJ_S1_NONE(D)              ((D << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S1_TUNNEL_LIGHT(D)      ((D << 4) | MAP_OBJ_S1_TUNNEL_LIGHT_VAL)
 #define MAP_OBJ_S1_UNKNOWN_2(D)         ((D << 4) | MAP_OBJ_S1_UNKNOWN_2_VAL)
 #define MAP_OBJ_S1_SHORT_POLE(D)        ((D << 4) | MAP_OBJ_S1_SHORT_POLE_VAL)
