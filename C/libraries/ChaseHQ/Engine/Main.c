@@ -14528,7 +14528,7 @@ static void dr_fill(chqstate_t *state,
   int  Arightval;               /* right x-position table value for this row (was A) */
   u8   Aright_stripe_width;     /* right stripe width: right table value + dr_right_edge_offset (was A) */
   u16  DEdash_backbuf;          /* banked DEbackbuf copy; used to build SPoutput (was DE') */
-  int  Ldash_backbuf;           /* low byte of DEdash_backbuf + 31: rightmost column (was L') */
+  u8   Ldash_backbuf;           /* low byte of DEdash_backbuf + 31: rightmost column (was L') */
   int  Hdash_backbuf;           /* high byte of DEdash_backbuf (was H') */
   u8  *SPoutput;                /* back-buffer write pointer for this scanline's rightmost byte (was SP) */
   u16  HLdash_fill;             /* fill word: fill_pattern repeated in both bytes (was HL') */
@@ -14749,11 +14749,14 @@ static void dr_fill_left_stripe(chqstate_t *state,
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
     /* AND-OR masking here. */
-    /* Left outer edge ($C643-$C666): AND-OR blend at E, direct copy at E+1 */
-    *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1]; // wraparound needed?
+    /* Left outer edge ($C643-$C666): AND-OR blend at E, direct copy at E+1.
+     * Conv: Z80 "INC E" wraps only the low byte (no carry into D), so the
+     * second byte's address must be recomputed with a wrapped low byte
+     * rather than a raw pointer increment, which can run past the row
+     * boundary (and off the end of backbuffer[]) when Edash is 0xFF. */
+    *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1];
     HLdash_markingsptr += 3;
-    DEdash_backbufptr++;
-    *DEdash_backbufptr++ = *HLdash_markingsptr++; // also BC--;
+    *ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF)) = *HLdash_markingsptr++; // also BC--;
 
     // EXX - Unbank
   }
@@ -14779,8 +14782,10 @@ static void dr_fill_left_stripe(chqstate_t *state,
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
     /* Draw - no masking since we're on a plain surface. */
-    *DEdash_backbufptr++ = *HLdash_markingsptr++; // also BC--;
-    *DEdash_backbufptr = *HLdash_markingsptr;
+    // Conv: see left-edge write above; second byte's low address byte wraps
+    // rather than a raw pointer increment.
+    *DEdash_backbufptr = *HLdash_markingsptr++; // also BC--;
+    *ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF)) = *HLdash_markingsptr;
 
     // EXX - Unbank
   }
@@ -14804,8 +14809,11 @@ static void dr_fill_left_stripe(chqstate_t *state,
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
     /* AND-OR masking here. */
-    *DEdash_backbufptr++ = *HLdash_markingsptr++; // also BC--;
-    *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1]; // wraparound needed?
+    // Conv: see left-edge write above; second byte's low address byte wraps
+    // rather than a raw pointer increment.
+    *DEdash_backbufptr = *HLdash_markingsptr++; // also BC--;
+    DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF));
+    *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1];
 
     // EXX - Unbank
   }
