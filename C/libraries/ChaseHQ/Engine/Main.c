@@ -15067,11 +15067,9 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
 
   /* $C79B-$C7A3: in-tunnel or tunnel-visible check */
   if ((state->dr_in_tunnel | state->dt_tunnel_visible) == 0) {
-    /* $C7A5: C = D & 0x0F, B = ~((E>>1)+C)+0x80 */
     C = D & 0x0F;
     B = (int)(u8)(~((u8)((u8)(E >> 1) + (u8)C)) + 0x80);
 
-    /* $C7AE: load horizon level; H = high byte, L = low byte. */
     C = 24;
     A = (int)((state->session.horizon_level >> 8) & 0xFF);
     if ((s8)(u8)A < 0)
@@ -15108,15 +15106,17 @@ dr_c7db:
     Ascroll = state->dr_horizon_x_scroll;
     carry = Ascroll & 1; // low bit becomes choice between original and shifted version
     Ascroll >>= 1; // halve the actual shift
-    // CHECK is this the right way around?
+    /* TODO(unverified): direction of this carry-selected choice between
+     * stage->backdrop and pre_shifted_backdrop has not been confirmed
+     * against the skool disassembly at $C7F1. Do not treat as settled
+     * until checked. */
     HLbackdrop = carry ? &state->stage->backdrop[BC_backdrop_offset] : &state->pre_shifted_backdrop[BC_backdrop_offset];
     Ajump = (u8)(18 - (int)(u8)Ascroll * 2);
     state->dr_backdrop_copy_jump = (u8)Ajump;
     assert(Ajump + 18 <= 36);
     memcpy(&state->dr_backdrop_copy_instrs[0], &backdrop_copy_instrs_template[Ajump], 18);
 
-    /* $C80A: BC = (dr_sky_rows<<8) | 0x0A.  $C80E LD A,L gives backdrop row offset.
-     * In C: HLbackdrop already points to the correct row, so A_col starts at 0
+    /* HLbackdrop already points to the correct row, so A_col starts at 0
      * and advances by 10 per scanline (each backdrop row = 10 bytes). */
     Bloop = (int)state->dr_sky_rows;
     A_col = 0;
@@ -15132,9 +15132,11 @@ dr_backdrop_fill_advance:
     goto dr_copy_row;
 
     do {
-      /* top of per-row copy loop: $C821 EXX; $C822 EX AF,AF'; $C823 LD E,A.
-       * $C823 LD E,A shuttles A_col into E so $C82C LD L,A can pick it up
-       * via the subsequent EX AF,AF'.  E (screen column) stays constant. */
+      // EXX ($C821)
+      // EX AF,AF' ($C822) — A_col is shuttled through E ($C823 LD E,A) so that
+      // $C82C LD L,A can retrieve it after the exchange; E (screen column)
+      // is otherwise unaffected, so the C model leaves it untouched here and
+      // reads A_col directly at the point of use below.
 
 dr_c824:
       A = D;
@@ -15143,7 +15145,6 @@ dr_c824:
         goto dr_backdrop_fill_advance; // up
 
 dr_copy_row:
-      /* $C82A: A = E; EX AF,AF'; L = A (set backdrop src col to A_col) */
       /* Blit one screen row.
        * Source: HLbackdrop + A_col (restarted after each LD L,A).
        * Dest:   ADDRTOBACKBUF(D:E), advancing right per LDI. */
@@ -15161,25 +15162,36 @@ dr_copy_row:
         else
           /* 0xED 0xA0 = LDI: copy one byte */
           *DEscr++ = *HLsrc++;
-      /* $C83F: 1 LDI; $C841 LD L,A; $C842-$C854: 10 LDIs */
+      /* The source pointer is reloaded back to HLbackdrop + A_col before
+       * this section and the one below, so each restarts reading from
+       * A_col rather than continuing where the previous section left off.
+       * This is not a bug: each section of the row is a separately-scrolled
+       * strip of the backdrop, so they legitimately share the same source
+       * origin. */
       // Fill solid middle section
       *DEscr++ = *HLsrc++;
-      memcpy(DEscr, HLbackdrop + (u8)A_col, 10); DEscr += 10; // Conv: replaced loop
-      /* $C856 LD L,A; $C857-$C869: 10 LDIs; $C86B LD L,A */
+      /* Conv: 10 consecutive LDIs (byte copy, no mask, no flip table) folded
+       * into memcpy — safe because the source run is contiguous and
+       * non-wrapping within backdrop row storage. */
+      memcpy(DEscr, HLbackdrop + (u8)A_col, 10); DEscr += 10;
       // Fill solid right hand section
-      memcpy(DEscr, HLbackdrop + (u8)A_col, 10); DEscr += 10; // Conv: replaced loop
+      /* Conv: same reasoning as the middle section above — 10 plain LDIs
+       * from a re-seeded HLbackdrop + A_col, folded into memcpy. */
+      memcpy(DEscr, HLbackdrop + (u8)A_col, 10); DEscr += 10;
       /* $C86C JR (self-modified): JR target = $C86E + dr_backdrop_copy_jump →
        * copies (18 - dr_backdrop_copy_jump) / 2 LDIs from the 9-slot variable block.
        * dr_backdrop_copy_jump = 18 - scroll*2: scroll=0 → 0 LDIs, scroll=9 → 9 LDIs. */
       // Fill partial right hand section
-      memcpy(DEscr, HLbackdrop + (u8)A_col, (18 - state->dr_backdrop_copy_jump) / 2); // Conv: replaced loop
-      /* $C880 EXX; $C881 ADD A,C (A_col += 10); $C882 DJNZ */
+      /* Conv: variable-length run of plain LDIs (length set by
+       * dr_backdrop_copy_jump) folded into memcpy — same non-wrapping,
+       * unmasked source guarantee as above. */
+      memcpy(DEscr, HLbackdrop + (u8)A_col, (18 - state->dr_backdrop_copy_jump) / 2);
       A_col = (u8)(A_col + 10);
     } while (--Bloop > 0);
   }
 
-  /* $C884-$C887: EXX; EX AF,AF'; LD E,A; EX DE,HL — sky fill uses
-   * current screen address (D:E) as HL, with L += 30. */
+  /* Sky fill uses the current screen address (D:E), with the column
+   * advanced by 30. */
 dr_blank_sky_fill:
   E = (u8)(E + 30);
   DEfillpattern = state->dr_in_tunnel ? 0xFF : 0x00;
