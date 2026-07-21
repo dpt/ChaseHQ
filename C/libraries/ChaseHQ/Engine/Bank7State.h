@@ -58,6 +58,19 @@ struct chq_bank7_state {
   // clears it, $E045/$E04C are show_end_screen's own mask logic, $E272 is
   // render_score's unconditional set).
   u8           es_input_mask;
+
+  // $5C6C (SM): flip-flop gate byte, rotated (RLC) once per call by both
+  // routine_e42e (GLYPH_A) and routine_e472 (GLYPH_B, also called by
+  // routine_e3b7's handshake handler before its own animation logic).
+  u8           es_flag_5c6c;
+
+  // $5C6D (SM): flip-flop gate byte, rotated (RLC) once per call by both
+  // routine_e46d (GLYPH_C) and routine_e3b7 (HANDSHAKE) itself.
+  u8           es_flag_5c6d;
+
+  // $A172 (SM): handshake animation frame index (0..5), advanced and
+  // wrapped by routine_e3b7 each call; indexes handshake_table.
+  u8           es_handshake_index;
 };
 
 /* ----------------------------------------------------------------------- */

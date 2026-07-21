@@ -209,7 +209,7 @@ u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 #define ADDRTOBACKBUF_M(addr) \
   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
-static u8 *z80addrtobackbuf(chqstate_t *state, int addr)
+u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 {
   u8 *ptr;
   if (addr < 0x0020) {

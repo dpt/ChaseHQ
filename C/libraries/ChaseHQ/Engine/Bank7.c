@@ -82,7 +82,9 @@ static void es_clear(chqstate_t *state)
 #define ESCMD_CALL_WORD       (12) /* -> $E2B2, runs immediately */
 #define ESCMD_RENDER_SCORE    (13) /* -> $E256, runs immediately */
 
-#define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
+#define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr, 0, 0)
+#define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
+#define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
 /**
  * $E0FE-$E209: Raw end-screen script bytes.
@@ -174,6 +176,50 @@ static u8 script_data[] = {
 };
 
 /**
+ * Advance a raw Z80 screen address by one character-cell row.
+ *
+ * Common wraparound arithmetic shared by draw_endshot ($E4A9) and
+ * routine_e3b7's handshake blit ($E3E9-$E3F8, $E407-$E416): within a
+ * character row D climbs through its low 3 bits (one pixel scanline per
+ * call); when that wraps, E jumps on by 32 (next character row) and D drops
+ * back by 8 unless E itself carried into the next screen third.
+ *
+ * \param[in] addr Current screen address (was DE).
+ * \return Screen address one row down.
+ */
+static u16 next_screen_row(u16 addr)
+{
+  u8 Dhi; /* screen address high byte after +1 scanline (was D via A) */
+  u8 Elo; /* screen address low byte after +32 column step (was E via A) */
+
+  Dhi = (u8) ((addr >> 8) + 1);
+  if ((Dhi & 0x07) != 0)
+    return (u16) ((Dhi << 8) | (addr & 0xFF));
+
+  Elo = (u8) ((addr & 0xFF) + 0x20);
+  if (Elo < 0x20) /* carry out of E: stay in the next screen third */
+    return (u16) ((Dhi << 8) | Elo);
+  else
+    return (u16) (((Dhi - 0x08) << 8) | Elo);
+}
+
+/**
+ * Rotate a byte left circularly (Z80 RLC), reporting the bit that wrapped.
+ *
+ * \param[in,out] v Byte to rotate in place (was (HL) or a register).
+ * \return The old bit 7, i.e. the carry flag RLC sets (was Carry).
+ */
+static u8 rlc8(u8 *v)
+{
+  u8 old_bit7; /* bit that rotates out of the top and back in at the bottom */
+
+  old_bit7 = (u8) ((*v >> 7) & 1);
+  *v       = (u8) ((*v << 1) | old_bit7);
+
+  return old_bit7;
+}
+
+/**
  * $E4A9: Blit an end-game montage shot to the screen
  *
  * Copies a 13-byte-wide bitmap, 64 rows tall, from image into the screen at
@@ -196,8 +242,6 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 {
   int  row;      /* bitmap row counter, 64 down to 1 (was B) */
   u16  DE;       /* current screen row address (was DE) */
-  u8   Dhi;      /* screen address high byte after +1 scanline (was D via A) */
-  u8   Elo;      /* screen address low byte after +32 column step (was E via A) */
   u8   Dattr;    /* attribute row address high byte (was D after RRCA x3) */
   u16  attraddr; /* current attribute row address (was DE in the attr loop) */
   int  attrrow;  /* attribute row counter, 8 down to 1 (was A) */
@@ -207,17 +251,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
   for (row = 64; row != 0; row--) {
     memcpy(ADDRTOSCREEN(DE), image, 13);
     image += 13;
-
-    Dhi = (u8) ((DE >> 8) + 1);
-    if ((Dhi & 0x07) != 0) {
-      DE = (u16) ((Dhi << 8) | (DE & 0xFF));
-    } else {
-      Elo = (u8) ((DE & 0xFF) + 0x20);
-      if (Elo < 0x20) /* carry out of E: stay in the next screen third */
-        DE = (u16) ((Dhi << 8) | Elo);
-      else
-        DE = (u16) (((Dhi - 0x08) << 8) | Elo);
-    }
+    DE = next_screen_row(DE);
   }
 
   Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
@@ -292,30 +326,195 @@ static void es_handler_draw_frame(chqstate_t *state, const u8 **script)
 }
 
 /**
- * $E42E/$E472/$E46D (stub): Plot end-screen glyphs
+ * $E42E routine_e42e: Sweep the middle attribute band toward the backbuffer
+ * target colours
  *
- * TODO: not yet ported (bitmap/glyph blit phase). Three related entry points
- * into the same glyph-plot routine, called repeatedly (every reload-count
- * frames) while $A16D points past the command byte at the text to plot.
+ * Gate: only runs every other call (rlc8 flip-flops $5C6C; returns
+ * immediately when the old top bit was set). When it runs, walks all 512
+ * attribute cells $5900-$5AFF against the corresponding backbuffer bytes at
+ * $F000-$F1FF (the glyph shapes rasterised there by other code): cells with
+ * the BRIGHT bit set are left untouched; cells whose masked colour already
+ * matches the backbuffer target are copied verbatim; every other cell steps
+ * its ink and paper fields one unit toward the target. Called repeatedly
+ * this produces a gradual colour reveal as glyphs are plotted into the
+ * backbuffer over several frames.
+ *
+ * Conv: the ink-field increment (`INC C`, $E45D) and paper-field increment
+ * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
+ * wraparound reproduces this bug-for-bug.
  *
  * \param[in] state Pointer to game state.
  */
-static void es_handler_glyph_plot(chqstate_t *state)
+static void es_handler_glyph_sweep(chqstate_t *state)
 {
-  NOT_USED(state);
+  u8 *HLattr;   /* current attribute cell (was HL) */
+  u8 *DEback;   /* current backbuffer cell (was DE) */
+  int cell;     /* attribute cell counter, 512 down to 0 (was H reaching $5B) */
+  u8  A;        /* working accumulator (was A) */
+  u8  B_target; /* masked target colour read from the backbuffer (was B) */
+  u8  C_ink;    /* merged ink field (was C) */
+
+  if (rlc8(&state->bank7->es_flag_5c6c))
+    return;
+
+  HLattr = ADDRTOATTRS(0x5900);
+  DEback = ADDRTOBACKBUF(0xF000);
+
+  for (cell = 512; cell != 0; cell--, HLattr++, DEback++) {
+    if (*HLattr & 0x40) /* BRIGHT set: leave this cell untouched */
+      continue;
+
+    A = *DEback & 0x3F;
+    if (A == *HLattr) {
+      *HLattr = *DEback;
+      continue;
+    }
+
+    B_target = A;
+
+    C_ink = *HLattr & 0x07;
+    if ((B_target & 0x07) != C_ink)
+      C_ink++;
+
+    A = *HLattr & 0x38;
+    if ((B_target & 0x38) != A)
+      A = (u8) (A + 0x08);
+
+    *HLattr = (u8) (A | C_ink);
+  }
 }
 
 /**
- * $E3B7/$E3BA (stub): Advance the handshake animation frame
+ * $E475: Shared fade-to-black tail for routine_e472/routine_e46d
  *
- * TODO: not yet ported (bitmap/glyph blit phase). Ping-pongs through the
- * four handshake_N bitmaps via the $E3A5 table, LDIR'd to screen $48AC.
+ * Sweeps the same 512-cell attribute band as es_handler_glyph_sweep,
+ * decrementing each cell's ink field by 1 (floor 0) and paper field by one
+ * unit (floor 0) every call it runs. Gated by rlc8 on *flag -- $5C6C for
+ * routine_e472 (GLYPH_B, also called directly by the handshake handler),
+ * $5C6D for routine_e46d (GLYPH_C).
+ *
+ * Conv: unlike es_handler_glyph_sweep, BRIGHT/FLASH are never tested here --
+ * the original ANDs each byte down to its ink/paper fields before OR-ing
+ * them back together, which drops those bits on every write. Matched
+ * bug-for-bug.
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] flag  Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
+ */
+static void es_glyph_fade_common(chqstate_t *state, u8 *flag)
+{
+  u8 *HLattr; /* current attribute cell (was HL) */
+  int cell;   /* attribute cell counter, 512 down to 0 (was D pages) */
+  u8  A;      /* working accumulator (was A) */
+  u8  B_ink;  /* new ink field (was B) */
+
+  if (!rlc8(flag))
+    return;
+
+  HLattr = ADDRTOATTRS(0x5900);
+
+  for (cell = 512; cell != 0; cell--, HLattr++) {
+    A = *HLattr;
+    if (A == 0)
+      continue;
+
+    B_ink = A & 0x07;
+    if (B_ink != 0)
+      B_ink--;
+
+    A &= 0x38;
+    if (A != 0)
+      A = (u8) (A - 0x08);
+
+    *HLattr = (u8) (A | B_ink);
+  }
+}
+
+/**
+ * $E472 routine_e472: Fade the $5C6C-gated glyph attribute band
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_glyph_fade_b(chqstate_t *state)
+{
+  es_glyph_fade_common(state, &state->bank7->es_flag_5c6c);
+}
+
+/**
+ * $E46D routine_e46d: Fade the $5C6D-gated glyph attribute band
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_glyph_fade_c(chqstate_t *state)
+{
+  es_glyph_fade_common(state, &state->bank7->es_flag_5c6d);
+}
+
+/* $E3A5 handshake_table: row-count + source bitmap per animation frame,
+ * cycling 1-2-3-4-3-2 (see routine_e3b7 below). */
+static const struct {
+  u8         rows;
+  const u8  *image;
+} handshake_table[6] = {
+  { 37, bitmap_handshake_1 },
+  { 35, bitmap_handshake_2 },
+  { 34, bitmap_handshake_3 },
+  { 32, bitmap_handshake_4 },
+  { 34, bitmap_handshake_3 },
+  { 35, bitmap_handshake_2 },
+};
+
+/**
+ * $E3B7 routine_e3b7: Advance the handshake animation frame
+ *
+ * Always fades the $5C6C attribute band one step first (routine_e472's
+ * shared tail, called directly rather than duplicated). Then rotates the
+ * gate byte at $5C6D: when its old top bit was clear, the animation-advance
+ * block below is skipped entirely; otherwise the 0-5 ping-pong frame index
+ * ($A172) advances into handshake_table, that frame's rows are LDIR'd to
+ * screen $48AC (8 bytes/row, wraparound-stepped via next_screen_row), and 3
+ * further 8-byte rows are zero-filled to pad every frame out to a fixed
+ * height. Either way, finishes by stamping a fixed 5-group x 8-byte
+ * decorative attribute pattern at $59AC.
  *
  * \param[in] state Pointer to game state.
  */
 static void es_handler_handshake(chqstate_t *state)
 {
-  NOT_USED(state);
+  u8        A_index; /* frame index 0..5, wrapped (was A/B) */
+  const u8 *HLimage;  /* handshake bitmap source, walked forward (was HL) */
+  u16       DE;       /* screen destination address (was DE) */
+  int       row;      /* bitmap row counter for this frame (was B) */
+  int       blank;    /* blank-row counter, 3 down to 0 (was C) */
+  u8       *HLattr;    /* decorative attribute cell (was HL) */
+  int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
+
+  es_handler_glyph_fade_b(state);
+
+  if (rlc8(&state->bank7->es_flag_5c6d)) {
+    A_index = state->bank7->es_handshake_index;
+    state->bank7->es_handshake_index = (u8) (A_index + 1 == 6 ? 0 : A_index + 1);
+
+    HLimage = handshake_table[A_index].image;
+    DE      = 0x48AC;
+
+    for (row = handshake_table[A_index].rows; row != 0; row--) {
+      memcpy(ADDRTOSCREEN(DE), HLimage, 8);
+      HLimage += 8;
+      DE = next_screen_row(DE);
+    }
+
+    for (blank = 3; blank != 0; blank--) {
+      memset(ADDRTOSCREEN(DE), 0, 8);
+      DE = next_screen_row(DE);
+    }
+  }
+
+  HLattr = ADDRTOATTRS(0x59AC);
+  for (group = 5; group != 0; group--) {
+    memset(HLattr, 0x07, 8);
+    HLattr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
+  }
 }
 
 /**
@@ -464,13 +663,19 @@ static void run_script(chqstate_t *state)
       continue;
 
     case ESCMD_GLYPH_A:
+      es_set_dispatch(state, es_handler_glyph_sweep, 16);
+      goto rs_exit;
+
     case ESCMD_GLYPH_B:
+      es_set_dispatch(state, es_handler_glyph_fade_b, 16);
+      goto rs_exit;
+
     case ESCMD_HANDSHAKE:
-      es_set_dispatch(state, es_handler_glyph_plot, 16);
+      es_set_dispatch(state, es_handler_handshake, 16);
       goto rs_exit;
 
     case ESCMD_GLYPH_C:
-      es_set_dispatch(state, es_handler_glyph_plot, 32);
+      es_set_dispatch(state, es_handler_glyph_fade_c, 32);
       goto rs_exit;
 
     case ESCMD_IDLE:
@@ -480,6 +685,7 @@ static void run_script(chqstate_t *state)
 
     case ESCMD_SET_A172:
       Creload = *HLscript++;
+      state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
       es_set_dispatch(state, es_handler_handshake, Creload);
       goto rs_exit;
 

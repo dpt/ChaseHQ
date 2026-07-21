@@ -286,6 +286,7 @@
 
 u8   *z80addrtoscreen(chqstate_t *state, int addr, int left, int right);
 u8   *z80addrtoattrs(chqstate_t *state, int addr, int left, int right);
+u8   *z80addrtobackbuf(chqstate_t *state, int addr);
 u16   wordat(const u8 *addr);
 void  setwordat(u8 *addr, int value);
 
