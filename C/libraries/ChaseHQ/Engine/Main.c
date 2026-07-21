@@ -1238,9 +1238,9 @@ static void play_engine_sfx_48k(chqstate_t *state)
 {
   int phase;     /* perp-caught phase; suppresses effect when car is stopped (was A) */
   int counter;   /* per-call skip counter; fires every 4th call (was A) */
-  int nloops;    /* tone pulse iteration count (was C) */
   int off_cycle; /* off-phase delay loop count; 0 means 256 as DJNZ (was B) */
   int on_cycle;  /* on-phase delay loop count; 0 means 256 as DJNZ (was B) */
+  int nloops;    /* tone pulse iteration count (was C) */
 
   phase = state->perp_caught_phase;
   if (phase >= PERPCAUGHTPHASE_STOPPED)
@@ -1548,10 +1548,10 @@ static void main_loop(chqstate_t *state)
 {
   int  carry;               /* carry flag used by SRL (carry) */
   int  start_speech_index;  /* index into the 3-entry speech cycle (was A) */
+  int  start_speech;        /* speech sample index to play (was A) */
   u8   keys;                /* keyboard state in test mode (was A) */
   u8  *pstart_speech;       /* pointer to start_speech field (was HL) */
   int  quit_state;          /* current quit-state value (was A) */
-  int  start_speech;        /* speech sample index to play (was A) */
   carry = 0;
 
   for (;;) {
@@ -2841,8 +2841,8 @@ static int handle_perp_caught(chqstate_t *state)
   int       zero;          /* zero flag from SBC operations (zero) */
   int       phase;         /* perp_caught_phase value read at entry (was A) */
   int       car_y;         /* hero car y position advancing during phase 2 (was A) */
-  int       fastcounter;   /* fast_counter incremented during phase 2 (was A) */
   int       HLroadpos;     /* road_pos adjusted in phases 2 and 1 (was HL) */
+  int       fastcounter;   /* fast_counter incremented during phase 2 (was A) */
   u8        A;             /* general accumulator across phase 3 and score phases (was A) */
   const u8 *HLmessages;    /* pointer to the stage arrest message list (was HL) */
   int       H;             /* high ASCII digit for the stage clear bonus (was H) */
@@ -3215,11 +3215,11 @@ static void fully_smashed(chqstate_t *state)
  */
 static void transition(chqstate_t *state)
 {
-  int       iterations;  /* shadow iteration count, 8 chunks (was B') */
+  int       mask;        /* fade mask byte ORed into each back-buffer pixel (was E) */
   u16       backbuf;     /* back-buffer high byte packed in u16; L forced per call (was HL) */
   const u8 *maskptr;     /* pointer walking the transition mask table (was HL') */
+  int       iterations;  /* shadow iteration count, 8 chunks (was B') */
   u16       backbufcopy; /* saved backbuf restored after the odd-chunk call (was D) */
-  int       mask;        /* fade mask byte ORed into each back-buffer pixel (was E) */
 
   switch (state->transition_control) {
   case TRANSITIONCONTROL_STOP:
@@ -3713,8 +3713,8 @@ static void draw_scene_objects(chqstate_t *state)
   u8             *IYheight_table;      /* pointer into height_table for per-object calls (was IY) */
   u8             *HLroadbuf;           /* pointer into road_buffer for right-side object scan (was HL) */
   s16            *IXtable_ea00;        /* pointer into xpos_road_centre at offset 88 ($EAB0) (was IX) */
-  int             Afloating_arrow;     /* non-zero when the floating target arrow should be drawn (was A) */
   int             Aobj;                /* current object byte from the road buffer (was A) */
+  int             Afloating_arrow;     /* non-zero when the floating target arrow should be drawn (was A) */
   const bitmap_t *HLarrow_defn;        /* pointer to the floating arrow bitmap definition (was HL) */
   int             Ex;                  /* horizontal position for the arrow draw (was E) */
   int             Dy;                  /* vertical position for the arrow draw (was D) */
@@ -5735,8 +5735,8 @@ static void drive_chatter(chqstate_t *state)
   int          chatter_state; /* FSM state at entry, decremented to dispatch (was A) */
   char         character;     /* character to display: space or message char (was D) */
   u8           rotating;      /* cursor blink byte, RRC-rotated each frame (was A) */
-  int          delay;         /* chatter display delay counter (was A) */
   int          x;             /* x position for mini-font cursor plot (was A) */
+  int          delay;         /* chatter display delay counter (was A) */
   u8           B;             /* copy of chatter_delay used for RR blink-rate test (was B) */
   const char  *HLnextchar;    /* pointer to current character in message string (was HL) */
   const u8    *chatterblk;    /* pointer into the chatter data block (was HL) */
@@ -6396,14 +6396,14 @@ static void clear_message_line(chqstate_t *state)
 static void check_time_up(chqstate_t *state)
 {
   const u8 *ptime_bcd;            /* pointer to BCD time counter in session state (was HL) */
+  int       time_bcd;             /* updated BCD time value after DAA_sub decrement (was A) */
   int       time_up_state;        /* FSM state at entry, used as switch index (was A) */
   int       half_borrow;          /* H flag: low BCD nibble was 0 before decrement (was H flag) */
-  int       time_bcd;             /* updated BCD time value after DAA_sub decrement (was A) */
-  u8       *time_digits;          /* pointer to the two-digit time field in continue_messages (was DE) */
-  int       effect;               /* SFX index: EFFECT_BIP or EFFECT_BOW for the tick-tock sound (was B) */
-  int       remaining_subseconds; /* sub-second frame counter, 6 down to 1 (was H) */
   int       remaining_seconds_x2; /* doubled countdown: 21 (= 10 seconds × 2 + 1) down to 0 (was L) */
+  int       remaining_subseconds; /* sub-second frame counter, 6 down to 1 (was H) */
+  int       effect;               /* SFX index: EFFECT_BIP or EFFECT_BOW for the tick-tock sound (was B) */
   int       seconds;              /* countdown in whole seconds, derived by halving remaining_seconds_x2 (was A) */
+  u8       *time_digits;          /* pointer to the two-digit time field in continue_messages (was DE) */
   int       hidigit;              /* ASCII high digit of the countdown display: '1' or space (was A) */
   int       lodigit;              /* low digit of the countdown as integer, converted to ASCII on write (was L) */
 
@@ -6943,19 +6943,19 @@ static void plot_turbos_and_digits(chqstate_t *state)
   int        Aboost;          /* current boost time: non-zero means turbos are spinning (was A) */
   const u8  *HLbitmap;        /* pointer to the turbo sprite frame to draw (was HL) */
   int        Aframe;          /* turbo spin animation frame index 0–2 (was A, SM $9E22) */
-  int        B;               /* row counter for the sprite draw loop, TURBOHEIGHT down to 1 (was B) */
   const u16 *SM_9e45;         /* frame data pointer for the last turbo sprite (was SM $9E45) */
   int        A;               /* back-buffer column offset for each turbo position (was A) */
   const u16 *SPbitmap;        /* pointer walking the turbo frame bitmap data (was SP) */
   u8        *HLbackbuf;       /* back-buffer pointer for sprite row writes (was HL) */
+  int        B;               /* row counter for the sprite draw loop, TURBOHEIGHT down to 1 (was B) */
   int        DEbitmap;        /* combined mask+bitmap word from the frame data (was DE) */
   int        Emask;           /* pixel mask byte extracted from DEbitmap (was E) */
   int        Dbitmap;         /* pixel bitmap byte extracted from DEbitmap (was D) */
   u8        *DEscreen;        /* pointer to the speed digit area on screen (was DE) */
   int        DEdash_speed;    /* raw speed value, banked to shadow DE (was DE') */
+  int        HLdash;          /* accumulated scaled speed value (was HL') */
   int        Bdash_iterations;/* bit count for the multiply loop, 7 iterations (was B') */
   u8         Ascale;          /* scale factor 82, RLA-shifted through for multiply (was A') */
-  int        HLdash;          /* accumulated scaled speed value (was HL') */
   int        BCdash;          /* divisor for digit extraction: 10000, 1000, or 100 (was BC') */
   int        Ddash;           /* extracted 10,000s digit (was D') */
   int        Edash;           /* extracted 1,000s digit (was E') */
@@ -7651,17 +7651,17 @@ static void check_scenery_collisions(chqstate_t *state)
   int          Croad_pos_hi;      /* road_pos high byte saved to shadow C before scenery_hit call (was C') */
   int          Aspeed;            /* speed cap (20) passed to scenery_hit for tunnel wall impact (was A) */
   int          Adash_flip;        /* flip flag for tunnel wall: low bit of road_pos high byte (was A') */
-  int          Adash;             /* road buffer offset banked to shadow A via EX AF,AF' (was A') */
   u8           A;                 /* road buffer forward index used for RL carry test (was A) */
+  int          Adash;             /* road buffer offset banked to shadow A via EX AF,AF' (was A') */
+  int          raw_byte1;         /* first road-buffer byte before OR (no Z80 register) */
   int          Aobj;              /* object ID byte OR'd from two consecutive road buffer positions (was A) */
+  int          raw_byte2;         /* second road-buffer byte after optional pointer advance (no Z80 register) */
   const obj_t *HLobj;             /* pointer to the struck object's data record (was HL') */
   int          BCdash_max;        /* upper x collision threshold from right-side object data (was BC') */
   int          DEdash_min;        /* lower x collision threshold from right-side object data (was DE') */
   int          Aspeed_cap;        /* impact speed cap read from object data (was A') */
   int          BCdash_min;        /* lower x collision threshold from left-side object data (was BC') */
   int          DEdash_max;        /* upper x collision threshold from left-side object data (was DE') */
-  int          raw_byte1;         /* first road-buffer byte before OR (no Z80 register) */
-  int          raw_byte2;         /* second road-buffer byte after optional pointer advance (no Z80 register) */
 
   carry = 0;
 
@@ -8015,11 +8015,11 @@ static void layout_objects(chqstate_t *state)
   int       countdown;  /* fork_countdown snapshot used to split normal vs. fork iterations (was A) */
   int       lanesbyte;  /* lanes byte read from road buffer before EXX bank (was A) */
   u8        lanesbyte2; /* lanes byte after EXX, rotated to test fork/tunnel/dirt flags (was E') */
+  int       L;          /* xpos row index for the fork tail pass (was L) */
   int       Ldash;      /* xpos table row index: 127 - (objpos2[0] & 0x7F) (was L') */
   int       laneoffset; /* lane offset bits 1:0 from lanesbyte2, selects left table (was A) */
   s16      *tabptr;     /* pointer into the selected xpos table for right-boundary lookup (was HL') */
   int       laneshift;  /* right-boundary table selector, derived from lanes byte bit pattern (was A) */
-  int       L;          /* xpos row index for the fork tail pass (was L) */
   int       A;          /* remaining slots for the fork tail pass: 21 - fork_countdown (was A) */
 
   carry = 0;
@@ -8180,17 +8180,15 @@ void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
   u8        Adistancediff;      /* distance difference between hazard car and perp, mod 256 (was A) */
   u8        Achanging_lane_flag; /* pb_changing_lane flag read (was A) */
   u8        Adist_lane_gate;    /* perp distance compared to 7, gating the lane-change timer path (was A) */
-  u8        Alane_timer;        /* lane-change countdown value, decremented then reloaded on zero (was A) */
-  u8        Acurrlane_bound;    /* current_lane re-read for boundary check against Bmin_lane/Cmax_lane (was A) */
-  u8        Adist_minus_6;      /* distance-6 scratch value; result is discarded (dead code) (was A) */
-  u8        Abonus_rotate;      /* bonus digit rotated left 4 bits for the retry_count case (was A) */
   int       HL;                 /* road position remainder for iterative lane-boundary checks (was HL) */
+  int       DE;                 /* lane-boundary step value: 70 (was DE) */
+  u8        Alane_timer;        /* lane-change countdown value, decremented then reloaded on zero (was A) */
   int       Bmin_lane;          /* lower lane bound from road-width table (was B) */
   int       Cmax_lane;          /* upper lane bound from road-width table (was C) */
-  int       DE;                 /* lane-boundary step value: 70 (was DE) */
-  int       Acurrlane;          /* perp's current_lane, updated during lane management (was A) */
+  u8        Acurrlane_bound;    /* current_lane re-read for boundary check against Bmin_lane/Cmax_lane (was A) */
   int       Ccurrentlane;       /* current_lane captured before random ±1 walk (was C) */
   int       Cnewlane;           /* candidate new lane after random ±1 step (was C) */
+  int       Acurrlane;          /* perp's current_lane, updated during lane management (was A) */
   int       Cdelta;             /* lane correction delta: +2 or −2 when lane is out of range (was C) */
   int       BCspawn_lanes;      /* packed return from get_spawn_lanes: high byte=min, low byte=max (was BC) */
   int       Bmin_spawn_lane;    /* minimum valid lane from road buffer, unpacked from BCspawn_lanes (was B) */
@@ -8203,10 +8201,12 @@ void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
   int       HLspeed;            /* perp's approach speed accumulator, base 230 (was HL) */
   int       Acounter;           /* inner approach-timer countdown; resets from perp_approach_base+rng (was A) */
   int       Adistance;          /* perp's buffer distance, compared to 13 for close-approach boost (was A) */
+  u8        Adist_minus_6;      /* distance-6 scratch value; result is discarded (dead code) (was A) */
   int       Adash_threshold;    /* crash speed threshold: 200 normally, 230 during turbo boost (was A') */
   int       Dbonus_hi;          /* high bonus digit: 0 base, +4 for a second smash (was D) */
   int       smash_twice;        /* 1 when hit hard enough to call smash() twice (was second PUSH HL) */
   int       Ebonus_mid;         /* middle bonus digit, rotated into position when retry_count is set (was E) */
+  u8        Abonus_rotate;      /* bonus digit rotated left 4 bits for the retry_count case (was A) */
   carry = 0;
 
   if (state->perp_caught_phase > 0)
@@ -8644,10 +8644,10 @@ fill_in:
  */
 static u16 get_spawn_lanes(chqstate_t *state, int extra)
 {
-  int carry;       /* carry from SLA of masked lanes byte (carry) */
   u8 *roadbuf;     /* pointer into road buffer lanes data at the queried offset (was HL) */
   u8  lanes;       /* raw lanes byte read from road buffer (was A) */
   int lanes_copy;  /* preserved copy of lanes before masking to $C1 (was E) */
+  int carry;       /* carry from SLA of masked lanes byte (carry) */
 
   roadbuf = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + 2 + extra);
   lanes = *roadbuf;
@@ -8700,15 +8700,15 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
  */
 void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 {
-  int       carry;              /* current_lane < lane, selects left/right slide direction (carry) */
   int       spawn_lanes;        /* packed return from get_spawn_lanes: high byte=min, low byte=max (was BC) */
   u8        min_lane;           /* minimum valid lane for this hazard's road position (was B) */
   int       max_lane;           /* maximum valid lane for this hazard's road position (was C) */
   int       lane;               /* hazard's assigned lane from hazard_lane_OR_perp_dist_hi (was A) */
   int       current_lane;       /* hazard's current_lane after clamping to road bounds (was A) */
+  int       carry;              /* current_lane < lane, selects left/right slide direction (carry) */
+  const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the target lane column (was HL) */
   int       horz_pos;           /* hazard's horizontal position, slid ±5 toward target each frame (was A) */
   int       hit_timer;          /* hit_timer from hazard slot; non-zero triggers a crash (was A) */
-  const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the target lane column (was HL) */
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
     IXhazard->speed = 0x1FF;
@@ -10680,8 +10680,8 @@ mhc_set_cornering:
 static void animate_hero_car(chqstate_t *state)
 {
   int HLspeed;            /* current hero car speed (was HL) */
-  int DEquartered_speed;  /* speed / 4 | 3: friction ramp during crash (was DE) */
   int Acrashed_flag;      /* ahc_crashed_flag on entry (was A) */
+  int DEquartered_speed;  /* speed / 4 | 3: friction ramp during crash (was DE) */
   int Aturn_speed;        /* turn_speed value set during crash (was A) */
   int HL_b356;            /* crash spin speed decayed by 1/16 each frame (was HL) */
   int DE_b356;            /* copy of HL_b356 after EX DE,HL (was DE) */
@@ -11869,16 +11869,16 @@ static void scroll_horizon(chqstate_t *state)
   int        speed;                     /* hero car speed; early-out if zero (was HL) */
   int        current_curvature;         /* current_curvature: selects horizontal scroll path (was A) */
   u8         Adash;                     /* banked A': approximated as 0 — Z80 carried this in from $B296 (was A') */
-  const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
   u8         Bhorizon_table_value;      /* high byte of horizon_table entry: reload for horizon_x_scroll (was B) */
   u8         Chorizon_x_delta;         /* low byte of horizon_table entry: signed direction for x-scroll (was C) */
   int        Aregular;                  /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
-  int        Aincline;                  /* state->incline value; magnitude used for table index (was A) */
-  int        Adiff;                     /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
+  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
   int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was B) */
   int        Eset_if_incline_negative;  /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
+  int        Aincline;                  /* state->incline value; magnitude used for table index (was A) */
+  const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
+  int        Adiff;                     /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
   int        Chorizon_table_value;      /* threshold from horizon_table for the vertical scroll rate (was C) */
-  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
   int        BCcounter;                 /* signed tick count: positive=uphill, negative=downhill (was BC) */
 
   carry = 0;
@@ -12005,9 +12005,9 @@ static void update_road_level(chqstate_t *state)
   int       Bprev_road_height;  /* previous road height, positive copy (was B) */
   int       Ay_offset;          /* current mhc_y_offset jump counter (was A) */
   int       Adiff;              /* height difference triggering jump (was A) */
+  int       car_jump_params_index; /* byte index into car_jump_params (no register) */
   const u8 *HLjump_params;      /* pointer into car_jump_params (was HL) */
   int       Ehero_car_jump_table_index; /* jump table row offset into hero_car_jump_table (was E) */
-  int       car_jump_params_index; /* byte index into car_jump_params (no register) */
   int       Acurrent_curvature; /* curvature value from previous frame (was A) */
   int       Afork_visible;      /* fork_visible flag (was A) */
   int       Acurvature_byte;    /* curvature byte read from road buffer (was A) */
@@ -12181,8 +12181,8 @@ static void layout_road(chqstate_t *state)
   s16      *SProadright;       /* pointer into xpos_road_right[], post-incremented per entry (was SP) */
   u8        Aiterations;       /* loop counter: 0x30→0 in steps of 2 (u8 wrap = 104 iters) (was A) */
   s16      *SMroadcentre;      /* pointer to current xpos_road_centre output slot (was $BA36 SM) */
-  s16      *SMroadcentreright; /* pointer to current xpos_road_centre_right output slot (was $BA40 SM) */
   s16      *SMroadcentreleft;  /* pointer to current xpos_road_centre_left output slot (was $BA45 SM) */
+  s16      *SMroadcentreright; /* pointer to current xpos_road_centre_right output slot (was $BA40 SM) */
   s16      *SMroadleft;        /* pointer to current xpos_road_left input slot (was $BA29 SM) */
   int       DEdash;            /* road-left x-position read from xpos_road_left (was DE') */
   int       HLdash;            /* x-position accumulator; updated through each interpolation (was HL') */
@@ -13326,11 +13326,11 @@ static void prepare_tunnel(chqstate_t *state)
   u8    Ain_tunnel;      /* dr_in_tunnel value; doubles as loop counter (was A at $C0E5) */
   s16  *HLmain;          /* pointer into xpos_road_centre, main-register stream (was HL) */
   int   BCmain;          /* previous entry from main stream; updated each iteration (was BC) */
-  int   DEmain;          /* current entry from main stream (was DE) */
   s16  *HLdash;          /* pointer into xpos_road_centre, shadow-register stream (was HL') */
   int   DEdash;          /* previous entry from shadow stream (was DE') */
-  int   BCdash;          /* current entry from shadow stream (was BC') */
   int   carry;           /* carry out of SBC comparisons */
+  int   DEmain;          /* current entry from main stream (was DE) */
+  int   BCdash;          /* current entry from shadow stream (was BC') */
 
   /* $C0E1-$C0E4: read dt_tunnel_visible; AND A preserves Z flag through next LD */
   Atunnel_visible = state->dt_tunnel_visible;
@@ -15036,19 +15036,19 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
 {
   int        D;                  /* screen address high byte (was D) */
   int        E;                  /* screen address low byte after INC E (was E) */
-  int        A;                  /* multi-use accumulator (was A) */
-  int        carry;              /* carry/borrow flag */
   int        C;                  /* pixel-row nibble → 24 → sky-row count (was C) */
   int        B;                  /* backdrop bias = ~((E>>1)+C)+0x80 (was B) */
+  int        A;                  /* multi-use accumulator (was A) */
   int        L_horz;             /* horizon_level low byte for sky-row clamp (was L) */
+  int        carry;              /* carry/borrow flag */
   int        BC_backdrop_offset; /* row byte offset into backdrop = (24-C)*10 (was BC) */
   int        Ascroll;            /* dr_horizon_x_scroll >> 1, selects shift amount (was A) */
   const u8  *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
   int        Ajump;              /* offset for copying instructions (was A) */
-  int        Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
   int        A_col;              /* backdrop source column; reset per LD L,A via A' (was L/A') */
-  const u8  *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
+  int        Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
   u8        *DEscr;              /* screen destination pointer for backdrop copy (was DE in LDI) */
+  const u8  *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
   int        i;                  /* byte index into dr_backdrop_copy_instrs stream */
   u8         DEfillpattern;      /* sky-fill byte: 0x00 open, 0xFF tunnel (was DE = $0000/$FFFF) */
   u8        *HLbackbuf;          /* screen scanline pointer in sky fill (was HL via SP) */
@@ -15792,8 +15792,8 @@ static void build_curve_table(chqstate_t *state, int forked)
   s16       *L_lefttab_end;          /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
   int        C_curvature;        /* curvature byte from road buffer (was C) */
-  int        A_scratch;          /* multiply scratch (was A) */
   const u8  *IY_height;          /* perspective x-scale row pointer (was IY) */
+  int        A_scratch;          /* multiply scratch (was A) */
   const u16 *IX_lanes;           /* bend table pointer (was IX) */
   u8        *DE_output;          /* curvature_table write pointer (was DE) */
   int        B_iterations;       /* curvature fill loop count (was B) */
@@ -16790,8 +16790,8 @@ dak_loop1:
  */
 static u16 dak_move_down(int DEscreen)
 {
-  int carry;   /* carry out of the E += 32 addition (carry) */
   int E_sum;   /* E + 32 before truncation, to test for overflow (was A) */
+  int carry;   /* carry out of the E += 32 addition (carry) */
   u8  E;       /* low byte of DEscreen: byte column offset + 32 (was E) */
   u8  D;       /* high byte of DEscreen: pixel row within third (was D) */
 
@@ -17078,9 +17078,9 @@ static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
  */
 static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
 {
+  int carry;            /* carry flag used by RLC (carry) */
   int Bdash_iterations; /* inner loop counter: drum_speed ticks per sample byte (was B') */
   int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
-  int carry;            /* carry flag used by RLC (carry) */
 
   carry = 0;
   do {
@@ -17603,12 +17603,12 @@ static void reset_paging_128k(chqstate_t *state)
  */
 static void attract_mode_128k(chqstate_t *state)
 {
-  int       carry;                /* carry from RRC of attract_mode_128k_blink (carry) */
-  int       enter_pressed;        /* non-zero when Enter key is held (was carry from RRA) */
   int       HL_routine;           /* bank-3 routine address constant to invoke (was HL) */
   int       A_result;             /* return value from call_bank_3_128k: 0 = early return (was A) */
   const u8 *DE_messages;          /* messages pointer: enter_for_options or press_gear (was DE) */
+  int       enter_pressed;        /* non-zero when Enter key is held (was carry from RRA) */
   const u8 *HL_messages;          /* copy of DE_messages passed to print_message (was HL) */
+  int       carry;                /* carry from RRC of attract_mode_128k_blink (carry) */
   int       A_transition_control; /* transition_control state: non-zero while transition is running (was A) */
   int       A_countdown;          /* attract_mode_128k_countdown: 2..negative; triggers scene restart (was A) */
 
@@ -17792,8 +17792,8 @@ void chq_test_game_frame(chqstate_t *state)
 int chq_test_max_side_object(chqstate_t *state)
 {
   u8  *HLroadbuf;   /* pointer into road_buffer, as in draw_scene_objects */
-  int  Biterations; /* loop counter, as in draw_scene_objects */
   int  max;         /* largest object byte seen */
+  int  Biterations; /* loop counter, as in draw_scene_objects */
 
   /* Replicates the draw_scene_objects right/left object scan so tests can
    * detect corrupt object ids (> 9) without running the full draw. */
