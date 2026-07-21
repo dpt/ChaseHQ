@@ -104,6 +104,7 @@ struct session {
 /// ever sees this as an opaque pointer, so its fields aren't reachable from
 /// any other translation unit.
 struct chq_bank3_state;
+struct chq_bank7_state;
 
 /// Per-frame AY-3-8912 register soft-copy cache, shared by the in-game audio
 /// engine (chqstate::ay_regs) and the 128K bank 3 title-tune engine
@@ -773,6 +774,14 @@ struct chqstate {
   // by bank3_state_create/bank3_state_destroy (Bank3.h), called from
   // Create.c.
   struct chq_bank3_state *bank3;
+
+  // $A16D/$A170/$5C31-$5C32 (128K bank 7 only) -- end-screen script
+  // interpreter state (run_script/$E20A). Opaque pointer: the fields live in
+  // struct chq_bank7_state (Bank7State.h), which only Bank7.c includes, so
+  // no other translation unit can read or write them. Allocated and freed
+  // by bank7_state_create/bank7_state_destroy (Bank7.h), called from
+  // Create.c.
+  struct chq_bank7_state *bank7;
 };
 
 #endif /* CHASEHQ_STATE_H */

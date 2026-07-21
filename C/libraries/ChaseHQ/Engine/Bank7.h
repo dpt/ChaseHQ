@@ -29,16 +29,26 @@
 u8 call_bank_7_128k(chqstate_t *state, int HLroutine);
 
 /**
- * $5C00: Show the end screen
+ * $E000: Show the end screen
  *
- * Displays the end-of-game results screen.
- *
- * Conv: Not yet implemented; the Z80 version drives a full results/credits
- * sequence. This stub returns immediately.
+ * Displays the end-of-game results screen: the entry loop and script
+ * dispatch skeleton are ported; the draw/glyph-plot handler bodies and
+ * script_data content are not yet (see Bank7.c).
  *
  * \param[in] state Pointer to game state.
  */
 void show_end_screen(chqstate_t *state);
+
+/**
+ * Allocates and initialises state->bank7.
+ * \return 0 on success, -1 on allocation failure.
+ */
+int bank7_state_create(chqstate_t *state);
+
+/**
+ * Frees state->bank7 and clears the pointer.
+ */
+void bank7_state_destroy(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 

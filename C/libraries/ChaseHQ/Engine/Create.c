@@ -24,6 +24,7 @@
 #include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Engine/State.h"
 #include "ChaseHQ/Engine/Bank3.h"
+#include "ChaseHQ/Engine/Bank7.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -199,6 +200,9 @@ CHQ_API chqstate_t *chq_create(zxspectrum_t *speccy)
   if (bank3_state_create(state) < 0)
     goto failure;
 
+  if (bank7_state_create(state) < 0)
+    goto failure;
+
   return state;
 
 
@@ -215,6 +219,7 @@ CHQ_API void chq_destroy(chqstate_t *state)
     return;
 
   bank3_state_destroy(state);
+  bank7_state_destroy(state);
 
   free(state);
 }

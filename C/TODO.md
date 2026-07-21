@@ -5,7 +5,7 @@
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
-  - music still not right
+  - music still not right (e.g. playing things twice or more over before stopping)
   - music plays while animating
   - animations don't stop in some cases
   - animations don't work if screen clearing is enabled
@@ -45,8 +45,6 @@
 - Draw road pipeline: merge `draw_road` back into one big unholy lump
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
-- Audit TODO/CHECK markers
-- `Spectrum.h:164` FIXME struct should be private, expose `.screen` via accessor
 
 ## P5 — Clarity pass
 

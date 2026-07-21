@@ -24,6 +24,7 @@
  */
 
 #include <setjmp.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "C99/Types.h"
@@ -34,6 +35,7 @@
 
 #include "Internal.h"
 #include "State.h"
+#include "Bank7State.h"
 
 #include "Bank7.h"
 
@@ -62,34 +64,209 @@ static void es_clear(chqstate_t *state)
   memset(&state->backbuffer[0], 0, 512);
 }
 
+/* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
+#define ESCMD_DRAW_FRAME      (1)  /* -> $E2D9 routine_e2d9, runs immediately */
+#define ESCMD_DRAW_WORD       (2)  /* -> $E2DE routine_e2de, runs immediately */
+#define ESCMD_GLYPH_A         (3)  /* -> $E42E routine_e42e via rs_exit, reload 16 */
+#define ESCMD_GLYPH_B         (4)  /* -> $E472 routine_e472 via rs_exit, reload 16 */
+#define ESCMD_HANDSHAKE       (5)  /* -> $E3B7 routine_e3b7 via rs_exit, reload 16 */
+#define ESCMD_GLYPH_C         (6)  /* -> $E46D routine_e46d via rs_exit, reload 32 */
+#define ESCMD_IDLE            (7)  /* -> rs_exit, handler = no-op, reload = script byte */
+#define ESCMD_SET_A172        (8)  /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
+#define ESCMD_HANDSHAKE_AGAIN (9)  /* -> rs_exit, handler = handshake, reload = script byte */
+#define ESCMD_10              (10) /* -> $E2F0 (undecoded) */
+#define ESCMD_11              (11) /* -> $E2C0-style entry (undecoded) */
+#define ESCMD_CALL_WORD       (12) /* -> $E2B2, runs immediately */
+#define ESCMD_RENDER_SCORE    (13) /* -> $E256, runs immediately */
+
 /**
- * $E20A (stub): Run the current end-screen script
+ * $E2D9/$E2DE (stub): Draw an end-screen graphic frame
  *
- * TODO: not yet ported. Drives the visual-effect/text sequence: two scripts
- * back to back (the intro montage commands, then the congratulations text),
- * self-modifying the per-frame dispatch call at $5ED8 as it goes. See
- * project memory project-endscreen-bank7-double-relocation for the traced
- * behaviour.
+ * TODO: not yet ported (bitmap/glyph blit phase). Reads a byte then a word
+ * pointer from the script (e.g. one of the bitmap_endshot_N pointers) and
+ * blits it via draw_endshot ($E4A9).
  *
  * \param[in] state Pointer to game state.
  */
-static void run_script(chqstate_t *state)
+static void es_handler_draw_frame(chqstate_t *state)
 {
   NOT_USED(state);
 }
 
 /**
- * $5ED8 (stub): Advance one frame of the current script command
+ * $E42E/$E472/$E46D (stub): Plot end-screen glyphs
  *
- * TODO: not yet ported. The Z80 self-modifies this call's operand each time
- * run_script dispatches a new command, repointing it at one of the
- * draw-frame/glyph-plot handlers ($E2D9/$E42E/$E3B7/$E46D).
+ * TODO: not yet ported (bitmap/glyph blit phase). Three related entry points
+ * into the same glyph-plot routine, called repeatedly (every reload-count
+ * frames) while $A16D points past the command byte at the text to plot.
  *
  * \param[in] state Pointer to game state.
  */
-static void advance_script_frame(chqstate_t *state)
+static void es_handler_glyph_plot(chqstate_t *state)
 {
   NOT_USED(state);
+}
+
+/**
+ * $E3B7/$E3BA (stub): Advance the handshake animation frame
+ *
+ * TODO: not yet ported (bitmap/glyph blit phase). Ping-pongs through the
+ * four handshake_N bitmaps via the $E3A5 table, LDIR'd to screen $48AC.
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_handshake(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $E2D8 (stub): Idle per-frame handler (no drawing)
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_idle(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $E256 (stub): Render the final score text
+ *
+ * TODO: not yet ported. Formats two BCD-ish numbers (bonus count and total)
+ * via $9D17/$9F12/$8A36 and writes the digits into the script text buffer
+ * at $5DFB, then falls through to routine_e2d9-style drawing. Runs
+ * immediately (loops back into run_script rather than returning).
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_render_score(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $E2B2 (stub): Call a script-supplied handler with a literal argument
+ *
+ * TODO: not yet ported ($E2B9 CALL $9945, target and purpose unconfirmed).
+ * Runs immediately (loops back into run_script rather than returning).
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_call_word(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $E2CD rs_exit: Set the per-frame handler and its frame-delay reload
+ *
+ * Common tail shared by the run_script commands that hand off to a
+ * self-modified per-frame handler rather than running immediately: stores
+ * the new handler and reload count, ready for show_end_screen's loop to
+ * count down and re-invoke run_script when it reaches zero.
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] handler New per-frame handler (was DE).
+ * \param[in] reload New $A170 frame-delay reload count (was C).
+ */
+static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
+                             u8 reload)
+{
+  state->bank7->es_handler     = handler;
+  state->bank7->es_frame_count = reload;
+}
+
+/**
+ * $E20A: Run the current end-screen script
+ *
+ * Reads and dispatches script command bytes from state->es_script_ptr in a
+ * DEC A/JP Z chain matching the ESCMD_* constants above. "Immediate" commands
+ * (draw frame, call word, render score) run their handler stub straight away
+ * and loop for the next command in the same call; all other commands instead
+ * arm state->es_handler/es_frame_count via es_set_dispatch and return,
+ * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
+ *
+ * Conv: the handler bodies themselves (draw/glyph-plot/handshake/score) are
+ * not yet ported -- see the TODO stubs above. This function faithfully
+ * reproduces the command dispatch and byte consumption only.
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void run_script(chqstate_t *state)
+{
+  const u8 *HLscript; /* script program counter (was HL) */
+  u8        Acmd;     /* command byte just read (was A) */
+  u8        Creload;  /* frame-delay reload value about to be applied (was C) */
+
+  HLscript = state->bank7->es_script_ptr;
+  if (HLscript == NULL) {
+    /* TODO: script_data ($E0FE) not yet ported; nothing to dispatch. */
+    state->bank7->es_frame_count = 0xFF;
+    return;
+  }
+
+  for (;;) {
+    Acmd = *HLscript++;
+
+    switch (Acmd) {
+    case ESCMD_DRAW_FRAME:
+      es_handler_draw_frame(state);
+      continue;
+
+    case ESCMD_DRAW_WORD:
+      /* Conv: $E2DE is $E2D9's tail half, entered directly for this command
+       * (skipping E2D9's own backbuffer-clear prefix). Same stub for now. */
+      es_handler_draw_frame(state);
+      continue;
+
+    case ESCMD_GLYPH_A:
+    case ESCMD_GLYPH_B:
+    case ESCMD_HANDSHAKE:
+      es_set_dispatch(state, es_handler_glyph_plot, 16);
+      goto rs_exit;
+
+    case ESCMD_GLYPH_C:
+      es_set_dispatch(state, es_handler_glyph_plot, 32);
+      goto rs_exit;
+
+    case ESCMD_IDLE:
+      Creload = *HLscript++;
+      es_set_dispatch(state, es_handler_idle, Creload);
+      goto rs_exit;
+
+    case ESCMD_SET_A172:
+      Creload = *HLscript++;
+      es_set_dispatch(state, es_handler_handshake, Creload);
+      goto rs_exit;
+
+    case ESCMD_HANDSHAKE_AGAIN:
+      Creload = *HLscript++;
+      es_set_dispatch(state, es_handler_handshake, Creload);
+      goto rs_exit;
+
+    case ESCMD_10:
+    case ESCMD_11:
+      /* TODO: $E2F0/$E2C0 region not yet decoded. */
+      goto rs_exit;
+
+    case ESCMD_CALL_WORD:
+      es_handler_call_word(state);
+      continue;
+
+    case ESCMD_RENDER_SCORE:
+      es_handler_render_score(state);
+      continue;
+
+    default:
+      /* Unrecognised command: matches the Z80 fallback (reset to a fixed
+       * script offset) closely enough for a defensive stop. */
+      goto rs_exit;
+    }
+  }
+
+rs_exit:
+  state->bank7->es_script_ptr = HLscript;
 }
 
 /**
@@ -162,6 +339,10 @@ void show_end_screen(chqstate_t *state)
   bank7_setup_interrupts(state);
   play_turbo_sfx_128k(state);
 
+  state->bank7->es_script_ptr  = NULL; /* TODO: point at ported script_data ($E0FE) */
+  state->bank7->es_frame_count = 1;
+  state->bank7->es_handler     = es_handler_idle;
+
   Auser_input_mask = 0;
   outer_count       = 6;
 
@@ -170,8 +351,9 @@ void show_end_screen(chqstate_t *state)
       longjmp(state->host_quit_jmp, 1);
 
     es_service_speech(state);
-    run_script(state);
-    advance_script_frame(state);
+    if (--state->bank7->es_frame_count == 0)
+      run_script(state);
+    state->bank7->es_handler(state);
 
     if (--outer_count != 0)
       continue;
@@ -196,4 +378,19 @@ void show_end_screen(chqstate_t *state)
   }
 
   drive_chatter_stop(state);
+}
+
+int bank7_state_create(chqstate_t *state)
+{
+  state->bank7 = calloc(1, sizeof(*state->bank7));
+  if (state->bank7 == NULL)
+    return -1;
+
+  return 0;
+}
+
+void bank7_state_destroy(chqstate_t *state)
+{
+  free(state->bank7);
+  state->bank7 = NULL;
 }
