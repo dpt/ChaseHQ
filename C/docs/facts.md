@@ -34,6 +34,10 @@ No floating-point, no trigonometry, no state machine — just comparisons and ad
 
 Taito never officially named the vehicle in Chase H.Q. It is an unlicensed lookalike, not a branded car. The consensus among fans is that it is based on the **Porsche 928** — the distinctive wide rear haunches, fastback roofline, and proportions match closely. The ZX Spectrum port inherits the same ambiguity. Treat this as the best available reading rather than a confirmed fact until a primary source surfaces.
 
+## The blacked-out playfield edges hide sloppy clipping
+
+The left and right margins of the playfield are painted black in the border, but the columns beneath them are real backbuffer memory, not dead space. Road, sprites and objects are drawn without careful edge-clipping in some paths, so drawing routines regularly overwrite those margin columns in the backbuffer rather than checking bounds every time. It doesn't matter, because those columns are never copied from the backbuffer to the visible ZX screen — only the playfield proper gets blitted out. The black border sits on top and hides the fact that garbage is being written underneath it. Reveal those pixels (e.g. widen the playfield or blit the full backbuffer) and the overdrawn garbage becomes visible.
+
 ## The game is spiritually a Miami Vice product
 
 Chase H.Q. (Taito, 1988 arcade) fits squarely in the Miami Vice cultural moment: plainclothes cops, a white European sports car, pursuing criminals rather than racing competitively. The TV show ran 1984–1990 and the "undercover cop in an exotic car" aesthetic dominated that window. Taito never cited Miami Vice as a direct source, but the thematic overlap is hard to attribute to coincidence. Chase H.Q. may also be downstream of a broader trend — Miami Vice itself borrowed heavily from _To Live and Die in L.A._ (1985) and similar 80s material.
