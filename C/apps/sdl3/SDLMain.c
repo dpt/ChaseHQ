@@ -44,7 +44,7 @@
 //
 #define GAMEWIDTH          (256)
 #define GAMEHEIGHT         (192)
-#define BORDER              (32)
+#define BORDER              (16)
 
 #define SCALE_DEFAULT        (4)
 #define SCALE_MIN            (1)
@@ -66,7 +66,7 @@
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
 #define AY_SAMPLE_RATE   (44100)
-#define AY_VOLUME_PCT       (5) // 0..AY_MASTER_VOLUME_MAX
+#define AY_VOLUME_PCT        (5) // 0..AY_MASTER_VOLUME_MAX
 
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
