@@ -46,7 +46,6 @@
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
 - Audit TODO/CHECK markers
-- `State.h:317` `keydefs[8]` needs symbolic names
 - `Spectrum.h:164` FIXME struct should be private, expose `.screen` via accessor
 
 ## P5 — Clarity pass

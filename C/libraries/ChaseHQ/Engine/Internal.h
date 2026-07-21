@@ -165,6 +165,7 @@
 #define KEYDEF_BRAKE                 (5)
 #define KEYDEF_LEFT                  (6)
 #define KEYDEF_RIGHT                 (7)
+#define KEYDEF__LIMIT                (8)
 
 #define USERINPUT_RIGHT              (0)
 #define USERINPUT_LEFT               (1)

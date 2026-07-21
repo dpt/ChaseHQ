@@ -314,7 +314,7 @@ struct chqstate {
   // $A0CC
   u8        kempston_flag;
   // $A0CD
-  u8        keydefs[8]; // TODO add symbols for these
+  u8        keydefs[KEYDEF__LIMIT];
   // $A0D5
   u8        user_input;
 
