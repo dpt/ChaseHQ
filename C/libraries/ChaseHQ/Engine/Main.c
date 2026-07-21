@@ -1140,6 +1140,7 @@ static void attract_mode_128k(chqstate_t *state);
 static void show_end_screen(chqstate_t *state)
 {
   // TODO: Write this.
+  NOT_USED(state);
 }
 
 /**
@@ -2589,7 +2590,7 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
   int           i;      /* inner loop counter, param1 times per byte (was B) */
   int           bits;   /* EAR output bit state (was A) */
 
-  (void) param2;
+  NOT_USED(param2);
 
   speccy = state->speccy;
   carry = 0;
@@ -2648,7 +2649,7 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
   int           bits;   /* EAR output bit state, toggled between 0 and port_MASK_EAR (was A) */
   int           i;      /* pulse count for this table entry (was B) */
 
-  (void) param2;
+  NOT_USED(param2);
 
   speccy = state->speccy;
   j = NELEMS(sfx_thud_table);
@@ -3278,6 +3279,8 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
 {
   int rows;       /* outer row counter, 8 rows per stripe (was C) */
   int iterations; /* inner column iteration count, 6 × 5 = 30 bytes per row (was B) */
+
+  NOT_USED(state);
 
   rows = 8;
   do {
@@ -9631,7 +9634,7 @@ static u8 check_collision(chqstate_t *state,
   int A_fast_cnt;  /* fast_counter; sign-tested to gate collision at distance 1 (was A) */
   int A_horz_pos;  /* L_horz_pos masked to $F8; used for bounding-box overlap (was A) */
 
-  (void) HL;
+  NOT_USED(HL);
 
   if (hazard->hit_timer) /* still in hit cooldown */
     return default_retval;
@@ -10318,6 +10321,8 @@ dhs_exit_1:
  */
 void no_op(chqstate_t *state, hazard_t *hazard)
 {
+  NOT_USED(state);
+  NOT_USED(hazard);
 }
 
 /**
@@ -12863,6 +12868,8 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
   u8        *DE_dst;             /* copy-back loop destination pointer (was DE) */
   int        BC_count;           /* copy-back loop byte count (was BC) */
 
+  NOT_USED(HLfast_counter);
+
   /* Advance roadbufptr */
   state->roadbufptr = ROADBUF_FWD2PTR(1);
 
@@ -15034,24 +15041,26 @@ dr_backdrop:
  */
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
 {
-  int        D;                  /* screen address high byte (was D) */
-  int        E;                  /* screen address low byte after INC E (was E) */
-  int        C;                  /* pixel-row nibble → 24 → sky-row count (was C) */
-  int        B;                  /* backdrop bias = ~((E>>1)+C)+0x80 (was B) */
-  int        A;                  /* multi-use accumulator (was A) */
-  int        L_horz;             /* horizon_level low byte for sky-row clamp (was L) */
-  int        carry;              /* carry/borrow flag */
-  int        BC_backdrop_offset; /* row byte offset into backdrop = (24-C)*10 (was BC) */
-  int        Ascroll;            /* dr_horizon_x_scroll >> 1, selects shift amount (was A) */
-  const u8  *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
-  int        Ajump;              /* offset for copying instructions (was A) */
-  int        A_col;              /* backdrop source column; reset per LD L,A via A' (was L/A') */
-  int        Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
-  u8        *DEscr;              /* screen destination pointer for backdrop copy (was DE in LDI) */
-  const u8  *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
-  int        i;                  /* byte index into dr_backdrop_copy_instrs stream */
-  u8         DEfillpattern;      /* sky-fill byte: 0x00 open, 0xFF tunnel (was DE = $0000/$FFFF) */
-  u8        *HLbackbuf;          /* screen scanline pointer in sky fill (was HL via SP) */
+  int       D;                  /* screen address high byte (was D) */
+  int       E;                  /* screen address low byte after INC E (was E) */
+  int       C;                  /* pixel-row nibble → 24 → sky-row count (was C) */
+  int       B;                  /* backdrop bias = ~((E>>1)+C)+0x80 (was B) */
+  int       A;                  /* multi-use accumulator (was A) */
+  int       L_horz;             /* horizon_level low byte for sky-row clamp (was L) */
+  int       carry;              /* carry/borrow flag */
+  int       BC_backdrop_offset; /* row byte offset into backdrop = (24-C)*10 (was BC) */
+  int       Ascroll;            /* dr_horizon_x_scroll >> 1, selects shift amount (was A) */
+  const u8 *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
+  int       Ajump;              /* offset for copying instructions (was A) */
+  int       A_col;              /* backdrop source column; reset per LD L,A via A' (was L/A') */
+  int       Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
+  u8       *DEscr;              /* screen destination pointer for backdrop copy (was DE in LDI) */
+  const u8 *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
+  int       i;                  /* byte index into dr_backdrop_copy_instrs stream */
+  u8        DEfillpattern;      /* sky-fill byte: 0x00 open, 0xFF tunnel (was DE = $0000/$FFFF) */
+  u8       *HLbackbuf;          /* screen scanline pointer in sky fill (was HL via SP) */
+
+  NOT_USED(Lrow);
 
   D = (DEbackbuf >> 8) & 0xFF;
   E = (u8)(DEbackbuf + 1);
@@ -16272,6 +16281,8 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
   u8                   iterations; /* was BC */
 #endif
 
+  NOT_USED(Bnrelocs);
+
   state->mode_128k = Amode_128k;
 
   memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
@@ -16319,6 +16330,7 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
  */
 void stop_the_tape_48k(chqstate_t *state)
 {
+  NOT_USED(state);
 }
 
 /**
@@ -16670,6 +16682,8 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *Dkeydef_out)
   u8  Hkeys;      /* copy of Akeys; shifted right to find the set bit column (was H) */
   int A;          /* column offset: decremented by 8 per SRL until the set bit falls out (was A) */
 
+  NOT_USED(Dkeydef_out);
+
   carry = 0;
 
   Dflag      = 0xFF;
@@ -16823,6 +16837,7 @@ static u16 dak_move_down(int DEscreen)
 static void setup_interrupts(chqstate_t *state)
 {
   /* Conv: no equivalent in C — SDL owns interrupt delivery */
+  NOT_USED(state);
 }
 
 /**
@@ -17567,6 +17582,7 @@ static void handle_perp_caught_128k(chqstate_t *state)
 static void page_128k(chqstate_t *state)
 {
   // Conv: Removed
+  NOT_USED(state);
 }
 
 /**
@@ -17582,6 +17598,7 @@ static void page_128k(chqstate_t *state)
 static void reset_paging_128k(chqstate_t *state)
 {
   // Conv: Removed
+  NOT_USED(state);
 }
 
 /**

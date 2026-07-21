@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
@@ -1310,6 +1311,7 @@ static void ts_music_service(chqstate_t *state)
 static void setup_im2_interrupt_table(chqstate_t *state)
 {
   /* Conv: no equivalent in C — SDL owns interrupt delivery */
+  NOT_USED(state);
 }
 
 /**
@@ -1330,6 +1332,7 @@ static void setup_im2_interrupt_table(chqstate_t *state)
 static void frame_interrupt_handler(chqstate_t *state)
 {
   /* Conv: no equivalent in C — see prologue */
+  NOT_USED(state);
 }
 
 /**
@@ -2728,6 +2731,7 @@ static void ts_refresh_name_table(chqstate_t *state)
   /* TODO: copy 3 rows of high-score name/rank data from $C403 into the
    * buffer pointed to by ($800A) -- needs a destination buffer/state field,
    * out of scope for this task. */
+  NOT_USED(state);
 }
 
 /* $FFE5-$FFE9: "list A" -- Sinclair Interface II joystick key-scan codes,

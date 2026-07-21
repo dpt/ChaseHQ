@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/slopay-chip.h"
 
 #include <stdlib.h>
@@ -274,7 +275,7 @@ static void ay_env_hold(ayenv_t *env)
    * Shape 13 (attack→hold) arrives here at AY_ENV_MAX_VOL;
    * shape 11 (decay→hold) arrives here at AY_ENV_MIN_VOL.
    * Forcing a fixed level here would be wrong for one of the two cases. */
-  (void)env;
+  NOT_USED(env);
 }
 
 static void ay_env_off(ayenv_t *env)

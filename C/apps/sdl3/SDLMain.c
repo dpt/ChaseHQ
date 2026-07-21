@@ -186,8 +186,8 @@ static void chq_draw_handler(const zxbox_t *dirty,
 {
   // SDL_UpdateTexture must be called from the main thread (Metal requirement).
   // The main loop picks up changes via zxspectrum_claim_screen.
-  (void) dirty;
-  (void) opaque;
+  NOT_USED(dirty);
+  NOT_USED(opaque);
 }
 
 static void chq_stamp_handler(void *opaque)
@@ -472,7 +472,7 @@ static void chq_audio_callback(void            *opaque,
   int                  i;
   slopay_chip_sample_t sample;
 
-  (void) total_amount;
+  NOT_USED(total_amount);
 
   framebytes = 2 * (int) sizeof(*buf);
 

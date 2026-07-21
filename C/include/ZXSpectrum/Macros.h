@@ -23,5 +23,10 @@
  */
 #define CLAMP(a,b,c) MIN(MAX(a,b),c)
 
+/**
+ * Mark a variable as deliberately unused, suppressing compiler warnings.
+ */
+#define NOT_USED(v) ((void) (v))
+
 #endif /* ZXSPECTRUM_MACROS_H */
 

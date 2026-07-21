@@ -35,6 +35,7 @@
 #include "ChaseHQ/Engine/State.h"
 #include "ChaseHQ/Data/Stages.h"
 #include "ChaseHQ/Engine/Tests.h"
+#include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */
@@ -43,28 +44,28 @@
 
 static uint8_t fake_in(zxspectrum_t *s, uint16_t addr)
 {
-  (void)s; (void)addr;
+  NOT_USED(s); NOT_USED(addr);
   return 0xFF;
 }
 
 static void fake_out(zxspectrum_t *s, uint16_t addr, uint8_t byte)
 {
-  (void)s; (void)addr; (void)byte;
+  NOT_USED(s); NOT_USED(addr); NOT_USED(byte);
 }
 
 static void fake_draw(zxspectrum_t *s, const zxbox_t *dirty)
 {
-  (void)s; (void)dirty;
+  NOT_USED(s); NOT_USED(dirty);
 }
 
 static void fake_stamp(zxspectrum_t *s)
 {
-  (void)s;
+  NOT_USED(s);
 }
 
 static int fake_sleep(zxspectrum_t *s, int ticks)
 {
-  (void)s; (void)ticks;
+  NOT_USED(s); NOT_USED(ticks);
   return 0;
 }
 
