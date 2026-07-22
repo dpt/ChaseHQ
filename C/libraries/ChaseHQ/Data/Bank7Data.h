@@ -27,8 +27,8 @@
  * label boundaries, not recomputed from the nominal 104x64 dimensions. */
 const u8 bitmap_endshot_1[936];
 const u8 bitmap_endshot_2[936];
-const u8 bitmap_endshot_3[944];
-const u8 bitmap_endshot_4[928];
+const u8 bitmap_endshot_3[936];
+const u8 bitmap_endshot_4[936];
 
 /* Handshake animation frames: 8-byte-wide rows only, no attribute data
  * (handshake's own routine_e3b7 supplies attributes via the fixed $59AC

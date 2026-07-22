@@ -245,7 +245,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
   attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
 
   for (attrrow = 8; attrrow != 0; attrrow--) {
-    memcpy(ADDRTOATTRS(attraddr), image, 13);
+    memcpy(ADDRTOBACKBUF(attraddr), image, 13);
     image += 13;
     attraddr = (u16) (attraddr + 19);
   }

@@ -176,7 +176,7 @@ const u8 bitmap_endshot_2[936] = {
   _XXXX___, _XXXX___, _XXXX___, __X_X___, _XX_X___, _XX_X___, _XX_X___, __XX____, __XXX___, __XXX___, __XXX___, __XXX___, __XXX___,
 };
 
-const u8 bitmap_endshot_3[944] = {
+const u8 bitmap_endshot_3[936] = {
   ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
@@ -249,10 +249,10 @@ const u8 bitmap_endshot_3[944] = {
   _X_X____, _X_X____, _X_X____, _X_X____, _X_X____, _XX_X___, _XX_X___, _XXX____, _XXX____, _XXX____, _XX_X___, _X_XX___, _X_X____,
   _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _X_X____, _X_X____, _X_X____, _X_X____, _X_X____, _X_X____, _X_X____,
   _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _XX_X___, _X_X____, _X_X____, _X_X____, _X_X____, _X_X____,
-  _X_X____, X_______, ________, ________, _XXXX___, ________, ________, ___X_X_X,
+  //_X_X____, X_______, ________, ________, _XXXX___, ________, ________, ___X_X_X,
 };
 
-const u8 bitmap_endshot_4[928] = {
+const u8 bitmap_endshot_4[936] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, XXXXX_XX, _X_X____, XX_XXXXX, XXXXXXXX, __XXXXXX, _XXXX___, _____XXX, XXXX____, ____X___,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_XXXX, XXXXX_XX, __XX____, X_X_X_X_, X_X_X_XX, ___X_X_X, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
