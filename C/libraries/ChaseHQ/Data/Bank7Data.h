@@ -39,8 +39,8 @@ const u8 bitmap_handshake_2[280];
 const u8 bitmap_handshake_3[272];
 const u8 bitmap_handshake_4[256];
 
-const u8 nancy_congratulates[6];
-const u8 press_gear[3];
+const u8 chatterblk_nancy_congratulates[6];
+const u8 chatterblk_press_gear[3];
 
 /* ----------------------------------------------------------------------- */
 

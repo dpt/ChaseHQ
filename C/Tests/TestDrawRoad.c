@@ -13,6 +13,7 @@
  */
 
 #include <assert.h>
+#include <setjmp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -20,6 +21,7 @@
 #include <string.h>
 
 #include "ChaseHQ/ChaseHQ.h"
+#include "ChaseHQ/Engine/Bank7.h"
 #include "ChaseHQ/Engine/Internal.h"
 #include "ChaseHQ/Engine/State.h"
 #include "ChaseHQ/Data/Stages.h"
@@ -862,6 +864,61 @@ static void test_advance_hazards_insert_shift_preserves_records(void)
          "records\n");
 }
 
+/*
+ * show_end_screen ($E000): an infinite input-driven loop with no natural
+ * exit under an all-keys-unpressed fake in(). Bound it with the project's
+ * host_quit/longjmp escape hatch -- the same idiom chq_setup uses around
+ * entry_128k -- so the test can run a fixed number of frames and then
+ * inspect state. state->bank7's fields are private to Bank7.c (only
+ * forward-declared in State.h), so the observable proof of life is that the
+ * script interpreter drew something into the back buffer.
+ */
+static chqstate_t *s_end_screen_state;
+static int         s_end_screen_in_count;
+
+static uint8_t end_screen_in(zxspectrum_t *s, uint16_t addr)
+{
+  NOT_USED(s); NOT_USED(addr);
+  if (++s_end_screen_in_count > 200)
+    s_end_screen_state->host_quit = 1;
+  return 0xFF; /* all keys unpressed */
+}
+
+static void test_show_end_screen_runs_script(void)
+{
+  chqstate_t *state;
+
+  /* show_end_screen's chatter path reads state->stage->addrof_perp_mugshot_
+   * bitmap (print_chatter, Main.c), so a bare chq_create() is not enough --
+   * a stage must be loaded, as it would be by the time the real game
+   * reaches the end screen. Stage 1 has no pilot mugshot (NULL by design),
+   * so use stage 2, which does. */
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->wanted_stage_number  = 2;
+  state->current_stage_number = 0; /* force load */
+  chq_test_load_stage(state);
+  assert(state->stage != NULL);
+  chq_test_set_up_stage(state);
+
+  memset(state->backbuffer, 0xFF, sizeof(state->backbuffer));
+
+  s_end_screen_state    = state;
+  s_end_screen_in_count = 0;
+  g_speccy.in            = end_screen_in;
+
+  if (setjmp(state->host_quit_jmp) == 0)
+    show_end_screen(state);
+
+  assert(backbuf_was_written(state));
+
+  g_speccy.in = fake_in;
+  chq_destroy(state);
+  printf("PASS  show_end_screen: script interpreter runs under bounded "
+         "host_quit escape\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -883,6 +940,7 @@ int main(void)
   test_helicopter_draws();
   test_perp_caught_progression();
   test_advance_hazards_insert_shift_preserves_records();
+  test_show_end_screen_runs_script();
 
   printf("\nAll tests passed.\n");
   return 0;

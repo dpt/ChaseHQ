@@ -100,7 +100,7 @@ static void es_clear(chqstate_t *state)
  */
 static u8 script_data[] = {
   ESCMD_CHATTER,
-  TWOBYTES(0x5C6E), /* -> nancy_congratulates */
+  TWOBYTES(0x5C6E), /* -> chatterblk_nancy_congratulates */
   0x07, 0xC0,
 
   ESCMD_CLEAR_DRAW_FRAME,
@@ -599,8 +599,8 @@ static void es_handler_draw_score(chqstate_t *state)
 static const u8 *resolve_chatterblk(u16 addr)
 {
   switch (addr) {
-  case 0x5C6E: return &nancy_congratulates[0];
-  case 0x5C77: return &press_gear[0];
+  case 0x5C6E: return &chatterblk_nancy_congratulates[0];
+  case 0x5C77: return &chatterblk_press_gear[0];
   default:     assert(0); return NULL;
   }
 }
@@ -920,6 +920,11 @@ static void run_script(chqstate_t *state)
   for (;;) {
     A_cmd = *HL_script++;
 
+    /* Conv: es_chatter reads/advances state->bank7->es_script_ptr directly
+     * rather than taking &HL_script like the other handlers, so it must see
+     * the pointer already advanced past A_cmd before it runs. */
+    state->bank7->es_script_ptr = HL_script;
+
     switch (A_cmd) {
     case ESCMD_CLEAR_DRAW_FRAME:
       es_clear_then_draw_frame(state, &HL_script);
@@ -974,6 +979,7 @@ static void run_script(chqstate_t *state)
 
     case ESCMD_CHATTER:
       es_chatter(state);
+      HL_script = state->bank7->es_script_ptr; /* es_chatter advanced it directly */
       continue;
 
     case ESCMD_DRAW_SCORE:

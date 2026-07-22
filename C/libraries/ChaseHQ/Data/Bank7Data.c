@@ -479,7 +479,7 @@ const u8 bitmap_handshake_4[256] = {
 
 /* ----------------------------------------------------------------------- */
 
-const u8 nancy_congratulaes[6] = {
+const u8 chatterblk_nancy_congratulates[6] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_THIS_IS_NANCY,
   CHATTERSTR_CONGRATS_1,
@@ -488,7 +488,7 @@ const u8 nancy_congratulaes[6] = {
   CHATTERCMD_STOP
 };
 
-const u8 press_gear[3] = {
+const u8 chatterblk_press_gear[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_PRESS_GEAR,
   CHATTERCMD_STOP
