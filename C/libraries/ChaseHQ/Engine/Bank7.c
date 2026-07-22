@@ -223,26 +223,29 @@ static u16 next_screen_row(u16 addr)
  */
 static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 {
-  int  row;      /* bitmap row counter, 64 down to 1 (was B) */
-  u16  DE;       /* current screen row address (was DE) */
-  u8   Dattr;    /* attribute row address high byte (was D after RRCA x3) */
-  u16  attraddr; /* current attribute row address (was DE in the attr loop) */
-  int  attrrow;  /* attribute row counter, 8 down to 1 (was A) */
+  int row;            /* bitmap row counter, 64 down to 1 (was B) */
+  u16 DE_screen_addr; /* current screen row address (was DE) */
+  u8  Dattr;          /* attribute row address high byte (was D after RRCA x3) */
+  u16 attraddr;       /* current attribute row address (was DE in the attr loop) */
+  int attrrow;        /* attribute row counter, 8 down to 1 (was A) */
 
-  DE = screen_addr;
+  DE_screen_addr = screen_addr;
 
   for (row = 64; row != 0; row--) {
-    memcpy(ADDRTOSCREEN(DE), image, 13);
+    memcpy(ADDRTOSCREEN(DE_screen_addr), image, 13);
     image += 13;
-    DE = next_screen_row(DE);
+    DE_screen_addr = next_screen_row(DE_screen_addr);
   }
 
+  /* Conv: skool POPs DE here, restoring the original destination pushed at
+   * function entry -- NOT the row loop's final DE_screen_addr. Must use the
+   * screen_addr parameter, which the loop above never mutates. */
   Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
   Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
   attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
 
   for (attrrow = 8; attrrow != 0; attrrow--) {
-    memcpy(ADDRTOSCREEN(attraddr), image, 13);
+    memcpy(ADDRTOATTRS(attraddr), image, 13);
     image += 13;
     attraddr = (u16) (attraddr + 19);
   }
