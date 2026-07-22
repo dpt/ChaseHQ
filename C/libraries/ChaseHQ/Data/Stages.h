@@ -83,11 +83,15 @@
 #define CHATTERSTR_ONE_MORE_TRY               (29)
 #define CHATTERSTR_MEDIOCRE_DRIVER            (30)
 #define CHATTERSTR_SEE_YOU_LATER              (31)
-#define CHATTERSTR_PERP_DESC_1                (32)
-#define CHATTERSTR_PERP_DESC_2                (33)
-#define CHATTERSTR_PERP_DESC_3                (34)
-#define CHATTERSTR_PERP_DESC_4                (35)
-#define CHATTERSTR__LIMIT                     (36)
+#define CHATTERSTR_CONGRATS_1                 (32) // bank 7
+#define CHATTERSTR_CONGRATS_2                 (33) // bank 7
+#define CHATTERSTR_CONGRATS_3                 (34) // bank 7
+#define CHATTERSTR_PRESS_GEAR                 (35) // bank 7
+#define CHATTERSTR_PERP_DESC_1                (36) // per-stage
+#define CHATTERSTR_PERP_DESC_2                (37) // per-stage
+#define CHATTERSTR_PERP_DESC_3                (38) // per-stage
+#define CHATTERSTR_PERP_DESC_4                (39) // per-stage
+#define CHATTERSTR__LIMIT                     (40)
 
 /// Chatter block indices
 #define CHATTERBLK_START_STAGE                 (0)

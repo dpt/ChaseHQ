@@ -45,6 +45,7 @@
 - Draw road pipeline: merge `draw_road` back into one big unholy lump
 - 'TEST' marker not drawn when in test mode
 - Fix all warnings pass
+- Write a code formatting script
 
 ## P5 — Clarity pass
 

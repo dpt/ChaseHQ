@@ -24,10 +24,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-/* Stub: bank 7 holds the end-of-game results/credits sequence, relocated at
- * $F7EF->$F300 with its own $E20A script interpreter. Not yet ported. */
-u8 call_bank_7_128k(chqstate_t *state, int HLroutine);
-
 /**
  * $E000: Show the end screen
  *

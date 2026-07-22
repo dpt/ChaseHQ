@@ -39,25 +39,8 @@ const u8 bitmap_handshake_2[280];
 const u8 bitmap_handshake_3[272];
 const u8 bitmap_handshake_4[256];
 
-/* $E06E-$E0FD: end-of-game congratulations text block, targeted by the sole
- * live ESCMD_CALL_WORD script entry (script_data's first byte, Bank7.c).
- *
- * Conv: this is NOT a standard {CHATTERCHR, CHATTERSTR, CHATTERCMD}
- * chatterblk -- byte 2 ($3F = 63) would be read as a CHATTERSTR index by
- * pc_chatter_message and immediately fail its bounds assertion
- * (CHATTERSTR__LIMIT is 36), or read out of bounds in a release build. See
- * es_handler_call_word in Bank7.c for how this is guarded. Included here
- * verbatim for documentation/fidelity only.
- *
- * Layout: 3 header bytes, an 11-byte pointer table (skool: "unproven,
- * confirmed dead end"), then four ASCII text strings, each terminated by
- * its last character having bit 7 set. */
-const u8 data_e06e[144];
-
-#define DATA_E06E_TEXT_1_OFFSET  (14) /* "I WOULD LIKE TO CONGRATULATE YOU FOR YOUR" */
-#define DATA_E06E_TEXT_2_OFFSET  (55) /* "HEROISM AND BRAVERY. YOU WILL BE REMEMBERED" */
-#define DATA_E06E_TEXT_3_OFFSET  (98) /* "FOR A LONG TIME TO COME." */
-#define DATA_E06E_TEXT_4_OFFSET (122) /* "PRESS GEAR TO CONTINUE" */
+const u8 nancy_congratulates[6];
+const u8 press_gear[3];
 
 /* ----------------------------------------------------------------------- */
 

@@ -1601,7 +1601,7 @@ static void main_loop(chqstate_t *state)
           }
 
           if (keys & 0x04) { // Is bit 2 set? (key 3 to load the end screen)
-            state->wanted_stage_number = 6; // stage 6
+            state->wanted_stage_number = MAXSTAGE + 1;
             break;
           }
 
@@ -5638,8 +5638,8 @@ static u8 rng(chqstate_t *state)
  * \param[in] chatterblk Pointer to the chatter data block to play. (was HL)
  */
 void start_chatter(chqstate_t       *state,
-                    chatterpriority_t priority,
-                    const u8         *chatterblk)
+                   chatterpriority_t priority,
+                   const u8         *chatterblk)
 {
   int chatter_state; /* current FSM state, checked against IDLE and STOP (was A) */
 

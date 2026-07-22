@@ -44,15 +44,9 @@
 
 #include "Bank7.h"
 
+#include <assert.h>
+
 /* ----------------------------------------------------------------------- */
-
-u8 call_bank_7_128k(chqstate_t *state, int HLroutine)
-{
-  NOT_USED(state);
-  NOT_USED(HLroutine);
-
-  return 0;
-}
 
 /**
  * $E499: Clear the playfield ready for the end screen
@@ -119,6 +113,7 @@ static u8 script_data[] = {
   TWOBYTES(0x4889), // screen dst
   0x03, 0x07, 0xA0, 0x04,
 
+  ESCMD_DRAW_FRAME,
   ESCMD_DRAW_FRAME,
   TWOBYTES(0x6831), // -> bitmap_endshot_3
   TWOBYTES(0x4889), // screen dst
@@ -305,8 +300,8 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 
   HLscript = *script;
 
-  image_addr  = (u16) (HLscript[0] | (HLscript[1] << 8));
-  screen_addr = (u16) (HLscript[2] | (HLscript[3] << 8));
+  image_addr  = wordat(HLscript);
+  screen_addr = wordat(HLscript + 2);
   HLscript += 4;
 
   draw_endshot(state, resolve_endshot(image_addr), screen_addr);
@@ -595,7 +590,7 @@ static void es_handler_draw_score(chqstate_t *state)
 }
 
 /**
- * Resolve a script-embedded $E2B2 argument word to its C data array.
+ * Resolve a script-embedded argument word to its C data array.
  *
  * Conv: as with resolve_endshot, script_data only ever encodes one literal
  * value here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E
@@ -610,8 +605,9 @@ static void es_handler_draw_score(chqstate_t *state)
 static const u8 *resolve_call_word_target(u16 addr)
 {
   switch (addr) {
-  case 0x5C6E: return data_e06e;
-  default:     return NULL; /* ponytail: script_data never encodes any other value */
+  case 0x5C6E: return &nancy_congratulates[0];
+  case 0x5C77: return &press_gear[0];
+  default:     assert(0); return NULL;
   }
 }
 
@@ -649,16 +645,11 @@ static void es_handler_call_word(chqstate_t *state)
 
   HLscript = state->bank7->es_script_ptr;
 
-  target_addr = (u16) (HLscript[0] | (HLscript[1] << 8));
+  target_addr = wordat(HLscript);
   HLscript += 2;
 
   chatterblk = resolve_call_word_target(target_addr);
-
-  /* Conv: data_e06e is not a well-formed chatterblk -- see prologue. Guard
-   * against the confirmed CHATTERSTR__LIMIT overrun in pc_chatter_message
-   * rather than reproduce the crash. */
-  if (chatterblk != NULL && chatterblk[1] < CHATTERSTR__LIMIT)
-    start_chatter(state, 1, chatterblk);
+  start_chatter(state, 1, chatterblk);
 
   state->bank7->es_script_ptr = HLscript;
 }
@@ -675,8 +666,9 @@ static void es_handler_call_word(chqstate_t *state)
  * \param[in] handler New per-frame handler (was DE).
  * \param[in] reload New $A170 frame-delay reload count (was C).
  */
-static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
-                             u8 reload)
+static void es_set_dispatch(chqstate_t *state,
+                            void      (*handler)(chqstate_t *state),
+                            u8          reload)
 {
   state->bank7->es_handler     = handler;
   state->bank7->es_frame_count = reload;
@@ -862,7 +854,7 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
  *
  * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced past the
- *                        3-byte header and the whole character run.
+ *                       3-byte header and the whole character run.
  */
 static void render_text_common(chqstate_t *state, const u8 **script)
 {
@@ -899,7 +891,7 @@ static void render_text_common(chqstate_t *state, const u8 **script)
  *
  * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced as per
- *                        render_text_common.
+ *                       render_text_common.
  */
 static void es_handler_render_text(chqstate_t *state, const u8 **script)
 {
@@ -1067,8 +1059,8 @@ static void es_service_speech(chqstate_t *state)
  */
 void show_end_screen(chqstate_t *state)
 {
-  u8  Ainput;             /* keyscan result, tested for the fire bit (was A) */
-  int outer_count;        /* per-keyscan frame divider, reloads to 5/6 (was A171) */
+  u8  Ainput;      /* keyscan result, tested for the fire bit (was A) */
+  int outer_count; /* per-keyscan frame divider, reloads to 5/6 (was A171) */
 
   es_clear(state);
   bank7_setup_interrupts(state);
