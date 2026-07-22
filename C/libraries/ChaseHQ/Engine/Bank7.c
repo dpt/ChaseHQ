@@ -64,19 +64,33 @@ static void es_clear(chqstate_t *state)
 }
 
 /* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
-#define ESCMD_CLEAR_DRAW_FRAME    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
-#define ESCMD_DRAW_WORD           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
-#define ESCMD_FADE_IN_A           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
-#define ESCMD_FADE_IN_B           (4) /* -> $E472 es_handler_glyph_fade_b via rs_exit, reload 16 */
-#define ESCMD_HANDSHAKE           (5) /* -> $E3B7 es_handler_handshake via rs_exit, reload 16 */
-#define ESCMD_FADE_IN_C           (6) /* -> $E46D es_handler_glyph_fade_c via rs_exit, reload 32 */
-#define ESCMD_IDLE                (7) /* -> rs_exit, handler = no-op, reload = script byte */
-#define ESCMD_RESET_HANDSHAKE     (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
-#define ESCMD_HANDSHAKE_AGAIN     (9) /* -> rs_exit, handler = handshake, reload = script byte */
-#define ESCMD_DRAW_TEXT_NO_CLEAR (10) /* -> $E2F0 (undecoded) */
-#define ESCMD_DRAW_TEXT          (11) /* -> $E2C0-style entry (undecoded) */
-#define ESCMD_CHATTER            (12) /* -> $E2B2, runs immediately */
-#define ESCMD_DRAW_SCORE         (13) /* -> $E256, runs immediately */
+#define ESCMD_CLEAR_DRAW_FRAME_VAL    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
+#define ESCMD_DRAW_WORD_VAL           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
+#define ESCMD_FADE_IN_A_VAL           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_B_VAL           (4) /* -> $E472 es_handler_glyph_fade_b via rs_exit, reload 16 */
+#define ESCMD_HANDSHAKE_VAL           (5) /* -> $E3B7 es_handler_handshake via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_C_VAL           (6) /* -> $E46D es_handler_glyph_fade_c via rs_exit, reload 32 */
+#define ESCMD_IDLE_VAL                (7) /* -> rs_exit, handler = no-op, reload = script byte */
+#define ESCMD_RESET_HANDSHAKE_VAL     (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
+#define ESCMD_HANDSHAKE_AGAIN_VAL     (9) /* -> rs_exit, handler = handshake, reload = script byte */
+#define ESCMD_DRAW_TEXT_NO_CLEAR_VAL (10) /* -> $E2F5 render_text_common, runs immediately, no backbuffer clear */
+#define ESCMD_DRAW_TEXT_VAL          (11) /* -> $E2F0 es_handler_render_text, runs immediately, clears backbuffer first */
+#define ESCMD_CHATTER_VAL            (12) /* -> $E2B2, runs immediately */
+#define ESCMD_DRAW_SCORE_VAL         (13) /* -> $E256, runs immediately */
+
+#define ESCMD_CLEAR_DRAW_FRAME(BMADDR, SCRADDR) ESCMD_CLEAR_DRAW_FRAME_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
+#define ESCMD_DRAW_WORD(BMADDR, SCRADDR)        ESCMD_DRAW_WORD_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
+#define ESCMD_FADE_IN_A                         ESCMD_FADE_IN_A_VAL
+#define ESCMD_FADE_IN_B                         ESCMD_FADE_IN_B_VAL
+#define ESCMD_HANDSHAKE                         ESCMD_HANDSHAKE_VAL
+#define ESCMD_FADE_IN_C                         ESCMD_FADE_IN_C_VAL
+#define ESCMD_IDLE(D)                           ESCMD_IDLE_VAL, (D)
+#define ESCMD_RESET_HANDSHAKE(D)                ESCMD_RESET_HANDSHAKE_VAL, (D)
+#define ESCMD_HANDSHAKE_AGAIN(D)                ESCMD_HANDSHAKE_AGAIN_VAL, (D)
+#define ESCMD_DRAW_TEXT_NO_CLEAR(ATTR, SCRADDR) ESCMD_DRAW_TEXT_NO_CLEAR_VAL, (ATTR), TWOBYTES(SCRADDR)
+#define ESCMD_DRAW_TEXT(ATTR, SCRADDR)          ESCMD_DRAW_TEXT_VAL, (ATTR), TWOBYTES(SCRADDR)
+#define ESCMD_CHATTER(ADDR)                     ESCMD_CHATTER_VAL, TWOBYTES(ADDR)
+#define ESCMD_DRAW_SCORE                        ESCMD_DRAW_SCORE_VAL
 
 #define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
@@ -88,90 +102,94 @@ static void es_clear(chqstate_t *state)
  * Verbatim transcription of the skool's script_data block (268 bytes):
  * command/argument bytes interleaved with bitmap addresses (as raw
  * little-endian DEFW pairs) and embedded high-bit-terminated ASCII text
- * ("CONGRATULATIONS", "WELL DONE", etc). run_script's command dispatch
- * (below) has not yet been checked against every byte here -- this is
- * the raw data only, not yet validated end-to-end against a real script
- * run.
+ * ("CONGRATULATIONS!", "ALL  CLEAR", "(C) 1989 OCEAN SOFTWARE", "(C) 1988
+ * TAITO CORPORATION", "THE  END", "FINAL  SCORE"). Every byte has now been
+ * decoded against run_script's command dispatch below -- see the inline
+ * comments through the tail of the array.
  *
- * Conv: not const -- es_handler_draw_score patches the "GBP________ PTS"
- * placeholder text in-place (offset 0xFD, matching $5DFB relocated) with the
- * player's formatted score, exactly as the original self-modifies its own
- * script_data at that address.
+ * Conv: this master copy is const. show_end_screen copies it into
+ * state->bank7->es_script at entry; es_handler_draw_score patches the
+ * "GBP________ PTS" placeholder text in-place (offset 0xFD, matching $5DFB
+ * relocated) in that per-instance copy, not here, exactly as the original
+ * self-modifies its own script_data at that address but without concurrent
+ * game instances trampling each other's score text.
  */
-static u8 script_data[] = {
-  ESCMD_CHATTER,
-  TWOBYTES(0x5C6E), /* -> chatterblk_nancy_congratulates */
-  0x07, 0xC0,
-
-  ESCMD_CLEAR_DRAW_FRAME,
-  TWOBYTES(0x60E1), // -> bitmap_endshot_1
-  TWOBYTES(0x4889), // screen dst
-  0x03, 0x07, 0xA0, 0x04,
-
-  ESCMD_CLEAR_DRAW_FRAME,
-  TWOBYTES(0x6489), // -> bitmap_endshot_2
-  TWOBYTES(0x4889), // screen dst
-  0x03, 0x07, 0xA0, 0x04,
-
-  ESCMD_CLEAR_DRAW_FRAME,
-  TWOBYTES(0x6831), // -> bitmap_endshot_3
-  TWOBYTES(0x4889), // screen dst
-  0x03, 0x07, 0xA0, 0x04,
-
-  ESCMD_CLEAR_DRAW_FRAME,
-  TWOBYTES(0x6BD9), // -> bitmap_endshot_4
-  TWOBYTES(0x4889), // screen dst
-  0x03, 0x07, 0xA0, 0x04,
-
-  ESCMD_CLEAR_DRAW_FRAME,
-  TWOBYTES(0x60E1), // -> bitmap_endshot_1
-  TWOBYTES(0x4802), // screen dst
-  0x03, 0x07, 0x50,
-
-  0x02,
-  TWOBYTES(0x6489), // -> bitmap_endshot_2
-  TWOBYTES(0x4811), // screen dst
-  0x03, 0x07, 0x50,
-
-  0x02,
-  TWOBYTES(0x6831), // -> bitmap_endshot_3
-  TWOBYTES(0x5002), // screen dst
-  0x03, 0x07, 0x50,
-
-  0x02,
-  TWOBYTES(0x6BD9), // -> bitmap_endshot_4
-  TWOBYTES(0x5011), // screen dst
-  0x03, 0x07, 0x50,
-
-  0x08, 0xC0, 0x09, 0xB0, 0x05, 0x09, 0xB0, 0x04,
-  0x0B, 0x47, 0x48, 0x48, 0x43, 0x4F, 0x4E, 0x47,
-  0x52, 0x41, 0x54, 0x55, 0x4C, 0x41, 0x54, 0x49,
-  0x4F, 0x4E, 0x53, 0xA1, 0x03, 0x07, 0x08, 0x0A,
-  0x47, 0xCB, 0x48, 0x41, 0x4C, 0x4C, 0x20, 0x20,
-  0x43, 0x4C, 0x45, 0x41, 0xD2, 0x03, 0x07, 0x08,
-  0x0A, 0x47, 0x49, 0x50, 0x35, 0x2C, 0x30, 0x30,
-  0x30, 0x2C, 0x30, 0x30, 0x30, 0x20, 0x20, 0x50,
-  0x54, 0x53, 0xAE, 0x03, 0x07, 0xC0, 0x06, 0x07,
-  0x60, 0x0B, 0x47, 0x84, 0x48, 0x28, 0x43, 0x29,
-  0x20, 0x31, 0x39, 0x38, 0x39, 0x20, 0x4F, 0x43,
-  0x45, 0x41, 0x4E, 0x20, 0x53, 0x4F, 0x46, 0x54,
-  0x57, 0x41, 0x52, 0xC5, 0x0A, 0x47, 0x43, 0x50,
-  0x28, 0x43, 0x29, 0x20, 0x31, 0x39, 0x38, 0x38,
-  0x20, 0x54, 0x41, 0x49, 0x54, 0x4F, 0x20, 0x43,
-  0x4F, 0x52, 0x50, 0x4F, 0x52, 0x41, 0x54, 0x49,
-  0x4F, 0xCE, 0x03, 0x07, 0xF0, 0x06, 0x07, 0x60,
-  0x0B, 0x47, 0xCC, 0x48, 0x54, 0x48, 0x45, 0x20,
-  0x20, 0x45, 0x4E, 0xC4, 0x03, 0x07, 0xF0, 0x07,
-  0x60, 0x06, 0x07, 0x60,
-  0x0B, 0x45, 0xAA, 0x48,
-  0x46, 0x49, 0x4E, 0x41, 0x4C, 0x20, 0x20, 0x53,
-  0x43, 0x4F, 0x52, 0xC5, 0x03, 0x07, 0x1E,
-
-  0x0D,
-
-  0x0A, 0x47, 0x2C, 0x50, 0x20, 0x20, 0x20, 0x20,
-  0x20, 0x20, 0x20, 0xA0, 0x03, 0x0C, 0x78, 0x5C,
-  0x07, 0x00, 0x0E
+static const u8 script_data[] = {
+  ESCMD_CHATTER(0x5C6E), /* -> chatterblk_nancy_congratulates */
+  ESCMD_IDLE(0xC0),
+  ESCMD_CLEAR_DRAW_FRAME(0x60E1, 0x4889), // bitmap_endshot_1, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(0x6489, 0x4889), // bitmap_endshot_2, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(0x6831, 0x4889), // bitmap_endshot_3, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(0x6BD9, 0x4889), // bitmap_endshot_4, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(0x60E1, 0x4802), // bitmap_endshot_1, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(0x6489, 0x4811), // bitmap_endshot_2, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(0x6831, 0x5002), // bitmap_endshot_3, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(0x6BD9, 0x5011), // bitmap_endshot_4, screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_RESET_HANDSHAKE(0xC0),
+  ESCMD_HANDSHAKE_AGAIN(0xB0),
+  ESCMD_HANDSHAKE,
+  ESCMD_HANDSHAKE_AGAIN(0xB0),
+  ESCMD_FADE_IN_B,
+  ESCMD_DRAW_TEXT(0x47, 0x4848), /* clear */
+  'C', 'O', 'N', 'G', 'R', 'A', 'T', 'U', 'L', 'A', 'T', 'I', 'O', 'N', 'S', '!' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x08),
+  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x48CB),
+  'A', 'L', 'L', ' ', ' ', 'C', 'L', 'E', 'A', 'R' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x08),
+  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x5049),
+  '5', ',', '0', '0', '0', ',', '0', '0', '0', ' ', ' ', 'P', 'T', 'S', '.' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xC0),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(0x47, 0x4884), /* clear */
+  '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
+  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x5043),
+  '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xF0),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(0x47, 0x48CC), /* clear */
+  'T', 'H', 'E', ' ', ' ', 'E', 'N', 'D' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xF0),
+  ESCMD_IDLE(0x60),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(0x45, 0x48AA), /* clear */
+  'F', 'I', 'N', 'A', 'L', ' ', ' ', 'S', 'C', 'O', 'R', 'E' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x1E),
+  ESCMD_DRAW_SCORE, /* tallies bonus, patches offset 0xFD below with score ASCII */
+  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x502C), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
+  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_CHATTER(0x5C78), /* -> chatterblk_press_gear */
+  ESCMD_IDLE(0x00),
+  0x0E /* unrecognised command: defensive stop (rs_exit) terminates the script */
 };
 
 /**
@@ -255,7 +273,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
  * Resolve a script-embedded end-shot bitmap address to its C data array.
  *
  * Conv: the original walks a real (relocated) Z80 pointer; script_data only
- * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME
+ * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME_VAL
  * entries above), so a small lookup replaces pointer arithmetic into
  * relocated bank memory the C port does not model byte-for-byte.
  *
@@ -274,7 +292,7 @@ static const u8 *resolve_endshot(u16 addr)
 }
 
 /**
- * $E2DE es_handler_draw_word: Read an image+destination pair from the
+ * $E2DE es_draw_frame_common: Read an image+destination pair from the
  * script and blit it, without the backbuffer-clear prefix.
  *
  * \param[in]     state  Pointer to game state.
@@ -423,7 +441,7 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 }
 
 /**
- * $E472 routine_e472: Fade the $5C6C-gated glyph attribute band
+ * $E472 es_handler_glyph_fade_b: Fade the $5C6C-gated glyph attribute band
  *
  * \param[in] state Pointer to game state.
  */
@@ -433,7 +451,7 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
 }
 
 /**
- * $E46D routine_e46d: Fade the $5C6D-gated glyph attribute band
+ * $E46D es_handler_glyph_fade_c: Fade the $5C6D-gated glyph attribute band
  *
  * \param[in] state Pointer to game state.
  */
@@ -457,7 +475,7 @@ static const struct {
 };
 
 /**
- * $E3B7 routine_e3b7: Advance the handshake animation frame
+ * $E3B7 es_handler_handshake: Advance the handshake animation frame
  *
  * Always fades the $5C6C attribute band one step first (routine_e472's
  * shared tail, called directly rather than duplicated). Then rotates the
@@ -560,7 +578,7 @@ static void es_handler_draw_score(chqstate_t *state)
   state->bank7->es_input_mask = 1;
 
   DE_bcd = &state->score_bcd[3];
-  HL_dst = &script_data[0xFD];
+  HL_dst = &state->bank7->es_script[0xFD];
   C_seen = 0;
 
   for (pair = 4; pair != 0; pair--) {
@@ -683,7 +701,7 @@ static void es_set_dispatch(chqstate_t *state,
  *                        SUB $20; space and 0 are handled by the caller).
  * \return Glyph index into font[] (multiply by 7 for the row pointer).
  */
-static int text_glyph_id(int character)
+static int ascii_to_glyph_id(int character)
 {
   int glyphid; /* glyph index accumulator (was C) */
 
@@ -719,7 +737,7 @@ have_single:
  * Space ($E323-$E327): advances both persistent cursors by one column and
  * draws nothing.
  *
- * Non-space ($E328-$E3A4): looks up the glyph via text_glyph_id(), then
+ * Non-space ($E328-$E3A4): looks up the glyph via ascii_to_glyph_id(), then
  * blits it double-height directly to the screen in two passes (font rows
  * 0-3, then 4-6 plus a trailing blank row) -- the same "double height via
  * two separate 4- and 3-row passes with a column advance mid-glyph"
@@ -742,7 +760,7 @@ have_single:
  * (Set S's stale/arbitrary BC and DE, pushed and popped purely to balance
  * the stack) carries no live data and is correctly omitted.
  *
- * Conv: A_colour (was C, Set M) is NOT the "row count" the ($E2F5) prologue
+ * Conv: A_attr (was C, Set M) is NOT the "row count" the ($E2F5) prologue
  * naming originally suggested. $E399's EXX switches back to the SAME
  * physical register set read at $E2F5 -- the ladder's own use of C
  * ($E328-$E356) is a completely different (Set S) C that plot_char's own
@@ -767,24 +785,24 @@ have_single:
  * established precedent in draw_endshot's attribute-row loop above -- this
  * bank-7 memory range is not standard $5800-$5AFF attribute space.
  *
- * \param[in]     state    Pointer to game state.
- * \param[in]     A_char   Script character byte, EOS bit already masked off
- *                          by the caller (was A).
- * \param[in]     Drow     Screen destination row byte; constant for the
- *                          whole render_text call (was D, Set M).
- * \param[in,out] Ecol     Screen destination column byte; the persistent
- *                          cursor, advanced by one per character (was E,
- *                          Set M).
- * \param[in]     Hattr    Attribute-row address high byte; constant for the
- *                          whole call (was H, Set M).
- * \param[in,out] Lattr    Attribute address column byte; the persistent
- *                          cursor, mirrors *Ecol (was L, Set M).
- * \param[in]     A_colour Attribute/colour byte read once from the script
- *                          at $E2F5 and held constant for the whole call
- *                          (was C, Set M) -- see the Conv note above.
+ * \param[in]     state  Pointer to game state.
+ * \param[in]     A_char Script character byte, EOS bit already masked off
+ *                       by the caller (was A).
+ * \param[in]     Drow   Screen destination row byte; constant for the
+ *                       whole render_text call (was D, Set M).
+ * \param[in,out] Ecol   Screen destination column byte; the persistent
+ *                       cursor, advanced by one per character (was E,
+ *                       Set M).
+ * \param[in]     Hattr  Attribute-row address high byte; constant for the
+ *                       whole call (was H, Set M).
+ * \param[in,out] Lattr  Attribute address column byte; the persistent
+ *                       cursor, mirrors *Ecol (was L, Set M).
+ * \param[in]     A_attr Attribute/colour byte read once from the script
+ *                       at $E2F5 and held constant for the whole call
+ *                       (was C, Set M) -- see the Conv note above.
  */
 static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
-                      u8 Hattr, u8 *Lattr, u8 A_colour)
+                      u8 Hattr, u8 *Lattr, u8 A_attr)
 {
   int       character; /* character code, offset by ' ' (was A) */
   int       glyphid;   /* glyph index into font[] (was C during the ladder) */
@@ -803,7 +821,7 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
     return;
   }
 
-  glyphid = text_glyph_id(character);
+  glyphid = ascii_to_glyph_id(character);
   HLfont  = &font[glyphid * 7];
 
   Ecur = *Ecol;
@@ -835,9 +853,9 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
   *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = 0;
 
   // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
-  Lcur    = *Lattr;
-  *ADDRTOBACKBUF(((u16) Hattr << 8) | Lcur)               = A_colour;
-  *ADDRTOBACKBUF(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_colour;
+  Lcur = *Lattr;
+  *ADDRTOBACKBUF(((u16) Hattr << 8) | Lcur)               = A_attr;
+  *ADDRTOBACKBUF(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_attr;
   *Lattr = (u8) (Lcur + 1);
 }
 
@@ -856,7 +874,7 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
 static void render_text_common(chqstate_t *state, const u8 **script)
 {
   const u8 *HL_script; /* script read pointer (was HL) */
-  u8        C_colour;  /* attribute/colour byte read from the script (was C) */
+  u8        C_attr;    /* attribute byte read from the script (was C) */
   u8        E_scr;     /* screen destination column byte (was E) */
   u8        D_scr;     /* screen destination row byte (was D) */
   u8        H_attr;    /* attribute-row address high byte (was H, $E304) */
@@ -866,7 +884,7 @@ static void render_text_common(chqstate_t *state, const u8 **script)
 
   HL_script = *script;
 
-  C_colour = *HL_script++;
+  C_attr = *HL_script++;
   E_scr    = *HL_script++;
   D_scr    = *HL_script++;
 
@@ -876,7 +894,7 @@ static void render_text_common(chqstate_t *state, const u8 **script)
   do {
     raw    = *HL_script;
     A_char = raw & (u8) ~EOS;
-    plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_colour);
+    plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
     HL_script++;
   } while ((raw & EOS) == 0);
 
@@ -906,7 +924,7 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  * arm state->es_handler/es_frame_count via es_set_dispatch and return,
  * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
  *
- * ESCMD_DRAW_TEXT_NO_CLEAR/ESCMD_DRAW_TEXT (render_text/plot_char) also run immediately, drawing
+ * ESCMD_DRAW_TEXT_NO_CLEAR_VAL/ESCMD_DRAW_TEXT_VAL (render_text/plot_char) also run immediately, drawing
  * their text run within this same call rather than arming a per-frame
  * handler -- see render_text_common and plot_char above.
  *
@@ -929,63 +947,63 @@ static void run_script(chqstate_t *state)
     state->bank7->es_script_ptr = HL_script;
 
     switch (A_cmd) {
-    case ESCMD_CLEAR_DRAW_FRAME:
+    case ESCMD_CLEAR_DRAW_FRAME_VAL:
       es_clear_then_draw_frame(state, &HL_script);
       continue;
 
-    case ESCMD_DRAW_WORD:
+    case ESCMD_DRAW_WORD_VAL:
       /* $E2DE is $E2D9's tail half, entered directly for this command
        * (skipping E2D9's own backbuffer-clear prefix). */
       es_draw_frame_common(state, &HL_script);
       continue;
 
-    case ESCMD_FADE_IN_A:
+    case ESCMD_FADE_IN_A_VAL:
       es_set_dispatch(state, es_attribute_fade_in, 16);
       goto rs_exit;
 
-    case ESCMD_FADE_IN_B:
+    case ESCMD_FADE_IN_B_VAL:
       es_set_dispatch(state, es_handler_glyph_fade_b, 16);
       goto rs_exit;
 
-    case ESCMD_HANDSHAKE:
+    case ESCMD_HANDSHAKE_VAL:
       es_set_dispatch(state, es_handler_handshake, 16);
       goto rs_exit;
 
-    case ESCMD_FADE_IN_C:
+    case ESCMD_FADE_IN_C_VAL:
       es_set_dispatch(state, es_handler_glyph_fade_c, 32);
       goto rs_exit;
 
-    case ESCMD_IDLE:
+    case ESCMD_IDLE_VAL:
       C_reload = *HL_script++;
       es_set_dispatch(state, es_handler_idle, C_reload);
       goto rs_exit;
 
-    case ESCMD_RESET_HANDSHAKE:
+    case ESCMD_RESET_HANDSHAKE_VAL:
       C_reload = *HL_script++;
       state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
       es_set_dispatch(state, es_handler_handshake, C_reload);
       goto rs_exit;
 
-    case ESCMD_HANDSHAKE_AGAIN:
+    case ESCMD_HANDSHAKE_AGAIN_VAL:
       C_reload = *HL_script++;
       es_set_dispatch(state, es_handler_handshake, C_reload);
       goto rs_exit;
 
-    case ESCMD_DRAW_TEXT_NO_CLEAR:
+    case ESCMD_DRAW_TEXT_NO_CLEAR_VAL:
       /* $E2F5 entered directly: no backbuffer-clear prefix. */
       render_text_common(state, &HL_script);
       continue;
 
-    case ESCMD_DRAW_TEXT:
+    case ESCMD_DRAW_TEXT_VAL:
       es_handler_render_text(state, &HL_script);
       continue;
 
-    case ESCMD_CHATTER:
+    case ESCMD_CHATTER_VAL:
       es_chatter(state);
       HL_script = state->bank7->es_script_ptr; /* es_chatter advanced it directly */
       continue;
 
-    case ESCMD_DRAW_SCORE:
+    case ESCMD_DRAW_SCORE_VAL:
       es_handler_draw_score(state);
       continue;
 
@@ -1069,7 +1087,9 @@ void show_end_screen(chqstate_t *state)
   bank7_setup_interrupts(state);
   play_turbo_sfx_128k(state);
 
-  state->bank7->es_script_ptr  = script_data;
+  assert(sizeof(script_data) == sizeof(state->bank7->es_script));
+  memcpy(state->bank7->es_script, script_data, sizeof(script_data));
+  state->bank7->es_script_ptr  = state->bank7->es_script;
   state->bank7->es_frame_count = 1;
   state->bank7->es_handler     = es_handler_idle;
   state->bank7->es_input_mask  = 0;

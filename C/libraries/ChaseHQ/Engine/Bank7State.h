@@ -37,8 +37,14 @@
  * are reachable only from within Bank7.c.
  */
 struct chq_bank7_state {
-  // $A16D (SM): run_script's script program counter. Points at script_data
-  // (Bank7.c).
+  // Per-instance copy of Bank7.c's static const script_data, made at
+  // show_end_screen entry so es_handler_draw_score's in-place score patch
+  // (offset 0xFD) cannot trample, or be trampled by, another concurrently
+  // running game instance sharing the same process.
+  u8           es_script[268];
+
+  // $A16D (SM): run_script's script program counter. Points into es_script
+  // above (Bank7.c).
   const u8    *es_script_ptr;
 
   // $A170 (SM): per-command frame-delay countdown; show_end_screen's loop
