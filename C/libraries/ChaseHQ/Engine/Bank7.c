@@ -34,6 +34,7 @@
 #include "ChaseHQ/ChaseHQ.h"
 
 #include "ChaseHQ/Data/Bank7Data.h"
+#include "ChaseHQ/Data/Stages.h"
 
 #include "Types.h"
 #include "Internal.h"
@@ -593,16 +594,72 @@ static void es_handler_draw_score(chqstate_t *state)
 }
 
 /**
- * $E2B2 (stub): Call a script-supplied handler with a literal argument
+ * Resolve a script-embedded $E2B2 argument word to its C data array.
  *
- * TODO: not yet ported ($E2B9 CALL $9945, target and purpose unconfirmed).
- * Runs immediately (loops back into run_script rather than returning).
+ * Conv: as with resolve_endshot, script_data only ever encodes one literal
+ * value here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E
+ * via the bank's uniform +0x8400 rule), so a small lookup replaces pointer
+ * arithmetic into relocated bank memory the C port does not model
+ * byte-for-byte.
  *
- * \param[in] state Pointer to game state.
+ * \param[in] addr Raw address word read from the script (was HL after
+ *                 EX DE,HL at $E2B7).
+ * \return Matching data block, or NULL if unrecognised.
+ */
+static const u8 *resolve_call_word_target(u16 addr)
+{
+  switch (addr) {
+  case 0x5C6E: return data_e06e;
+  default:     return NULL; /* ponytail: script_data never encodes any other value */
+  }
+}
+
+/**
+ * $E2B2: Call a script-supplied handler with a literal argument
+ *
+ * Reads a 2-byte little-endian pointer word from the script, advances the
+ * script pointer past it, then calls start_chatter with priority 1 (Z80
+ * sets A=0 then INC A immediately before CALL $9945) and the resolved
+ * pointer. Runs immediately (loops back into run_script rather than
+ * returning).
+ *
+ * Conv: data_e06e (the only live target) is NOT a standard
+ * {CHATTERCHR, CHATTERSTR, CHATTERCMD} chatterblk -- see the comment on
+ * data_e06e in Bank7Data.h. Byte 2 of that block ($3F = 63) would be
+ * consumed as a CHATTERSTR index by pc_chatter_message (Main.c, the
+ * "assert(*chatterblk < CHATTERSTR__LIMIT)" guard around line 5871) and
+ * fail that bounds check immediately -- CHATTERSTR__LIMIT is 36. In a
+ * release build without asserts this reads common_chatter_strings[63] out
+ * of its 36-entry array and dereferences whatever garbage pointer turns up,
+ * i.e. every single playthrough would crash on reaching the end screen.
+ * The original Z80 has the same malformed data, so this path is presumed
+ * unreached in practice (the skool marks it "unproven, dead end"); rather
+ * than risk that byte-for-byte here, the start_chatter call is skipped
+ * whenever the resolved target does not look like a well-formed chatterblk.
+ *
+ * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
+ *                       read and advanced past the word consumed.
  */
 static void es_handler_call_word(chqstate_t *state)
 {
-  NOT_USED(state);
+  const u8 *HLscript;    /* script read pointer (was HL) */
+  u16       target_addr; /* raw argument word read from the script (was DE/HL) */
+  const u8 *chatterblk;  /* resolved data block pointer (was HL after CALL $9945 setup) */
+
+  HLscript = state->bank7->es_script_ptr;
+
+  target_addr = (u16) (HLscript[0] | (HLscript[1] << 8));
+  HLscript += 2;
+
+  chatterblk = resolve_call_word_target(target_addr);
+
+  /* Conv: data_e06e is not a well-formed chatterblk -- see prologue. Guard
+   * against the confirmed CHATTERSTR__LIMIT overrun in pc_chatter_message
+   * rather than reproduce the crash. */
+  if (chatterblk != NULL && chatterblk[1] < CHATTERSTR__LIMIT)
+    start_chatter(state, 1, chatterblk);
+
+  state->bank7->es_script_ptr = HLscript;
 }
 
 /**
@@ -623,6 +680,57 @@ static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
   state->bank7->es_handler     = handler;
   state->bank7->es_frame_count = reload;
 }
+
+/**
+ * $E2F0-$E3A4 render_text/plot_char: NOT PORTED -- analysis notes
+ *
+ * Command entry points: $E2F0 (ESCMD_11, falls through to $E2F5 after a
+ * PUSH HL / CALL $6099 (es_clear) / POP HL prologue) and $E2F5 (ESCMD_10,
+ * entered directly). $E2F5 reads C=row/height byte, then DE=screen dest
+ * word from the script (3 bytes total), computes an attribute-row address
+ * from D exactly as draw_endshot does (RRCA x3; AND 3; ADD $EF; combine
+ * with E) into HL.
+ *
+ * The width-class table at $E328-$E34C was decoded and is NOT the
+ * ambiguous part: it is instruction-for-instruction identical to the
+ * existing glyphid-mapping ladder in draw_char ($9FEC, Main.c
+ * dc_have_range/dc_have_single), and $E357 "LD HL,$A27A; ADD HL,BC" (with
+ * BC = 7*glyphid) indexes the very same font[41*7] table already ported in
+ * CommonData.c. A real port would reuse that mapping, not reinvent it.
+ *
+ * The blocking ambiguity is the register-banking structure from $E306
+ * onward, which nests three independent EXX-driven state switches:
+ *   1. $E306 EXX banks {C=row count, DE=screen dest, HL=attr addr} into the
+ *      shadow set.
+ *   2. $E307 EX (SP),HL then swaps the (now-active, ex-shadow) HL with the
+ *      script pointer sitting on the stack (pushed at $E2FB) -- so "HL"
+ *      immediately after this instruction means the script read cursor,
+ *      while whatever was in shadow HL before step 1 is now on the stack,
+ *      to be popped back at $E31A after the closing EXX.
+ *   3. Every plot_char call ($E31F-$E3A4) performs its OWN internal EXX
+ *      (at $E35B and $E39A/$E3A3) to reach back into the set banked in
+ *      step 1 and mutate the persistent column cursor (E of screen dest,
+ *      L of attr addr) for the NEXT character, while borrowing the
+ *      PRE-increment value as this character's blit destination via a
+ *      PUSH/EXX/POP shuffle ($E35C-$E35F).
+ *
+ * Direct-translating this requires either (a) modelling three coexisting
+ * "shadow" register generations with the project's single-shadow-variable
+ * EXX convention, which the convention as documented does not cover, or
+ * (b) restructuring to explicit cursor-state parameters -- which is a
+ * legitimate translation strategy but is a design decision, not a
+ * mechanical port, and risks silently changing behaviour if the row-wrap
+ * arithmetic ($E37A-$E37F: E += 0x1F, D -= 7) doesn't get carried over
+ * exactly. Given the surrounding code already has next_screen_row() for an
+ * extremely similar row-wrap pattern, a future attempt should start by
+ * checking whether $E37A-E37F reduces to a variant of that helper before
+ * inventing new arithmetic.
+ *
+ * Not attempted rather than guessed, per project convention: pixel/column
+ * geometry here directly affects on-screen output, so an unverified guess
+ * would look plausible while being wrong in a way that's hard to spot from
+ * a screenshot (a font glyph one row tall or one column off).
+ */
 
 /**
  * $E20A: Run the current end-screen script
@@ -696,7 +804,15 @@ static void run_script(chqstate_t *state)
 
     case ESCMD_10:
     case ESCMD_11:
-      /* TODO: $E2F0/$E2C0 region not yet decoded. */
+      /* TODO: $E2F0-$E3A4 (render_text/plot_char) genuinely ambiguous,
+       * not ported -- see the analysis note below this switch. Script
+       * bytes are NOT consumed here (unlike the other unhandled-command
+       * fallback), so this stub cannot be safely left wired into a real
+       * script run -- it would desync the script pointer against every
+       * later command. Not confirmed whether script_data ever actually
+       * dispatches command byte 10 or 11 (a manual byte-by-byte trace of
+       * every other command's consumption length would be needed to be
+       * sure); treat this path as untested. */
       goto rs_exit;
 
     case ESCMD_CALL_WORD:

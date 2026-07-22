@@ -316,6 +316,9 @@ typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IXhazard);
 
 typedef u8 chatterpriority_t;
 
+void start_chatter(chqstate_t *state, chatterpriority_t priority,
+                    const u8 *chatterblk);
+
 typedef struct session session_t;
 
 typedef struct title_tune_channel title_tune_channel_t;

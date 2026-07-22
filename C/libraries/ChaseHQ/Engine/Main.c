@@ -710,9 +710,9 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
 
 static u8 rng(chqstate_t *state);
 
-static void start_chatter(chqstate_t       *state,
-                          chatterpriority_t priority,
-                          const u8         *chatterblk);
+void start_chatter(chqstate_t       *state,
+                    chatterpriority_t priority,
+                    const u8         *chatterblk);
 
 
 static void print_chatter(chqstate_t *state);
@@ -5637,9 +5637,9 @@ static u8 rng(chqstate_t *state)
  * \param[in] priority Priority of this chatter; higher values win. (was A)
  * \param[in] chatterblk Pointer to the chatter data block to play. (was HL)
  */
-static void start_chatter(chqstate_t       *state,
-                          chatterpriority_t priority,
-                          const u8         *chatterblk)
+void start_chatter(chqstate_t       *state,
+                    chatterpriority_t priority,
+                    const u8         *chatterblk)
 {
   int chatter_state; /* current FSM state, checked against IDLE and STOP (was A) */
 
