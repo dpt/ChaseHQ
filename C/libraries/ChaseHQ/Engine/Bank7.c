@@ -603,7 +603,7 @@ static const u8 *resolve_chatterblk(u16 addr)
 {
   switch (addr) {
   case 0x5C6E: return &chatterblk_nancy_congratulates[0];
-  case 0x5C77: return &chatterblk_press_gear[0];
+  case 0x5C78: return &chatterblk_press_gear[0];
   default:     assert(0); return NULL;
   }
 }
@@ -836,8 +836,8 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
 
   // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
   Lcur    = *Lattr;
-  *ADDRTOSCREEN(((u16) Hattr << 8) | Lcur)               = A_colour;
-  *ADDRTOSCREEN(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_colour;
+  *ADDRTOBACKBUF(((u16) Hattr << 8) | Lcur)               = A_colour;
+  *ADDRTOBACKBUF(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_colour;
   *Lattr = (u8) (Lcur + 1);
 }
 
@@ -1080,10 +1080,14 @@ void show_end_screen(chqstate_t *state)
     if (state->host_quit)
       longjmp(state->host_quit_jmp, 1);
 
+    state->speccy->stamp(state->speccy);
+
     es_service_speech(state);
     if (--state->bank7->es_frame_count == 0)
       run_script(state);
     state->bank7->es_handler(state);
+
+    state->speccy->sleep(state->speccy, END_SCREEN_TSTATES);
 
     if (--outer_count != 0)
       continue;
