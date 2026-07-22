@@ -34,6 +34,7 @@
 #include "ChaseHQ/ChaseHQ.h"
 
 #include "ChaseHQ/Data/Bank7Data.h"
+#include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Data/Stages.h"
 
 #include "Types.h"
@@ -682,55 +683,229 @@ static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
 }
 
 /**
- * $E2F0-$E3A4 render_text/plot_char: NOT PORTED -- analysis notes
+ * Map an ASCII character to its glyph index in font[]
  *
- * Command entry points: $E2F0 (ESCMD_11, falls through to $E2F5 after a
- * PUSH HL / CALL $6099 (es_clear) / POP HL prologue) and $E2F5 (ESCMD_10,
- * entered directly). $E2F5 reads C=row/height byte, then DE=screen dest
- * word from the script (3 bytes total), computes an attribute-row address
- * from D exactly as draw_endshot does (RRCA x3; AND 3; ADD $EF; combine
- * with E) into HL.
+ * $E328-$E356 width-class ladder. Instruction-for-instruction identical to
+ * draw_char's ($9FEC, Main.c) dc_have_range/dc_have_single mapping -- see
+ * that function for the equivalent structure. Reused here (rather than
+ * reinvented) because both routines index the same font[41*7] table.
  *
- * The width-class table at $E328-$E34C was decoded and is NOT the
- * ambiguous part: it is instruction-for-instruction identical to the
- * existing glyphid-mapping ladder in draw_char ($9FEC, Main.c
- * dc_have_range/dc_have_single), and $E357 "LD HL,$A27A; ADD HL,BC" (with
- * BC = 7*glyphid) indexes the very same font[41*7] table already ported in
- * CommonData.c. A real port would reuse that mapping, not reinvent it.
- *
- * The blocking ambiguity is the register-banking structure from $E306
- * onward, which nests three independent EXX-driven state switches:
- *   1. $E306 EXX banks {C=row count, DE=screen dest, HL=attr addr} into the
- *      shadow set.
- *   2. $E307 EX (SP),HL then swaps the (now-active, ex-shadow) HL with the
- *      script pointer sitting on the stack (pushed at $E2FB) -- so "HL"
- *      immediately after this instruction means the script read cursor,
- *      while whatever was in shadow HL before step 1 is now on the stack,
- *      to be popped back at $E31A after the closing EXX.
- *   3. Every plot_char call ($E31F-$E3A4) performs its OWN internal EXX
- *      (at $E35B and $E39A/$E3A3) to reach back into the set banked in
- *      step 1 and mutate the persistent column cursor (E of screen dest,
- *      L of attr addr) for the NEXT character, while borrowing the
- *      PRE-increment value as this character's blit destination via a
- *      PUSH/EXX/POP shuffle ($E35C-$E35F).
- *
- * Direct-translating this requires either (a) modelling three coexisting
- * "shadow" register generations with the project's single-shadow-variable
- * EXX convention, which the convention as documented does not cover, or
- * (b) restructuring to explicit cursor-state parameters -- which is a
- * legitimate translation strategy but is a design decision, not a
- * mechanical port, and risks silently changing behaviour if the row-wrap
- * arithmetic ($E37A-$E37F: E += 0x1F, D -= 7) doesn't get carried over
- * exactly. Given the surrounding code already has next_screen_row() for an
- * extremely similar row-wrap pattern, a future attempt should start by
- * checking whether $E37A-E37F reduces to a variant of that helper before
- * inventing new arithmetic.
- *
- * Not attempted rather than guessed, per project convention: pixel/column
- * geometry here directly affects on-screen output, so an unverified guess
- * would look plausible while being wrong in a way that's hard to spot from
- * a screenshot (a font glyph one row tall or one column off).
+ * \param[in] character ASCII character, already offset by ' ' (was A after
+ *                        SUB $20; space and 0 are handled by the caller).
+ * \return Glyph index into font[] (multiply by 7 for the row pointer).
  */
+static int text_glyph_id(int character)
+{
+  int glyphid; /* glyph index accumulator (was C) */
+
+  glyphid = 0x12;
+  if (character >= ('A' - ' ')) goto have_range;
+  glyphid = 0x0B;
+  if (character >= ('0' - ' ')) goto have_range;
+  glyphid = 0;
+  character--;
+  if (character == 0) goto have_single;
+  glyphid++;
+  character -= 7;
+  if (character == 0) goto have_single;
+  glyphid++;
+  character--;
+  if (character == 0) goto have_single;
+  glyphid++;
+  character -= 3;
+  if (character == 0) goto have_single;
+  glyphid++;
+  goto have_single;
+
+have_range:
+  glyphid = character - glyphid;
+
+have_single:
+  return glyphid;
+}
+
+/**
+ * $E31F plot_char: Render one end-screen text character
+ *
+ * Space ($E323-$E327): advances both persistent cursors by one column and
+ * draws nothing.
+ *
+ * Non-space ($E328-$E3A4): looks up the glyph via text_glyph_id(), then
+ * blits it double-height directly to the screen in two passes (font rows
+ * 0-3, then 4-6 plus a trailing blank row) -- the same "double height via
+ * two separate 4- and 3-row passes with a column advance mid-glyph"
+ * structure as draw_char's style==0 case, except writing to real (bank-7)
+ * screen addresses rather than a flat backbuffer offset, so the mid-glyph
+ * advance has to reproduce the Z80's raw row/column byte arithmetic.
+ * Finally stamps the call's colour byte into both glyph-cell attributes and
+ * advances the persistent cursor by one column.
+ *
+ * Conv: register-banking notes, resolved from the original stalled attempt.
+ * The Z80 threads three logically distinct values through nested EXX/stack
+ * shuffles ($E306, $E307/EX (SP),HL, and plot_char's own $E35B/$E39A-$E3A3
+ * EXX pairs): the script read cursor (HL throughout the character loop --
+ * modelled as the caller's script pointer, untouched by plot_char), the
+ * persistent column cursor (screen-dest E and attr-addr L, both threaded
+ * here as [in,out] Ecol/Lattr), and this character's own draw position
+ * (screen-dest E's PRE-increment value, borrowed via a PUSH/EXX/POP
+ * shuffle at $E35B-$E35F -- modelled here as the local Ecur, read from
+ * *Ecol before it is advanced). Everything else the EXX dance shuffles
+ * (Set S's stale/arbitrary BC and DE, pushed and popped purely to balance
+ * the stack) carries no live data and is correctly omitted.
+ *
+ * Conv: A_colour (was C, Set M) is NOT the "row count" the ($E2F5) prologue
+ * naming originally suggested. $E399's EXX switches back to the SAME
+ * physical register set read at $E2F5 -- the ladder's own use of C
+ * ($E328-$E356) is a completely different (Set S) C that plot_char's own
+ * LDI calls decrement into irrelevance and never reads back. Confirmed
+ * against script_data: the byte read here for "CONGRATULATIONS!" is $47 =
+ * BRIGHT, PAPER black, INK white -- a plausible text colour, not a row
+ * count. It survives unclobbered in Set M across the whole render_text call
+ * and is written verbatim into both glyph-cell attributes at $E399/$E3A0.
+ *
+ * Conv: $E37A-$E37F (E += $1F, then the pending LDI increment folds in a
+ * further +1, netting E += $20; D -= 7) is NOT the same computation as
+ * next_screen_row() -- it never checks for, or propagates, a carry out of
+ * the column byte into the row byte, unlike next_screen_row's explicit
+ * "did this cross a screen third" branch. Reproduced literally as two
+ * independent 8-bit adds rather than substituting next_screen_row, since
+ * the two are only equivalent when no such carry occurs -- true for every
+ * script-supplied text position in script_data, but not guaranteed in
+ * general.
+ *
+ * Conv: the attribute-row address computed from Drow (Hattr, range
+ * $EF-$F2) is resolved via ADDRTOSCREEN, not ADDRTOATTRS, matching the
+ * established precedent in draw_endshot's attribute-row loop above -- this
+ * bank-7 memory range is not standard $5800-$5AFF attribute space.
+ *
+ * \param[in]     state    Pointer to game state.
+ * \param[in]     A_char   Script character byte, EOS bit already masked off
+ *                          by the caller (was A).
+ * \param[in]     Drow     Screen destination row byte; constant for the
+ *                          whole render_text call (was D, Set M).
+ * \param[in,out] Ecol     Screen destination column byte; the persistent
+ *                          cursor, advanced by one per character (was E,
+ *                          Set M).
+ * \param[in]     Hattr    Attribute-row address high byte; constant for the
+ *                          whole call (was H, Set M).
+ * \param[in,out] Lattr    Attribute address column byte; the persistent
+ *                          cursor, mirrors *Ecol (was L, Set M).
+ * \param[in]     A_colour Attribute/colour byte read once from the script
+ *                          at $E2F5 and held constant for the whole call
+ *                          (was C, Set M) -- see the Conv note above.
+ */
+static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
+                       u8 Hattr, u8 *Lattr, u8 A_colour)
+{
+  int       character; /* character code, offset by ' ' (was A) */
+  int       glyphid;   /* glyph index into font[] (was C during the ladder) */
+  const u8 *HLfont;    /* current font row pointer, walked forward (was HL) */
+  u8        Ecur;      /* this character's draw column (was E, Set S) */
+  u8        Dcur;      /* current screen row byte during the blit (was D) */
+  int       i;         /* pass loop index (Conv: no Z80 register) */
+  int       data;      /* font byte read for the current scanline pair (was A) */
+  u8        Lcur;      /* this character's attribute column (was L) */
+
+  character = A_char - ' ';
+  if (character == 0) {
+    // Space: $E323-$E327.
+    (*Ecol)++;
+    (*Lattr)++;
+    return;
+  }
+
+  glyphid = text_glyph_id(character);
+  HLfont  = &font[glyphid * 7];
+
+  Ecur = *Ecol;
+  (*Ecol)++; // $E35D: persistent cursor advances for the NEXT character now.
+
+  // Pass 1 ($E360-$E378): font bytes 0-3, double height.
+  Dcur = Drow;
+  for (i = 0; i < 4; i++) {
+    data = *HLfont++;
+    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
+    Dcur++;
+    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
+    if (i != 3)
+      Dcur++;
+  }
+
+  // $E37A-$E381: mid-glyph row-wrap -- see Conv note in the prologue.
+  Ecur = (u8) (Ecur + 0x20);
+  Dcur = (u8) (Dcur - 7);
+
+  // Pass 2 ($E382-$E398): font bytes 4-6, double height, then a blank row.
+  for (i = 0; i < 3; i++) {
+    data = *HLfont++;
+    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
+    Dcur++;
+    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
+    Dcur++;
+  }
+  *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = 0;
+
+  // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
+  Lcur    = *Lattr;
+  *ADDRTOSCREEN(((u16) Hattr << 8) | Lcur)               = A_colour;
+  *ADDRTOSCREEN(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_colour;
+  *Lattr = (u8) (Lcur + 1);
+}
+
+/**
+ * $E2F5 render_text_common: Parse and draw a script text-render command
+ *
+ * Reads a colour byte and a screen destination word from the script (3
+ * bytes total), derives the attribute-row address exactly as draw_endshot
+ * does, then plots each following script character via plot_char until the
+ * EOS-terminated (top-bit-set) character has been drawn.
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] script Script read pointer (was HL); advanced past the
+ *                        3-byte header and the whole character run.
+ */
+static void render_text_common(chqstate_t *state, const u8 **script)
+{
+  const u8 *HLscript; /* script read pointer (was HL) */
+  u8        Ccolour;  /* attribute/colour byte read from the script (was C) */
+  u8        Escr;     /* screen destination column byte (was E) */
+  u8        Dscr;     /* screen destination row byte (was D) */
+  u8        Hattr;    /* attribute-row address high byte (was H, $E304) */
+  u8        Lattr;    /* attribute address column byte (was L, $E305) */
+  u8        raw;      /* raw script byte, EOS bit intact (was (HL) at $E312) */
+  u8        A_char;   /* script character byte, EOS bit masked off (was A) */
+
+  HLscript = *script;
+
+  Ccolour = *HLscript++;
+  Escr    = *HLscript++;
+  Dscr    = *HLscript++;
+
+  Hattr = (u8) ((((Dscr >> 3) | (Dscr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
+  Lattr = Escr;
+
+  do {
+    raw    = *HLscript;
+    A_char = raw & (u8) ~EOS;
+    plot_char(state, A_char, Dscr, &Escr, Hattr, &Lattr, Ccolour);
+    HLscript++;
+  } while ((raw & EOS) == 0);
+
+  *script = HLscript;
+}
+
+/**
+ * $E2F0: Clear the backbuffer, then render an end-screen text run
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] script Script read pointer (was HL); advanced as per
+ *                        render_text_common.
+ */
+static void es_handler_render_text(chqstate_t *state, const u8 **script)
+{
+  es_clear(state);
+  render_text_common(state, script);
+}
 
 /**
  * $E20A: Run the current end-screen script
@@ -742,9 +917,9 @@ static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *),
  * arm state->es_handler/es_frame_count via es_set_dispatch and return,
  * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
  *
- * Conv: the handler bodies themselves (draw/glyph-plot/handshake/score) are
- * not yet ported -- see the TODO stubs above. This function faithfully
- * reproduces the command dispatch and byte consumption only.
+ * ESCMD_10/ESCMD_11 (render_text/plot_char) also run immediately, drawing
+ * their text run within this same call rather than arming a per-frame
+ * handler -- see render_text_common and plot_char above.
  *
  * \param[in] state Pointer to game state.
  */
@@ -803,17 +978,13 @@ static void run_script(chqstate_t *state)
       goto rs_exit;
 
     case ESCMD_10:
+      /* $E2F5 entered directly: no backbuffer-clear prefix. */
+      render_text_common(state, &HLscript);
+      continue;
+
     case ESCMD_11:
-      /* TODO: $E2F0-$E3A4 (render_text/plot_char) genuinely ambiguous,
-       * not ported -- see the analysis note below this switch. Script
-       * bytes are NOT consumed here (unlike the other unhandled-command
-       * fallback), so this stub cannot be safely left wired into a real
-       * script run -- it would desync the script pointer against every
-       * later command. Not confirmed whether script_data ever actually
-       * dispatches command byte 10 or 11 (a manual byte-by-byte trace of
-       * every other command's consumption length would be needed to be
-       * sure); treat this path as untested. */
-      goto rs_exit;
+      es_handler_render_text(state, &HLscript);
+      continue;
 
     case ESCMD_CALL_WORD:
       es_handler_call_word(state);
