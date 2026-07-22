@@ -30,12 +30,12 @@
 #include "C99/Types.h"
 
 #include "ZXSpectrum/Macros.h"
+#include "ZXSpectrum/Z80.h"
 
 #include "ChaseHQ/ChaseHQ.h"
 
 #include "ChaseHQ/Data/Bank7Data.h"
 #include "ChaseHQ/Data/CommonData.h"
-#include "ChaseHQ/Data/Stages.h"
 
 #include "Types.h"
 #include "Internal.h"
@@ -64,19 +64,19 @@ static void es_clear(chqstate_t *state)
 }
 
 /* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
-#define ESCMD_DRAW_FRAME       (1) /* -> $E2D9 es_handler_draw_frame, runs immediately */
-#define ESCMD_DRAW_WORD        (2) /* -> $E2DE es_handler_draw_word, runs immediately */
-#define ESCMD_GLYPH_A          (3) /* -> $E42E routine_e42e via rs_exit, reload 16 */
-#define ESCMD_GLYPH_B          (4) /* -> $E472 routine_e472 via rs_exit, reload 16 */
-#define ESCMD_HANDSHAKE        (5) /* -> $E3B7 routine_e3b7 via rs_exit, reload 16 */
-#define ESCMD_GLYPH_C          (6) /* -> $E46D routine_e46d via rs_exit, reload 32 */
-#define ESCMD_IDLE             (7) /* -> rs_exit, handler = no-op, reload = script byte */
-#define ESCMD_SET_A172         (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
-#define ESCMD_HANDSHAKE_AGAIN  (9) /* -> rs_exit, handler = handshake, reload = script byte */
-#define ESCMD_10              (10) /* -> $E2F0 (undecoded) */
-#define ESCMD_11              (11) /* -> $E2C0-style entry (undecoded) */
-#define ESCMD_CALL_WORD       (12) /* -> $E2B2, runs immediately */
-#define ESCMD_RENDER_SCORE    (13) /* -> $E256, runs immediately */
+#define ESCMD_CLEAR_DRAW_FRAME    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
+#define ESCMD_DRAW_WORD           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
+#define ESCMD_FADE_IN_A           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_B           (4) /* -> $E472 es_handler_glyph_fade_b via rs_exit, reload 16 */
+#define ESCMD_HANDSHAKE           (5) /* -> $E3B7 es_handler_handshake via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_C           (6) /* -> $E46D es_handler_glyph_fade_c via rs_exit, reload 32 */
+#define ESCMD_IDLE                (7) /* -> rs_exit, handler = no-op, reload = script byte */
+#define ESCMD_RESET_HANDSHAKE     (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
+#define ESCMD_HANDSHAKE_AGAIN     (9) /* -> rs_exit, handler = handshake, reload = script byte */
+#define ESCMD_DRAW_TEXT_NO_CLEAR (10) /* -> $E2F0 (undecoded) */
+#define ESCMD_DRAW_TEXT          (11) /* -> $E2C0-style entry (undecoded) */
+#define ESCMD_CHATTER            (12) /* -> $E2B2, runs immediately */
+#define ESCMD_DRAW_SCORE         (13) /* -> $E256, runs immediately */
 
 #define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
@@ -99,32 +99,31 @@ static void es_clear(chqstate_t *state)
  * script_data at that address.
  */
 static u8 script_data[] = {
-  0x0C,
-  TWOBYTES(0x5C6E), // -> data_e06e
+  ESCMD_CHATTER,
+  TWOBYTES(0x5C6E), /* -> nancy_congratulates */
   0x07, 0xC0,
 
-  ESCMD_DRAW_FRAME,
+  ESCMD_CLEAR_DRAW_FRAME,
   TWOBYTES(0x60E1), // -> bitmap_endshot_1
   TWOBYTES(0x4889), // screen dst
   0x03, 0x07, 0xA0, 0x04,
 
-  ESCMD_DRAW_FRAME,
+  ESCMD_CLEAR_DRAW_FRAME,
   TWOBYTES(0x6489), // -> bitmap_endshot_2
   TWOBYTES(0x4889), // screen dst
   0x03, 0x07, 0xA0, 0x04,
 
-  ESCMD_DRAW_FRAME,
-  ESCMD_DRAW_FRAME,
+  ESCMD_CLEAR_DRAW_FRAME,
   TWOBYTES(0x6831), // -> bitmap_endshot_3
   TWOBYTES(0x4889), // screen dst
   0x03, 0x07, 0xA0, 0x04,
 
-  ESCMD_DRAW_FRAME,
+  ESCMD_CLEAR_DRAW_FRAME,
   TWOBYTES(0x6BD9), // -> bitmap_endshot_4
   TWOBYTES(0x4889), // screen dst
   0x03, 0x07, 0xA0, 0x04,
 
-  ESCMD_DRAW_FRAME,
+  ESCMD_CLEAR_DRAW_FRAME,
   TWOBYTES(0x60E1), // -> bitmap_endshot_1
   TWOBYTES(0x4802), // screen dst
   0x03, 0x07, 0x50,
@@ -166,7 +165,10 @@ static u8 script_data[] = {
   0x60, 0x06, 0x07, 0x60,
   0x0B, 0x45, 0xAA, 0x48,
   0x46, 0x49, 0x4E, 0x41, 0x4C, 0x20, 0x20, 0x53,
-  0x43, 0x4F, 0x52, 0xC5, 0x03, 0x07, 0x1E, 0x0D,
+  0x43, 0x4F, 0x52, 0xC5, 0x03, 0x07, 0x1E,
+
+  0x0D,
+
   0x0A, 0x47, 0x2C, 0x50, 0x20, 0x20, 0x20, 0x20,
   0x20, 0x20, 0x20, 0xA0, 0x03, 0x0C, 0x78, 0x5C,
   0x07, 0x00, 0x0E
@@ -198,22 +200,6 @@ static u16 next_screen_row(u16 addr)
     return (u16) ((Dhi << 8) | Elo);
   else
     return (u16) (((Dhi - 0x08) << 8) | Elo);
-}
-
-/**
- * Rotate a byte left circularly (Z80 RLC), reporting the bit that wrapped.
- *
- * \param[in,out] v Byte to rotate in place (was (HL) or a register).
- * \return The old bit 7, i.e. the carry flag RLC sets (was Carry).
- */
-static u8 rlc8(u8 *v)
-{
-  u8 old_bit7; /* bit that rotates out of the top and back in at the bottom */
-
-  old_bit7 = (u8) ((*v >> 7) & 1);
-  *v       = (u8) ((*v << 1) | old_bit7);
-
-  return old_bit7;
 }
 
 /**
@@ -266,7 +252,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
  * Resolve a script-embedded end-shot bitmap address to its C data array.
  *
  * Conv: the original walks a real (relocated) Z80 pointer; script_data only
- * ever encodes these four literal addresses (see the ESCMD_DRAW_FRAME
+ * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME
  * entries above), so a small lookup replaces pointer arithmetic into
  * relocated bank memory the C port does not model byte-for-byte.
  *
@@ -276,11 +262,11 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 static const u8 *resolve_endshot(u16 addr)
 {
   switch (addr) {
-  case 0x60E1: return bitmap_endshot_1;
-  case 0x6489: return bitmap_endshot_2;
-  case 0x6831: return bitmap_endshot_3;
-  case 0x6BD9: return bitmap_endshot_4;
-  default:     return bitmap_endshot_1; /* ponytail: script_data never encodes any other value */
+  case 0x60E1: return &bitmap_endshot_1[0];
+  case 0x6489: return &bitmap_endshot_2[0];
+  case 0x6831: return &bitmap_endshot_3[0];
+  case 0x6BD9: return &bitmap_endshot_4[0];
+  default:     assert(0); return NULL;
   }
 }
 
@@ -294,19 +280,19 @@ static const u8 *resolve_endshot(u16 addr)
  */
 static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 {
-  const u8 *HLscript; /* script read pointer (was HL) */
+  const u8 *HL_script;   /* script read pointer (was HL) */
   u16       image_addr;  /* raw bitmap address word read from script */
   u16       screen_addr; /* destination screen address word read from script */
 
-  HLscript = *script;
+  HL_script = *script;
 
-  image_addr  = wordat(HLscript);
-  screen_addr = wordat(HLscript + 2);
-  HLscript += 4;
+  image_addr  = wordat(HL_script);
+  screen_addr = wordat(HL_script + 2);
+  HL_script += 4;
 
   draw_endshot(state, resolve_endshot(image_addr), screen_addr);
 
-  *script = HLscript;
+  *script = HL_script;
 }
 
 /**
@@ -314,19 +300,19 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
  *
  * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced past the two
- *                        words consumed.
+ *                       words consumed.
  */
-static void es_handler_draw_frame(chqstate_t *state, const u8 **script)
+static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
 {
   es_clear(state);
   es_draw_frame_common(state, script);
 }
 
 /**
- * $E42E routine_e42e: Sweep the middle attribute band toward the backbuffer
- * target colours
+ * $E42E es_attribute_fade_in: Sweep the middle attribute band toward
+ * the backbuffer target colours
  *
- * Gate: only runs every other call (rlc8 flip-flops $5C6C; returns
+ * Gate: only runs every other call (RLC flip-flops $5C6C; returns
  * immediately when the old top bit was set). When it runs, walks all 512
  * attribute cells $5900-$5AFF against the corresponding backbuffer bytes at
  * $F000-$F1FF (the glyph shapes rasterised there by other code): cells with
@@ -342,55 +328,58 @@ static void es_handler_draw_frame(chqstate_t *state, const u8 **script)
  *
  * \param[in] state Pointer to game state.
  */
-static void es_handler_glyph_sweep(chqstate_t *state)
+static void es_attribute_fade_in(chqstate_t *state)
 {
-  u8 *HLattr;   /* current attribute cell (was HL) */
-  u8 *DEback;   /* current backbuffer cell (was DE) */
-  int cell;     /* attribute cell counter, 512 down to 0 (was H reaching $5B) */
-  u8  A;        /* working accumulator (was A) */
+  int carry;    /* carry flag set by RLC (carry) */
+  u8 *HL_attr;  /* current attribute cell (was HL) */
+  u8 *DE_back;  /* current backbuffer cell (was DE) */
+  int c;        /* attribute cell counter, 512 down to 0 (was H reaching $5B) */
+  u8  A_target; /* masked target colour read from the backbuffer (was A) */
+  u8  A_paper;  /* working accumulator (was A) */
   u8  B_target; /* masked target colour read from the backbuffer (was B) */
   u8  C_ink;    /* merged ink field (was C) */
 
-  if (rlc8(&state->bank7->es_flag_5c6c))
+  RLC(state->bank7->es_flag_5c6c);
+  if (carry)
     return;
 
-  HLattr = ADDRTOATTRS(0x5900);
-  DEback = ADDRTOBACKBUF(0xF000);
+  HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+  DE_back = ADDRTOBACKBUF(0xF000);
 
-  for (cell = 512; cell != 0; cell--, HLattr++, DEback++) {
-    if (*HLattr & 0x40) /* BRIGHT set: leave this cell untouched */
+  for (c = 32 * 16; c != 0; c--, HL_attr++, DE_back++) {
+    if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
       continue;
 
-    A = *DEback & 0x3F;
-    if (A == *HLattr) {
-      *HLattr = *DEback;
-      continue;
+    A_target = *DE_back & 0x3F;
+    if (A_target == *HL_attr) {
+      *HL_attr = *DE_back;
+      continue; // already there
     }
 
-    B_target = A;
+    B_target = A_target;
 
-    C_ink = *HLattr & 0x07;
+    C_ink = *HL_attr & 0x07; // Ink
     if ((B_target & 0x07) != C_ink)
       C_ink++;
 
-    A = *HLattr & 0x38;
-    if ((B_target & 0x38) != A)
-      A = (u8) (A + 0x08);
+    A_paper = *HL_attr & 0x38; // Paper
+    if ((B_target & 0x38) != A_paper)
+      A_paper = (u8) (A_paper + 0x08);
 
-    *HLattr = (u8) (A | C_ink);
+    *HL_attr = (u8) (A_paper | C_ink);
   }
 }
 
 /**
  * $E475: Shared fade-to-black tail for routine_e472/routine_e46d
  *
- * Sweeps the same 512-cell attribute band as es_handler_glyph_sweep,
+ * Sweeps the same 512-cell attribute band as es_attribute_fade_in,
  * decrementing each cell's ink field by 1 (floor 0) and paper field by one
  * unit (floor 0) every call it runs. Gated by rlc8 on *flag -- $5C6C for
  * routine_e472 (GLYPH_B, also called directly by the handshake handler),
  * $5C6D for routine_e46d (GLYPH_C).
  *
- * Conv: unlike es_handler_glyph_sweep, BRIGHT/FLASH are never tested here --
+ * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here --
  * the original ANDs each byte down to its ink/paper fields before OR-ing
  * them back together, which drops those bits on every write. Matched
  * bug-for-bug.
@@ -398,32 +387,35 @@ static void es_handler_glyph_sweep(chqstate_t *state)
  * \param[in] state Pointer to game state.
  * \param[in] flag  Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
  */
-static void es_glyph_fade_common(chqstate_t *state, u8 *flag)
+static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 {
-  u8 *HLattr; /* current attribute cell (was HL) */
-  int cell;   /* attribute cell counter, 512 down to 0 (was D pages) */
-  u8  A;      /* working accumulator (was A) */
-  u8  B_ink;  /* new ink field (was B) */
+  int carry;     /* carry flag set by RLC (carry) */
+  u8 *HL_pattrs; /* current attribute cell (was HL) */
+  int c;         /* attribute cell counter, 512 down to 0 (was D pages) */
+  u8  A_attr;    /* attribute cell (was A) */
+  u8  B_ink;     /* new ink field (was B) */
+  u8  A_paper;   /* working accumulator (was A) */
 
-  if (!rlc8(flag))
+  RLC(*flag);
+  if (!carry)
     return;
 
-  HLattr = ADDRTOATTRS(0x5900);
+  HL_pattrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
 
-  for (cell = 512; cell != 0; cell--, HLattr++) {
-    A = *HLattr;
-    if (A == 0)
+  for (c = 32 * 16; c != 0; c--, HL_pattrs++) {
+    A_attr = *HL_pattrs;
+    if (A_attr == 0)
       continue;
 
-    B_ink = A & 0x07;
+    B_ink = A_attr & 0x07;
     if (B_ink != 0)
       B_ink--;
 
-    A &= 0x38;
-    if (A != 0)
-      A = (u8) (A - 0x08);
+    A_paper = A_attr & 0x38;
+    if (A_paper != 0)
+      A_paper = (u8) (A_paper - 0x08);
 
-    *HLattr = (u8) (A | B_ink);
+    *HL_pattrs = (u8) (A_paper | B_ink);
   }
 }
 
@@ -434,7 +426,7 @@ static void es_glyph_fade_common(chqstate_t *state, u8 *flag)
  */
 static void es_handler_glyph_fade_b(chqstate_t *state)
 {
-  es_glyph_fade_common(state, &state->bank7->es_flag_5c6c);
+  es_attribute_fade_out(state, &state->bank7->es_flag_5c6c);
 }
 
 /**
@@ -444,7 +436,7 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
  */
 static void es_handler_glyph_fade_c(chqstate_t *state)
 {
-  es_glyph_fade_common(state, &state->bank7->es_flag_5c6d);
+  es_attribute_fade_out(state, &state->bank7->es_flag_5c6d);
 }
 
 /* $E3A5 handshake_table: row-count + source bitmap per animation frame,
@@ -453,12 +445,12 @@ static const struct {
   u8         rows;
   const u8  *image;
 } handshake_table[6] = {
-  { 37, bitmap_handshake_1 },
-  { 35, bitmap_handshake_2 },
-  { 34, bitmap_handshake_3 },
-  { 32, bitmap_handshake_4 },
-  { 34, bitmap_handshake_3 },
-  { 35, bitmap_handshake_2 },
+  { 37, &bitmap_handshake_1[0] },
+  { 35, &bitmap_handshake_2[0] },
+  { 34, &bitmap_handshake_3[0] },
+  { 32, &bitmap_handshake_4[0] },
+  { 34, &bitmap_handshake_3[0] },
+  { 35, &bitmap_handshake_2[0] },
 };
 
 /**
@@ -478,26 +470,28 @@ static const struct {
  */
 static void es_handler_handshake(chqstate_t *state)
 {
-  u8        A_index; /* frame index 0..5, wrapped (was A/B) */
-  const u8 *HLimage;  /* handshake bitmap source, walked forward (was HL) */
+  int       carry;    /* carry flag set by RLC (carry) */
+  u8        A_index;  /* frame index 0..5, wrapped (was A/B) */
+  const u8 *HL_image; /* handshake bitmap source, walked forward (was HL) */
   u16       DE;       /* screen destination address (was DE) */
   int       row;      /* bitmap row counter for this frame (was B) */
   int       blank;    /* blank-row counter, 3 down to 0 (was C) */
-  u8       *HLattr;    /* decorative attribute cell (was HL) */
-  int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
+  u8       *HL_attr;  /* decorative attribute cell (was HL) */
+  int       group;    /* decorative attribute group counter, 5 down to 0 (was C) */
 
   es_handler_glyph_fade_b(state);
 
-  if (rlc8(&state->bank7->es_flag_5c6d)) {
+  RLC(state->bank7->es_flag_5c6d);
+  if (carry) {
     A_index = state->bank7->es_handshake_index;
     state->bank7->es_handshake_index = (u8) (A_index + 1 == 6 ? 0 : A_index + 1);
 
-    HLimage = handshake_table[A_index].image;
+    HL_image = handshake_table[A_index].image;
     DE      = 0x48AC;
 
     for (row = handshake_table[A_index].rows; row != 0; row--) {
-      memcpy(ADDRTOSCREEN(DE), HLimage, 8);
-      HLimage += 8;
+      memcpy(ADDRTOSCREEN(DE), HL_image, 8);
+      HL_image += 8;
       DE = next_screen_row(DE);
     }
 
@@ -507,10 +501,10 @@ static void es_handler_handshake(chqstate_t *state)
     }
   }
 
-  HLattr = ADDRTOATTRS(0x59AC);
+  HL_attr = ADDRTOATTRS(0x59AC);
   for (group = 5; group != 0; group--) {
-    memset(HLattr, 0x07, 8);
-    HLattr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
+    memset(HL_attr, 0x07, 8);
+    HL_attr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
   }
 }
 
@@ -546,12 +540,12 @@ static void es_handler_idle(chqstate_t *state)
  */
 static void es_handler_draw_score(chqstate_t *state)
 {
-  int       tally;   /* bonus-tally animation iteration counter (was BC) */
-  const u8 *DEbcd;   /* packed-BCD score pointer, walked backwards (was DE) */
-  u8       *HLdst;   /* destination ASCII bytes in script_data (was HL) */
-  u8        Cseen;   /* sticky "non-blank digit already printed" flag (was C) */
-  int       pair;    /* BCD byte-pair iteration counter (was B) */
-  u8        Anibble; /* nibble being converted to ASCII (was A) */
+  int       tally;    /* bonus-tally animation iteration counter (was BC) */
+  const u8 *DE_bcd;   /* packed-BCD score pointer, walked backwards (was DE) */
+  u8       *HL_dst;   /* destination ASCII bytes in script_data (was HL) */
+  u8        C_seen;   /* sticky "non-blank digit already printed" flag (was C) */
+  int       pair;     /* BCD byte-pair iteration counter (was B) */
+  u8        A_nibble; /* nibble being converted to ASCII (was A) */
 
   for (tally = 1000; tally != 0; tally--) {
     increment_score(state, 0, 0x00, 0x50);
@@ -562,31 +556,31 @@ static void es_handler_draw_score(chqstate_t *state)
 
   state->bank7->es_input_mask = 1;
 
-  DEbcd = &state->score_bcd[3];
-  HLdst = &script_data[0xFD];
-  Cseen = 0;
+  DE_bcd = &state->score_bcd[3];
+  HL_dst = &script_data[0xFD];
+  C_seen = 0;
 
   for (pair = 4; pair != 0; pair--) {
-    Anibble = (*DEbcd >> 4) & 0x0F;
-    if (Anibble != 0 || Cseen != 0) {
-      Cseen    = 0xFF;
-      *HLdst++ = 0x30 + Anibble;
+    A_nibble = (*DE_bcd >> 4) & 0x0F;
+    if (A_nibble != 0 || C_seen != 0) {
+      C_seen    = 0xFF;
+      *HL_dst++ = 0x30 + A_nibble;
     } else {
-      *HLdst++ = 0x20;
+      *HL_dst++ = 0x20;
     }
 
-    Anibble = *DEbcd & 0x0F;
-    if (Anibble != 0 || Cseen != 0) {
-      Cseen    = 0xFF;
-      *HLdst++ = 0x30 + Anibble;
+    A_nibble = *DE_bcd & 0x0F;
+    if (A_nibble != 0 || C_seen != 0) {
+      C_seen    = 0xFF;
+      *HL_dst++ = 0x30 + A_nibble;
     } else {
-      *HLdst++ = 0x20;
+      *HL_dst++ = 0x20;
     }
 
-    DEbcd--;
+    DE_bcd--;
   }
 
-  HLdst[-1] |= EOS; /* SET 7,(HL): mark this text run's terminator byte */
+  HL_dst[-1] |= EOS; /* SET 7,(HL): mark this text run's terminator byte */
 }
 
 /**
@@ -602,7 +596,7 @@ static void es_handler_draw_score(chqstate_t *state)
  *                 EX DE,HL at $E2B7).
  * \return Matching data block, or NULL if unrecognised.
  */
-static const u8 *resolve_call_word_target(u16 addr)
+static const u8 *resolve_chatterblk(u16 addr)
 {
   switch (addr) {
   case 0x5C6E: return &nancy_congratulates[0];
@@ -612,7 +606,7 @@ static const u8 *resolve_call_word_target(u16 addr)
 }
 
 /**
- * $E2B2: Call a script-supplied handler with a literal argument
+ * $E2B2: es_chatter: Call a script-supplied handler with a literal argument
  *
  * Reads a 2-byte little-endian pointer word from the script, advances the
  * script pointer past it, then calls start_chatter with priority 1 (Z80
@@ -637,25 +631,25 @@ static const u8 *resolve_call_word_target(u16 addr)
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
  *                       read and advanced past the word consumed.
  */
-static void es_handler_call_word(chqstate_t *state)
+static void es_chatter(chqstate_t *state)
 {
-  const u8 *HLscript;    /* script read pointer (was HL) */
-  u16       target_addr; /* raw argument word read from the script (was DE/HL) */
-  const u8 *chatterblk;  /* resolved data block pointer (was HL after CALL $9945 setup) */
+  const u8 *HL_script_ptr; /* script read pointer (was HL) */
+  u16       target_addr;   /* raw argument word read from the script (was DE/HL) */
+  const u8 *chatterblk;    /* resolved data block pointer (was HL after CALL $9945 setup) */
 
-  HLscript = state->bank7->es_script_ptr;
+  HL_script_ptr = state->bank7->es_script_ptr;
 
-  target_addr = wordat(HLscript);
-  HLscript += 2;
+  target_addr = wordat(HL_script_ptr);
+  HL_script_ptr += 2;
 
-  chatterblk = resolve_call_word_target(target_addr);
+  chatterblk = resolve_chatterblk(target_addr);
   start_chatter(state, 1, chatterblk);
 
-  state->bank7->es_script_ptr = HLscript;
+  state->bank7->es_script_ptr = HL_script_ptr;
 }
 
 /**
- * $E2CD rs_exit: Set the per-frame handler and its frame-delay reload
+ * $E2CD es_set_dispatch: Set the per-frame handler and its frame-delay reload
  *
  * Common tail shared by the run_script commands that hand off to a
  * self-modified per-frame handler rather than running immediately: stores
@@ -787,7 +781,7 @@ have_single:
  *                          (was C, Set M) -- see the Conv note above.
  */
 static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
-                       u8 Hattr, u8 *Lattr, u8 A_colour)
+                      u8 Hattr, u8 *Lattr, u8 A_colour)
 {
   int       character; /* character code, offset by ' ' (was A) */
   int       glyphid;   /* glyph index into font[] (was C during the ladder) */
@@ -858,32 +852,32 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
  */
 static void render_text_common(chqstate_t *state, const u8 **script)
 {
-  const u8 *HLscript; /* script read pointer (was HL) */
-  u8        Ccolour;  /* attribute/colour byte read from the script (was C) */
-  u8        Escr;     /* screen destination column byte (was E) */
-  u8        Dscr;     /* screen destination row byte (was D) */
-  u8        Hattr;    /* attribute-row address high byte (was H, $E304) */
-  u8        Lattr;    /* attribute address column byte (was L, $E305) */
-  u8        raw;      /* raw script byte, EOS bit intact (was (HL) at $E312) */
-  u8        A_char;   /* script character byte, EOS bit masked off (was A) */
+  const u8 *HL_script; /* script read pointer (was HL) */
+  u8        C_colour;  /* attribute/colour byte read from the script (was C) */
+  u8        E_scr;     /* screen destination column byte (was E) */
+  u8        D_scr;     /* screen destination row byte (was D) */
+  u8        H_attr;    /* attribute-row address high byte (was H, $E304) */
+  u8        L_attr;    /* attribute address column byte (was L, $E305) */
+  u8        raw;       /* raw script byte, EOS bit intact (was (HL) at $E312) */
+  u8        A_char;    /* script character byte, EOS bit masked off (was A) */
 
-  HLscript = *script;
+  HL_script = *script;
 
-  Ccolour = *HLscript++;
-  Escr    = *HLscript++;
-  Dscr    = *HLscript++;
+  C_colour = *HL_script++;
+  E_scr    = *HL_script++;
+  D_scr    = *HL_script++;
 
-  Hattr = (u8) ((((Dscr >> 3) | (Dscr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
-  Lattr = Escr;
+  H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
+  L_attr = E_scr;
 
   do {
-    raw    = *HLscript;
+    raw    = *HL_script;
     A_char = raw & (u8) ~EOS;
-    plot_char(state, A_char, Dscr, &Escr, Hattr, &Lattr, Ccolour);
-    HLscript++;
+    plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_colour);
+    HL_script++;
   } while ((raw & EOS) == 0);
 
-  *script = HLscript;
+  *script = HL_script;
 }
 
 /**
@@ -909,7 +903,7 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  * arm state->es_handler/es_frame_count via es_set_dispatch and return,
  * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
  *
- * ESCMD_10/ESCMD_11 (render_text/plot_char) also run immediately, drawing
+ * ESCMD_DRAW_TEXT_NO_CLEAR/ESCMD_DRAW_TEXT (render_text/plot_char) also run immediately, drawing
  * their text run within this same call rather than arming a per-frame
  * handler -- see render_text_common and plot_char above.
  *
@@ -917,31 +911,31 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  */
 static void run_script(chqstate_t *state)
 {
-  const u8 *HLscript; /* script program counter (was HL) */
-  u8        Acmd;     /* command byte just read (was A) */
-  u8        Creload;  /* frame-delay reload value about to be applied (was C) */
+  const u8 *HL_script; /* script program counter (was HL) */
+  u8        A_cmd;     /* command byte just read (was A) */
+  u8        C_reload;  /* frame-delay reload value about to be applied (was C) */
 
-  HLscript = state->bank7->es_script_ptr;
+  HL_script = state->bank7->es_script_ptr;
 
   for (;;) {
-    Acmd = *HLscript++;
+    A_cmd = *HL_script++;
 
-    switch (Acmd) {
-    case ESCMD_DRAW_FRAME:
-      es_handler_draw_frame(state, &HLscript);
+    switch (A_cmd) {
+    case ESCMD_CLEAR_DRAW_FRAME:
+      es_clear_then_draw_frame(state, &HL_script);
       continue;
 
     case ESCMD_DRAW_WORD:
       /* $E2DE is $E2D9's tail half, entered directly for this command
        * (skipping E2D9's own backbuffer-clear prefix). */
-      es_draw_frame_common(state, &HLscript);
+      es_draw_frame_common(state, &HL_script);
       continue;
 
-    case ESCMD_GLYPH_A:
-      es_set_dispatch(state, es_handler_glyph_sweep, 16);
+    case ESCMD_FADE_IN_A:
+      es_set_dispatch(state, es_attribute_fade_in, 16);
       goto rs_exit;
 
-    case ESCMD_GLYPH_B:
+    case ESCMD_FADE_IN_B:
       es_set_dispatch(state, es_handler_glyph_fade_b, 16);
       goto rs_exit;
 
@@ -949,40 +943,40 @@ static void run_script(chqstate_t *state)
       es_set_dispatch(state, es_handler_handshake, 16);
       goto rs_exit;
 
-    case ESCMD_GLYPH_C:
+    case ESCMD_FADE_IN_C:
       es_set_dispatch(state, es_handler_glyph_fade_c, 32);
       goto rs_exit;
 
     case ESCMD_IDLE:
-      Creload = *HLscript++;
-      es_set_dispatch(state, es_handler_idle, Creload);
+      C_reload = *HL_script++;
+      es_set_dispatch(state, es_handler_idle, C_reload);
       goto rs_exit;
 
-    case ESCMD_SET_A172:
-      Creload = *HLscript++;
+    case ESCMD_RESET_HANDSHAKE:
+      C_reload = *HL_script++;
       state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
-      es_set_dispatch(state, es_handler_handshake, Creload);
+      es_set_dispatch(state, es_handler_handshake, C_reload);
       goto rs_exit;
 
     case ESCMD_HANDSHAKE_AGAIN:
-      Creload = *HLscript++;
-      es_set_dispatch(state, es_handler_handshake, Creload);
+      C_reload = *HL_script++;
+      es_set_dispatch(state, es_handler_handshake, C_reload);
       goto rs_exit;
 
-    case ESCMD_10:
+    case ESCMD_DRAW_TEXT_NO_CLEAR:
       /* $E2F5 entered directly: no backbuffer-clear prefix. */
-      render_text_common(state, &HLscript);
+      render_text_common(state, &HL_script);
       continue;
 
-    case ESCMD_11:
-      es_handler_render_text(state, &HLscript);
+    case ESCMD_DRAW_TEXT:
+      es_handler_render_text(state, &HL_script);
       continue;
 
-    case ESCMD_CALL_WORD:
-      es_handler_call_word(state);
+    case ESCMD_CHATTER:
+      es_chatter(state);
       continue;
 
-    case ESCMD_RENDER_SCORE:
+    case ESCMD_DRAW_SCORE:
       es_handler_draw_score(state);
       continue;
 
@@ -994,7 +988,7 @@ static void run_script(chqstate_t *state)
   }
 
 rs_exit:
-  state->bank7->es_script_ptr = HLscript;
+  state->bank7->es_script_ptr = HL_script;
 }
 
 /**
