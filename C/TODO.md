@@ -21,6 +21,7 @@
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - Calibrate `TITLE_MUSIC_TSTATES`, `KEMPSTON_MUSIC_TSTATES`, `OMD_MUSIC_TSTATES`, `SUCCESS_MUSIC_TSTATES`, `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder values
 - Title jingle T-state count is a guess, tune by ear (`Bank3.c:3458`)
+- Model contention?
 
 ## P3 — Incomplete / missing content
 

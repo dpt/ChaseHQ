@@ -17039,9 +17039,12 @@ static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
  * \param[in]     HLdata Pointer to the next sample byte in state->drum1[] or
  *   state->drum2[]. (was HL)
  *
- * Conv: the RLC (HL) rotation mutates the sample data in place (only a full
- * 8-bit rotation restores it), so the drum samples live in state as mutable
- * copies of drum1_template/drum2_template. Conv: the inter-OUT delay code is
+ * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions
+ * across 8 iterations -- the byte doubles as its own iteration counter, no
+ * separate bit-index register needed. This rotation mutates the sample data
+ * in place (only a full 8-bit rotation restores it), so the drum samples
+ * live in state as mutable copies of drum1_template/drum2_template. Conv:
+ * the inter-OUT delay code is
  * modelled as speccy->logtime so the host can reconstruct the bit timing.
  * Conv: C has no mid-sample interrupts, so the early-return resume path
  * never triggers and the sample always plays to completion in one call.

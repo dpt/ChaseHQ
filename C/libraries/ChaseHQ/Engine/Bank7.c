@@ -21,7 +21,7 @@
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
  * See show_end_screen() below. es_setup_interrupts remains a stub -- see its
- * own prologue. es_play_music_48k drives the fanfare each frame (relocated
+ * own prologue. es_play_music_48k drives the beatbox each frame (relocated
  * to $F340 -- the real target of that call, not speech as originally
  * guessed) but its drum/noise instruments (es_playdrum_2/1, es_play_noise)
  * remain unported stubs, so playback is currently silent on instrument
@@ -1082,7 +1082,7 @@ static void es_setup_interrupts(chqstate_t *state)
  * \param[in,out] state     Pointer to game state.
  * \param[in]     HLpataddr Pattern-list read pointer (was HL).
  */
-static void es_next_pattern(chqstate_t *state, const u8 *HLpataddr)
+static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
 {
   int       An_repeats; /* pattern repeat count just read, or 0xFF end marker (was A) */
   int       Coffset;    /* offset into es_music_data for this pattern's notes (was C) */
@@ -1122,11 +1122,11 @@ static void es_advance_pattern(chqstate_t *state)
 {
   if (--state->bank7->es_music.pattern_repeats)
     return;
-  es_next_pattern(state, state->bank7->es_music.pattern_addr);
+  es_next_pattern_at_addr(state, state->bank7->es_music.pattern_addr);
 }
 
 /**
- * $F300: Start the end-screen fanfare
+ * $F300: Start the end-screen beatbox
  *
  * Clears the three playback flags that carry state across ticks
  * (drum_active, extra_delay, started) then loads the first pattern in
@@ -1135,12 +1135,12 @@ static void es_advance_pattern(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  */
-static void es_start_music(chqstate_t *state)
+static void es_reset_music(chqstate_t *state)
 {
   state->bank7->es_music.drum_active = 0;
   state->bank7->es_music.extra_delay = 0;
   state->bank7->es_music.started     = 0;
-  es_next_pattern(state, &es_music_patterns[0]);
+  es_next_pattern_at_addr(state, &es_music_patterns[0]);
 }
 
 /**
@@ -1157,14 +1157,17 @@ static void es_start_music(chqstate_t *state)
  * cleared. Identical in structure to Main.c's playdrum_go, operating on
  * bank 7's own es_music state and es_drum2/es_drum1 buffers.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state   Pointer to game state.
  * \param[in]     Dlength Number of sample bytes remaining to output (was D).
- * \param[in]     HLdata Pointer to the next sample byte in
+ * \param[in]     HLdata  Pointer to the next sample byte in
  *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
  *
- * Conv: the RLC (HL) rotation mutates the sample data in place (only a full
- * 8-bit rotation restores it), so the drum samples live in bank7 state as
- * mutable copies of es_drum2_template/es_drum1_template. Conv: the
+ * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions
+ * across 8 iterations -- the byte doubles as its own iteration counter, no
+ * separate bit-index register needed. This rotation mutates the sample data
+ * in place (only a full 8-bit rotation restores it), so the drum samples
+ * live in bank7 state as mutable copies of
+ * es_drum2_template/es_drum1_template. Conv: the
  * inter-OUT delay code is modelled as speccy->logtime so the host can
  * reconstruct the bit timing. Conv: C has no mid-sample interrupts, so the
  * early-return resume path never triggers and the sample always plays to
@@ -1172,28 +1175,30 @@ static void es_start_music(chqstate_t *state)
  */
 static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
 {
-  int carry;            /* carry flag used by RLC (carry) */
-  int Bdash_iterations; /* inner loop counter: drum_speed ticks per sample byte (was B') */
-  int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+  zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
+  int           carry;  /* carry flag used by RLC (carry) */
+  int           i;      /* inner loop counter: drum_speed ticks per sample byte (was B') */
+  int           bits;   /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
 
-  carry = 0;
-  do {
-    Bdash_iterations = state->bank7->es_music.drum_speed;
+  speccy = state->speccy;
+  carry  = 0;
+  for (;;) {
+    i = state->bank7->es_music.drum_speed;
     do {
-      A = port_MASK_EAR; // speaker bit
+      bits = port_MASK_EAR; // speaker bit
       if ((*HLdata & (1 << 7)) == 0)
-        A = 0;
-      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
+        bits = 0;
+      speccy->out(speccy, port_BORDER_EAR_MIC, bits);
       RLC(*HLdata); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
-      state->speccy->logtime(state->speccy, 63);
-    } while (--Bdash_iterations > 0);
+      speccy->logtime(speccy, 63);
+    } while (--i > 0);
     HLdata++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
-    state->speccy->logtime(state->speccy, 46);
+    speccy->logtime(speccy, 46);
     if (--Dlength == 0)
       goto pd_end_of_sample;
-  } while (1);
+  }
   // EXX unbank
   return;
 
@@ -1256,8 +1261,7 @@ static void es_play_noise(chqstate_t *state, int Aparam)
 }
 
 /**
- * $F340 (b7_play_music_48k): Service the end-screen fanfare for the current
- * frame
+ * $F340 Service the end-screen beatbox for the current frame
  *
  * Per-tick music driver for bank 7's own 48K music engine, almost identical
  * to Main.c's play_music_48k operating on es_music/es_music_patterns/
@@ -1268,11 +1272,6 @@ static void es_play_noise(chqstate_t *state, int Aparam)
  * es_advance_pattern). Bytes with bit 7 set carry a one-tick extra delay
  * flag; the lower three bits of the remaining byte select the instrument
  * (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise).
- *
- * An earlier pass guessed this function's real target was speech playback
- * (living two bytes before the shared play_speech_128k); tracing the $E026
- * CALL $F340 dispatch through the inner relocation ($F82F - 0x4EF = $F340)
- * disproved that -- it is bank 7's music player.
  *
  * Conv: the Z80 clears an interrupt flag ($F3BC) on entry then, once its
  * own processing is done, busy-waits on that flag in a loop
@@ -1292,12 +1291,12 @@ static void es_play_noise(chqstate_t *state, int Aparam)
  */
 static void es_play_music_48k(chqstate_t *state)
 {
-  int       Adelay;       /* note_delay-1; tests whether the current note's delay has expired (was A) */
-  const u8 *HLdata;       /* pattern byte-stream read pointer (was HL) */
-  int       An_note;      /* raw music byte minus 1; zero marks the end-of-pattern sentinel (was A) */
-  int       Dnote;        /* adjusted music byte: delay bit consumed, upper bits = param, lower 3 = instrument (was D) */
-  int       Binstrument;  /* instrument index: lower 3 bits of Dnote (was B) */
-  int       Aparam;       /* pitch/parameter value passed to the instrument handler (was A) */
+  int       Adelay;      /* note_delay-1; tests whether the current note's delay has expired (was A) */
+  const u8 *HLdata;      /* pattern byte-stream read pointer (was HL) */
+  int       An_note;     /* raw music byte minus 1; zero marks the end-of-pattern sentinel (was A) */
+  int       Dnote;       /* adjusted music byte: delay bit consumed, upper bits = param, lower 3 = instrument (was D) */
+  int       Binstrument; /* instrument index: lower 3 bits of Dnote (was B) */
+  int       Aparam;      /* pitch/parameter value passed to the instrument handler (was A) */
 
   if (state->bank7->es_input_mask != 0)
     return; // Conv: wait-for-interrupt loop is a no-op here (see prologue)
@@ -1360,7 +1359,7 @@ pm_reset_pattern:
  * $E000: Show the end screen
  *
  * Displays the end-of-game results screen: clears the playfield, starts the
- * fanfare and bank 7's own interrupt-driven music/script engine, then loops
+ * beatbox and bank 7's own interrupt-driven music/script engine, then loops
  * driving the script/frame-advance dispatch and drive_chatter each frame
  * until the fire key is pressed twice (once to reach the congratulations
  * script, once more to exit), clearing the queued key each time.
@@ -1381,7 +1380,7 @@ void show_end_screen(chqstate_t *state)
 
   es_clear(state);
   es_setup_interrupts(state);
-  es_start_music(state);
+  es_reset_music(state);
 
   assert(sizeof(es_script) == sizeof(state->bank7->es_script));
   memcpy(state->bank7->es_script, es_script, sizeof(es_script));
