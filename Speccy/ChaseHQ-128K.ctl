@@ -8,7 +8,8 @@
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
 > $4000 ; of the extra memory banks.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas, 2023-2024.
+> $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2026.
+> $4000 ; Sources live at <https://github.com/dpt/ChaseHQ>.
 > $4000 ;
 > $4000 ;
 > $4000 ; AUTHORS
@@ -44,6 +45,7 @@
 > $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
 > $4000 ; - Shares a composer and an artist with ZX Chase H.Q.
 > $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
+> $4000 ; - Chase H.Q. is reportedly a modification of WEC Le Mans' game engine.
 > $4000 ;
 > $4000 ; "Batman: The Movie" (Ocean Software, 1989)
 > $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
@@ -100,23 +102,25 @@
 > $4000 ; $5C00..$76EF is the per-stage data:
 > $4000 ; - $5C00..$5CEF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
-> $4000 ; $E300..$E316 is a height table (22 bytes long)
+> $4000 ; $E300..$E316 is a height table (22? bytes long)
 > $4000 ; $E336..      is TBD
 > $4000 ; $E410..$E4CF is a road edge/markings table
 > $4000 ; $E4D0..$E4FF is road lane markings
 > $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
-> $4000 ; $E830..$E8FF is 104 words for road drawing (left)
-> $4000 ; $E900        is a table
-> $4000 ; $E930..$E9FF is 104 words for road drawing (centre left)
+> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
+> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
+> $4000 ; $E900        is a curvature? table
+> $4000 ; $E930..$E9FF is 104? words for road drawing (centre left)
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
-> $4000 ; $EA30..$EAFF is 104 words for road drawing (centre)
+> $4000 ; $EA30..$EAFF is 104? words for road drawing (centre)
 > $4000 ; $EB00..$EB27 is the square zoom-in mask
-> $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
+> $4000 ; $EB30..$EBFF is 104? words for road drawing (centre right)
 > $4000 ; $EC00..$EC2F is TBD (transition uses this)
-> $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
+> $4000 ; $EC30..$ECFF is 104? words for road drawing (right)
+> $4000 ; $ED00..$ED?? is a curvature table?
 > $4000 ; $ED28        is the stack (growing downwards)
-> $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
+> $4000 ; $ED30..$EDFF is (possibly another 104? word road drawing buffer)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
@@ -147,6 +151,7 @@
 > $4000 ;
 > $4000 ; 128K SOUND
 > $4000 ; ----------
+> $4000 ; The siren is played on Channels A and B.
 > $4000 ; The engine drone is played on Channel C.
 > $4000 ;
 > $4000 ;
@@ -158,13 +163,13 @@
 > $4000 ; TODO
 > $4000 ; ----
 > $4000 ; - Decode all stages' level data (see CHQStage.py)
+> $4000 ; - Decode the music data at $F111
 > $4000 ; - Disassemble the Chase HQ demo version
-> $4000 ; - $8008 area used at all?
+> $4000 ; - Is the $8008 area used at all?
 > $4000 ; - Stretchy streetlamps etc. encoding
 > $4000 ; - $E34B block is what?
 > $4000 ; - Stripy tunnel fills
 > $4000 ;
-> $4000
 @ $4000 org
 @ $4000 set-warnings=1
 @ $4000 start
@@ -208,8 +213,8 @@ C $5B2F,2 Call the handler
 N $5B31 Loader handler that loads a stage.
 @ $5B31 label=loader_load
 C $5B31,1 Preserve command list address
-C $5B32,4 Address of loader_scratch
-C $5B36,3 Length of loader_scratch
+C $5B32,4 Load address of loader_scratch
+C $5B36,3 Load length of loader_scratch
 C $5B39,3 Call loader_load_chunk
 C $5B3C,1 Restore command list address
 @ $5B3D label=loader_load_headerless
@@ -286,7 +291,7 @@ D $5BD7 Bytes to pad this section out to $5C00. These bytes do get touched by e.
 S $5BD7,31,$1F
 B $5BF6,10,10
 b $5C00 [Stage 1] Horizon graphic
-D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
+D $5C00 #HTML[#CALL(graphic($5C00,80,24,0,1))]
 @ $5C00 label=bitmap_horizon
 B $5C00,240,8 Horizon backdrop (80x24). Non-masked, inverted, bitmap data. Varies per stage.
 b $5CF0 [Stage 1] Per-stage data
@@ -302,7 +307,7 @@ W $5CF6,2,2 Loaded by #R$AC1F. Address of table of LODs for tumbleweeds, barrier
 @ $5CF8 ssub=DEFW right_hand_handlers - 7
 W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFA label=addrof_right_hand_objects
-@ $5CFA ssub=DEFW right_hand_graphics_defs - 7
+@ $5CFA ssub=DEFW right_hand_object_defs - 7
 W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFC label=addrof_right_hand_short_pole_object
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
@@ -310,7 +315,7 @@ W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
 @ $5CFE ssub=DEFW left_hand_handlers - 7
 W $5CFE,2,2 Address of turn sign arg and handler address. Points 7 bytes earlier to permit 1-indexing.
 @ $5D00 label=addrof_left_hand_objects
-@ $5D00 ssub=DEFW left_hand_graphics_defs - 7
+@ $5D00 ssub=DEFW left_hand_object_defs - 7
 W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 10. Points 7 bytes earlier to permit 1-indexing.
 @ $5D02 label=addrof_left_hand_short_pole_object
 W $5D02,2,2 Loaded by #R$A55C. Address of graphics entry 12.
@@ -334,14 +339,14 @@ W $5D10,2,2 Address of LODs for car (perp's car).
 W $5D12,2,2 Address of LODs for lambo.
 W $5D14,2,2 Address of LODs for truck.
 W $5D16,2,2 Address of LODs for lambo (again).
-W $5D18,2,2 Address of LODs for car (generic car).
+W $5D18,2,2 Address of LODs for car (generic car - must match the perp's car; not spawned once perp is seen).
 b $5D1A [Stage 1] Per-stage difficulty settings
-@ $5D1A label=car_spawn_rate
+@ $5D1A label=car_spawn_delay
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
-B $5D1B,1,1 Loaded by #R$A6A7. Used by smash_handler.
-@ $5D1C label=smash_5d1c
-B $5D1C,1,1 Loaded by #R$A759.
+B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_behaviour.
+@ $5D1C label=smash_perp_delay
+B $5D1C,1,1 Loaded by #R$A759. Delay between perp boosts or something?
 w $5D1D [Stage 1] Per-stage setup data
 @ $5D1D label=stage_set_up_data
 W $5D1D,2,2 road_pos
@@ -381,7 +386,7 @@ W $5D3A,2,2 Points at "THIS IS NANCY..."
 W $5D3C,2,2 Points at "EMERGENCY HERE..."
 W $5D3E,2,2 Points at "IS FLEEING ..."
 W $5D40,2,2 Points at "VEHICLE IS..."
-B $5D42,1,1 (pause?)
+B $5D42,1,1 Pause
 W $5D43,2,2 -> Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")
 @ $5D45 label=perp_description_1
 T $5D45,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -413,11 +418,10 @@ W $5E34,2,2 Back buffer address
 W $5E36,2,2 Attribute address
 T $5E38,6,5:n1 "MURDER"
 B $5E3E,1,1 Frame delay until next message?
-b $5E3F [Stage 1] Graphics definitions
-D $5E3F All are stored inverted except where noted.
-@ $5E3F label=graphics_defs
-B $5E3F,1,1 Pointed to by #R$5CFA
-N $5E40 Hittable hazards: tumbleweed and barrier.
+B $5E3F,1,1 End marker?
+b $5E40 [Stage 1] Graphics definitions
+D $5E40 All are stored inverted except where noted.
+D $5E40 Hittable hazards: tumbleweed and barrier.
 @ $5E40 label=hittable_objects_defs
 B $5E40,1,1 Pointed to by #R$5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
@@ -425,7 +429,7 @@ B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Right hand side objects.
 N $5E46 Entry 1 (tunnel light)
-@ $5E46 label=right_hand_graphics_defs
+@ $5E46 label=right_hand_object_defs
 B $5E46,3,3 (hit coord max, hit coord min, ?)
 @ $5E49 label=right_hand_handlers
 W $5E49,2,2 Arg for routine passed in DE
@@ -464,8 +468,8 @@ W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at #R$92E1
 N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
-@ $5E85 label=left_hand_graphics_defs
-B $5E85,3,3
+@ $5E85 label=left_hand_object_defs
+B $5E85,3,3 (hit coord min, hit coord max, ?)  -- note reversed order
 @ $5E88 label=left_hand_handlers
 W $5E88,2,2 Arg for routine passed in DE
 W $5E8A,2,2 -> Routine at #R$924D
@@ -504,103 +508,133 @@ W $5EC2,2,2 -> Routine at #R$9278
 b $5EC4 [Stage 1] Map: Start stretch
 N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
+N $5EC4 #HTML[#CALL(curvature_for_c($5EC4))]
 @ $5EC4 label=map_start_curvature
 B $5EC4,32,8
 N $5EE4 Start stretch, height
+N $5EE4 #HTML[#CALL(height_for_c($5EE4))]
 @ $5EE4 label=map_start_height
 B $5EE4,43,8*5,3
 N $5F0F Start stretch, lanes
+N $5F0F #HTML[#CALL(lanes_for_c($5F0F))]
 @ $5F0F label=map_start_lanes
 B $5F0F,14,8,6
 N $5F1D Start stretch, hazards
+N $5F1D #HTML[#CALL(hazards_for_c($5F1D))]
 @ $5F1D label=map_start_hazards
 B $5F1D,13,8,5
 N $5F2A Start stretch, left-side objects
+N $5F2A #HTML[#CALL(objects_for_c($5F2A))]
 @ $5F2A label=map_start_leftobjs
 B $5F2A,78,8*9,6
 N $5F78 Start stretch, right-side objects
+N $5F78 #HTML[#CALL(objects_for_c($5F78))]
 @ $5F78 label=map_start_rightobjs
 B $5F78,90,8*11,2
-b $5FD2 [Stage 1] Map: Left fork
+b $5FD2 [Stage 1] Map: Left fork (wrong way)
 N $5FD2 Left fork
 N $5FD2 Left fork, curvature
+N $5FD2 #HTML[#CALL(curvature_for_c($5FD2))]
 @ $5FD2 label=map_left_curvature
 B $5FD2,20,8*2,4
 N $5FE6 Left fork, height
+N $5FE6 #HTML[#CALL(height_for_c($5FE6))]
 @ $5FE6 label=map_left_height
 B $5FE6,29,8*3,5
 N $6003 Left fork, lanes
+N $6003 #HTML[#CALL(lanes_for_c($6003))]
 @ $6003 label=map_left_lanes
 B $6003,6,6
 N $6009 Left fork, hazards
+N $6009 #HTML[#CALL(hazards_for_c($6009))]
 @ $6009 label=map_left_hazards
 B $6009,8,8
 N $6011 Left fork, left-side objects
+N $6011 #HTML[#CALL(objects_for_c($6011))]
 @ $6011 label=map_left_leftobjs
 B $6011,65,8*8,1
 N $6052 Left fork, right-side objects
+N $6052 #HTML[#CALL(objects_for_c($6052))]
 @ $6052 label=map_left_rightobjs
 B $6052,54,8*6,6
-b $6088 [Stage 1] Map: Right fork (dirt track)
+b $6088 [Stage 1] Map: Right fork (correct way - dirt track)
 N $6088 Right fork (dirt track), curvature
+N $6088 #HTML[#CALL(curvature_for_c($6088))]
 @ $6088 label=map_right_curvature
 B $6088,27,8*3,3
 N $60A3 Right fork (dirt track), height
+N $60A3 #HTML[#CALL(height_for_c($60A3))]
 @ $60A3 label=map_right_height
 B $60A3,66,8*8,2
 N $60E5 Right fork (dirt track), lanes
+N $60E5 #HTML[#CALL(lanes_for_c($60E5))]
 @ $60E5 label=map_right_lanes
 B $60E5,10,8,2
 N $60EF Right fork (dirt track), hazards
+N $60EF #HTML[#CALL(hazards_for_c($60EF))]
 @ $60EF label=map_right_hazards
 B $60EF,26,8*3,2
 N $6109 Right fork (dirt track), left-side objects
+N $6109 #HTML[#CALL(objects_for_c($6109))]
 @ $6109 label=map_right_leftobjs
 B $6109,58,8*7,2
 N $6143 Right fork (dirt track), right-side objects
+N $6143 #HTML[#CALL(objects_for_c($6143))]
 @ $6143 label=map_right_rightobjs
 B $6143,48,8
 b $6173 [Stage 1] Map: Tunnel section
 N $6173 Tunnel section, curvature
+N $6173 #HTML[#CALL(curvature_for_c($6173))]
 @ $6173 label=map_tunnel_curvature
 B $6173,22,8*2,6
 N $6189 Tunnel section, height
+N $6189 #HTML[#CALL(height_for_c($6189))]
 @ $6189 label=map_tunnel_height
 B $6189,28,8*3,4
 N $61A5 Tunnel section, lanes
+N $61A5 #HTML[#CALL(lanes_for_c($61A5))]
 @ $61A5 label=map_tunnel_lanes
 B $61A5,20,8*2,4
 N $61B9 Tunnel section, hazards
+N $61B9 #HTML[#CALL(hazards_for_c($61B9))]
 @ $61B9 label=map_tunnel_hazards
 B $61B9,5,5
 N $61BE Tunnel section, left-side objects
+N $61BE #HTML[#CALL(objects_for_c($61BE))]
 @ $61BE label=map_tunnel_leftobjs
 B $61BE,11,8,3
 N $61C9 Tunnel section, right-side objects
+N $61C9 #HTML[#CALL(objects_for_c($61C9))]
 @ $61C9 label=map_tunnel_rightobjs
 B $61C9,11,8,3
 b $61D4 [Stage 1] Map: Loop section
 N $61D4 Loop section, curvature
+N $61D4 #HTML[#CALL(curvature_for_c($61D4))]
 @ $61D4 label=map_loop_curvature
 B $61D4,53,8*6,5
 N $6209 Loop section, height
+N $6209 #HTML[#CALL(height_for_c($6209))]
 @ $6209 label=map_loop_height
 B $6209,84,8*10,4
 N $625D Loop section, lanes
+N $625D #HTML[#CALL(lanes_for_c($625D))]
 @ $625D label=map_loop_lanes
 B $625D,26,8*3,2
 N $6277 Loop section, hazards
+N $6277 #HTML[#CALL(hazards_for_c($6277))]
 @ $6277 label=map_loop_hazards
 B $6277,29,8*3,5
 N $6294 Loop section, left-side objects
+N $6294 #HTML[#CALL(objects_for_c($6294))]
 @ $6294 label=map_loop_leftobjs
 B $6294,128,8
 N $6314 Loop section, right-side objects
+N $6314 #HTML[#CALL(objects_for_c($6314))]
 @ $6314 label=map_loop_rightobjs
 B $6314,118,8*14,6
 b $638A [Stage 1] Ralph the Idaho Slasher's mugshot
 N $638A Bitmap data for Ralph the Idaho Slasher's mugshot (32x40). Stored top-down.
-N $638A #HTML[#CALL:face($638A)]
+N $638A #HTML[#CALL(face($638A))]
 @ $638A label=bitmap_ralph
 B $638A,160,4
 N $642A Attribute data for Ralph the Idaho Slasher's mugshot (4x5). Stored top-down.
@@ -720,63 +754,63 @@ B $64B7,1,1 Height (pixels)
 W $64B8,2,2 Bitmap
 W $64BA,2,2 Pre-shifted bitmap
 N $64BC Bitmap: Lamborghini_1 (48x30)
-N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
-@ $64BC label=bitmap_lamborghini_1
+N $64BC #HTML[#CALL(graphic($64BC,48,30,0,1))]
+@ $64BC label=bitmap_lambo_1
 B $64BC,180,6 Bitmap data
 N $6570 Bitmap: Lamborghini_2 (40x22)
-N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
-@ $6570 label=bitmap_lamborghini_2
+N $6570 #HTML[#CALL(graphic($6570,40,22,0,1))]
+@ $6570 label=bitmap_lambo_2
 B $6570,110,5 Bitmap data
 N $65DE Bitmap: Lamborghini_3 (24x15)
-N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
-@ $65DE label=bitmap_lamborghini_3
+N $65DE #HTML[#CALL(graphic($65DE,24,15,0,1))]
+@ $65DE label=bitmap_lambo_3
 B $65DE,45,3 Bitmap data
 N $660B Bitmap: Truck_1 (48x39)
-N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
+N $660B #HTML[#CALL(graphic($660B,48,39,0,1))]
 @ $660B label=bitmap_truck_1
 B $660B,234,6 Bitmap data
 N $66F5 Bitmap: Truck_2 (40x29)
-N $66F5 #HTML[#CALL:graphic($66F5,40,29,0,1)]
+N $66F5 #HTML[#CALL(graphic($66F5,40,29,0,1))]
 @ $66F5 label=bitmap_truck_2
 B $66F5,145,5 Bitmap data
 N $6786 Bitmap: Truck_3 (24x20)
-N $6786 #HTML[#CALL:graphic($6786,24,20,0,1)]
+N $6786 #HTML[#CALL(graphic($6786,24,20,0,1))]
 @ $6786 label=bitmap_truck_3
 B $6786,60,3 Bitmap data
 N $67C2 Bitmap: Car_1 (48x31)
-N $67C2 #HTML[#CALL:graphic($67C2,48,31,0,1)]
+N $67C2 #HTML[#CALL(graphic($67C2,48,31,0,1))]
 @ $67C2 label=bitmap_car_1
 B $67C2,186,6 Bitmap data
 N $687C Bitmap: Car_2 (40x22)
-N $687C #HTML[#CALL:graphic($687C,40,22,0,1)]
+N $687C #HTML[#CALL(graphic($687C,40,22,0,1))]
 @ $687C label=bitmap_car_2
 B $687C,110,5 Bitmap data
 N $68EA Bitmap: Car_3 (24x16)
-N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
+N $68EA #HTML[#CALL(graphic($68EA,24,16,0,1))]
 @ $68EA label=bitmap_car_3
 B $68EA,48,3 Bitmap data
 N $691A Bitmap: Lamborghini_4 (24x8)
-N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
-@ $691A label=bitmap_lamborghini_4
+N $691A #HTML[#CALL(graphic($691A,24,8,1,1))]
+@ $691A label=bitmap_lambo_4
 B $691A,48,6 Masked bitmap data
 N $694A Bitmap: Lamborghini_4 (24x8) pre-shifted
-N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
-@ $694A label=bitmap_lamborghini_4s
+N $694A #HTML[#CALL(graphic($694A,24,8,1,1))]
+@ $694A label=bitmap_lambo_4s
 B $694A,48,6 Masked bitmap data
 N $697A Bitmap: Truck_4 (16x12)
-N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
+N $697A #HTML[#CALL(graphic($697A,16,12,1,1))]
 @ $697A label=bitmap_truck_4
 B $697A,48,4 Masked bitmap data
 N $69AA Bitmap: Truck_4 (16x12) pre-shifted
-N $69AA #HTML[#CALL:graphic($69AA,16,12,1,1)]
+N $69AA #HTML[#CALL(graphic($69AA,16,12,1,1))]
 @ $69AA label=bitmap_truck_4s
 B $69AA,48,4 Masked bitmap data
 N $69DA Bitmap: Car_4 (24x9)
-N $69DA #HTML[#CALL:graphic($69DA,24,9,1,1)]
+N $69DA #HTML[#CALL(graphic($69DA,24,9,1,1))]
 @ $69DA label=bitmap_car_4
 B $69DA,54,6 Masked bitmap data
 N $6A10 Bitmap: Car_4 (24x9) pre-shifted
-N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
+N $6A10 #HTML[#CALL(graphic($6A10,24,9,1,1))]
 @ $6A10 label=bitmap_car_4s
 B $6A10,54,6 Masked bitmap data
 N $6A46 Stones LOD 1
@@ -854,47 +888,47 @@ B $6A95,1,1 Height (pixels)
 W $6A96,2,2 Bitmap
 W $6A98,2,2 Pre-shifted bitmap
 N $6A9A Bitmap: Stones (16x5)
-N $6A9A #HTML[#CALL:graphic($6A9A,16,5,1,1)]
+N $6A9A #HTML[#CALL(graphic($6A9A,16,5,1,1))]
 @ $6A9A label=bitmap_stones_1
 B $6A9A,20,4 Masked bitmap data
 N $6AAE Bitmap: Stones (16x4)
-N $6AAE #HTML[#CALL:graphic($6AAE,16,4,1,1)]
+N $6AAE #HTML[#CALL(graphic($6AAE,16,4,1,1))]
 @ $6AAE label=bitmap_stones_2
 B $6AAE,16,4 Masked bitmap data
 N $6ABE Bitmap: Stones (16x4) pre-shifted
-N $6ABE #HTML[#CALL:graphic($6ABE,16,4,1,1)]
+N $6ABE #HTML[#CALL(graphic($6ABE,16,4,1,1))]
 @ $6ABE label=bitmap_stones_2s
 B $6ABE,16,4 Masked bitmap data
 N $6ACE Bitmap: Stones (16x3)
-N $6ACE #HTML[#CALL:graphic($6ACE,16,3,1,1)]
+N $6ACE #HTML[#CALL(graphic($6ACE,16,3,1,1))]
 @ $6ACE label=bitmap_stones_3
 B $6ACE,12,4 Masked bitmap data
 N $6ADA Bitmap: Stones (16x3) pre-shifted
-N $6ADA #HTML[#CALL:graphic($6ADA,16,3,1,1)]
+N $6ADA #HTML[#CALL(graphic($6ADA,16,3,1,1))]
 @ $6ADA label=bitmap_stones_3s
 B $6ADA,12,4 Masked bitmap data
 N $6AE6 Bitmap: Stones (8x2)
-N $6AE6 #HTML[#CALL:graphic($6AE6,8,2,1,1)]
+N $6AE6 #HTML[#CALL(graphic($6AE6,8,2,1,1))]
 @ $6AE6 label=bitmap_stones_4
 B $6AE6,4,2 Masked bitmap data
 N $6AEA Bitmap: Stones (8x2) pre-shifted
-N $6AEA #HTML[#CALL:graphic($6AEA,8,2,1,1)]
+N $6AEA #HTML[#CALL(graphic($6AEA,8,2,1,1))]
 @ $6AEA label=bitmap_stones_4s
 B $6AEA,4,2 Masked bitmap data
 N $6AEE Bitmap: Stones (8x1)
-N $6AEE #HTML[#CALL:graphic($6AEE,8,1,1,1)]
+N $6AEE #HTML[#CALL(graphic($6AEE,8,1,1,1))]
 @ $6AEE label=bitmap_stones_5
 B $6AEE,2,2 Masked bitmap data
 N $6AF0 Bitmap: Stones (8x1) pre-shifted
-N $6AF0 #HTML[#CALL:graphic($6AF0,8,1,1,1)]
+N $6AF0 #HTML[#CALL(graphic($6AF0,8,1,1,1))]
 @ $6AF0 label=bitmap_stones_5s
 B $6AF0,2,2 Masked bitmap data
 N $6AF2 Bitmap: Dust (8x1)
-N $6AF2 #HTML[#CALL:graphic($6AF2,8,1,1,1)]
+N $6AF2 #HTML[#CALL(graphic($6AF2,8,1,1,1))]
 @ $6AF2 label=bitmap_dust_1
 B $6AF2,2,2 Masked bitmap data
 N $6AF4 Bitmap: Dust (8x1) pre-shifted
-N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
+N $6AF4 #HTML[#CALL(graphic($6AF4,8,1,1,1))]
 @ $6AF4 label=bitmap_dust_1s
 B $6AF4,2,2 Masked bitmap data
 @ $6AF6 label=turn_sign_right
@@ -966,35 +1000,35 @@ B $6B63,1,1 Height (pixels)
 W $6B64,2,2 Bitmap
 W $6B66,2,2 Pre-shifted bitmap
 N $6B68 Turn right sign (32x40)
-N $6B68 #HTML[#CALL:graphic($6B68,32,40,0,1)]
+N $6B68 #HTML[#CALL(graphic($6B68,32,40,0,1))]
 @ $6B68 label=bitmap_turnsign_1
 B $6B68,160,4 Bitmap data
 N $6C08 Turn right sign (24x30)
-N $6C08 #HTML[#CALL:graphic($6C08,24,30,0,1)]
+N $6C08 #HTML[#CALL(graphic($6C08,24,30,0,1))]
 @ $6C08 label=bitmap_turnsign_2
 B $6C08,90,3 Bitmap data
 N $6C62 Turn right sign (16x20)
-N $6C62 #HTML[#CALL:graphic($6C62,16,20,0,1)]
+N $6C62 #HTML[#CALL(graphic($6C62,16,20,0,1))]
 @ $6C62 label=bitmap_turnsign_3
 B $6C62,40,2 Bitmap data
 N $6C8A Turn right sign (16x16)
-N $6C8A #HTML[#CALL:graphic($6C8A,16,16,1,1)]
+N $6C8A #HTML[#CALL(graphic($6C8A,16,16,1,1))]
 @ $6C8A label=bitmap_turnsign_4
 B $6C8A,64,4 Masked bitmap data
 N $6CCA Turn right sign (16x13)
-N $6CCA #HTML[#CALL:graphic($6CCA,16,13,1,1)]
+N $6CCA #HTML[#CALL(graphic($6CCA,16,13,1,1))]
 @ $6CCA label=bitmap_turnsign_5
 B $6CCA,52,2 Masked bitmap data
 N $6CFE Turn right sign (16x13) pre-shifted
-N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
+N $6CFE #HTML[#CALL(graphic($6CFE,16,13,1,1))]
 @ $6CFE label=bitmap_turnsign_5s
 B $6CFE,52,2 Masked bitmap data
-N $6D32 Turn right sign (16x10)
-N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
+N $6D32 Turn right sign (16x10) unused?
+N $6D32 #HTML[#CALL(graphic($6D32,16,10,1,1))]
 @ $6D32 label=bitmap_turnsign_6
 B $6D32,40,4 Masked bitmap data
-N $6D5A Turn right sign (16x10) pre-shifted
-N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
+N $6D5A Turn right sign (16x10) pre-shifted, unused?
+N $6D5A #HTML[#CALL(graphic($6D5A,16,10,1,1))]
 @ $6D5A label=bitmap_turnsign_6s
 B $6D5A,40,4 Masked bitmap data
 N $6D82 Tumbleweed LOD 1
@@ -1035,19 +1069,19 @@ B $6DA7,1,1 Height (pixels)
 W $6DA8,2,2 Bitmap
 W $6DAA,2,2 Pre-shifted bitmap
 N $6DAC Bitmap: Tumbleweed_1 (16x16)
-N $6DAC #HTML[#CALL:graphic($6DAC,16,16,0,1)]
+N $6DAC #HTML[#CALL(graphic($6DAC,16,16,0,1))]
 @ $6DAC label=bitmap_tumbleweed_1
 B $6DAC,32,2 Bitmap data
 N $6DCC Bitmap: Tumbleweed_2 (16x11)
-N $6DCC #HTML[#CALL:graphic($6DCC,16,11,0,1)]
+N $6DCC #HTML[#CALL(graphic($6DCC,16,11,0,1))]
 @ $6DCC label=bitmap_tumbleweed_2
 B $6DCC,22,2 Bitmap data
 N $6DE2 Bitmap: Tumbleweed_3 (8x9)
-N $6DE2 #HTML[#CALL:graphic($6DE2,8,9,0,1)]
+N $6DE2 #HTML[#CALL(graphic($6DE2,8,9,0,1))]
 @ $6DE2 label=bitmap_tumbleweed_3
 B $6DE2,9,1 Bitmap data
 N $6DEB Bitmap: Tumbleweed_4 (8x7)
-N $6DEB #HTML[#CALL:graphic($6DEB,8,7,0,1)]
+N $6DEB #HTML[#CALL(graphic($6DEB,8,7,0,1))]
 @ $6DEB label=bitmap_tumbleweed_4
 B $6DEB,7,1 Bitmap data
 N $6DF2 Barrier LOD 1
@@ -1088,23 +1122,23 @@ B $6E17,1,1 Height (pixels)
 W $6E18,2,2 Bitmap
 W $6E1A,2,2 Pre-shifted bitmap
 N $6E1C Bitmap: Barrier (32x17)
-N $6E1C #HTML[#CALL:graphic($6E1C,32,17,0,1)]
+N $6E1C #HTML[#CALL(graphic($6E1C,32,17,0,1))]
 @ $6E1C label=bitmap_barrier_1
 B $6E1C,68,4 Bitmap data
 N $6E60 Bitmap: Barrier (24x13)
-N $6E60 #HTML[#CALL:graphic($6E60,24,13,0,1)]
+N $6E60 #HTML[#CALL(graphic($6E60,24,13,0,1))]
 @ $6E60 label=bitmap_barrier_2
 B $6E60,39,3 Bitmap data
 N $6E87 Bitmap: Barrier (16x9)
-N $6E87 #HTML[#CALL:graphic($6E87,16,9,0,1)]
+N $6E87 #HTML[#CALL(graphic($6E87,16,9,0,1))]
 @ $6E87 label=bitmap_barrier_3
 B $6E87,18,2 Bitmap data
 N $6E99 Bitmap: Barrier (16x7)
-N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
+N $6E99 #HTML[#CALL(graphic($6E99,16,7,1,1))]
 @ $6E99 label=bitmap_barrier_4
 B $6E99,28,4 Masked bitmap data
 N $6EB5 Bitmap: Barrier (16x7) pre-shifted
-N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
+N $6EB5 #HTML[#CALL(graphic($6EB5,16,7,1,1))]
 @ $6EB5 label=bitmap_barrier_4s
 B $6EB5,28,4 Masked bitmap data
 @ $6ED1 label=stretchy_streetlamp_right
@@ -1128,10 +1162,10 @@ W $6EE5,2,2
 B $6EE7,1,1
 W $6EE8,2,2
 B $6EEA,1,1
-@ $6EEB label=streetlamptop_6eeb
+@ $6EEB label=streetlamptop_right
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,2
-@ $6F01 label=streetlamptop_flipped_6f01
+@ $6F01 label=streetlamptop_left
 W $6F01,2,2 Address of another LOD table
 B $6F03,20,2
 N $6F17 Street lamp LOD 1
@@ -1197,35 +1231,35 @@ B $6F58,1,1 Height
 W $6F59,2,2 Bitmap
 W $6F5B,2,2 Pre-shifted bitmap
 N $6F5D Street lamp top (32x8)
-N $6F5D #HTML[#CALL:graphic($6F5D,32,8,0,1)]
+N $6F5D #HTML[#CALL(graphic($6F5D,32,8,0,1))]
 @ $6F5D label=bitmap_streetlamptop_1
 B $6F5D,32,4 Bitmap data
 N $6F7D Street lamp top (24x5)
-N $6F7D #HTML[#CALL:graphic($6F7D,24,5,0,1)]
+N $6F7D #HTML[#CALL(graphic($6F7D,24,5,0,1))]
 @ $6F7D label=bitmap_streetlamptop_2
 B $6F7D,15,3 Bitmap data
 N $6F8C Street lamp top (24x4)
-N $6F8C #HTML[#CALL:graphic($6F8C,24,4,0,1)]
+N $6F8C #HTML[#CALL(graphic($6F8C,24,4,0,1))]
 @ $6F8C label=bitmap_streetlamptop_3
 B $6F8C,12,3 Bitmap data
 N $6F98 Street lamp top (24x4) pre-shifted
-N $6F98 #HTML[#CALL:graphic($6F98,24,4,0,1)]
+N $6F98 #HTML[#CALL(graphic($6F98,24,4,0,1))]
 @ $6F98 label=bitmap_streetlamptop_3s
 B $6F98,12,3 Bitmap data
 N $6FA4 Street lamp top (16x4)
-N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
+N $6FA4 #HTML[#CALL(graphic($6FA4,16,4,1,1))]
 @ $6FA4 label=bitmap_streetlamptop_4
 B $6FA4,16,2 Masked bitmap data
 N $6FB4 Street lamp top (16x4) pre-shifted
-N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
+N $6FB4 #HTML[#CALL(graphic($6FB4,16,4,1,1))]
 @ $6FB4 label=bitmap_streetlamptop_4s
 B $6FB4,16,2 Masked bitmap data
 N $6FC4 Street lamp top (16x3)
-N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
+N $6FC4 #HTML[#CALL(graphic($6FC4,16,3,1,1))]
 @ $6FC4 label=bitmap_streetlamptop_5
 B $6FC4,12,2 Masked bitmap data
 N $6FD0 Street lamp top (16x3) pre-shifted
-N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
+N $6FD0 #HTML[#CALL(graphic($6FD0,16,3,1,1))]
 @ $6FD0 label=bitmap_streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
@@ -1246,10 +1280,10 @@ W $6FEA,2,2
 B $6FEC,1,1
 W $6FED,2,2
 B $6FEF,1,1
-@ $6FF0 label=telegraphpoletop_6ff0
+@ $6FF0 label=telegraphpoletop_left
 W $6FF0,2,2
 B $6FF2,20,2
-@ $7006 label=telegraphpoletop_7006
+@ $7006 label=telegraphpoletop_right
 W $7006,2,2
 B $7008,20,2
 @ $701C label=telegraphpoletop_lods
@@ -1279,47 +1313,47 @@ B $703A,1,1 Height
 W $703B,2,2 Bitmap
 W $703D,2,2 Pre-shifted bitmap
 N $703F Top of telegraph pole (24x13)
-N $703F #HTML[#CALL:graphic($703F,24,13,0,1)]
+N $703F #HTML[#CALL(graphic($703F,24,13,0,1))]
 @ $703F label=bitmap_telegraphpoletop_1
 B $703F,8,8 Bitmap data
 B $7047,31,8*3,7
 N $7066 Top of telegraph pole (24x10)
-N $7066 #HTML[#CALL:graphic($7066,24,10,0,1)]
+N $7066 #HTML[#CALL(graphic($7066,24,10,0,1))]
 @ $7066 label=bitmap_telegraphpoletop_2
 B $7066,8,8 Bitmap data
 B $706E,22,8*2,6
 N $7084 Top of telegraph pole (24x7)
-N $7084 #HTML[#CALL:graphic($7084,24,7,0,1)]
+N $7084 #HTML[#CALL(graphic($7084,24,7,0,1))]
 @ $7084 label=bitmap_telegraphpoletop_3
 B $7084,8,8 Bitmap data
 B $708C,13,8,5
 N $7099 Top of telegraph pole (24x7) pre-shifted
-N $7099 #HTML[#CALL:graphic($7099,24,7,0,1)]
+N $7099 #HTML[#CALL(graphic($7099,24,7,0,1))]
 @ $7099 label=bitmap_telegraphpoletop_3s
 B $7099,8,8 Bitmap data
 B $70A1,13,8,5
 N $70AE Top of telegraph pole (16x5) masked
-N $70AE #HTML[#CALL:graphic($70AE,16,5,1,1)]
+N $70AE #HTML[#CALL(graphic($70AE,16,5,1,1))]
 @ $70AE label=bitmap_telegraphpoletop_4
 B $70AE,8,8 Masked bitmap data
 B $70B6,12,8,4
 N $70C2 Top of telegraph pole (16x5) pre-shifted and masked
-N $70C2 #HTML[#CALL:graphic($70C2,16,5,1,1)]
+N $70C2 #HTML[#CALL(graphic($70C2,16,5,1,1))]
 @ $70C2 label=bitmap_telegraphpoletop_4s
 B $70C2,8,8 Masked bitmap data
 B $70CA,12,8,4
 N $70D6 Top of telegraph pole (16x4)
-N $70D6 #HTML[#CALL:graphic($70D6,16,4,1,1)]
+N $70D6 #HTML[#CALL(graphic($70D6,16,4,1,1))]
 @ $70D6 label=bitmap_telegraphpoletop_5
 B $70D6,8,8 Masked bitmap data
 B $70DE,8,8
 N $70E6 Top of telegraph pole (16x4) pre-shifted and masked
-N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
+N $70E6 #HTML[#CALL(graphic($70E6,16,4,1,1))]
 @ $70E6 label=bitmap_telegraphpoletop_5s
 B $70E6,8,8 Masked bitmap data
 @ $70F6 label=stretchy_tree_right
 B $70EE,9,8,1
-W $70F7,2,2
+W $70F7,2,2 trunk + ground shadow
 B $70F9,1,1
 W $70FA,2,2
 B $70FC,1,1
@@ -1503,145 +1537,145 @@ B $7228,1,1 Height
 W $7229,2,2 Bitmap
 W $722B,2,2 Pre-shifted bitmap
 N $722D Tree middle (64x16)
-N $722D #HTML[#CALL:graphic($722D,64,16,0,1)]
+N $722D #HTML[#CALL(graphic($722D,64,16,0,1))]
 @ $722D label=bitmap_tree_middle_64x16
 B $722D,128,8
 N $72AD Tree bottom (64x5)
-N $72AD #HTML[#CALL:graphic($72AD,64,5,0,1)]
+N $72AD #HTML[#CALL(graphic($72AD,64,5,0,1))]
 @ $72AD label=bitmap_tree_bottom_64x5
 B $72AD,40,8
 N $72D5 Tree trunk (16x8)
-N $72D5 #HTML[#CALL:graphic($72D5,16,8,0,1)]
+N $72D5 #HTML[#CALL(graphic($72D5,16,8,0,1))]
 @ $72D5 label=bitmap_tree_trunk_16x8
 B $72D5,16,8
 N $72E5 Tree shadow (64x5)
-N $72E5 #HTML[#CALL:graphic($72E5,64,5,0,1)]
+N $72E5 #HTML[#CALL(graphic($72E5,64,5,0,1))]
 @ $72E5 label=bitmap_tree_shadow_64x5
 B $72E5,40,8
 N $730D Tree middle (48x12)
-N $730D #HTML[#CALL:graphic($730D,48,12,0,1)]
+N $730D #HTML[#CALL(graphic($730D,48,12,0,1))]
 @ $730D label=bitmap_tree_middle_48x12
 B $730D,72,8
 N $7355 Tree bottom (48x4)
-N $7355 #HTML[#CALL:graphic($7355,48,4,0,1)]
+N $7355 #HTML[#CALL(graphic($7355,48,4,0,1))]
 @ $7355 label=bitmap_tree_bottom_48x4
 B $7355,24,8
 N $736D Tree shadow (48x4)
-N $736D #HTML[#CALL:graphic($736D,48,4,0,1)]
+N $736D #HTML[#CALL(graphic($736D,48,4,0,1))]
 @ $736D label=bitmap_tree_shadow_48x4
 B $736D,24,8
 N $7385 Tree middle (32x8)
-N $7385 #HTML[#CALL:graphic($7385,32,8,0,1)]
+N $7385 #HTML[#CALL(graphic($7385,32,8,0,1))]
 @ $7385 label=bitmap_tree_middle_32x8
 B $7385,32,8
 N $73A5 Tree bottom (32x3)
-N $73A5 #HTML[#CALL:graphic($73A5,32,3,0,1)]
+N $73A5 #HTML[#CALL(graphic($73A5,32,3,0,1))]
 @ $73A5 label=bitmap_tree_bottom_32x3
 B $73A5,12,8,4
 N $73B1 Tree shadow (16x2)
-N $73B1 #HTML[#CALL:graphic($73B1,16,2,0,1)]
-@ $73B1 label=bitmap_tree_shadow_16x2
+N $73B1 #HTML[#CALL(graphic($73B1,32,2,0,1))]
+@ $73B1 label=bitmap_tree_shadow_32x2
 B $73B1,8,8
 N $73B9 Tree middle (24x7)
-N $73B9 #HTML[#CALL:graphic($73B9,24,7,0,1)]
+N $73B9 #HTML[#CALL(graphic($73B9,24,7,0,1))]
 @ $73B9 label=bitmap_tree_middle_24x7
 B $73B9,21,8*2,5
 N $73CE Tree bottom (24x2)
-N $73CE #HTML[#CALL:graphic($73CE,24,2,0,1)]
+N $73CE #HTML[#CALL(graphic($73CE,24,2,0,1))]
 @ $73CE label=bitmap_tree_bottom_24x2
 B $73CE,6,6
 N $73D4 Tree trunk (8x4)
-N $73D4 #HTML[#CALL:graphic($73D4,8,4,0,1)]
+N $73D4 #HTML[#CALL(graphic($73D4,8,4,0,1))]
 @ $73D4 label=bitmap_tree_trunk_8x4
 B $73D4,4,4
 N $73D8 Tree shadow (24x2)
-N $73D8 #HTML[#CALL:graphic($73D8,24,2,0,1)]
+N $73D8 #HTML[#CALL(graphic($73D8,24,2,0,1))]
 @ $73D8 label=bitmap_tree_shadow_24x2
 B $73D8,6,6
 N $73DE Tree top (64x13)
-N $73DE #HTML[#CALL:graphic($73DE,64,13,1,1)]
+N $73DE #HTML[#CALL(graphic($73DE,64,13,1,1))]
 @ $73DE label=bitmap_tree_top_64x13
 B $73DE,208,8 Masked bitmap data
 N $74AE Tree top (48x10)
-N $74AE #HTML[#CALL:graphic($74AE,48,10,1,1)]
+N $74AE #HTML[#CALL(graphic($74AE,48,10,1,1))]
 @ $74AE label=bitmap_tree_top_48x10
 B $74AE,120,12 Masked bitmap data
 N $7526 Tree top (32x5)
-N $7526 #HTML[#CALL:graphic($7526,32,5,1,1)]
+N $7526 #HTML[#CALL(graphic($7526,32,5,1,1))]
 @ $7526 label=bitmap_tree_top_32x5
 B $7526,40,8 Masked bitmap data
 N $754E Tree top (24x4)
-N $754E #HTML[#CALL:graphic($754E,24,4,1,1)]
+N $754E #HTML[#CALL(graphic($754E,24,4,1,1))]
 @ $754E label=bitmap_tree_top_24x4
 B $754E,24,6 Masked bitmap data
 N $7566 Tree top (24x3)
-N $7566 #HTML[#CALL:graphic($7566,24,3,1,1)]
+N $7566 #HTML[#CALL(graphic($7566,24,3,1,1))]
 @ $7566 label=bitmap_tree_top_24x3
 B $7566,18,6 Masked bitmap data
 N $7578 Tree top (24x3) pre-shifted
-N $7578 #HTML[#CALL:graphic($7578,24,3,1,1)]
+N $7578 #HTML[#CALL(graphic($7578,24,3,1,1))]
 @ $7578 label=bitmap_tree_top_24x3s
 B $7578,18,6 Masked bitmap data
 N $758A Tree trunk (16x6)
-N $758A #HTML[#CALL:graphic($758A,16,6,1,1)]
+N $758A #HTML[#CALL(graphic($758A,16,6,1,1))]
 @ $758A label=bitmap_tree_trunk_16x6
 B $758A,24,4 Masked bitmap data
 N $75A2 Tree trunk (16x4)
-N $75A2 #HTML[#CALL:graphic($75A2,16,4,1,1)]
+N $75A2 #HTML[#CALL(graphic($75A2,16,4,1,1))]
 @ $75A2 label=bitmap_tree_trunk_16x4
 B $75A2,16,4 Masked bitmap data
 N $75B2 Tree middle (24x5)
-N $75B2 #HTML[#CALL:graphic($75B2,24,5,1,1)]
+N $75B2 #HTML[#CALL(graphic($75B2,24,5,1,1))]
 @ $75B2 label=bitmap_tree_middle_24x5
 B $75B2,30,6 Masked bitmap data
 N $75D0 Tree bottom (24x2)
-N $75D0 #HTML[#CALL:graphic($75D0,24,2,1,1)]
+N $75D0 #HTML[#CALL(graphic($75D0,24,2,1,1))]
 @ $75D0 label=bitmap_tree_bottom_24x2_another
 B $75D0,12,6 Masked bitmap data
 N $75DC Tree trunk (24x3)
-N $75DC #HTML[#CALL:graphic($75DC,24,3,1,1)]
+N $75DC #HTML[#CALL(graphic($75DC,24,3,1,1))]
 @ $75DC label=bitmap_tree_trunk_24x3
 B $75DC,18,6 Masked bitmap data
 N $75EE Tree shadow (24x1)
-N $75EE #HTML[#CALL:graphic($75EE,24,1,1,1)]
+N $75EE #HTML[#CALL(graphic($75EE,24,1,1,1))]
 @ $75EE label=bitmap_tree_shadow_24x1
 B $75EE,6,6 Masked bitmap data
 N $75F4 Tree middle (24x5) pre-shifted
-N $75F4 #HTML[#CALL:graphic($75F4,24,5,1,1)]
+N $75F4 #HTML[#CALL(graphic($75F4,24,5,1,1))]
 @ $75F4 label=bitmap_tree_middle_24x5s
 B $75F4,30,6 Masked bitmap data
 N $7612 Tree bottom (24x2) pre-shifted
-N $7612 #HTML[#CALL:graphic($7612,24,2,1,1)]
+N $7612 #HTML[#CALL(graphic($7612,24,2,1,1))]
 @ $7612 label=bitmap_tree_bottom_24x2s
 B $7612,12,6 Masked bitmap data
 N $761E Tree trunk (24x3) pre-shifted
-N $761E #HTML[#CALL:graphic($761E,24,3,1,1)]
+N $761E #HTML[#CALL(graphic($761E,24,3,1,1))]
 @ $761E label=bitmap_tree_trunk_24x3s
 B $761E,18,6 Masked bitmap data
 N $7630 Tree shadow (24x1) pre-shifted
-N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
+N $7630 #HTML[#CALL(graphic($7630,24,1,1,1))]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
 u $7636 [Stage 1] Spare space
 D $7636 This is the end of the per-stage data.
 S $7636,186,$BA
 b $76F0 [Graphics] Turbo icons
-D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
+D $76F0 #HTML[#CALL(anim($76F0,16,14,1,1,3))]
 N $76F0 Frame 1 (16x14)
-N $76F0 #HTML[#CALL:graphic($76F0,16,14,1,1)]
+N $76F0 #HTML[#CALL(graphic($76F0,16,14,1,1))]
 @ $76F0 label=bitmap_turbospin_1
 B $76F0,56,4 Masked bitmap data
 N $7728 Frame 2 (16x14)
-N $7728 #HTML[#CALL:graphic($7728,16,14,1,1)]
+N $7728 #HTML[#CALL(graphic($7728,16,14,1,1))]
 @ $7728 label=bitmap_turbospin_2
 B $7728,56,4 Masked bitmap data
 N $7760 Frame 3 (16x14)
-N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
+N $7760 #HTML[#CALL(graphic($7760,16,14,1,1))]
 @ $7760 label=bitmap_turbospin_3
 B $7760,56,4 Masked bitmap data
 b $7798 [Pre-game] Messages
-@ $7798 label=pre_game_messages
-B $7798,1,1 .
+@ $7798 label=pregame_messages
+B $7798,1,1 flags? attrs?   text is white
 W $7799,2,2 Back buffer address
 W $779B,2,2 Attributes address
 T $779D,28,27:n1 "CHASE H.Q. MONITORING SYSTEM" text is white
@@ -1658,6 +1692,7 @@ W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
 b $77D8 [Pre-game] Drawing commands for the pre-game screen
+N $77D8 #HTML[#CALL(decode_pregame_screen($77D8))]
 @ $77D8 label=pregame_data
 B $77D8,1,1 Set colour 12 (Bright Green)
 B $77D9,1,1 Draw horizontally
@@ -1868,95 +1903,95 @@ B $78A5,1,1 Plot tile 21
 B $78A6,1,1 Stop
 N $78A7 45 tiles used to draw the pre-game screen.
 @ $78A7 label=pregame_tiles
-B $78A7,8,8 Tile 0 #HTML[#CALL:graphic($78A7,8,8,0,0)]
-B $78AF,8,8 Tile 1 #HTML[#CALL:graphic($78AF,8,8,0,0)]
-B $78B7,8,8 Tile 2 #HTML[#CALL:graphic($78B7,8,8,0,0)]
-B $78BF,8,8 Tile 3 #HTML[#CALL:graphic($78BF,8,8,0,0)]
-B $78C7,8,8 Tile 4 #HTML[#CALL:graphic($78C7,8,8,0,0)]
-B $78CF,8,8 Tile 5 #HTML[#CALL:graphic($78CF,8,8,0,0)]
-B $78D7,8,8 Tile 6 #HTML[#CALL:graphic($78D7,8,8,0,0)]
-B $78DF,8,8 Tile 7 #HTML[#CALL:graphic($78DF,8,8,0,0)]
-B $78E7,8,8 Tile 8 #HTML[#CALL:graphic($78E7,8,8,0,0)]
-B $78EF,8,8 Tile 9 #HTML[#CALL:graphic($78EF,8,8,0,0)]
-B $78F7,8,8 Tile 10 #HTML[#CALL:graphic($78F7,8,8,0,0)]
-B $78FF,8,8 Tile 11 #HTML[#CALL:graphic($78FF,8,8,0,0)]
-B $7907,8,8 Tile 12 #HTML[#CALL:graphic($7907,8,8,0,0)]
-B $790F,8,8 Tile 13 #HTML[#CALL:graphic($790F,8,8,0,0)]
-B $7917,8,8 Tile 14 #HTML[#CALL:graphic($7917,8,8,0,0)]
-B $791F,8,8 Tile 15 #HTML[#CALL:graphic($791F,8,8,0,0)]
-B $7927,8,8 Tile 16 #HTML[#CALL:graphic($7927,8,8,0,0)]
-B $792F,8,8 Tile 17 #HTML[#CALL:graphic($792F,8,8,0,0)]
-B $7937,8,8 Tile 18 #HTML[#CALL:graphic($7937,8,8,0,0)]
-B $793F,8,8 Tile 19 #HTML[#CALL:graphic($793F,8,8,0,0)]
-B $7947,8,8 Tile 20 #HTML[#CALL:graphic($7947,8,8,0,0)]
-B $794F,8,8 Tile 21 #HTML[#CALL:graphic($794F,8,8,0,0)]
-B $7957,8,8 Tile 22 #HTML[#CALL:graphic($7957,8,8,0,0)]
-B $795F,8,8 Tile 23 #HTML[#CALL:graphic($795F,8,8,0,0)]
-B $7967,8,8 Tile 24 #HTML[#CALL:graphic($7967,8,8,0,0)]
-B $796F,8,8 Tile 25 #HTML[#CALL:graphic($796F,8,8,0,0)]
-B $7977,8,8 Tile 26 #HTML[#CALL:graphic($7977,8,8,0,0)]
-B $797F,8,8 Tile 27 #HTML[#CALL:graphic($797F,8,8,0,0)]
-B $7987,8,8 Tile 28 #HTML[#CALL:graphic($7987,8,8,0,0)]
-B $798F,8,8 Tile 29 #HTML[#CALL:graphic($798F,8,8,0,0)]
-B $7997,8,8 Tile 30 #HTML[#CALL:graphic($7997,8,8,0,0)]
-B $799F,8,8 Tile 31 #HTML[#CALL:graphic($799F,8,8,0,0)]
-B $79A7,8,8 Tile 32 #HTML[#CALL:graphic($79A7,8,8,0,0)]
-B $79AF,8,8 Tile 33 #HTML[#CALL:graphic($79AF,8,8,0,0)]
-B $79B7,8,8 Tile 34 #HTML[#CALL:graphic($79B7,8,8,0,0)]
-B $79BF,8,8 Tile 35 #HTML[#CALL:graphic($79BF,8,8,0,0)]
-B $79C7,8,8 Tile 36 #HTML[#CALL:graphic($79C7,8,8,0,0)]
-B $79CF,8,8 Tile 37 #HTML[#CALL:graphic($79CF,8,8,0,0)]
-B $79D7,8,8 Tile 38 #HTML[#CALL:graphic($79D7,8,8,0,0)]
-B $79DF,8,8 Tile 39 #HTML[#CALL:graphic($79DF,8,8,0,0)]
-B $79E7,8,8 Tile 40 #HTML[#CALL:graphic($79E7,8,8,0,0)]
-B $79EF,8,8 Tile 41 #HTML[#CALL:graphic($79EF,8,8,0,0)]
-B $79F7,8,8 Tile 42 #HTML[#CALL:graphic($79F7,8,8,0,0)]
-B $79FF,8,8 Tile 43 #HTML[#CALL:graphic($79FF,8,8,0,0)]
-B $7A07,8,8 Tile 44 #HTML[#CALL:graphic($7A07,8,8,0,0)]
+B $78A7,8,8 Tile 0 #HTML[#CALL(graphic($78A7,8,8,0,0))]
+B $78AF,8,8 Tile 1 #HTML[#CALL(graphic($78AF,8,8,0,0))]
+B $78B7,8,8 Tile 2 #HTML[#CALL(graphic($78B7,8,8,0,0))]
+B $78BF,8,8 Tile 3 #HTML[#CALL(graphic($78BF,8,8,0,0))]
+B $78C7,8,8 Tile 4 #HTML[#CALL(graphic($78C7,8,8,0,0))]
+B $78CF,8,8 Tile 5 #HTML[#CALL(graphic($78CF,8,8,0,0))]
+B $78D7,8,8 Tile 6 #HTML[#CALL(graphic($78D7,8,8,0,0))]
+B $78DF,8,8 Tile 7 #HTML[#CALL(graphic($78DF,8,8,0,0))]
+B $78E7,8,8 Tile 8 #HTML[#CALL(graphic($78E7,8,8,0,0))]
+B $78EF,8,8 Tile 9 #HTML[#CALL(graphic($78EF,8,8,0,0))]
+B $78F7,8,8 Tile 10 #HTML[#CALL(graphic($78F7,8,8,0,0))]
+B $78FF,8,8 Tile 11 #HTML[#CALL(graphic($78FF,8,8,0,0))]
+B $7907,8,8 Tile 12 #HTML[#CALL(graphic($7907,8,8,0,0))]
+B $790F,8,8 Tile 13 #HTML[#CALL(graphic($790F,8,8,0,0))]
+B $7917,8,8 Tile 14 #HTML[#CALL(graphic($7917,8,8,0,0))]
+B $791F,8,8 Tile 15 #HTML[#CALL(graphic($791F,8,8,0,0))]
+B $7927,8,8 Tile 16 #HTML[#CALL(graphic($7927,8,8,0,0))]
+B $792F,8,8 Tile 17 #HTML[#CALL(graphic($792F,8,8,0,0))]
+B $7937,8,8 Tile 18 #HTML[#CALL(graphic($7937,8,8,0,0))]
+B $793F,8,8 Tile 19 #HTML[#CALL(graphic($793F,8,8,0,0))]
+B $7947,8,8 Tile 20 #HTML[#CALL(graphic($7947,8,8,0,0))]
+B $794F,8,8 Tile 21 #HTML[#CALL(graphic($794F,8,8,0,0))]
+B $7957,8,8 Tile 22 #HTML[#CALL(graphic($7957,8,8,0,0))]
+B $795F,8,8 Tile 23 #HTML[#CALL(graphic($795F,8,8,0,0))]
+B $7967,8,8 Tile 24 #HTML[#CALL(graphic($7967,8,8,0,0))]
+B $796F,8,8 Tile 25 #HTML[#CALL(graphic($796F,8,8,0,0))]
+B $7977,8,8 Tile 26 #HTML[#CALL(graphic($7977,8,8,0,0))]
+B $797F,8,8 Tile 27 #HTML[#CALL(graphic($797F,8,8,0,0))]
+B $7987,8,8 Tile 28 #HTML[#CALL(graphic($7987,8,8,0,0))]
+B $798F,8,8 Tile 29 #HTML[#CALL(graphic($798F,8,8,0,0))]
+B $7997,8,8 Tile 30 #HTML[#CALL(graphic($7997,8,8,0,0))]
+B $799F,8,8 Tile 31 #HTML[#CALL(graphic($799F,8,8,0,0))]
+B $79A7,8,8 Tile 32 #HTML[#CALL(graphic($79A7,8,8,0,0))]
+B $79AF,8,8 Tile 33 #HTML[#CALL(graphic($79AF,8,8,0,0))]
+B $79B7,8,8 Tile 34 #HTML[#CALL(graphic($79B7,8,8,0,0))]
+B $79BF,8,8 Tile 35 #HTML[#CALL(graphic($79BF,8,8,0,0))]
+B $79C7,8,8 Tile 36 #HTML[#CALL(graphic($79C7,8,8,0,0))]
+B $79CF,8,8 Tile 37 #HTML[#CALL(graphic($79CF,8,8,0,0))]
+B $79D7,8,8 Tile 38 #HTML[#CALL(graphic($79D7,8,8,0,0))]
+B $79DF,8,8 Tile 39 #HTML[#CALL(graphic($79DF,8,8,0,0))]
+B $79E7,8,8 Tile 40 #HTML[#CALL(graphic($79E7,8,8,0,0))]
+B $79EF,8,8 Tile 41 #HTML[#CALL(graphic($79EF,8,8,0,0))]
+B $79F7,8,8 Tile 42 #HTML[#CALL(graphic($79F7,8,8,0,0))]
+B $79FF,8,8 Tile 43 #HTML[#CALL(graphic($79FF,8,8,0,0))]
+B $7A07,8,8 Tile 44 #HTML[#CALL(graphic($7A07,8,8,0,0))]
 b $7A0F [Graphics] Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
-B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
+B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL(graphic($7A0F,16,13,1,1))]
 @ $7A43 label=bitmap_smoke2
-B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,1)]
+B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL(graphic($7A43,16,11,1,1))]
 @ $7A6F label=bitmap_smoke3
-B $7A6F,36,8*4,4 16x9 pixels, masked #HTML[#CALL:graphic($7A6F,16,9,1,1)]
+B $7A6F,36,8*4,4 16x9 pixels, masked #HTML[#CALL(graphic($7A6F,16,9,1,1))]
 @ $7A93 label=bitmap_smoke4
-B $7A93,14,8,6 8x7 pixels, masked #HTML[#CALL:graphic($7A93,8,7,1,1)]
+B $7A93,14,8,6 8x7 pixels, masked #HTML[#CALL(graphic($7A93,8,7,1,1))]
 @ $7AA1 label=bitmap_smoke5
-B $7AA1,10,8,2 8x5 pixels, masked #HTML[#CALL:graphic($7AA1,8,5,1,1)]
+B $7AA1,10,8,2 8x5 pixels, masked #HTML[#CALL(graphic($7AA1,8,5,1,1))]
 @ $7AAB label=bitmap_smoke6
-B $7AAB,6,6 8x3 pixels, masked #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+B $7AAB,6,6 8x3 pixels, masked #HTML[#CALL(graphic($7AAB,8,3,1,1))]
 @ $7AB1 label=bitmap_fire1
-B $7AB1,64,4 32x16 pixels #HTML[#CALL:graphic($7AB1,32,16,0,1)]
+B $7AB1,64,4 32x16 pixels #HTML[#CALL(graphic($7AB1,32,16,0,1))]
 @ $7AF1 label=bitmap_fire2
-B $7AF1,64,4 32x16 pixels #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+B $7AF1,64,4 32x16 pixels #HTML[#CALL(graphic($7AF1,32,16,0,1))]
 @ $7B31 label=bitmap_fire3
-B $7B31,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B31,24,8,1,1)]
+B $7B31,48,3 24x8 pixels, masked #HTML[#CALL(graphic($7B31,24,8,1,1))]
 @ $7B61 label=bitmap_fire4
-B $7B61,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B61,24,8,1,1)]
+B $7B61,48,3 24x8 pixels, masked #HTML[#CALL(graphic($7B61,24,8,1,1))]
 @ $7B91 label=bitmap_fire5
-B $7B91,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7B91,16,5,1,1)]
+B $7B91,20,4 16x5 pixels, masked #HTML[#CALL(graphic($7B91,16,5,1,1))]
 @ $7BA5 label=bitmap_fire5s
-B $7BA5,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+B $7BA5,20,4 16x5 pixels, masked #HTML[#CALL(graphic($7BA5,16,5,1,1))]
 @ $7BB9 label=bitmap_fire6
-B $7BB9,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BB9,16,6,1,1)]
+B $7BB9,24,4 16x6 pixels, masked #HTML[#CALL(graphic($7BB9,16,6,1,1))]
 @ $7BD1 label=bitmap_fire6s
-B $7BD1,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BD1,16,6,1,1)]
+B $7BD1,24,4 16x6 pixels, masked #HTML[#CALL(graphic($7BD1,16,6,1,1))]
 b $7BE9 [Graphics] Faces
 N $7BE9 Nancy's face (32x40)
-N $7BE9 #HTML[#CALL:face($7BE9)]
+N $7BE9 #HTML[#CALL(face($7BE9))]
 @ $7BE9 label=bitmap_nancy
 B $7BE9,160,4 Bitmap data, top-down format
 @ $7C89 label=attrs_nancy
 B $7C89,20,4 Attribute data for above
 N $7C9D Raymond's face (32x40)
-N $7C9D #HTML[#CALL:face($7C9D)]
+N $7C9D #HTML[#CALL(face($7C9D))]
 @ $7C9D label=bitmap_raymond
 B $7C9D,160,4 Bitmap data, top-down format
 @ $7D3D label=attrs_raymond
 B $7D3D,20,4 Attribute data for above
 N $7D51 Tony's face (32x40)
-N $7D51 #HTML[#CALL:face($7D51)]
+N $7D51 #HTML[#CALL(face($7D51))]
 @ $7D51 label=bitmap_tony
 B $7D51,160,4 Bitmap data, top-down format
 @ $7DF1 label=attrs_tony
@@ -1969,155 +2004,179 @@ W $7E06,2,2
 B $7E08,1,1
 W $7E09,2,2
 B $7E0B,1,1 1 => end
-@ $7E0C label=shortpole_7e0c
-W $7E0C,2,2 -> streetlampbody_lods
+@ $7E0C label=shortpole_bottom
+W $7E0C,2,2 -> streetlampbody_bitmaps
 B $7E0E,20,2
-@ $7E22 label=shortpole_7e22
+@ $7E22 label=shortpole_middle
 W $7E22,2,2
 B $7E24,20,2
-@ $7E38 label=streetlampbody_7e38
+@ $7E38 label=streetlampbottom_left
 W $7E38,2,2
 B $7E3A,20,2
-@ $7E4E label=streetlampbody_7e4e
+@ $7E4E label=streetlampbottom_right
 W $7E4E,2,2
 B $7E50,20,2
-@ $7E64 label=streetlampbody_7e64
+@ $7E64 label=streetlampmiddle2_left
 W $7E64,2,2
 B $7E66,20,2
-@ $7E7A label=streetlampbody_7e7a
+@ $7E7A label=streetlampmiddle2_right
 W $7E7A,2,2
 B $7E7C,20,2
-@ $7E90 label=streetlampbody_7e90
+@ $7E90 label=streetlampmiddle_left
 W $7E90,2,2
 B $7E92,20,2
-@ $7EA6 label=streetlampbody_7ea6
+@ $7EA6 label=streetlampmiddle_right
 W $7EA6,2,2
 B $7EA8,20,2
-@ $7EBC label=streetlampbody_lods
+@ $7EBC label=streetlampbody_bitmaps
 B $7EBC,1,1 Width (bytes)
-B $7EBD,1,1 Flags
+B $7EBD,1,1 Flags (masked)
 B $7EBE,1,1 Height (pixels)
 W $7EBF,2,2 Bitmap
 W $7EC1,2,2 Pre-shifted bitmap
 B $7EC3,1,1 Width (bytes)
-B $7EC4,1,1 Flags
+B $7EC4,1,1 Flags (masked)
 B $7EC5,1,1 Height (pixels)
 W $7EC6,2,2 Bitmap
 W $7EC8,2,2 Pre-shifted bitmap
 B $7ECA,1,1 Width (bytes)
-B $7ECB,1,1 Flags
+B $7ECB,1,1 Flags (masked)
 B $7ECC,1,1 Height (pixels)
 W $7ECD,2,2 Bitmap
 W $7ECF,2,2 Pre-shifted bitmap
 B $7ED1,1,1 Width (bytes)
-B $7ED2,1,1 Flags
+B $7ED2,1,1 Flags (masked)
 B $7ED3,1,1 Height (pixels)
 W $7ED4,2,2 Bitmap
 W $7ED6,2,2 Pre-shifted bitmap
 B $7ED8,1,1 Width (bytes)
-B $7ED9,1,1 Flags
+B $7ED9,1,1 Flags (masked)
 B $7EDA,1,1 Height (pixels)
 W $7EDB,2,2 Bitmap
 W $7EDD,2,2 Pre-shifted bitmap
 B $7EDF,1,1 Width (bytes)
-B $7EE0,1,1 Flags
+B $7EE0,1,1 Flags (masked)
 B $7EE1,1,1 Height (pixels)
 W $7EE2,2,2 Bitmap
 W $7EE4,2,2 Pre-shifted bitmap
 B $7EE6,1,1 Width (bytes)
-B $7EE7,1,1 Flags
+B $7EE7,1,1 Flags (masked)
 B $7EE8,1,1 Height (pixels)
 W $7EE9,2,2 Bitmap
 W $7EEB,2,2 Pre-shifted bitmap
 B $7EED,1,1 Width (bytes)
-B $7EEE,1,1 Flags
+B $7EEE,1,1 Flags (masked)
 B $7EEF,1,1 Height (pixels)
 W $7EF0,2,2 Bitmap
 W $7EF2,2,2 Pre-shifted bitmap
 B $7EF4,1,1 Width (bytes)
-B $7EF5,1,1 Flags
+B $7EF5,1,1 Flags (masked)
 B $7EF6,1,1 Height (pixels)
 W $7EF7,2,2 Bitmap
 W $7EF9,2,2 Pre-shifted bitmap
 B $7EFB,1,1 Width (bytes)
-B $7EFC,1,1 Flags
+B $7EFC,1,1 Flags (masked)
 B $7EFD,1,1 Height (pixels)
 W $7EFE,2,2 Bitmap
 W $7F00,2,2 Pre-shifted bitmap
 B $7F02,1,1 Width (bytes)
-B $7F03,1,1 Flags
+B $7F03,1,1 Flags (masked)
 B $7F04,1,1 Height (pixels)
 W $7F05,2,2 Bitmap
 W $7F07,2,2 Pre-shifted bitmap
 B $7F09,1,1 Width (bytes)
-B $7F0A,1,1 Flags
+B $7F0A,1,1 Flags (masked)
 B $7F0B,1,1 Height (pixels)
 W $7F0C,2,2 Bitmap
 W $7F0E,2,2 Pre-shifted bitmap
 B $7F10,1,1 Width (bytes)
-B $7F11,1,1 Flags
+B $7F11,1,1 Flags (masked)
 B $7F12,1,1 Height (pixels)
 W $7F13,2,2 Bitmap
 W $7F15,2,2 Pre-shifted bitmap
 B $7F17,1,1 Width (bytes)
-B $7F18,1,1 Flags
+B $7F18,1,1 Flags (masked)
 B $7F19,1,1 Height (pixels)
 W $7F1A,2,2 Bitmap
 W $7F1C,2,2 Pre-shifted bitmap
 B $7F1E,1,1 Width (bytes)
-B $7F1F,1,1 Flags
+B $7F1F,1,1 Flags (masked)
 B $7F20,1,1 Height (pixels)
 W $7F21,2,2 Bitmap
 W $7F23,2,2 Pre-shifted bitmap
 N $7F25 Bottom two rows of largest scale lamppost.
+N $7F25 #HTML[#CALL(graphic($7F25,8,2,1,1))]
 @ $7F25 label=bitmap_streetlampbody_1
 B $7F25,4,4 Masked bitmap data
 N $7F29 Bottom repeating section of largest scale lamppost.
+N $7F29 #HTML[#CALL(graphic($7F29,8,2,1,1))]
 @ $7F29 label=bitmap_streetlampbody_2
 B $7F29,4,4 Masked bitmap data
 N $7F2D Upper repeating section of largest scale lamppost.
+N $7F2D #HTML[#CALL(graphic($7F2D,8,2,1,1))]
 @ $7F2D label=bitmap_streetlampbody_3
 B $7F2D,4,4 Masked bitmap data
+N $7F31 #HTML[#CALL(graphic($7F31,8,2,1,1))]
 @ $7F31 label=bitmap_streetlampbody_4
 B $7F31,4,4 Masked bitmap data
+N $7F35 #HTML[#CALL(graphic($7F35,8,2,1,1))]
 @ $7F35 label=bitmap_streetlampbody_5
 B $7F35,4,4 Masked bitmap data
+N $7F39 #HTML[#CALL(graphic($7F39,8,2,1,1))]
 @ $7F39 label=bitmap_streetlampbody_6
 B $7F39,4,4 Masked bitmap data
+N $7F3D #HTML[#CALL(graphic($7F3D,8,1,1,1))]
 @ $7F3D label=bitmap_streetlampbody_7
 B $7F3D,2,2 Masked bitmap data
+N $7F3F #HTML[#CALL(graphic($7F3F,8,2,1,1))]
 @ $7F3F label=bitmap_streetlampbody_8
 B $7F3F,4,4 Masked bitmap data
+N $7F43 #HTML[#CALL(graphic($7F43,8,2,1,1))]
 @ $7F43 label=bitmap_streetlampbody_9
 B $7F43,4,4 Masked bitmap data
+N $7F47 #HTML[#CALL(graphic($7F47,8,1,1,1))]
 @ $7F47 label=bitmap_streetlampbody_7s
 B $7F47,2,2 Masked bitmap data
+N $7F49 #HTML[#CALL(graphic($7F49,8,2,1,1))]
 @ $7F49 label=bitmap_streetlampbody_8s
 B $7F49,4,4 Masked bitmap data
+N $7F4D #HTML[#CALL(graphic($7F4D,8,2,1,1))]
 @ $7F4D label=bitmap_streetlampbody_9s
 B $7F4D,4,4 Masked bitmap data
+N $7F51 #HTML[#CALL(graphic($7F51,8,1,1,1))]
 @ $7F51 label=bitmap_streetlampbody_10
 B $7F51,2,2 Masked bitmap data
+N $7F53 #HTML[#CALL(graphic($7F53,8,2,1,1))]
 @ $7F53 label=bitmap_streetlampbody_11
 B $7F53,4,4 Masked bitmap data
+N $7F57 #HTML[#CALL(graphic($7F57,8,2,1,1))]
 @ $7F57 label=bitmap_streetlampbody_12
 B $7F57,4,4 Masked bitmap data
+N $7F5B #HTML[#CALL(graphic($7F5B,8,1,1,1))]
 @ $7F5B label=bitmap_streetlampbody_10s
 B $7F5B,2,2 Masked bitmap data
+N $7F5D #HTML[#CALL(graphic($7F5D,8,2,1,1))]
 @ $7F5D label=bitmap_streetlampbody_11s
 B $7F5D,4,4 Masked bitmap data
+N $7F61 #HTML[#CALL(graphic($7F61,8,2,1,1))]
 @ $7F61 label=bitmap_streetlampbody_12s
 B $7F61,4,4 Masked bitmap data
+N $7F65 #HTML[#CALL(graphic($7F65,8,2,1,1))]
 @ $7F65 label=bitmap_streetlampbody_13
 B $7F65,4,4 Masked bitmap data
+N $7F69 #HTML[#CALL(graphic($7F69,16,2,1,1))]
 @ $7F69 label=bitmap_streetlampbody_14
 B $7F69,8,8 Masked bitmap data
+N $7F71 #HTML[#CALL(graphic($7F71,16,2,1,1))]
 @ $7F71 label=bitmap_streetlampbody_15
 B $7F71,8,8 Masked bitmap data
+N $7F79 #HTML[#CALL(graphic($7F79,8,2,1,1))]
 @ $7F79 label=bitmap_streetlampbody_13s
 B $7F79,4,4 Masked bitmap data
+N $7F7D #HTML[#CALL(graphic($7F7D,16,2,1,1))]
 @ $7F7D label=bitmap_streetlampbody_14s
 B $7F7D,8,8 Masked bitmap data
+N $7F85 #HTML[#CALL(graphic($7F85,16,2,1,1))]
 @ $7F85 label=bitmap_streetlampbody_15s
 B $7F85,8,8 Masked bitmap data
 u $7F8D Unused
@@ -2125,8 +2184,8 @@ B $7F8D,115,8*14,3
 g $8000 Game status buffer entry at 8000
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
-@ $8001 label=attract_cycle
-B $8001,1,1 [128K] Attract mode message cycle. Used by #R$F437. When zero shows the "ENTER FOR OPTIONS" message.
+@ $8001 label=controls_selected
+B $8001,1,1 [128K] Attract mode message cycle. Used by #R$F437. When zero shows the "ENTER FOR OPTIONS" message. Set by banked menu code.
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 @ $8006 label=retry_count
@@ -2142,13 +2201,13 @@ D $8014 Used by the routine at #R$8401.
 C $8014,3 Load wanted_stage_number
 C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
-C $801C,1 current_stage_number = wanted_stage_number
+C $801C,1 Set current_stage_number to wanted_stage_number
 C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
-@ $8025 label=ls_8025
-C $8025,3 Call clear_screen_set_attrs
-C $8028,3 Call clear_game_attrs
+@ $8025 label=ls_loop
+C $8025,3 Call clear_playfield_set_attrs
+C $8028,3 Call clear_playfield_attrs
 C $802B,2 Reverse transition
 C $802D,3 Call setup_transition
 @ $8032 label=ls_8032
@@ -2173,8 +2232,8 @@ C $8059,3 Call tape_load_to_5c00
 C $805C,2 Jump to ls_8025 if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
-C $8061,3 Call clear_screen_set_attrs
-C $8064,3 Call clear_game_attrs
+C $8061,3 Call clear_playfield_set_attrs
+C $8064,3 Call clear_playfield_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
 C $806C,3 Call ls_8098
 C $806F,1 Preserve ?
@@ -2193,8 +2252,7 @@ N $8088 #REGb is passed in.
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
-N $8091 This entry point is used by the routine at #R$F32E.
-@ $8091 refs=:$E810,$F220
+@ $8091 refs=:$E810,$F32E
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
@@ -2204,17 +2262,17 @@ C $8099,1 preserve message pointer
 @ $809A label=ls_809A
 C $809A,2 flags byte for print_message
 C $809C,1 why dec here?
-N $809D This entry point is used by the routine at #R$F220.
-@ $809D label=ls_809D
+@ $809D refs=:$F2A2
 C $809D,3 Call print_message
 C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
 C $80A5,3 Call draw_screen
 C $80A8,1 restore message pointer
 C $80A9,1 restore counter
-N $80AA This entry point is used by the routine at #R$F220.
+@ $80AA refs=:$F2FA
 C $80AA,3 Load transition_control
 C $80AD,2 Return if zero
+@ $80B2 label=ls_delay_loop
 C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
@@ -2368,9 +2426,9 @@ C $8225,4 Self modify iterations -- L
 C $8229,4 Self modify delay loop -- H
 C $822D,7 Self modify delay loop -- (5 - A)
 N $8234 This entry point is used by the routine at #R$83B5.
-@ $8234 label=play_engine_sfx
+@ $8234 label=play_engine_sfx_48k
 C $8234,6 Return if perp_caught_phase is >= 3 (when car stops)
-C $823A,8 Self modifying counter produces 0,1,2
+C $823A,8 Self modifying counter produces 0,1,2,3
 C $8242,1 Return if nonzero
 N $8243 This produces the engine sound effect.
 C $8243,2 <Self modified> iterations
@@ -2382,7 +2440,7 @@ C $8254,3 Loop until iterations is zero
 C $8257,1 Return
 c $8258 Attract mode
 D $8258 Used by the routine at #R$83B5.
-@ $8258 label=attract_mode
+@ $8258 label=attract_mode_48k
 C $8258,3 #REGhl -> attract_data
 C $825B,3 Call set_up_stage
 C $825E,4 Reset credits/copyright message blinker to show credits
@@ -2394,7 +2452,7 @@ N $8271 This entry point is used by the routine at #R$F220.
 C $8271,3 #REGhl -> attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
 C $8274,2 Number of messages?
 N $8276 Blink "PRESS GEAR TO PLAY".
-C $8276,2 A = <initally $F0, self modified>
+C $8276,2 A = <initially $F0, self modified>
 C $8278,1 Rotate
 C $8279,3 Self modify above
 C $827C,2 If carry set the hide the final message
@@ -2419,7 +2477,7 @@ B $82A7,1,1 Attribute (black)
 W $82A8,2,2 Back buffer address
 W $82AA,2,2 Attribute address
 T $82AC,8,7:n1 "CHASE HQ"
-B $82B4,1,1 Flags (regular)
+B $82B4,1,1 Flags (single height)
 B $82B5,1,1 Attribute (black)
 W $82B6,2,2 Back buffer address
 W $82B8,2,2 Attribute address
@@ -2427,19 +2485,19 @@ T $82BA,18,17:n1 "PRESS GEAR TO PLAY"  (this blinks)
 @ $82CC label=credits_messages
 B $82CC,1,1 Frame delay until the following messages start being shown (0 = 256)
 B $82CD,1,1 Frame delay until next message?
-B $82CE,1,1 Flags (regular)
+B $82CE,1,1 Flags (single)
 B $82CF,1,1 Attribute (red)
 W $82D0,2,2 Back buffer address
 W $82D2,2,2 Attribute address
 T $82D4,20,19:n1 "PROGRAM      JOBBEEE"
 B $82E8,1,1 Frame delay?
-B $82E9,1,1 Flags (regular)
+B $82E9,1,1 Flags (single)
 B $82EA,1,1 Attribute (red)
 W $82EB,2,2 Back buffer address
 W $82ED,2,2 Attribute address
 T $82EF,20,19:n1 "GRAPHICS        BILL"
 B $8303,1,1 Delay + stop flags?  $28
-B $8304,1,1 Flags (regular)
+B $8304,1,1 Flags (single)
 B $8305,1,1 Attribute (red)
 W $8306,2,2 Back buffer address
 W $8308,2,2 Attribute address
@@ -2447,19 +2505,19 @@ T $830A,20,19:n1 "MUSIC       JON DUNN"
 B $831E,2,1
 @ $8320 label=copyright_messages
 B $8320,2,2 (Frame delays as #R$82CC)
-B $8322,1,1 Flags (regular)
+B $8322,1,1 Flags (single)
 B $8323,1,1 Attribute (red)
 W $8324,2,2 Back buffer address
 W $8326,2,2 Attribute address
 T $8328,23,22:n1 "(C) 1989 OCEAN SOFTWARE"
 B $833F,1,1 Frame delay?
-B $8340,1,1 Flags (regular)
+B $8340,1,1 Flags (single)
 B $8341,1,1 Attribute (red)
 W $8342,2,2 Back buffer address
 W $8344,2,2 Attribute address
 T $8346,26,25:n1 "(C) 1988 TAITO CORPORATION"
 B $8360,1,1 Delay + stop flags?  $28
-B $8361,1,1 Flags (regular)
+B $8361,1,1 Flags (single)
 B $8362,1,1 Attribute (red)
 W $8363,2,2 Back buffer address
 W $8365,2,2 Attribute address
@@ -2475,12 +2533,12 @@ N $83B5 Used by the routine at #R$B4CC.
 C $83B5,3 No-op when in 48K mode
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
 @ $83B8 label=play_engine_or_siren_sfx_hook
-C $83B8,3 Call play_engine_sfx when in 48K mode
+C $83B8,3 Call play_engine_sfx_48k when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
 C $83BB,3 No-op when in 48K mode
 N $83BE This entry point is used by the routine at #R$8903.
-@ $83BE label=write_registers_hook
+@ $83BE label=write_audio_registers_hook
 C $83BE,3 No-op when in 48K mode
 N $83C1 This entry point is used by the routine at #R$8876.
 @ $83C1 label=setup_engine_sfx_hook
@@ -2493,9 +2551,10 @@ N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
 C $83C7,3 No-op when in 48K mode
 N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
-C $83CA,3 Call attract_mode when in 48K mode
+C $83CA,3 Call attract_mode_48k when in 48K mode
 c $83CD Bootstrap / Über main loop
 D $83CD This is the true start and main loop of the game. It's called once the memory map is set up. It builds a table of 256 flipped bytes at $EF00 then starts attract mode. When the player causes attract mode to yield, the overtaking bonus, the score and the retry count are reset as are the wanted stage number and the number of credits. The main loop is then called to run the game. Then when the main loop yields it will start the 128K animated title screen, or just loop if we're running on a 48K machine.
+D $83CD Note that the flipped bytes table build happens each time the loopr restarts.
 D $83CD Used by the routine at #R$E839.
 N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
@@ -2512,7 +2571,7 @@ C $83DA,2 Loop for 256 iterations (until #REGl overflows)
 N $83DC Start attract mode.
 C $83DC,3 Call attract_mode_hook
 N $83DF When attract mode yields then we set up the game.
-C $83DF,4 Reset overtake_bonus
+C $83DF,4 Reset overtake_bonus_bcd
 N $83E3 Clear score_bcd and retry_count.
 @ $83E8 label=bs_clear_loop
 N $83EC Reset wanted_stage_number and credits.
@@ -2525,7 +2584,7 @@ C $83F9,3 Entry point for ?bootstrap
 C $83FC,3 Call relocated call_bank_3_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
-D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the boostrap / uber main loop above.
+D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the bootstrap / uber main loop above.
 R $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
@@ -2540,20 +2599,20 @@ C $841A,1 Return
 N $841B Run the main game loop.
 @ $841B label=ml_not_credits
 C $841B,3 Call run_pregame_screen
-C $841E,3 Address of stage_set_up_data
+C $841E,3 Load address of stage_set_up_data
 C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
 C $842E,7 start_speech = (#REGa << 2) OR 2  -- The number of leading zeroes are used to encode a delay
 C $8435,4 Test 128K mode flag
-C $8439,5 Set hazards[0].used to $FF  -- I suspect this keeps the perp spawned
-C $843E,3 Address of start_stage_chatter
+C $8439,5 Set hazards[0].used to $FF to keep the perp spawned
+C $843E,3 Load address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
-C $844A,3 Call tick
+C $844A,3 Call check_time_up
 C $844D,3 Call check_user_input
 C $8450,3 Call read_map
 C $8453,3 Call handle_perp_caught
@@ -2574,13 +2633,13 @@ C $847D,3 Call spawn_hazards
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
 C $8486,3 Call play_engine_or_siren_sfx_hook
-C $8489,3 Call draw_hazards
+C $8489,3 Call advance_hazards
 C $848C,3 Call layout_dirt_and_stones
 C $848F,3 Call play_engine_or_siren_sfx_hook
 C $8492,3 Call move_helicopter
-C $8495,3 Call check_collisions
+C $8495,3 Call check_scenery_collisions
 C $8498,3 Call play_engine_or_siren_sfx_hook
-C $849B,3 Call draw_everything_else
+C $849B,3 Call draw_scene_objects
 C $849E,3 Call play_engine_or_siren_sfx_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
@@ -2588,7 +2647,7 @@ C $84A7,3 Call update_scoreboard
 C $84AA,3 Call calc_overtake_bonus
 C $84AD,3 Call play_engine_or_siren_sfx_hook
 C $84B0,3 Call drive_chatter
-C $84B3,3 Call smash_bar_etc
+C $84B3,3 Call draw_smash_bar
 C $84B6,3 Call transition
 C $84B9,3 Call play_engine_or_siren_sfx_hook
 C $84BC,3 Call draw_screen
@@ -2599,7 +2658,7 @@ N $84C8 Test mode handling
 @ $84C8 label=ml_handle_test_mode
 C $84C8,4 Read keys 1/2/3/4/5
 C $84CC,1 Change to active high
-C $84CD,2 Mask off just keys
+C $84CD,2 Isolate just keys
 C $84CF,2 If none are set then jump
 C $84D1,1 Bank key flags
 C $84D2,3 Effect 8 (bip), Priority 4
@@ -2624,7 +2683,7 @@ C $84F2,9 Increment credits unless maxed out at 9
 C $84FB,3 Load transition_control
 C $84FE,4 Jump to ml_loop if non-zero
 N $8502 Play speech when we see a 1-bit shift out of start_speech.
-C $8502,3 Address of start_speech
+C $8502,3 Load address of start_speech
 C $8505,2 Shift the counter right
 C $8507,2 Jump if no carry
 C $8509,1 Load speech sample index
@@ -2674,20 +2733,20 @@ C $8571,3 Call prepare_tunnel
 C $8574,3 Call spawn_hazards
 C $8577,3 Call choose_dirt_and_stones
 C $857A,3 Call layout_dirt_and_stones
-C $857D,3 Call draw_hazards
+C $857D,3 Call advance_hazards
 C $8580,3 Call move_hero_car
-C $8583,3 Call check_collisions
-C $8586,3 Call draw_everything_else
+C $8583,3 Call check_scenery_collisions
+C $8586,3 Call draw_scene_objects
 C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
-C $858C,3 Address of stage_set_up_data
+C $858C,3 Load address of stage_set_up_data
 C $858F,3 Call set_up_stage
 C $8592,2 Reverse transition
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
-C $859A,3 Call clear_screen_set_attrs
+C $859A,3 Call clear_playfield_set_attrs
 C $859D,4 Reset the counter in #R$85E4 that reveals the perp's car
 C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
@@ -2704,7 +2763,7 @@ N $85C0 transition_control is now zero.
 C $85C0,5 Return if chatter_state is idle (zero)
 C $85C5,4 Jump to rps_start_game if chatter_state is stopping (>= 3)
 C $85C9,3 Call keyscan
-C $85CC,4 Loop to rps_start_game unless fire was hit
+C $85CC,4 Loop to rps_loop unless fire was hit
 N $85D0 Fire was hit.
 C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise (will RET for us)
@@ -2733,15 +2792,15 @@ C $85FB,3 Read lod.height
 C $85FE,4 If height counter < lod.height #REGb = height counter
 @ $8602 label=rpc_height_lod_ok
 C $8602,5 Load address of bitmap data
-C $8607,1 Stride of bitmap data in bytes (#REGd is still zero)
+C $8607,1 Set #REGde to stride of bitmap data in bytes (#REGd is zero here)
 C $8608,1 Bank for plot_sprite entry
-C $8609,3 Address in back buffer to plot at
+C $8609,3 Fixed address in back buffer to plot at
 C $860C,3 Exit via plot_sprite
 c $860F Animate the signal meters
 D $860F Used by the routine at #R$858C.
 N $860F Update the first meter.
 @ $860F label=animate_meters
-C $860F,3 Call rng
+C $860F,3 Generate a random byte
 C $8612,1 Set flags
 C $8613,2 Self modified counter
 N $8615 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -2754,8 +2813,8 @@ C $8622,1 Decrement counter (max out at 7)
 C $8623,3 Self modify counter in #R$8613
 C $8626,3 Screen attribute (23,16)
 C $8629,3 Call am_set_attrs
-N $862C Update the second meter. Repeats the above.
-C $862C,3 Call rng
+N $862C Update the second meter. Essentially duplicates the above code.
+C $862C,3 Generate a random byte
 C $862F,1 Set flags
 C $8630,2 Self modified counter
 N $8632 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -2772,13 +2831,13 @@ N $8646 The signal meter bar is seven segments wide. Fill the left hand portion 
 C $8646,1 Set flags from counter in #REGa
 C $8647,2 Jump if zero
 C $8649,1 Copy counter to loop counter
-C $864A,3 Set attribute byte to black ink over green
+C $864A,3 Set attribute byte to bright, black ink over green
 C $864D,2 Loop while #REGb > 0
 @ $864F label=am_set_right_attrs
 C $864F,3 A = 7 - A
 C $8652,1 Return if zero
 C $8653,1 Copy counter to loop counter
-C $8654,3 Set attribute byte to black ink over red
+C $8654,3 Set attribute byte to bright, black ink over red
 C $8657,2 Loop while #REGb > 0
 C $8659,1 Return
 c $865A Draw the pre-game screen
@@ -2786,7 +2845,7 @@ D $865A The pre-game screen ("CHASE H.Q. MONITORING SYSTEM") is drawn by followi
 D $865A Once the tiles are drawn the strings at #R$7798 are drawn by calling #R$8E6C.
 D $865A Used by the routine at #R$858C.
 @ $865A label=draw_pregame
-C $865A,3 Address of pre-game screen data
+C $865A,3 Load address of pre-game screen data
 @ $865D label=dp_get_command
 C $865D,1 Read a command byte
 C $865E,1 Set flags
@@ -2805,7 +2864,7 @@ C $8676,8 Self modify #R$86C2 with (#REGa - $D0) << 3
 C $867E,2 Loop dp_get_command
 N $8680 $F0..$FF is "Set address".
 @ $8680 label=dp_set_address
-C $8680,3 Load new backbuffer address into #REGde
+C $8680,3 Load new back buffer address into #REGde
 C $8683,2 Loop dp_get_command
 N $8685 $00..$CF could be either "Repeat" or "Plot tile".
 @ $8685 label=dp_repeat_or_plot_tile
@@ -2825,11 +2884,11 @@ C $8695,3 Expand tile offset into #REGbc
 C $8698,2 Add in carry flag
 C $869A,4 HL = &pregame_tiles[A]
 C $869E,1 Restore count
-C $869F,1 #REGde becomes tile ptr, #REGhl becomes backbuffer ptr
+C $869F,1 #REGde becomes tile ptr, #REGhl becomes back buffer ptr
 @ $86A0 label=dp_line_loop
 C $86A0,1 Count
 C $86A1,1 Tile ptr
-C $86A2,1 Backbuffer ptr
+C $86A2,1 Back buffer ptr
 N $86A3 Plot a tile.
 C $86A3,2 8 rows per tile
 @ $86A5 label=dp_tile_loop
@@ -2837,9 +2896,9 @@ C $86A5,2 Copy a row of tile pixels to the screen
 C $86A7,1 Move to next tile row
 C $86A8,1 Move to next scanline
 C $86A9,2 Loop dp_tile_loop
-C $86AB,1 Pop backbuffer ptr
-N $86AC Seems to be building an attribute address?
-C $86AC,6 Get bit 3 of Y
+C $86AB,1 Pop back buffer ptr
+N $86AC Build attribute address from back buffer ptr
+C $86AC,6 Get bit 3 of Y as bit 5
 C $86B2,5 Add to X bits
 C $86B7,4 Get bits 4..6 of Y. Bit 6 goes to carry
 C $86BB,4 Select second third of attributes
@@ -2869,57 +2928,57 @@ C $86E4,1 Restore command pointer
 C $86E5,3 Loop dp_get_command
 @ $86E8 label=dp_print_strings
 C $86E8,2 Four messages to print
-C $86EA,3 Address of pre_game_messages
+C $86EA,3 Load address of pregame_messages
 @ $86ED label=dp_print_string
 C $86ED,2 Flags TBD
-C $86EF,1 HL--
+C $86EF,1 print_message expects a flags byte at the start, which it skips, so fake one here
 C $86F0,3 Call print_message
 C $86F3,2 Loop to dp_print_string while #REGb > 0
 C $86F5,1 Return
-c $86F6 Routine at 86F6
-D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
-@ $86F6 label=backdrop_shift_instrs
+c $86F6 Backdrop shifting instructions
+D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808.
+@ $86F6 label=backdrop_shifting_instrs
 b $871A Escape scene setup data
 D $871A 14 bytes of set_up_stage data used by escape_scene. Map data addresses are all a byte earlier than their actual start data.
 @ $871A label=escape_scene_data
 W $871A,2,2 road_pos
 @ $871C ssub=DEFW perp_escape_curvature - 1
-W $871C,2,2 road_curvature_ptr
+W $871C,2,2 Set road_curvature_ptr to #R$E2AA - 1
 @ $871E ssub=DEFW perp_escape_height - 1
-W $871E,2,2 road_height_ptr
+W $871E,2,2 Set road_height_ptr to #R$E2AF - 1
 @ $8720 ssub=DEFW perp_escape_lanes - 1
-W $8720,2,2 road_lanes_ptr
-@ $8722 ssub=DEFW perp_escape_hazards + 5
-W $8722,2,2 road_rightside_ptr (note: reuse of road curvature data)
-@ $8724 ssub=DEFW perp_escape_hazards + 5
-W $8724,2,2 road_leftside_ptr (note: reuse of road curvature data)
+W $8720,2,2 Set road_lanes_ptr to #R$E2B4 - 1
+@ $8722 ssub=DEFW perp_escape_curvature - 1
+W $8722,2,2 Set road_rightside_ptr to #R$E2AA - 1 (note: reuse of road curvature data)
+@ $8724 ssub=DEFW perp_escape_curvature - 1
+W $8724,2,2 Set road_leftside_ptr to #R$E2AA - 1 (note: reuse of road curvature data)
 @ $8726 ssub=DEFW perp_escape_hazards - 1
-W $8726,2,2 road_hazard_ptr
+W $8726,2,2 Set road_hazard_ptr to #R$E2A4 - 1
 N $8728 20 bytes copied to hazards[0]
-@ $8728 label=escape_scene_hazards
-B $8728,1,1 Used flag
+@ $8728 label=escape_scene_perp
+B $8728,1,1 Hazard used flag (true)
 B $8729,8,8
-W $8731,2,2
-W $8733,2,2 Routine at #R$ADF9 (it's just a RET)
-W $8735,2,2
+W $8731,2,2 Car LOD
+W $8733,2,2 Routine at #R$ADF9 (it's just a RET). Set to perp_behaviour in other places
+W $8735,2,2 Speed
 B $8737,5,5
 c $873C Escape scene
 D $873C This runs the scene shown when the perp has escaped.
 R $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
 C $873C,3 Call silence_audio_hook
-C $873F,3 Address of escape_scene_data
+C $873F,3 Load address of escape_scene_data
 C $8742,3 Call set_up_stage
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
-@ $8759 ssub=LD (hazard_0 + 1),HL
+@ $8759 ssub=LD (hazard_0 + 9),HL
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops #R$AD0D from running
-C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
+C $8761,3 Load address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
 C $8764,3 Call start_chatter (priority $FF)
 N $8767 Print "GAME OVER" once the transition has completed.
 @ $8767 label=es_loop
-C $8767,3 Address of game_over_message
+C $8767,3 Load address of game_over_message
 C $876A,8 If transition_control != 4 Call setup_overlay_messages
 C $8772,3 Call read_map
 C $8775,3 Call build_height_table
@@ -2929,8 +2988,8 @@ C $877E,3 Call draw_road
 C $8781,3 Call layout_objects
 C $8784,3 Call prepare_tunnel
 C $8787,3 Call spawn_hazards
-C $878A,3 Call draw_hazards
-C $878D,3 Call draw_everything_else
+C $878A,3 Call advance_hazards
+C $878D,3 Call draw_scene_objects
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
@@ -2939,9 +2998,9 @@ C $879C,6 Loop to es_loop unless the tunnel has appeared
 N $87A2 Tunnel has appeared.
 C $87A2,3 reading from tunnel code [15 when tunnel is small, 6 when fills screen]
 C $87A5,4 Loop to es_loop if tunnel code value >= 7
-C $87A9,3 $A189 is hazards 2nd byte
+C $87A9,3 Load hazards[0].distance byte
 C $87AC,4 Jump if it != 5
-C $87B0,11 Activate three hazards? [i.e. the three barriers]
+C $87B0,11 Activate the three barriers
 C $87BB,6 Set speed to zero [speed of camera]
 C $87C1,6 Loop to es_loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
@@ -2958,30 +3017,30 @@ C $87DC,1 Preserve data pointer
 N $87DD Zero $EE00..$EEFF and reset road_buffer_offset to $EE00.
 C $87EC,1 A = 0
 N $87ED Copy 47 bytes of saved game state at #R$A13E to #R$A16D.
-N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 onwards).
+N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 up to start_speech).
 C $8801,1 Restore data pointer
 N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
 N $8807 Pre-shift the backdrop image.
-N $880A Set backdrop position values in the <road drawing table TBD>.
+N $880A Set backdrop position in horizon table (used to draw attributes).
 C $880A,6 $E34B = 8  -- perhaps a relative value
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
-N $8813 NOP some things TBD.
+N $8813 Disable the helicopter and tunnel drawing calls in draw_scene_objects.
 C $8813,5 $8F82 = NOP (instruction)
 C $8818,2 $8F83 = NOP (instruction)
 C $881A,1 $8F84 = NOP (instruction)
 N $881B NOP the 6 instruction bytes at $8FA4: the helicopter and tunnel drawing calls.
-N $8824 ...
+N $8824 Reset current hazard command.
 C $8824,3 Self modify "LD (HL),x" at #R$C058 to x = 0
 N $8827 Reset car jump counter.
 C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0
 C $882A,6 Set $A191 to the perp's car LOD
 N $8830 Zero $EE00..$EEFF and reset road_buffer_offset to $EE00 [duplicates work from earlier].
-N $883F Run the map reader 32 times [enough to draw the screen?]
+N $883F Run the map reader 32 times.
 C $883F,2 32 iterations
 @ $8841 label=sus_loop
 C $8841,1 Preserve BC
-C $8842,3 Address of fast_counter == road_buffer_offset - 1 since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
+C $8842,3 Load address of fast_counter (== road_buffer_offset - 1) since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
 C $8845,3 Call rm_cycle_buffer_offset
 C $8848,1 Restore BC
 C $8849,2 Loop
@@ -2990,23 +3049,23 @@ C $884B,4 Clear allow_spawning
 N $884F Set up screen.
 C $884F,2 Reverse transition
 C $8851,3 Call setup_transition
-C $8854,3 Call clear_screen_set_attrs
+C $8854,3 Call clear_playfield_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
 C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
 N $8860 Clear the lights' BRIGHT bit.
-@ $8860 label=sus_clear_lights
+@ $8860 label=sus_reset_lights
 C $8860,2 4 rows
 C $8862,2 5 columns
 C $8864,2 Clear BRIGHT bit
 N $8870 Exit, updating the scoreboard. [This must happen twice since this block is CALLed.]
 C $8870,3 Call silence_audio_hook
 C $8873,3 Exit via update_scoreboard
-c $8876 User input checking
+c $8876 Handle quit, pause or turbo
 D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
 C $8876,3 Load transition_control
-C $8879,3 Address of user_input
-C $887C,4 Ignore the user's input unless transition_control is set to 4
+C $8879,3 Load address of user_input
+C $887C,4 Ignore the user's input if transition_control is set to 4
 C $8880,2 Clear user_input
 C $8882,1 Return
 C $8883,5 AND user_input with user input mask
@@ -3014,7 +3073,7 @@ C $8888,3 AND with mask for (Quit+Pause+Turbo), return if none
 C $888B,3 Quit bit set? Jump to quit_key if so
 C $888E,3 Pause bit set? Jump to pause_key if so
 N $8891 Turbo was pressed
-C $8891,3 Address of boost timer
+C $8891,3 Load address of boost timer
 C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
@@ -3032,15 +3091,15 @@ C $88BB,1 Return
 @ $88BC label=cui_pause_key
 C $88BC,3 Call silence_audio_hook
 C $88BF,7 Call keyscan while PAUSE is pressed
-C $88C6,7 Call keyscan until keys are pressed
+C $88C6,7 Call keyscan until keys are pressed (ignoring quit)
 C $88CD,7 Call keyscan until keys are released (debounce)
 C $88D4,1 Return
 c $88D5 Clears the game screen attributes to zero
 D $88D5 Used by the routines at #R$8014 and #R$88E2.
-@ $88D5 label=clear_game_attrs
+@ $88D5 label=clear_playfield_attrs
 c $88E2 Clears the game screen attributes and the game screen to zero
 D $88E2 Used by the routine at #R$BDC1.
-@ $88E2 label=clear_game_screen
+@ $88E2 label=clear_playfield
 c $88F2 Starts a sound effect
 D $88F2 Used by the routines at #R$8401, #R$8903, #R$9BCF, #R$A399, #R$A637, #R$A8CD, #R$AC3C, #R$B063 and #R$B318.
 R $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C.
@@ -3056,13 +3115,16 @@ c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
-C $8909,7 var_a23d |= var_a23c
-C $8910,3 Effect 7 (tit-tit), Priority 4
+N $8909 If trigger_right_hand_passed_object_sfx or trigger_left_hand_passed_object_sfx is set then play effect 7 ("tit").
+C $8909,3 Load trigger_right_hand_passed_object_sfx
+C $890C,3 Load address of trigger_left_hand_passed_object_sfx
+C $890F,1 OR together vars and set flags
+C $8910,3 Effect 7 (tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
-@ $8916 label=drs_8916
+@ $8916 label=drs_skip_effect_no7
 C $8916,3 Call play_engine_sfx_hook
 C $8919,3 Call play_engine_or_siren_sfx_hook  -- plays engine in 48K, siren in 128K
-C $891C,3 Call write_registers_hook  -- nop in 48K
+C $891C,3 Call write_audio_registers_hook  -- nop in 48K
 C $891F,5 If sfx_index == 0 return
 C $8924,3 #REGe = sfx_index * 4 -- stride of table
 C $8927,4 sfx_index = 0
@@ -3081,14 +3143,14 @@ W $893C,4,2
 N $8940 Effect 2 - Car landing (low thump)
 W $8940,4,2
 N $8944 Effect 3 - Crash (high) - Used for hits on cars
-W $8944,4,2
+W $8944,4,2 Play sfx_crash with speed 8
 N $8948 Effect 4 - Crash (low) - Used for hits on scenery
-W $8948,4,2
+W $8948,4,2 Play sfx_crash with speed 12
 N $894C Effect 5 - Hazard hit (high thump)
 W $894C,4,2
 N $8950 Effect 6 - Tunnel wall hit
 W $8950,4,2
-N $8954 Effect 7 - Cornering ("tit-tit")
+N $8954 Effect 7 - Cornering ("tit")
 W $8954,4,2
 N $8958 Effect 8 - Time running out high ("bip")
 W $8958,4,2
@@ -3107,7 +3169,7 @@ C $8968,2 Top bit set of this byte?
 C $896A,2 Don't clear the EAR bit
 C $896C,2 Otherwise clear the EAR bit
 C $896E,2 Output
-C $8970,2 Rotate the effect data
+C $8970,2 Rotate the effect data in-place
 C $8972,2 Delay
 C $8974,2 Loop while #REGb > 0
 C $8976,1 Move to the next byte of effect data
@@ -3147,8 +3209,8 @@ C $8A16,1 Return if flag became non-zero
 @ $8A17 label=sfx_cornering_loop_outer
 C $8A17,1 Set inner loop counter
 @ $8A18 label=sfx_cornering_loop_inner
-C $8A18,3 Call rng
-C $8A1B,2 Mask off bit 4
+C $8A18,3 Generate a random byte
+C $8A1B,2 Isolate bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
 N $8A1F Delay for (24 - #REGd) iterations.
 @ $8A23 label=sfx_cornering_delay1
@@ -3236,7 +3298,7 @@ C $8AC4,1 Return if A != 0
 C $8AC5,5 perp_caught_phase = 4
 C $8ACA,3 Point #REGhl at addrof_arrest_messages
 C $8ACD,2 Set transition_control to 1 (draw mugshots)
-C $8ACF,3 Exit via setup_overlay_messages_with_A
+C $8ACF,3 Exit via setup_overlay_messages_with_transition
 @ $8AD2 label=hpc_phase4
 C $8AD2,7 Call relocated handle_perp_caught_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
@@ -3260,7 +3322,7 @@ C $8B0E,2 Zero other digits
 C $8B10,3 Call increment_score (with D,E,A)
 N $8B13 Calculate time remaining bonus.
 C $8B13,3 Get time remaining (BCD)
-C $8B16,3 Set A in "TIME BONUS   Ax X 5000"  as a temporary location
+C $8B16,3 Set A in "TIME BONUS   Ax X 5000" as a temporary location
 C $8B19,1 Copy time remaining (BCD)
 C $8B1A,6 Extract high digit
 C $8B20,2 Jump if it's non-zero
@@ -3357,7 +3419,7 @@ N $8BB8 Otherwise we're in the centre zone.
 C $8BB8,2 Set input ACCELERATE
 @ $8BBA label=hpc_assign_hero_pos
 C $8BBA,1 Move input into #REGc for the moment
-C $8BBB,2 Mask off LEFT and RIGHT flags
+C $8BBB,2 Isolate LEFT and RIGHT flags
 C $8BBD,2 Jump to #R$8BE5 if either is set
 N $8BBF Not turning. Are we within distance?
 @ $8BBF label=hpc_check_distance
@@ -3372,7 +3434,7 @@ C $8BD3,3 *$A18C = 0  -- distance related? [reset by set_up_stage]
 C $8BD6,4 Set perp's distance to 1
 C $8BDA,4 Set perp_caught_phase to 2
 C $8BDE,4 Set smoke to 3
-C $8BE2,3 Jump to hpc_set_perp_pos_or_accel (with #REGde = 0)
+C $8BE2,3 Jump to hpc_set_perp_speed (with #REGde = 0)
 N $8BE5 HL = 350 - (16 - <distance related>) * 20  -- compared to speed later Arrive here if we're turning or the perp is too far away.
 @ $8BE5 label=hpc_perp_too_far_away
 C $8BE5,3 Load perp's distance
@@ -3396,7 +3458,7 @@ C $8C05,7 Jump if HL < 50
 C $8C0C,2 Set input BRAKE
 @ $8C0E label=hpc_set_gear
 C $8C0E,1 Restore speed
-C $8C0F,5 Calculate speed - 150
+C $8C0F,5 Calculate (speed - 150)
 C $8C14,3 Load gear
 C $8C17,2 Set gear to low if speed < 150, otherwise high
 C $8C1B,2 Set input GEAR
@@ -3404,14 +3466,14 @@ C $8C1B,2 Set input GEAR
 C $8C1D,4 Set user input
 @ $8C21 label=hpc_check_perp_accel
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
-C $8C21,3 Load the (accel?) of the perp's car into #REGhl
+C $8C21,3 Load the speed of the perp's car into #REGhl
 C $8C24,7 Compare it to 70
-C $8C2B,4 Jump to hpc_set_perp_pos_or_accel if result <= 70, with #REGde = 70
+C $8C2B,4 Jump to hpc_set_perp_speed if result <= 70, with #REGde = 70
 C $8C2F,6 Otherwise reduce it by 5 with result in #REGde
 N $8C35 This entry point is used by the routine at #R$8C3A.
-@ $8C35 label=hpc_set_perp_pos_or_accel
+@ $8C35 label=hpc_set_perp_speed
 @ $8C35 ssub=LD (hazard_0 + 13),DE
-C $8C35,4 Set the horizontal position (or accel?) of the perp's car to #REGde -- and it's writing A196 too is that the high byte?
+C $8C35,4 Set the speed of the perp's car to #REGde
 C $8C39,1 Return
 c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
@@ -3422,9 +3484,9 @@ C $8C43,5 Set smash_counter to 20 [Should it not always be 20 at this point alre
 C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
 C $8C4D,3 Print the "OK! PULL OVER CREEP!" message
 C $8C50,3 Call setup_overlay_messages
-C $8C53,3 #REGde = $190 (pos/accel?)
-C $8C56,2 Exit via hpc_set_perp_pos_or_accel
-b $8C58 End of level messages
+C $8C53,3 #REGde = $190 (perp speed)
+C $8C56,2 Exit via hpc_set_perp_speed
+b $8C58 End of stage bonus/score messages
 @ $8C58 label=score_messages
 B $8C58,3,3
 B $8C5B,1,1 Attribute (red)
@@ -3499,14 +3561,14 @@ W $8D83,2,2 Attribute address
 @ $8D85 label=credit_n
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
-c $8D8F Drives transitions (scene fades)
+c $8D8F Drives transitions (the fade between scenes)
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
 C $8D8F,3 Load transition_control
 C $8D92,2 Exit early if it's zero
-C $8D94,4 If transition_control was 1, call draw_mugshots
-C $8D98,4 If transition_control was 2, call draw_overlay_messages
-C $8D9C,4 If transition_control was 3, call fill_attributes
+C $8D94,4 If transition_control was 1, exit via draw_mugshots
+C $8D98,4 If transition_control was 2, exit via draw_overlay_messages
+C $8D9C,4 If transition_control was 3, exit via fill_attributes
 N $8DA0 Otherwise transition_control was 4.
 C $8DA0,3 A = <self modified> - 1  -- Self modified by #R$8E18, and below
 C $8DA3,3 Self modify above
@@ -3524,7 +3586,7 @@ C $8DB9,1 Bank
 C $8DBA,3 HL = <self modified>  -- Self modified by #R$8E1F, and above
 C $8DBD,2 8 chunks
 @ $8DBF label=t_loop
-C $8DBF,1 Load a byte of anim?
+C $8DBF,1 Load a byte of anim
 C $8DC0,1 Unbank
 C $8DC1,1 Get it into #REGe (value ORred in)
 C $8DC2,1 Preserve H in D (which is safe)
@@ -3550,7 +3612,7 @@ C $8DF0,2 Loop
 C $8DF2,2 Move to next start address
 C $8DF4,4 Loop
 C $8DF8,1 Return
-c $8DF9 Seems to setup a transition
+c $8DF9 Sets up a transition (the fade between scenes)
 D $8DF9 Used by the routines at #R$8014, #R$8401, #R$858C, #R$873C, #R$87DC, #R$8A57 and #R$F220.
 R $8DF9 I:A $08 or $F8 to animate forwards or backwards respectively.
 @ $8DF9 label=setup_transition
@@ -3572,7 +3634,7 @@ C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
 C $8E25,3 transition_control = A
 C $8E28,1 Return
-c $8E29 Fills the attribute bytes leftwards from column 1
+c $8E29 Fills the playfield attribute bytes leftwards from column 1
 D $8E29 Used by the routines at #R$8876, #R$8A57 and #R$8D8F.
 @ $8E29 label=fill_attributes
 C $8E29,3 Screen attribute position (1,8)
@@ -3590,7 +3652,7 @@ C $8E41,1 Return
 c $8E42 Draw overlay messages
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
 @ $8E42 label=draw_overlay_messages
-C $8E42,3 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
+C $8E42,3 Load address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
 C $8E45,2 B = 0 -- self modified by (#R$8E58 increments it), (#R$8E8D resets it to 1)
 @ $8E47 label=dom_loop
 C $8E47,2 Loop? to dom_1
@@ -3614,6 +3676,7 @@ c $8E6C Print a message
 D $8E6C Used by the routines at #R$8014, #R$8258, #R$865A, #R$8E42 and #R$F220.
 R $8E6C I:A Flags byte
 R $8E6C I:HL -> as yet unnamed message structure
+R $8E6C O:HL -> next unconsumed byte
 @ $8E6C label=print_message
 C $8E6C,1 Preserve/bank flags byte in #REGa
 C $8E6D,1 Preserve #REGbc
@@ -3622,7 +3685,7 @@ C $8E6F,2 Load attribute byte into #REGa
 C $8E71,4 Load back buffer address into #REGde
 C $8E75,4 Load attribute address into #REGbc
 N $8E79 #REGhl now points at the string.
-C $8E79,3 Call alt draw_string entry point
+C $8E79,3 Call alt draw_string_generic entry point
 C $8E7C,1 Restore #REGbc
 C $8E7D,1 Return
 c $8E7E Setup overlay messages
@@ -3632,38 +3695,39 @@ R $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginni
 @ $8E7E label=setup_overlay_messages
 C $8E7E,2 Set transition_control to 2 (show overlay)
 N $8E80 This entry point is used by the routine at #R$8A57.
-@ $8E80 label=setup_overlay_messages_with_A
+@ $8E80 label=setup_overlay_messages_with_transition
 C $8E80,3 Set transition_control to #REGa
 C $8E83,4 Modify 'LD A,x' @ #R$8E49 with frame delay
 N $8E87 Set the overlay message structure address.
 C $8E87,4 Modify 'LD HL,x' @ #R$8E42 to be a (different type) message struct address, e.g. $82CD
 C $8E8B,5 Modify 'LD B,x' @ #R$8E45 to be 1
 C $8E90,1 Return
-c $8E91 Copies the mugshots onto the screen when perp is caught
+c $8E91 Draws the three mugshots to the back buffer when perp is caught
+D $8E91 Each mugshot's bitmap address is the start of attributes or: the byte after the final byte of bitmap data.
 D $8E91 Used by the routine at #R$8D8F.
 @ $8E91 label=draw_mugshots
-C $8E91,3 Load end address of perp's mugshot bitmap into #REGhl
-C $8E94,3 Address of final byte of bitmap (back buffer)
+C $8E91,3 Load end address + 1 of perp's mugshot bitmap into #REGhl
+C $8E94,3 Load address of final byte of bitmap (back buffer)
 C $8E97,3 Screen position (40,104)
 C $8E9A,3 Draw
-C $8E9D,3 Load end address of Tony's mugshot bitmap into #REGhl
+C $8E9D,3 Load end address + 1 of Tony's mugshot bitmap into #REGhl
 C $8EA0,3 Final byte of bitmap (back buffer)
 C $8EA3,3 Screen position (160,104)
 C $8EA6,3 Draw
-C $8EA9,3 Load end address of Raymond's mugshot bitmap into #REGhl
+C $8EA9,3 Load end address + 1 of Raymond's mugshot bitmap into #REGhl
 C $8EAC,3 Final byte of bitmap (back buffer)
 C $8EAF,3 Screen position (200,104)
 C $8EB2,3 Draw
 C $8EB5,2 Exit via draw_overlay_messages
-c $8EB7 Draws a mugshot
+c $8EB7 Draws a mugshot to the back buffer
 D $8EB7 Used by the routine at #R$8E91.
 R $8EB7 I:BC Screen position (used for attributes)
 R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
 R $8EB7 I:HL Address of start of mugshot attributes / end of bitmap data
 @ $8EB7 label=draw_mugshot
-C $8EB7,1 Preserve screen position
+C $8EB7,1 Preserve screen position (plot_face_attributes POPs it)
 C $8EB8,1 Preserve address of mugshot attributes
-N $8EB9 We assume that the bitmap data precedes the attribute bytes.
+N $8EB9 The bitmap data precedes the attribute bytes.
 C $8EB9,1 Move back one byte to point at end of bitmap data
 C $8EBA,3 Size of mugshot data (32x40 bitmap)
 @ $8EBD label=dm_loop
@@ -3671,7 +3735,7 @@ C $8EBD,1 Save #REGe
 C $8EBE,8 Transfer four bytes (#REGde, #REGhl and #REGbc are decremented by 4)
 C $8EC6,1 Restore #REGe
 C $8EC7,3 If #REGbc becomes zero then proceed to dm_plot_attrs
-N $8ECA Move to next scanline.
+N $8ECA Move to previous buffer scanline.
 C $8ECA,1 Save for checking in a moment
 C $8ECB,1 Move to next scanline (visually upwards)
 C $8ECC,2 Would it have rolled over into the top nibble?
@@ -3684,7 +3748,7 @@ C $8EDC,4 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 C $8EE0,3 Loop
 @ $8EE3 label=dm_plot_attrs
 C $8EE3,1 Restore address of mugshot attributes
-C $8EE4,3 Exit via pf_attrs_bit
+C $8EE4,3 Exit via plot_face_attributes
 c $8EE7 Draw the smash bar
 D $8EE7 Used by the routine at #R$8401.
 @ $8EE7 label=draw_smash_bar
@@ -3699,15 +3763,15 @@ C $8EFD,3 Get smash_counter
 C $8F00,3 Jump straight to drawing solid if it's zero (whole bar solid)
 C $8F03,1 Set iterations in #REGc for call
 C $8F04,1 Preserve smash_counter
-C $8F05,3 Call draw_smash_bar_segment
+C $8F05,3 Call draw_smash_bar_segments
 C $8F08,1 Restore smash_counter
 @ $8F09 label=draw_smash_bar_solid_top
 C $8F09,1 Iterations = smash_counter
-C $8F0A,6 B = ~(A * 3) + 63 = amount of solid rows to draw
+C $8F0A,6 B = 62-(A*3) = amount of solid rows to draw
 C $8F10,3 Call draw_smash_bar_solid_bit
-@ $8F13 label=draw_smash_bar_segment
+@ $8F13 label=draw_smash_bar_segments
 C $8F13,2 Set 8 pixels to "X......X"
-N $8F15 Move to next scanline.
+N $8F15 Move to next scanline (longer form).
 C $8F15,1 Save for checking in a moment
 C $8F16,1 Move to next scanline (visually upwards)
 C $8F17,1 Would it have rolled over into the top nibble?
@@ -3717,18 +3781,19 @@ C $8F1B,3 Put back the bit stolen by rollover
 C $8F1E,4 Move to next chunk of 16 scanlines
 C $8F22,3 Continue if it didn't roll over
 C $8F25,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
-@ $8F28 label=draw_smash_bar_segment2
+@ $8F28 label=draw_smash_bar_segments2
 C $8F28,2 Set 8 pixels to "X......X"
+N $8F2A Move to next scanline (longer form).
 C $8F2A,1 Save for checking in a moment
 C $8F2B,1 Move to next scanline (visually upwards)
 C $8F2C,1 Would it have rolled over into the top nibble?
-N $8F2D It rolled over
 C $8F2D,3 No - continue
+N $8F30 It rolled over.
 C $8F30,3 Put back the bit stolen by rollover
 C $8F33,4 Move to next chunk of 16 scanlines
 C $8F37,3 Continue if it didn't roll over
 C $8F3A,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
-@ $8F3D label=draw_smash_bar_segment_cont
+@ $8F3D label=draw_smash_bar_segments_cont
 C $8F3D,2 1 row
 C $8F3F,3 Call draw_smash_bar_solid_bit
 C $8F42,4 Loop while iterations remain
@@ -3736,7 +3801,7 @@ C $8F46,1 Return
 @ $8F47 label=draw_smash_bar_solid_bit
 C $8F47,2 Set 8 pixels to solid black
 N $8F49 Move to next scanline.
-C $8F49,1 Save for checking in a moment (visually upwards)
+C $8F49,1 Save for checking in a moment
 C $8F4A,1 Move to next scanline (visually upwards)
 C $8F4B,1 Would it have rolled over into the top nibble?
 C $8F4C,3 No - continue
@@ -3750,7 +3815,7 @@ C $8F5C,2 Loop while iterations remain
 C $8F5E,1 Return
 c $8F5F Draws anything that's not the road or the hero car
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $8F5F label=draw_everything_else
+@ $8F5F label=draw_scene_objects
 C $8F5F,3 Point #REGhl at (something above the stack)
 C $8F62,3 Self modify 'LD HL' @ #R$A9E2 to load the stack? address
 C $8F65,6 Self modify 'LD HL' @ #R$AECF to load $E900
@@ -3758,25 +3823,24 @@ N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled wit
 C $8F6B,3 HL = $E301
 C $8F6E,3 DE = $E336
 C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
-@ $8F74 label=dee_loop
+@ $8F74 label=dee_first_loop
 C $8F74,3 *HL += 32
 C $8F77,3 *DE += 32
-N $8F7A Do these wrap around?
-C $8F7A,1 DE++
+C $8F7A,1 DE++ (no wrapping since only 21 iterations)
 C $8F7B,1 HL++
 C $8F7C,2 Loop while #REGb > 0
 N $8F7E Draw tunnel, if configured.
 C $8F7E,4 IY = $E315
 C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8F85,2 IY--
-C $8F87,3 Load road_buffer_offset into #REGa
+C $8F87,3 Load road_buffer_offset.lo into #REGa
 C $8F8A,2 Add 115 so it's the right side objects data offset + 19
 C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
 C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
-@ $8F96 label=dee_inner_loop
+@ $8F96 label=dee_second_loop
 C $8F96,4 Preserve IX, HL, BC
-C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
+C $8F9A,7 Call draw_arrow_fire_smoke if n_hazards is set
 C $8FA1,3 Call draw_dirt_and_stones
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
@@ -3786,44 +3850,44 @@ C $8FAF,3 Jump to right hand stuff if non-zero [why not a CALL?]
 N $8FB2 ...
 @ $8FB2 label=dee_continue_after_right_hand_done
 C $8FB2,4 Advance #REGix by 2
-C $8FB6,3 Advance #REGhl by 32
-C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9 (wrapping!)
+C $8FB6,3 Advance #REGhl by 32 (wrapping!)
+C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9
 C $8FBA,1 Set flags
 C $8FBB,2 Jump to #R$9023 if non-zero  -- left hand stuff, it will jump back here so I'm not sure why it's not a CALL
 @ $8FBD label=dee_continue_after_left_hand_done
 C $8FBD,4 Advance #REGix by 2
-C $8FC1,4 Advance #REGhl by -33
+C $8FC1,4 Advance #REGhl by -33 (wrapping!)
 C $8FC5,2 IY--
-C $8FC7,2 Loop to #R$8F96 while #REGb > 0  -- inner loop
+C $8FC7,2 Loop to #R$8F96 while #REGb > 0
 N $8FC9 ..
 C $8FC9,3 Load self modified instructions from earlier
 C $8FCC,2 Return if drawing the helicopter
 C $8FCE,5 Return if floating_arrow is zero => no arrow
 N $8FD3 Draw the floating arrow.
 @ $8FD3 label=dee_draw_floating_arrow
-C $8FD3,3 Point #REGhl at floating_arrow_defns[0]
+C $8FD3,3 Point #REGhl at floating_arrow_left_defn
 C $8FD6,2 Set horizontal position to 120
 C $8FD8,3 Jump if floating_arrow is 1 => left facing arrow
-C $8FDB,3 Point #REGhl at floating_arrow_defns[1]
+C $8FDB,3 Point #REGhl at floating_arrow_right_defn
 C $8FDE,2 Set horizontal position to 128
 @ $8FE0 label=dee_floating_arrow_chosen
-C $8FE0,2 D = $30
+C $8FE0,2 Set vertical position to 48
 C $8FE2,1 Load width bytes
 C $8FE3,1 Advance to flags
 C $8FE4,1 Load flags
 C $8FE5,2 flags >>= 1
 C $8FE7,3 BC' = BC
-C $8FEA,1 E' = C'
+C $8FEA,1 E' = C (width bytes)
 C $8FEB,2 C' = 0
 C $8FED,1 Unbank
 C $8FEE,1 Advance to height
 C $8FEF,2 Load height into #REGb
 C $8FF1,4 Load bitmap address into #REGhl
-C $8FF5,3 Exit via #R$B6DD  (plotting)
+C $8FF5,3 Exit via #R$B6DD (plotting)
 N $8FF8 Right hand object handling.
 @ $8FF8 label=dee_right_hand_stuff
 C $8FF8,1 E = A
-C $8FF9,3 A = IX[1]  -- what are we checking here?
+C $8FF9,3 A = IX[1]  -- buffer offset/distance
 C $8FFC,1 Set flags
 C $8FFD,2 Loop or exit?
 C $8FFF,4 Preserve IX, HL, BC
@@ -3843,7 +3907,7 @@ C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
 @ $9028 label=dee_left__a_isnt_2
-C $9028,3 A = IX[1]  -- what are we checking here?
+C $9028,3 A = IX[1]  -- buffer offset/distance
 C $902B,1 Set flags
 C $902C,2 Loop or exit?
 @ $902E label=dee_left__a_is_2
@@ -3859,12 +3923,12 @@ C $904A,1 Indirect jump  -- Call #R$916C #R$9171 #R$924D #R$9252 #R$92E1 etc.
 @ $904B label=dee_left__return
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Continue
-c $9052 Draws overhead graphics.
+c $9052 Draws overhead graphics
 D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
-D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
+D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (Stage 3)
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
-C $9056,3 A = IX[1]
+C $9056,3 A = IX[1]  -- buffer offset/distance
 C $9059,1 Set flags
 C $905D,4 Restore (restore DE to HL)
 C $9061,1 HL++
@@ -3892,9 +3956,9 @@ C $9093,1 B = A
 C $9094,5 HL = A * 2 + DE
 C $9099,1 C = *HL
 C $909A,1 A = B
-C $909B,8 HL = ((A * 2) + B + 20) + DE
+C $909B,8 HL = (A * 3 + 20) + DE
 C $90A3,2 D = 1
-C $90A5,3 A = IX[1]
+C $90A5,3 A = IX[1]  -- buffer offset/distance
 C $90A8,1 Set flags
 C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
@@ -3903,14 +3967,14 @@ C $90C3,1 D = A
 @ $90C4 label=do_90c4
 C $90C4,4 IX -= 2
 C $90C8,2 E = $1F
-C $90CA,3 A = IX[1]
+C $90CA,3 A = IX[1]  -- buffer offset/distance
 C $90CD,1 Set flags
 C $90D1,4 A = IX[0] + C
 C $90DD,6 A >>= 3
 C $90E3,1 E = A
 @ $90E4 label=do_90e4
 C $90E4,1 C = D
-C $90E5,3 A = E * 2 - C
+C $90E5,3 A = (E - C) * 2;
 C $90E8,3 A = ~A + $3D
 C $90EB,3 *$9116 = A   -- Self modify jump table target
 C $90EE,3 A = IY[$35]
@@ -3929,15 +3993,15 @@ C $9107,6 L = (L & $70) * 2 + C
 @ $910F label=do_continue
 C $910F,1 DE++
 C $9112,1 Return
-@ $9113 label=do_9113
+@ $9113 label=do_draw
 C $9113,1 A = *DE
 C $9114,1 C = L
 @ $9115 label=do_9115
 C $9115,2 Self modified
-C $9117,58 *HL++ = A  -- 28 times
-C $9151,1 *HL = A
+C $9117,58 Store #REGa to #REGhl and advance, 29 times
+C $9151,1 Store #REGa to #REGhl
 C $9152,1 L = C  -- restore
-N $9153 Move to next scanline.
+N $9153 Move to next scanline (longer form).
 C $9153,1 Save for checking in a moment
 C $9154,1 Move to next scanline (visually upwards)
 C $9155,2 Would it have rolled over into the top nibble?
@@ -3948,7 +4012,7 @@ C $915E,4 Move to next chunk of 16 scanlines
 C $9162,3 Continue if it didn't roll over
 C $9165,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9169,3 Loop
-c $916C Draws stretchy objects, such as trees.
+c $916C Draws stretchy objects, such as trees
 D $916C Used by the routine at #R$9052.
 R $916C I:B ? value that affects scaling
 R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stretchy_shortpole/#R$7E05)
@@ -3958,7 +4022,7 @@ C $916C,3 HL = $9293  -- callback address
 N $9171 Entry point for right hand objects.
 @ $9171 label=draw_stretchy_object_right
 C $9171,3 HL = $92FC  -- callback address
-@ $9174 label=dso_common
+@ $9174 label=draw_stretchy_object_common
 C $9174,3 Self modify CALL at $91CD to call #REGhl
 C $9177,3 Self modify CALL at $9243 to call #REGhl
 N $917A build A - an index into the road drawing tables.
@@ -3984,16 +4048,16 @@ C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
 C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stretchy_shortpole + 0
 C $91AC,1 Return if count byte was 1 (terminator)
 C $91AD,1 Advance past count byte
-C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_7e0c
+C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_bottom
 C $91B2,4 Preserve HL, IX, BC
 C $91B6,1 Swap
-C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_lods
+C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_bitmaps
 N $91BA This seems to be a 0..9 value that selects from the table.
 C $91BA,4 HL += <self modified>  -- by #R$91A0, this is the table offset from earlier
 N $91BE HL now points to an entry in the table. Load it. sampled DE = $717E (-> tree_lods), HL = $713E (first of a byte pair)
 C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
-C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_lods
+C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_bitmaps
 C $91C4,1 Restore BC
 C $91C5,1 B--   -- e.g. cmd byte 2 would be 0 after this
 C $91C6,2 Jump to dispatch for cmd bytes 3+
@@ -4026,8 +4090,9 @@ C $91F3,2 Continue
 C $91F5,4 A >>= 2
 C $91F9,2 Continue
 @ $91FB label=dso_case_7
-C $91FD,1 B = A
-C $9200,1 A += B
+C $91FB,2 A/2
+C $91FE,2 A/4
+C $9200,1 A/2 + A/4
 C $9201,2 Continue
 @ $9203 label=dso_case_6
 C $9205,1 B = A
@@ -4068,6 +4133,7 @@ R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
 C $924D,3 HL = $9279
 @ $9252 label=draw_tunnel_light_right
 C $9252,3 HL = $92E2
+@ $9255 label=draw_tunnel_light_common
 C $9255,4 Return if B >= 16
 C $9259,1 Push return address
 C $925A,5 A = fast_counter & $E0
@@ -4087,10 +4153,11 @@ c $9278 Draws objects (left hand version)
 D $9278 Called via dispatch at #R$901B.
 D $9278 Used to draw turn signs, tunnel lights, ... what else?
 R $9278 I:B ?
-R $9278 I:IX ?
 R $9278 I:DE Address of arg, e.g. $6B0C
+R $9278 I:IX ?
 @ $9278 label=draw_object_left
 C $9278,1 A = 0
+@ $9279 label=draw_object_left_entrypt
 C $9279,3 Self modify 'LD D,x' @ #R$933D to load #REGa
 C $927C,7 A = min(B,10)
 C $9283,1 Put arg address in HL
@@ -4099,11 +4166,11 @@ C $9287,6 HL += A * 2 - 1   -- index the table
 C $928D,2 B = *HL++   -- this reads #R$6AF8
 C $928F,4 HL = *HL + DE   -- read as byte
 N $9293 This entry point is used by the routine at #R$916C.
-@ $9293 label=draw_object_left_stretchy_entrypt
+@ $9293 label=*draw_object_left_stretchy_entrypt
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $929A label=draw_object_left_helicopter_entrypt
+@ $929A label=*draw_object_left_helicopter_entrypt
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
@@ -4129,7 +4196,7 @@ C $92D3,3 D = *HL >> 1
 C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
-C $92DE,3 Exit via draw_object_common
+C $92DE,3 Exit via draw_object_common_flipped
 c $92E1 Draws objects (right hand version)
 R $92E1 I:B ?
 R $92E1 I:IX ?
@@ -4137,6 +4204,7 @@ R $92E1 I:IY ?
 R $92E1 I:DE Address of arg, e.g. $6B0C
 @ $92E1 label=draw_object_right
 C $92E1,1 A = 0
+@ $92E2 label=draw_object_right_entrypt
 C $92E2,3 Self modify 'LD D,x' @ #R$933D to load #REGa
 C $92E5,7 A = min(B,10)
 C $92EC,1 Put arg address in HL
@@ -4144,7 +4212,7 @@ C $92ED,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $92F0,6 HL += A * 2 - 1   -- index the table
 C $92F6,2 B = *HL++
 C $92F8,4 HL = *HL + DE   -- read as byte
-@ $92FC label=draw_object_right_stretchy_entrypt
+@ $92FC label=*draw_object_right_stretchy_entrypt
 C $92FC,3 A = IX[0]
 C $92FF,2 Test B's sign
 C $9301,2 Jump if +ve
@@ -4154,10 +4222,11 @@ C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $9309 label=draw_object_right_helicopter_entrypt
+@ $9309 label=*draw_object_right_helicopter_entrypt
 C $9309,3 Return if A >= 247
 C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
+@ $930E label=*draw_object_930e_entrypt
 C $930E,4 A = (A & $FC) >> 2
 C $9312,3 Self modify 'LD A,x' at $9395 to load A
 C $9315,1 A >>= 1
@@ -4173,20 +4242,32 @@ C $9323,3 Jump if zero
 C $9326,1 C = A
 C $9328,3 C = E - C
 N $932B This entry point is used by the routine at #R$9278.
-@ $932B label=draw_object_common
+@ $932B label=draw_object_common_flipped
 C $932B,7 Self modify 'LD A,x' at #R$9395 to be (~x)
 N $9333 This entry point is used by the routine at #R$9278.
-C $933C,1 HL++
-C $933D,2 D = <self modified>
-C $933F,6 A = IY[0] - IY[$35]
-C $9347,4 A = IY[$35] + D
+@ $9333 label=draw_object_clipped
+C $9333,2 Jump if NOT masked {A=width_bytes} {B=height} {C=padding} {E=bitmap_stride} {HL=bitmap} {IY=height_tab} {F=masked_flag} {SP=stack}
+C $9335,1 Preserve carry (masked flag)
+C $9336,2 Double padding
+C $9338,2 Double bitmap_stride
+C $933A,1 Restore carry
+C $933B,1 Bank width_bytes and carry (masked flag)
+C $933C,1 Advance bitmap to height field
+@ $933D label=doc_loop
+C $933D,2 Load <self modified> {D=col_pos}
+C $933F,6 A = IY[0] - IY[$35] {A=y_range}
+N $9347 Otherwise heights equal.
+@ $9347 label=doc_equal_heights
+C $9347,4 A = IY[$35] + D {A=clip_rows}
 C $934D,1 A++
-C $934E,1 D = *HL
-C $934F,1 A -= D
-C $9352,1 A = 0
+C $934E,1 Load bitmap.height {D=bitmap_height}
+C $934F,1 A -= D (height)
+C $9352,1 A = 0 {A=something}
+@ $9353 label=doc_potato
 C $9353,1 A += D
 C $9354,1 HL++
-C $9355,2 D = 1
+C $9355,2 D = 1 {D=bitmap_height}
+@ $9359 label=doc_y_range_nonzero
 C $9359,4 Jump if D is -ve
 C $935D,1 A -= D
 C $9361,1 A += D
@@ -4194,29 +4275,34 @@ C $9362,1 D = A
 C $9369,3 A = IY[$35]
 C $936D,3 A = *HL - 1 - D
 C $9370,3 Jump if no carry
+C $9373,1 Discard?
 C $9374,3 Read A from 'LD A,x' @ #R$93C0 below
 C $9377,1 Set flags
 C $9378,1 Return if zero
 C $9379,3 Read A from 'LD D,x' @ #R$933D above
-C $937C,1 D = *HL
+C $937C,1 Read bitmap.height
 C $937D,1 A -= D
 C $937E,1 Return if positive
 C $937F,3 *$933E = A
 C $9382,4 A = *$9405 - D
 C $9386,2 Return if carry or zero
 C $9388,3 *$9405 = A
-C $938B,2 Loop?
+C $938B,2 Loop
+@ $938D label=doc_loop_exit
 C $938D,1 A++
 C $938E,1 D++
 C $938F,1 HL++
+@ $9390 label=doc_compute_bitmap
 C $9392,1 D = A
-C $9393,2 B = 0  -- not self modified AFAICT
+C $9393,2 BC = C
 C $9395,2 A = <self modified>
 C $939A,2 HL += 2
-C $939C,5 HL = wordat(HL) + BC
-C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412 to load HL
+C $939C,4 HL = wordat(HL) + BC (padding)
+C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412 to load HL (bitmap ptr)
 C $93A4,1 C = E
+C $93A5,1 AF = DE (from $9391 PUSH)
 C $93A6,1 A--
+@ $93A9 label=doc_multiplier
 C $93A9,1 HL += BC
 C $93AA,1 A--
 C $93AE,1 B = D
@@ -4225,7 +4311,7 @@ C $93B4,1 D = A
 C $93B5,5 H = (A & $0F) + $F0
 C $93BA,1 A = D
 C $93BB,5 L = (A & $70) * 2 + B
-C $93C0,2 A = <self modified>
+C $93C0,2 A = <self modified> inverted flag
 C $93C2,1 Set flags
 C $93C6,1 A--
 C $93D3,3 Exit via draw_part_entry3 if carry
@@ -4236,17 +4322,18 @@ C $93E3,2 A >>= 1
 C $93E8,4 #REGix = Base of jump table
 C $93EC,3 (~#REGa + 5) is (4 - #REGa)
 C $93EF,9 IX += A * 5
-C $93F8,3 BC = &plot_sprite_entry
+C $93F8,3 BC = &plot_sprite_even_entry
+@ $93FB label=do_set_callbacks
 C $93FB,4 Self modify CALL at $940F
 C $93FF,4 Self modify JP at $941D
 C $9404,3 A = <self modified> - B
 C $940B,3 Self modify 'LD A,x' @ #R$9404
-C $940F,3 Call <self modified> [e.g. plot_sprite_entry]
+C $940F,3 Call <self modified> [e.g. plot_sprite_even_entry]
 C $9412,3 HL = <self modified by $93A1>
 C $9415,2 B = <self modified by $9239>
 C $941A,1 A += B
 C $941B,1 B = A
-C $941D,3 Exit via <self modified> [e.g. plot_sprite_entry]
+C $941D,3 Exit via <self modified> [e.g. plot_sprite_even_entry]
 @ $9420 label=plot_sprite_xxx_odd
 C $9420,1 Increment #REGa for upcoming calculation
 C $9421,4 Point #REGix at start of plot instructions
@@ -4263,7 +4350,7 @@ C $944E,6 *$9470 = *$9416
 C $9454,6 *$9460 = *$9405
 C $945A,3 B' = $0F  -- Set mask used by scanline calc in plot_masked_sprite
 C $945D,2 D = $00  -- Clear top byte of source data stride
-C $945F,3 A = 0 - B
+C $945F,3 A = <self modified> - B
 C $9466,3 *$9460 = A
 C $9469,3 Call plot_masked_sprite
 C $946C,3 HL = <self modified>  -- Self modified by $9446
@@ -4289,34 +4376,35 @@ C $9496,4 E = -E
 C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
-R $949C I:A Plot (#REGa + 1) * 8 pixels
-R $949C I:DE' Stride of bitmap data in bytes
+R $949C I:A Width in bytes
 R $949C I:HL Address in back buffer to plot at
+R $949C I:B' Height in rows
+R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL' Address of bitmap data
 @ $949C label=plot_sprite
-C $949C,5 Use ps_odd if the bottom bit is set (odd widths)
+C $949C,5 Use plot_sprite_odd if the bottom bit is set (odd widths)
 C $94A1,4 #REGix = Base of jump table
 C $94A5,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $94A8,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94AC,3 Move result to #REGbc
 C $94AF,2 Add it to #REGix to complete the jump target
 N $94B1 This entry point is used by the routine at #R$92E1.
-@ $94B1 label=plot_sprite_entry
+@ $94B1 label=*plot_sprite_even
 C $94B1,4 Save #REGsp to restore on exit (self modify)
 C $94B5,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $94B8,1 Bank
 C $94B9,2 Jump into body of loop
-@ $94BB label=ps_even_loop
+@ $94BB label=ps_even_unbank_continue
 C $94BB,1 Bank
-@ $94BC label=ps_even_continue
 C $94BC,2 Next scanline
 C $94BE,3 Restore original #REGsp (self modified)
-C $94C1,1 Return
+C $94C1,1 Return (banked...)
 @ $94C2 label=ps_even_next
 C $94C2,1 Calculate address of next bitmap scanline
-@ $94C3 label=ps_even_body
-C $94C3,1 Put it in #REGsp (so we can use POP for speed)
-C $94C4,2 Unbank
+@ $94C3 label=plot_sprite_even_start
+C $94C3,1 Put it in #REGsp (so we can use PUSH for speed)
+C $94C4,1 Unbank
+C $94C5,1 Preserve row start address
 C $94C6,2 Jump into table
 @ $94C8 label=ps_even_jumptable
 C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
@@ -4324,25 +4412,28 @@ C $94CD,5 Transfer another 16 pixels
 C $94D2,5 Transfer another 16 pixels
 C $94D7,4 Transfer another 16 pixels
 C $94DB,1 Restore row start address
-N $94DC Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $94DC,1 Preserve #REGa for checking in a moment
-C $94DD,1 Move to next row (visually upwards)
+N $94DC Move to next scanline (longer form).
+N $94DC Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
+C $94DC,1 Save for checking in a moment
+C $94DD,1 Move to next scanline (visually upwards)
 C $94DE,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $94DF,3 No - continue
+N $94E2 It rolled over.
 N $94E2 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
-C $94E2,3 Fix 1111 field (#REGc is 16 here)
-C $94E5,4 Move to next chunk of 16 rows
-C $94E9,3 No carry, so continue
+C $94E2,3 Put back the bit stolen by rollover (#REGc is 16 here)
+C $94E5,4 Move to next chunk of 16 scanlines
+C $94E9,3 Continue if it didn't roll over
 N $94EC Otherwise have to compensate 1111 field.
-C $94EC,3 Undo carry
+C $94EC,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer) (#REGc is 16 here)
 C $94EF,3 Continue
-@ $94F2 label=ps_odd
+@ $94F2 label=plot_sprite_odd
 C $94F2,1 Increment #REGa for upcoming calculation
 C $94F3,4 Point #REGix at start of plot instructions
 C $94F7,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $94FA,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94FE,3 Move result to #REGbc
 C $9501,2 Add it to #REGix to complete the jump target
+@ $9503 label=ps_odd_entry
 C $9503,4 Save #REGsp to restore on exit (self modify)
 C $9507,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $950A,1 Bank
@@ -4355,25 +4446,27 @@ C $9510,3 Restore original #REGsp (self modified)
 C $9513,1 Return
 @ $9514 label=ps_odd_next
 C $9514,1 Calculate address of next bitmap scanline
-@ $9515 label=ps_odd_body
-C $9515,1 Put it in #REGsp (so we can use POP for speed)
-C $9516,2 Unbank
+@ $9515 label=plot_sprite_odd_start
+C $9515,1 Put it in #REGsp (so we can use PUSH for speed)
+C $9516,1 Unbank
+C $9517,1 Preserve row start address
 C $9518,2 Jump into table
 @ $951A label=ps_odd_jumptable
 C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $951F,5 Transfer another 16 pixels
 C $9524,5 Transfer another 16 pixels
 C $9529,2 Transfer another 8 pixels
-N $952B Handle end of row.
+N $952B Handle end of row (longer form).
+N $952B Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
 C $952B,1 Restore row start address
-N $952C Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $952C,1 Preserve #REGa for checking in a moment
-C $952D,1 Move to next row (visually upwards)
+C $952C,1 Save for checking in a moment
+C $952D,1 Move to next scanline (visually upwards)
 C $952E,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $952F,3 No - continue
+N $9532 It rolled over.
 N $9532 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
 C $9532,3 Fix 1111 field (#REGc is 16 here)
-C $9535,4 Move to next chunk of 16 rows
+C $9535,4 Move to next chunk of 16 scanlines
 C $9539,3 No carry, so continue
 N $953C Otherwise have to compensate 1111 field.
 C $953C,3 Undo carry
@@ -4381,12 +4474,12 @@ C $953F,3 Continue
 c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
-R $9542 I:DE' Stride of bitmap data in bytes
 R $9542 I:HL Address in back buffer to plot at
+R $9542 I:DE' Stride of bitmap data in bytes
 R $9542 I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
 C $9542,4 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
-C $9546,5 Use psf_odd if the bottom bit is set (odd widths)
+C $9546,5 Use plot_sprite_flipped_odd if the bottom bit is set (odd widths)
 C $954B,4 Save #REGsp to restore on exit (self modify)
 C $954F,4 #REGix = Base of jump table
 C $9553,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
@@ -4395,18 +4488,22 @@ C $955B,3 Move result to #REGbc
 C $955E,2 Add it to #REGix to complete the jump target
 C $9560,2 Point #REGde at table of flipped bytes at $EF00
 C $9562,1 Bank
+E $9542 FALLTHROUGH
+c $9565 Routine at 9565
+@ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
-C $9567,1 Bank
+C $9567,1 UNBANK
 C $9568,2 Next scanline
 C $956A,3 Restore original #REGsp (self modified)
 C $956D,1 Return
 @ $956E label=psf_even_next
 C $956E,1 Calculate address of next bitmap scanline
-@ $956F label=psf_even_body
-C $956F,1 Put it in #REGsp (so we can use POP for speed)
-C $9570,1 Unbank
+@ $956F label=plot_sprite_flipped_even_start
+C $956F,1 Put it in #REGsp (so we can use PUSH for speed)
+C $9570,1 BANK
 C $9571,1 [check elsewhere too]
+C $9572,1 BANK
 C $9573,2 Jump into table
 @ $9575 label=psf_even_jumptable
 C $9575,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
@@ -4419,16 +4516,21 @@ C $957D,1 Advance backwards
 C $957E,9 Transfer another 16 pixels
 C $9587,9 Transfer another 16 pixels
 C $9590,8 Transfer another 16 pixels
+C $9598,1 UNBANK
 C $9599,1 Restore #REGhl
-C $959A,2 Save H in A then H--
-C $959C,2 Extract low four bits of row address
-C $959E,3 If zero we'll need to handle it below, otherwise just loop
-C $95A1,4 H += 16
-C $95A5,4 Decrement the high three bits of row address
-C $95A9,3 No carry, so finish scanline
-C $95AC,4 H -= 16
+N $959A Move to next scanline (longer form).
+C $959A,1 Save for checking in a moment
+C $959B,1 Move to next scanline (visually upwards)
+C $959C,2 Would it have rolled over into the top nibble?
+C $959E,3 No - continue
+N $95A1 It rolled over.
+C $95A1,4 Put back the bit stolen by rollover
+C $95A5,4 Move to next chunk of 16 scanlines
+C $95A9,3 Continue if it didn't roll over
+C $95AC,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $95B0,3 Loop back to psf_even_continue
-@ $95B3 label=psf_odd
+N $95B3 This entry point is used by the routine at #R$9542.
+@ $95B3 label=plot_sprite_flipped_odd
 C $95B3,1 Increment #REGa for upcoming calculation
 C $95B4,4 Save #REGsp to restore on exit (self modify) [in a different position to others]
 C $95B8,4 Point #REGix at start of plot instructions
@@ -4447,7 +4549,7 @@ C $95D6,1 Return
 @ $95D7 label=psf_odd_next
 C $95D7,1 Calculate address of next bitmap scanline
 @ $95D8 label=psf_odd_body
-C $95D8,1 Put it in #REGsp (so we can use POP for speed)
+C $95D8,1 Put it in #REGsp (so we can use PUSH for speed)
 C $95D9,1 Unbank
 C $95DC,2 Jump into table
 @ $95DE label=psf_odd_jumptable
@@ -4462,16 +4564,19 @@ C $95E7,9 Transfer another 16 pixels
 C $95F0,9 Transfer another 16 pixels
 C $95F9,4 Transfer another 8 pixels
 C $95FE,1 Restore #REGhl
-C $95FF,2 Save H in A then H--
-N $9601 Decrement the screen address.
-C $9601,2 Extract low four bits of row address
-C $9603,3 If zero we'll need to handle it below, otherwise just loop
-C $9606,4 H += 16
-C $960A,4 Decrement the high three bits of row address
-C $960E,3 No carry, so finish scanline
-C $9611,4 H -= 16
+N $95FF Move to next scanline (longer form).
+C $95FF,1 Save for checking in a moment
+C $9600,1 Move to next scanline (visually upwards)
+C $9601,2 Would it have rolled over into the top nibble?
+C $9603,3 No - continue
+N $9606 It rolled over.
+C $9606,4 Put back the bit stolen by rollover
+C $960A,4 Move to next chunk of 16 scanlines
+C $960E,3 Continue if it didn't roll over
+C $9611,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
+D $9618 My tests show this has a period of 32,768.
 R $9618 O:A Random byte
 R $9618 O:HL Corrupted
 @ $9618 label=rng_seed
@@ -4489,15 +4594,15 @@ C $962D,1 Return
 g $962E In-game message variables
 @ $962E label=next_character
 W $962E,2,2 Address of the next character in the current message
-@ $9630 label=message_set
-W $9630,2,2 Address of current message set
+@ $9630 label=chatterblk_ptr
+W $9630,2,2 Address of current chatter block byte
 @ $9632 label=message_x
 B $9632,1,1 Index of next character in the message bar
 @ $9633 label=chatter_delay
 B $9633,1,1 Counted down while waiting to display the next line of chatter
 @ $9634 label=noise_bytes
 B $9634,5,5 Five bytes used for noise when character pictures 'noise in'
-B $9639,3,3
+B $9639,3,3 Used?
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
 @ $963D label=chatter_state
@@ -4555,16 +4660,19 @@ B $98BD,1,1 Three-way random choice ($FC)
 W $98BE,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 W $98C0,2,2 -> Raymond: "ROGER!" <STOP>
 W $98C2,2,2 -> Tony: "GOTCHA NANCY BABY!" <STOP>
+@ $98C4 label=loud_and_clear_chatter
 B $98C4,1,1 Tony ($03)
 W $98C5,2,2 -> "WE READ LOUD AND CLEAR! OVER."
 B $98C7,1,1 <STOP>
+@ $98C8 label=roger_chatter
 B $98C8,1,1 Raymond ($02)
 W $98C9,2,2 -> "ROGER!"
 B $98CB,1,1 <STOP>
+@ $98CC label=gotcha_chatter
 B $98CC,1,1 Tony ($03)
 W $98CD,2,2 -> "GOTCHA NANCY BABY!"
 B $98CF,1,1 <STOP>
-@ $98D0 label=wrong_way_chatter
+@ $98D0 label=raymond_says_wrong_way_chatter
 B $98D0,1,1 Raymond ($02)
 W $98D1,2,2 -> "WHAT ARE YOU DOING MAN!!"
 W $98D3,2,2 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
@@ -4648,7 +4756,7 @@ B $993B,1,1 Nancy ($01)
 W $993C,2,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 W $993E,2,2 -> "SEE YOU LATER."
 B $9940,1,1 <STOP>
-@ $9941 label=lets_go_mr_driver
+@ $9941 label=tony_says_lets_go_mr_driver
 B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
@@ -4664,7 +4772,7 @@ C $994C,4 If chatter_state >= 3 (chatter end) jump forward to #R$9955
 C $9950,5 If the current chatter_priority >= priority given then return
 @ $9955 label=chatter_set
 C $9955,4 Update chatter_priority
-C $9959,3 Set message set pointer
+C $9959,3 Set chatter block pointer
 C $995C,4 chatter_delay = 0
 C $9960,4 chatter_state = 1 (start chatter)
 C $9964,1 Return
@@ -4672,41 +4780,41 @@ c $9965 Runs chatter, mugshots and noise effect
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
 C $9965,3 Load chatter_state
-C $9968,3 If chatter_state was 1 (starting) then jump to drive_chatter_clear
+C $9968,3 If chatter_state was 1 (starting) then jump to drive_chatter_starting
 C $996B,3 If chatter_state was 2 (displaying) then jump to drive_chatter_do_noise_effect
-C $996E,3 If chatter_state was 0 (idle) then jump to drive_chatter_idle
+C $996E,3 If chatter_state was not 3 (stopping) it must be 0 (idle) so jump to drive_chatter_idle
 N $9971 Otherwise chatter_state is 3 (stopping).
 C $9971,4 Decrement noise_counter in-place
 C $9975,1 Load noise_counter
-C $9976,3 Jump into noise_effect if it was non-zero
+C $9976,3 Jump to draw_noise_effect if it was non-zero
 C $9979,3 New chatter_state is 0 (idle)
-C $997C,3 Call noise_plot_attrs to clear to black
+C $997C,3 Call ne_plot_attrs to clear to black
 N $997F This is the flashing cursor.
 @ $997F label=drive_chatter_idle
 C $997F,2 Plot a space character
 C $9981,6 Alternating bit generator: $AA rotated 1 becomes $55, $55 rotated 1 becomes $AA, and so on, result in carry flag
 C $9987,2 (flag?)
-C $9989,3 Exit via plot_mini_font_2 if carry set
-C $998C,3 Otherwise exit via plot_mini_font_1
+C $9989,3 Exit via plot_mini_font_cursor_on if carry set
+C $998C,3 Otherwise exit via plot_mini_font_cursor_off
 @ $998F label=drive_chatter_do_noise_effect
-C $998F,7 If noise_counter > 0 exit via noise_effect
+C $998F,7 If noise_counter > 0 exit via drive_noise_effect
 C $9996,6 If chatter_delay is zero jump to drive_chatter_clear_line
 C $999C,4 Otherwise decrement chatter_delay
 C $99A0,1 Copy chatter_delay for later
-C $99A1,2 If chatter_delay was zero jump to drive_chatter_99bd
+C $99A1,2 If chatter_delay was zero jump to drive_chatter_read_message
 C $99A3,3 Load address of next character
 C $99A6,1 Go back 1
 C $99A7,1 Load the character for when we call plot_mini_font*
-C $99A8,2 Clear string terminator bit
+C $99A8,2 Clear any string terminator bit
 C $99AA,4 A = message_x - 1
-C $99AE,2 Rotate chatter_delay (testing the bottom bit but why?)
+C $99AE,2 Rotate chatter_delay (testing the bottom bit but why? flashing cursor?)
 N $99B0 Could JP $9989 here instead.
-C $99B0,3 Exit via plot_mini_font_2 if carry set
-C $99B3,3 Otherwise exit via plot_mini_font_1
+C $99B0,3 Exit via plot_mini_font_cursor_on if carry set
+C $99B3,3 Otherwise exit via plot_mini_font_cursor_off
 @ $99B6 label=drive_chatter_clear_line
 C $99B6,7 If message_x != 0 exit via pc_clear_line
-@ $99BD label=drive_chatter_99bd
-C $99BD,3 Load message set address
+@ $99BD label=drive_chatter_read_message
+C $99BD,3 Load current chatter block pointer
 C $99C0,1 Read a byte
 C $99C1,4 Is it a message set terminator? Jump to drive_chatter_stop if so
 N $99C5 An $FE byte means the next two bytes are the address of another message set.
@@ -4714,7 +4822,7 @@ C $99C5,2 Is it introducing a message set address?
 C $99C7,2 Exit via pc_chatter_message if not
 N $99C9 The next two bytes hold a message set address.
 C $99C9,1 Step over the $FE byte
-C $99CA,7 message_set = wordat(HL)
+C $99CA,7 Set chatter block pointer to wordat(HL)
 C $99D1,2 Jump to drive_chatter_clear
 N $99D3 This entry point is used by the routines at #R$858C and #R$8876.
 @ $99D3 label=drive_chatter_stop
@@ -4726,11 +4834,11 @@ C $99DF,5 chatter_state = 2 (displaying)
 @ $99E4 label=drive_chatter_clear
 C $99E4,3 Call clear_message_line
 C $99E7,2 Set noise effect counter to 4
-C $99E9,3 Exit via noise_effect
+C $99E9,3 Exit via drive_noise_effect
 c $99EC Shows the chatter - the alerts and remarks from the game's characters
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
-C $99EC,3 Load current message set address
+C $99EC,3 Load current chatter block pointer
 @ $99EF label=pc_loop
 C $99EF,2 Read a byte and advance
 N $99F1 $FC indicates a three-way random choice. Otherwise it's the index of the speaking character (1/2/3 for Nancy/Raymond/Tony) or 0 for the helicopter pilot.
@@ -4738,15 +4846,15 @@ C $99F1,4 If byte != $FC then jump to pc_plot_character
 N $99F5 We have a three-way choice here.
 @ $99F5 label=pc_random_choice
 C $99F5,1 Preserve message data address
-C $99F6,3 Call rng - returns a random byte in #REGa
+C $99F6,3 Generate a random byte
 C $99F9,1 Restore message data address
 C $99FA,4 If random value < $55 jump to pc_load_message_ptr -- a 33.3% chance
 C $99FE,2 Skip first option message
 C $9A00,4 If random value < $AA jump to pc_load_message_ptr -- a 66.6% chance
 C $9A04,2 Skip second option message
 @ $9A06 label=pc_load_message_ptr
-C $9A06,4 Load the address of the chosen message set
-C $9A0A,2 Loop back - it could be another random choice
+C $9A06,4 Load the address of the chosen chatter block
+C $9A0A,2 Loop back and process the pointed-to chatter block
 N $9A0C #REGa is the index of the face to show.
 @ $9A0C label=pc_plot_character
 C $9A0C,1 Is it zero? (=> the pilot character's face)
@@ -4763,8 +4871,8 @@ C $9A20,3 Call plot_face
 C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
 @ $9A24 label=pc_chatter_message
-C $9A24,4 Load address of message to start showing
-C $9A28,3 Save current message set address
+C $9A24,4 Load address of message (set/block?) to start showing
+C $9A28,3 Save current chatter block pointer
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
 N $9A30 This entry point is used by the routine at #R$9965. #REGa is message_x.
@@ -4775,7 +4883,7 @@ C $9A39,1 Load the character itself
 C $9A3A,2 Clear any string terminator bit
 C $9A3C,1 Preserve message_x
 C $9A3D,1 Preserve string address
-C $9A3E,3 Call plot_mini_font_2, with #REGd as ASCII character to plot
+C $9A3E,3 Call plot_mini_font_cursor_on, with #REGd as ASCII character to plot
 C $9A41,1 Restore string address
 C $9A42,2 Test string terminator bit
 C $9A44,1 Move to the next character in the string
@@ -4789,18 +4897,18 @@ C $9A54,1 Return
 c $9A55 Noise in/out effect used for mugshots
 D $9A55 Used by the routine at #R$9965.
 R $9A55 I:A Noise effect counter
-@ $9A55 label=noise_effect
+@ $9A55 label=drive_noise_effect
 C $9A55,4 Decrement noise_counter
-C $9A59,3 Jump to print_chatter if it's zero, otherwise fallthrough
+C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
-@ $9A5C label=ne_9a5c
+@ $9A5C label=draw_noise_effect
 C $9A5C,1 Shift A's bottom bit into carry
-C $9A5D,2 A = 255  -- plot_mini_font_1 flag?
+C $9A5D,2 A = 255  -- plot_mini_font_cursor_off flag?
 C $9A5F,2 D = 32  -- ASCII character for plot_mini_font*
 C $9A61,5 If A on input was odd then jump
-C $9A66,2 else call plot_mini_font_2 and continue at $9a6b
+C $9A66,2 else call plot_mini_font_cursor_on and continue at $9a6b
 @ $9A68 label=ne_9a68
-C $9A68,3 Call plot_mini_font_1
+C $9A68,3 Call plot_mini_font_cursor_off
 @ $9A6B label=ne_9a6b
 C $9A6B,3 Set plot address to (176,8)
 @ $9A70 label=ne_9a70
@@ -4829,7 +4937,7 @@ C $9AA0,7 Set four attribute bytes
 C $9AA7,1 Move to start of next row
 C $9AA8,2 Loop while rows remain
 C $9AAA,1 Return
-c $9AAB Plots a face
+c $9AAB Plots a face on the screen
 D $9AAB Used by the routine at #R$99EC.
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
 R $9AAB I:DE Address of screen location (real screen)
@@ -4848,9 +4956,9 @@ C $9AC6,2 If carry then loop (overflow is ok)
 C $9AC8,4 Step back 8 lines (undo overflow)
 C $9ACC,2 Loop
 N $9ACE This entry point is used by the routine at #R$8EB7.
-@ $9ACE label=pf_attrs_bit
+@ $9ACE label=plot_face_attributes
 C $9ACE,1 Restore current screen address
-C $9ACF,6 Extract line bits (0..7)
+C $9ACF,6 Extract line bits (0..3)
 C $9AD5,3 Turn it into an attribute address (works for first band only?)
 C $9AD8,2 Byte length of attributes - counter
 @ $9ADA label=pf_attrs_loop
@@ -4862,12 +4970,12 @@ C $9AE9,1 Move down 8 attribute rows
 C $9AEA,2 Loop
 c $9AEC Plot mini font characters
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
-R $9AEC I:A flag?
+R $9AEC I:A 0xFF (meaning ?) or value (meaning ?)
 R $9AEC I:D The character to plot (ASCII)
-@ $9AEC label=plot_mini_font_1
+@ $9AEC label=plot_mini_font_cursor_off
 C $9AEF,2 Jump to pmf_go
 N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55.
-@ $9AF1 label=plot_mini_font_2
+@ $9AF1 label=plot_mini_font_cursor_on
 C $9AF1,3 values to self modify with
 @ $9AF4 label=pmf_go
 C $9AF4,1 Preserve A
@@ -4878,12 +4986,12 @@ N $9B02 String terminator?
 C $9B02,2 $BF / 8?
 @ $9B08 label=pmf_regular_char
 C $9B08,6 A = A*5+2
-@ $9B10 label=pmf_9b10
+@ $9B10 label=pmf_divider
 C $9B0E,4 8 - $C0 / 8 ??
 @ $9B12 label=pmf_9b12
 C $9B12,7 divider / rounding?
 C $9B19,8 Modify jump table - A * 4 - 4 bytes per sequence
-@ $9B21 label=pmf_9b21
+@ $9B21 label=pmf_multiplier
 C $9B21,3 General multiplier by A
 C $9B24,3 Self modify #R$9B88 which is a mask
 C $9B27,1 Get ASCII character
@@ -4930,11 +5038,12 @@ C $9BB9,16 Move to next scanline
 C $9BCA,1 Decrement row counter
 C $9BCB,3 Loop while rows remain to clear
 C $9BCE,1 Return
-c $9BCF Game timer
-D $9BCF Used by the routine at #R$8401.
-@ $9BCF label=tick
+c $9BCF Handle "time up", countdown and continue.
+D $9BCF This function handles timed events. When 15s or less remain then Nancy warns that our heroes are running of time. When they do run out of time, and sufficient credits remain, a 10s coundown timer and restart query are presented along with a tick-tock sound effect. If restart is initiated the game is part reset and continues.
+R $9BCF Used by the routine at #R$8401.
+@ $9BCF label=check_time_up
 C $9BCF,5 Return if perp_caught_phase > 0
-C $9BD4,6 Return if transition_control == 4 -- don't tick while transitions are running
+C $9BD4,6 Return if transition_control == 4 -- don't check while transitions are running
 C $9BDA,3 Point #REGhl at time_bcd
 C $9BDD,6 Jump to #R$9C0D if time_up_state was 1 - out of time
 C $9BE3,3 Jump to #R$9C31 if time_up_state was 2 - show "TIME UP" message
@@ -4943,32 +5052,34 @@ C $9BE9,2 Return if it was 4 - countdown elapsed
 N $9BEB Otherwise it's zero?
 C $9BEB,1 A = time_bcd
 C $9BEC,1 Set flags
-C $9BED,2 Jump to tick_time_remaining if non-zero
+C $9BED,2 Jump to tick_update_remaining_time if non-zero
 N $9BEF Out of time.
 C $9BEF,4 time_up_state = 1
-C $9BF3,5 user_input_mask = $93 (allow Quit, Fire, Left, Right) [Q: Why left and right?]
+C $9BF3,5 user_input_mask = $93 (allow only Quit, Fire, Left, Right to force stop)
 C $9BF8,1 Return
-@ $9BF9 label=tick_time_remaining
+@ $9BF9 label=tick_update_remaining_time
 C $9BF9,2 Decrement the 1/16th sec counter
 C $9BFB,1 Return if not zero
 C $9BFC,2 Reset time_sixteenths to 15
 C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
-C $9C0A,3 Exit via start_chatter (priority 21)
+C $9C0A,3 Exit via start_chatter (Bug? Priority is 21)
+@ $9C0D label=tick_check_time_up
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
 C $9C19,2 Loop back to #R$9BF9
-@ $9C1B label=tick_time_up
+@ $9C1B label=tick_time_is_up
 C $9C1B,3 Point at "TIME UP" message
 C $9C1E,3 Call setup_overlay_messages
 C $9C21,6 Return if speed > 0
 C $9C27,5 time_up_state = 2
 C $9C2C,2 Index of "Your time's up" speech sample
 C $9C2E,3 Exit via play_speech_hook
+@ $9C31 label=tick_check_credits
 C $9C31,5 Return if transition_control is non-zero
-C $9C36,8 Exit via quit_key if no credits remain
+C $9C36,8 Exit via cui_quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
 @ $9C41 ssub=LD (credit_n + 7),A
 C $9C3F,5 Turn it into ASCII and poke it into the "CREDIT x" string
@@ -4976,6 +5087,7 @@ C $9C44,5 time_up_state = 3
 C $9C49,3 HL = $0115
 C $9C4C,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9C4F,1 Return
+@ $9C50 label=tick_check_restart
 C $9C50,5 Is fire pressed?
 C $9C55,2 Jump if not (?)
 N $9C57 Resetting mission code.
@@ -5000,24 +5112,31 @@ C $9C87,1 H--
 C $9C8A,2 H = 6
 C $9C8C,1 L--
 C $9C8D,1 A = L
+C $9C8E,1 Set carry to even/odd seconds
 C $9C8F,3 Effect 8 (bip), Priority 1
+C $9C92,2 Jump if carry clear (even seconds)
 C $9C94,1 Effect 9 (bow)
+@ $9C95 label=tick_play_sfx
 C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
 C $9C9C,1 A++
-C $9C9D,3 quit_state = A
+C $9C9D,3 quit_state = A  (A is 1)
 C $9CA0,5 time_up_state = 4
+@ $9CA5 label=tick_set_digits
 C $9CA5,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9CA8,1 A = L
 C $9CA9,2 A >>= 1
 @ $9CAB ssub=LD DE,time_n + 5
-C $9CAB,3 Address of nn in "TIME nn"
+C $9CAB,3 Load address of nn in "TIME nn"
 C $9CAE,2 CP 10
-C $9CB2,2 A = $31
+C $9CB2,2 A = '1'
 C $9CB4,2 L = $00
+C $9CB6,2 Write the digits out
+@ $9CB8 label=tick_less_than_10
 C $9CB8,1 L = A
-C $9CB9,2 A = $20
+C $9CB9,2 A = ' '
+@ $9CBB label=tick_write_digits
 C $9CBB,1 *DE = A
 C $9CBC,3 A = L + $B0
 C $9CBF,1 DE++
@@ -5030,7 +5149,7 @@ C $9CC2,3 Load speed into #REGhl
 N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
 C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
-C $9CC8,1 Merge carry into LSB of speed [Wrong end?]
+C $9CC8,1 Merge carry into LSB of speed [Wrong end? RRA intended?]
 C $9CC9,4 Divide by four
 C $9CCD,1 [Needless move]
 C $9CCE,2 Add carry in, perhaps for rounding?
@@ -5043,7 +5162,7 @@ D $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is o
 D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
 R $9CD6 I:A Low nibble of bonus
 R $9CD6 I:DE High four nibbles of bonus
-@ $9CD6 label=bonus
+@ $9CD6 label=add_bonus
 C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
 C $9CDA,2 Flag, set to $FF while digits are zero
@@ -5051,33 +5170,33 @@ C $9CDC,1 Needless move
 C $9CDD,3 Call bonus_digit  -- final digit first
 C $9CE0,2 Top-bit terminate the bonus string
 C $9CE2,1 Load lowest digit
-C $9CE3,3 Call bonus_high_nibble
+C $9CE3,3 Call ab_high_nibble
 C $9CE6,1 Load middle digits
 C $9CE7,3 Call bonus_digit
 C $9CEA,1 Load middle digits
-C $9CEB,3 Call bonus_high_nibble
+C $9CEB,3 Call ab_high_nibble
 C $9CEE,1 Load high digits
 C $9CEF,3 Call bonus_digit
 C $9CF2,1 Load high digits
-C $9CF3,3 Call bonus_high_nibble
-C $9CF6,2 Exit via bonus_exit
-@ $9CF8 label=bonus_high_nibble
+C $9CF3,3 Call ab_high_nibble
+C $9CF6,2 Exit via ab_exit
+@ $9CF8 label=ab_high_nibble
 C $9CF8,4 Shift the high digit down
 @ $9CFC label=bonus_digit
-C $9CFC,2 Mask off low nibble
-C $9CFE,2 If #REGa is not zero goto bonus_non_zero
+C $9CFC,2 Isolate low nibble
+C $9CFE,2 If #REGa is not zero goto ab_non_zero
 N $9D00 Digit is zero.
 C $9D00,4 Jump if the flag in #REGc is set
 N $9D04 We saw a non-zero-to-zero transition, so terminate.
 C $9D04,1 Discard return address
-C $9D05,2 Exit via bonus_exit
-@ $9D07 label=bonus_non_zero
+C $9D05,2 Exit via ab_exit
+@ $9D07 label=ab_non_zero
 C $9D07,2 Set flag to zero now we've seen a non-zero digit
-@ $9D09 label=bonus_store
+@ $9D09 label=ab_store
 C $9D09,2 Turn digit to ASCII
 C $9D0B,2 Write digit out in reverse
 C $9D0D,1 Return
-@ $9D0E label=bonus_exit
+@ $9D0E label=ab_exit
 C $9D0E,3 Self modify 'LD HL,xxxx' @ #R$9D9B  -- bonus score pointer
 C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B, then fall into increment_score with the bonus preserved
@@ -5104,28 +5223,28 @@ C $9D2B,1 BCD correct A
 C $9D2C,1 *HL = A
 C $9D2D,1 Return
 c $9D2E Calculate overtake bonus
-D $9D2E Bonus is 200 for each overtaken car, reset on crashes.
+D $9D2E The bonus is 200 for each overtaken car and is reset on crashes.
 R $9D2E Used by the routine at #R$8401.
-N $9D2E I:A Iterations (number of sequential overtakes to consider)
 @ $9D2E label=calc_overtake_bonus
-C $9D2E,5 If allow_overtake_bonus is zero then return
-C $9D33,1 B = A -- iterations / no. of overtakes
-C $9D34,3 Point #REGhl at overtake_bonus
+C $9D2E,5 If overtake_bonus_counter is zero then return
+C $9D33,1 Set iterations to no. of overtakes
+C $9D34,3 Point #REGhl at overtake_bonus_bcd
 N $9D37 Increment bonus by 2 up to a max of 128.
-@ $9D37 label=cob_overtake_loop
-C $9D37,3 A = *HL + 2
-C $9D3A,1 BCD correction
-C $9D3B,6 If A >= 128 then A = 128  [80 in BCD]
-C $9D41,1 *HL = A
+@ $9D37 label=cob_loop
+C $9D37,3 Increment overtake_bonus_bcd by 2
+C $9D3A,1 Perform BCD correction
+C $9D3B,6 If A >= 128 then A = 128 (80 in BCD)
+@ $9D41 label=cob_store_bcd
+C $9D41,1 Store new overtake_bonus_bcd
 C $9D42,1 Bank
 N $9D43 Set bonus to N * 100.
-C $9D43,1 Set middle digits
+C $9D43,1 Set middle digits, in effect multiplying the bonus by 100
 C $9D44,1 Clear low digit
 C $9D45,1 Clear top two digits
-C $9D46,3 Call bonus
+C $9D46,3 Call add_bonus
 C $9D49,1 Unbank
 C $9D4A,2 Loop while #REGb > 0
-C $9D4C,4 Clear allow_overtake_bonus
+C $9D4C,4 Clear overtake_bonus_counter
 C $9D50,1 Return
 c $9D51 Update scoreboard and flashing lights
 @ $9D51 label=bonus_string
@@ -5192,22 +5311,24 @@ C $9DD9,3 Draw string
 @ $9DDC label=us_lights
 C $9DDC,4 C = sighted_flag
 C $9DE0,3 A = <counter_B>
-C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_scores
+C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_digits
 C $9DE6,3 Point #REGhl at left light's attributes
 C $9DE9,3 Toggle its brightness
 C $9DEC,3 Point #REGhl at right light's attributes
-C $9DEF,5 Toggle its brightness
+C $9DEF,3 Toggle its brightness
+C $9DF2,2 Exit via plot_turbos_and_digits
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 D $9DF4 Used by the routines at #R$9D51 and #R$B4CC.
+R $9DF4 I:HL Address of light to toggle.
 @ $9DF4 label=toggle_light_brightness
 C $9DF4,3 B = 4, C = $40 (BRIGHT bit)
 C $9DF7,19 Toggle attribute byte on five successive locations
 C $9E0A,4 Move to next attribute row
 C $9E0E,3 Repeat for four rows
-c $9E11 Draws the turbo sprites and updates the displayed scores
+c $9E11 Draws the turbo sprites and updates the displayed speed, time, distance and score
 D $9E11 Used by the routine at #R$9D51.
-@ $9E11 label=plot_turbos_and_scores
-C $9E11,6 If no turbo boosts remain jump to plot_scores_only
+@ $9E11 label=plot_turbos_and_digits
+C $9E11,6 If no turbo boosts remain, jump to plot_scores_only
 C $9E17,1 Preserve number of turbo boosts in #REGc
 C $9E18,4 Read boost time remaining and set flags
 C $9E1C,3 Point #REGhl at base of turbo sprites
@@ -5217,13 +5338,13 @@ C $9E29,3 Self modify frame number
 C $9E2C,2 Avoid frame address calculation if possible
 C $9E2E,3 56 bytes per frame
 C $9E31,4 Calculate the frame address
-@ $9E35 label=ptas_turbo_setup
+@ $9E35 label=ptad_turbo_setup
 C $9E35,3 Self modify #R$9E44 to load #REGsp with address of frame
 C $9E38,4 Self modify #R$9E78 to restore #REGsp once drawing is done
 C $9E3C,2 Low byte of back buffer draw address
 N $9E3E Draw a whole frame of turbo sprite.
 N $9E3E Note that the frame data is stored in memory inverted (bottom first), so we draw the bottom row first and then proceed upwards.
-@ $9E3E label=ptas_turbo_loops
+@ $9E3E label=ptad_turbo_loops
 C $9E3E,3 Base address of frames
 C $9E41,1 Temporarily decrement the number of turbos remaining to draw
 C $9E42,2 All but the final turbo sprite use the zeroth frame
@@ -5233,13 +5354,22 @@ C $9E48,3 Form back buffer position
 C $9E4B,1 Preserve partial back buffer position
 C $9E4C,2 Height of frame
 N $9E4E Draw a scanline of frame.
-@ $9E4E label=ptas_turbo_scanline
+@ $9E4E label=ptad_turbo_scanline
 C $9E4E,1 Pop some frame data off the stack (E is mask data, D is bitmap data)
 C $9E4F,4 Write to screen: Screen = (Screen AND Mask) OR Bitmap
 C $9E53,1 Advance screen address to next column
 C $9E54,5 (Repeat)
 C $9E59,1 Step back
-C $9E5A,22 Move up a row (standard pattern)
+N $9E5A Move to next scanline (longer form).
+C $9E5A,1 Save for checking in a moment
+C $9E5B,1 Move to next scanline (visually upwards)
+C $9E5C,2 Would it have rolled over into the top nibble?
+C $9E5E,3 No - continue
+N $9E61 It rolled over.
+C $9E61,4 Put back the bit stolen by rollover
+C $9E65,4 Move to next chunk of 16 scanlines
+C $9E69,3 Continue if it didn't roll over
+C $9E6C,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 @ $9E70 label=plot_turbo_continue
 C $9E70,2 Loop until out of rows
 C $9E72,1 Restore back buffer draw address
@@ -5255,23 +5385,23 @@ N $9E83 Scale internal speed (0..511) to displayed speed by multiplying by 82 th
 C $9E83,3 Initialise counter
 C $9E86,2 Do 7 digits / iterations
 C $9E88,2 Multiplier of 82 (a percentage: speed * multiplier / 100 = displayed speed)
+@ $9E8A label=ptad_speed_multiply_loop
 C $9E8A,1 Shift one bit out
 C $9E8B,2 Jump if not adding
 C $9E8D,1 Add
-@ $9E8E label=ptas_speed_multiply_loop
 C $9E8E,1 Double
 C $9E8F,2 Loop
 N $9E91 Count 10,000s.
 C $9E91,3 10000
 C $9E94,3 Initialise #REGd and #REGe counters to -1
 C $9E97,1 ?Clear carry flag?
-@ $9E98 label=ptas_speed_10000s_loop
+@ $9E98 label=ptad_speed_10000s_loop
 C $9E98,1 Increment counter
 C $9E99,2 Decrease total by 10,000
 C $9E9B,2 Loop until #REGhl goes negative
 C $9E9D,1 Correct for overshoot
+N $9E9E Count 1,000s.
 C $9E9E,1 ?Clear carry flag?
-N $9E9F Count 1,000s.
 C $9E9F,3 1000
 @ $9EA2 label=plot_speed_1000s_loop
 C $9EA2,1 Increment counter
@@ -5281,7 +5411,7 @@ C $9EA7,1 Correct for overshoot
 N $9EA8 Count 100s.
 C $9EA8,1 Initialise counter (to zero not -1 as in previous cases)
 C $9EA9,3 100
-@ $9EAC label=ptas_speed_100s_loop
+@ $9EAC label=ptad_speed_100s_loop
 C $9EAC,1 Increment counter
 C $9EAD,2 Decrease total by 100
 C $9EAF,2 Loop until total goes negative
@@ -5301,12 +5431,12 @@ C $9EC5,3 Point #REGde at time_bcd (one BCD byte)
 @ $9EC8 ssub=LD HL,time_digits + 1
 C $9EC8,3 Point #REGhl at time_digits + 1
 C $9ECB,2 One pair of digits
-C $9ECD,3 Call plot_led_digits
+C $9ECD,3 Call ptad_led_digits
 N $9ED0 Distance.
 @ $9ED0 ssub=LD DE,distance_bcd + 1
 C $9ED0,3 Point #REGde at distance_bcd + 1 (the second of two BCD bytes)
 C $9ED3,4 L = Distance byte from first 'hazard' (the perp)
-C $9ED7,4 H = 17th byte from first hazard (not sure yet how they relate)
+C $9ED7,4 H = High byte of distance
 N $9EDB Count 1000s (no loop here - it's not required)
 C $9EDB,3 1,000
 C $9EDE,2 Decrease total by 1,000
@@ -5316,7 +5446,7 @@ C $9EE4,1 Otherwise correct for overshoot
 C $9EE5,1 BCD "00"
 N $9EE6 Count 100s
 C $9EE6,3 100
-@ $9EE9 label=ptas_scores_distance_100s_loop
+@ $9EE9 label=ptad_scores_distance_100s_loop
 C $9EE9,1 Increment counter
 C $9EEA,2 Decrease total by 100
 C $9EEC,3 Loop until total goes negative
@@ -5327,7 +5457,7 @@ N $9EF2 Count 10s
 C $9EF2,2 10 (#REGb's already zero)
 C $9EF4,1 ?Clear carry flag?
 C $9EF5,2 #REGa = $F0 (BCD)
-@ $9EF7 label=ptas_scores_distance_10s_loop
+@ $9EF7 label=ptad_scores_distance_10s_loop
 C $9EF7,2 Increment counter
 C $9EF9,1 ?Clear carry flag?
 C $9EFA,2 Decrease total by 10
@@ -5342,7 +5472,7 @@ C $9F07,3 Point #REGde at distance_bcd + 1 (two BCD bytes)
 @ $9F0A ssub=LD HL,distance_digits + 3
 C $9F0A,3 Point #REGhl at distance_digits + 3
 C $9F0D,2 Two pairs of digits (4 digits)
-C $9F0F,3 Call ptas_led_digits
+C $9F0F,3 Call ptad_led_digits
 C $9F12,3 Point #REGde at score digits screen position
 C $9F15,1 Bank
 @ $9F16 ssub=LD DE,score_bcd + 3
@@ -5351,34 +5481,35 @@ C $9F16,3 Point #REGde at score (four BCD bytes)
 C $9F19,3 Point #REGhl at score digits (eight bytes)
 C $9F1C,2 B = 4
 N $9F1E Plots scoreboard digits (#REGde -> BCD) only if different than recorded values (#REGhl -> byte per digit). #REGb is the count.
-@ $9F1E label=ptas_led_digits
+@ $9F1E label=ptad_led_digits
 C $9F1E,1 Read a pair of digits (BCD)
 C $9F1F,1 Save digits for later
 C $9F20,6 Unpack a BCD digit
 C $9F26,3 If different than stored then plot
 C $9F29,3 Move screen position
-@ $9F2C label=ptas_led_next_half
+@ $9F2C label=ptad_led_next_half
 C $9F2C,1 Move to next recorded value
 C $9F2D,3 Examine next digit
 C $9F30,3 If different than stored then plot
 C $9F33,3 Move screen position
-@ $9F36 label=ptas_led_next_whole
+@ $9F36 label=ptad_led_next_whole
 C $9F36,1 Move to next recorded value
 C $9F37,1 Move to next digits
 C $9F38,2 Loop until B is zero
 C $9F3A,1 Return
-@ $9F3B label=ptas_led_plot_1st
+@ $9F3B label=ptad_led_plot_1st
 C $9F3B,1 Update drawn digit
 C $9F3C,3 Plot the digit
 C $9F3F,2 Jump back to handle next digit (second half of a pair)
-@ $9F41 label=ptas_led_plot_2nd
+@ $9F41 label=ptad_led_plot_2nd
 C $9F41,1 Update drawn digit
 C $9F42,3 Plot the digit
 C $9F45,2 Jump back to handle hext digit (next whole pair)
-c $9F47 Plots an 8x15 LED font digit
+c $9F47 Plots an 8x15 LED font digit to the screen
 D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
 R $9F47 I:A Glyph ID (0..9)
-R $9F47 I:DE Address of (real) screen location
+R $9F47 I:DE' Address of (real) screen location
+R $9F47 O:DE' Next screen location
 @ $9F47 label=ledfont_plot
 C $9F47,1 Bank
 C $9F48,13 #REGhl = &ledfont[glyphID * 15]
@@ -5396,24 +5527,31 @@ C $9F97,1 Bank
 C $9F98,1 Return
 c $9F99 Another draw string entry point?
 D $9F99 Used by the routine at #R$8E6C.
+R $9F99 I:A ...
+R $9F99 I:BC Attribute address
+@ $9F99 label=draw_string_with_style
+C $9F99,1 Push attribute address
 C $9F9A,1 Bank
-C $9F9B,1 HL' = BC   so BC is ptr to text
-C $9F9C,3 DE = 32
-C $9F9F,1 C = A
+C $9F9B,1 HL' = BC
+C $9F9C,3 DE' = 32
+C $9F9F,1 C' = A
 C $9FA0,1 Bank
-C $9FA1,2 goto draw_string_entry
+C $9FA1,2 goto draw_string_core
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
-@ $9FA3 label=draw_string
+@ $9FA3 label=*draw_string_generic
 C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
-@ $9FA6 label=draw_string_entry
-C $9FA6,8 Load a byte and mask off the text part
+@ $9FA6 label=*draw_string_core
+C $9FA6,8 Load a byte and isolate the text part
 C $9FAE,6 Was bit 7 set?, quit if so, otherwise loop
 c $9FB4 Draws a character (to buffer or screen?)
+D $9FB4 Input font definitions are only seven rows high so gaps are left when drawing.
 D $9FB4 Used by the routine at #R$9F99.
 R $9FB4 I:A Character to draw (ASCII)
-R $9FB4 I:A' Rendering type (double height, invert, etc.)
-R $9FB4 I:HL ...
 R $9FB4 I:DE Screen address
+R $9FB4 I:A' Rendering type (double height, invert, etc.)
+R $9FB4 I:C' Attribute
+R $9FB4 I:DE' Stride
+R $9FB4 I:HL' Attribute address
 R $9FB4 O:HL ...
 R $9FB4 O:DE Screen address moved to next column
 @ $9FB4 label=draw_char
@@ -5475,6 +5613,7 @@ C $A01C,1 *DE = A
 C $A01D,1 Move to next row
 C $A01E,1 Move to next glyph row
 C $A01F,2 While iterations remain, goto loop2
+@ $A023 label=dc_double_height_inverted
 C $A024,2 B = 7
 @ $A026 label=dc_loop3
 C $A026,2 A = ~*HL
@@ -5484,6 +5623,7 @@ C $A02A,1 *DE = A
 C $A02B,1 Move to next row
 C $A02C,1 Move to next glyph row
 C $A02D,2 While iterations remain, goto loop3
+@ $A031 label=dc_single_height_inverted
 C $A032,2 B = 7
 @ $A034 label=dc_loop4
 C $A034,3 *DE = ~*HL
@@ -5491,7 +5631,7 @@ C $A037,1 Move to next glyph row
 C $A038,1 Move to next row
 C $A039,2 While iterations remain, goto loop4
 N $A03D Plots double-height glyphs. DE->screen HL->glyph def
-@ $A03D label=dc_double_height_glyph
+@ $A03D label=dc_double_height
 C $A03E,2 *DE = 0
 C $A040,1 D++
 C $A041,2 *DE = *HL
@@ -5501,13 +5641,14 @@ C $A047,1 D++
 C $A048,42 Repeat six more times
 C $A072,1 A = 0
 C $A073,1 *DE = A
-@ $A074 label=dc_a074
+@ $A074 label=dc_set_double_attrs
 C $A075,1 E++
 C $A078,3 *HL |= C
 C $A07B,1 HL += DE
 C $A07C,3 *HL |= C
 C $A080,1 L++
 C $A082,1 Return
+@ $A083 label=dc_single_height
 C $A084,1 A = 0
 C $A085,1 *DE = A
 C $A086,1 D++
@@ -5526,14 +5667,15 @@ C $A09E,1 D++
 C $A0A1,1 E--
 C $A0A2,1 D++
 C $A0A3,1 *DE = A
-@ $A0A4 label=dc_a0a4
+@ $A0A4 label=dc_set_single_attrs
 C $A0A5,1 E++
 C $A0A7,3 *HL |= C
 C $A0AA,1 L++
 C $A0AC,1 Return
+@ $A0AD label=dc_screen
 C $A0AD,1 Save screen pointer
 C $A0AE,2 7 iterations/rows
-@ $A0B0 label=dc_loop_a0b0
+@ $A0B0 label=dc_screen_loop
 C $A0B0,2 Transfer a byte
 C $A0B2,1 Move to next scanline (Y0++)
 C $A0B3,1 Move to next row of glyph data
@@ -5551,7 +5693,7 @@ c $A0CC Keyscan
 @ $A0CC label=kempston_flag
 B $A0CC,1,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
 @ $A0CD label=keydefs
-B $A0CD,8,8 Gear, Accelerate, Brake, Left, Right, Quit, Pause, Turbo
+B $A0CD,8,8 Q / P / SPACE / 0 / 9 / 8 / 6 / 7 -- Sinclair joystick
 @ $A0D5 label=user_input
 B $A0D5,1,1 User input: QPBFUDLR - Quit Pause Boost Fire/Gear Up Down Left Right. Note that attract mode is driven through this var.
 N $A0D6 This entry point is used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$8876 and #R$F220.
@@ -5560,14 +5702,17 @@ C $A0D6,6 If not Kempston then goto #R$A0F3
 C $A0DC,4 Read Kempston joystick port. Returns 000FUDLR active high
 @ $A0F3 label=ks_keyboard
 @ $A0FB label=ks_common
+C $A0FB,2 If left and right are both pressed then clear them both
+C $A105,2 If up and down are both pressed then clear them both
 C $A111,1 Return
+@ $A112 label=keyscan_keydefs
 C $A112,1 Outer keyboard loop
 C $A117,1 invert carry
 C $A11A,2 loop while top bit set?
 C $A11D,1 Return
 @ $A11E label=keyscan_inner
 C $A11E,1 Inner keyboard loop.... what's in #REGa?
-C $A11F,14 B=(A&7)+1, C=5-(A>>3)
+C $A11F,14 B=(A&7)+1, C=5-(C>>3)
 C $A12D,5 A = $FE ROR B
 C $A132,2 Port $FE is the AND of all columns/rows? This is the main keyboard access
 C $A134,4 C = A ROR C
@@ -5579,13 +5724,13 @@ B $A139,1,1 0/1 => 48K/128K mode
 B $A13A,1,1 Current stage number
 @ $A13B label=start_speech_cycle
 B $A13B,1,1 Used by #R$8424  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
-@ $A13C label=overtake_bonus
+@ $A13C label=overtake_bonus_bcd
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
 B $A13D,1,1 Number of credits remaining (2 for a new game)
 N $A13E Data copied to $A16D+.
 @ $A13E label=saved_game_state
-B $A13E,1,1 Copied to var_a16d
+B $A13E,1,1 Copied to spawn_accumulator
 B $A13F,1,1 Copied to idle_timer
 B $A140,1,1 Copied to user_input_mask
 B $A141,1,1 Copied to turbos
@@ -5594,14 +5739,13 @@ B $A144,1,1 Copied to perp_halt_counter
 B $A145,1,1 Copied to displayed_gear
 B $A146,8,8 Copied to score_digits
 B $A14E,1,1 Copied to time_sixteenths
-B $A14F,1,1 Copied to time_digits
-B $A150,1,1
-B $A151,4,4 Copied to distance_digits
-B $A155,1,1
+B $A14F,1,1 Copied to time_bcd
+B $A150,2,2 Copies to time_digits
+B $A152,4,4 Copied to distance_digits
 B $A156,1,1 Copied to no_objects_counter
 W $A157,2,2 Copied to horizon_attribute
 B $A159,1,1 Copied to hazards[0].0
-B $A15A,1,1 Copied to hazards[0].1
+B $A15A,1,1 Copied to hazards[0].1 (distance low byte)
 B $A15B,1,1 Copied to hazards[0].2
 B $A15C,1,1 Copied to hazards[0].3
 B $A15D,1,1 Copied to hazards[0].4
@@ -5610,15 +5754,15 @@ B $A15F,1,1 Copied to hazards[0].6
 B $A160,1,1 Copied to hazards[0].7
 B $A161,1,1 Copied to hazards[0].8
 W $A162,2,2 Copied to hazards[0].9 (car LOD)
-W $A164,2,2 Copied to hazards[0].11 (== smash_handler)
+W $A164,2,2 Copied to hazards[0].11 (== perp_behaviour)
 W $A166,2,2 Copied to hazards[0].13 (horz pos)
 B $A168,1,1 Copied to hazards[0].15
 B $A169,1,1 Copied to hazards[0].16
-B $A16A,1,1 Copied to hazards[0].17
+B $A16A,1,1 Copied to hazards[0].17 (distance high byte)
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
 N $A16D Usually 1. Oscillates 0/1 when the road forks. Adjusts horizontal position of the untaken road.
-@ $A16D label=var_a16d
+@ $A16D label=spawn_accumulator
 B $A16D,1,1 Used by #R$BC36
 @ $A16E label=idle_timer
 B $A16E,1,1 Idle timer. Counts down from 100. Recommences whenever the hero car is stopped. When it hits zero Raymond will say "LET'S GET MOVIN' MAN!" and it will be reset to 100.
@@ -5627,7 +5771,7 @@ B $A16F,1,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed,
 @ $A170 label=turbos
 B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
 @ $A171 label=horizon_level
-W $A171,2,2 seems to be the horizon level, possibly relative (used during attract mode)
+W $A171,2,2 The horizon level. Seems to be relative.
 @ $A173 label=perp_halt_counter
 B $A173,1,1 A counter decremented while slowing down the caught perp. This is set to 20 by #$87ED then decremented by #R$8BC6.
 @ $A174 label=displayed_gear
@@ -5647,24 +5791,24 @@ B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 N $A188 Table of spawned vehicles and/or objects
-N $A188 Each entry is 20 bytes long. The first entry is the perp.
+N $A188 Each entry is 20 bytes long. The first entry is the perp. There are six entries in total.
 N $A188 Hazard structure layout:
 N $A188 +0 (byte) is $FF if this hazard is used, $00 otherwise
 N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when the perp is getting further away, decrements otherwise.
-N $A188 +2 (byte) is horizontal position
+N $A188 +2 (byte) is horizontal position (relative?)
 N $A188 +3 (byte) TBD
-N $A188 +4 (byte) TBD
-N $A188 +5 (byte) is horizontal position
+N $A188 +4 (byte) TBD. seems to count fast while the perp is escaping. distance low-low byte?
+N $A188 +5 (byte) is horizontal position on the road (observed values: 5..216 left..right)
 N $A188 +6 (byte) TBD
-N $A188 +7 (byte) TBD used by hazard_hit, used in plotting
+N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_behaviour, goes high when the perp is smashed into
 N $A188 +8 (byte) gets copied from the hazards table
 N $A188 +9 (word) address of LOD
-N $A188 +11 (word) address of routine
+N $A188 +11 (word) address of hit handler routine
 N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
-N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced
+N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced. $ff if unused. $80 for vehicles. 0+ for hazards.
 N $A188 +16 (byte) TBD
-N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB
-N $A188 +18 (byte) TBD used by hazard_hit
+N $A188 +17 (byte) used by hazard_hit, indexes table #R$ACDB, set with a minimum lane. For the perp this is the high byte of the distance.
+N $A188 +18 (byte) TBD used by hazard_hit, set with a lane, likely current lane
 N $A188 +19 (byte) TBD used by hazard_hit
 @ $A188 label=hazard_0
 @ $A19C label=hazard_1
@@ -5679,9 +5823,9 @@ N $A213 AY registers 0..11 [128K]
 @ $A213 label=ay_chan_a_pitch
 W $A213,2,2 0,1: Channel A pitch (fine,coarse=lo,hi)
 @ $A215 label=ay_chan_b_pitch
-W $A215,2,2 2,3: Channel B pitch
+W $A215,2,2 2,3: Channel B pitch (fine,coarse=lo,hi)
 @ $A217 label=ay_chan_c_pitch
-W $A217,2,2 4,5: Channel C pitch - used for engine tone?
+W $A217,2,2 4,5: Channel C pitch (fine,coarse=lo,hi) - used for engine tone/drone
 @ $A219 label=ay_noise_pitch
 B $A219,1,1 6: Noise pitch
 @ $A21A label=ay_mixer
@@ -5708,7 +5852,7 @@ B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 N $A224 0 => no helicopter 1 => moves to left 2 => bobs around in the air 3/4 => moves from left 5 => bobs around in the air
 @ $A224 label=helicopter_control
 B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. #R$AAC6, #R$AB33 reads #R$AB96, #R$C013 writes
-@ $A225 label=stop_car_spawning
+@ $A225 label=dont_spawn_cars
 B $A225,1,1 Inhibits cars from spawning.
 @ $A226 label=correct_fork
 B $A226,1,1 Holds the correct direction to take at forks (1 => left, 2 => right).
@@ -5717,11 +5861,11 @@ B $A227,1,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right
 @ $A228 label=cherry_light
 B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on).
 @ $A229 label=time_up_state
-B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
+B $A229,1,1 1 => out of time; 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs; 4 => countdown elapsed; 0 otherwise
 @ $A22A label=car_y
-B $A22A,1,1 Car Y offset. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
-@ $A22B label=allow_overtake_bonus
-B $A22B,1,1 Enables overtake bonus. Used by #R$9D2E and others.
+B $A22A,1,1 Car Y offset. Usually zero. Higher values move the car upwards. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
+@ $A22B label=overtake_bonus_counter
+B $A22B,1,1 Number of cars overtaken since a bonus was last awarded. Used by #R$9D2E and others.
 @ $A22C label=trigger_bonus_flag
 B $A22C,1,1 Bonus flag (1 triggers the effect)
 @ $A22D label=bonus_counter
@@ -5729,7 +5873,7 @@ B $A22D,1,1 Counter for bonus flash effect (counts 8..0)
 @ $A22E label=sighted_flag
 B $A22E,1,1 Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.
 @ $A22F label=hand_flag
-B $A22F,1,1 Set to 1 by perp_sighted. This starts the anim where the cherry light is put on the roof. Set to 2 by fully_smashed. This shows the "stop" hand.
+B $A22F,1,1 Set to 1 by start_chase. This starts the anim where the cherry light is put on the roof. Set to 2 by fully_smashed. This shows the "stop" hand.
 @ $A230 label=perp_caught_phase
 B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Inhibits car spawning.
 @ $A231 label=transition_control
@@ -5751,18 +5895,18 @@ B $A237,1,1 Current sound effect index
 B $A238,1,1 Current sound effect priority
 @ $A239 label=siren_enabled
 B $A239,1,1 Enables siren. Used by #R$F265 [128K]
-@ $A23A label=turbo_sfx_enabled
+@ $A23A label=turbo_sfx_noise_pitch
 B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
-@ $A23C label=var_a23c
-B $A23C,1,1 #R$8909, #R$BE28 reads  #R$A3FA, #R$BDFF, #R$BE2C writes
-@ $A23D label=var_a23d
-B $A23D,1,1 #R$BE33 reads  #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes
+@ $A23C label=trigger_right_hand_passed_object_sfx
+B $A23C,1,1 #R$8909, #R$BE28 reads. #R$A3FA, #R$BDFF, #R$BE2C writes.
+@ $A23D label=trigger_left_hand_passed_object_sfx
+B $A23D,1,1 Set whenever an object passes the hero's car. #R$BE33 reads. #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes.
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: #R$B104, #R$B40C reads  #R$A3FD, #R$A52A, #R$B07D, #R$B322, #R$B404, #R$B443 writes]
 @ $A23F label=fast_counter
-B $A23F,1,1 This is a very fast counter related to level position. Typically the top three bits are masked off and used to index other tables.
+B $A23F,1,1 This is a very fast counter that increments only when the car is in motion. Typically the top three bits are masked off and used to index other tables. When this rolls over the road_buffer_offset increments so it's really the lowest byte of the road offset.
 @ $A240 label=road_buffer_offset
 W $A240,2,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by #R$B8F6, #R$BBF7, #R$87E0.
 @ $A242 label=curvature_byte
@@ -5783,7 +5927,7 @@ B $A248,1,1 Set to 1 when on dirt track. [#R$A955 reads #R$C457,#R$C526 writes]
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
 W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6 (230), high gear =~ $168 (360), turbo =~ $1FF (511). In practice I see maximums of 188 / 295 / 419 (82% of original value...)
-@ $A24C label=inclined
+@ $A24C label=inclined_counter
 B $A24C,1,1 Counts 3/2/1/0 when the hero car is ascending or descending. #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
 B $A24D,1,1 Likely a cornering force flag. Used to trigger smoke. #R$B3B4, #R$B432 reads  #R$B2E5, #R$B314, #R$B32A writes
@@ -5800,7 +5944,7 @@ B $A252,1,1 Locks out repeated gear changes. Counts down 3-2-1-0
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
 @ $A254 label=allow_spawning
-B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Returns to zero when the hero car is stopped.
+B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Reset to zero when the hero car is stopped.
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
@@ -5817,7 +5961,7 @@ B $A25B,1,1 Changes often? when the backdrop Y changes. ($00/$55/$7F/$AA/?)
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
 B $A25D,1,1 Seems to be added to the index for the horizon_table. Saw: 8/16/24.
-@ $A25E label=horizon_a25e
+@ $A25E label=horizon_x_scroll
 B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
 @ $A25F label=horizontal_adjust
 W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road. It's mainly zero but occasionally gets set to one. +ve shifts the hero car left, -ve shifts it right.
@@ -5832,7 +5976,7 @@ B $A264,1,1 Left turning force (0..36)
 @ $A265 label=fork_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
 @ $A266 label=fork_countdown
-B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the forked road approaches, zero when the fork actually starts
+B $A266,1,1 Used by #R$A3A6 -- counts down from 21 when the forked road approaches, zero when the fork actually starts or otherwise
 @ $A267 label=fork_distance
 W $A267,2,2 Counts 0..255 during road forks
 @ $A269 label=fork_in_progress
@@ -5855,110 +5999,151 @@ W $A274,2,2 Address of the previous right object data byte
 W $A276,2,2 Address of the previous left object data byte
 @ $A278 label=road_hazard_ptr
 W $A278,2,2 Address of the previous hazard object data byte
-b $A27A Font: 8x7 bitmap
-D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
+b $A27A [Graphics] 8x7 bitmap font
+D $A27A #HTML[#CALL(graphic($A27A,8,41*7,0,0))]
 @ $A27A label=font
 B $A27A,7,7 Exclamation mark
 B $A281,7,7 Open bracket
 B $A288,7,7 Close bracket
 B $A28F,7,7 Comma
 B $A296,7,7 Full stop
-B $A29D,70,7 0..9
-B $A2E3,182,7 A-Z
-c $A399 Checks for collisions
+B $A29D,7,7 0
+B $A2A4,7,7 1
+B $A2AB,7,7 2
+B $A2B2,7,7 3
+B $A2B9,7,7 4
+B $A2C0,7,7 5
+B $A2C7,7,7 6
+B $A2CE,7,7 7
+B $A2D5,7,7 8
+B $A2DC,7,7 9
+B $A2E3,7,7 A
+B $A2EA,7,7 B
+B $A2F1,7,7 C
+B $A2F8,7,7 D
+B $A2FF,7,7 E
+B $A306,7,7 F
+B $A30D,7,7 G
+B $A314,7,7 H
+B $A31B,7,7 I
+B $A322,7,7 J
+B $A329,7,7 K
+B $A330,7,7 L
+B $A337,7,7 M
+B $A33E,7,7 N
+B $A345,7,7 O
+B $A34C,7,7 P
+B $A353,7,7 Q
+B $A35A,7,7 R
+B $A361,7,7 S
+B $A368,7,7 T
+B $A36F,7,7 U
+B $A376,7,7 V
+B $A37D,7,7 W
+B $A384,7,7 X
+B $A38B,7,7 Y
+B $A392,7,7 Z
+c $A399 Checks for scenery collisions
 D $A399 Used by the routines at #R$8401 and #R$852A.
-@ $A399 label=check_collisions
+@ $A399 label=check_scenery_collisions
 C $A399,3 HL = $0048
-C $A39C,3 DE = $01D8
-C $A3A0,3 A = fork_visible
+C $A39C,3 DE = $01D8  -- constant indicates road centre?
+C $A39F,1 Bank
+C $A3A0,3 Load fork_visible
 C $A3A3,1 Set flags
-C $A3A4,2 Jump to cc_at_fork if zero
-C $A3A6,3 A = fork_countdown
+C $A3A4,2 Jump to csc_fork_not_visible_or_fork_in_progress if zero
+N $A3A6 The fork is visible.
+C $A3A6,3 Load fork_countdown
 C $A3A9,1 Set flags
-C $A3AA,3 Jump to cc_not_fork if zero
-C $A3AD,1 A--
-C $A3AE,1 Return if zero  [can't collide immediately before fork?]
-N $A3AF Check left hand side of car.
-@ $A3AF label=cc_at_fork
-C $A3AF,3 HL = *$EAFE
-C $A3B2,1 A = H (0 or 255)
-C $A3B3,1 Set flags
-C $A3B4,2 Jump to #R$A3D1 if non-zero
-C $A3B6,9 Jump to #R$A3D1 if HL < $40
-C $A3BF,8 Jump to #R$A3D5 if HL < $6A
-C $A3C7,4 HL -= $85
-C $A3CB,1 A++  -- A == 1 => partially off-road
-C $A3CC,2 Jump to cc_fork_set if A was 255
+C $A3AA,3 Exit via check_fork_scenery_collisions if zero
+N $A3AD Currently forking.
+C $A3AD,1 Decrement the fork_countdown value
+C $A3AE,1 Return if zero  -- can't collide immediately before fork?
+N $A3AF Check left hand side of car. This reads the position of the road from generated data at $EAFE. The values as seen in the debugger vibrate so it's hard to tell exactly what the buffer is. Presumably it's a dual-use buffer and I need to know what it's being used for at this instant to make a clear statement here.
+@ $A3AF label=csc_fork_not_visible_or_fork_in_progress
+C $A3AF,3 Read signed word at $EAFE
+N $A3B2 When car off road left       ~  176 When car half off road left  ~  133 When car in lane 1           ~  85 When car in lane 2           ~  38 When car in lane 3           ~ -36 When car in lane 4           ~ -84 When car half off road right ~ -153 When car off road right      ~ -186
+C $A3B2,2 Set flags from sign of word: 0 when hero car on left side, 255 if right
+C $A3B4,2 Jump to #R$A3D1 if non-zero  -- right side
+N $A3B6 Otherwise left side.
+C $A3B6,9 Jump to #R$A3D1 if HL < 64
+C $A3BF,8 Jump to #R$A3D5 if HL < 106
+C $A3C7,4 HL -= 133
+C $A3CB,1 A++  -- A == 1 => partially off-road (note: A is zero here)
+C $A3CC,2 Jump to csc_store_off_road if HL < 133 (note: INC A doesn't affect carry)
 C $A3CE,1 A++  -- A == 2 => fully off-road
-C $A3CF,2 Jump to cc_fork_set
-@ $A3D1 label=cc_a3d1
-C $A3D1,4 var_a23d = 0
-N $A3D5 Check right hand side of car.
-@ $A3D5 label=cc_a3d5
-C $A3D5,3 HL = *$EAFC
-C $A3D8,1 A = H
-C $A3D9,1 Set flags
-C $A3DA,2 A = 0  (not self modified)
+C $A3CF,2 Jump to csc_store_off_road
+@ $A3D1 label=csc_clear_trigger_lane_change_sfx
+C $A3D1,4 trigger_left_hand_passed_object_sfx = 0  -- offroad/sfx flag perhaps?
+N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2 ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
+@ $A3D5 label=csc_check_right_hand
+C $A3D5,3 Read signed word at $EAFC [ how is this different to $EAFE? ]
+C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
+C $A3DA,2 Init value for trigger_right_hand_passed_object_sfx  -- this must stop the passed object sfx from playing
 C $A3DC,2 Jump to #R$A3FA if non-zero
-C $A3DE,9 Jump to #R$A3FA if HL >= $BE
-C $A3E7,9 Jump to #R$A3FD if HL >= $8E
-C $A3F0,4 HL -= $7C
+C $A3DE,9 Jump to #R$A3FA if HL >= 190
+C $A3E7,9 Jump to #R$A3FD if HL >= 142
+C $A3F0,4 HL -= 124
 C $A3F4,1 A++  -- A == 1 => partially off-road
-C $A3F5,2 Jump to cc_fork_set if no carry
+C $A3F5,2 Jump to csc_store_off_road if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
-C $A3F8,2 Jump to cc_fork_set
-@ $A3FA label=cc_a3fa
-C $A3FA,3 var_a23c = A
-@ $A3FD label=cc_fork_set
+C $A3F8,2 Jump to csc_store_off_road
+@ $A3FA label=csc_store_sfx_trigger
+C $A3FA,3 trigger_right_hand_passed_object_sfx = A
+@ $A3FD label=csc_store_off_road
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
 C $A401,2 C = 0  (not self modified)
-C $A403,2 not off road?
-C $A405,3 Load road_buffer_offset into #REGa
+C $A403,2 Jump if not off road
+N $A405 Otherwise we're off-road.
+C $A405,3 Load road_buffer_offset.lo into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
 C $A40A,3 Point #REGhl at road buffer lanes data
-C $A40D,1 A = *HL
+C $A40D,1 Read lane data byte
 C $A40E,2 Test bit 6  -- tunnel bits perhaps?
 C $A410,2 Jump if clear
 C $A412,1 Test bit 7
 C $A413,2 Jump if set
+N $A415 We arrive here if we're far into the tunnel.
 C $A415,2 Test bit 3 (was bit 2 before RLA)
-C $A417,3 A = road_pos.hi
-C $A41A,2 Jump if clear
+C $A417,3 Load road_pos high byte
+C $A41A,2 Jump if bit 3 clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
+C $A41F,1 Bank it
 C $A420,3 A = C & 1
-C $A423,3 Jump to cc_hit_scenery2
-@ $A426 label=cc_a426
-C $A426,3 HL = $00D1
-C $A429,3 DE = $0195
+C $A423,3 Exit via scenery_hit
+@ $A426 label=csc_a426
+C $A426,3 HL = 209
+C $A429,3 DE = 405
+C $A42C,1 Unbank from #R$A39F
 C $A42D,1 Set flags [A is ?]
 C $A42E,2 C = 1
 C $A432,1 C = 2
-@ $A433 label=cc_hit_tunnel_wall
+@ $A433 label=csc_hit_tunnel_wall
 C $A433,1 Preserve BC
 C $A434,3 Effect 6 (tunnel wall hit), Priority 4
 C $A437,3 Call start_sfx
 C $A43A,1 Restore BC
-@ $A43B label=cc_a43b
+@ $A43B label=csc_store_crash_spin
 C $A43B,1 A = C
 C $A43C,3 ($B3DC) = A
 C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
-C $A447,1 Set flags
+C $A447,1 Set flags from A (was C)
 C $A448,1 Return if non-zero
-C $A449,3 Load road_buffer_offset into #REGa
-N $A44C -- RIGHT SIDE OBJECT HIT CHECKING --
+N $A449 -- RIGHT SIDE OBJECT HIT CHECKING --
+C $A449,3 Load road_buffer_offset.lo into #REGa
 C $A44C,2 Add 96 so it's the right side objects data offset
 C $A44E,1 Point #REGhl at road buffer right side objects data
 C $A44F,1 Bank road buffer offset
 C $A450,2 (cont.)
-C $A452,3 Load road_buffer_offset into #REGa
+C $A452,3 Load road_buffer_offset.lo into #REGa
 C $A455,1 Top bit -> carry
 C $A456,1 Read a right side object data byte
 C $A457,2 Jump if top bit was clear
 C $A459,1 L++  -- so if the top bit of the road buffer offset is set we take next byte?
-@ $A45A label=cc_a45a
+@ $A45A label=csc_a45a
 C $A45A,1 OR in the (next) byte
 C $A45B,2 Jump if it's zero -- no object
 N $A45D Build a graphics_defs address.
@@ -5966,104 +6151,106 @@ C $A45D,12 HL = (*#R$5CFA)[A * 7]
 N $A469 Read collision values.
 C $A469,2 C = *HL++  -- e.g. $5E5B. a higher value
 C $A46B,2 E = *HL++  -- e.g. $5E5C. a lower value
-C $A46D,1 A = *HL     -- e.g. $5E5D. TBD
-C $A46E,1 D = B       -- B is zero here, so BC = C and DE = E
+C $A46D,1 A = *HL     -- e.g. $5E5D. a speed cap
+C $A46E,1 DE = E, BC = C  -- #REGb is zero from #R$A463 above
 N $A46F Check for collisions with scenery (right hand side).
 C $A46F,3 HL = *$EAFC  -- near end of road drawing words (centre)... must be position of car
-C $A472,6 Jump to cc_a480 if HL >= BC
-C $A478,4 Jump to cc_a480 if HL < DE
-C $A47C,1 Unbank road buffer offset
-C $A47D,1 A = 0  -- perhaps a right hand flag
-C $A47E,2 Jump to cc_hit_scenery
-@ $A480 label=cc_a480
-C $A480,1 Unbank road buffer offset
+C $A472,6 Jump to csc_a480 if HL >= BC
+C $A478,4 Jump to csc_a480 if HL < DE
+C $A47C,1 Bank speed cap
+C $A47D,1 Set flip flag to 0
+C $A47E,2 Jump to csc_hit_scenery
+@ $A480 label=csc_a480
+C $A480,1 Unbank road buffer offset or/and bank mystery value in A
 N $A481 -- LEFT SIDE OBJECT HIT CHECKING --
 C $A481,2 Add 32 so it's the left side objects data offset
 C $A483,3 Point #REGhl at road buffer left side objects data
-C $A486,3 Load road_buffer_offset into #REGa
+C $A486,3 Load road_buffer_offset.lo into #REGa
 C $A489,1 Top bit -> carry
 C $A48A,1 Read a left side object data byte
-C $A48B,2 Jump if top bit was clear
-C $A48D,1 L++
-@ $A48E label=cc_a48e
+C $A48B,2 Jump if top bit of road_buffer_offset.lo was clear
+C $A48D,1 Advance to next data byte
+@ $A48E label=csc_a48e
 C $A48E,1 OR in the (next) byte
-C $A48F,1 Return if zero -- no object
-C $A490,12 HL = (*#R$5D00)[A * 7]
+C $A48F,1 Return if combined value is zero -- no object
+C $A490,12 HL = (*#R$5D00)[A * 7]  -- indexing left hand objects
 N $A49C Read collision values.
-C $A49C,2 C = *HL++
-C $A49E,2 E = *HL++
-C $A4A0,1 A = *HL
-C $A4A1,1 D = B  must be zero?
+C $A49C,2 C = *HL++  -- must be min/left hit coord
+C $A49E,2 E = *HL++  -- must be max/right hit coord
+C $A4A0,1 A = *HL  -- a speed cap
+C $A4A1,1 DE = E, BC = C  -- #REGb is zero from #R$A496 above
 N $A4A2 Check for collisions with scenery (left hand side).
-C $A4A2,3 HL = *$EAFE  -- suspected position of car
+C $A4A2,3 HL = *$EAFE  -- suspected position of car/road
 C $A4A5,5 Return if HL < BC
 C $A4AA,3 Return if HL >= DE
-C $A4AD,1 Unbank road buffer offset
-C $A4AE,2 A = 1  -- perhaps a left hand flag
-N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
-@ $A4B0 label=cc_hit_scenery
+C $A4AD,1 Bank speed cap
+C $A4AE,2 Set flip flag to 1
+N $A4B0 Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
+@ $A4B0 label=csc_hit_scenery
 C $A4B0,1 Preserve AF  -- suspected left hand flag
 C $A4B1,3 Effect 4 (scenery crash), Priority 3
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
-N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
-@ $A4B8 label=cc_hit_scenery2
-C $A4B8,3 HL = &<crashed flag>
+E $A399 FALLTHROUGH
+c $A4B8 Scenery was hit
+D $A4B8 Used by the routines at #R$A399, #R$A637 and #R$A8CD.
+@ $A4B8 label=scenery_hit
+C $A4B8,3 Load address of the x in 'LD A,x' @ #R$B325 (crashed flag)
 C $A4BB,2 Set flags
 C $A4BD,1 Return if already crashed
-@ $A4BE label=cc_new_crash
+@ $A4BE label=sch_new_crash
 C $A4BE,2 Set crashed flag
-C $A4C0,4 *$B36F = A++  -- set flip flag (0/1 = right/left)
-C $A4C4,3 *$B38E = A
+C $A4C0,3 *$B36F = A  -- set flip flag (0/1 = right/left)
+C $A4C3,4 *$B38E = A + 1
 C $A4C7,5 *$B385 = 5
 C $A4CC,3 Load speed into #REGhl
-C $A4CF,1 Preserve HL
-C $A4D0,2 H >>= 1
-C $A4D2,1 A = L
-C $A4D5,8 A = (A << 3) + 16
-C $A4DD,2 L = 24
-C $A4E2,1 L = A
-@ $A4E3 label=cc_a4e3
+C $A4CF,1 Preserve speed
+C $A4D0,5 A = HL >> 1
+C $A4D5,8 A = (A >> 3) + 16
+C $A4DD,6 L = MAX(24, A)
+@ $A4E3 label=sch_a4e3
 C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
-C $A4E7,3 HL = A
+C $A4E7,3 HL = A'
+C $A4EA,1 Restore speed
 C $A4EC,2 HL -= DE
-@ $A4F2 label=cc_a4f2
+@ $A4F2 label=sch_exit
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
-@ $A4F6 label=cc_not_fork
+c $A4F6 Fork completed
+D $A4F6 Used by the routine at #R$A399.
+@ $A4F6 label=check_fork_scenery_collisions
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
-C $A4FB,2 Jump to cc_a510 if A isn't zero
+C $A4FB,2 Jump to fc_a510 if A isn't zero
 C $A4FD,9 Jump to #R$A510 if HL < $6A
 C $A506,4 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
-C $A50B,2 Jump to cc_not_fork_set if HL < $85
+C $A50B,2 Jump to fc_not_fork_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
-C $A50E,2 Jump to cc_not_fork_set
-@ $A510 label=cc_a510
+C $A50E,2 Jump to fc_not_fork_set
+@ $A510 label=fc_a510
 C $A510,3 HL = *$EDFC
 C $A513,1 A = H
 C $A514,1 Set flags
 C $A515,2 A = 0
-C $A517,2 JR NZ,cc_not_fork_set
-C $A519,9 Jump to cc_not_fork_set if HL >= $8E
+C $A517,2 JR NZ,fc_not_fork_set
+C $A519,9 Jump to fc_not_fork_set if HL >= $8E
 C $A522,4 HL -= $7C
 C $A526,1 A++  -- A == 1 => partially off-road
-C $A527,2 Jump to cc_not_fork_set if HL >= $7C
+C $A527,2 Jump to fc_not_fork_set if HL >= $7C
 C $A529,1 A++  -- A == 2 => fully off-road
 N $A52A Set the off-road flag etc.
-@ $A52A label=cc_not_fork_set
+@ $A52A label=fc_not_fork_set
 C $A52A,3 off_road = A
-C $A52D,1 A = 0
-C $A52E,3 *$B3DC = A
+C $A52D,4 *$B3DC = 0
 C $A532,3 *$B396 = HL
 C $A535,4 *$B3A4 = DE
 C $A539,6 Jump to #R$A55C if fork_taken was 1 (right fork taken)
-C $A53F,3 HL = *$5CFC
+C $A53F,3 Get address of right hand short pole object
 C $A542,2 C = *HL++  -- max object boundary
 C $A544,2 E = *HL++  -- min object boundary
-C $A546,1 A = *HL
+C $A546,1 A = *HL  -- unused
 C $A547,2 B = 0
 C $A549,1 D = B
 C $A54A,3 HL = *$EAFE
@@ -6071,8 +6258,8 @@ C $A54D,5 Return if HL >= BC
 C $A552,3 Return if HL < DE
 C $A555,2 A = $8C
 C $A558,1 A = 0  -- perhaps a right hand flag
-C $A559,3 Exit via cc_hit_scenery
-@ $A55C label=cc_a55c
+C $A559,3 Exit via csc_hit_scenery
+@ $A55C label=fc_a55c
 C $A55C,3 HL = *$5D02
 C $A55F,2 C = *HL++
 C $A561,2 E = *HL++
@@ -6084,80 +6271,104 @@ C $A56E,3 Return if HL >= DE
 C $A571,2 A = $8C
 C $A573,1 Bank
 C $A574,2 A = 1  -- perhaps a left hand flag
-C $A576,3 Exit via cc_hit_scenery
+C $A576,3 Exit via csc_hit_scenery
 c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=layout_objects
-C $A579,3 Address of object_positions
-C $A57C,2 21 iterations [max no of objects on-screen?]
-N $A57E Turn a run of sizes into accumulating values.
-C $A57E,1 total = 0
+C $A579,3 Load address of object_positions
+C $A57C,2 21 iterations [max no of objects on-screen? max no of stripes?]
+N $A57E object_positions is individual sizes. Turn them into positions.
+C $A57E,1 Initialise total to zero
 @ $A57F label=lo_loop1
-C $A57F,1 total += *HL
-C $A580,2 *HL++ = total
+C $A57F,1 Increment total by (HL)
+C $A580,2 Write total back in place
 C $A582,2 Loop lo_loop1 while #REGb > 0
+N $A584 Setup addresses.
 C $A584,4 Save #REGsp to restore on exit (self modify)
-C $A588,3 SP = $EB00
-C $A58B,2 Point #REGde at road buffer (somewhere)
-C $A58D,3 Load road_buffer_offset into #REGa
+C $A588,3 Load #REGsp with $EB00 - where results will be stored (end of - stack is descending)
+C $A58B,2 Point #REGde at road buffer
+C $A58D,3 Load road_buffer_offset.lo into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
-C $A592,1 E = calculated offset
-C $A593,4 Address of object_positions
-C $A597,2 B = 21
-C $A599,3 A = fork_visible
+C $A592,1 Finalised #REGde now points into lanes data
+C $A593,4 Load address of object_positions
+C $A597,2 21 iterations
+C $A599,3 Load fork_visible
 C $A59C,1 Set flags
-C $A59D,3 Jump to lo_loop2 if zero [not in forked road]
-C $A5A0,3 A = fork_countdown
+C $A59D,3 Jump to lo_positions_loop if zero (passing iterations in #REGb)
+N $A5A0 Otherwise the road fork is visible.
+@ $A5A0 label=lo_fork_visible
+C $A5A0,3 Load fork_countdown
 C $A5A3,1 Set flags
-C $A5A4,2 [not about to fork the road]
-C $A5A6,1 B = A
-@ $A5A7 label=lo_loop2
-C $A5A7,1 A = *DE
-C $A5A9,1 E = A
-C $A5AA,5 A = ~(IY[0] * 2)
-C $A5AF,1 L = A
-C $A5B0,3 A = E & 3
-C $A5B5,2 H = $E8
-C $A5B7,1 B = *HL
-C $A5B8,1 L--
-C $A5B9,1 C = *HL
-C $A5BB,2 H = $EC
-C $A5BD,2 Jump to lo_a5da
-C $A5BF,3 H = A + $E7
+C $A5A4,2 Jump to lo_forking if forking
+N $A5A6 Fork is visible but not forking as yet.
+C $A5A6,1 Set iterations to fork_countdown
+@ $A5A7 label=lo_positions_loop
+C $A5A7,1 Read a lanes byte
+C $A5A8,1 Bank
+C $A5A9,1 Copy lanes byte to #REGe
+N $A5AA L = ~(IY[0] * 2) -- this doubles then complements, not sure why yet.
+C $A5AA,3 Read from current index in object_positions array
+C $A5AD,1 Double it
+C $A5AE,1 Complement it
+C $A5AF,1 Move result to #REGl
+N $A5B0 Read left hand offset bits (0+1).
+C $A5B0,1 Copy lanes byte to #REGa
+C $A5B1,2 Isolate left hand offset bits
+C $A5B3,2 Jump if there's a left hand offset
+N $A5B5 Otherwise no left hand offset is set.
+C $A5B5,2 Set #REGhl to left hand table address: $E8xx
+C $A5B7,3 Load #REGbc from the table
+C $A5BA,1 Store left hand value - then fallthrough
+@ $A5BB label=lo_set_right_hand
+C $A5BB,2 Set #REGhl to right hand table - $ECxx
+C $A5BD,2 Jump to lo_load_and_store_right
+N $A5BF The left hand position of the road in #REGa is 1/2/3 here. Use that to select table $E8xx/$E9xx/$EAxx.
+@ $A5BF label=lo_a5bf
+C $A5BF,3 Set table high byte to $E7 + #REGa
 N $A5C2 Sampled HL = $E869 $E865 $E863 $E861 (road drawing left)
-C $A5C2,1 B = *HL
-C $A5C3,1 L--
-C $A5C4,1 C = *HL
-C $A5CF,2 A = 3
-C $A5D3,2 A = 3
-C $A5D7,1 A--
-C $A5D8,2 H += A
-@ $A5DA label=lo_a5da
-C $A5DA,1 C = *HL
-C $A5DB,1 L++
-C $A5DC,1 B = *HL
-C $A5DF,2 IY++
-C $A5E1,1 E++
-C $A5E2,2 Loop to lo_loop2 while #REGb > 0
-C $A5E4,3 A = fork_countdown
+C $A5C2,3 Load #REGbc from the table
+C $A5C5,1 Store left hand value
+C $A5C6,2 Shift bit 7 of lanes byte into carry (checked later)
+C $A5C8,2 Test former bit 6; set if tunnel, dirt track or fork (carry preserved)
+C $A5CA,3 Jump to lo_normal_road if clear
+C $A5CD,2 Jump to lo_set_right_hand if carry (dirt track or fork)
+N $A5CF Otherwise it's a tunnel piece.
+C $A5CF,2 Set lane shift amount for 3 lanes
+C $A5D1,2 Jump to lo_set_table_right
+@ $A5D3 label=lo_normal_road
+C $A5D3,2 Set lane shift amount for 3 lanes
+C $A5D5,2 Jump to lo_set_table_right if 3 lane or 3/4 lane widening/narrowing
+N $A5D7 Otherwise it's 2 lane or 2/3 lane widening/narrowing.
+C $A5D7,1 Set lane shift amount for 2 lanes
+@ $A5D8 label=lo_set_table_right
+C $A5D8,2 Add #REGa to table high byte
+@ $A5DA label=lo_load_and_store_right
+C $A5DA,3 Load #REGbc from the table
+C $A5DD,1 Store right hand value
+C $A5DE,1 Unbank
+C $A5DF,2 Advance object_positions pointer
+C $A5E1,1 Advance lanes pointer
+C $A5E2,2 Loop to lo_positions_loop while #REGb > 0
+N $A5E4 $EB00 now contains pairs of 16-bit left,right object positions.
+C $A5E4,3 Load fork_countdown
 C $A5E7,1 Set flags
-C $A5E8,3 Jump to lo_return if zero
-C $A5EB,6 A = ~fork_countdown + 22
-C $A5F1,2 Jump to lo_return if zero
-C $A5F3,1 B = A
-C $A5F4,2 H = $EB
-@ $A5F6 label=lo_loop3
-C $A5F6,6 L = ~(IY[0] * 2)
-C $A5FC,1 H--
-C $A5FD,1 D = *HL
-C $A5FE,1 L--
-C $A5FF,1 E = *HL
-C $A601,1 H++
-C $A602,1 E = *HL
-C $A603,1 L++
-C $A604,1 D = *HL
-C $A606,2 IY++
-C $A608,2 Loop lo_loop3 while #REGb > 0
+C $A5E8,3 Jump to lo_return if zero (no fork)
+N $A5EB Otherwise we're about to fork.
+@ $A5EB label=lo_forking
+C $A5EB,6 Calculate (21 - fork_countdown)
+C $A5F1,2 Jump to lo_return if zero  [no fork, or not about to fork?]
+C $A5F3,1 Set iterations to above
+C $A5F4,2 Set up to read from $EBxx
+@ $A5F6 label=lo_fork_loop
+C $A5F6,6 L = ~(IY[0] * 2)  -- still not sure why we invert then double
+C $A5FC,1 Step back by 256 to read from $EAxx (centre table)
+C $A5FD,3 Load #REGde from table (reading high byte first)
+C $A600,1 Store left hand value
+C $A601,1 Restore pointer to read from $EBxx (centre right)
+C $A602,3 Load #REGde from table (reading low byte first)
+C $A605,1 Store right hand value
+C $A606,2 Advance object_positions pointer
+C $A608,2 Loop lo_fork_loop while #REGb > 0
 @ $A60A label=lo_return
 C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
@@ -6178,62 +6389,73 @@ W $A62C,2,2
 W $A62E,2,2 Routine at #R$A8CD
 W $A630,2,2
 B $A632,5,5
-c $A637 Smash/chase handling
-D $A637 This gets called whenever the perp is within sight of the hero car.
-@ $A637 label=smash_handler
+c $A637 Perp car behaviour
+D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
+R $A637 I:IX Address of hazard[0] (the perp)
+R $A637 I:IY ? sampled $E360 $E356 $E34F
+N $A637 Exit if we've caught the perp.
+@ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
-C $A63C,7 Call perp_sighted if sighted_flag is zero
-C $A643,3 A = IX[7]
+N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
+C $A63C,7 Call start_chase if sighted_flag is zero
+N $A643 Reading a hit counter here? It starts at $FC (set at #R$A78A) and is incremented. This seems like it might speed the perp car up when it's hit.
+C $A643,3 Read IX[7] e.g. $A18F  -- a hit counter
 C $A646,1 Set flags
-C $A647,2 Jump if zero
-C $A649,3 Jump if positive
-N $A64C Otherwise A is negative.
+C $A647,2 Jump if zero  -- delay finished?
+C $A649,3 Jump to set delay if positive
+N $A64C Otherwise #REGa is negative.
+N $A64C This line gets hit 4 times when we smash into the perp's car - matching the $FC value it's reset to.
 C $A64C,3 IX[7]++
 C $A64F,1 Return if non-zero
-N $A650 A must be zero to arrive here.
-@ $A650 label=sh_a650
-C $A650,2 Preserve IY
-C $A652,3 C = IX[1]
+N $A650 IX[7] must be zero to arrive here. We now iterate over all non-perp hazards.
+@ $A650 label=pb_is_zero
+C $A650,2 Preserve #REGiy
+C $A652,3 Read perp's distance (buffer offset) into #REGc
 C $A655,2 5 iterations
-C $A657,4 IY = &hazards[1]
-C $A65B,3 DE = 20  -- stride of hazards
-@ $A65E label=sh_hazards_loop
+C $A657,4 Point #REGiy at hazards[1]
+C $A65B,3 Stride of hazards is 20 bytes
+@ $A65E label=pb_find_unused_hazard_loop
 C $A65E,6 If the hazard is active then jump to #R$A66C
-@ $A664 label=sh_a664
+@ $A664 label=pb_find_unused_hazard_continue
 C $A664,2 Move to next hazard
 C $A666,2 Loop while #REGb
-C $A668,2 Restore IY
+C $A668,2 Restore #REGiy
 C $A66A,2 Jump to #R$A68F
-@ $A66C label=sh_a66c
-C $A66C,3 A = IY[15]
-C $A66F,1 Check top bit
-C $A670,3 Jump if clear
-C $A673,4 A = IY[1] - C
-C $A677,3 Jump to sh_a67e if IY[1] > c
-C $A67A,2 A += 2
-C $A67C,2 Jump to sh_a680
-@ $A67E label=sh_a67e
+@ $A66C label=pb_ensure_vehicle
+C $A66C,3 Read IY[15]. It's $80 for vehicles, 0+ for hazards or $FF if unused
+C $A66F,4 If the top bit is clear then it's not a vehicle, continue to next hazard
+N $A673 Calculate distance between current hazard and the perp.
+C $A673,4 A = IY[1] - <perp distance>
+C $A677,3 Jump to pb_a67e if car/hazard further than perp
+N $A67A Otherwise car is behind perp...
+C $A67A,2 A += 2  -- move it two lanes away?
+C $A67C,2 Jump to pb_a680
+@ $A67E label=pb_a67e
 C $A67E,2 A -= 3
-@ $A680 label=sh_a680
-C $A682,3 A = IY[17]
-C $A685,3 Compare to IX[18]
-C $A68B,2 Restore IY $A650 pushed
-C $A68D,2 Jump to sh_a6d8
-@ $A68F label=sh_a68f
-C $A68F,2 A = <self modified>
-C $A691,3 Jump if non-zero
-C $A694,3 A = IX[1]
-C $A697,4 Jump if A >= 7
-N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop.
+@ $A680 label=pb_a680
+C $A680,2 Jump if (out of range?) - continue to next hazard
+C $A682,3 A = IY[17]  -- lane
+C $A685,3 Compare to IX[18]  -- compare to perp's lane
+C $A688,3 Jump if not equal - continue to next hazard
+N $A68B So the lanes match.
+C $A68B,2 Restore #REGiy pushed at #R$A650
+C $A68D,2 Jump to pb_random_move_left_or_right
+@ $A68F label=pb_check_changing_lane_flag
+C $A68F,2 A = <self modified>  -- load "changing lane" flag that appears to be set to 1 when the perp changes lane
+C $A691,3 Jump to pb_check_lane if non-zero
+N $A694 Otherwise not changing lane?
+C $A694,3 Load buffer offset
+C $A697,4 Jump to pb_check_lane if A >= 7
+N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop between lane changes.
 N $A69B In-place decrementing counter.
 C $A69B,3 A = <self modified> - 1  -- Self modified below
-C $A69E,2 Jump to sh_update_counter if non-zero
+C $A69E,2 Jump to pb_update_counter if non-zero
 N $A6A0 When it hits zero we pick a random number...
 C $A6A0,1 [C incremented but overwritten in a moment - no effect?]
 C $A6A1,6 C = rng() & 31
 N $A6A7 This gets hit at some point during the smash process.
 C $A6A7,4 A = smash_5d1b + C
-@ $A6AB label=sh_update_counter
+@ $A6AB label=pb_update_counter
 C $A6AB,3 Self modify 'LD A,x' at #R$A69B (above) to load A
 N $A6AE This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
 C $A6AE,8 HL = road_pos - 164
@@ -6250,280 +6472,328 @@ C $A6C8,2 BC = $0102
 C $A6CA,2 HL -= DE  -- includes previous
 C $A6CC,2 Jump to #R$A6CF if HL < 70
 C $A6CE,1 BC = $0101
-@ $A6CF label=sh_a6cf
-C $A6CF,3 A = IX[18]
-C $A6D2,3 Jump to sh_a6d8 if A == C
-C $A6D5,3 Jump to sh_a6f6 if A == B
-@ $A6D8 label=sh_a6d8
-C $A6D8,3 C = IX[18]
-C $A6DB,3 Call rng
-C $A6DE,1 C++
-C $A6DF,4 Jump if C positive
-C $A6E3,2 C -= 2
-@ $A6E5 label=sh_a6e5
-C $A6E5,1 A = C
+@ $A6CF label=pb_a6cf
+C $A6CF,3 Read current_lane
+C $A6D2,3 Jump to pb_random_move_left_or_right if A == C
+C $A6D5,3 Jump to pb_check_lane if A != B
+@ $A6D8 label=pb_random_move_left_or_right
+C $A6D8,3 Read current_lane
+C $A6DB,3 Generate a random byte
+C $A6DE,1 Increment current_lane
+C $A6DF,4 Jump if random value is positive
+C $A6E3,2 Otherwise decrement current_lane (twice to counter earlier increment)
+@ $A6E5 label=pb_clamping
+C $A6E5,1 Copy current_lane
 C $A6E6,1 Set flags
-C $A6E7,2 C = 2
-C $A6E9,3 Jump if A is zero
-C $A6EC,4 Jump if A < 5
-C $A6F0,2 C = $FE
-@ $A6F2 label=sh_a6f2
-C $A6F2,1 A += C
-@ $A6F3 label=sh_a6f3
-C $A6F3,3 IX[18] = A
-@ $A6F6 label=sh_a6f6
-C $A6F6,3 C = IX[1]
+C $A6E7,2 Delta = 2
+C $A6E9,3 Jump if current_lane is zero  -- new current_lane will be 2
+C $A6EC,4 Jump if A < 5  -- lane is reasonable?
+N $A6F0 Arrive here if the updated current_lane is >= 5.
+C $A6F0,2 Delta = -2  -- new current_lane will be 3+
+@ $A6F2 label=pb_change_lane_by_delta
+C $A6F2,1 Change A by delta
+@ $A6F3 label=pb_set_current_lane
+C $A6F3,3 Update current_lane
+@ $A6F6 label=pb_check_lane
+C $A6F6,3 Read buffer offset/distance
 C $A6F9,3 Call get_spawn_lanes
-C $A6FC,3 A = IX[18]
-C $A6FF,3 Jump to sh_a707 if A >= B  -- upper boundary?
-C $A702,2 A += 2
-C $A704,3 IX[18] = A
-@ $A707 label=sh_a707
-C $A707,5 Jump to #R$A711 if A <= C  -- lower boundary?
-C $A70C,2 A -= 2
-C $A70E,3 IX[18] = A
-@ $A711 label=sh_a711
-C $A711,3 A = IX[18]
-@ $A714 ssub=LD HL,table_a7e7 - 1
-C $A714,3 HL = $A7E6 -> #R$A7E7 data block
-C $A717,2 L += A
-C $A719,3 A = IX[5]
-C $A71C,1 A == *HL ?
-C $A71D,2 C = 1
-C $A71F,2 Jump if A == *HL
-C $A721,2 Jump if A < *HL
-C $A723,2 A -= 10
-C $A725,2 Jump if A was < 10
-C $A727,1 A == *HL ?
-C $A728,2 Jump if A >= *HL
-@ $A72A label=sh_a72a
-C $A72A,1 C--
-C $A72B,1 A = *HL
-C $A72C,2 Jump sh_a737
-@ $A72E label=sh_a72e
-C $A72E,2 A += 10
-C $A730,2 Jump if A+10 carried
-C $A732,1 A == *HL ?
-C $A733,2 Jump if A < *HL
-@ $A735 label=sh_a735
-C $A735,1 C--
-C $A736,1 A = *HL
-@ $A737 label=sh_a737
-C $A737,3 IX[5] = A
-C $A73A,4 Self modify 'LD A' @ #R$A68F to load C
-C $A73E,2 A = <self modified>
+C $A6FC,3 Read current_lane from IX[18]
+C $A6FF,3 Jump to pb_min_lane_set/#R$A707 if current_lane >= min_lane
+N $A702 Otherwise the (perp?) needs to move right to stay on the road.
+C $A702,2 Move right by two lanes [why two?]
+C $A704,3 Update current_lane
+@ $A707 label=pb_min_lane_set
+C $A707,5 Jump to pb_reread_current_lane/#R$A711 if current_lane <= max_lane
+N $A70C Otherwise the (perp?) needs to move left to stay on the road.
+C $A70C,2 Move left by two lanes
+C $A70E,3 Update current_lane
+N $A711 current_lane is 1/2/3/4
+@ $A711 label=pb_reread_current_lane
+C $A711,3 Re-read current_lane [not convinced this is required]
+@ $A714 ssub=LD HL,hazard_pos_speed - 1
+C $A714,5 Load address of hazard_pos_speed[current_lane]
+C $A719,4 Compare horizontal position IX[5] with table value
+N $A71D #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We seem to be bumping the position by +/-10.
+C $A71D,2 Set flag indicating we're changing lane
+@ $A71F label=pb_check_low
+C $A71F,4 Jump with C==1 if horizontal position <= table value [is this meaning left or right?]
+C $A723,4 Jump with C==1 if horizontal position - 10 carried -- at lower limit?
+C $A727,1 Compare with table value (again)
+C $A728,2 Jump with C==1 if (horizontal position - 10) was >= table value
+N $A72A Redundant code path; jump to pb_set_lane_from_table_2 instead.
+@ $A72A label=pb_set_lane_from_table_1
+C $A72A,1 Decrement 1 to 0 so we're not changing lane
+C $A72B,1 Read table value
+C $A72C,2 Jump to pb_set_horz_pos
+@ $A72E label=pb_check_high
+C $A72E,4 Jump with C==1 if horizontal position + 10 carried -- at upper limit?
+C $A732,1 Compare with table value
+C $A733,2 Jump with C==1 if (horizontal position + 10) was < table value
+@ $A735 label=pb_set_lane_from_table_2
+C $A735,1 Decrement 1 to 0 so we're not changing lane
+C $A736,1 Read table value
+@ $A737 label=pb_set_horz_pos
+C $A737,3 Set horizontal position
+C $A73A,4 Self modify 'LD A' @ #R$A68F to load #REGc  -- changing lane flag will be 0 or 1
+C $A73E,2 A = <self modified>  -- delay counter
 C $A740,1 Set flags
-C $A741,3 DE = $1E
-C $A744,3 HL = $E6
-C $A747,2 Jump sh_a762 if non-zero
+C $A741,3 DE = $1E  -- multiplicand
+C $A744,3 HL = $E6  -- base
+C $A747,2 Jump pb_bypass if non-zero  -- bypasses all the delay stuff
 N $A749 Countdown+rng stuff again... as at #R$A69B
 N $A749 In-place decrementing counter.
 C $A749,3 A = <self modified> - 1  -- Self modified below
 C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
-C $A74F,2 Jump to sh_a776 if non-zero
+C $A74F,2 Jump to pb_a776 if non-zero
 N $A751 When it hits zero we pick a random number...
-C $A751,1 Preserve HL [what's in it?]
-C $A752,3 Call rng
+C $A751,1 Preserve HL [always holding $E6?]
+C $A752,3 Generate a random byte
 C $A755,1 Restore HL
-C $A756,3 C = (result of rng) & 15
-C $A759,4 A = smash_5d1c + C
+C $A756,7 A = smash_perp_delay + (random value) & 15  -- perhaps a base delay plus random factor
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
-C $A760,2 A = 10
-@ $A762 label=sh_a762
+C $A760,2 A = 10  -- reset the delay loop
+N $A762 Count down outer delay loop.
+@ $A762 label=pb_bypass
 C $A762,1 A--
 C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
-C $A766,2 Jump to sh_a776 if zero
+C $A766,2 Jump to pb_a776 if zero
 N $A768 sampled IX = $A188 (hazards)
-C $A768,3 A = IX[1]  -- load hazard_1 distance byte
+C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
 C $A76B,4 Jump if A >= 13 -- too far
 N $A76F Distance to perp is 12 or less.
-N $A76F HL += (15 - A) * DE
+N $A76F HL += (13 - A) * DE    HL is 230, DE is 30
 N $A76F This seems to be using the distance to the perp as a scale by which to adjust its horizontal position.
-C $A76F,4 B = (15 - A)  -- iterations
-@ $A773 label=sh_a773_loop
-C $A773,1 HL += DE
-C $A774,2 Loop to loop_a773 while #REGb > 0
-@ $A776 label=sh_a776
-C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte again
-C $A77B,2 Jump to sh_store_exit if A >= 6
+C $A76F,4 B = (13 - A)  -- iterations
+@ $A773 label=pb_mult_loop
+C $A773,1 HL += 30
+C $A774,2 Loop while #REGb > 0
+@ $A776 label=pb_a776
+C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte / buffer offset again
+C $A77B,2 Jump to pb_store_exit if A >= 6
 N $A77D Distance to perp is 5 or less.
 C $A77D,2 Put back most of what we just subtracted
 C $A77F,3 Multiply by 8
-N $A782 And then we do nothing with #REGa?
+N $A782 Bug? And then we do nothing with #REGa...
 C $A782,1 HL += DE
-@ $A783 label=sh_store_exit
+@ $A783 label=pb_store_exit
 C $A783,6 wordat(IX + 13) = HL  -- store horizontal position (or accel?)
 C $A789,1 Return
-@ $A78A label=sh_a78a
-C $A78A,4 IX[7] = $FC
+N $A78A If I meddle with this value the perp seems to race off too fast to catch.
+@ $A78A label=pb_set_delay
+C $A78A,4 IX[7] = $FC  -- set a delay of 4 turns until we ... do what?
 C $A78E,5 Jump if A < 3  -- preserve A
 C $A793,2 A -= 3  -- 0..
-@ $A795 label=sh_check_boost
+@ $A795 label=pb_check_boost
 C $A795,1 Bank
 C $A796,3 Load turbo boost time remaining (60..0)
 C $A799,1 Set flags
-C $A79A,2 200 when not turbo boosting
-C $A79C,2 Jump if no turbo boost
-C $A79E,2 230 when turbo boosting
-@ $A7A0 label=sh_a7a0
-C $A7A0,1 Bank value chosen from boost; Unbank other
-C $A7A1,3 Call cc_hit_scenery2
-C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
-C $A7A7,4 HL += 40
+C $A79A,2 200 when not boosting
+C $A79C,2 Jump if not boosting
+C $A79E,2 230 when boosting
+@ $A7A0 label=pb_not_boosting
+C $A7A0,1 Bank value chosen; Unbank other [which is?]
+C $A7A1,3 Call scenery_hit
+C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E  -- a value set when crashed
+C $A7A7,4 Add 40 to it
 C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
-C $A7AE,2 D = 0  -- bonus middle digit
-C $A7B0,1 -- restore A which holds the IX[7] flags from earlier AND FLAGS TOO
-C $A7B1,4 Put a call to smash on the stack
+C $A7AE,2 Zero bonus high digit
+C $A7B0,1 Restore #REGa which holds IX[7] and flags from earlier
+C $A7B1,4 Put a call to 'smash' on the stack
 C $A7B5,2 Jump if no carry
 C $A7B7,4 Jump if A == 2
 C $A7BB,1 Put another call to smash on the stack
 N $A7BC Break?
-C $A7BC,2 D = 4  -- bonus middle digit
-@ $A7BE label=sh_a7be
-C $A7BE,5 D = wanted_stage_number + D  (D could be 0 or 4)
-C $A7C3,2 E = 0  -- bonus top digit(s)
+C $A7BC,2 Set bonus high digit to 4
+@ $A7BE label=pb_a7be
+C $A7BE,5 Add wanted_stage_number to #REGd (could be 0 or 4)
+C $A7C3,2 Zero bonus middle digit(s)
 C $A7C5,6 Jump if retry_count is zero
-C $A7CB,1 Middle digit(s) of bonus
+C $A7CB,1 High digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
-C $A7CD,4 Move middle digit into position
+C $A7CD,4 Move digit into position
 C $A7D1,1 Set middle digits of bonus
-@ $A7D2 label=sh_retry_was_zero
+@ $A7D2 label=pb_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
-C $A7D3,3 Call bonus
-C $A7D6,2 A = 5
-C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
+C $A7D3,3 Call add_bonus
+C $A7D6,2 Set delay to 5 turns?
+C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A  -- delay counter
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
 C $A7E1,3 Effect 3 (car crash), Priority 1
 C $A7E4,3 Exit via start_sfx
-b $A7E7 Data block at A7E7
-@ $A7E7 label=table_a7e7
-B $A7E7,12,8,4
+b $A7E7 Horizontal positions and speeds of hazard vehicles
+D $A7E7 Three groups of four horizontal position values. Indexed by lane number [0..3]. Offset +4 is used when spawning cars before the perp is sighted. Offset +8 is used when sighted.
+@ $A7E7 label=hazard_pos_speed
+B $A7E7,4,4 positions the hazard will align with
+B $A7EB,4,4 used when perp has not been sighted
+B $A7EF,4,4 used when perp is sighted
+> $A7F3 ; a7f0, a7f1, a7ec, a7ef is used by $a875
+> $A7F3 ; a7ea by $A866
 c $A7F3 Spawns cars
-D $A7F3 Used by the routines at #R$8401 and #R$852A. Return and don't spawn anything if perp_caught_phase or stop_car_spawning flags are set.
+D $A7F3 Used by the routines at #R$8401 and #R$852A.
+N $A7F3 Return without spawning anything if perp_caught_phase is non-zero or the dont_spawn_cars flag is set.
 @ $A7F3 label=spawn_cars
-N $A7FC Return and don't spawn anything if allow_spawning is zero.
-C $A801,4 A = <self modified> - allow_spawning (can be 1 or 2)
-C $A805,3 Self modify above
-C $A808,1 Return if carry set  -- when's it set?
+C $A7F3,4 Load perp_caught_phase as #REGc
+C $A7F7,3 Load dont_spawn_cars as #REGa
+C $A7FA,1 Merge them together
+C $A7FB,1 Return if either has set bits
+N $A7FC Return without spawning anything if allow_spawning is zero.
+C $A7FC,3 Load allow_spawning
+C $A7FF,2 Return if it's zero
+N $A801 Reduce inline spawn delay counter by the value of allow_spawning (1 or 2 here).
+C $A801,4 Calculate <self modified counter> - allow_spawning
+C $A805,3 Self modify above ADD instruction
+C $A808,1 Return unless counter hits zero (adding positive delay counter to negative #REGa will normally carry)
 N $A809 Start spawning cars.
-N $A809 Call rng and take the bottom four bits of the result. Put it in #REGc
+C $A809,3 Generate a random byte
+C $A80C,2 Take the bottom four bits of the result
+C $A80E,1 Put it in #REGc
 C $A80F,4 Load and test sighted_flag
-C $A813,3 Load car_spawn_rate
-C $A816,2 Jump (don't boost) if sighted_flag was zero
-N $A818 Perp was sighted.
-@ $A818 label=sc_boost
-C $A818,2 Boost rate by 25 when perp sighted
-@ $A81A label=sc_set
-C $A81A,1 Add random factor (0..15) in #REGc to rate
-C $A81B,3 Self modify spawn value above
-C $A81E,3 B = 5 iterations; C = 0 - a flag?
+C $A813,3 Load the current stage's car_spawn_delay
+C $A816,2 Jump if sighted_flag was zero (don't increase the spawn delay)
+N $A818 Perp was sighted so increase the spawn delay by 25.
+@ $A818 label=sc_increase_spawn_delay
+C $A818,2 Increase spawn delay by 25
+@ $A81A label=sc_set_spawn_delay
+C $A81A,1 Add random factor (0..15) in #REGc to delay
+C $A81B,3 Self modify spawn delay counter above
+N $A81E Now walk the hazards array to find an unused slot.
+C $A81E,3 #REGb = 5 iterations; #REGc = is-a-vehicle flags initialised to zero
 C $A821,4 Point #REGix at hazards[1]
 C $A825,3 Stride of hazards is 20 bytes
-@ $A828 label=sc_loop
-C $A828,6 If the hazard is not active jump to sc_fill_in
-C $A82E,3 A = IX[15]  -- what are we reading here?
-C $A831,1 Shift a bit out left into carry flag
-C $A832,3 Continue if clear
-C $A835,2 Shift carry into #REGc
+@ $A828 label=sc_find_unused_hazard_loop
+C $A828,6 If hazard is unused jump to sc_fill_in
+C $A82E,3 Read IX[15]. Top bit is set for vehicles
+C $A831,4 If the top bit is clear then it's not a vehicle, continue to next hazard
+C $A835,2 Shift is-a-vehicle flag into #REGc
 @ $A837 label=sc_continue
 C $A837,2 Advance to next hazard
 C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
+N $A83C Don't spawn if there are three or more cars already spawned.
 @ $A83C label=sc_fill_in
-C $A83C,2 test bit 2 of ?
-C $A83E,1 Return if set?
-C $A83F,3 DE = IX
-C $A842,3 BC = 20
+C $A83C,3 Return if bit 2 of flags is set
+N $A83F Copy template hazard to unused slot.
+C $A83F,3 Copy destination address to #REGde so we can LDIR
+C $A842,3 Size of hazard is 20 bytes
 C $A845,3 Point #REGhl at hazard_template
 C $A848,2 Copy hazard_template
+N $A84A Select a random lane in which to spawn the hazard.
 C $A84A,2 Buffer offset of 20 for get_spawn_lanes
-C $A84C,3 Call get_spawn_lanes  -- Gets car spawning positions (B = min, C = max?)
-C $A84F,3 Call rng
-C $A852,3 A = (A & 3) + B
-C $A855,4 If A >= C A = C
-@ $A859 label=sc_a859
-C $A859,3 IX[17] = A
-C $A85C,3 IX[18] = A
-@ $A85F ssub=LD HL,table_a7e7 - 1
-C $A85F,8 A = $A7E6[A]
-C $A867,3 IX[5] = A
-C $A86A,3 Load sighted_flag
-C $A86D,1 Set flags
-C $A86E,2 A = 4
-C $A872,1 A <<= 1
-@ $A873 label=sc_a873
-C $A873,2 HL += A
-C $A875,4 IX[13] = *HL
-C $A879,3 Call rng
-C $A87C,3 C = A & 6
-C $A87F,3 Load sighted_flag
-C $A882,1 Set flags
-C $A885,2 A = 6
-C $A88A,2 C--
-@ $A88C label=sc_a88c
-C $A88C,2 B = 0
-C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
-C $A891,1 HL += BC
-C $A892,9 wordat(IX+9) = HL
+C $A84C,3 Call get_spawn_lanes to get valid spawning range (#REGb,#REGc = min,max)
+C $A84F,3 Generate a random byte
+C $A852,2 Take the bottom two bits of the result
+N $A854 Clamp new lane to valid range.
+C $A854,1 Add to minimum lane, result is new lane
+C $A855,1 Compare new lane to maximum lane
+C $A856,2 Jump if less than or equal
+C $A858,1 Otherwise set to maximum lane
+@ $A859 label=sc_set_lane
+C $A859,3 Set IX[17] to new lane
+C $A85C,3 Set IX[18] to new lane  [but what's the difference between the two?]
+N $A85F Copy hazard_pos_speed values to hazard position and speed.
+@ $A85F ssub=LD HL,hazard_pos_speed - 1
+C $A85F,3 Load address of #R$A7E7 table (but start a byte earlier so it's 1-indexed)
+C $A862,4 Index the table
+C $A866,1 Load horizontal position from table
+C $A867,3 Set new horizontal position
+C $A86A,4 Load and test sighted_flag
+C $A86E,2 Set offset to 4 by default
+C $A870,2 Jump if not sighted
+C $A872,1 Double offset to 8 if sighted
+@ $A873 label=sc_have_offset
+C $A873,2 Add offset to previously computed table address (#REGb is zero)
+C $A875,4 Set speed from table
+N $A879 Now pick a random car LOD to show.
+C $A879,3 Generate a random byte with which we shall select a LOD
+C $A87C,2 Isolate two bits, shifted up by one (giving a valid array byte offset of 0/2/4/6)
+C $A87E,1 Copy to #REGc
+N $A87F If we've sighted the perp then don't spawn any generic cars (offset 6) since they look just like the perp's. Instead use offset 4.
+C $A87F,4 Load and test sighted_flag
+C $A883,2 Jump if not sighted - use random offset
+C $A885,2 If sighted set #REGa to 6 (LOD offset of generic car)
+C $A887,1 Compare with random LOD offset
+C $A888,2 Jump to sc_set_lod if different
+C $A88A,2 Decrement offset from 6 to 4
+@ $A88C label=sc_set_lod
+C $A88C,2 Clear #REGb so we can use full offset as #REGbc
+C $A88E,3 Load address of lods_vehicles (first of generic car LODs)
+C $A891,1 Index array
+C $A892,9 Set hazard's LOD address to #REGhl (IX+9)
 C $A89B,1 Return
-c $A89C Returns the lanes that cars can spawn in
-D $A89C Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
-R $A89C I:C Buffer offset
-R $A89C O:BC TBD
+c $A89C Returns the range of lanes that cars or hazards should spawn within
+D $A89C Returning (1,1) means that cars will only spawn in the leftmost lane; returning (3,4) makes them spawn in the third or fourth lane; and so on.
+R $A89C I:C Additional lanes buffer offset (e.g. 20)
+R $A89C O:B Lowest lane
+R $A89C O:C Highest lane
 @ $A89C label=get_spawn_lanes
-C $A89C,6 A = [current buffer offset] + 66 + C  (wrapping around)
-C $A8A2,3 Point #REGde at road buffer lanes data (+2 bytes)
-C $A8A5,1 Read lanes byte
+C $A89C,6 Calculate [current buffer offset] + [lanes offset of 64] + 2 bytes + [additional buffer offset] (wrapping around)
+C $A8A2,3 Point #REGde at road buffer lane data as calculated
+C $A8A5,1 Read lanes_byte
 C $A8A6,1 Set flags
-C $A8A7,3 BC = $0104
-C $A8AA,1 Return if zero
-C $A8AB,1 E = A  -- preserve E
-C $A8AC,2 A &= $C1
-C $A8AE,3 Return if A == $C1
-C $A8B1,2 CP $41
-C $A8B3,3 BC = $0103
-C $A8B6,1 Return if zero
-C $A8B7,4 A = (E & $82) << 1
-C $A8BB,2 Jump to #R$A8C5 if didn't carry
-C $A8BD,3 BC = $0204
-C $A8C0,1 Return if non-zero
-C $A8C1,3 BC = $0103
-C $A8C4,1 Return
-@ $A8C5 label=gsl_a8c5
-C $A8C5,3 BC = $0102
-C $A8C8,1 Return if zero
-C $A8C9,3 BC = $0304
+C $A8A7,3 Set lowest lane = 1, highest lane = 4
+C $A8AA,1 Return if lanes_byte was zero (4 lanes)
+C $A8AB,1 Preserve lanes_byte
+C $A8AC,5 Return if ((lanes_byte & $C1) == $C1) (4 lane dirt track) [would also choose 2 lane dirt track but that's nonstandard]
+C $A8B1,2 Test for tunnel (three lanes)
+C $A8B3,3 Set lowest = 1, highest = 3
+C $A8B6,1 Return if tunnel
+C $A8B7,3 Compute (lanes_byte & $82)
+C $A8BA,1 Set carry from top bit while discarding it
+C $A8BB,2 Jump to #R$A8C5 if top bit not set
+@ $A8BD label=gsl_three_lanes
+C $A8BD,3 Set lowest = 2, highest = 4
+C $A8C0,1 Return if non-zero (3 lanes right aligned)
+C $A8C1,3 Set lowest = 1, highest = 3
+C $A8C4,1 Return (3 lanes left aligned)
+@ $A8C5 label=gsl_two_lanes
+C $A8C5,3 Set lowest = 1, highest = 2
+C $A8C8,1 Return if zero (2 lanes left aligned)
+C $A8C9,3 Set lowest = 3, highest = 4
 C $A8CC,1 Return
-c $A8CD Hazard handler routine? Triggered at road fork
-@ $A8CD label=hazard_handler_a8cd
-C $A8CD,6 Return if perp_caught_phase > 0
-C $A8D3,6 Check stop_car_spawning flag
+c $A8CD Hazard handler routine?
+D $A8CD Triggered at road fork.
+@ $A8CD label=hazard_handler
+C $A8CD,6 Jump if perp_caught_phase > 0
+C $A8D3,6 Check dont_spawn_cars flag
+@ $A8D9 label=hzh_perp_caught_or_no_car_spawning
 C $A8D9,4 IX[14] = $01  -- horizontal position or accel?
 C $A8DD,4 IX[13] = $FF
-C $A8E1,3 C = IX[1]  -- buffer offset
+@ $A8E1 label=hzh_clamp_lanes
+C $A8E1,3 Load buffer offset (distance from camera) required for next call
 C $A8E4,3 Call get_spawn_lanes
-C $A8E7,3 A = IX[17]
-C $A8EA,6 If A < B IX[18] = B
-C $A8F0,8 If A > C IX[18] = C
-C $A8F8,3 A = IX[18]
-C $A8FB,5 Jump to #R$A926 if A == IX[17]
-@ $A902 ssub=LD HL,table_a7e7 - 1
-C $A902,3 HL = $A7E6 -> #R$A7E7 data block
-C $A905,1 C = A
-C $A906,2 L += A
-C $A908,3 A = IX[5]
-C $A90B,2 test bottom bit?
+N $A8E7 Hazard's IX[17] must be a lane value here.
+C $A8E7,3 Read (current? minimum?) lane
+C $A8EA,6 If A < B IX[18] = B  -- set min lane if less than get_spawn_lanes' min. It's odd that it's setting IX[18] here and not IX[17].
+@ $A8F0 label=hzh_clamp_max_lane
+C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
+@ $A8F8 label=hzh_test_chosen_lane
+C $A8F8,3 Read back the chosen lane
+C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
+C $A900,2 Shift min lane?
+@ $A902 ssub=LD HL,hazard_pos_speed - 1
+C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
+C $A905,1 C = A  -- copy chosen lane to C
+C $A906,2 Compute HL[A]
+N $A908 breakpoint hit here seemingly when the right hand side narrows and there's a barrier
+C $A908,3 A = IX[5]  e.g. $A19C[5]
+C $A90B,2 test bottom bit? top bit? could be testing sign
+C $A90D,2 jump if clear
 C $A90F,2 A -= 5
-C $A911,1 CP *HL
-C $A914,1 A = *HL
-C $A915,3 IX[17] = C
+C $A911,1 CP *HL   -- comparing (IX[5] - 5) to entry from A7E7 table
+C $A912,2 jump if (IX[5] - 5) > entry
+C $A914,1 load entry
+C $A915,3 IX[17] = C  -- set chosen lane
 C $A918,2 Jump to #R$A923
-C $A91A,2 A += 5
-C $A91C,1 CP *HL
-C $A91F,1 A = *HL
-C $A920,3 IX[17] = C
-C $A923,3 IX[5] = A
+@ $A91A label=hzh_check_max
+C $A91A,2 compute (IX[5] + 5)
+C $A91C,1 compare to (same) entry from A7E7 table
+C $A91D,2 jump if (IX[5] + 5) < entry
+C $A91F,1 load entry
+C $A920,3 IX[17] = C  -- set chosen lane
+@ $A923 label=hzh_set_ix_5
+C $A923,3 IX[5] = A  -- set entry from table
+@ $A926 label=hzh_7
 C $A926,3 A = IX[7]
 C $A929,1 Set flags
 C $A92A,1 Return if zero
@@ -6532,14 +6802,14 @@ C $A92C,4 IX[7] = 0
 C $A930,5 Return if crashed flag set
 N $A935 #REGa is zero.
 C $A935,3 IX[0] = 0  -- unused hazard
-C $A938,3 overtake_bonus = 0
+C $A938,3 overtake_bonus_bcd = 0
 C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
-@ $A944 label=hazard_handler_crash
-C $A944,3 Call cc_hit_scenery2
-C $A947,3 HL = ouch_chatter
+@ $A944 label=hzh_crashed
+C $A944,3 Call scenery_hit
+C $A947,3 Load address of ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 Effect 3 (car crash), Priority 2
 C $A952,3 Call start_sfx
@@ -6549,12 +6819,12 @@ D $A955 Used by the routines at #R$8401 and #R$852A.
 C $A955,5 Return if on_dirt_track is zero
 C $A95A,5 Return if allow_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
-C $A962,3 Call rng
+C $A962,3 Generate a random byte
 @ $A96C label=cdas_store
 C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
-C $A96D,3 Call rng [could be a position?]
+C $A96D,3 Generate a random byte [could be a position?]
 C $A970,2 Store that random byte
-C $A972,5 Self modify 'LD A' @ #R$A97E to load 1
+C $A972,2 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
 C $A97A,3 Self modify 'LD A' @ #R$A9DE to load 1
 C $A97D,1 Return
@@ -6566,7 +6836,7 @@ C $A97E,2 A = <self modified>  -- Self modified by #R$A974
 C $A980,2 Return if #REGa is zero
 C $A982,6 #REGiy = $E361
 C $A988,3 BC = $1400
-C $A98B,3 Point #REGhl at (something above the stack)
+C $A98B,3 Point #REGhl at xpos_road_fork_right[20]
 N $A98E Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
 @ $A98E label=ldas_loop1
 C $A98E,1 A = *HL++
@@ -6583,6 +6853,7 @@ C $A99D,3 Self modify LD A @ #R$A97E
 C $A9A0,3 Self modify LD A @ #R$C0BB
 C $A9A3,3 Self modify LD A @ #R$A9DE
 C $A9A6,1 Return
+@ $A9A7 label=ldas_do_work
 C $A9A7,2 A = *HL++
 C $A9A9,1 C++
 C $A9AB,1 Bank A
@@ -6596,7 +6867,7 @@ C $A9B9,1 A = *HL
 C $A9BA,1 L++
 C $A9BB,1 H = *HL
 C $A9BC,1 L = A
-C $A9BD,1 Set flags
+C $A9BD,1 Clear carry flag
 C $A9BF,2 HL -= DE
 C $A9C2,3 HL = $0000 [not self modified]
 C $A9C5,1 Unbank A
@@ -6638,7 +6909,7 @@ C $AA00,1 HL++
 C $AA01,3 Self modify 'LD HL,x' @ #R$A9E2 to load HL
 C $AA04,1 A = 0
 C $AA05,3 Self modify 'LD D,x' @ #R$933D to load zero
-C $AA08,1 H = A
+C $AA08,1 H = 0
 C $AA09,2 A = B - 1
 C $AA0B,6 If A > 10 A = 10
 @ $AA11 label=dss_aa11
@@ -6687,7 +6958,7 @@ C $AA5F,3 Self modify 'ADD A' @ #R$AA76 (below)
 C $AA62,2 5 iterations
 C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke and helicopter blades
 C $AA69,3 Load addrof_helicopter_stuff_1
-C $AA6C,2 If A was set
+C $AA6C,2 Jump if A was zero
 C $AA6E,3 Kiad addrof_helicopter_stuff_2
 @ $AA71 label=dhl_aa71
 C $AA71,4 DE = wordat(HL); HL += 2
@@ -6699,7 +6970,7 @@ C $AA7D,3 Call dhl_aa94
 C $AA80,4 Restore IY, HL, BC
 C $AA84,2 Loop loop_aa71 while #REGb > 0
 C $AA86,3 DE = wordat(HL); HL++
-C $AA89,1 A = 0
+C $AA89,1 A = 0  [can't see a reason for this]
 C $AA8A,2 Preserve IY
 C $AA8C,2 A = <self modified> -- Self modified by #R$AA57 (above)
 C $AA8E,3 Call dhl_aa94
@@ -6710,9 +6981,8 @@ C $AA94,3 BC = <self modified> -- Self modified by #R$AB00, #R$AB2F + others
 C $AA97,2 A = -A
 C $AA99,3 Self modify 'LD D,x' @ #R$933D to load A
 C $AA9C,5 HL = *DE++
-C $AAA1,1 Set flags
-C $AAA5,1 H--
-@ $AAA6 label=dhl_aaa6
+C $AAA1,5 Make widened value negative
+@ $AAA6 label=dhl_widened
 C $AAA6,1 HL += BC
 C $AAA8,1 B = *HL
 C $AAA9,6 B <<= 3
@@ -6759,9 +7029,9 @@ C $AAFC,4 Self modify 'LD BC' above to load DE
 C $AB00,4 Load DE from 'LD BC' @ #R$AA94
 C $AB04,1 HL += DE
 C $AB05,1 Preserve HL
-C $AB06,3 DE = $0070
-C $AB09,2 B = 0
-C $AB0B,1 Set flags
+C $AB06,3 Set #REGde to <self modified>
+C $AB09,2 Clear top of #REGbc
+C $AB0B,1 Clear carry
 C $AB0C,2 HL -= DE
 C $AB0E,1 Restore HL
 C $AB11,2 A = 8
@@ -6771,11 +7041,12 @@ C $AB18,2 A = -A
 C $AB1A,1 C = A
 C $AB1B,1 HL += BC
 C $AB1C,1 Preserve HL
-C $AB1D,1 Set flags
+C $AB1D,1 Clear carry
 C $AB1E,2 HL -= DE
 C $AB20,1 Restore HL
 C $AB24,1 Restore AF
 C $AB2A,1 Restore AF
+C $AB2E,1 Put #REGde centre value into #REGhl
 C $AB2F,3 Self modify 'LD BC' @ #R$AA94
 C $AB32,1 Return
 c $AB33 Helicopter
@@ -6788,9 +7059,10 @@ N $AB3E Otherwise helicopter_control is 2.
 C $AB3E,3 Read from 'LD BC' @ #R$AA94
 C $AB41,1 Set flags
 C $AB42,1 Return if zero
-C $AB43,1 A = 0  -- NOP
+C $AB43,1 New value for helicopter_control is 0
 C $AB44,2 DE = 0  -- NOPs
-C $AB46,2 New value for helicopter_control is 0
+C $AB46,1 Bank A
+C $AB47,1 A = 0  -- NOP
 C $AB48,2 Jump to hc_exit
 @ $AB4A label=hc_1
 C $AB4A,3 HL = $FFC8 (-56)
@@ -6817,7 +7089,7 @@ C $AB83,2 New value for helicopter_control is 5
 @ $AB85 label=hc_set_draw
 C $AB85,1 Preserve new value for helicopter_control
 C $AB86,3 Self modify 'LD DE' @ #R$AB06 to load $0070, or $FFC8
-C $AB89,3 Address of draw_helicopter
+C $AB89,3 Load address of draw_helicopter
 C $AB8C,2 Opcode for CALL
 @ $AB8E label=hc_exit
 C $AB8E,7 Self modify #R$8FA4 to be CALL draw_helicopter, or NOPs
@@ -6829,115 +7101,126 @@ D $AB9A Spawns hittable hazards in the road, like barriers and tumbleweeds.
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $AB9A label=spawn_hazards
 C $AB9A,5 Return if allow_spawning is zero
-C $AB9F,4 #REGc = 20 - allow_spawning (is 1/2 here)
-C $ABA3,3 Load road_buffer_offset into #REGa
-C $ABA6,2 Add 160 so it's the hazards data offset
-C $ABA8,1 A += C
+N $AB9F Calculate a spawning distance.
+C $AB9F,4 #REGc = 20 - allow_spawning (can be 1 or 2 here)
+N $ABA3 Point #REGhl at hazards data.
+C $ABA3,3 Load road_buffer_offset.lo into #REGa
+C $ABA6,2 Add 160 for the hazards data offset
+C $ABA8,1 Add spawn distance
 C $ABA9,3 Point #REGhl at road buffer hazards data
-C $ABAC,1 A = *HL   -- load the hazard byte
+N $ABAC Do we have a hazard?
+C $ABAC,1 Load the hazard byte  -- what's in this byte?
 C $ABAD,1 Set flags
-C $ABAE,1 Return if zero
-C $ABAF,2 Is it 4?
-C $ABB1,3 DE = 0
-C $ABB4,2 Jump if < 4   -- stop spawning barriers etc? jump/fork too?
-C $ABB6,2 E = 3
-C $ABB8,1 A -= E
-@ $ABB9 label=sh_abb9
-C $ABB9,2 B = 50
-C $ABBB,1 A--
-C $ABBC,2 Jump if zero  [A == 1]
-C $ABBE,2 B = $DC
-C $ABC0,1 A--
-C $ABC1,2 Jump if zero  [A == 2]
-C $ABC3,2 L += 2
-C $ABC5,1 *HL = D
+C $ABAE,1 Return if zero - no hazard?
+C $ABAF,2 Otherwise is it 4?
+C $ABB1,3 DE = 0  -- D used as hazard later?
+C $ABB4,2 Jump if < 4  -- stop spawning barriers is the only case?
+C $ABB6,2 DE = 3  -- used as flag later?
+C $ABB8,1 A -= 3
+N $ABB9 A is 1/2/3 here?
+@ $ABB9 label=sh_select_hazard
+C $ABB9,2 X coordinate = 50
+C $ABBB,3 If #REGa was 1 exit via sh_add_hazards_done, adding one barrier? (left case?)
+C $ABBE,2 X coordinate = 220
+C $ABC0,3 If #REGa was 2 exit via sh_add_hazards_done, adding one barrier? (right case?)
+C $ABC3,2 L += 2  -- step to next hazards?
+C $ABC5,1 *HL = 0  -- D is zero here
 C $ABC6,2 L += 2
-C $ABC8,1 *HL = D
+C $ABC8,1 *HL = 0  -- D is zero here
 C $ABC9,1 A = E
 C $ABCA,2 Is it 3?
 C $ABCC,2 Jump if non-zero
+N $ABCE Use inhibit_collision_detection to choose between two or three barriers? Seems odd
 C $ABCE,3 Load inhibit_collision_detection
 C $ABD1,1 Set flags
-C $ABD2,2 Jump if zero
+C $ABD2,2 Jump to sh_add_two_barriers if zero, otherwise add three
 N $ABD4 Flag was set.
-C $ABD4,2 B = 32
-C $ABD6,3 Call sh_spawn
-C $ABD9,2 B = 86
-C $ABDB,3 Call sh_spawn
-C $ABDE,2 B = 140
-C $ABE0,2 Calls sh_spawn then returns
-@ $ABE2 label=sh_abe2
-C $ABE2,2 B = 80
-C $ABE4,3 Call sh_spawn
-C $ABE7,2 B = 160
-C $ABE9,2 Calls sh_spawn then returns
-@ $ABEB label=sh_abeb
-C $ABEB,2 B = 70
-C $ABED,3 Call sh_spawn
-C $ABF0,2 B = 180
-@ $ABF2 label=sh_abf2
-C $ABF2,3 Call sh_spawn
+N $ABD4 Populate hazards with three barriers (e.g. for perp escape screen).
+@ $ABD4 label=sh_add_three_barriers
+C $ABD4,2 X coordinate = 32
+C $ABD6,3 Add barrier
+C $ABD9,2 X coordinate = 86
+C $ABDB,3 Add barrier
+C $ABDE,2 X coordinate = 140
+C $ABE0,2 Exit via sh_add_hazards_done
+N $ABE2 Populate hazards with two barriers (e.g. for dirt track).
+@ $ABE2 label=sh_add_two_barriers
+C $ABE2,2 X coordinate = 80
+C $ABE4,3 Add barrier
+C $ABE7,2 X coordinate = 160
+C $ABE9,2 Exit via sh_add_hazards_done
+N $ABEB Populate hazards with two tumbleweeds (e.g. for dirt track).
+@ $ABEB label=sh_add_two_tumbleweeds
+C $ABEB,2 X coordinate = 70
+C $ABED,3 Add barrier
+C $ABF0,2 X coordinate = 180
+@ $ABF2 label=sh_add_hazards_done
+C $ABF2,3 Add barrier
 C $ABF5,1 Return
+N $ABF6 Adds a barrier.
 N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
 N $ABF6 I:C Stored at entry+1  e.g. $13
-@ $ABF6 label=sh_spawn
+@ $ABF6 label=sh_find_free
 C $ABF6,1 Bank entry registers
 C $ABF7,2 6 iterations
 C $ABF9,3 Point #REGhl at hazards table
 C $ABFC,3 Stride of 20 bytes
-@ $ABFF label=sh_loop
-C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)
-C $AC01,2 Jump to sh_found_spare if it didn't carry
+@ $ABFF label=sh_ff_loop
+C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place does not affect its value)
+C $AC01,2 Jump to sh_found_free if it didn't carry
 C $AC03,1 Move to the next entry
 C $AC04,2 Loop while iterations remain
-C $AC07,1 Return
-N $AC08 #REGhl points to the unused entry
-@ $AC08 label=sh_found_spare
+C $AC06,2 No iterations remain so discard the return address and exit spawn_hazards
+N $AC08 #REGhl points to the unused entry.
+@ $AC08 label=sh_found_free
 C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
-C $AC16,9 wordat(IX + 11) = Address of #R$AC3C routine
+C $AC16,3 Load address of #R$AC3C routine
+C $AC19,6 Store to #REGix+11
 N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
-C $AC23,5 Copy flag TBD
+C $AC23,5 Copy flag/value TBD from hazard table
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
-C $AC31,3 IX[5] = B TBD -- passed in
-C $AC34,3 IX[1] = C TBD
+C $AC31,3 IX[5] = B TBD -- passed in, setup before sh_find_free calls
+C $AC34,3 IX[1] = C  -- buffer offset/distance
 C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
 c $AC3C Test for collision with hazard
 R $AC3C I:IX Address of hazard structure ($A188+)
-R $AC3C If IX[15] is non-zero then jump forward.
+N $AC3C If IX[15] is non-zero then jump forward.
 @ $AC3C label=hazard_hit
 C $AC3C,3 IX[15] appears to be a delay of some sort
 C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
-C $AC42,5 If IX[7] == 0 then return
+N $AC42 IX[15] is zero.
+C $AC42,5 If IX[7] (hit counter) == 0 then return
 N $AC47 If we arrive here then a hit has occurred.
 C $AC47,4 Load speed
-C $AC4B,6 If IX[7] < 0 then #REGde = 280
+C $AC4B,6 If IX[7] (hit counter) < 0 then #REGde = 280
 @ $AC51 label=hh_ac51
 C $AC51,2 #REGbc = #REGde
 C $AC53,3 Point #REGhl at #R$AD03 table
 N $AC56 This must be mapping the speed into the 5-entry array.
-C $AC56,1 A = D     top part of speed
-C $AC57,2 E ROL 1   double speed
+C $AC56,1 A = D  -- top part of speed
+C $AC57,2 E ROL 1  -- double speed
 C $AC59,1 A ROL 1
-C $AC5A,2 A &= 3    mask top part to 3 (for ref. turbo speed = $1FF)
-C $AC5C,2 RR D      halve D to carry?
+C $AC5A,2 A &= 3  -- mask top part to 3 (for ref. turbo speed = $1FF)
+C $AC5C,2 RR D  -- halve D to carry?
 C $AC5E,2 D = 0
-C $AC60,2 A = (A + D + carry) * 2  scale for element size of 2
-C $AC62,1 E = A   it's an offset in #R$AD03
+C $AC60,2 A = (A + D + carry) * 2  -- scale for element size of 2
+C $AC62,1 E = A  -- it's now an offset into #R$AD03
 C $AC63,1 HL += DE
-C $AC64,9 Copy (two bytes?) to IX+17 from table
+N $AC64 Copy two bytes to IX+17 from table
+C $AC6A,3 -- usually current lane
 C $AC6D,4 double BC?  adjusted speed retained from earlier
 C $AC71,8 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
 @ $AC79 label=hh_ac79
 C $AC79,3 Set bottom byte of horizontal position
-C $AC7C,3 Increment IX[7]
-C $AC7F,2 if B is zero then don't store it
+C $AC7C,3 Increment hit counter
+C $AC7F,2 If counter is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
 @ $AC84 label=hh_ac84
-C $AC84,3 Increment IX[1]
+C $AC84,3 Increment IX[1]  -- distance/buffer offset
 C $AC87,3 Effect 5 (hazard hit), Priority 3
 C $AC8A,3 Call start_sfx
 C $AC8D,2 A = 2        [set this to 1 and the hazard drives off like a car]
@@ -6964,120 +7247,136 @@ C $ACDA,1 Return
 B $ACDB,40,8 #R$AC94 uses this
 @ $AD03 label=table_ad03
 W $AD03,10,2 #R$AC53 uses this
-c $AD0D Routine at AD0D  spawning/collision related
+c $AD0D Checks for hazard collisions
+D $AD0D Called continuously.
 D $AD0D Used by the routine at #R$BDFB.
-@ $AD0D label=sub_ad0d
+@ $AD0D label=check_hazard_collisions
 C $AD0D,5 Return if the inhibit_collision_detection flag is set
-C $AD12,4 IX = &hazards[0]
-C $AD16,3 DE = 20  -- stride of hazards
-C $AD19,2 B = 6
+N $AD12 Iterate over all hazards.
+C $AD12,4 Point #REGix at hazards[0]
+C $AD16,3 Stride of hazards is 20 bytes
+C $AD19,2 6 iterations
+@ $AD1B label=chc_loop
 C $AD1B,6 If the hazard is not active continue to next one
 C $AD21,1 Bank
-C $AD22,3 Address of ad0d_unbank_continue
-C $AD25,1 Push  -- this makes RETs below jump to ad0d_unbank_continue
-C $AD26,4 A = IX[15] + 1
+N $AD22 Push address of the end of the loop on the stack so any RETs below will return there.
+C $AD22,3 Load address of #R$AD4B
+C $AD25,1 Stack it
+C $AD26,4 A = IX[15] + 1  -- a delay of some sort used for hits
 C $AD2A,2 Jump if non-zero
-C $AD2C,3 A = IX[17]
+N $AD2C Otherwise it was zero (IX[15] was $FF => unused/unset?)
+C $AD2C,3 A = IX[17]  -- read min lane?
 C $AD2F,1 Set flags
-C $AD30,1 UNBANK_CONTINUE if non-zero
-C $AD31,3 A = IX[1]  -- distance related
-C $AD34,3 UNBANK_CONTINUE if >= 20
-C $AD37,2 D = 0  -- not SM
-C $AD39,3 Call sub_ad51
-C $AD3C,1 A = D
-C $AD3D,1 Set flags
-C $AD3E,1 UNBANK_CONTINUE if zero
-C $AD3F,4 A = IX[15] + 1
-C $AD43,1 UNBANK_CONTINUE if zero
-C $AD44,6 HL = wordat(IX + 11)  -- presumably the hit handler
-C $AD4A,1 Jump to it (then return to the next instr)
-@ $AD4B label=ad0d_unbank_continue
+C $AD30,1 End this iteration if non-zero
+@ $AD31 label=chc_check_distance
+C $AD31,3 A = IX[1]  -- buffer offset/distance
+C $AD34,3 End this iteration if distance >= 20  -- too far away?
+N $AD37 Distance is < 20.
+C $AD37,2 Initialise #REGd
+C $AD39,3 Call check_collision (returns #REGd)
+C $AD3C,3 End this iteration if no collision
+N $AD3F There was a collision.
+C $AD3F,4 A = IX[15] + 1  -- increment delay
+C $AD43,1 End this iteration if zero
+C $AD44,6 Load address of hit handler into #REGhl
+C $AD4A,1 Jump to it (it will return to the next instr)
+@ $AD4B label=chc_unbank_continue
 C $AD4B,1 Unbank
-@ $AD4C label=ad0d_continue
+@ $AD4C label=chc_continue
 C $AD4C,2 Move to next hazard
 C $AD4E,2 Loop
 C $AD50,1 Return
-c $AD51 Routine at AD51  hazard related
+c $AD51 Hazard collision
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
+R $AD51 I:D Initialised to zero (when return value is required)
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
-@ $AD51 label=sub_ad51
-C $AD51,5 Return if IX[7] is non-zero
-C $AD56,6 HL = wordat(IX + 2)
-C $AD5C,3 Return if top byte of #REGhl was set
-C $AD5F,4 A = IX[15] + 1 and set flags
-C $AD63,3 A = IX[1]
+R $AD51 O:L Hazard[2]
+R $AD51 O:H Hazard[3]
+@ $AD51 label=check_collision
+C $AD51,5 Return if hit counter is non-zero
+N $AD56 Otherwise we're... ?
+C $AD56,6 L = horizontal position, H = ?
+C $AD5C,3 Return if top byte of #REGhl was non-zero
+C $AD5F,4 A = IX[15] + 1 and set flags  -- hazard anim counter thing
+C $AD63,3 A = IX[1]  -- buffer offset/distance
 C $AD66,2 C = 3
-C $AD68,2 Jump if A /was/ non-zero
+C $AD68,2 Jump if (IX[15] + 1) was non-zero
 C $AD6A,2 C = 2
-C $AD6C,2 Return if A >= C
+@ $AD6C label=ccl_1
+C $AD6C,2 Return if distance >= C
 C $AD6E,2 E = 4
-C $AD70,1 A--
-C $AD71,3 A = fast_counter
-C $AD74,2 Jump if A /was/ non-zero
-C $AD76,1 Set flags
+C $AD70,1 Reduce distance by 1
+C $AD71,3 Load fast_counter
+C $AD74,2 Jump if A-- was non-zero
+C $AD76,1 Set flags for fast_counter
 C $AD77,3 Jump if positive
+N $AD7A Otherwise zero or negative?
 C $AD7A,2 E = 1
 C $AD7C,2 Jump
-C $AD7E,1 Set flags
+@ $AD7E label=ccl_2
+C $AD7E,1 Set flags for fast_counter
 C $AD7F,1 Return if positive
-C $AD80,3 A = L & $F8
-C $AD83,3 Return if A >= $90
-C $AD86,3 A += IX[8]
-C $AD89,3 Return if A <= $70
+@ $AD80 label=ccl_check_horz_pos
+C $AD80,3 A = (horizontal position) & $F8
+C $AD83,3 Return if A >= 144
+C $AD86,3 A += IX[8]  -- from hazard data table
+C $AD89,3 Return if A <= 112
 C $AD8C,3 A -= IX[8]
-C $AD8F,4 Jump if A < $68
+C $AD8F,4 Jump if A < 104
 C $AD93,1 E--
-C $AD94,4 Jump if A < $78
+C $AD94,4 Jump if A < 120
 C $AD98,2 E += 2
-C $AD9A,3 IX[7] = E
-C $AD9D,2 D = 1
+@ $AD9A label=ccl_exit
+C $AD9A,3 IX[7] (hit counter) = E
+C $AD9D,2 D = 1  -- perhaps a "was hit" flag
 C $AD9F,1 Return
-c $ADA0 Draws hazards
+c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
 D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $ADA0 label=draw_hazards
+@ $ADA0 label=advance_hazards
 C $ADA0,4 n_hazards = 0
 C $ADA4,3 IY = $E3xx
-C $ADA7,4 IX = &hazards[0]
-C $ADAB,3 Stride of hazards entry in bytes
+C $ADA7,4 Point #REGix at hazards[0]
+C $ADAB,3 Stride of hazards is 20 bytes
 C $ADAE,2 6 iterations
-@ $ADB0 label=dh_loop
+@ $ADB0 label=ah_loop
 C $ADB0,4 Set carry if the hazard is active
 C $ADB4,1 Bank
-C $ADB5,3 Call dh_draw_one_hazard if hazard active
+C $ADB5,3 Call advance_hazard if hazard active
 C $ADB8,1 Unbank
 C $ADB9,2 Advance to next hazard
 C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
-@ $ADBE label=dh_draw_one_hazard
+@ $ADBE label=advance_hazard
 C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
-N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
-C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of accel/something?
-C $ADCA,3 If IX[4] was < IX[13] Then C++
-@ $ADCD label=dh_adcd
-C $ADCD,5 C += IX[1]  -- distance related?
+N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which is the perp's speed
+C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of speed
+C $ADCA,3 If IX[4] was < IX[13] then C++
+@ $ADCD label=ah_adcd
+C $ADCD,5 C += IX[1]  -- buffer offset/distance
 C $ADD2,4 A = IX[15] + 1  -- counter?
-C $ADD6,2 Jump to dh_adf0 if non-zero
+C $ADD6,2 Jump to ah_adf0 if non-zero
 C $ADD8,3 A = IX[17]  -- byte that indexes #R$ACDB
-C $ADDB,2 Jump if no carry (from earlier)
+C $ADDB,2 Jump if no carry (carry not set by INC A, but ADD A,C)
 C $ADDD,5 Jump if ++A < 4
 C $ADE2,1 A--
 C $ADE3,2 C = $FF  -- gets put in distance related field
-C $ADE5,3 IX[17] = A
+C $ADE5,3 IX[17] = A  -- set lane?
 C $ADE8,1 Set flags
 C $ADE9,1 A = C
 C $ADEA,2 Jump if zero
-C $ADEC,3 IX[1] = A  -- update distance?
+C $ADEC,3 IX[1] = A  -- buffer offset/distance
 C $ADEF,1 Return
-@ $ADF0 label=dh_adf0
+@ $ADF0 label=ah_adf0
 C $ADF0,1 A = C
 C $ADF1,4 Jump if A < 23  -- still visible?
-N $ADF5 Wipe the hazard because it's gone?
+N $ADF5 Wipe the hazard
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
-@ $ADF9 label=just_ret
-C $ADF9,1 Return
-C $ADFA,3 IX[1] = A  -- distance related
+@ $ADF9 label=ah_exit
+C $ADF9,1 Return (used as just a RET elsewhere)
+@ $ADFA label=ah_adfa
+C $ADFA,3 IX[1] = A  -- buffer offset/distance
 C $ADFD,3 Return if A >= 20
 C $AE00,1 A--
 C $AE01,2 Jump if non-zero
@@ -7088,10 +7387,13 @@ C $AE12,2 Jump if zero
 N $AE14 Wipe the hazard because car overtaken?
 C $AE14,4 IX[0] = 0  -- hazard slot now spare
 C $AE1A,1 Return if no carry
-C $AE1B,4 Increment allow_overtake_bonus
+C $AE1B,4 Increment overtake_bonus_counter
 C $AE1F,1 Return
+@ $AE20 label=ah_ae20
 C $AE20,3 IX[4] = A
+@ $AE23 label=ah_ae23
 C $AE23,1 A = 0
+@ $AE24 label=ah_ae24
 C $AE24,2 A += $4E
 N $AE26 $E300..$E316 is regularly accessed. $E300 is always $60, $E316 is always $A0
 C $AE26,2 IY.low = A  -- i.e. $E300 | A
@@ -7102,8 +7404,10 @@ N $AE2F Multiplier. DE = multiplier. A = multiplicand. HL = result.
 C $AE2F,5 DE = A; HL = 0
 C $AE34,3 A = IX[4]
 C $AE37,2 B = 8  -- iterations of multiply loop
+@ $AE39 label=ah_ae39_loop
 C $AE39,1 Test top bit
 C $AE3A,3 If it carried out then add
+@ $AE3D label=ah_not_set
 C $AE3D,1 Double
 C $AE3E,2 Loop
 C $AE40,1 A = H  -- high part of result
@@ -7118,7 +7422,7 @@ C $AE52,1 A = *HL
 C $AE53,1 L++
 C $AE54,1 H = *HL
 C $AE55,1 L = A
-C $AE56,1 Set flags
+C $AE56,1 Clear carry
 C $AE57,4 Self modify 'LD HL,xxxx' @ #R$AE70
 C $AE5B,2 HL -= DE
 C $AE5D,1 Swap
@@ -7126,25 +7430,27 @@ C $AE5E,3 HL = 0
 C $AE61,3 A = IX[5]
 N $AE64 Another multiplier.
 C $AE64,2 B = 8
+@ $AE66 label=ah_ae66
 C $AE66,1 A <<= 1
 C $AE67,3 If it carried out then add
+@ $AE6A label=ah_ae6a
 C $AE6A,1 Double
 C $AE6B,2 Loop
 C $AE6D,1 A = H
 C $AE6F,1 C = A
 C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
-C $AE7A,3 Call sub_ad51
-C $AE7D,3 D = IX[1]
-C $AE80,3 E = IX[4]
-C $AE83,3 HL = &n_hazards
-C $AE86,1 A = *HL
-C $AE87,1 (*HL)++
-C $AE88,3 HL -> table
-C $AE8B,1 Set flags
-C $AE8C,2 Jump to dh_no_hazards if zero
+C $AE7A,3 Call check_collision (result ignored)
+C $AE7D,3 D = IX[1]  -- buffer offset/distance
+C $AE80,3 E = IX[4]  -- possibly a distance low byte?
+C $AE83,3 Load address of n_hazards
+C $AE86,1 Load n_hazards
+C $AE87,1 Increment n_hazards
+C $AE88,3 Load address of (road centre left?) table
+C $AE8B,3 Jump to ah_no_hazards if n_hazards was zero
 C $AE8E,1 Iterations
 N $AE8F Loop starts (loop for all hazards)
+@ $AE8F label=ah_ae8f
 C $AE8F,1 A = D
 C $AE90,1 Compare to *HL
 C $AE91,1 L++
@@ -7153,13 +7459,15 @@ C $AE94,2 Jump if A != *HL
 C $AE96,1 A = E
 C $AE97,1 Compare to *HL
 C $AE98,2 Jump if A < *HL
+@ $AE9A label=ah_ae9a
 C $AE9A,3 L += 3
 C $AE9D,2 Loop
-@ $AE9F label=dh_no_hazards
+@ $AE9F label=ah_no_hazards
 C $AE9F,4 wordat(HL) = DE; HL += 2
 C $AEA3,3 DE = IX
 C $AEA6,3 wordat(HL) = DE; HL++
 C $AEA9,2 Jump
+@ $AEAB label=ah_aeab
 C $AEAB,1 Preserve DE
 C $AEAC,3 A = B * 4
 C $AEAF,3 BC = A
@@ -7175,21 +7483,26 @@ C $AEC4,1 Restore DE
 C $AEC5,1 *HL = E
 C $AEC6,1 L--
 C $AEC7,1 *HL = D
+@ $AEC8 label=ah_call_handler
 C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
-N $AECF This entry point is used by the routine at #R$8F5F.
+c $AECF This entry point is used by the routine at #R$8F5F.
+D $AECF Used by the routine at #R$8F5F.
+@ $AECF label=draw_arrow_fire_smoke
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
 C $AED3,2 Return if A != *HL
 C $AED5,1 A--
 C $AED6,4 Jump if A < 11
 C $AEDA,2 A = 10
+@ $AEDC label=dhs_aedc
 C $AEDC,2 A >>= 1
 C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
 C $AEE2,3 A <<= 3
 C $AEE5,1 A -= E
 C $AEE6,3 DE = A
+@ $AEE9 label=dhs_equal
 C $AEE9,2 L += 2
 C $AEEB,8 IX = wordat(HL); HL += 2
 C $AEF3,3 Preserve HL, BC, DE
@@ -7211,21 +7524,26 @@ C $AF23,3 Jump if non-zero
 C $AF26,5 Jump if A >= 128
 C $AF2B,1 A += E
 C $AF2C,3 Jump
+@ $AF2F label=dhs_af2f
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
+@ $AF32 label=dhs_draw_left_1
 C $AF32,3 Call draw_object_left_helicopter_entrypt
 C $AF35,3 Jump over next CALL
+@ $AF38 label=dhs_draw_right_1
 C $AF38,3 Call draw_object_right_helicopter_entrypt
+@ $AF3B label=dhs_draw_done_1
 C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $AF41,3 HL = &n_hazards
-C $AF44,1 (*HL)--
-C $AF45,1 Restore HL
+C $AF41,3 Load address of n_hazards
+C $AF44,1 Decrement n_hazards
+C $AF45,1 Restore HL (which?)
 C $AF46,1 Return if zero
 C $AF47,1 A = *HL
 C $AF48,4 Jump if A == B
 C $AF4C,3 Self modify 'LD HL' @ #R$AECF to load HL
 C $AF4F,1 Return
+@ $AF50 label=dhs_af50
 C $AF50,3 A = IX[3]
 C $AF53,3 Self modify 'LD A,x' @ #R$B029 to load A
 C $AF56,1 Set flags
@@ -7236,45 +7554,51 @@ C $AF60,3 Jump if non-zero
 C $AF63,5 Jump if A >= 128
 C $AF68,1 A = E
 C $AF69,3 Jump
+@ $AF6C label=dhs_af6c
 C $AF6C,1 A = E
 C $AF6D,2 -- checking result of test at #R$AF56?
+@ $AF6F label=dhs_draw_left_2
 C $AF6F,3 Call draw_object_left_helicopter_entrypt
 C $AF72,3 Jump
+@ $AF75 label=dhs_draw_right_2
 C $AF75,3 Call draw_object_right_helicopter_entrypt
+@ $AF78 label=dhs_done_draw_object
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
 C $AF7B,3 Self modify 'LD A,x' @ #R$B023
 C $AF7E,3 Get smash_level
 C $AF81,4 Jump if A >= 5
 C $AF85,3 A = x in 'LD A,x' @ #R$AFFB
 C $AF88,5 Jump if A >= 4
-C $AF8D,1 Double A
+C $AF8D,1 Double A to make it an index
 C $AF8E,3 BC = A
 C $AF91,4 HL = #R$CDEC + BC
 N $AF95 I see this getting hit only when in smash mode.
-C $AF95,3 BC = wordat(HL)
-C $AF98,3 -> floating_arrow_big_defn (incl. "HERE!")
-C $AF9B,3 Call plotting func TBD
-@ $AF9E label=dh_smash_level
+C $AF95,1 Load x offset
+C $AF96,1 Advance
+C $AF97,1 Load y offset
+C $AF98,3 Address of floating_arrow_here_defn (incl. "HERE!")
+C $AF9B,3 Call dhs_draw_lod
+@ $AF9E label=dhs_smash_level
 C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
-C $AFA5,4 A = (A - 4) * 4 ?
-C $AFA9,1 Bank
+C $AFA5,4 Compute (smash_level - 4) * 4
+C $AFA9,1 Bank scaled smash level
 C $AFAA,3 A = x in 'LD A,x' @ #R$AFFB
 C $AFAD,1 *= 2
 C $AFAE,3 DE = A
-C $AFB1,4 HL = #R$CE00 + DE  -- table?
+C $AFB1,4 HL = #R$CE00 + DE  -- index smoke_offsets
 C $AFB5,3 BC = wordat(HL); HL++
-C $AFB8,1 Unbank
-C $AFB9,1 E = A   this must be a distance value?
-C $AFBA,3 Address of table of car-on-fire LODs (six entries long)
+C $AFB8,1 Unbank scaled smash level
+C $AFB9,1 E = A
+C $AFBA,3 Load address of table of car-on-fire LODs (six entries long)
 C $AFBD,5 Take half-rate counter_C (counts 0/1/2/3) and make it 0/1/0/1 (this is the animation frame)
 C $AFC2,3 Double it so it's a table offset
 C $AFC5,1 Form table entry pointer
 C $AFC6,4 HL = wordat(HL)   Load table entry (a pointer) into #REGhl
 C $AFCA,2 Retrieve #REGde from stack
-N $AFCC DE is offset, HL is base of graphic defns
+N $AFCC DE is offset, HL is base of graphic defns, B/C is x/y
 C $AFCC,3 Draw
-@ $AFCF label=dh_check_smash_level
+@ $AFCF label=dhs_check_smash_level
 C $AFCF,3 Get smash_level (should be 0..6)
 C $AFD2,1 Is smash_level 0?
 C $AFD3,3 Jump if so (draw nothing, continue)
@@ -7285,17 +7609,19 @@ C $AFDA,2 Jump if so (draw 2 lots)
 N $AFDC Otherwise draw all 3 lots.
 C $AFDC,3 Smoke data
 C $AFDF,3 Call #R$AFF1
+@ $AFE2 label=dhs_draw_smoke_2
 C $AFE2,3 Smoke data
 C $AFE5,3 Call #R$AFF1
+@ $AFE8 label=dhs_draw_smoke_3
 C $AFE8,3 Smoke data
 C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
 N $AFF1 Decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
-@ $AFF1 label=dh_aff1
+@ $AFF1 label=dhs_smoke
 C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
 C $AFF6,2 It became zero, reset to 5
-@ $AFF8 label=dh_aff8
+@ $AFF8 label=dhs_aff8
 C $AFF8,1 *HL = A
 C $AFF9,1 Copy counter to #REGe
 C $AFFA,1 HL++
@@ -7318,10 +7644,10 @@ N $B010 Select the frame.
 C $B010,8 DE = E * 7
 C $B018,3 Point #REGhl at smoke_defns
 N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
-@ $B01B label=dh_draw
+@ $B01B label=dhs_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
-N $B01C HL -> graphic definition
-@ $B01C label=dh_draw_hl_setup
+N $B01C B,C = x,y offset/position? HL -> graphic definition
+@ $B01C label=dhs_draw_lod
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
 C $B023,3 A = <self modified by #R$AF7B> + B
@@ -7334,28 +7660,28 @@ C $B031,1 Return if non-zero
 C $B032,1 A += C
 C $B033,1 Return if carry
 C $B034,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
-@ $B039 label=dh_exit_1
+@ $B039 label=dhs_exit_1
 C $B039,1 Add pixel width
 C $B03A,3 Exit via draw_object_left_helicopter_entrypt
-@ $B03D label=dh_exit_2
+@ $B03D label=dhs_exit_2
 C $B03D,1 A += C
 C $B03E,2 Jump if carry
 C $B040,1 Add pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
-w $B045 Hero car jump table
-D $B045 This is a table of 10 values used when the hero car jumps. The first byte of the entry is used to make the car move vertically (by self modifying #R$B5AA). The second byte is used to change the pitch of the car where level/up/down = 0/3/6 (by self modifying #R$B5AF). Used by #R$B968.
+b $B045 Hero car's jump table
+D $B045 This is a table of 10 values used when the hero car jumps. The first byte of each entry is used to change the pitch of the car, where level/up/down = 0/3/6 (by self modifying #R$B5AF). The second byte of the entry is a delta used to make the car move vertically (by self modifying #R$B5AA). Used by #R$B968.
 @ $B045 label=hero_car_jump_table
-W $B045,2,2 Delta  13, Pitch Up
-W $B047,2,2 Delta  10, Pitch Up
-W $B049,2,2 Delta   7, Pitch Up
-W $B04B,2,2 Delta   4, Pitch Up
-W $B04D,2,2 Delta   2, Pitch Level
-W $B04F,2,2 Delta  -2, Pitch Level
-W $B051,2,2 Delta  -4, Pitch Down
-W $B053,2,2 Delta  -7, Pitch Down
-W $B055,2,2 Delta -10, Pitch Down
-W $B057,2,2 Delta -13, Pitch Down
+B $B045,2,2 Pitch Up,    Delta  13
+B $B047,2,2 Pitch Up,    Delta  10
+B $B049,2,2 Pitch Up,    Delta   7
+B $B04B,2,2 Pitch Up,    Delta   4
+B $B04D,2,2 Pitch Level, Delta   2
+B $B04F,2,2 Pitch Level, Delta  -2
+B $B051,2,2 Pitch Down,  Delta  -4
+B $B053,2,2 Pitch Down,  Delta  -7
+B $B055,2,2 Pitch Down,  Delta -10
+B $B057,2,2 Pitch Down,  Delta -13
 w $B059 Sub-table (another byte pair)
 D $B059 Note: $B057 is used to refer to this table
 @ $B059 label=table_b059
@@ -7364,7 +7690,7 @@ c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
 C $B063,2 Load jump counter. Self modified by #R$8827 and #R$B965. Highest is 8.
-C $B065,3 Jump to mhc_not_jumping if the jump counter is zero
+C $B065,3 Jump to mhc_set_jump_offset if the jump counter is zero
 N $B068 Hero car is jumping.
 @ $B068 label=mhc_jumping
 C $B068,4 Decrement the jump counter in (self modified) #R$B063
@@ -7376,18 +7702,18 @@ C $B073,3 Effect 2 (car landing), Priority 3
 C $B076,3 Call start_sfx
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
-C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092. Default is $B055.
+C $B079,3 Point #REGhl at entry in jump(ing) table. Self modified by #R$B96C and #R$B092. Default is $B055.
 C $B07C,1 off_road = 0
 C $B07D,3 }
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 N $B088 The low bytes of the hero_car_jump_table entries are the car's pitch (0/3/6).
 C $B088,5 Self modify the 'ADD A,x' at #$B5AF to load the car's pitch
 N $B08D The high bytes of the entries are the car's jump offset (-13..13).
-C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_car
+C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_hero_car
 C $B092,3 Update #REGhl jump table entry address above @ #R$B079
 @ $B095 label=mhc_set_jump_offset
 C $B095,3 Self modify 'SUB x' @ #R$B5AA to be the new car jump offset
-C $B098,3 Address of boost timer
+C $B098,3 Load address of boost timer
 C $B09B,4 Jump to mhc_smoke if a turbo boost is not in effect
 C $B09F,1 Decrement boost timer
 C $B0A0,2 Jump to mhc_smoke if boost timer is non-zero
@@ -7409,7 +7735,7 @@ C $B0B9,4 Change user input to be ONLY the fire/gear flag (if set)
 C $B0BD,1 A = C
 C $B0BE,1 Preserve the modified user input for later
 C $B0BF,2 Test fire/gear flag
-C $B0C1,3 Address of gear flag
+C $B0C1,3 Load address of gear flag
 C $B0C4,3 Load gear_lockout
 C $B0C7,2 Jump if fire/gear is unset
 N $B0C9 Fire/gear was set.
@@ -7420,7 +7746,7 @@ C $B0D2,2 Jump if low gear
 C $B0D4,3 Set smoke counter
 @ $B0D7 label=mhc_b0d7
 C $B0D7,2 Decrement A  [why write it as a SUB 1?]
-C $B0D9,2 Jump if positive result
+C $B0D9,2 Jump if negative result
 C $B0DB,3 gear_lockout = A
 @ $B0DE label=mhc_b0de
 C $B0DE,1 Read current gear flag
@@ -7433,7 +7759,7 @@ N $B0EB Going slowly here (<120).
 C $B0EB,6 Jump if perp_caught_phase > 0  -- Don't do idle handling if we're slowing while catching the perp
 N $B0F1 Handle idle timer.
 @ $B0F1 label=mhc_idle_timer
-C $B0F1,3 Address of idle timer
+C $B0F1,3 Load address of idle timer
 C $B0F4,1 Decrement idle timer
 C $B0F5,2 Jump if non-zero
 @ $B0F7 label=mhc_reset_idle_timer
@@ -7501,7 +7827,6 @@ C $B175,2 Jump if current speed (HL) < max speed (DE)
 C $B177,3 BC = 470 -- max speed?
 C $B17A,1 Unbank turbo boost with flags
 C $B17B,2 Jump if turbo boost in effect -- Uses banked flags
-@ $B17D label=mhc_something2
 C $B17D,10 A = DE >> 4
 C $B187,5 C = (A | 1) & $1F
 C $B18C,2 Jump to mhc_check_brake
@@ -7532,10 +7857,10 @@ N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
 N $B1B7 HL = new speed
 @ $B1B7 label=mhc_speed_set
-C $B1B7,5 A = inclined - 1  (hasn't used DEC A here... possibly left for tweaking)
+C $B1B7,5 A = inclined_counter - 1  (hasn't used DEC A here... possibly left for tweaking)
 C $B1BC,2 Jump if A is now >= 0
 N $B1BE "inclined" counter went -ve
-C $B1BE,3 A = $B5B0  -- read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B1BE,3 A = $B5B0  -- read self modified value in draw_hero_car that sets the car's pitch (0/3/6)
 C $B1C1,3 Jump if zero (pitch is level)
 C $B1C4,1 C = A  -- temp save A
 C $B1C5,4 Jump if HL (new speed) is zero
@@ -7545,16 +7870,16 @@ C $B1D1,3 Jump if result is positive
 C $B1D4,1 BC = $FF00 | A  -- otherwise widen as negative
 @ $B1D5 label=mhc_positive
 C $B1D5,2 Copy speed from HL to DE
-C $B1D7,1 Increment speed ... by a value computed from car's pitch ... eh?
+C $B1D7,1 Increment speed ... by a value computed from car's pitch ... accelerating slowly when going upwards?
 C $B1D8,3 Speed threshold 695
 C $B1DB,1 Save it
 C $B1DC,2 Reduce speed by threshold
 C $B1DE,1 Restore it
 C $B1DF,2 Jump if speed < 695  -- surely always the case?!
 @ $B1E2 label=mhc_b1e2
-C $B1E2,2 A = 3  -- reset A24C to 3
+C $B1E2,2 Set inclined to 3
 @ $B1E4 label=mhc_set_inclined
-C $B1E4,3 inclined = A
+C $B1E4,3 inclined_counter = A
 C $B1E7,1 A = H
 C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
@@ -7563,7 +7888,7 @@ C $B1EF,3 Set speed to #REGhl
 C $B1F2,1 Restore HL  [likely to be the user input?]
 C $B1F3,4 B = right_turn
 C $B1F7,4 C = left_turn
-C $B1FB,3 A = *$B064  -- Jump counter [self modified]
+C $B1FB,3 A = *$B064  -- Read jump counter [self modified]
 C $B1FE,4 Jump to mhc_b253 if non-zero
 N $B202 Is this checking input flags in H?
 C $B202,2 Shift LSB out of H
@@ -7610,7 +7935,7 @@ C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B242,1 Halve speed, shifting carry in as MSB
-N $B243 Divide by 2.666 but not quite right?
+N $B243 Divide by 2.666 but not quite right? Or is it twice that?
 C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
@@ -7644,12 +7969,12 @@ C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
 C $B274,2 Jump if zero
 C $B276,1 C = *HL
-@ $B277 label=mhc_b277
+@ $B277 label=mhc_b277_loop
 C $B277,1 A -= C
 C $B278,2 Jump if carry
 C $B27A,1 B++
 C $B27C,1 A += C
-C $B27E,2 Jump to mhc_b277 (above)  -- loop?
+C $B27E,2 Jump to mhc_b277_loop (above)
 @ $B280 label=mhc_b280
 C $B280,1 A = B
 C $B281,3 Jump to mhc_b295 if A is zero
@@ -7721,21 +8046,21 @@ C $B305,1 0 => Straight
 @ $B306 label=mhc_exit
 C $B306,4 turn_speed = B  -- should be 0/1/2
 C $B30A,4 flip_car = D  -- should be 0/1
-C $B30E,3 A = *$B064  -- Jump counter [self modified]
+C $B30E,3 A = *$B064  -- Read jump counter [self modified]
 C $B311,2 Return if zero
-C $B313,4 cornering = 0  -- reset cornering if not jumping
+C $B313,4 cornering = 0  -- reset cornering if jumping
 C $B317,1 Return
-c $B318 Animates the hero car.
+c $B318 Animates the hero car
 D $B318 Used by the routines at #R$8401 and #R$852A.
 @ $B318 label=animate_hero_car
-C $B318,7 Jump to #R$B325 if speed > 0
-N $B31F #REGa is zero here.
+C $B318,7 Jump to #R$B325 if speed != 0
+N $B31F Speed is zero.
 C $B31F,3 Self modify 'LD A' @ #R$B3DB (below) to load zero
 C $B322,3 off_road = 0
 @ $B325 label=ahc_check_crashed
 C $B325,2 A = <self modified>  -- crashed flag set by #R$A4BE
 C $B327,3 Jump if not crashed
-N $B32A Crashed. #REGa is non-zero here.
+N $B32A Crashed.
 @ $B32A label=ahc_crashed
 C $B32A,3 cornering = A (which is non-zero here)
 C $B32D,1 Preserve speed
@@ -7748,18 +8073,18 @@ C $B336,8 Divide speed by four (#REGd becomes zero since game max speed is 511)
 C $B33E,2 A |= 3  -- perhaps rounding up
 C $B340,1 E = A
 C $B341,2 HL -= DE  -- overall expr is  new_speed = (speed - ((speed / 4) | 3))
-C $B343,2 Jump to #R$B349 if equal (to zero?)
-C $B345,2 Turn speed = 2 (fastest)
+C $B343,2 Jump to #R$B349 if equal
+C $B345,2 Turn speed = 2 (fast turning)
 C $B347,2 Jump to #R$B350 if HL > DE
 N $B349 Otherwise HL < DE.
 @ $B349 label=ahc_speed_less_or_eq
 C $B349,4 Clear crashed flag
-C $B34D,1 Turn speed = 1 (middle)
+C $B34D,1 Turn speed = 1 (normal turning)
 C $B34E,2 Jump to set turn speed
 @ $B350 label=ahc_assign_speed
 C $B350,3 Set speed to #REGhl
 @ $B353 label=ahc_assign_turn_speed
-C $B353,3 Set turn_speed to #REGa -- could be 0, 1 or 2
+C $B353,3 Set turn_speed to #REGa -- could be 0?, 1 or 2
 N $B356 This value is set by #R$A4E3, then decremented by 1/16 each time we pass here.
 C $B356,3 HL = <self modified below>
 N $B359 Divide HL by 16.
@@ -7769,7 +8094,7 @@ C $B35F,6 Divide #REGe by 8
 C $B365,2 HL -= DE  -- i.e. original HL minus HL/16
 C $B367,3 Self modify 'LD HL,$xxxx' @ #R$B356 above
 C $B36B,3 Load road_pos
-C $B36E,2 Load flip_flag, self modified by #R$A4C0 in check_collisions
+C $B36E,2 Load flip_flag, self modified by #R$A4C0 in check_scenery_collisions
 C $B370,6 flip_car = (flip_flag & 1)
 C $B376,3 Jump if flip_flag is 1
 C $B379,3 Jump if flip_flag is 2  -- is this ever taken?
@@ -7787,11 +8112,12 @@ C $B386,3 Jump if zero
 C $B389,1 Decrement
 C $B38A,3 Self modify 'LD A,x' @ #R$B384 (above) to x = A
 C $B38D,2 A = <self modified>  -- gets set to (flip flag + 1)
+@ $B38F label=ahc_b38f
 C $B38F,3 *$B3DC = A  (below)
 N $B392 Arrive here if not crashed.
 @ $B392 label=ahc_not_crashed
 C $B392,3 Load road_pos
-C $B395,3 DE = 72
+C $B395,3 DE = <self modified>
 C $B398,1 A = H
 C $B399,1 Set flags
 C $B39A,3 Jump if top bit is set?
@@ -7800,12 +8126,14 @@ N $B39F Otherwise it was zero.
 C $B39F,1 A = L
 C $B3A0,1 A -= E
 C $B3A1,2 Jump if E > L
-C $B3A3,3 DE = $01D8
+@ $B3A3 label=ahc_b3a3
+C $B3A3,3 DE = <self modified>
 C $B3A6,1 A = H
-C $B3A8,2 Jump if D > H
+C $B3A8,2 Jump if
 C $B3AC,1 A = L
 C $B3AD,1 A -= E
 C $B3AE,2 Jump if E > L
+@ $B3B0 label=ahc_b3b0
 @ $B3B1 label=ahc_assign_road_pos_2
 C $B3B1,3 Set road_pos to #REGhl
 C $B3B4,7 A = cornering | smoke
@@ -7816,13 +8144,17 @@ C $B3C7,3 Jump if perp_caught_phase is 1 (starts the pull over sequence)
 N $B3CA New turn speed = MIN(A,2)
 C $B3CA,4 Jump if A < 2
 C $B3CE,2 Else A = 2
+@ $B3D0 label=ahc_b3d0
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
 @ $B3D8 label=ahc_debris
 C $B3D8,3 Draw debris
+@ $B3DB label=ahc_load_flip_flag
 C $B3DB,2 A = <self modified>  -- flip flag + 1
-C $B3DD,3 Jump if zero (not flipped?)
+C $B3DD,3 Jump if not flipped
+N $B3E0 Otherwise it's flipped.
 C $B3E0,1 C = A
+C $B3E1,1 A *= 2
 C $B3E2,3 A += C + 24
 C $B3E5,1 C = A
 C $B3E6,3 Load turn_speed
@@ -7831,55 +8163,66 @@ N $B3ED turn_speed is 2.
 C $B3ED,3 Load flip_car
 C $B3F0,3 Jump if zero
 C $B3F3,1 2 -> 3
+@ $B3F4 label=ahc_b3f4
 C $B3F4,1 2/3 -> 3/4
-C $B3F5,1 Bank/unbank
-C $B3F6,6 B = counter_A & 1  -- animation counter
-C $B3FD,1 C = A
+@ $B3F5 label=ahc_b3f5
+C $B3F5,1 Bank
+C $B3F6,6 B' = counter_A & 1  -- animation counter
+C $B3FC,2 C' = A << 1
+C $B3FE,1 Unbank
 C $B3FF,1 A = C
 C $B400,3 Draw crash
 C $B403,4 off_road = 0
+@ $B407 label=ahc_b407
 C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
-C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
+C $B40A,2 Default bounce of zero to pass to draw_hero_car. It should be either 0 or 3.
 C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
 C $B412,9 New bounce = (counter_C & 1) * 3  -- half rate counter 0/1/2/3
 @ $B41B label=ahc_draw_car
 C $B41B,3 Load turn_speed
-C $B41E,3 Call draw_car
+C $B41E,3 Call draw_hero_car
 C $B421,6 Jump if cherry_light is zero
 N $B427 Draw the cherry light.
-C $B427,1 A = 0
-C $B428,3 BC = $0102  -- size?
-C $B42B,3 Call draw_cherry
+C $B427,1 A = 0  -- parameter TBD
+C $B428,3 BC = $0102  -- parameters TBD
+C $B42B,3 Call draw_cherry_light
 N $B42E Check to see if smoke needs drawing.
-@ $B42E label=ahc_draw_smoke
-C $B42E,4 B = counter_A (0/1/2/3)
-C $B432,7 Jump if cornering
-C $B439,3 A = counter_C  -- half rate counter 0/1/2/3
-C $B43C,1 B = A
-C $B43D,1 HL++
-C $B43E,2 A = *HL++
-C $B440,1 A |= *HL
+@ $B42E label=ahc_need_smoke
+C $B42E,4 Load counter_A (0/1/2/3 full rate) into #REGb  -- animate smoke fast if cornering
+C $B432,3 Read cornering flag
+C $B435,4 Jump to ahc_do_draw_smoke if it's non-zero
+N $B439 Not cornering.
+C $B439,4 Load counter_C (0/1/2/3 half rate) into #REGb
+C $B43D,1 Advance to boost var
+C $B43E,1 Read boost var
+C $B43F,1 Advance to smoke var
+C $B440,1 Merge together
+C $B441,2 Jump to ahc_do_draw_smoke if either is set
+N $B443 No boost nor smoke.
 C $B443,3 Load off_road
 C $B446,3 Return if not fully off-road
+N $B449 Otherwise we're off-road.
 N $B449 Draw the smoke.
 @ $B449 label=ahc_do_draw_smoke
-C $B449,2 A' = 0
+C $B449,2 A' = 0  -- no flip?
 C $B44B,1 A = B  -- smoke anim index
-C $B44C,1 preserve
+C $B44C,1 Preserve smoke anim index
 C $B44D,3 Call draw_smoke - for the right hand side
-C $B450,3 A' = 1
-C $B453,1 restore smoke anim index
+C $B450,3 A' = 1  -- flip?
+C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
+c $B457 Routine at B457
+D $B457 Used by the routine at #R$B318.
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
-N $B45C Start the animation.
+N $B45C Start the hand animation.
 @ $B45C label=ahc_hand_flag_non_zero
 C $B45C,3 Jump if hand_flag is one
 N $B45F Show the "stop" hand.
 @ $B45F label=ahc_hand_flag_gt_one
 C $B45F,1 Bank
-C $B460,3 BC = A
+C $B460,3 BC' = A
 C $B463,1 Unbank
 N $B464 Avoid the hand animation if turning hard?
 C $B464,5 Is turn_speed 2? (turn hard)
@@ -7890,57 +8233,70 @@ C $B46E,5 A = flip_car + 37
 C $B473,3 Exit via #R$B69E
 N $B476 Start the animation.
 @ $B476 label=ahc_hand_flag_one
-C $B476,2 C = <self modified>
+C $B476,2 C = <self modified>  zeroed in start_chase
 C $B478,2 A = <self modified>  [could be animation frame?]  -- gets set to 2
-C $B47A,1 A--
+C $B47A,1 Decrement counter
 C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
+C $B47E,2 Jump to ahc_b493 if A != 0
+N $B480 A was zero.
 C $B480,2 B = 2
-C $B482,1 C++
+C $B482,1 Increment C
 C $B483,1 A = C
 C $B484,4 Jump if >= 4
-C $B488,1 A++
+C $B488,1 Increment A
 C $B489,1 C = A
 C $B48A,4 Jump if != 2
-C $B48E,1 B++
+C $B48E,1 Increment B
 @ $B48F label=ahc_b48f
-C $B48F,1 A = B
-C $B490,3 Self modify 'LD A' @ #R$B478 (above) to load A
+C $B48F,4 Self modify 'LD A' @ #R$B478 (above) to load B
 @ $B493 label=ahc_b493
-C $B493,1 A = C
-C $B494,3 Self modify 'LD C' @ #R$B476 (above) to load A
-C $B497,4 Jump if >= 7
+C $B493,4 Self modify 'LD C' @ #R$B476 (above) to load C
+C $B497,4 Jump if < 7
+N $B49B Hide the "stop" hand.
 C $B49B,4 hand_flag = 0
 C $B49F,1 Return
-C $B4A0,3 A = turn_speed
-C $B4A3,2 CP 2
-C $B4A5,2 A = 6
-C $B4A9,10 A = (A << 3) - flip_car + 13
-C $B4B3,1 A += C
+@ $B4A0 label=ahc_b4a0
+C $B4A0,3 Load turn_speed
+C $B4A3,2 Turning hard?
+C $B4A5,4 Jump if not turning hard with A = 6
+C $B4A9,10 A = (flip_car * 7) + 13
+@ $B4B3 label=ahc_b4b3
+C $B4B3,1 A += C  -- C is as $B493
+C $B4B4,1 Preserve A
+C $B4B5,3 Call draw_cherry_b699
+C $B4B8,1 Restore A
 C $B4B9,1 C = A
 C $B4BA,3 Read from 'LD C' @ #R$B476 (above) to load A
 C $B4BD,4 Jump to #R$B4C6 if A >= 4
+N $B4C1 A < 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
-C $B4C3,3 Exit via #R$B699
+C $B4C3,3 Exit via draw_cherry_b699
 @ $B4C6 label=ahc_enable_cherry_light
 C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
-c $B4CC Perp sighted
-D $B4CC Used by the routine at #R$A637.
-@ $B4CC label=perp_sighted
-C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0  -- hand animation related
-C $B4D0,4 Set hand_flag to 1  -- put the cherry light on the roof
-C $B4D4,3 Set sighted_flag to 1  -- enable flashing lights and smash bar
-C $B4D7,4 Self modify 'LD A' @ #R$B478 to load 2  -- animation frame?
-C $B4DB,6 Set time_sixteenths to 15 and time_bcd to 96
+c $B4CC Start the chase
+D $B4CC This starts the animation to put the cherry light on the roof of the hero car, enables flashing lights and the smash bar, shows the "SIGHTING OF..." message and starts the siren.
+R $B4CC Used by the routine at #R$A637.
+R $B4CC This is hand animation related?
+@ $B4CC label=start_chase
+C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
+N $B4D0 Starts the animation that puts the cherry light on the roof
+C $B4D0,4 Set hand_flag to 1
+N $B4D4 Enable flashing lights and smash bar
+C $B4D4,3 Set sighted_flag to 1
+N $B4D7 This is animation frame related?
+C $B4D7,4 Self modify 'LD A' @ #R$B478 to load 2
+C $B4DB,6 Set time_sixteenths to 15 and time_bcd to $60
 C $B4E1,6 Toggle the left light's brightness
 C $B4E7,6 Show the "SIGHTING OF TARGET VEHICLE" message
 C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
 @ $B4F0 label=smash
 C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
-C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6  -- in draw_debris
-C $B506,5 $B54A = 9  -- in draw_debris
+N $B4F8 Setup debris_table entry in draw_debris
+C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6
+C $B506,5 $B54A = 9  -- set counter in draw_debris
 C $B50B,4 Load and increment smash_counter
 C $B50F,2 20 hits? [POKE this for single hit capture]
 C $B511,3 Exit via fully_smashed if so
@@ -7964,177 +8320,208 @@ C $B543,1 Otherwise set smash_level to 6
 @ $B544 label=smash_set
 C $B544,4 Set smash_level to #REGc
 C $B548,1 Return
-c $B549 Draws the debris
+c $B549 Draws the debris animation
 D $B549 Used by the routine at #R$B318.
 @ $B549 label=draw_debris
-C $B549,2 A = <self modified>
-C $B54B,1 Set flags
-C $B54C,1 Return if zero  -- no debris?
-C $B54D,1 Decrement
-C $B54E,3 Self modify 'LD A' above
-C $B551,4 DE = A * 2  -- builds an offset
-C $B555,4 Self modify 'LD HL' below
+C $B549,2 Load <self modified> frame counter  -- this is set to 9 to start the animation
+C $B54B,2 Return if the counter is zero (not animating)
+C $B54D,1 Decrement counter
+C $B54E,3 Self modify 'LD A' above with new counter value
+C $B551,4 Double the frame counter, turning it into an offset in #REGde
+C $B555,4 Self modify 'LD HL' below with the result
 C $B559,2 3 iterations
-C $B55B,3 HL = <self modified> by #R$B503  -- an entry in debris_table_ce33
+C $B55B,3 Load value <self modified by #R$B503>  -- an entry in #R$CE33
 @ $B55E label=dd_loop
-C $B55E,1 Preserve #REGbc
-C $B55F,4 Load an address
-C $B563,1 Preserve #REGhl
-C $B564,4 A = (*DE + 1) & 3
-C $B568,1 *DE = A  -- writes back into table
-C $B569,6 C = A * 12
-C $B56F,1 DE++ -- advance to next byte in table
-C $B570,3 HL = <self modified> above
-C $B573,1 B = H  -- H is zero so BC = C
-C $B574,1 HL += DE  -- DE is ptr to table, HL is offset
-C $B575,3 DE = wordat(HL)
-C $B578,4 Address of bitmap_debris_1/2/3/4
-C $B57C,3 B = height, C = ?
+C $B55E,1 Preserve #REGbc (iterations)
+C $B55F,4 Load address of debris sub-table into #REGde (e.g. #R$CE4B)
+C $B563,1 Preserve #REGhl (table addr)
+N $B564 First subtable byte seems to be a 0..3 counter
+C $B564,5 Cycle this byte 0-1-2-3
+C $B569,6 Multiply it by 12 (stride of bitmap_debris_1/2/3/4)
+C $B56F,1 Advance to next byte in table
+C $B570,3 Load frame counter turned into offset <self modified> above
+C $B573,1 BC = C since #REGc is set and #REGh is always zero here
+C $B574,1 Add table address to offset
+C $B575,1 Load vertical position
+C $B576,2 Load horizontal position
+C $B578,4 Load address of bitmap_debris_1, 2, 3 or 4 (bitmap data)
+C $B57C,3 6 height (rows), 1 byte wide (masked)
 C $B57F,1 Bank
 C $B580,3 B = 0
 C $B583,2 E = 1
 C $B585,1 Unbank
-C $B586,3 Presumably plotting the debris
-C $B589,1 Restore #REGhl
-C $B58A,1 Restore #REGbc
+C $B586,3 Draw
+C $B589,1 Restore #REGhl (addr)
+C $B58A,1 Restore #REGbc (iterations)
 C $B58B,2 Loop to dd_loop
 C $B58D,1 Return
 c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
 R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
 R $B58E I:B 0/3 to make the car wobble when off-road.
-@ $B58E label=draw_car
-C $B58E,6 If #REGa is zero (straight) then flip_car = 0
-@ $B594 label=dc_1
-C $B594,2 Preserve #REGc (#REGa from input)
-C $B596,9 Point #REGhl at hero_car_shadow then add (#REGa * 4)
-C $B59F,3 D = $78 (vertical postion in rows), E = $60 (horizontal position in pixels)
-C $B5A2,2 C = 7
-C $B5A4,3 Call dc_draw to draw shadow
-C $B5A7,1 Restore #REGc
-N $B5A8 117 is the car's normal vertical position. Smaller values make it higher.
-C $B5A8,4 117 - <self modified value $B5AB>  == car jump offset
-C $B5AC,1 D = A
-N $B5AD Build an index into hero_car_refs[].
-C $B5AD,4 A = C (0/1/2, turn value from input) + B (counter value from input) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
+@ $B58E label=draw_hero_car
+C $B58E,6 If not turning (turn speed zero) then flip_car = 0
+@ $B594 label=dc_draw_shadow
+C $B594,2 Preserve turn speed argument
+C $B596,9 Point #REGhl at hero_car_shadow [array of 3 x 4 bytes] then add (#REGa * 4)
+C $B59F,3 D = 120 (vertical position in rows), E = 96 (horizontal position in pixels)
+C $B5A2,2 C = 7 (56 pixels wide)
+C $B5A4,3 Call draw_hero_car_part to draw the shadow
+C $B5A7,1 Restore turn speed to #REGc
+N $B5A8 117 is the car's usual vertical position. Smaller values make it move higher.
+C $B5A8,5 D = 117 - <self modified car jump offset @ $B5AB>
+N $B5AD Build an index into hero_car_parts[]. Valid indices are 0 to 8 inclusive.
+C $B5AD,4 A = C (0/1/2, turn speed argument) + B (car wobble argument) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
 C $B5B1,6 If A >= 9 A -= 9  -- clamping
-@ $B5B7 label=dc_2
-C $B5B7,13 Point #REGhl at hero_car_refs[A] (rows/entries are 20 bytes wide)
-C $B5C5,4 A = car_y + *HL
-C $B5C9,2 A=0-A
-C $B5CB,1 A+=D  (aka A=D-A)    D here is (117 - car jump offset) from earlier
-C $B5CC,1 E=A
-C $B5CD,2 A &= $0F
-C $B5CF,2 A += $F0
-C $B5D1,1 D=A
-C $B5D2,1 A=E
-C $B5D3,2 A &= $70
-C $B5D5,1 A = A*2
-C $B5D6,2 A += $0D
-C $B5D8,1 E=A
-C $B5D9,1 HL++
-C $B5DA,2 B=*HL++
-C $B5DC,2 A=*HL++
-C $B5E0,1 H=*HL
-C $B5E1,1 L=A
-C $B5E2,2 A=5
-C $B5E4,1 E=A
-C $B5E5,2 D=0
-C $B5EA,6 If flip_car jump to draw_car_perhaps_flipped
-C $B5F1,3 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
-C $B5F4,2 Jump to draw_car_cont
-@ $B5F6 label=dc_perhaps_flipped
-C $B5F7,1 L--
+@ $B5B7 label=dc_draw_middle
+C $B5B7,13 Point #REGhl at hero_car_parts[A] (rows/entries are 20 bytes wide)
+C $B5C4,1 Preserve car vertical position (only in D - anything in E?)
+C $B5C5,7 A = D - car_y - hero_car_part.y  [car_y is the shift value used when a perp is caught] -- D here is (117 - car jump offset) from earlier
+C $B5CC,1 Preserve #REGa
+C $B5CD,5 D = (A & $F) | $F0  -- sign extending?
+C $B5D2,1 Restore #REGa
+C $B5D3,6 E = (A & $70) * 2 + 13  -- computes horizontal position somehow
+C $B5D9,1 Advance to hero_car_part.rows
+C $B5DA,1 Read rows
+C $B5DB,1 Advance to hero_car_part.address
+C $B5DC,2 Read low byte of address
+C $B5DE,1 Preserve HL  [saving halfway through the address seems weird]
+C $B5DF,1 Preserve #REGde [back buffer plot address]
+C $B5E0,1 Read high byte of address
+C $B5E1,1 #REGhl now holds address of bitmap data
+C $B5E2,5 Set #REGa and #REGde to 5, which is the width & stride of the bitmap data in bytes
+C $B5E7,1 Bank for plot_sprite (DE' = stride, HL' = address of bitmap data)
+C $B5E8,1 Restore the #REGde saved earlier [back buffer plot address]
+C $B5E9,1 Preserve #REGa for the flip test
+C $B5EA,6 If flip_car jump to dc_middle_flipped
+C $B5F0,1 Restore #REGa
+C $B5F1,3 Call plot_sprite -- #REGa is (width in bytes)
+C $B5F4,2 Jump to dc_cont
+@ $B5F6 label=dc_middle_flipped
+C $B5F6,1 Restore #REGa
+C $B5F7,1 Adjust back buffer plot address to be a byte earlier
 C $B5F8,3 Call plot_sprite_flipped
 @ $B5FB label=dc_cont
-C $B5FD,1 HL++
-C $B5FE,7 E=$68 C=$05 (width) CALL #R$B627  draws the top (windscreen)
-C $B605,7 E=$68 C=$05 (width) CALL #R$B627  draws the bottom (wheels)
-C $B60C,6 Check flip_car flag
-C $B612,4 unflipped
-C $B616,2 flipped
-@ $B618 label=dc_3
+C $B5FB,1 Restore HL [points at second byte of hero_car_part address field]
+C $B5FC,1 Restore DE [car vertical position]
+C $B5FD,1 Advance to ?
+N $B5FE Draw the windscreen
+C $B5FE,2 Set (horz pos in px) to 104
+C $B600,2 Set (byte width) to 5
+C $B602,3 Call draw_hero_car_part
+N $B605 Draw the wheels
+C $B605,2 Set (horz pos in px) to 104
+C $B607,2 Set (byte width) to 5
+C $B609,3 Call draw_hero_car_part
+N $B60C Draw left hand side
+C $B60C,4 Check flip_car flag
+C $B610,2 Set (byte width) to 1
+C $B612,2 Set (horz pos in px) to 96 if not flipped
+C $B614,2 Jump if not flipped
+C $B616,2 Set (horz pos in px) to 144 if flipped
+@ $B618 label=dc_flip_checked
 C $B618,3 Draws left side of car
-C $B61B,2 C = 1
-C $B61D,3 A = flip_car
-C $B620,1 Set flags
-C $B621,2 E = $60
+N $B61B Draw right hand side
+C $B61B,2 Set (byte width) to 1
+C $B61D,4 Load flip_car and set flags
+C $B621,2 Set (horz pos in px) to 96 if flipped
 C $B623,2 Jump if flipped
-C $B625,2 E = $90
-N $B627 Drawing subroutine. C = byte width?, D = Y (vertical postion in rows), E = X (horizontal position in pixels), HL -> address of graphic def (v.shift, n.rows, data address)
-@ $B627 label=dc_draw
-C $B627,1 A = D  -- vertical position in rows
+C $B625,2 Set (horz pos in px) to 144 if not flipped [then fall through]
+c $B627 Draws a car part
+D $B627 Used by the routine at #R$B58E.
+R $B627 I:C Byte width
+R $B627 I:D Y/Vertical position (in rows)
+R $B627 I:E X/Horizontal position (in pixels)
+R $B627 I:HL Address of graphic def (y_offset, nrows, data address)
+R $B627 O:D Preserved
+R $B627 O:E Preserved
+R $B627 O:HL Address of next graphic def
+@ $B627 label=draw_hero_car_part
+C $B627,1 A = Y
 C $B628,1 Preserve X,Y
-C $B629,3 D = A - *HL++  -- this byte seems to be a vertical shift value
-C $B62C,2 B = *HL++  -- num rows
-C $B62E,5 HL = wordat(HL) while preserving (HL+1)  -- load data address
-C $B633,1 Preserve byte width
-N $B634 D = v.shift, B = n.rows, HL -> data
+C $B629,2 D = Y - y_offset
+C $B62B,1 Advance to nrows field
+C $B62C,1 Read nrows
+C $B62D,1 Advance to data address field
+C $B62E,5 Read data address while stacking HL+1
+C $B633,1 Preserve byte width over bank
+N $B634 D = y_offset, B = nrows, HL -> data
 C $B634,1 Bank
 C $B635,1 Restore byte width
 C $B636,4 Load flip_car into #REGb
-C $B63A,1 E = C  -- byte width
-C $B63B,1 C--  -- reduce byte width
-C $B63C,4 If A == 0 C = A  -- check flip_car flag, if clear then C = 0 else C = bytewidth-1
-@ $B640 label=dc_5
+C $B63A,1 E = byte width  -- becomes E' which is source data stride
+C $B63B,1 C = byte width - 1
+C $B63C,4 Test flip_car flag, if clear then C = 0 else C = (byte width - 1)
+@ $B640 label=dcp_cont
 C $B640,1 Unbank
-C $B641,3 Draws all masked parts of the car
-C $B644,1 Restore ptr
-C $B645,1 Skip final byte
+C $B641,3 Draws all masked parts of the car (using car_y)
+C $B644,1 Restore graphic def ptr
+C $B645,1 Skip final byte - already consumed
 C $B646,1 Restore X,Y
 C $B647,1 Return
-c $B648 Draw the hero car's smoke
+c $B648 Draw the hero car's turbo smoke
 D $B648 Used by the routine at #R$B318.
-R $B648 I:A Index 0..3 of car smoke animation
+R $B648 I:A Index 0..3 of car turbo smoke animation
+R $B648 I:A' Flip flag?
+R $B648 Calculate address of hero_car_turbo smoke[#REGa]
 @ $B648 label=draw_smoke
-C $B648,11 #REGhl = &hero_car_smoke[#REGa]
-C $B653,3 A = *$B064 -- jump counter in move_hero_car
+N $B653 Don't draw smoke if car's mid-jump
+C $B653,3 Read jump counter in move_hero_car
 C $B656,1 Set flags
-C $B657,1 Return if non-zero -- don't draw smoke if jumping
-C $B658,2 C = *HL++  -- these must be size and position
+C $B657,1 Return if non-zero
+N $B658 Load size(s) and position(s) TBD?
+C $B658,2 C = *HL++
 C $B65A,2 B = *HL++
 C $B65C,2 D = *HL++
 C $B65E,2 E = *HL++
-C $B660,2 A = *HL++  -- frame pointer
-C $B662,1 H = *HL
-C $B663,1 L = A
+N $B660 Load frame data pointer into #REGhl
+C $B660,1 Load low byte
+C $B661,1 Advance
+C $B662,1 Load high byte
+C $B663,1 Finalise
+N $B664 blah
+C $B664,1 Preserve (sizes ?)
 C $B665,1 Bank
-C $B668,1 B = A
+C $B666,1 unbanking a flip flag?
+C $B667,1 Restore (sizes ?)
+C $B668,1 B = A  -- copy flip flag
 C $B669,1 E = C
 C $B66A,1 C--
-C $B66B,1 Set flags
-C $B66C,2 Jump to #R$B673 if non-zero
+C $B66B,1 Set flags  -- test flip
+C $B66C,2 Jump to #R$B673 if non-zero  -- flipped
 C $B66E,1 C = A
 C $B66F,1 Unbank
 C $B670,1 A = E
 C $B671,2 Jump to #R$B675
+@ $B673 label=dsm_flip
 C $B673,1 Unbank
 C $B674,1 A = D
+@ $B675 label=dsm_draw
 C $B675,3 E = A + 127 -- horizontal position
-C $B678,2 D = 119  -- vertical position
-C $B67A,2 Exit via #R$B6D6
+C $B678,2 Set vertical position to 119
+C $B67A,2 Exit via #R$B6D6 (draw part using car_y)
 c $B67C Likely NOT just drawing the cherry
 D $B67C Used by the routine at #R$B318.
 R $B67C I:A ? (seems to always be zero)
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
 R $B67C I:C ? (used wrt flipping)           e.g. 2
-@ $B67C label=draw_cherry
+@ $B67C label=draw_cherry_light
 C $B67C,7 Take the bottom bit of the half rate counter_C (counts 0/1/2/3 then repeats) and add it to #REGa
 C $B683,1 Bank A
 C $B684,6 Jump to #R$B698 if turn_speed < #REGb
 C $B68A,3 Load flip_car
 C $B68D,1 Set flags
 C $B68E,2 A = 0
-C $B690,2 Jump to draw_cherry_no_flip if flip_car is zero
+C $B690,2 Jump to dcl_no_flip if flip_car is zero
 C $B692,1 A += C
-@ $B693 label=draw_cherry_no_flip
+@ $B693 label=dcl_no_flip
 C $B693,1 A += C
 C $B694,1 C = A
 C $B695,3 A' += C
-@ $B698 label=draw_cherry_b698
+@ $B698 label=dcl_b698
 N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_cherry_b699
-C $B69A,3 BC = 0   -- not self modified
+C $B699,5 BC' = 0   -- not self modified
 E $B67C FALL THROUGH
 c $B69E This entry point is used by the routine at #R$B318.
 D $B69E Used by the routine at #R$B318.
@@ -8154,23 +8541,27 @@ C $B6C0,1 Get byte width in #REGa
 C $B6C1,3 Bank byte width in #REGe'
 C $B6C4,3 Read car jump offset from 'SUB x' @ #R$B5AA
 C $B6C7,4 D -= A  -- vert pos/offset - car jump offset
-C $B6CB,3 Read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B6CB,3 Read self modified value in draw_hero_car that sets the car's pitch (0/3/6)
 C $B6CE,2 0 -> 0, 3 -> 1, 6 -> 3
 C $B6D0,2 Jump to #R$B6D6 if zero
 N $B6D2 Otherwise pitch was 3/6.
 C $B6D2,4 D += A - 2  -- make v.shift -1/1
 E $B69E FALL THROUGH
-c $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
+c $B6D6 Draw a masked bitmap at (E,D)
 D $B6D6 Used by the routines at #R$B58E, #R$B648 and #R$B69E.
-R $B6D6 I:B height (in rows)
-R $B6D6 I:C = 0/bytewidth-1
-R $B6D6 I:D v.shift (always -1/0/1 ?)  -- seems to be in D' but inconsistent!
-R $B6D6 I:E byte width? can't be right
-R $B6D6 I:HL address of bitmap data
+R $B6D6 I:B Height (in rows)
+R $B6D6 I:C (byte width - 1) if flipping, 0 if not
+R $B6D6 I:D Vertical position (rows)
+R $B6D6 I:E Horizontal position (pixels)
+R $B6D6 I:HL Address of bitmap data
+R $B6D6 I:B' ?
+R $B6D6 I:C' 0 ?
+R $B6D6 I:D' ?
+R $B6D6 I:E' Byte width ?
 @ $B6D6 label=draw_part
-C $B6D6,7 D -= car_y  -- add additional car_y to v.shift
+C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=draw_part_entry2
+@ $B6DD label=*draw_part_entry2
 C $B6DD,7 Divide #REGe by 8
 C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
@@ -8180,10 +8571,11 @@ C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
 C $B6F8,1 A = E
 C $B6F9,2 B >>= 1
-C $B6FB,1 Is this EX'ing AF to get the carry flag?
+C $B6FB,1 Preserve carry flag (flip flag)
 C $B6FC,1 HL += BC
+C $B6FD,1 Restore carry flag (flip flag)
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=draw_part_entry3
+@ $B701 label=*draw_part_entry3
 C $B701,4 Point #REGix at pms_jumptable
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
@@ -8211,7 +8603,7 @@ C $B722,1 Return
 @ $B723 label=pms_start_row
 C $B723,1 Advance to start of next row
 N $B724 This entry point is used by the routine at #R$B7EF.
-@ $B724 label=pms_entry
+@ $B724 label=*pms_entry
 C $B724,1 Point #REGsp at the source data
 C $B725,1 Bank
 C $B726,1 Preserve start address
@@ -8221,40 +8613,55 @@ C $B729,1 Load a bitmap and mask pair (#REGd,#REGe)
 C $B72A,2 Load the screen pixels and AND with mask
 C $B72C,2 OR in new pixels and store back to screen
 C $B72E,1 Move to next screen pixel
-C $B72F,41 Repeat 7 more times
-N $B758 Handle end of row.
+C $B72F,6 7
+C $B735,6 6
+C $B73B,6 5
+C $B741,6 4
+C $B747,6 3
+C $B74D,6 2
+C $B753,5 1
 C $B758,1 Restore row start address
-N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $B759,1 Preserve #REGa for checking in a moment
-C $B75A,1 Move to next row (visually upwards)
+N $B759 Move to next scanline (shorter form).
+N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
+C $B759,1 Save for checking in a moment
+C $B75A,1 Move to next scanline (visually upwards)
 C $B75B,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $B75C,3 No - continue
+N $B75F It rolled over.
 N $B75F The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
-C $B75F,4 Move to next chunk of 16 rows
+C $B75F,4 Move to next chunk of 16 scanlines
 C $B763,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
 N $B765 Otherwise have to compensate 1111 field.
 C $B765,4 Put back the bit stolen since BAAA field was zero
-C $B769,3 Continue
+C $B769,3 Loop
 c $B76C Masked sprite plotter which flips
 D $B76C Used by the routine at #R$92E1.
 @ $B76C label=plot_masked_sprite_flipped
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
-@ $B770 label=plot_masked_sprite_flipped_entry2
+@ $B770 label=*plot_masked_sprite_flipped_entry2
 C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
-C $B779,3 Subtract 8
+C $B779,3 Subtract #REGa from 8
 C $B77C,3 Multiply by 8  -- length of jump table sequences
 C $B77F,5 Add to IX
-C $B784,2 H = $EF
+C $B784,2 HL = $EFxx
+C $B786,1 Bank
+C $B787,2 DE' = $00xx  -- unsure why
+C $B789,2 goto pmsf_start
+@ $B78B label=pmsf_reset_next
+@ $B78D label=pmsf_next
 C $B78E,1 Bank
 C $B78F,2 Next scanline
 C $B791,3 Restore original #REGsp (self modified)
 C $B794,1 Return
+@ $B795 label=pmsf_next_scanline
 C $B795,1 Calculate address of next bitmap scanline
-C $B796,1 Put it in #REGsp (so we can use POP for speed)
+@ $B796 label=pmsf_start
+C $B796,1 Put it in #REGsp (so we can use PUSH for speed)
 C $B797,1 Unbank
+C $B798,2 Bank #REGe for next-scanline code below
 C $B79A,2 Jump into table
 @ $B79C label=pmsf_jumptable
 C $B79C,1 Load a bitmap and mask pair (B,C)
@@ -8265,20 +8672,36 @@ C $B7A0,1 Set flip table index
 C $B7A1,1 OR in new flipped pixels
 C $B7A2,1 Store back to the screen
 C $B7A3,1 Move to next screen pixel (downwards in memory)
-C $B7A4,55 <Repeat 9 times>
-C $B7E6,2 Loop
-C $B7EC,3 Loop
-c $B7EF Masked sprite plotter variant TBD
+C $B7A4,8 7
+C $B7AC,8 6
+C $B7B4,8 5
+C $B7BC,8 4
+C $B7C4,8 3
+C $B7CC,8 2
+C $B7D4,7 1
+N $B7DB Move to next scanline (shorter form).
+C $B7DB,1 Save for checking in a moment
+C $B7DC,1 Move to next scanline (visually upwards)
+C $B7DD,2 Would it have rolled over into the top nibble?
+C $B7DF,3 No - continue (resetting scanline)
+N $B7E2 It rolled over.
+C $B7E2,4 Move to next chunk of 16 scanlines
+C $B7E6,2 Carry set if CCC field was zero - don't compensate 1111 field and continue (not resetting)
+N $B7E8 Otherwise have to compensate 1111 field.
+C $B7E8,4 Put back the bit stolen since BAAA field was zero
+C $B7EC,3 Loop (not resetting)
+c $B7EF Masked + inverted sprite plotter
 D $B7EF Used by the routine at #R$92E1.
 R $B7EF I:BC'
 R $B7EF I:HL'
 R $B7EF I:E' this value is multiplied
-@ $B7EF label=plot_masked_sprite_variant
+@ $B7EF label=plot_masked_sprite_inverted
 C $B7EF,4 Self modify #R$B71F - exit of plot_masked_sprite to be #REGsp to be restored on exit
 C $B7F3,4 Point #REGix at pms_jumptable
 C $B7F7,3 A = 8 - A  -- jump table index
 C $B7FA,9 IX += A * 6  -- jump table entry size
-C $B803,3 B' = $0F
+C $B803,2 B = $0F -- mask for line stepper
+C $B805,1 Bank
 C $B806,2 D = 0
 C $B808,1 pushing banked-on-entry BC
 C $B809,1 pushing banked-on-entry HL
@@ -8300,8 +8723,7 @@ C $B81C,1 HL += DE
 @ $B81D label=pmsv_3
 C $B81D,2 pop and add banked-on-entry BC
 C $B81F,1 pop banked-on-entry HL
-C $B820,1 D--  -- always setting D to 255?
-C $B821,4 E = -E
+C $B820,5 Negate #REGde
 N $B825 HL -> graphic data here
 C $B825,3 Exit via pms_entry
 b $B828 Horizon image related
@@ -8321,14 +8743,14 @@ N $B854 current_curvature is non-zero here.
 @ $B854 label=sh_curved_road
 C $B854,1 Bank current_curvature (and unbank what?)
 C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
-N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me.
+N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me. Where was it last banked? $B296?
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
 C $B85C,8 BC = horizon_a25d + A
 C $B864,3 16 word horizon table at #R$B828
 C $B867,1 HL += BC
-C $B868,3 BC = wordat(HL)
-N $B86B Decrement horizon_a25e.
-C $B86B,3 HL = &horizon_a25e
+C $B868,3 BC = wordat(HL) - wrong way around! needs to swap
+N $B86B Decrement horizon_x_scroll.
+C $B86B,3 HL = &horizon_x_scroll
 C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
 N $B871 It became zero.
@@ -8337,23 +8759,24 @@ C $B872,1 Bank A [must be because A gets overwritten next]
 C $B873,1 A = C
 C $B874,3 Jump if positive
 C $B877,2 A = -A
-@ $B879 label=sh_b879
-C $B879,3 Address of operand in 'LD A,x' @ #R$C7E7 (horizon shift value 0..19)
+@ $B879 label=sh_update_hz_shift
+C $B879,3 Load address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
-C $B880,2 A += 20  -- negative case (or zero)
-@ $B882 label=sh_b882
-C $B882,4 Jump if A < 20
-C $B886,2 A -= 20
-@ $B888 label=sh_b888
-C $B888,1 *HL = A
+N $B880 Otherwise negative (or zero?).
+C $B880,2 A += 20  -- wrap around?
+@ $B882 label=sh_reduce
+C $B882,6 If A >= 20 then A -= 20
+@ $B888 label=sh_set_hz_shift
+C $B888,1 Store new horizontal shift value
 @ $B889 label=sh_straight_road
 C $B889,3 Zero #REGa, #REGb, #REGe
-C $B88C,1 Bank zeroed #REGa
+C $B88C,1 Bank zeroed #REGa, unbank other one
 C $B88D,5 Return if incline is zero (flat road)
 C $B892,3 Jump if positive
 N $B895 Otherwise negative.
-C $B895,3 E = -(E + 1)
+C $B895,1 E++
+C $B896,2 A = -A
 @ $B898 label=sh_not_flat_road
 @ $B898 ssub=LD HL,horizon_table - 1
 C $B898,3 16 word horizon table at #R$B828
@@ -8361,7 +8784,7 @@ C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
 C $B89D,8 A = fast_counter - var_a25b
 C $B8A5,1 Set flags
-C $B8A6,1 Return if non-zero
+C $B8A6,1 Return if zero
 C $B8A7,1 C = *HL  -- loading from horizon table
 @ $B8A8 label=sh_b8a8_loop
 C $B8A8,1 A -= C
@@ -8392,29 +8815,31 @@ c $B8D2 Horizon stuff / Car jumping stuff
 D $B8D2 Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=update_road_level
-C $B8D2,6 BC = var_a25a  -- set by scroll_horizon
+C $B8D2,4 B = var_a25a  -- set by scroll_horizon
+C $B8D6,2 C = 0   -- clear a flag perhaps
 C $B8D8,3 Load incline ($FD..$03 = climbing..descending)
 C $B8DB,1 Set flags
-C $B8DC,3 Jump if road descending (positive incline)
-N $B8DF Otherwise road climbing (negative incline).
-C $B8DF,2 A = -A  -- make positive ($FD..$FF => 3..1)
-C $B8E1,1 C++     -- C becomes 1
+C $B8DC,3 Jump if road descending (positive value)
+N $B8DF Otherwise road climbing (negative value).
+C $B8DF,2 A = -A  -- make positive $FD..$FF => 3..1
+C $B8E1,1 C++     -- set flag to 1
 @ $B8E2 label=url_incline_set
-C $B8E2,3 Jump if (A-B) == 0  (B is copy of var_a25a, not used again)
+C $B8E2,1 A -= B (B is copy of var_a25a, not used again)
+C $B8E3,2 Jump if zero
 @ $B8E5 label=url_incline_was_nonzero
-C $B8E5,2 9-bit rotate right through carry  -- C can be 0 or 1?
+C $B8E5,2 C is 0 or 1, so put into carry
 C $B8E7,2 BC = C
-C $B8E9,2 Jump if no carry
-N $B8EB Otherwise negative?
-C $B8EB,2 A = -A  -- invert incline
+C $B8E9,2 Jump if no carry (positive value)
+N $B8EB Otherwise negative value.
+C $B8EB,2 A = -A  -- invert incline again?
 C $B8ED,1 B = $FF
 @ $B8EE label=url_alter_horizon_level
-C $B8EE,3 Point #REGhl at horizon_level
+C $B8EE,3 Load #REGhl from horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 Store horizon_level
 @ $B8F6 label=url_read_road_height
-C $B8F6,3 Load road_buffer_offset into #REGa
+C $B8F6,3 Load road_buffer_offset.lo into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
 C $B8FE,7 Zero var_a25b and var_a25a
@@ -8440,14 +8865,14 @@ C $B925,2 B = 0
 @ $B927 label=url_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
-C $B92B,3 Address of var_a259
+C $B92B,3 Load address of var_a259
 C $B92E,1 Read var_a259
 C $B92F,1 Set flags
-C $B930,3 Jump if positive
-N $B933 Else negative or zero.
+C $B930,3 Jump if positive (or zero)
+N $B933 Else negative.
 C $B933,2 Test bit 7
 C $B935,2 Jump if non-zero
-N $B937 Else zero.
+N $B937 Else unset.
 C $B937,4 A = -A - 2
 C $B93B,2 Jump if carry  (-A < 2)
 N $B93D Else ?
@@ -8475,7 +8900,7 @@ C $B96F,1 Restore HL (which is what?)
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
 C $B974,1 Preserve it
-C $B975,3 Load road_buffer_offset into #REGa
+C $B975,3 Load road_buffer_offset.lo into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
 C $B97B,4 Test fork_visible
 C $B97F,1 Load a curvature byte
@@ -8497,11 +8922,11 @@ C $B99A,3 Jump if positive
 N $B99D Otherwise negative
 C $B99F,2 A = -A  -- make positive
 @ $B9A1 label=url_b9a1
-C $B9A1,1 D = A
+C $B9A1,1 D = A -- this doesn't appear to be used
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
 C $B9A7,1 B = A
-C $B9A8,6 Jump if horizon_a25e is non-zero
+C $B9A8,6 Jump if horizon_x_scroll is non-zero
 C $B9AE,3 Load speed into #REGhl
 C $B9B1,1 Speed low byte
 C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -8510,11 +8935,12 @@ C $B9B9,1 A += B
 C $B9BA,3 BC = A
 C $B9BD,4 HL = horizon_table + BC
 C $B9C1,1 A = *HL
-@ $B9C2 label=url_b9c2
-C $B9C2,3 horizon_a25e = A
+@ $B9C2 label=url_set_x_scroll
+C $B9C2,3 horizon_x_scroll = A
 @ $B9C5 label=url_b9c5
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
+C $B9CB,1 Unbank current curvature
 C $B9CC,1 Set flags
 C $B9CD,3 Jump if positive
 N $B9D0 Otherwise negative
@@ -8541,15 +8967,16 @@ C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
 C $B9F3,1 Return
 c $B9F4 Lays out the road
-D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
+D $B9F4 Reads in (expanded out) lane data then...
+R $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
-C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
-C $B9F7,2 Add 64 so it's the lanes data offset
+C $B9F4,3 Load road_buffer_offset.lo into #REGa [as byte]
+C $B9F7,2 Add 64 so it's the lanes data offset (wrapping around)
 C $B9F9,3 Point #REGde at road buffer lanes data
 N $B9FC Count the distance to the forked road.
-C $B9FC,3 #REGb = 20 iterations, #REGc = $E1 (a mask)
+C $B9FC,3 #REGb = 22 iterations, #REGc = $E1 (a mask)  [forked road is $ED]
 C $B9FF,2 Counter
-N $BA01 Q. Lanes bytes are pairs of bytes (count,data), so how does looking for $E1 help?
+@ $BA01 label=lr_loop1
 C $BA01,1 Load a lanes byte
 C $BA02,5 Jump to lr_forked_road if (lanes byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
@@ -8558,12 +8985,12 @@ C $BA09,2 Loop while #REGb
 N $BA0B No forked road found.
 N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
 @ $BA0B label=lr_no_fork
-C $BA0B,3 Call sub_cbce_non_fork
+C $BA0B,3 Call build_curve_table_non_forked
 C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
 N $BA17 Note that the fork case branches back here.
-@ $BA17 label=lr_ba17
+@ $BA17 label=lr_calc_single_lane
 C $BA17,3 Self modify #R$BA35 to load $EA30 upwards (road centre)
 C $BA1A,3 Self modify #R$BA3F to load $EB30 upwards (road centre right)
 C $BA1D,3 Self modify #R$BA44 to load $E930 upwards (road centre left)
@@ -8580,7 +9007,7 @@ C $BA32,2 BC = HL  [keep a copy]
 C $BA34,1 HL += DE  == (*$ECxx - *$E8xx) / 2 + *$E8xx  [calc centre from left]
 C $BA35,3 *$EAxx = HL (xx = self modified) (road centre)  [store centre pos]
 C $BA38,2 DE = BC  [copy halved width again]
-C $BA3A,4 Divide BC by 2   [divide by 2 again for quarter width]
+C $BA3A,4 Divide BC by 2 again for quarter width
 C $BA3E,1 == [centre] + [quarter width]
 C $BA3F,3 *$EBxx = HL (xx = self modified) (road centre right) [store centre-right pos]
 C $BA42,2 == [[centre] + [quarter width]] - [half total width]
@@ -8604,14 +9031,13 @@ C $BA67,2 Jump if non-zero
 N $BA69 Lanes byte & 4 is zero. Hit when the road forks (during the fork itself).
 C $BA69,4 A = fork_in_progress - 1
 C $BA6D,2 Jump to lr_check_spawning if zero
-N $BA6F Otherwise A has 255? NEG turns that back to zero. Why not XOR A which is shorter?
-C $BA6F,5 fork_in_progress = -fork_in_progress + 1 = ~fork_in_progress
+C $BA6F,5 fork_in_progress = -A
 C $BA74,4 Get road position
 C $BA78,2 A = 1
 C $BA7A,1 D--
 C $BA7B,3 jump with A==1  => right fork
 C $BA7E,3 jump with A==1  => left fork
-C $BA81,1 A = E  -- E is ?
+C $BA81,1 A = E  -- E is bottom of road position
 C $BA82,6 Jump with A==1 if E < 12
 @ $BA88 label=lr_left_fork
 C $BA88,1 A should be 1, will become zero
@@ -8619,19 +9045,19 @@ C $BA88,1 A should be 1, will become zero
 C $BA89,3 Set fork_taken to #REGa
 C $BA8C,1 0/1 -> 1/2
 C $BA8D,1 Preserve HL (holds fork_distance)
-C $BA8E,3 Address of correct_fork
+C $BA8E,3 Load address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 C $BA95,2 Jump to lr_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
 @ $BA99 ssub=LD (hazard_0 + 13),A
-C $BA97,5 Set the (accel?) of the perp's car to $5F  -- reducing accel so we can catch up?
+C $BA97,5 Set the speed of the perp's car to 95 (normally 60)
 N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way (eh?)
 C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
 C $BAA2,1 Clear low digit
 C $BAA3,1 Clear middle digits
-C $BAA4,3 Call bonus
+C $BAA4,3 Call add_bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
 C $BAAA,5 Call start_chatter (with priority 20)
@@ -8640,7 +9066,7 @@ C $BAAF,1 Restore HL (holds fork_distance)
 C $BAB0,3 Load allow_spawning (0/1/2)
 C $BAB3,3 Jump to lr_no_car_spawning if zero
 N $BAB6 allow_spawning is non-zero.
-C $BAB6,5 A = allow_spawning + var_a16d
+C $BAB6,5 A = allow_spawning + spawn_accumulator
 C $BABB,1 C = A  -- copy so we can destroy A
 C $BABC,2 A -= 2
 C $BABE,2 Jump if A < 2
@@ -8649,11 +9075,13 @@ C $BAC0,1 C = A
 N $BAC1 Adjusting this delta will cause the forked road effect to proceed faster (higher values) or slower (lower values).
 C $BAC1,7 Increase fork_distance by 16
 @ $BAC8 label=lr_set_var_a16d_from_c
-C $BAC8,4 var_a16d = C
+C $BAC8,4 spawn_accumulator = C
 @ $BACC label=lr_no_car_spawning
-C $BACC,3 A = var_a16d
-C $BACF,1 Getting carry?
-C $BAD0,9 A = (fast_counter >> 4)
+C $BACC,3 A = spawn_accumulator
+C $BACF,1 this must extract the bottom bit to carry
+C $BAD0,3 A = fast_counter
+C $BAD3,1 A = (A << 1) | carry
+C $BAD4,1 A = (...)
 C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A  -- ($FFF0..$FFFF)
 C $BADE,1 HL += DE  -- fork_distance + DE
@@ -8663,22 +9091,22 @@ C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
 @ $BAE6 label=lr_left_fork_taken
-C $BAE6,3 Call sub_cbce_non_fork
+C $BAE6,3 Call build_curve_table_non_forked
 C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
 C $BAED,1 Stack it
 C $BAEE,1 DE must be a road position delta?
 C $BAEF,3 Set road position
-C $BAF2,3 Call sub_cbce_fork
+C $BAF2,3 Call build_curve_table_forked
 N $BAF7 Right fork was taken.
 @ $BAF7 label=lr_right_fork_taken
-C $BAF7,3 Call sub_cbce_fork
+C $BAF7,3 Call build_curve_table_forked
 C $BAFA,1 Pop result?
 C $BAFB,3 Get road position
 C $BAFE,1 Stack it
 C $BAFF,2 DE must be a road position delta?
 C $BB01,3 Set road position
-C $BB04,3 Call sub_cbce_non_fork
+C $BB04,3 Call build_curve_table_non_forked
 @ $BB07 label=lr_bb07
 C $BB07,1 Unstack road position
 C $BB08,3 Set road position
@@ -8727,9 +9155,9 @@ N $BB74 Set up left route.
 @ $BB74 label=ef_left
 C $BB74,3 D,E = $FC,$01  (curvature byte -4 => super hard (?) left turn, lanes byte = 1)
 C $BB77,1 Save for later
-@ $BB78 ssub=LD HL,forked_road_leftobjs - 1
+@ $BB78 ssub=LD HL,forked_road_exit_leftobjs - 1
 C $BB78,6 road_leftside_ptr  = $E2D9
-@ $BB7E ssub=LD HL,forked_road_rightobjs - 1
+@ $BB7E ssub=LD HL,forked_road_exit_rightobjs - 1
 C $BB7E,6 road_rightside_ptr = $E2D5
 @ $BB84 ssub=LD HL,forked_road_exit_lanes_left - 1
 C $BB84,6 road_lanes_ptr     = $E2E7
@@ -8747,9 +9175,9 @@ N $BBA1 Set up right route.
 C $BBA1,3 D,E = $04,$03  (curvature byte +4 => super hard (?) right turn, lanes byte = 3)
 C $BBA4,1 Save for later
 N $BBA5 Note the switch around here.
-@ $BBA5 ssub=LD HL,forked_road_rightobjs - 1
+@ $BBA5 ssub=LD HL,forked_road_exit_rightobjs - 1
 C $BBA5,6 road_leftside_ptr  = $E2D5
-@ $BBAB ssub=LD HL,forked_road_leftobjs - 1
+@ $BBAB ssub=LD HL,forked_road_exit_leftobjs - 1
 C $BBAB,6 road_rightside_ptr = $E2D9
 @ $BBB1 ssub=LD HL,forked_road_exit_lanes_right - 1
 C $BBB1,6 road_lanes_ptr     = $E2F3
@@ -8773,12 +9201,12 @@ C $BBE0,3 Self modify rm_hazards_one_command handler
 C $BBE3,6 road_curvature_ptr = $E2DD
 @ $BBE9 ssub=LD HL,forked_road_exit_height - 1
 C $BBE9,6 road_height_ptr    = $E2E2
-@ $BBEF ssub=LD HL,forked_road_hazards - 1
+@ $BBEF ssub=LD HL,forked_road_exit_hazards - 1
 C $BBEF,6 road_hazard_ptr    = $E2D2
 C $BBF5,1 Suspected road curve type left/right
 C $BBF6,1 Copy road buffer additional offset
 N $BBF7 The code commonly loads the byte at #R$A240 and merges it with $EE00, yet #R$A240 already contains a whole word with the right value.
-C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
+C $BBF7,3 Load road_buffer_offset.lo into #REGa [as byte]
 C $BBFA,3 Point #REGhl at road buffer curvature data
 N $BBFD Set the 32 bytes at #REGhl to the road curvature type in #REGd.
 C $BBFD,2 32 iterations
@@ -8787,7 +9215,7 @@ C $BBFF,1 Store
 C $BC00,1 Advance
 C $BC01,2 Loop
 N $BC03 Set the 32 bytes at #REGhl + 64 to the lane type in #REGe.
-C $BC03,2 A = road_buffer_offset + 64
+C $BC03,2 A = road_buffer_offset.lo + 64
 C $BC05,1 Point #REGhl at lane bytes
 C $BC06,2 32 iterations
 @ $BC08 label=ef_set_lanes_loop
@@ -8813,19 +9241,19 @@ C $BC29,3 fork_in_progress    = 0
 C $BC2C,3 fork_taken          = 0
 C $BC2F,3 fork_visible        = 0
 C $BC32,4 no_objects_counter = 1
-C $BC36,3 var_a16d            = 1
+C $BC36,3 spawn_accumulator   = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
-c $BC3E Copies the backbuffer at $F000 to the screen (and sets attributes)
-D $BC3E Copies 240 x ? pixels from the backbuffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
+c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
+D $BC3E Copies 240 x ? pixels from the back buffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
 R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
 R $BC3E #R$F220.
 @ $BC3E label=draw_screen
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
-C $BC42,3 Point #REGhl' at backbuffer + 1 byte.
+C $BC42,3 Point #REGhl' at back buffer + 1 byte.
 C $BC45,4 Self modify #REGsp restore instruction
 N $BC49 A sequence that transfers 16 bytes
-@ $BC49 label=ds_loop
+@ $BC49 label=ds_loop_16bytes
 C $BC49,1 Point #REGsp at the back buffer
 C $BC4A,12 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX IY), incrementing SP
 C $BC56,1 Point #REGsp at screen
@@ -8836,28 +9264,36 @@ C $BC64,1 Advance back buffer pointer
 C $BC65,28 Transfer another 16 bytes (128 pixels)
 C $BC81,28 Transfer another 16 bytes (128 pixels)
 C $BC9D,28 Transfer another 16 bytes (128 pixels)
-C $BCB9,2 Is the back buffer row a multiple of 4?
+C $BCB9,2 If bit 2 of backbufptr is set then we're on the first pass
 C $BCBB,3 Loop if so
 C $BCBE,5 Advance back buffer pointer (backwards) by a half row?
 C $BCC3,5 Advance screen pointer (backwards) by half a row?
 N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
+@ $BCC8 label=ds_loop_14bytes
 C $BCC8,1 Point #REGsp at the back buffer
-C $BCC9,23 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
+C $BCC9,23 Pull in 14 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
 C $BCE0,24 Transfer another 14 bytes (112 pixels)
 C $BCF8,24 Transfer another 14 bytes (112 pixels)
 C $BD10,24 Transfer another 14 bytes (112 pixels)
-C $BD28,2 Is the back buffer row multiple of 4?
-C $BD2D,2 Is the back buffer row multiple of 8?
-C $BD31,2 L -= $F0, H = $F0
+C $BD28,2 If bit 2 of backbufptr is set then we're on the first pass
+C $BD2A,3 Loop if so
+N $BD2D Second pass completed.
+C $BD2D,2 If bit 3 of backbufptr is set then we're not overflowing into the top four bits yet
+C $BD2F,2 Jump if so
+N $BD31 Otherwise we've rolled into the top nibble.
+C $BD31,2 H = $F0
+C $BD33,3 L -= $F0
 C $BD36,3 L >= $F0
-C $BD39,3 PE = parity even
-C $BD3D,3 Increment the screen address
+C $BD39,3 PE => signed overflow for SUB
+C $BD3D,4 Increment the screen address
+C $BD42,3 Copy more
 @ $BD45 label=ds_bd45
-C $BD46,3 Point #REGhl at screen pixel (136,128).
+C $BD46,3 Point #REGhl at screen pixel (136,128)
 C $BD4A,3 Copy more
 @ $BD4D label=ds_bd4d
-C $BD51,1 Which one are we modifying here?
-C $BD54,2 Ditto, which?
+C $BD4E,4 Increment the screen address
+C $BD53,4 Update buffer address
+C $BD57,3 Copy more
 @ $BD5A label=ds_attributes
 C $BD5A,6 Don't update the attributes if the level intro screen is being shown
 C $BD60,4 Seems to be related to the horizon level
@@ -8868,68 +9304,75 @@ C $BD6B,3 E = A * 4
 C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
 C $BD6F,1 D = A
 C $BD70,3 Load the address of the first line of ground attributes (+ 31)
-C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
+C $BD73,3 Set the sky colour screen attributes by default (always bright, black over cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
-C $BD7C,2 Point #REGsp at the screen attributes (DE = $FFE0 = -32)
+@ $BD7D label=ds_bd7d
+C $BD7C,2 Point #REGsp at the screen attributes (DE = $FFE0 = -32) - doesn't affect Z
 C $BD7E,15 Fill 30 bytes - length of attribute line minus the two blank edges
 C $BD8F,1 Move to next line of attributes
+@ $BD90 label=ds_bd90
 C $BD90,3 Save the address of the first line of ground attributes (+ 31)
+@ $BD93 label=ds_smash_meter
 C $BD93,6 Exit if sighted_flag is zero (flashing lights / smash mode)
 C $BD99,7 Jump if perp_caught_phase >= 3 (when car stops)
 N $BDA0 Set the smash meter attributes
 C $BDA0,3 Screen attribute (2,11)
 C $BDA3,3 = 32
-C $BDA6,2 Black over bright red
+C $BDA6,2 Bright, black over red
 C $BDA8,4 Set two attrs
-C $BDAC,2 Black over bright magenta
+C $BDAC,2 Bright, black over magenta
 C $BDAE,4 Set two attrs
-C $BDB2,2 Black over bright green
+C $BDB2,2 Bright, black over green
 C $BDB4,4 Set two attrs
-C $BDB8,2 Black over bright white
+C $BDB8,2 Bright, black over white
 C $BDBA,3 Set two attrs
 @ $BDBD label=ds_exit
 C $BDBD,3 Restore original #REGsp (self modified at start of routine)
 C $BDC0,1 Return
-c $BDC1 Clears screen then sets in-game attributes
-D $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
-@ $BDC1 label=clear_screen_set_attrs
-C $BDC1,3 Call clear_game_screen
-C $BDC4,13 Clear the game screen pixels to $FF (redoes similar work just done)
+c $BDC1 Clears the playfield then sets its attributes
+D $BDC1 The playfield is the lower two thirds of the screen - where the action happens.
+R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
+@ $BDC1 label=clear_playfield_set_attrs
+C $BDC1,3 Call clear_playfield
+C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
-C $BDDD,6 Clear the next three rows to $68 (black over bright cyan)
+C $BDDD,6 Clear the next three rows to $68 (bright, black over cyan)
 C $BDE3,9 Clear the next 11 rows to the current ground colour
+@ $BDF4 label=cpsa_clear_edges_loop
 C $BDEC,14 Clear the edges of the game screen to black on black
 C $BDFA,1 Return
 c $BDFB Map reader
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
-C $BDFB,4 var_a23d = 0  -- state var TBD
-C $BDFF,3 var_a23c = 0  -- state var TBD
+C $BDFB,1 Prepare to clear
+C $BDFC,3 Clear trigger_left_hand_passed_object_sfx
+C $BDFF,3 Clear trigger_right_hand_passed_object_sfx
 C $BE02,3 Clear allow_spawning
-C $BE05,3 HL = Address of fast_counter
-C $BE08,4 DE = speed
-C $BE0C,1 A = Bottom byte of speed
-C $BE0D,4 If speed < 255 then jump
-C $BE11,2 Preserve
-C $BE13,3 Call subfunction #R$BE1F  -- processing something twice as much when at high speed?
+C $BE05,3 Load address of fast_counter
+C $BE08,4 Load speed
+C $BE0C,1 Copy bottom byte of speed
+C $BE0D,4 If speed <= 255 then jump
+N $BE11 Otherwise we're going fast. This seems to cause the buffer to be processed twice as often as when in slow mode.
+C $BE11,2 Preserve registers over next call
+C $BE13,3 Call rm_cycle_buffer_offset/#R$BE1F
 C $BE16,2 Restore
-@ $BE18 label=rm_be18
-C $BE18,2 fast_counter += bottom byte of speed in A
-C $BE1A,2 A = 0  -- disallow car spawning
-C $BE1C,3 Jump to rm_inc_spawning if no carry
+@ $BE18 label=rm_check_speed
+C $BE18,2 Increment fast_counter by bottom byte of current speed
+C $BE1A,2 Set flag to disallow car spawning
+C $BE1C,3 Jump to rm_exit if fast_counter didn't carry (meaning we're going slow or have stopped)
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,1 Set #REGhl to address of road_buffer_offset
-C $BE20,3 Increment road_buffer_offset
-C $BE23,5 HL = $EE00 | (A + 95)  -- final byte of lanes data? or compensating for previous increment?
-C $BE28,7 var_a23c |= *HL
-C $BE2F,4 L += 32    -- offset 128
-C $BE33,7 var_a23d |= *HL
-C $BE3A,4 L -= 96    -- offset 32
-N $BE3E -- CURVATURE --
+C $BE20,3 Load, increment and update road_buffer_offset.lo (wrapping around)
+C $BE23,5 Point HL at first byte of right hand object data
+C $BE28,7 Set trigger_right_hand_passed_object_sfx
+C $BE2F,4 Point HL at first byte of left hand object data
+C $BE33,7 Set trigger_left_hand_passed_object_sfx
+N $BE3A -- CURVATURE --
+C $BE3A,4 Step back 96 bytes to the now-end of curvature?
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
-C $BE3E,5 A = curvature_byte - 16
+C $BE3E,5 Decrement down the counter nibble
 C $BE43,2 Jump to rm_save_curvature_byte if curvature_byte >= 16
 N $BE45 Load a new curvature byte.
 C $BE45,5 Read and increment address of curvature data
@@ -8963,14 +9406,14 @@ C $BE77,4 road_curvature_ptr = #REGde
 C $BE7B,2 A -= 16  -- decrement counter in top nibble
 @ $BE7D label=rm_save_curvature_byte
 C $BE7D,3 curvature_byte = A
-C $BE80,2 Mask off direction bits
+C $BE80,2 Isolate direction bits
 C $BE82,4 Jump to rm_set_curvature if (A & (1<<3)) is zero   -- bit 3 => left (so jump if right)
 C $BE86,4 A = -(A & 7)  -- Left direction becomes -ve
 N $BE8A Write the direction into the cyclic road buffer.
 @ $BE8A label=rm_set_curvature
 C $BE8A,2 *HL = A * 2  -- Sampled HL: $EEA9 [in cyclic road buffer]
+N $BE8C -- HEIGHT --
 C $BE8C,4 L += 32
-N $BE90 -- HEIGHT --
 N $BE90 The top nibble of each byte is a counter. The bottom nibble is height data.
 C $BE90,5 A = height_byte - 16
 C $BE95,2 Jump to rm_save_height_byte if height_byte >= 16
@@ -9082,7 +9525,7 @@ C $BF6F,4 Load address of left route's rightside data
 C $BF73,4 Set modify 'LD DE,$xxxx' @ #R$BB8D to load the address
 C $BF77,4 Load address of right route's rightside data
 C $BF7B,3 Self modify 'LD DE,$xxxx' @ #R$BBBA to load the address
-C $BF7E,3 HL = $E2C1  [overlapping use of data TBD]
+C $BF7E,3 HL = fork_leftrightobjs_loop
 C $BF81,2 Jump to rm_read_rightside
 @ $BF83 label=rm_rightside_one_command
 C $BF83,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
@@ -9115,7 +9558,7 @@ C $BFB8,4 Load address of left route's leftside data
 C $BFBC,4 Self modify 'LD BC,$xxxx' @ #R$BB90
 C $BFC0,4 Load address of right route's leftside data
 C $BFC4,3 Self modify 'LD BC,$xxxx' @ #R$BBBD
-C $BFC7,3 HL = $E2C0  [overlapping use of data TBD]
+C $BFC7,3 HL = fork_leftrightobjs
 C $BFCA,2 Jump to rm_read_leftside
 @ $BFCC label=rm_leftside_one_command
 C $BFCC,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
@@ -9133,8 +9576,9 @@ C $BFDD,3 leftside_byte = A  -- Store decremented leftside counter
 C $BFE0,3 *HL = A & $0F  -- Write to cyclic road buffer
 C $BFE3,4 L += 32
 N $BFE7 -- HAZARDS --
-C $BFE7,5 A = hazards_byte - 1  [it's a counter]
-C $BFEC,2 Jump to rm_no_hazards if no carry
+C $BFE7,5 A = hazards_byte - 1 (a counter)
+C $BFEC,2 Jump to rm_set_hazards if counter >= 1
+N $BFEE Otherwise decode...
 C $BFEE,5 DE = road_hazard_ptr + 1
 @ $BFF3 label=rm_restart_hazards_read
 C $BFF3,1 Read a hazards byte
@@ -9152,7 +9596,7 @@ C $C011,5 Otherwise helicopter_control = A - 11
 C $C016,2 Jump to rm_do_restart
 N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
 @ $C018 label=rm_hazards_spawning_command
-C $C018,5 stop_car_spawning = A - 10  (13/14 in map data)
+C $C018,5 dont_spawn_cars = A - 10  (13/14 in map data)
 C $C01D,2 Jump to rm_do_restart
 N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
 @ $C01F label=rm_hazards_set_arrow_command
@@ -9182,53 +9626,56 @@ C $C04A,4 HL = wordat(HL)  [Sampled HL: $6292 $6107 $61BC $600F]
 C $C04E,1 #REGde is now hazards address
 C $C04F,1 Read a hazards byte (regular, not an escape)
 @ $C050 label=rm_hazards_regular_byte
-C $C050,4 road_hazard_ptr = DE  -- Update hazard objects ptr
-C $C054,1 A--
-@ $C055 label=rm_no_hazards
-C $C055,3 hazards_byte = A   -- Update hazards byte
-C $C058,2 *HL = 0  [cyclic road buffer]
-C $C05A,2 A = 2
+C $C050,4 Update road_hazard_ptr
+C $C054,1 Decrement counter
+@ $C055 label=rm_set_hazards
+C $C055,3 Update counter
+C $C058,2 Write <current hazard command - self modified> to the cyclic road buffer
+C $C05A,2 no_objects_counter = 2
 @ $C05C label=rm_all_hazards
 C $C05C,3 Set no_objects_counter to #REGa
-C $C05F,3 Call #R$B8D2
-C $C062,4 IX = &hazards
-C $C066,3 DE = 20  -- array entry stride
-C $C069,3 B = 6, C = 0
-@ $C06C label=rm_c06c
-C $C06C,4 test the used flag
-C $C070,2 jump if used
-@ $C072 label=rm_c072_continue
-C $C072,2 IX += DE
+C $C05F,3 Call #R$B8D2 to update the road level
+C $C062,4 Point #REGix at hazards[0]
+C $C066,3 Stride of hazards is 20 bytes
+C $C069,3 6 iterations in #REGb & clear overtake counter in #REGc
+@ $C06C label=rm_hazard_loop
+C $C06C,6 If the hazard is active then jump to #R$C080
+@ $C072 label=rm_hazard_loop_continue
+C $C072,2 Move to next hazard
 C $C074,2 Loop while #REGb
-C $C076,1 A = C  -- A = 0?
-C $C077,3 HL = &allow_overtake_bonus
-C $C07A,3 HL = &allow_overtake_bonus  -- duplicate instruction
-C $C07D,1 *HL = A
-C $C07E,2 Jump to rm_c0bb
-@ $C080 label=rm_c080
+C $C076,1 Copy overtake counter
+C $C077,3 Point #REGhl at overtake_bonus_counter
+C $C07A,3 Bug: duplicated instruction
+C $C07D,1 Store the number of cars overtaken [only cars!]
+C $C07E,2 Jump to rm_hazard_continue
+N $C080 Could be any active hazard here.
+@ $C080 label=rm_active_hazard
 C $C080,4 A = IX[15] + 1
-C $C084,2 Jump to rm_c096 if zero
-C $C086,3 IX[1]--
-C $C089,3 Jump to rm_c072_continue if non-zero
-C $C08C,4 IX[0] = 0  -- mark the hazard entry unused
-C $C090,1 testing top bit of A
-C $C091,2 Jump to rm_c072_continue if no carry
-C $C093,1 C++
-C $C094,2 Jump to rm_c072_continue
-@ $C096 label=rm_c096
-C $C096,5 A = IX[1] - 1
-C $C09B,3 IX[1] = A
-C $C09E,2 Jump to rm_c0b2 if carry
-C $C0A0,2 Jump to rm_c072_continue if non-zero
-C $C0A2,3 A = IX[17]
-C $C0A5,3 Jump to rm_c072_continue if non-zero
-C $C0A8,4 IX[1] = 1
-C $C0AC,4 IX[4] = 255
-C $C0B0,2 Jump to rm_c072_continue
-@ $C0B2 label=rm_c0b2
-C $C0B2,7 IX[17]--
-C $C0B9,2 Jump to rm_c072_continue
-@ $C0BB label=rm_c0bb
+C $C084,2 Jump to rm_decrement_distance if zero
+C $C086,3 IX[1]--   -- buffer offset/distance
+C $C089,3 Jump to rm_hazard_loop_continue if non-zero
+C $C08C,4 Mark the hazard entry unused
+C $C090,1 Top bit of #REGa set if hazard is vehicle
+C $C091,2 Jump to rm_hazard_loop_continue if no carry - hazard is not vehicle
+N $C093 Overtook a car.
+C $C093,1 Increment overtake counter
+C $C094,2 Jump to rm_hazard_loop_continue
+N $C096 This gets hit all the time when the road is moving... but not in attract mode! Perhaps perp specific?
+@ $C096 label=rm_decrement_distance
+C $C096,8 Decrement the low byte of the distance
+C $C09E,2 If the decrement carried (went 0 -> 255) jump to rm_decrement_distance_high_byte
+C $C0A0,2 Jump to rm_hazard_loop_continue if non-zero
+N $C0A2 Low byte of distance was zero.
+C $C0A2,3 Load distance high byte
+C $C0A5,3 Jump to rm_hazard_loop_continue if non-zero
+N $C0A8 Both low and high bytes were zero - player has caught up with the perp. This will bump the perp forward so the player can never actually overtake them.
+C $C0A8,4 Set perp to be just one unit away
+C $C0AC,4 Set distance high byte to 255  -- how's that work?
+C $C0B0,2 Jump to rm_hazard_loop_continue
+@ $C0B2 label=rm_decrement_distance_high_byte
+C $C0B2,7 Decrement the high byte of the distance
+C $C0B9,2 Jump to rm_hazard_loop_continue
+@ $C0BB label=rm_hazard_continue
 C $C0BB,2 A = <self modified>  -- Self modified by #R$A977 + #R$A9A0 only
 C $C0BD,4 Jump to rm_allow_car_spawning if zero
 N $C0C1 Some sort of block copy.
@@ -9244,10 +9691,10 @@ N $C0D2 This seems to get hit in the dirt track section.
 C $C0D2,3 Loop to rm_c0ca while B != 0 (LDD sets P/V if BC != 0)
 C $C0D5,2 *++HL = 0  (since B is zero)
 @ $C0D7 label=rm_allow_car_spawning
-C $C0D7,2 A = 1
-@ $C0D9 label=rm_inc_spawning
+C $C0D7,2 Set flag to allow car spawning
+@ $C0D9 label=rm_exit
 C $C0D9,5 Increment allow_spawning by #REGa (which should be 0 or 1)
-C $C0DE,3 Exit via #R$AD0D
+C $C0DE,3 Exit via check_hazard_collisions/#R$AD0D
 c $C0E1 Set up the tunnel
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C0E1 label=prepare_tunnel
@@ -9292,46 +9739,58 @@ C $C133,1 Swap
 C $C134,2 #REGde = #REGbc
 C $C136,1 A--
 C $C137,2 Loop to tunnel_loop
+@ $C139 label=pt_c139
 C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C13F,2 A = 2
 C $C141,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel below)
+@ $C144 label=pt_c144
 C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' @ #R$C2B8
 N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
+C $C149,3 Load address of draw_tunnel
+C $C14C,2 Load opcode of 'CALL'
+C $C14E,6 Write CALL draw_tunnel to #R$8F82
+C $C154,6 Write CALL draw_tunnel to #R$8FA7
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
-D $C15B Called by $8F82 etc. being self modified.
-R $C15B I:IY e.g. $E315
+D $C15B Called by #R$8F82 etc. when that's self modified to call here.
+R $C15B I:IY e.g. $E315 buffer
 @ $C15B label=draw_tunnel
-C $C15B,2 A = IY.low
+C $C15B,2 Load #REGiy's low byte -- it's a size/distance value
+N $C15D This is set to ~20 then counts down to ~9 as the tunnel is entered. (I've noted 15..6 elsewhere).
 C $C15D,2 Compare to <self modified>
-C $C15F,1 Return if non-zero
-C $C160,2 A = <self modified>
-C $C162,2 D = $EE
-C $C164,1 A--
+C $C15F,1 Return if not equal
+C $C160,2 Load <self modified>
+C $C162,2 Set fill value to use for striped tunnel entrance to $EE
+C $C164,1 Decrement #REGa
 C $C165,2 Jump if zero
-C $C167,2 D = $FF
-C $C169,1 E = D
+C $C167,2 Set fill value to use for (much of) tunnel interior to $FF
+@ $C169 label=dt_fill_chosen
+C $C169,1 Widen fill value to $EEEE or $FFFF
 C $C16A,4 Self modify 'LD DE,x' @ #R$C21C
 C $C16E,4 Save #REGsp to restore on exit (self modify)
-C $C172,8 L = ~((IY[$4E] - 2) << 1)
-C $C17A,2 C = 0
-C $C17C,2 H = $EB
-C $C17E,1 A = *HL
+C $C172,8 #REGl = ~((#REGiy[$4E] - 2) << 1)
+C $C17A,2 Clear #REGc
+C $C17C,2 Set #REGhl to $EBxx
+C $C17E,1 Load byte at $EBxx
 C $C17F,1 Set flags
 C $C180,3 Jump if zero
-C $C183,2 D = 16
+N $C183 This path is hit only when the tunnel is entered.
+C $C183,2 D = 16 = jump table target
 C $C185,3 Jump if positive
-C $C188,2 D = 22
+@ $C188 label=dt_c188
+C $C188,2 D = 22 = jump table target
 C $C18A,2 L = 31
 C $C18C,2 Jump
+@ $C18E label=dt_c18e
 C $C18E,3 A = HL[-1]
 C $C191,5 Divide by 8
 C $C196,2 A >>= 1
 C $C198,2 Rotate C
 C $C19A,1 A++
 C $C19B,1 D = A
+@ $C19C label=dt_c19c
 C $C19C,2 H = $E8
 C $C19E,1 A = *HL
 C $C19F,1 Set flags
@@ -9339,19 +9798,23 @@ C $C1A0,2 Jump if zero
 C $C1A2,2 E = 16
 C $C1A4,3 Jump if negative
 C $C1A7,3 Jump
+@ $C1AA label=dt_c1aa
 C $C1AA,1 L--
 C $C1AB,3 A = *HL + 8
 C $C1AE,2 Jump if carry
 C $C1B0,5 Divide by 8
 C $C1B5,1 B = A
 C $C1B6,6 E = 16 - (A >> 1)
+@ $C1BC label=dt_c1bc
 C $C1BC,3 A = 32 - B
 C $C1BF,2 L = 32
 C $C1C1,2 Rotate left
 C $C1C3,2 Jump if carry
 C $C1C5,1 L--
 C $C1C6,1 A--
+@ $C1C7 label=dt_c1c7
 C $C1C7,1 C = A
+@ $C1C8 label=dt_c1c8
 C $C1C8,1 A = D
 C $C1C9,3 Self modify 'JR x' @ #R$C221 -- jump table target
 C $C1CC,1 A = E
@@ -9362,6 +9825,7 @@ C $C1D4,5 H = (A & 15) + $F0
 C $C1D9,5 A = ((B & $70) << 1) + L
 C $C1DE,2 Jump if no carry
 C $C1E0,1 A--
+@ $C1E1 label=dt_c1e1
 C $C1E1,1 L = A
 C $C1E2,3 A = 128 - B
 C $C1E5,1 Bank/unbank
@@ -9391,27 +9855,37 @@ C $C215,2 A = -A
 C $C217,1 A += D
 C $C218,1 D = A
 C $C219,1 A = E
+@ $C21A label=dt_c21a
 C $C21A,1 Bank/unbank
 C $C21B,1 B = D
 N $C21C Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom byte, E, affects whole pattern. The LD E,D later would explain that.
 C $C21C,3 DE = <self modified>  -- pixels of tunnel
 N $C21F Loop
-C $C21F,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C220,1 A = L
+@ $C21F label=dt_fill_loop
+C $C21F,1 Put destination in #REGsp so we can use PUSH for speed
+C $C220,1 Preserve destination?
+@ $C221 label=dt_jump_table_1
 C $C221,2 Jump table (self modified)
+C $C223,16 Store up to 16 words / 256 pixels
 C $C233,1 A -= C
-C $C234,1 L = A
-C $C235,1 Put it in #REGsp (so we can use PUSH for speed)
+C $C234,1 Restore destination?
+C $C235,1 Put destination in #REGsp so we can use PUSH for speed
+@ $C236 label=dt_jump_table_2
 C $C236,2 Jump table (self modified)
+C $C238,16 Store up to 16 words / 256 pixels
 C $C248,1 A += C
 C $C249,1 L = A
-C $C24A,1 A = H
-C $C24B,1 H--
-C $C24C,2 A &= 15
-C $C24E,3 Jump if non-zero
-C $C251,4 L -= 32
+N $C24A Move to next scanline (shorter form).
+C $C24A,1 Save for checking in a moment
+C $C24B,1 Move to next scanline (visually upwards)
+C $C24C,2 Would it have rolled over into the top nibble?
+C $C24E,3 No - continue
+N $C251 It rolled over.
+C $C251,4 Move to next chunk of 16 scanlines
 C $C255,2 Jump if carry
-C $C257,4 H -= 16
+N $C257 Otherwise have to compensate 1111 field.
+C $C257,4 Put back the bit stolen since BAAA field was zero
+@ $C25B label=dt_c25b
 C $C25D,1 E = D
 C $C25E,2 Loop
 C $C260,1 Bank/unbank
@@ -9431,6 +9905,7 @@ C $C276,2 A = -A
 C $C278,1 A = B
 C $C279,1 B = A
 C $C27A,1 A = E
+@ $C27B label=dt_c27b
 C $C27B,1 Bank/unbank
 C $C27C,1 A = B
 C $C27D,1 Bank/unbank
@@ -9439,16 +9914,22 @@ C $C27F,1 A = L
 C $C280,2 A &= 15
 C $C282,2 Jump if non-zero
 C $C284,1 L--
+@ $C285 label=dt_c285
 C $C285,2 C = 15
 N $C287 Loop
+@ $C287 label=dt_jump_table_3
 C $C287,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C297,1 A = H
-C $C298,1 H--
-C $C299,1 A &= C
-C $C29A,3 Jump if non-zero
-C $C29D,4 L -= 32
-C $C2A1,2 Jump if carry
-C $C2A3,4 H += 16
+N $C297 Move to next scanline (shorter form).
+C $C297,1 Save for checking in a moment
+C $C298,1 Move to next scanline (visually upwards)
+C $C299,1 Would it have rolled over into the top nibble? (#REGc is a mask, 15, here)
+C $C29A,3 No - continue
+N $C29D It rolled over.
+C $C29D,4 Move to next chunk of 16 scanlines
+C $C2A1,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $C2A3 Otherwise have to compensate 1111 field.
+C $C2A3,4 Put back the bit stolen since BAAA field was zero
+@ $C2A7 label=dt_c2a7
 C $C2A9,1 E = D
 C $C2AA,2 Loop
 C $C2AD,1 Set flags
@@ -9461,67 +9942,72 @@ C $C2BB,2 Jump if zero
 C $C2BD,1 A--
 C $C2BE,2 Jump if non-zero
 C $C2C0,1 DE--
+@ $C2C1 label=dt_jump_table_4
 C $C2C1,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C2D1,1 A = H
-C $C2D2,1 H--
-C $C2D3,1 A &= C
-C $C2D4,3 Jump if non-zero
-N $C2D7 Scanline increment pattern.
-C $C2D7,4 L -= 32
-C $C2DB,2 Jump if carry
-C $C2DD,4 H -= 16
+N $C2D1 Move to next scanline (shorter form).
+C $C2D1,1 Save for checking in a moment
+C $C2D2,1 Move to next scanline (visually upwards)
+C $C2D3,1 Would it have rolled over into the top nibble? (#REGc is a mask, 15, here)
+C $C2D4,3 No - continue
+N $C2D7 It rolled over.
+C $C2D7,4 Move to next chunk of 16 scanlines
+C $C2DB,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $C2DD Otherwise have to compensate 1111 field.
+C $C2DD,4 Put back the bit stolen since BAAA field was zero
+@ $C2E1 label=dt_next
 C $C2E1,2 Next scanline ?
+@ $C2E3 label=dt_exit
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
-c $C2E7 Routine at C2E7
+c $C2E7 Subroutine of draw_road
+D $C2E7 This seems to get called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
-C $C2E7,2 A = IY.low
+R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
+R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
+@ $C2E7 label=draw_road_lanes_change
+C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
-C $C2EB,3 Jump if >= 19
-C $C2EE,1 Bank
-C $C2EF,3 A = IX[0]
-C $C2F2,1 L = A
-C $C2F3,2 A &= 12
-C $C2F5,3 Jump if zero
-C $C2F8,2 IY--
+C $C2EB,3 Jump to exit if >= 19
+C $C2EE,1 Bank distance
+C $C2EF,3 Load lane flags from IX[0]
+C $C2F2,1 Copy to #REGl
+C $C2F3,2 Mask with 0b00001100
+C $C2F5,3 Jump to exit if zero
+N $C2F8 Otherwise ...
+C $C2F8,2 Decrement height table pointer
 C $C2FA,2 Bit 5 of L set?
 C $C2FC,2 Jump if clear
 C $C2FE,2 Bit 7 of L set?
-C $C300,2 H = $EC
+C $C300,2 H = $EC  -- must be a top byte of address
 C $C302,2 Jump if set
 C $C304,1 H = $EB
+@ $C305 label=drlc_1
 C $C305,2 Bit 4 of L set?
 C $C307,3 Jump if clear
-C $C30A,1 Bank
+C $C30A,1 Unbank distance / bank masked-lane-flags
 C $C30B,2 Compare to 2
 C $C30D,3 Jump if >= 2
-C $C310,1 Bank
+C $C310,1 Bank distance again / unbank masked-lane-flags
 C $C311,2 Compare to 4
 C $C313,2 A = 32
 C $C315,3 C = IY[1]
 C $C318,2 Jump if != 4
 C $C31A,1 A = 0
 C $C31B,3 C = IY[2]
+@ $C31E label=drlc_2
 C $C31E,3 Self modify 'ADD A,x' @ #R$C345
-C $C321,3 A = IY[0]
-C $C324,1 A -= C
+C $C321,4 A = IY[0] - C
 C $C325,6 Jump if A was <= C
 C $C32B,1 C = A
-C $C32C,1 A <<= 1
-C $C32D,1 B = A
+C $C32C,2 B = A * 2
 C $C32E,8 L = ~(($60 - IY[0]) << 1)
 C $C336,1 -- why are we copying to SP with no push/pop nearby?
-C $C337,1 D = *HL
-C $C338,1 L--
-C $C339,1 E = *HL
-C $C33A,1 A -= B
-C $C33B,1 L = A
+C $C337,3 DE = wordat(HL - 1);
+C $C33A,2 L = A - B
 C $C33C,1 H--
-C $C33D,3 A = fast_counter
-C $C340,3 A ROR 3
-C $C343,2 A &= 28
+C $C33D,8 A = (fast_counter ROR 3) & 0b00011100
 C $C345,2 A += <self modified>
-C $C347,3 Self modify 'LD HL,x' @ #R$C351 below
+C $C347,3 Self modify 'LD HL,x' @ #R$C351 below  -- stash left hand table ptr
 C $C34A,1 Swap
 C $C34B,3 DE = A
 C $C34E,2 HL -= DE
@@ -9529,59 +10015,58 @@ C $C350,1 Swap
 C $C351,3 HL = <self modified>
 C $C354,3 Jump
 N $C357 Another case.
+@ $C357 label=drlc_3
 C $C357,1 Bank
 C $C358,2 Compare to 4
 C $C35A,3 Jump if non-zero
 C $C35D,6 A = IY[0] - IY[2]
 C $C363,6 Jump if IY[0] was <= IY[2]
 C $C369,1 C = A
-C $C36A,1 A <<= 1
-C $C36B,1 B = A
+C $C36A,2 B = A * 2
 C $C36C,8 L = ~(($60 - IY[0]) << 1)
-C $C374,1 -- this again
+C $C374,1 -- this pattern again
 C $C375,1 D = *HL
 C $C376,1 L--
 C $C377,1 E = *HL
-C $C378,1 A -= B
-C $C379,1 L = A
+C $C378,2 L = A - B
 C $C37A,1 H--
 C $C37B,3 Jump
+@ $C37E label=drlc_4
 C $C37E,1 Bank/unbank
 C $C37F,2 Compare to 2
-N $C381 This entry point is used by the routine at #R$E8CE.
+N $C381 This entry point is used by the routine at #R$E8CE. (PHANTOM)
 C $C381,3 Jump if A >= 2
 C $C384,1 Bank/unbank
 C $C385,2 Compare to 4
 C $C387,2 A = 32
 C $C389,3 C = IY[1]
 C $C38C,2 Jump if non-zero
-C $C38E,1 X = 0
+C $C38E,1 A = 0
 C $C38F,3 C = IY[2]
+@ $C392 label=drlc_5
 C $C392,3 Self modify 'ADD A,x' @ #R$C3BD below
 C $C395,3 A = IY[0]
 C $C398,1 A -= C
-C $C399,6 Jump if A was >= C
+C $C399,6 Jump if A was <= C
 C $C39F,2 C = A << 1
 C $C3A1,1 B = A
 C $C3A2,8 L = ~(($60 - IY[0]) << 1)
-C $C3AA,1 -- this again
+C $C3AA,1 -- this pattern again (2)
 C $C3AB,1 H--
 C $C3AC,1 D = *HL
 C $C3AD,1 L--
 C $C3AE,1 E = *HL
-C $C3AF,1 A -= B
-C $C3B0,1 L = A
+C $C3AF,2 L = A - B
 C $C3B1,1 H++
 C $C3B2,3 Self modify 'LD HL,x' @ #R$C3C4 below
-C $C3B5,3 A = fast_counter
-C $C3B8,3 A ROR 3
-C $C3BB,2 A &= 28
+C $C3B5,8 A = (fast_counter ROR 3) & 0b00011100
 C $C3BD,2 A += <self modified>
 C $C3BF,3 HL = A
 C $C3C2,1 HL += DE
 C $C3C3,1 Swap
 C $C3C4,3 HL = <self modified>
 C $C3C7,3 Jump
+@ $C3CA label=drlc_6
 C $C3CA,1 Swap
 C $C3CB,2 Compare to 4
 C $C3CD,2 Jump if non-zero
@@ -9591,75 +10076,80 @@ C $C3DB,1 C = A
 C $C3DC,1 A <<= 1
 C $C3DD,1 B = A
 C $C3DE,8 L = ~(($60 - IY[0]) << 1)
-C $C3E6,1 -- this again
+C $C3E6,1 -- this pattern again (3)
 C $C3E7,1 H--
 C $C3E8,1 D = *HL
 C $C3E9,1 L--
 C $C3EA,1 E = *HL
-C $C3EB,1 A -= B
-C $C3EC,1 L = A
+C $C3EB,2 L = A - B
 C $C3ED,1 H++
 N $C3EE Continuation point.
-C $C3EE,1 A = *HL
-C $C3EF,1 L--
-C $C3F0,1 L = *HL
-C $C3F1,1 H = A
-C $C3F2,1 Set flags
+@ $C3EE label=drlc_7
+C $C3EE,4 HL = wordat(HL); L--
+C $C3F2,1 Set/clear flags before SBC
 C $C3F3,2 HL -= DE
 C $C3F5,1 A = L
 C $C3F6,3 Jump if negative
-C $C3F9,1 Set flags
+C $C3F9,1 Set flags from A
 C $C3FA,3 Jump if positive
 C $C3FD,2 A = 127
 C $C3FF,2 Jump
 N $C401 Negative case.
+@ $C401 label=drlc_8
 C $C401,1 Set flags
 C $C402,3 Jump if negative
-C $C405,2 A = $81
+C $C405,2 A = -127
 N $C407 Positive case.
+@ $C407 label=drlc_9
 C $C407,1 SP++
 C $C408,4 Bit 5 of IX[0] set?
 C $C40C,2 Jump if clear
-C $C40E,3 HL = $FF00
-C $C411,1 HL += SP
-C $C412,1 SP = HL
+C $C40E,5 Move SP 256 bytes back
+@ $C413 label=drlc_10
 C $C413,1 L = A
 C $C414,1 B = C
 C $C415,1 A = C
 C $C416,2 Bit 7 of L set?
 C $C418,2 Jump if clear
-C $C41A,1 A = L
-C $C41B,2 A = -A
-C $C41D,1 L = A
+N $C41A Otherwise negative
+C $C41A,4 L = -L
 C $C41E,1 A = B
 C $C41F,1 Compare to L
-C $C420,2 A = 'DEC DE'
-C $C422,2 Jump if A was < L
+C $C420,2 Load opcode of 'DEC DE'
+C $C422,2 Jump if prev A was < L
 C $C424,2 Jump
+@ $C426 label=drlc_11
 C $C426,1 Compare to L
-C $C427,2 A = 'INC DE'
-C $C429,2 Jump if A was < L
-C $C42B,3 Self modify instruction at #R$C435
-C $C42E,1 A = B
-C $C42F,1 A >>= 1
-N $C430 Divider?
+C $C427,2 Load opcode of 'INC DE'
+C $C429,2 Jump if prev A was < L
+@ $C42B label=drlc_self_modify
+C $C42B,3 Self modify instruction at #R$C435 below
+C $C42E,2 A = B >> 1
+@ $C430 label=drlc_bresenham_loop
 C $C430,1 A = L
 C $C431,1 Compare to C
 C $C432,2 Jump if A < C
 C $C434,1 A -= C
 C $C435,1 <self modified instruction> DE++ or DE--
+@ $C436 label=drlc_14
 C $C436,1 Stack DE
 C $C437,2 Loop
+@ $C439 label=drlc_15
 C $C439,2 IY++
-C $C43B,3 Pointer to routine which called function will store at instruction #R$C4B2
+N $C43B Four lane highway?
+@ $C43B label=drlc_16
+C $C43B,3 Set instruction #R$C4B2 to call dr_four_lane_highway/#R$C534
 C $C43E,3 Jump
+@ $C441 label=drlc_alt_bresenham
 C $C441,3 Self modify instruction at #R$C445
-C $C444,1 A = 0
+C $C444,1 A = 0  -- init counter
+@ $C445 label=drlc_alt_bresenham_loop
 C $C445,1 <self modified instruction> DE++ or DE--
 C $C446,1 A += C
 C $C447,2 Jump if carry
 C $C449,1 Compare to L
-C $C44A,2 Jump if A < L
+C $C44A,2 Loop if A < L
+@ $C44C label=drlc_19
 C $C44C,1 A -= L
 C $C44D,1 Stack DE
 C $C44E,2 Loop
@@ -9668,176 +10158,190 @@ c $C452 Draws the road
 D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=draw_road
 C $C452,4 Self modify #REGsp restore instruction
-C $C456,4 on_dirt_track = 0
-C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (in draw_tunnel)
-C $C45D,3 Self modify 'LD A,x' @ #R$C88F to be zero (tunnel related)
-C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to be 3
-C $C465,4 #REGiy = $E301
+C $C456,4 Zero on_dirt_track
+C $C45A,3 Self modify 'LD A,x' @ #R$C160 to load zero (in draw_tunnel, "tunnel visible")
+C $C45D,3 Self modify 'LD A,x' @ #R$C88F to load zero (below, "in tunnel")
+N $C460 This affects the thickness of the road edges and lane markings with increasing distance. A larger value means lines remain thick into distance.
+C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to load 3 (below)
+C $C465,4 Load address of height table[1]
 C $C469,6 C = $60 - IY[0]
-C $C46F,3 Load road_buffer_offset into #REGa
+N $C46F Set initial road stripe state.
+C $C46F,3 Load road_buffer_offset.lo
 C $C472,2 Add 64 so it's the lanes data offset
-C $C474,5 IX = $EE00 | A
-C $C479,3 B = A
-C $C47C,3 $C6B3 = A & 1
-C $C47F,4 RR B twice
-N $C483 I'm debating whether $D0 here is an opcode. I'm currently thinking not.
-C $C483,3 H = $D0, L = 16
-C $C486,1 Copy $D0 to #REGa
-C $C487,2 B = $55 -- Zero this and the landscape goes blank but only half the time
-C $C489,2 If B carried out (earlier) then jump
-C $C48B,3 H = $00, L = 48
-C $C48E,1 Copy $00 to #REGb
-@ $C48F label=dr_c48f
+C $C474,5 Load address of $EE00[#REGa]
+C $C479,1 Copy lanes data offset to #REGb
+C $C47A,5 Self modify 'LD A,x' @ #R$C6B2 (below) to load <lanes data offset> & 1
+C $C47F,4 Shift bit 1 of <lanes data offset> into carry
+C $C483,3 Set #REGh to $D0 (table offset?); Set #REGl to 16 (stripe height?)
+C $C486,1 Copy $D0 to #REGa (XOR base)
+N $C487 Alter this and the landscape uses that fill pattern, but only half the time.
+C $C487,2 Set #REGb to $55  -- "on" fill pattern?
+C $C489,2 If #REGb carried out (earlier) then jump
+C $C48B,3 Set #REGh to $00 (table offset?); Set #REGl to 48
+C $C48E,1 Copy $00 to #REGb  -- "off" fill pattern
+@ $C48F label=dr_stripe_state_set
 C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be x = $D0
-C $C492,4 Self modify 'ADD A,x' @ #R$C677 to be x = $D0 or x = $00
-C $C496,4 Self modify 'ADD A,x' @ #R$C651 to be x = $10 or x = $30
-C $C49A,4 Self modify 'ADD A,x' @ #R$C698 to be x = $11 or x = $31
-C $C49E,6 Self modify 'JP Z,x' @ #R$C4B2 to be #R$C534
-C $C4A4,2 L = $FF
-C $C4A6,3 DE = $0100
-C $C4A9,1 A = B
-C $C4AA,3 Self modify 'LD A,x' @ #R$C6BC to be zero?
+C $C492,4 Self modify 'ADD A,x' @ #R$C677 to be x = $D0 or $00
+C $C496,4 Self modify 'ADD A,x' @ #R$C651 to be x = $10 or $30
+C $C49A,4 Self modify 'ADD A,x' @ #R$C698 to be x = $11 or $31
+C $C49E,6 Self modify 'JP Z,x' @ #R$C4B2 to be dr_four_lane_highway/#R$C534
+C $C4A4,2 Set #REGl to $FF
+C $C4A6,3 Set #REGde to $0100
+C $C4A9,4 Self modify 'LD A,x' @ #R$C6BC to load on/off stripe fill pattern
 N $C4AD This entry point is used by the routine at #R$C598.
-@ $C4AD label=dr_c4ad
-C $C4AD,5 A = IX[0] & 3  -- lanes byte & 3
-C $C4B2,3 Jump to <self modified> if zero
+@ $C4AD label=dr_read_lanes
+C $C4AD,3 Load a lanes byte
+C $C4B0,2 Isolate bottom two bits (left hand position)
+C $C4B2,3 Jump to <self modified> if zero (e.g. dr_four_lane_highway)
+N $C4B5 Otherwise it's anything other than the zero case.
 C $C4B5,1 Bank
-C $C4B6,3 L = IX[0] -- sampled IX=$EEFD $EEFE $EEFF $EE00 .. etc.
-C $C4B9,2 A += $E7
+N $C4B6 Sampled IX=$EEFD $EEFE $EEFF $EE00 .. etc.
+C $C4B6,3 Reload the lanes byte
+C $C4B9,2 Turn left hand road position (1..3) into table high byte ($E8..$EA)
 C $C4BB,3 Self modify 'LD H,x' @ #R$C642
 C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
-C $C4C1,1 H = A
-C $C4C2,2 L <<= 1
-C $C4C4,2 New bit 7 set?
-C $C4C6,2 Jump if set  -- Forked road plotting path
-C $C4C8,2 Old bit 7 was set?
-C $C4CA,2 A &= 3
-C $C4CC,2 C = $FD
-C $C4CE,3 Jump
-@ $C4D1 label=dr_c4d1
-C $C4D1,2 A += 2
-C $C4D3,2 C = $FE
-@ $C4D5 label=dr_c4d5
+C $C4C1,1 Copy
+C $C4C2,2 Shift bit 7 of lanes byte into carry (a flag, undetermined at this point, but perhaps the dirt track flag)
+C $C4C4,2 Test former bit 6; is set for tunnel or for dirt track (carry preserved)
+C $C4C6,2 Jump to dr_special_road if set
+N $C4C8 If bit 6 was clear then it's a normal road (not tunnel, dirt track or forked road).
+C $C4C8,2 Jump to dr_two_lane if bit 7 was clear (any of the two-lane roads or 2-to-3 narrowing/widening lane types)
+N $C4CA If bit 7 was set then it's a 3-lane, 3-to-4 lane or 4-to-3 lane section.
+C $C4CA,2 $E8..$EA becomes $EB..$ED
+C $C4CC,2 Set #REGc to -3
+C $C4CE,3 Jump to dr_setup_scene_change
+N $C4D1 If bit 7 was clear then it's a 2-lane, 2-to-3 lane or 3-to-2 lane section.
+@ $C4D1 label=dr_two_lane
+C $C4D1,2 $E8..$EA becomes $EA..$EC
+C $C4D3,2 Set #REGc to -2
+@ $C4D5 label=dr_setup_scene_change
 C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
-C $C4DB,1 A = C
+C $C4DB,1 Set #REGa to $FD or $FE (from #REGc)
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
-C $C4DF,3 Exit via
-@ $C4E2 label=dr_c4e2
-C $C4E2,2 -- Forked road plotting path
-C $C4E4,2 C = $FF
-C $C4E6,2 H = 1
-C $C4E8,2 Bit 4 set?
-C $C4EA,2 Jump if set
-C $C4EC,2 Bit 3 set?
-C $C4EE,2 Jump if clear
-@ $C4F0 label=dr_c4f0
-C $C4F0,2 A = IY.low  -- tunnel size factor
-C $C4F2,3 Self modify 'CP x' @ #R$C15D
-C $C4F5,2 A = 1
-C $C4F7,1 C++
-C $C4F8,2 Bit 5 set?
-C $C4FA,2 Jump if clear
-C $C4FC,1 C--
-C $C4FD,1 A++
-C $C4FE,1 H--
-@ $C4FF label=dr_c4ff
+C $C4DF,3 Exit via draw_road_lanes_change/#R$C2E7  [this is its only caller]
+N $C4E2 If bit 6 was clear then it's a special road (tunnel, dirt track or forked road).
+@ $C4E2 label=dr_special_road
+C $C4E2,2 Jump to dr_dirt_track if carry set (bit 7 of lanes byte - dirt track flag)
+N $C4E4 If bit 7 was clear then it's a tunnel section.
+C $C4E4,2 Set #REGc to $FF
+C $C4E6,2 Set #REGh to 1
+C $C4E8,4 Jump if former bit 3 of lanes byte set (tunnel exit)
+C $C4EC,4 Jump if former bit 2 of lanes byte clear (also tunnel exit... so that can't be right)
+N $C4F0 If bits 2 or 3 are set then it's a tunnel transition section.
+@ $C4F0 label=dr_tunnel_transition
+C $C4F0,2 Load #REGiy.low (distance)
+C $C4F2,3 Self modify 'CP x' @ #R$C15D (in draw_tunnel) - tunnel distance
+C $C4F5,2 Set #REGa to 1 - tunnel visible
+C $C4F7,1 Set #REGc to 0 - fill pattern
+C $C4F8,4 Jump if former bit 4 of lanes byte clear (tunnel entrance)
+N $C4FC If bit 4 is set then it's a tunnel exit.
+C $C4FC,1 Set #REGc to $FF -- fill pattern
+C $C4FD,1 Set #REGa to 2 -- tunnel visible
+C $C4FE,1 Set #REGh to 0 -- in-tunnel flag
+@ $C4FF label=dr_set_visible_flag
 C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
-@ $C502 label=dr_c502
-C $C502,1 A = H
-C $C503,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
-C $C506,2 A = $EB
+@ $C502 label=dr_set_inside_flag
+C $C502,1 Set #REGa to 0 (from #REGh)
+C $C503,3 Self modify 'LD A,x' @ #R$C88F (inside tunnel flag)
+C $C506,2 Set #REGa to $EB  -- top byte of table?
 C $C508,3 Self modify 'LD H,x' @ #R$C5D9
 C $C50B,3 Self modify 'LD H,x' @ #R$C68A
-C $C50E,2 A = $FF
-C $C510,3 Self modify 'LD B,x' @ #R$C5AC
-C $C513,1 A = C
+C $C50E,2 Set #REGa to -1
+C $C510,3 Self modify 'LD B,x' @ #R$C5AC (-ve lane count)
+C $C513,1 A = C  (fill pattern)
 C $C514,1 Bank/unbank
-C $C515,1 B = A
+C $C515,1 B = A  (fill pattern)
 C $C516,3 Jump
-@ $C519 label=dr_c519
-C $C519,2 Bit 6 set?
-C $C51B,3 Jump to forked_road_plotter if set
-N $C51E Non-forked path.
-C $C51E,1 A = L
-C $C51F,2 A &= 24
-C $C521,2 A = 0
-C $C523,2 Jump if non-zero
-C $C525,1 A++
+N $C519 If bit 7 was set then it's a dirt track or forked road.
+@ $C519 label=dr_dirt_track
+C $C519,2 Jump to forked_road_plotter if former bit 5 (not 6
+N $C51B If bit 5 was set then it's a forked road.
+C $C51B,3 because shifted) of lanes byte is set}
+N $C51E If bit 5 was clear then it's a dirt track section.
+C $C51E,3 Set flags of (#REGl & 24)
+C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A?)
+C $C523,2 Jump if flags non-zero
+C $C525,1 Set new on_dirt_track value to 1
 @ $C526 label=dr_c526
-C $C526,3 on_dirt_track = A
-C $C529,2 A = $FF
-C $C52B,3 Self modify 'LD B,x' @ #R$C5AC
+C $C526,3 Set on_dirt_track to new value
+C $C529,2 Set #REGa to -1
+C $C52B,3 Self modify 'LD B,x' @ #R$C5AC (-ve lane count)
+C $C52E,3 -> dr_four_lane_highway
 C $C531,3 Jump forward
-@ $C534 label=dr_c534
-C $C534,1 Bank/unbank
-C $C535,2 A = $E8
+@ $C534 label=dr_four_lane_highway
+C $C534,1 Bank
+C $C535,2 Set #REGa to $E8  -- set left hand road position to leftmost
 C $C537,3 Self modify 'LD H,x' @ #R$C642
 C $C53A,3 Self modify 'LD H,x' @ #R$C5B3
-C $C53D,2 A += 4
+C $C53D,2 Set #REGa to $EC  -- set right hand road position to rightmost
 C $C53F,3 Self modify 'LD H,x' @ #R$C68A
 C $C542,3 Self modify 'LD H,x' @ #R$C5D9
-C $C545,2 A = $FC
+C $C545,2 Set #REGa to -4
 C $C547,3 Self modify 'LD B,x' @ #R$C5AC
-N $C54D This entry point is used by the routine at #R$C2E7.
-@ $C54D label=dr_c54d
+C $C54A,3 -> dr_c551
+N $C54D This entry point is used by the routine at #R$C2E7. Called for regular roads incl dirt track, but not tunnels or splits.
+@ $C54D label=dr_set_lane_callback
 C $C54D,3 Self modify 'JP Z,x' @ #R$C4B2
 C $C550,1 Bank/unbank
-@ $C551 label=dr_c551
-C $C551,1 A = B
-C $C552,1 Set flags
+@ $C551 label=dr_dispatch_fill
+C $C551,2 Copy fill pattern from #REGb
 C $C553,3 Jump if non-zero
-C $C556,1 Bank/unbank
+C $C556,1 Bank
 C $C557,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C55F
-C $C55D,1 Bank/unbank
-C $C55F,1 A = D
-C $C560,1 D--
-C $C561,2 A &= 15
+C $C55D,1 Unbank
+N $C55F Move to next scanline.
+@ $C55F label=dr_advance_unfilled
+C $C55F,1 Save for checking in a moment
+C $C560,1 Move to next scanline (visually upwards)
+C $C561,2 Would it have rolled over into the top nibble?
 C $C563,2 Jump if zero
 N $C565 This entry point is used by the routine at #R$C58A.
-@ $C565 label=dr_c565
+@ $C565 label=dr_write_scanline_unfilled
 C $C565,4 Self modify 'LD DE,x' @ #R$C56C (below)
-C $C569,2 B = $FF
+C $C569,2 Set #REGb to $FF
 C $C56B,1 Bank/unbank
 N $C56C Calculate address of next bitmap scanline ??
 C $C56C,3 DE = <self modified>
 C $C56F,4 L = E + 31
 C $C573,1 H = D
 C $C574,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C575,3 HL = 0  [not self modified apparently]
-C $C578,1 C = L
+C $C575,3 HL = 0  [not self modified apparently] -- fill value
+C $C578,1 C = 0
 C $C579,3 Jump into a sequence of 15 PUSH HLs
-N $C57C smells like scanline/buffer pointer movement
-@ $C57C label=dr_c57c
-C $C57C,4 E -= 32
-C $C580,3 Jump if it went -ve
-C $C583,4 D += 16
+N $C57C This is scanline/buffer pointer movement
+@ $C57C label=dr_rollover_filled
+C $C57C,4 Move to next chunk of 16 scanlines
+C $C580,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
+C $C583,4 Put back the bit stolen since BAAA field was zero
 C $C587,3 jump
-N $C58A smells like scanline/buffer pointer movement
-@ $C58A label=dr_c58a
-C $C58A,4 E -= 32
-C $C58E,3 Jump if it went -ve
-C $C591,4 D += 16
+N $C58A This is scanline/buffer pointer movement
+@ $C58A label=dr_rollover_unfilled
+C $C58A,4 Move to next chunk of 16 scanlines
+C $C58E,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
+C $C591,4 Put back the bit stolen since BAAA field was zero
 C $C595,3 jump
 N $C598 Road and backdrop plotting
-@ $C598 label=dr_c598
+@ $C598 label=dr_dispatch_filled
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C5A1
 C $C59F,1 Unbank
-C $C5A1,1 A = D
-C $C5A2,1 D--
-C $C5A3,2 A &= 15
-C $C5A5,2 Jump if zero
+N $C5A1 Move to next scanline.
+@ $C5A1 label=dr_advance_filled
+C $C5A1,1 Save for checking in a moment
+C $C5A2,1 Move to next scanline (visually upwards)
+C $C5A3,2 Would it have rolled over into the top nibble?
+C $C5A5,2 Jump if rolled over
 N $C5A7 This entry point is used by the routine at #R$C57C.
-@ $C5A7 label=dr_c5a7
+@ $C5A7 label=dr_fill
 C $C5A7,4 Self modify 'LD DE,x' @ #R$C5F9
 C $C5AB,1 A = L
-C $C5AC,2 B = <self modified>
+C $C5AC,2 B = <self modified>  e.g. $FC or $FD  -- -ve lane count
 C $C5AE,1 Bank
 C $C5AF,1 L = A
 C $C5B0,3 B = 16, C = $F8 (mask)
-C $C5B3,2 Self modified
-C $C5B5,1 A = *HL
+C $C5B3,2 Load <self modified> top byte of table left hand position
+C $C5B5,1 Load from table
 C $C5B6,1 Set flags
 C $C5B7,3 Jump if zero
 C $C5BA,2 A = 0 (not self modified)
@@ -9846,8 +10350,8 @@ C $C5BF,2 A = 15
 C $C5C1,3 Jump
 N $C5C4 Pattern
 @ $C5C4 label=dr_c5c4
-C $C5C4,3 A = HL[-1]
-C $C5C7,1 A &= C  -- C is the mask $F8 here
+C $C5C4,3 Load HL[-1]
+C $C5C7,1 A &= $F8  -- C is the mask $F8 here
 C $C5C8,3 A >>= 3
 C $C5CB,1 A >>= 1
 C $C5CC,2 Add carry
@@ -9855,63 +10359,72 @@ C $C5CE,4 Jump if A < B
 C $C5D2,1 A--
 @ $C5D3 label=dr_c5d3
 C $C5D3,1 E = A
-C $C5D4,2 A = ~A + B
+C $C5D4,2 A = ~E + B  -- B is 16
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
-C $C5D9,2 H = $EC
-C $C5DB,1 A = *HL
+C $C5D9,2 Set high byte of table address to <self modified> e.g. $EC
+C $C5DB,1 Read from table  -- is this 8-bit or a partial 16-bit value?
 C $C5DC,1 Set flags
-C $C5DD,3 Jump if zero
-C $C5E0,2 A = 15
+C $C5DD,3 Jump if zero  -- jump to calc bit
+C $C5E0,2 Set righthand jump table target to 15 (just plots 16 pixels?)
 C $C5E2,3 Jump if positive
-C $C5E5,1 A = 0
+C $C5E5,1 Otherwise set it to zero (plots 15*16 pixels?)
 C $C5E6,3 Jump
 N $C5E9 Same pattern again
-@ $C5E9 label=dr_c5e9
+@ $C5E9 label=dr_calc_righthand_width
 C $C5E9,1 L--
-C $C5EA,2 A = *HL & C  -- C is the mask $F8 here
+C $C5EA,1 Read from table
+C $C5EB,1 Mask with $F8 (#REGc is the mask $F8 here)
 C $C5EC,3 A >>= 3
 C $C5EF,1 A >>= 1
-@ $C5F0 label=dr_c5f0
-C $C5F0,3 Self modify 'JR x' @ #R$C60A -- jump table target
-C $C5F3,3 A = ~A + B + E
-C $C5F6,3 Self modify 'JR x' @ #R$C61B -- jump table target
-C $C5F9,3 DE = <self modified>
+@ $C5F0 label=dr_set_righthand_jump_table_target
+C $C5F0,3 Self modify 'JR x' @ #R$C60A -- righthand jump table target
+N $C5F3 Calculate road jump table target.
+C $C5F3,3 A = ~A + B + E (== 15 - A + E)
+C $C5F6,3 Self modify 'JR x' @ #R$C61B -- road jump table target
+C $C5F9,3 DE = <self modified by #$C5A7>
 C $C5FC,4 L = E + 31
 C $C600,1 H = D
 C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C602,1 Bank
-C $C603,1 A <<= 1
-C $C604,1 H = A
-C $C605,1 L = A
-C $C606,1 Unbank
-C $C607,3 BC = 0
+C $C602,1 Unbank fill byte
+C $C603,1 Rotate fill pattern so we checkerboard
+C $C604,2 Widen stripe fill byte to whole word
+C $C606,1 Bank fill byte
+C $C607,3 Set road fill to zero (but only when drawing stripes)
+N $C60A Fill right hand road stripes - starting from right hand side.
 @ $C60A refs=:$C60A
+@ $C60A label=dr_righthand_jumptable
 C $C60A,2 Jump table (self modified)
+N $C61B Fill blank road surface - continuing from the right hand side.
 @ $C61B refs=:$C61B
+@ $C61B label=dr_road_jumptable
 C $C61B,2 Jump table (self modified)
+N $C62C Fill left hand road stripes - continuing from the right hand side.
 @ $C62C refs=:$C62C
+@ $C62C label=dr_lefthand_jumptable
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
-@ $C62E label=dr_c62e
+@ $C62E label=dr_fill_left_stripe
+N $C63D ...
 C $C63D,1 B = E
-C $C63E,1 C--
-C $C63F,2 H = $E4  -- point at $E4xx - road edge/markings table
+C $C63E,1 0 -> 255
+C $C63F,2 Point #REGhl at road edge/markings table at $E4xx
 C $C641,1 Bank/unbank
-C $C642,2 H = <self modified>  -- seems to receive $E8 $E9 $EA (left, centre left, centre tables)
-C $C644,1 A = *HL
+C $C642,2 Load <self modified> top byte of road left hand edge table ($E8/$E9/$EA for left/centre-left/centre)
+C $C644,1 Read from left/centre-left/centre hand edge table at $E8xx/$E9xx/$EAxx
 C $C645,3 Jump if non-zero
-C $C648,3 A = HL[-1]
-C $C64B,1 Bank/unbank
+N $C648 Otherwise zero.
+C $C648,3 index = HL[-1]  -- Load the byte prior
+C $C64B,1 Bank
 N $C64C Build address of road edge marking graphic.
-N $C64C Bottom three bits select the row.
 C $C64C,1 Save index
-C $C64D,4 A = (A & 7) * 4
-C $C651,2 A += <self modifed>  -- set to one of $10 $30 $50 $70 $90 $B0 - offset of the current edge graphic
-C $C653,1 Set road/edge markings address
+C $C64D,2 Bottom three bits select the row number 0..7
+C $C64F,2 Turn into a scanline offset (4 bytes per row)
+C $C651,2 Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
+C $C653,1 Set #REGhl to road edge marking address
 N $C654 Top five bits select screen buffer addr?
 N $C654 If I break this it seems to affect the left hand side only.
 C $C654,8 E = ((index >> 3) & 31) + B
-N $C65C AND-OR masking here. DE is address of screen buffer byte HL is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
+N $C65C AND-OR masking here. #REGde is address of screen buffer byte. #REGhl is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
 C $C65C,1 Read a screen buffer byte
 C $C65D,1 Apply the mask
 C $C65E,1 Advance to bitmap byte
@@ -9920,33 +10433,33 @@ C $C660,1 Write the new screen buffer byte
 C $C661,2 L += 2
 C $C663,1 E++
 C $C664,2 *DE++ = *HL++, BC--
-C $C666,1 Bank/unbank
-@ $C667 label=dr_c667
-C $C667,1 B++  -- counter?
-C $C668,2 Jump if zero  -- exit?
+C $C666,1 Unbank
+N $C667 Draw road lane markings.
+@ $C667 label=dr_road_lane_marking_loop
+C $C667,1 Increment counter
+C $C668,2 Exit loop if zero
 C $C66A,1 H++
-C $C66B,1 A = *HL
+C $C66B,1 Read from road left drawing table e.g $E89F
 C $C66C,1 Set flags
-C $C66D,2 Jump if non-zero
-C $C66F,3 A = HL[-1]
-C $C672,1 Bank/unbank
+C $C66D,2 Loop if non-zero
+C $C66F,3 A = HL[-1]  (with wraparound?)
+C $C672,1 Bank
 C $C673,1 E = A  -- save A
 C $C674,6 L = ((A & 7) << 1) + <self modified>
 C $C67A,8 E = ((E >> 3) & 31) + B
 C $C682,2 *DE++ = *HL++, BC--
-N $C684 This reads a road edge byte from $E4xx.
-C $C684,1 A = *HL
-C $C685,1 *DE = A
-C $C686,1 Bank/unbank
-C $C687,3 Jump  -- looks like a loop
+N $C684 This reads an (unmasked) road lane marker bitmap byte from $E4D0+.
+C $C684,2 Copy a byte from $E4D0+ to the buffer
+C $C686,1 Unbank
+C $C687,3 Loop
 @ $C68A label=dr_c68a
-C $C68A,2 H = <self modified>
+C $C68A,2 Set high byte of table address to <self modified> e.g. $EC
 C $C68C,1 A = *HL
 C $C68D,1 L--
 C $C68E,1 Set flags
 C $C68F,2 Jump if non-zero
 C $C691,1 A = *HL
-C $C692,1 Bank/unbank
+C $C692,1 Bank
 C $C693,1 E = A  -- save A
 N $C694 Must be the right hand edge handling.
 C $C694,7 L = ((A & 7) << 2) + <self modified>   -- as above but * 4
@@ -9956,31 +10469,35 @@ N $C6A5 AND-OR masking here. This affects road lines when altered.
 C $C6A5,2 A = *DE & *HL
 C $C6A7,1 L++
 C $C6A8,2 *DE = A | *HL
-C $C6AA,1 Bank/unbank
+C $C6AA,1 Unbank
 @ $C6AB label=dr_c6ab
 C $C6AB,1 L--
-C $C6AC,1 C--
+C $C6AC,1 C--  -- possible loop counter
 C $C6AD,3 Jump to <self modified> if non-zero
 C $C6B0,1 Swap
 C $C6B1,1 B = A
-@ $C6B2 label=dr_c6b2
-C $C6B2,2 A = <self modified>
-C $C6B4,2 A ^= 1
-C $C6B6,3 Self modify above
+N $C6B2 This causes the alternating road stripes.
+@ $C6B2 label=dr_set_stripes
+C $C6B2,2 Load <self modified>  -- loads (<lanes data offset> & 1)
+C $C6B4,2 Toggle the road stripe state
+C $C6B6,3 Write it back
 C $C6B9,3 Jump if non-zero
-C $C6BC,4 A = <self modified> ^ 0x55
+@ $C6BC label=dr_stripe_perhaps_off
+C $C6BC,2 Load <self modified> fill pattern
+C $C6BE,2 Exclusive or with $55  -- toggling the stripe fill pattern?
 C $C6C0,3 Self modify above
-C $C6C3,1 B = A
+C $C6C3,1 Keep a copy of the stripe fill pattern  -- follow this through
 N $C6C4 This causes the road edge stripes.
-C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651  -- switch between adjacent edge graphics
-C $C6CC,1 A++
+C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651  -- switch between adjacent edge graphics (that are 32 bytes each)
+C $C6CC,1 ?advance past a mask byte (guess)?
 C $C6CD,3 Self modify 'ADD A,x' @ #R$C698
 C $C6D0,8 Toggle <self modified> bits of 'ADD A,x' @ #R$C677
-@ $C6D8 label=dr_c6d8
-C $C6D8,2 A = <self modified>  -- self modified below
-C $C6DA,1 A--
-C $C6DB,3 Self modify 'LD A' @ #R$C6D8 to be new #REGa [above]
+@ $C6D8 label=dr_stripe_perhaps_on
+C $C6D8,2 Load <self modified> edge width value
+C $C6DA,1 Decrement it
+C $C6DB,3 Self modify 'LD A' above @ #R$C6D8 to be new #REGa
 C $C6DE,3 Jump if non-zero
+N $C6E1 Otherwise edge width value was zero.
 C $C6E1,3 Read 'XOR x' @ #R$C6D3
 C $C6E4,2 A += 16
 C $C6E6,2 Jump if carried
@@ -9994,29 +10511,34 @@ C $C6F3,3 Self modify 'ADD A,x' @ #R$C677
 @ $C6F6 label=dr_c6f6
 C $C6F6,8 Increment x in 'ADD A,x' @ #R$C651 by 64  -- next road edge graphic?
 C $C6FE,5 Self modify 'LD A,x' @ #R$C6D8 to be 5
-@ $C703 label=dr_c703
-C $C703,3 A = IY[0]
-C $C706,2 IY++
-C $C708,2 IX.low++
+N $C703 Sampled IY = $E301..$E315
+@ $C703 label=dr_edge_width_handled
+C $C703,3 Load IY[0]
+C $C706,2 Increment #REGiy
+N $C708 Sampled IX = $EEC5..$EED9
+C $C708,2 IX.low++  -- wrapping around
 C $C70A,3 A -= IY[0]
 C $C70D,2 Jump if zero
 C $C70F,3 Jump if positive
 C $C712,3 Jump
-@ $C715 label=dr_c715
+@ $C715 label=dr_level_road
 C $C715,2 L -= 2
-C $C717,3 C = IX[0]
-C $C71A,2 Bit 6 of C set?
-C $C71C,3 Jump if clear
-C $C71F,2 Bit 7 of C set?
-C $C721,3 Jump if set
-C $C724,2 B = 255
-C $C726,2 Bit 2 of C set?
-C $C728,2 A = 1
-C $C72A,2 Jump if clear
-C $C72C,2 A = IY.low  -- tunnel size factor
+N $C717 Sampled IX = $EE2C ... EE39 EE45
+C $C717,3 Load the lanes flags byte
+C $C71A,2 Bit 6 indicates tunnel or dirt track
+C $C71C,3 Jump (loop?) if clear (neither tunnel nor dirt track)
+N $C71F Tunnel or dirt track.
+C $C71F,2 Bit 7 indicates dirt track
+C $C721,3 Jump (loop?) if set (dirt track only)
+N $C724 Tunnel.
+C $C724,2 Load 255
+C $C726,2 Bit 2 indicates tunnel start
+C $C728,2 Load 1  -- value for (tunnel related)
+C $C72A,2 Jump if clear (tunnel cont/end?)
+C $C72C,2 Load #REGiy.low (distance)
 C $C72E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C731,2 A = 1
-C $C733,1 B++
+C $C733,1 255 -> 0
 C $C734,2 Bit 4 of C set?
 C $C736,1 C = A
 C $C737,2 Jump if clear
@@ -10041,7 +10563,7 @@ C $C754,2 B = 255
 C $C756,2 Bit 2 of C set?
 C $C758,2 A = 1
 C $C75A,2 Jump if clear
-C $C75C,2 A = IY.low  -- tunnel size factor
+C $C75C,2 Load #REGiy.low (distance)
 C $C75E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C761,2 A = 1
 C $C763,1 B++
@@ -10078,30 +10600,22 @@ C $C794,1 C = A
 C $C795,2 Compare to $50
 C $C797,3 Jump if A < $50
 N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
-@ $C79A label=dr_c79a
+@ $C79A label=dr_start_backdrop_fill
 C $C79A,1 E++
-C $C79B,3 Address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
+C $C79B,3 Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C79E,3 Read 'LD A,x' @ #R$C88F (tunnel related)
 C $C7A1,1 A |= *HL
 C $C7A2,1 A >>= 1
-C $C7A3,3 Jump if carry
-C $C7A6,1 A = D
-C $C7A7,2 A &= 15
-C $C7A9,1 C = A
-C $C7AA,1 A = E
-C $C7AB,2 A >>= 1
-C $C7AD,1 A += C
-C $C7AE,1 A = ~A
-C $C7AF,2 A += $80
-C $C7B1,1 B = A
-C $C7B2,3 HL = horizon_level
+C $C7A3,3 Jump if carry (bottom bit set)
+C $C7A6,4 C = D & 15
+C $C7AA,8 B = ~((E >> 1) + C) + $80
+C $C7B2,3 Load horizon_level
 C $C7B5,2 C = 24
 C $C7B7,1 A = H
 C $C7B8,1 Set flags
 C $C7B9,3 Jump if negative
 C $C7BC,2 Jump if non-zero
-C $C7BE,1 A = L
-C $C7BF,1 A -= B
+C $C7BE,2 A = L - B
 C $C7C0,2 Jump if A was >= B
 C $C7C2,1 A += C
 C $C7C3,3 Jump if no carry
@@ -10112,34 +10626,26 @@ C $C7CA,1 A = C
 C $C7CB,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7CE,1 A += B
 C $C7CF,3 Jump if positive
-C $C7D2,2 A -= 127
-C $C7D4,2 A = -A
-C $C7D6,1 A += C
+C $C7D2,5 A = -(A - 127) + C
 C $C7D7,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7DA,1 C = A
 @ $C7DB label=dr_c7db
-C $C7DB,4 A = 24 - C
-C $C7DF,1 A <<= 1
-C $C7E0,1 C = A
-C $C7E1,2 A <<= 2
-C $C7E3,1 A += C
-C $C7E4,1 C = A
-C $C7E5,2 B = 0
-C $C7E7,2 A = <self modified>  -- horizon shift value (ranges 0..19)
-C $C7E9,1 A >>= 1  -- deciding whether to use the shifted or non shifted backdrop
-C $C7EA,3 Point at first hill backdrop (shifted version)
+C $C7DB,12 BC = (24 - C) * 3  -- assuming no overflow from calc of C
+C $C7E7,2 Load <self modified> horizon's horizontal shift value (ranges 0..19)
+N $C7E9 Decide whether to use the pre-shifted or the non-shifted version of the backdrop bitmap.
+C $C7E9,1 Shift bottom bit out to carry
+C $C7EA,3 Point at hill backdrop (pre-shifted version)
 C $C7ED,2 Jump if no carry
-C $C7EF,3 Point at second hill backdrop
+C $C7EF,3 Point at hill backdrop (non-shifted version)
 @ $C7F2 label=dr_c7f2
 C $C7F2,1 HL += BC
 C $C7F3,1 Bank/unbank
+N $C7F4 #REGa is 0..9 here, turn it back to 0..18 and invert to make jump table target.
 C $C7F4,4 A = 18 - A * 2
 C $C7F8,3 Self modify 'JR x' @ #R$C86C -- jump table target
-C $C7FB,3 DE = A
-C $C7FE,3 Address of backdrop_shift_instrs
-C $C801,1 HL += DE
-C $C802,3 BC = 18
-C $C805,3 Address in instruction stream
+C $C7FB,7 Set source address to backdrop_shifting_instrs[A]
+C $C802,3 Copy 18 bytes
+C $C805,3 Set destination address to instruction stream
 C $C808,2 Copy
 C $C80A,3 BC = $<self modified>0A
 C $C80D,1 Bank/unbank
@@ -10151,7 +10657,7 @@ N $C813 Scanline advance pattern.
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
-@ $C821 label=dr_c821
+@ $C821 label=dr_c821_apparent_loop_start
 C $C821,1 Bank/unbank
 C $C822,1 Swap
 C $C823,1 E = A
@@ -10165,6 +10671,7 @@ N $C82A This entry point is used by the routine at #R$C813.
 C $C82A,1 A = E
 C $C82B,1 Swap
 C $C82C,1 L = A
+@ $C82D label=dr_c82d
 C $C82D,18 18 instructions/lines filled in by earlier code
 @ $C86C label=dr_c86c
 C $C86C,2 Self modified - jump table
@@ -10189,7 +10696,7 @@ C $C895,1 $0000 -> $FFFF
 C $C896,2 Mask for later
 N $C898 Decrement the screen address.
 @ $C898 label=dr_sky_fill_loop
-C $C898,1 Save H in A
+C $C898,1 Save #REGh in #REGa
 C $C899,1 Decrement row address
 C $C89A,1 Extract low four bits of row address
 C $C89B,2 Jump to dr_sky_fill_scanline if non-zero (easy case)
@@ -10200,22 +10707,22 @@ N $C8A3 Exit.
 C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
 @ $C8A7 label=dr_sky_fill_fix_address
-C $C8A7,4 Didn't carry so fix H from earlier DEC H (1110xxxx -> 1111xxxx)
+C $C8A7,4 Didn't carry so fix #REGh from earlier DEC H (1110xxxx -> 1111xxxx)
 N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper part of the sky. DE must always be zero? or what about tunnels?
 @ $C8AB label=dr_sky_fill_scanline
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C8AC,15 Write 30 bytes of sky pixels
 C $C8BB,3 Loop
-c $C8BE Builds a pre-shifted version of the backdrop horizon image
+c $C8BE Builds a pre-shifted version of the backdrop horizon bitmap
 D $C8BE 80x24 pixels = 240 bytes
 D $C8BE Used by the routine at #R$87DC.
 @ $C8BE label=pre_shift_backdrop
-C $C8BE,3 Point at source image
-C $C8C1,3 Point at destination image (to be shifted)
+C $C8BE,3 Point at source bitmap
+C $C8C1,3 Point at destination bitmap (to be shifted)
 C $C8C4,2 Preserve addresses
-C $C8C6,5 Copy whole source image to destination
+C $C8C6,5 Copy whole source bitmap to destination
 C $C8CB,1 Restore source address
-C $C8CC,5 #REGde = Source address + 9
+C $C8CC,5 #REGde = Source address + 9 (final byte on line)
 C $C8D1,1 Pop destination address
 C $C8D2,3 Load counters for 10 bytes per row, 24 rows
 @ $C8D5 label=psb_row_loop
@@ -10237,7 +10744,7 @@ C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
 C $C8E4,3 Read 'LD A,x' @ #R$C6D8
 C $C8E7,3 Self modify 'LD A,x' @ #R$CB65
-C $C8EA,3 Read 'LD A,x' @ #R$C6B2
+C $C8EA,3 Read 'LD A,x' @ #R$C6B2  -- read road stripe state
 C $C8ED,3 Self modify 'LD A,x' @ #R$CB36
 C $C8F0,3 Read 'XOR x' @ #R$C6D3
 C $C8F3,3 Self modify 'XOR x' @ #R$CB5D
@@ -10250,9 +10757,10 @@ C $C905,3 Self modify 'ADD A,x' @ #R$CADC
 C $C908,1 A++
 C $C909,3 Self modify 'ADD A,x' @ #R$CB1C
 C $C90C,3 Self modify 'ADD A,x' @ #R$CABB
-C $C90F,3 Read 'LD A,x' @ #R$C6BC
+C $C90F,3 Read 'LD A,x' @ #R$C6BC  -- read road stripe fill pattern
 C $C912,3 Self modify 'LD A,x' @ #R$CB40
 N $C915 This entry point is used by the routines at #R$CBA4 and #R$CBC5.
+@ $C915 label=dfr_c915
 C $C915,1 A = B
 C $C916,1 Set flags
 C $C917,3 Jump if non-zero
@@ -10262,31 +10770,35 @@ C $C921,1 Bank
 C $C923,4 A = (D - 1) & 15
 C $C927,2 Jump if zero
 N $C929 This entry point is used by the routine at #R$C94C.
-C $C929,4 Self modify 'LD DE,x' @ #R$C92E (just below)
+@ $C929 label=dfr_c929
+C $C929,4 Self modify 'LD DE,x' @ #R$C92E (just below) to load current DE  -- start of current scanline
 C $C92D,1 Unbank
-N $C92E Calculate address of next bitmap scanline ??
-C $C92E,3 DE = <self modified>
-C $C931,4 L = E + 31
+C $C92E,3 Load <self modified> address of start of current scanline
+C $C931,4 Calculate final byte of scanline (start + 31)
 C $C935,1 H = D
-C $C936,1 Put it in #REGsp (so we can use POP for speed)
+C $C936,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C937,3 HL = 0  [not self modified apparently]
 C $C93A,1 C = L
 C $C93B,3 Jump into a sequence of 15 PUSH HLs
-N $C93E Smells line scanline counting foo.
+N $C93E Scanline advance then jump somewhere.
+@ $C93E label=dfr_next_scanline_then_c969
 C $C93E,4 E -= 32
 C $C942,3 Jump if E < 32
 C $C945,4 D -= 16
-N $C94C Smells line scanline counting foo.
+N $C94C Another scanline advance then jump.
+@ $C94C label=dfr_next_scanline_then_c929
 C $C94C,4 E -= 32
 C $C950,3 Jump if E < 32
 C $C953,4 D -= 16
+@ $C95A label=dfr_c95a
 C $C95A,1 Unbank
 C $C95B,6 Self modify 'JP NZ,x' @ #R$CB31 to be #R$C963
 C $C963,1 A = D
 C $C964,1 D--
 C $C965,2 A &= $0F
 C $C967,2 Jump if zero
-C $C969,4 Self modify 'LD DE,x' @ #R$CA00 to load current DE
+@ $C969 label=dfr_c969
+C $C969,4 Self modify 'LD DE,x' @ #R$CA00 to load current DE  -- start of current scanline
 C $C96D,1 A = L
 C $C96E,1 Bank/unbank
 C $C96F,1 L = A
@@ -10300,6 +10812,7 @@ C $C97C,3 Jump if negative
 C $C97F,2 A = 15
 C $C981,3 Jump
 N $C984 Variation 1?
+@ $C984 label=dfr_c984
 C $C984,3 A = HL[-1]
 C $C987,1 A &= C  -- C is the mask $F8 here
 C $C988,3 A >>= 3
@@ -10307,10 +10820,11 @@ C $C98B,1 A >>= 1
 C $C98C,2 Add carry
 C $C98E,4 Jump if A < B
 C $C992,1 A--
+@ $C993 label=dfr_c993
 C $C993,1 E = A
 C $C994,1 A = ~A
 C $C995,1 A += B
-C $C996,3 Self modify 'JR x' @ #R$CA55 -- jump table target
+C $C996,3 Self modify 'JR x' @ #R$CA55  -- set lefthand off-road jump table target
 C $C999,2 H++
 C $C99B,1 A = *HL
 C $C99C,1 Set flags
@@ -10319,14 +10833,16 @@ C $C9A0,2 A = 0 (not self modified)
 C $C9A2,3 Jump if negative
 C $C9A5,2 A = 15
 C $C9A7,3 Jump
-N $C9AA Variation 2?
+N $C9AA Variation 2?  [hit when left turn at fork]
+@ $C9AA label=dfr_c9aa
 C $C9AA,3 A = HL[-1]
 C $C9AD,1 A &= C  -- C is the mask $F8 here
 C $C9AE,3 A >>= 3
 C $C9B1,1 A >>= 1
+@ $C9B2 label=dfr_c9b2
 C $C9B2,1 D = A
 C $C9B3,3 A = ~(A - E) + B
-C $C9B6,3 Self modify jump table target
+C $C9B6,3 Self modify 'JR x' @ #R$CA44  -- set lefthand blank road jump table target
 C $C9B9,1 H++
 C $C9BA,1 A = *HL
 C $C9BB,1 Set flags
@@ -10336,6 +10852,7 @@ C $C9C1,3 Jump if negative
 C $C9C4,2 A = 15
 C $C9C6,3 Jump
 N $C9C9 Variation 3?
+@ $C9C9 label=dfr_c9c9
 C $C9C9,3 A = HL[-1]
 C $C9CC,1 A &= C  -- C is the mask $F8 here
 C $C9CD,3 A >>= 3
@@ -10343,11 +10860,12 @@ C $C9D0,1 A >>= 1
 C $C9D1,2 Add carry
 C $C9D3,4 Jump if A < B
 C $C9D7,1 A--
+@ $C9D8 label=dfr_c9d8
 C $C9D8,1 E = A
 C $C9D9,1 A -= D
 C $C9DA,1 A = ~A
 C $C9DB,1 A += B
-C $C9DC,3 Self modify 'JR x' @ #R$CA33 -- jump table target
+C $C9DC,3 Self modify 'JR x' @ #R$CA33  -- set middle off-road jump table target
 C $C9DF,2 H += 2
 C $C9E1,1 A = *HL
 C $C9E2,1 Set flags
@@ -10357,37 +10875,48 @@ C $C9E8,3 Jump if negative
 C $C9EB,2 A = 15
 C $C9ED,3 Jump
 N $C9F0 Different chunk
+@ $C9F0 label=dfr_c9f0
 C $C9F0,2 A = HL[-1]
 C $C9F2,1 A &= C  -- C is the mask $F8 here
 C $C9F3,3 A >>= 3
 C $C9F6,1 A >>= 1
-C $C9F7,3 Self modify 'JR x' @ #R$CA11 -- jump table target
+@ $C9F7 label=dfr_c9f7
+C $C9F7,3 Self modify 'JR x' @ #R$CA11  -- set righthand off-road jump table target
 C $C9FA,1 A -= E
 C $C9FB,2 A = ~A + B
-C $C9FD,3 Self modify 'JR x' @ #R$CA22 -- jump table target
-C $CA00,3 Self modified
-C $CA03,3 A = E + 31
-C $CA06,1 L = A
-C $CA07,1 H = D
-C $CA08,1 Put it in #REGsp (so we can use POP for speed)
-C $CA09,1 Bank A
-C $CA0A,1 A <<= 1  -- Rotate the road shading pattern (0x55 <-> 0xAA)
-C $CA0B,1 H = A   -- Prepare pattern for storing
-C $CA0C,1 L = A
-C $CA0D,1 Unbank A
-N $CA0E This BC filling the blank parts of the road when drawing the forked road.
-C $CA0E,3 BC = 0 [doesn't seem self modified]
-C $CA11,17 Jump table (self modified) Write 16 pixels
+C $C9FD,3 Self modify 'JR x' @ #R$CA22  -- set righthand blank road jump table target
+C $CA00,3 Load <self modified> address of start of current scanline
+C $CA03,5 Calculate final byte of scanline (start + 31)
+N $CA08 HL is now the end of the scanline we're drawing (in the back buffer).
+C $CA08,1 Put it in #REGsp (so we can use PUSH for speed)
+C $CA09,1 Unbank the stripe shading pattern
+C $CA0A,1 Alternate the pattern (0x55 <-> 0xAA)
+C $CA0B,2 Prepare pattern for storing
+C $CA0D,1 Bank it again
+N $CA0E Draw striped pattern.
+C $CA0E,3 Load zero fill pattern (NOT self modified)
+@ $CA11 label=dfr_draw_righthand_verge
+C $CA11,17 Jump table (self modified)
+N $CA22 Draw blank road.
+@ $CA22 label=dfr_draw_righthand_road
 C $CA22,17 Jump table (self modified)
+N $CA33 Draw striped pattern.
+@ $CA33 label=dfr_draw_middle_verge
 C $CA33,17 Jump table (self modified)
+N $CA44 Draw blank road.
+@ $CA44 label=dfr_draw_lefthand_road
 C $CA44,17 Jump table (self modified)
+N $CA55 Draw striped pattern.
+@ $CA55 label=dfr_draw_lefthand_verge
 C $CA55,2 Jump table (self modified)
+@ $CA57 label=dfr_push_15_hls
+N $CA66 (end of scanline filling)
 C $CA66,1 B = E
 C $CA67,1 C--
-C $CA68,2 H = $E4
+C $CA68,2 H = $E4  -- table high byte
 C $CA6A,1 Bank/unbank
-C $CA6B,2 H = $E8
-C $CA6D,1 A = *HL
+C $CA6B,2 H = $E8  -- table high byte
+C $CA6D,1 Load from $E8xx
 C $CA6E,1 Set flags
 C $CA6F,2 Jump if non-zero
 C $CA71,3 A = HL[-1]
@@ -10402,7 +10931,7 @@ C $CA7E,3 A = A (rotate right through carry) 3
 C $CA81,3 A = (A & 31) + B
 C $CA84,1 E = A
 C $CA85,1 A = *DE
-C $CA86,1 A = A & *HL
+C $CA86,1 A = A & *HL  -- AND with ($E4xx)
 C $CA87,1 L++
 C $CA88,1 A |= *HL
 C $CA89,1 *DE = A
@@ -10411,6 +10940,7 @@ C $CA8C,1 E++
 C $CA8D,2 *DE++ = *HL++, BC--
 C $CA8F,1 Bank/unbank
 N $CA90 Similar chunk to above
+@ $CA90 label=dfr_ca90
 C $CA90,1 H++
 C $CA91,1 A = *HL
 C $CA92,1 Set flags
@@ -10431,6 +10961,7 @@ C $CAAA,1 A = *HL
 C $CAAB,1 *DE = A
 C $CAAC,1 Bank/unbank
 N $CAAD Similar chunk again to above... different rotates
+@ $CAAD label=dfr_caad
 C $CAAD,1 H++
 C $CAAE,1 A = *HL
 C $CAAF,1 Set flags
@@ -10447,12 +10978,14 @@ C $CABF,3 A = A (rotate right through carry) 3
 C $CAC2,3 A = (A & 31) + B
 C $CAC5,1 E = A
 C $CAC6,2 *DE++ = *HL++, BC--
+N $CAC8 AND-OR masking here?
 C $CAC8,2 A = *DE & *HL
 C $CACA,1 L++
 C $CACB,1 A |= *HL
 C $CACC,1 *DE = A
 C $CACD,1 Bank/unbank
 N $CACE Similar chunk again
+@ $CACE label=dfr_cace
 C $CACE,1 H++
 C $CACF,1 A = *HL
 C $CAD0,1 Set flags
@@ -10468,6 +11001,7 @@ C $CADF,1 A = E
 C $CAE0,3 A = A (rotate right through carry) 3
 C $CAE3,3 A = (A & 31) + B
 C $CAE6,1 E = A
+N $CAE7 AND-OR masking here?
 C $CAE7,2 A = *DE & *HL
 C $CAE9,1 L++
 C $CAEA,1 A |= *HL
@@ -10477,6 +11011,7 @@ C $CAEE,1 E++
 C $CAEF,2 *DE++ = *HL++, BC--
 C $CAF1,1 Bank/unbank
 N $CAF2 Similar chunk again
+@ $CAF2 label=dfr_caf2
 C $CAF2,1 H++
 C $CAF3,1 A = *HL
 C $CAF4,1 Set flags
@@ -10496,6 +11031,8 @@ C $CB09,1 E = A
 C $CB0C,1 A = *HL
 C $CB0D,1 *DE = A
 C $CB0E,1 Bank/unbank
+N $CB0F Similar chunk again
+@ $CB0F label=dfr_cb0f
 C $CB0F,3 A = HL[-1]
 C $CB12,1 Set flags
 C $CB13,2 Jump if non-zero
@@ -10517,10 +11054,12 @@ C $CB2B,1 L++
 C $CB2C,1 A |= *HL
 C $CB2D,1 *DE = A
 C $CB2E,1 Bank/unbank
+@ $CB2F label=dfr_cb2f
 C $CB2F,1 L--
 C $CB30,1 C--
 C $CB31,3 Jump if non-zero to <self modified>
 C $CB35,1 B = A
+@ $CB36 label=dfr_loop
 C $CB36,2 A = <self modified>
 C $CB38,2 Toggle bit 0
 C $CB3A,3 Self modify 'LD A,x' @ #R$CB36 (just above)
@@ -10538,6 +11077,7 @@ C $CB5A,3 Read 'LD A,x' @ #R$CA9D
 C $CB5D,2 [nested self modification - INCEPTION ACHIEVED]
 C $CB5F,3 Self modify 'LD A,x' @ #R$CA9D
 C $CB62,3 Self modify 'ADD A,x' @ #R$CAFF
+@ $CB65 label=dfr_cb65
 C $CB65,3 A = <self modified> - 1
 C $CB68,3 Self modify 'LD A,x' @ #R$CB65
 C $CB6B,3 Jump if non-zero
@@ -10548,25 +11088,29 @@ C $CB7C,1 Set flags
 C $CB7D,2 Jump if zero
 C $CB7F,1 A = C
 C $CB80,3 Self modify 'LD A,x' @ #R$CA9D
+@ $CB83 label=dfr_cb83
 C $CB83,8 Self modify 'LD A,x' @ #R$CA7A
 C $CB8B,5 Self modify 'LD A,x' @ #R$CB65 to load 5
+@ $CB90 label=dfr_cb90
 C $CB90,3 A = IY[0]
 C $CB93,2 IY++
 C $CB95,2 IX.low++
 C $CB97,3 A -= IY[0]
 C $CB9A,2 Jump if zero
 C $CB9C,3 Jump if positive
+@ $CB9F label=dfr_cb9f
 C $CB9F,2 L -= 2
 C $CBA1,3 Loop
-c $CBA4 Routine at CBA4
-D $CBA4 I can't find what calls this routine. Checked various stages...
+c $CBA4 Unknown routine or dead code
+D $CBA4 I can't find what calls this routine. I've checked various stages...
+@ $CBA4 label=mystery_cba4
 C $CBA4,1 C = A
 C $CBA5,3 A = IY[0]
 C $CBA8,2 IY++
 C $CBAA,2 IX.low++
 C $CBAC,3 A -= IY[0]
 C $CBAF,5 Jump if >= 240
-C $CBB4,5 Jump if >= 80
+C $CBB4,5 Exit via #R$C79A/dr_start_backdrop_fill if >= 80
 C $CBB9,2 L -= 2
 C $CBBB,1 A += C
 C $CBBC,5 Jump if zero or negative
@@ -10575,180 +11119,209 @@ C $CBC2,3 Exit via #R$C915
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
 N $CBC5 This gets hit during road forks.
+@ $CBC5 label=backdrop_fill_dispatch
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
-C $CBCB,3 Exit via #R$C79A
-c $CBCE Road drawing - curvature stuff?
-D $CBCE Used by the routine at #R$B9F4.
-N $CBCE This gets hit during road forks.
-@ $CBCE label=sub_cbce_fork
+C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
+c $CBCE Builds road curvature tables
+D $CBCE Possibly just for one section of the road at a time. Used by the routine at #R$B9F4.
+N $CBCE This gets hit during road forks (where the roads bend outwards).
+@ $CBCE label=build_curve_table_forked
 C $CBCE,3 Load two table high-bytes: $EE, $EC
-C $CBD1,3 $ED $44 => NEG instruction for #R$CC21 & #R$CC22
+C $CBD1,3 Load $ED $44 => Opcode of NEG instruction for #R$CC21
+C $CBD4,2 Jump forward
 N $CBD6 This entry point is used by the routine at #R$B9F4.
-N $CBD6 This is the normal entry point?
-@ $CBD6 label=sub_cbce_non_fork
+@ $CBD6 label=build_curve_table_non_forked
 C $CBD6,3 Load two table high-bytes: $ED, $E9
-C $CBD9,3 Pair of NOP instructions for #R$CC21 & #R$CC22
-@ $CBDC label=sub_cbce_self_modify
-C $CBDC,4 Write instructions in #REGde to #R$CC21 & #R$CC22
-C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00)
-C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00)
+C $CBD9,3 Load opcodes of two NOP instructions for #R$CC21
+@ $CBDC label=build_curve_table_self_modify
+C $CBDC,4 Write pair of instructions in #REGde to #R$CC21
+C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00) e.g. $ED00 or $EE00
+C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00) e.g. $E900 or $EC00
+N $CBE8 Using road_buffer_offset as a full address here.
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
-N $CBEC There's similar code at #R$CD47.
-C $CBEC,5 A = fast_counter & $E0  -- top three bits
-N $CBF2 Reduces A by 31.25% ... unsure why that figure.
-C $CBF2,5 Divide A by 4 and subtract
-C $CBF7,5 Divide A by 16 and subtract
-C $CBFC,10 #REGiy = data_e6b0[#REGa]
-C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
+N $CBEC See similar code at #R$CD47.
+C $CBEC,3 Load fast_counter
+C $CBEF,2 Isolate top three bits
+C $CBF1,1 Move result to #REGb
+N $CBF2 Map #REGb (0,32,64,96,...,224) to (0,22,44,66,...,154)
+C $CBF2,5 Divide by 4 and subtract
+C $CBF7,5 Divide by 16 and subtract
+N $CBFC Index the road animation table persp_x_scale_right.
+C $CBFC,10 #REGiy = persp_x_scale_right + #REGa
+N $CC06 Multiply #REGc by the top three bits of #REGa then divide by 8 (with rounding) on return.
+C $CC06,3 Call multiply (result in #REGa)
 C $CC09,6 A = (128 - A) & $FE
 C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
-C $CC14,3 D = $E3, E = $20
+C $CC14,3 -> table_e320
 C $CC17,2 20 iterations
 C $CC19,1 Bank
-C $CC1A,4 Get road position
+C $CC1A,4 Read road position
+N $CC1E SP is regular stack here.
+C $CC1E,1 Stack it
 C $CC1F,1 Unbank
+@ $CC20 label=bct_loop
 C $CC20,1 Read road buffer byte
-C $CC21,2 Self modified above - Set to NOP or NEG
+C $CC21,2 Self modified above - Set to NOP (if non-forked) or NEG (if forked)
 C $CC23,1 Advance road buffer pointer (wrapping)
 C $CC24,1 Bank
-C $CC25,4 IX.low += A  -- point into distance shift table
-C $CC29,3 HL = 0  -- not self modified
-C $CC2C,3 Reads from the #R$E540 table (inward_bend_table)
-N $CC2F Subtract DE from table entry, result in BC.
-C $CC2F,2 C = A - E  -- E is $20 here I think
-C $CC31,3 high byte
-C $CC34,1 A -= D
-C $CC35,1 B = A
-N $CC36 Sampled IY = E71E E71F E720 ..
-C $CC36,3 IY seems to point to $E6xx..E7xx
-N $CC3B This is a multiplier of HL (distance shift value computed above) by A (value from $E600+).
-C $CC3B,1 shift left
-C $CC3C,2 top bit not set
-C $CC3E,2 HL = BC  copy of distance shift value
-C $CC40,1 shift result left. HL seems to be zeroed above, so this is confusing
-C $CC41,1 shift topmost bit out
-C $CC42,2 jump if top bit not set
-C $CC44,1 otherwise HL += BC
-C $CC45,5 repeat
-C $CC4A,5 repeat
-C $CC4F,5 repeat
-C $CC54,5 repeat
+C $CC25,4 IX.low += A  -- point into bend table
+C $CC29,3 Initialise a multiplier result
+N $CC2C Subtract road_pos in #REGde from table entry, result in #REGbc.
+C $CC2C,3 Reads low byte from the #R$E540 table (inward_bend_table)
+C $CC2F,2 C = A - E
+C $CC31,3 Reads high byte
+C $CC34,2 B = A - D (with carry)
+N $CC36 Sampled IY = $E71E $E71F $E720 ..
+C $CC36,3 Load from somewhere in persp_x_scale_right[]
+C $CC39,2 Advance
+N $CC3B This is a multiplier of #REGhl (distance shift value computed above) by #REGa (value from $E600Vertical perspective weights — Y scale by speed and distance+).
+C $CC3B,1 Shift left
+C $CC3C,2 Top bit not set
+C $CC3E,2 Copy distance shift value
+C $CC40,1 Double it
+@ $CC41 label=bct_mult1
+C $CC41,1 Shift topmost bit out
+C $CC42,2 Jump if top bit not set
+C $CC44,1 Otherwise HL += BC
+@ $CC45 label=bct_mult2
+C $CC45,5 Repeat
+@ $CC4A label=bct_mult3
+C $CC4A,5 Repeat
+@ $CC4F label=bct_mult4
+C $CC4F,5 Repeat
+@ $CC54 label=bct_mult5
+C $CC54,5 Repeat
+@ $CC59 label=bct_cc59
 C $CC59,1 A = H
 C $CC5A,2 L <<= 1
 C $CC5C,2 H = 0
-C $CC5E,1 A += H + carry
-C $CC5F,1 L = A
+C $CC5E,2 L = A + H + carry
 C $CC60,1 A <<= 1
-C $CC61,2 jump if top bit not set
-C $CC63,1 H--
+C $CC61,2 Jump if top bit not set
+C $CC63,1 H = $FF - make negative
+@ $CC64 label=bct_topbitclear
 C $CC64,1 A >>= 1
+C $CC65,1 HL += DE
+C $CC66,1 Swap (DE is result)
 C $CC67,1 Unbank
 C $CC68,2 *DE++ = A
-C $CC6A,2 Loop back to read buffer byte bit
+C $CC6A,2 Loop back to bct_loop to read buffer byte bit
+C $CC6C,1 Pop road position
+C $CC6D,2 B = 0  -- not self modified
 C $CC6F,1 Bank
-C $CC73,3 subroutine
-C $CC76,3 A = fast_counter
-C $CC79,2 take top three bits
-C $CC7B,11 same pattern as above
-C $CC88,3 HL = $E700 | A
+C $CC70,3 SELF MODIFIED output address $ED00 or $EE00
+C $CC73,3 Call build_curve_table_fill
+C $CC76,3 Load fast_counter
+C $CC79,2 Take top three bits
+C $CC7B,1 Move result to #REGb
+N $CC7C Reduce #REGb 0..31 => 0..21.
+C $CC7C,5 Divide by 4 and subtract
+C $CC81,5 Divide by 16 and subtract
+N $CC86 Index the road animation table persp_x_delta_left.
+C $CC86,5 HL = $E700 + $60 + A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
-N $CC8E Converts the 20 bytes at $E320 to totals.
-C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
-C $CC91,2 B = 20
-C $CC93,1 *DE += *HL
-N $CC94 This reads from $E760+ in sequence.
-C $CC95,1 }
-C $CC96,1 HL++
-C $CC97,1 E++
+N $CC8E Adds one of the entries somewhere in persp_x_delta_left to the 22 bytes at $E320.
+@ $CC8E label=bct_build_table_e320
+C $CC8E,3 Address of table_e320 (written to)
+C $CC91,2 22 iterations
+@ $CC93 label=bct_build_table_e320_loop
+C $CC93,1 Load an entry from table_e320
+N $CC94 This reads from (somewhere in) persp_x_delta_left in sequence.
+C $CC94,1 Increment it by (HL)
+C $CC95,1 Write back to (DE)
+C $CC96,1 Increment entry address in persp_x_delta_left
+C $CC97,1 Increment entry address in table_e320
 C $CC98,2 Loop while #REGb > 0
-C $CC9A,7 HL = road position - 295
-C $CCA1,1 swap
-C $CCA2,2 B = 0
+N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left... Consider that this is $127 but $109 is the centre.
+C $CC9A,7 HL = road_pos - 295
+C $CCA1,1 Swap result to #REGde
+C $CCA2,2 Initialise total/counter
 C $CCA4,1 Unbank
-C $CCA5,3 table?
-C $CCA8,4 table?
-C $CCAC,2 B = 21
+C $CCA5,3 SELF MODIFIED destination address $E900 or $EC00
+N $CCA8 Called as subroutine, also fallthrough.
+@ $CCA8 label=build_curve_table_fill
+C $CCA8,4 Address of height table (22 bytes long)
+C $CCAC,2 21 iterations
 C $CCAE,4 Save #REGsp to restore on exit (self modify)
-C $CCB2,1 Put address in #REGsp (so we can use POP for speed)
+C $CCB2,1 Put address in #REGsp (so we can use PUSH for speed)
+@ $CCB3 label=bct_loop_ccb3
 C $CCB3,1 Bank
-C $CCB4,3 A = B - 2
-C $CCB7,3 A += *IY
-C $CCBA,2 IY++
-C $CCBC,3 A -= *IY
+C $CCB4,11 A = B - 2 + IY[0] - IY[1]; IY++
+C $CCBF,3 Jump to bct_endbit_negative if M
 C $CCC2,2 A += 2
-C $CCC4,3 IY[$4E] = A
+C $CCC4,3 IY[$4E] = A -- in table_e320?
 C $CCC7,1 A -= B
 C $CCC8,1 C = A
 C $CCC9,1 B = A
 C $CCCA,3 L = IY[$1F]
-C $CCCD,2 test bit 7 of L
-C $CCCF,2 jump if ?
+C $CCCD,2 Test bit 7 of L
+C $CCCF,2 Jump if clear
 C $CCD1,4 L = -L
 C $CCD5,1 A = B
 C $CCD6,1 A < L ?
 C $CCD7,2 Opcode for DEC DE
-C $CCD9,2 jump if A < L
+C $CCD9,2 Jump to bct_endbit_A if A < L
+C $CCDB,3 Jump to bct_do_self_modify
+@ $CCDE label=bct_increment_case
 C $CCDE,1 A < L ?
 C $CCDF,2 Opcode for INC DE
-C $CCE1,2 jump if A < L
+C $CCE1,2 Jump to bct_endbit_A if A < L
+@ $CCE3 label=bct_do_self_modify
 C $CCE3,3 Self modify instruction below
-C $CCE6,1 A = B
-C $CCE7,1 A >>= 1
+C $CCE6,2 A = B >> 1
+@ $CCE8 label=bct_loop_cce8
 C $CCE8,1 A += L
 C $CCE9,1 A < C ?
-C $CCEA,2 jump if A < C
+C $CCEA,2 Jump if A < C
 C $CCEC,1 A -= C
-C $CCED,1 Self modified: INC DE or DEC DE
-C $CCEF,2 Loop while #REGb > 0
+C $CCED,1 Self modified: could be INC DE or DEC DE
+@ $CCEE label=bct_ccee
+C $CCEE,1 Store the current state of #REGde to table
+C $CCEF,2 Loop to bct_loop_cce8 while #REGb > 0
 C $CCF1,1 Unbank
-C $CCF2,2 Outer loop?
-C $CCF4,3 Restore original #REGsp (must be self modified)
+C $CCF2,2 Loop to bct_loop_ccb3 while #REGb > 0
+@ $CCF4 label=bct_exit
+C $CCF4,3 Restore original #REGsp (self modified by #R$CCAE)
 C $CCF7,1 Return
+N $CCF8 #REGa is opcode of instruction (INC DE/DEC DE) #REGb is max iterations #REGc is ? #REGl is ? #REGde is ?
+@ $CCF8 label=bct_endbit_A
 C $CCF8,3 Self modify instruction below
-C $CCFB,1 A = 0
-C $CCFC,1 Self modified: INC DE or DEC DE
-C $CCFD,1 A += C
-C $CCFE,2 jump if overflow
-C $CD00,1 A < L ?
-C $CD01,2 jump if A < L
-C $CD03,1 A -= L
-C $CD05,2 Loop while #REGb > 0
-C $CD07,1 Bank
-C $CD08,2 Outer loop?
-C $CD0A,2 Exit
+C $CCFB,1 Initialise total to zero
+@ $CCFC label=bct_loop_ccfc
+C $CCFC,1 Self modified: could be INC DE or DEC DE
+C $CCFD,1 Increment total by #REGc
+C $CCFE,2 Jump if overflow
+C $CD00,3 Otherwise, loop if A < L
+@ $CD03 label=bct_carried_or_a_ge_l
+C $CD03,1 Decrement A by L
+C $CD04,1 Push the current state of #REGde to table
+C $CD05,2 Loop to bct_loop_ccfc while #REGb > 0
+C $CD07,1 Unbank
+C $CD08,2 Loop to bct_loop_ccb3 while #REGb > 0
+C $CD0A,2 Exit via bct_exit
+@ $CD0C label=bct_endbit_negative
 C $CD0C,4 IY[$4E] = 1
 C $CD10,1 A++
+C $CD11,2 Jump to bct_endbit_C if zero
 C $CD13,1 A++
 C $CD14,1 B = A
 C $CD15,3 A = IY[$1F]
 C $CD18,1 L = A
 C $CD19,1 A <<= 1
-C $CD1A,1 A = A - A - carry
-C $CD1B,1 H = A
+C $CD1A,2 H = A - A - carry  -- sign extend?
 C $CD1C,1 HL += DE
 C $CD1D,1 swap
-C $CD1E,1 push
-C $CD1F,1 Unbank
-C $CD20,1 B--
-C $CD21,3 Outer loop?
-C $CD24,3 Exit
-C $CD27,1 B = A
-C $CD28,3 A = IY[$1F]
-C $CD2B,1 L = A
-C $CD2C,1 A <<= 1
-C $CD2D,1 A = A - A - carry
-C $CD2E,1 H = A
-C $CD2F,1 HL += DE
-C $CD30,1 swap
-C $CD31,1 push result?
-C $CD32,1 Bank
-C $CD33,1 B--
-C $CD34,3 Outer loop?
-C $CD37,3 Exit
-c $CD3A Seems to build the height table at $E300 and $E336.
+C $CD1E,1 push result?
+C $CD1F,1 Bank/Unbank?
+C $CD20,1 Decrement loop counter  -- Why not using DJNZ?
+C $CD21,3 Loop to bct_loop_ccb3 while #REGb > 0
+C $CD24,3 Exit via bct_exit
+N $CD27 This is identical to the preceding sequence starting at #R$CD14, so could be removed if #R$CD11 instead just jumped over #R$CD13.
+@ $CD27 label=bct_endbit_C
+c $CD3A Seems to build the height table at $E300 and $E336
 D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
 N $CD3A Point #REGiy at the road buffer's height data. (The "unpacked map height data"?)
 @ $CD3A label=build_height_table
@@ -10757,7 +11330,7 @@ C $CD3D,3 Load road_buffer_offset into #REGa
 C $CD40,2 Add 32 so it's the height data offset (wrapping around)
 C $CD42,2 #REGiy is now the road buffer height data pointer
 C $CD44,3 Read the current height byte into #REGc
-N $CD47 The height byte is the byte B from the map data but converted like so ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
+N $CD47 The height byte is the byte B from the map data but converted like so: ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
 N $CD47 build A - an index into the road drawing tables.
 N $CD47 See similar code at #R$917A.
 C $CD47,5 A = fast_counter & $E0  -- top three bits
@@ -10774,13 +11347,13 @@ C $CD5D,3 Call multiply (A = multiplier, C = multiplicand) result in A
 C $CD60,3 Negate result and copy to C
 C $CD63,1 Bank
 N $CD64 This builds the look-up table at $E301. Assuming it's a height table.
-C $CD64,2 B = 21
+C $CD64,2 21 iterations
 C $CD66,3 DE = $E301
 @ $CD69 label=bht_loop
 C $CD69,1 Unbank
 C $CD6A,3 E = *HL * 2  -- HL points at $E6xx (road drawing tables)
 C $CD6D,1 Preserve HL
-C $CD6E,2 DE is now the value from table, widened
+C $CD6E,2 #REGde is now the value from table, widened
 C $CD70,2 Initialise result to zero
 C $CD72,1 A = negated multiply result from above
 C $CD73,3 A += *IY  -- a height byte
@@ -10789,7 +11362,7 @@ C $CD77,2 Jump to bht_continue if zero (since multiply by zero is a no-op)
 C $CD79,3 Jump if positive
 N $CD7C Otherwise handle negative case.
 C $CD7C,5 E = -E; D = $FF  -- negate multiplier
-C $CD81,3 A = -C  -- negate muliplicand
+C $CD81,3 A = -C  -- negate multiplicand
 N $CD84 Multiplier.
 @ $CD84 label=bht_multiplier
 C $CD84,1 Throw sign bit away?
@@ -10816,21 +11389,22 @@ C $CDA9,1 A = H  -- top byte of result
 @ $CDAA label=bht_continue
 C $CDAA,1 Restore HL
 C $CDAB,1 A += *HL  -- HL points at $E6xx (road drawing data)
-C $CDAC,1 HL++  (wrapping around)
+C $CDAC,1 Advance to next byte of HL while wrapping around
 C $CDAD,1 Bank
 C $CDAE,1 Write #REGa to the table at $E3xx
-C $CDAF,1 DE++  (wrapping around)
+C $CDAF,1 Increment address of entry in table (wrapping around)
 C $CDB0,2 IYl++ (wrapping around)
 C $CDB2,2 Loop to bht_loop while #REGb
 C $CDB4,3 Final byte is always $A0
-N $CDB7 Copy the table to $E336 while setting -ve values to 96.
-C $CDB7,3 destination
-C $CDBA,3 source
-C $CDBD,3 B = 21 iterations, C = 96 limit
+N $CDB7 Copy the table to $E336 while setting negative values to 96[?]
+C $CDB7,3 Load address of destination
+C $CDBA,3 Load address of source (height table?)
+C $CDBD,3 B = 21 iterations, C = 96 limit/minimum?
 @ $CDC0 label=bht_loop2
 C $CDC0,1 Read from table just built
-C $CDC1,4 Jump if A is positive
-C $CDC5,1 Otherwise it's negative, so C = 96
+C $CDC1,4 Jump to bht_write_it if (A - C) is positive
+C $CDC5,1 Otherwise it's negative, so use #REGa
+@ $CDC6 label=bht_write_it
 C $CDC6,1 Write it
 C $CDC7,1 HL++  (wrapping around)
 C $CDC8,1 DE++  (wrapping around)
@@ -10847,23 +11421,24 @@ D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with r
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
 R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
 R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
-R $CDD6 O:A Result e.g. $03, $02, $01, $02, $FE
+R $CDD6 O:A Result                              e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=multiply
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
-C $CDD9,1 Initialise total
+C $CDD9,1 Initialise total to zero
 @ $CDDA label=mult_loop
 C $CDDA,2 Shift the most significant bit out of multiplier
-C $CDDC,3 If the MSB was set then total += multiplicand
+C $CDDC,3 If it was set then increase total by multiplicand
 @ $CDDF label=mult_continue
-C $CDDF,1 total <<= 1
+C $CDDF,1 Double the total
 C $CDE0,2 While iterations remain, goto mult_loop
-C $CDE2,1 Undo final shift
+C $CDE2,1 Undo final doubling
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
-@ $CDEC label=table_cdec
-W $CDEC,8,8
+@ $CDEC label=arrow_offsets
+B $CDEC,2,2 4 pairs of (x,y)
+B $CDEE,6,6
 w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
 W $CDF4,2,2 32x6, frame A
@@ -10872,187 +11447,223 @@ W $CDF8,2,2 32x11, frame A
 W $CDFA,2,2 32x11, frame B
 W $CDFC,2,2 32x16, frame A
 W $CDFE,2,2 32x16, frame B
-w $CE00 Data block at CE00
-@ $CE00 label=table_ce00
-W $CE00,12,12
+b $CE00 Data block at CE00
+@ $CE00 label=smoke_offsets
+B $CE00,12,2
 b $CE0C Smoke tables
 D $CE0C first byte of each of the following is a counter
 @ $CE0C label=smoke_ce0c
 @ $CE19 label=smoke_ce19
 @ $CE26 label=smoke_ce26
 B $CE0C,39,13
-b $CE33 Used by #R$B4FD - four groups of three words
-@ $CE33 label=debris_table_ce33
-W $CE33,24,6
-@ $CE4B label=debris_table_ce4b
-@ $CE5E label=debris_table_ce5e
-@ $CE71 label=debris_table_ce71
-@ $CE84 label=debris_table_ce84
-@ $CE97 label=debris_table_ce97
-B $CE4B,95,8*2,3,8*2,3,8*2,3,8*2,3,8*2,3
+b $CE33 Debris tables
+D $CE33 Used by #R$B4FD - four groups of three addresses (following on)
+N $CE33 1,2,3
+@ $CE33 label=debris_table
+W $CE33,6,2
+N $CE39 5,3,4
+W $CE39,6,2
+N $CE3F 1,2,5
+W $CE3F,6,2
+N $CE45 3,4,1
+W $CE45,6,2
+N $CE4B First byte seems to be a counter 0..3
+@ $CE4B label=debris_subtable_1
+B $CE4B,1,1 Counter
+B $CE4C,18,18
+@ $CE5E label=debris_subtable_2
+B $CE5E,1,1 Counter
+B $CE5F,18,18
+@ $CE71 label=debris_subtable_3
+B $CE71,1,1 Counter
+B $CE72,18,18
+@ $CE84 label=debris_subtable_4
+B $CE84,1,1 Counter
+B $CE85,18,18
+@ $CE97 label=debris_subtable_5
+B $CE97,1,1 Counter
+B $CE98,18,18
 b $CEAA [Graphics] Debris
 D $CEAA Used by #R$B578 4 frames, all 8x6 masked
 @ $CEAA label=bitmap_debris_1
-B $CEAA,2,2 #HTML[#CALL:graphic($CEAA,8,6,1,1)]
+B $CEAA,2,2 #HTML[#CALL(graphic($CEAA,8,6,1,1))]
 B $CEAC,10,2
 @ $CEB6 label=bitmap_debris_2
-B $CEB6,2,2 #HTML[#CALL:graphic($CEB6,8,6,1,1)]
+B $CEB6,2,2 #HTML[#CALL(graphic($CEB6,8,6,1,1))]
 B $CEB8,10,2
 @ $CEC2 label=bitmap_debris_3
-B $CEC2,2,2 #HTML[#CALL:graphic($CEC2,8,6,1,1)]
+B $CEC2,2,2 #HTML[#CALL(graphic($CEC2,8,6,1,1))]
 B $CEC4,10,2
 @ $CECE label=bitmap_debris_4
-B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
+B $CECE,2,2 #HTML[#CALL(graphic($CECE,8,6,1,1))]
 B $CED0,10,2
-b $CEDA Hero car drawing instructions
-D $CEDA 9 of them. 20 bytes per entry.
-@ $CEDA label=hero_car_refs
-B $CEDA,1,1
-B $CEDB,1,1 rows
+b $CEDA [Graphics] Hero car drawing data
+D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
+N $CEDA #HTML[#CALL(herocar($CEDA))]
+@ $CEDA label=hero_car_parts
+@ $CEDA label=hero_car_straight
+B $CEDA,1,1 y_offset
+B $CEDB,1,1 14 rows
 W $CEDC,2,2 -> middle graphic
-B $CEDE,1,1
-B $CEDF,1,1 rows
+B $CEDE,1,1 y_offset
+B $CEDF,1,1 9 rows
 W $CEE0,2,2 -> top graphic
-B $CEE2,1,1
-B $CEE3,1,1 rows
+B $CEE2,1,1 y_offset
+B $CEE3,1,1 6 rows
 W $CEE4,2,2 -> bottom graphic
-B $CEE6,1,1
-B $CEE7,1,1 rows
+B $CEE6,1,1 y_offset
+B $CEE7,1,1 14 rows
 W $CEE8,2,2 -> left graphic
-B $CEEA,1,1
-B $CEEB,1,1 rows
+B $CEEA,1,1 y_offset
+B $CEEB,1,1 14 rows
 W $CEEC,2,2 -> right graphic
-B $CEEE,1,1
-B $CEEF,1,1 rows
+N $CEEE #HTML[#CALL(herocar($CEEE))]
+@ $CEEE label=hero_car_turn
+B $CEEE,1,1 y_offset
+B $CEEF,1,1 17 rows
 W $CEF0,2,2 -> middle graphic
-B $CEF2,1,1
-B $CEF3,1,1 rows
+B $CEF2,1,1 y_offset
+B $CEF3,1,1 8 rows
 W $CEF4,2,2 -> top graphic
-B $CEF6,1,1
-B $CEF7,1,1 rows
+B $CEF6,1,1 y_offset
+B $CEF7,1,1 4 rows
 W $CEF8,2,2 -> bottom graphic
-B $CEFA,1,1
-B $CEFB,1,1 rows
+B $CEFA,1,1 y_offset
+B $CEFB,1,1 13 rows
 W $CEFC,2,2 -> left graphic
-B $CEFE,1,1
-B $CEFF,1,1 rows
+B $CEFE,1,1 y_offset
+B $CEFF,1,1 13 rows
 W $CF00,2,2 -> right graphic
-B $CF02,1,1
-B $CF03,1,1 rows
+N $CF02 #HTML[#CALL(herocar($CF02))]
+@ $CF02 label=hero_car_turn_hard
+B $CF02,1,1 y_offset
+B $CF03,1,1 16 rows
 W $CF04,2,2 -> middle graphic
-B $CF06,1,1
-B $CF07,1,1 rows
+B $CF06,1,1 y_offset
+B $CF07,1,1 9 rows
 W $CF08,2,2 -> top graphic
-B $CF0A,1,1
-B $CF0B,1,1 rows
+B $CF0A,1,1 y_offset
+B $CF0B,1,1 4 rows
 W $CF0C,2,2 -> bottom graphic
-B $CF0E,1,1
-B $CF0F,1,1 rows
+B $CF0E,1,1 y_offset
+B $CF0F,1,1 12 rows
 W $CF10,2,2 -> left graphic
-B $CF12,1,1
-B $CF13,1,1 rows
+B $CF12,1,1 y_offset
+B $CF13,1,1 15 rows
 W $CF14,2,2 -> right graphic
-B $CF16,1,1
-B $CF17,1,1 rows
+N $CF16 #HTML[#CALL(herocar($CF16))]
+@ $CF16 label=hero_car_up
+B $CF16,1,1 y_offset
+B $CF17,1,1 14 rows
 W $CF18,2,2 -> middle graphic
-B $CF1A,1,1
-B $CF1B,1,1 rows
+B $CF1A,1,1 y_offset
+B $CF1B,1,1 10 rows
 W $CF1C,2,2 -> top graphic
-B $CF1E,1,1
-B $CF1F,1,1 rows
+B $CF1E,1,1 y_offset
+B $CF1F,1,1 6 rows
 W $CF20,2,2 -> bottom graphic
-B $CF22,1,1
-B $CF23,1,1 rows
+B $CF22,1,1 y_offset
+B $CF23,1,1 13 rows
 W $CF24,2,2 -> left graphic
-B $CF26,1,1
-B $CF27,1,1 rows
+B $CF26,1,1 y_offset
+B $CF27,1,1 14 rows
 W $CF28,2,2 -> right graphic
-B $CF2A,1,1
-B $CF2B,1,1 rows
+N $CF2A #HTML[#CALL(herocar($CF2A))]
+@ $CF2A label=hero_car_up_turn
+B $CF2A,1,1 y_offset
+B $CF2B,1,1 17 rows
 W $CF2C,2,2 -> middle graphic
-B $CF2E,1,1
-B $CF2F,1,1 rows
+B $CF2E,1,1 y_offset
+B $CF2F,1,1 9 rows
 W $CF30,2,2 -> top graphic
-B $CF32,1,1
-B $CF33,1,1 rows
+B $CF32,1,1 y_offset
+B $CF33,1,1 4 rows
 W $CF34,2,2 -> bottom graphic
-B $CF36,1,1
-B $CF37,1,1 rows
+B $CF36,1,1 y_offset
+B $CF37,1,1 12 rows
 W $CF38,2,2 -> left graphic
-B $CF3A,1,1
-B $CF3B,1,1 rows
+B $CF3A,1,1 y_offset
+B $CF3B,1,1 14 rows
 W $CF3C,2,2 -> right graphic
-B $CF3E,1,1
-B $CF3F,1,1 rows
+N $CF3E #HTML[#CALL(herocar($CF3E))]
+@ $CF3E label=hero_car_up_turn_hard
+B $CF3E,1,1 y_offset
+B $CF3F,1,1 15 rows
 W $CF40,2,2 -> middle graphic
-B $CF42,1,1
-B $CF43,1,1 rows
+B $CF42,1,1 y_offset
+B $CF43,1,1 9 rows
 W $CF44,2,2 -> top graphic
-B $CF46,1,1
-B $CF47,1,1 rows
+B $CF46,1,1 y_offset
+B $CF47,1,1 6 rows
 W $CF48,2,2 -> bottom graphic
-B $CF4A,1,1
-B $CF4B,1,1 rows
+B $CF4A,1,1 y_offset
+B $CF4B,1,1 11 rows
 W $CF4C,2,2 -> left graphic
-B $CF4E,1,1
-B $CF4F,1,1 rows
+B $CF4E,1,1 y_offset
+B $CF4F,1,1 15 rows
 W $CF50,2,2 -> right graphic
-B $CF52,1,1
-B $CF53,1,1 rows
+N $CF52 #HTML[#CALL(herocar($CF52))]
+@ $CF52 label=hero_car_down
+B $CF52,1,1 y_offset
+B $CF53,1,1 14 rows
 W $CF54,2,2 -> middle graphic
-B $CF56,1,1
-B $CF57,1,1 rows
+B $CF56,1,1 y_offset
+B $CF57,1,1 8 rows
 W $CF58,2,2 -> top graphic
-B $CF5A,1,1
-B $CF5B,1,1 rows
+B $CF5A,1,1 y_offset
+B $CF5B,1,1 6 rows
 W $CF5C,2,2 -> bottom graphic
-B $CF5E,1,1
-B $CF5F,1,1 rows
+B $CF5E,1,1 y_offset
+B $CF5F,1,1 13 rows
 W $CF60,2,2 -> left graphic
-B $CF62,1,1
-B $CF63,1,1 rows
+B $CF62,1,1 y_offset
+B $CF63,1,1 14 rows
 W $CF64,2,2 -> right graphic
-B $CF66,1,1
-B $CF67,1,1 rows
+N $CF66 #HTML[#CALL(herocar($CF66))]
+@ $CF66 label=hero_car_down_turn
+B $CF66,1,1 y_offset
+B $CF67,1,1 16 rows
 W $CF68,2,2 -> middle graphic
-B $CF6A,1,1
-B $CF6B,1,1 rows
+B $CF6A,1,1 y_offset
+B $CF6B,1,1 8 rows
 W $CF6C,2,2 -> top graphic
-B $CF6E,1,1
-B $CF6F,1,1 rows
+B $CF6E,1,1 y_offset
+B $CF6F,1,1 4 rows
 W $CF70,2,2 -> bottom graphic
-B $CF72,1,1
-B $CF73,1,1 rows
+B $CF72,1,1 y_offset
+B $CF73,1,1 13 rows
 W $CF74,2,2 -> left graphic
-B $CF76,1,1
-B $CF77,1,1 rows
+B $CF76,1,1 y_offset
+B $CF77,1,1 13 rows
 W $CF78,2,2 -> right graphic
-B $CF7A,1,1
-B $CF7B,1,1 rows
+N $CF7A #HTML[#CALL(herocar($CF7A))]
+@ $CF7A label=hero_car_down_turn_hard
+B $CF7A,1,1 y_offset
+B $CF7B,1,1 16 rows
 W $CF7C,2,2 -> middle graphic
-B $CF7E,1,1
-B $CF7F,1,1 rows
+B $CF7E,1,1 y_offset
+B $CF7F,1,1 8 rows
 W $CF80,2,2 -> top graphic
-B $CF82,1,1
-B $CF83,1,1 rows
+B $CF82,1,1 y_offset
+B $CF83,1,1 4 rows
 W $CF84,2,2 -> bottom graphic
-B $CF86,1,1
-B $CF87,1,1 rows
+B $CF86,1,1 y_offset
+B $CF87,1,1 13 rows
 W $CF88,2,2 -> left graphic
-B $CF8A,1,1
-B $CF8B,1,1 rows
+B $CF8A,1,1 y_offset
+B $CF8B,1,1 15 rows
 W $CF8C,2,2 -> right graphic
 @ $CF8E label=hero_car_shadow
-B $CF8E,1,1
-B $CF8F,1,1 rows
-W $CF90,2,2 -> shadow graphic
-B $CF92,1,1
-B $CF93,1,1 rows
-W $CF94,2,2 -> shadow graphic
-B $CF96,1,1
-B $CF97,1,1 rows
-W $CF98,2,2 -> shadow graphic
-@ $CF9A label=hero_car_smoke
+B $CF8E,1,1 y_offset
+B $CF8F,1,1 12 rows
+W $CF90,2,2 -> bitmap_shadow_straight
+B $CF92,1,1 y_offset
+B $CF93,1,1 12 rows
+W $CF94,2,2 -> bitmap_shadow_turn_right
+B $CF96,1,1 y_offset
+B $CF97,1,1 12 rows
+W $CF98,2,2 -> bitmap_shadow_turn_right_hard
+@ $CF9A label=hero_car_turbo_smoke
 W $CF9A,4,2
 W $CF9E,2,2 -> Turbo smoke plume data frame 1
 W $CFA0,4,2
@@ -11061,15 +11672,48 @@ W $CFA6,4,2
 W $CFAA,2,2 -> Turbo smoke plume data frame 3
 W $CFAC,4,2
 W $CFB0,2,2 -> Turbo smoke plume data frame 4
-N $CFB2 TBD groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into car_adornments.
+b $CFB2 Car graphic anim/adornment table
+D $CFB2 TBD Groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into car_adornments.
 @ $CFB2 label=unknown_cfb2
-B $CFB2,3,3 ?cherry
-B $CFB5,3,3 ?cherry flash
-B $CFB8,3,3 ?cherry
-B $CFBB,3,3 ?cherry flash
-B $CFBE,3,3 ?cherry
-B $CFC1,3,3 ?cherry flash
-B $CFC4,99,3
+B $CFB2,3,3 Cherry light
+B $CFB5,3,3 Flashing cherry light
+B $CFB8,3,3 Cherry light
+B $CFBB,3,3 Flashing cherry light
+B $CFBE,3,3 Cherry light
+B $CFC1,3,3 Flashing cherry light
+B $CFC4,3,3 Putting-cherry-on-roof anim frame 1
+B $CFC7,3,3 Cherry light
+B $CFCA,3,3 Putting-cherry-on-roof anim frame 2
+B $CFCD,3,3 Cherry light
+B $CFD0,3,3 Putting-cherry-on-roof anim frame 3
+B $CFD3,3,3 Putting-cherry-on-roof anim frame 2
+B $CFD6,3,3 Putting-cherry-on-roof anim frame 1
+B $CFD9,3,3 Putting-cherry-on-roof anim frame 1
+B $CFDC,3,3 Cherry light
+B $CFDF,3,3 Putting-cherry-on-roof anim frame 2
+B $CFE2,3,3 Cherry light
+B $CFE5,3,3 Putting-cherry-on-roof anim frame 3
+B $CFE8,3,3 Putting-cherry-on-roof anim frame 2
+B $CFEB,3,3 Putting-cherry-on-roof anim frame 1
+B $CFEE,3,3 Putting-cherry-on-roof anim frame 1
+B $CFF1,3,3 Cherry light
+B $CFF4,3,3 Putting-cherry-on-roof anim frame 2
+B $CFF7,3,3 Cherry light
+B $CFFA,3,3 Putting-cherry-on-roof anim frame 3
+B $CFFD,3,3 Putting-cherry-on-roof anim frame 2
+B $D000,3,3 Putting-cherry-on-roof anim frame 1
+B $D003,3,3 Crash/spark
+B $D006,3,3 Crash/spark
+B $D009,3,3 Crash/spark
+B $D00C,3,3 Crash/spark
+B $D00F,3,3 Crash/spark
+B $D012,3,3 Crash/spark
+B $D015,3,3 Crash/spark
+B $D018,3,3 Crash/spark
+B $D01B,3,3 Crash/spark
+B $D01E,3,3 Putting-cherry-on-roof anim frame 2
+B $D021,3,3 Putting-cherry-on-roof anim frame 2
+B $D024,3,3 Putting-cherry-on-roof anim frame 2
 N $D027 Entries of 4 bytes.
 @ $D027 label=car_adornments
 B $D027,1,1 7 rows high
@@ -11078,556 +11722,565 @@ W $D029,2,2 -> Cherry light (8x7 masked data)
 B $D02B,1,1 14 rows high
 B $D02C,1,1 3 bytes wide
 W $D02D,2,2 -> Flashing cherry light (24x14 masked data)
+N $D02F Crash/spark
 B $D02F,1,1 20 rows high
 B $D030,1,1 3 bytes wide
 W $D031,2,2 -> Crash/spark data
+N $D033 Putting-cherry-on-roof anim
 B $D033,1,1 4 rows high
 B $D034,1,1 2 bytes wide
-W $D035,2,2 -> Graphic data (can't tell)
+W $D035,2,2 -> Frame 1
 B $D037,1,1 9 rows high
 B $D038,1,1 2 bytes wide
-W $D039,2,2 -> Debris
+W $D039,2,2 -> Frame 2
 B $D03B,1,1 12 rows high
 B $D03C,1,1 1 bytes wide
-W $D03D,2,2 -> More debris (perhaps)
+W $D03D,2,2 -> Frame 3
 N $D03F Arrow graphic (24x21)
-N $D03F #HTML[#CALL:graphic($D03F,24,21,1,1)]
+N $D03F #HTML[#CALL(graphic($D03F,24,21,1,1))]
 @ $D03F label=bitmap_arrow
 B $D03F,126,6 Masked bitmap data
 N $D0BD "HERE!" graphic (24x7)
-N $D0BD #HTML[#CALL:graphic($D0BD,24,7,1,1)]
+N $D0BD #HTML[#CALL(graphic($D0BD,24,7,1,1))]
 @ $D0BD label=bitmap_here
 B $D0BD,42,6 Masked bitmap data
 N $D0E7 Cherry light (sits on roof of car) (8x7)
-N $D0E7 #HTML[#CALL:graphic($D0E7,8,7,1,1)]
+N $D0E7 #HTML[#CALL(graphic($D0E7,8,7,1,1))]
 @ $D0E7 label=bitmap_cherry_light
 B $D0E7,14,2 Masked bitmap data
 N $D0F5 Illuminated cherry light (24x14)
-N $D0F5 #HTML[#CALL:graphic($D0F5,24,14,1,1)]
+N $D0F5 #HTML[#CALL(graphic($D0F5,24,14,1,1))]
 @ $D0F5 label=bitmap_cherry_light_lit
 B $D0F5,84,6 Masked bitmap data
 N $D149 Crash/spark (24x20)
-N $D149 #HTML[#CALL:graphic($D149,24,20,1,1)]
+N $D149 #HTML[#CALL(graphic($D149,24,20,1,1))]
 @ $D149 label=bitmap_spark
 B $D149,120,6 Masked bitmap data
-N $D1C1 Graphic (16x4)
-N $D1C1 #HTML[#CALL:graphic($D1C1,16,4,1,1)] LOOKS WRONG
-@ $D1C1 label=bitmap_d1c1
+N $D1C1 Putting-cherry-on-roof anim frame 1 (16x4)
+N $D1C1 #HTML[#CALL(graphic($D1C1,16,4,1,1))]
+@ $D1C1 label=bitmap_cherryout_1
 B $D1C1,16,4 Masked bitmap data
-N $D1D1 Debris (16x9)
-N $D1D1 #HTML[#CALL:graphic($D1D1,16,9,1,1)] LOOKS WRONG
-@ $D1D1 label=bitmap_debris
+N $D1D1 Putting-cherry-on-roof anim frame 2 (16x9)
+N $D1D1 #HTML[#CALL(graphic($D1D1,16,9,1,1))]
+@ $D1D1 label=bitmap_cherryout_2
 B $D1D1,36,4 Masked bitmap data
-N $D1F5 More debris (8x12)
-N $D1F5 #HTML[#CALL:graphic($D1F5,8,12,1,1)] LOOKS WRONG
-@ $D1F5 label=bitmap_more_debris
+N $D1F5 Putting-cherry-on-roof anim frame 3 (8x12)
+N $D1F5 #HTML[#CALL(graphic($D1F5,8,12,1,1))]
+@ $D1F5 label=bitmap_cherryout_3
 B $D1F5,24,2 Masked bitmap data
 N $D20D Turbo smoke plume animation
 N $D20D (32x16) masked per frame. 4 frames.
-N $D20D #HTML[#CALL:anim($D20D,32,16,1,1,4)]
+N $D20D #HTML[#CALL(anim($D20D,32,16,1,1,4))]
 N $D20D Turbo smoke plume data frame 1
-N $D20D #HTML[#CALL:graphic($D20D,32,16,1,1)]
+N $D20D #HTML[#CALL(graphic($D20D,32,16,1,1))]
 @ $D20D label=bitmap_turbo_1
 B $D20D,128,8 Masked bitmap data
 N $D28D Turbo smoke plume data frame 2
-N $D28D #HTML[#CALL:graphic($D28D,32,16,1,1)]
+N $D28D #HTML[#CALL(graphic($D28D,32,16,1,1))]
 @ $D28D label=bitmap_turbo_2
 B $D28D,128,8 Masked bitmap data
 N $D30D Turbo smoke plume data frame 3
-N $D30D #HTML[#CALL:graphic($D30D,32,16,1,1)]
+N $D30D #HTML[#CALL(graphic($D30D,32,16,1,1))]
 @ $D30D label=bitmap_turbo_3
 B $D30D,128,8 Masked bitmap data
 N $D38D Turbo smoke plume data frame 4
-N $D38D #HTML[#CALL:graphic($D38D,32,16,1,1)]
+N $D38D #HTML[#CALL(graphic($D38D,32,16,1,1))]
 @ $D38D label=bitmap_turbo_4
 B $D38D,128,8 Masked bitmap data
 N $D40D Hero car graphics
 N $D40D 9 sets
 N $D40D Centre parts
 N $D40D Straight (40x14)
-N $D40D #HTML[#CALL:graphic($D40D,40,14,0,1)]
+N $D40D #HTML[#CALL(graphic($D40D,40,14,0,1))]
 @ $D40D label=bitmap_hero_centre_straight
 B $D40D,70,5 Non-masked, inverted bitmap data
 N $D453 Straight + Turn right (40x17)
-N $D453 #HTML[#CALL:graphic($D453,40,17,0,1)]
+N $D453 #HTML[#CALL(graphic($D453,40,17,0,1))]
 @ $D453 label=bitmap_hero_centre_straight_right
 B $D453,85,5 Non-masked, inverted bitmap data
 N $D4A8 Straight + Turn right hard (40x16)
-N $D4A8 #HTML[#CALL:graphic($D4A8,40,16,0,1)]
+N $D4A8 #HTML[#CALL(graphic($D4A8,40,16,0,1))]
 @ $D4A8 label=bitmap_hero_centre_straight_right_hard
 B $D4A8,80,5 Non-masked, inverted bitmap data
 N $D4F8 Up (40x14)
-N $D4F8 #HTML[#CALL:graphic($D4F8,40,14,0,1)]
+N $D4F8 #HTML[#CALL(graphic($D4F8,40,14,0,1))]
 @ $D4F8 label=bitmap_hero_centre_up
 B $D4F8,70,5 Non-masked, inverted bitmap data
 N $D53E Up + Turn right (40x17)
-N $D53E #HTML[#CALL:graphic($D53E,40,17,0,1)]
+N $D53E #HTML[#CALL(graphic($D53E,40,17,0,1))]
 @ $D53E label=bitmap_hero_centre_up_right
 B $D53E,85,5 Non-masked, inverted bitmap data
 N $D593 Up + Turn right hard (40x15)
-N $D593 #HTML[#CALL:graphic($D593,40,15,0,1)]
+N $D593 #HTML[#CALL(graphic($D593,40,15,0,1))]
 @ $D593 label=bitmap_hero_centre_up_right_hard
 B $D593,75,5 Non-masked, inverted bitmap data
 N $D5DE Down (40x14)
-N $D5DE #HTML[#CALL:graphic($D5DE,40,14,0,1)]
+N $D5DE #HTML[#CALL(graphic($D5DE,40,14,0,1))]
 @ $D5DE label=bitmap_hero_centre_down
 B $D5DE,70,5 Non-masked, inverted bitmap data
 N $D624 Down + Turn right (40x16)
-N $D624 #HTML[#CALL:graphic($D624,40,16,0,1)]
+N $D624 #HTML[#CALL(graphic($D624,40,16,0,1))]
 @ $D624 label=bitmap_hero_centre_down_right
 B $D624,80,5 Non-masked, inverted bitmap data
 N $D674 Down + Turn right hard (40x16)
-N $D674 #HTML[#CALL:graphic($D674,40,16,0,1)]
+N $D674 #HTML[#CALL(graphic($D674,40,16,0,1))]
 @ $D674 label=bitmap_hero_centre_down_right_hard
 B $D674,80,5 Non-masked, inverted bitmap data
 N $D6C4 Straight parts
 N $D6C4 Top of car (40x9)
-N $D6C4 #HTML[#CALL:graphic($D6C4,40,9,1,1)]
+N $D6C4 #HTML[#CALL(graphic($D6C4,40,9,1,1))]
 @ $D6C4 label=bitmap_hero_top_straight
 B $D6C4,90,10 Masked, inverted bitmap data
 N $D71E Bottom of car (40x6)
-N $D71E #HTML[#CALL:graphic($D71E,40,6,1,1)]
+N $D71E #HTML[#CALL(graphic($D71E,40,6,1,1))]
 @ $D71E label=bitmap_hero_bottom_straight
 B $D71E,60,10 Masked, inverted bitmap data
 N $D75A Left of car (8x14)
-N $D75A #HTML[#CALL:graphic($D75A,8,14,1,1)]
+N $D75A #HTML[#CALL(graphic($D75A,8,14,1,1))]
 @ $D75A label=bitmap_hero_left_straight
 B $D75A,28,2 Masked, inverted bitmap data
 N $D776 Right of car (8x14)
-N $D776 #HTML[#CALL:graphic($D776,8,14,1,1)]
+N $D776 #HTML[#CALL(graphic($D776,8,14,1,1))]
 @ $D776 label=bitmap_hero_right_straight
 B $D776,28,2 Masked, inverted bitmap data
 N $D792 Straight + Turn right parts
 N $D792 Top of car (40x9)
-N $D792 #HTML[#CALL:graphic($D792,40,8,1,1)]
+N $D792 #HTML[#CALL(graphic($D792,40,8,1,1))]
 @ $D792 label=bitmap_hero_top_straight_right
 B $D792,80,10 Masked, inverted bitmap data
 N $D7E2 Bottom of car (40x6)
-N $D7E2 #HTML[#CALL:graphic($D7E2,40,4,1,1)]
+N $D7E2 #HTML[#CALL(graphic($D7E2,40,4,1,1))]
 @ $D7E2 label=bitmap_hero_bottom_straight_right
 B $D7E2,40,10 Masked, inverted bitmap data
 N $D80A Left of car (8x13)
-N $D80A #HTML[#CALL:graphic($D80A,8,13,1,1)]
+N $D80A #HTML[#CALL(graphic($D80A,8,13,1,1))]
 @ $D80A label=bitmap_hero_left_straight_left
 B $D80A,26,2 Masked, inverted bitmap data
 N $D824 Right of car (8x13)
-N $D824 #HTML[#CALL:graphic($D824,8,13,1,1)]
+N $D824 #HTML[#CALL(graphic($D824,8,13,1,1))]
 @ $D824 label=bitmap_hero_right_straight_right
 B $D824,26,2 Masked, inverted bitmap data
 N $D83E Straight + Turn right hard parts
 N $D83E Top of car (40x9)
-N $D83E #HTML[#CALL:graphic($D83E,40,9,1,1)]
+N $D83E #HTML[#CALL(graphic($D83E,40,9,1,1))]
 @ $D83E label=bitmap_hero_top_straight_right_hard
 B $D83E,90,10 Masked, inverted bitmap data
 N $D898 Bottom of car (40x4)
-N $D898 #HTML[#CALL:graphic($D898,40,4,1,1)]
+N $D898 #HTML[#CALL(graphic($D898,40,4,1,1))]
 @ $D898 label=bitmap_hero_bottom_straight_right_hard
 B $D898,40,10 Masked, inverted bitmap data
 N $D8C0 Left of car (8x12)
-N $D8C0 #HTML[#CALL:graphic($D8C0,8,12,1,1)]
+N $D8C0 #HTML[#CALL(graphic($D8C0,8,12,1,1))]
 @ $D8C0 label=bitmap_hero_left_straight_right_hard
 B $D8C0,24,2 Masked, inverted bitmap data
 N $D8D8 Right of car (8x15)
-N $D8D8 #HTML[#CALL:graphic($D8D8,8,15,1,1)]
+N $D8D8 #HTML[#CALL(graphic($D8D8,8,15,1,1))]
 @ $D8D8 label=bitmap_hero_right_straight_right_hard
 B $D8D8,30,2 Masked, inverted bitmap data
 N $D8F6 Up parts
 N $D8F6 Top of car (40x10)
-N $D8F6 #HTML[#CALL:graphic($D8F6,40,10,1,1)]
+N $D8F6 #HTML[#CALL(graphic($D8F6,40,10,1,1))]
 @ $D8F6 label=bitmap_hero_top_up
 B $D8F6,100,10 Masked, inverted bitmap data
 N $D95A Bottom of car (40x6)
-N $D95A #HTML[#CALL:graphic($D95A,40,6,1,1)]
+N $D95A #HTML[#CALL(graphic($D95A,40,6,1,1))]
 @ $D95A label=bitmap_hero_bottom_up
 B $D95A,60,10 Masked, inverted bitmap data
 N $D996 Left of car (8x13)
-N $D996 #HTML[#CALL:graphic($D996,8,13,1,1)]
+N $D996 #HTML[#CALL(graphic($D996,8,13,1,1))]
 @ $D996 label=bitmap_hero_left_up
 B $D996,26,2 Masked, inverted bitmap data
 N $D9B0 Right of car (8x14)
-N $D9B0 #HTML[#CALL:graphic($D9B0,8,14,1,1)]
+N $D9B0 #HTML[#CALL(graphic($D9B0,8,14,1,1))]
 @ $D9B0 label=bitmap_hero_right_up
 B $D9B0,28,2 Masked, inverted bitmap data
 N $D9CC Up + Turn right parts
 N $D9CC Top of car (40x9)
-N $D9CC #HTML[#CALL:graphic($D9CC,40,9,1,1)]
+N $D9CC #HTML[#CALL(graphic($D9CC,40,9,1,1))]
 @ $D9CC label=bitmap_hero_top_right
 B $D9CC,90,10 Masked, inverted bitmap data
 N $DA26 Bottom of car (40x4)
-N $DA26 #HTML[#CALL:graphic($DA26,40,4,1,1)]
+N $DA26 #HTML[#CALL(graphic($DA26,40,4,1,1))]
 @ $DA26 label=bitmap_hero_bottom_right
 B $DA26,40,10 Masked, inverted bitmap data
 N $DA4E Left of car (8x12)
-N $DA4E #HTML[#CALL:graphic($DA4E,8,12,1,1)]
+N $DA4E #HTML[#CALL(graphic($DA4E,8,12,1,1))]
 @ $DA4E label=bitmap_hero_left_right
 B $DA4E,24,2 Masked, inverted bitmap data
 N $DA66 Right of car (8x14)
-N $DA66 #HTML[#CALL:graphic($DA66,8,14,1,1)]
+N $DA66 #HTML[#CALL(graphic($DA66,8,14,1,1))]
 @ $DA66 label=bitmap_hero_right_right
 B $DA66,28,2 Masked, inverted bitmap data
 N $DA82 Up + Turn right hard parts
 N $DA82 Top of car (40x9)
-N $DA82 #HTML[#CALL:graphic($DA82,40,9,1,1)]
+N $DA82 #HTML[#CALL(graphic($DA82,40,9,1,1))]
 @ $DA82 label=bitmap_hero_up_right_hard
 B $DA82,90,10 Masked, inverted bitmap data
 N $DADC Bottom of car (40x6)
-N $DADC #HTML[#CALL:graphic($DADC,40,6,1,1)]
+N $DADC #HTML[#CALL(graphic($DADC,40,6,1,1))]
 @ $DADC label=bitmap_hero_bottom_right_hard
 B $DADC,60,10 Masked, inverted bitmap data
 N $DB18 Left of car (8x11)
-N $DB18 #HTML[#CALL:graphic($DB18,8,11,1,1)]
+N $DB18 #HTML[#CALL(graphic($DB18,8,11,1,1))]
 @ $DB18 label=bitmap_hero_left_right_hard
 B $DB18,22,2 Masked, inverted bitmap data
 N $DB2E Right of car (8x15)
-N $DB2E #HTML[#CALL:graphic($DB2E,8,15,1,1)]
+N $DB2E #HTML[#CALL(graphic($DB2E,8,15,1,1))]
 @ $DB2E label=bitmap_hero_right_right_hard
 B $DB2E,30,2 Masked, inverted bitmap data
 N $DB4C Down parts
 N $DB4C Top of car (40x8)
-N $DB4C #HTML[#CALL:graphic($DB4C,40,8,1,1)]
+N $DB4C #HTML[#CALL(graphic($DB4C,40,8,1,1))]
 @ $DB4C label=bitmap_hero_top_down
 B $DB4C,80,10 Masked, inverted bitmap data
 N $DB9C Bottom of car (40x6)
-N $DB9C #HTML[#CALL:graphic($DB9C,40,6,1,1)]
+N $DB9C #HTML[#CALL(graphic($DB9C,40,6,1,1))]
 @ $DB9C label=bitmap_hero_bottom_down
 B $DB9C,60,10 Masked, inverted bitmap data
 N $DBD8 Left of car (8x13)
-N $DBD8 #HTML[#CALL:graphic($DBD8,8,13,1,1)]
+N $DBD8 #HTML[#CALL(graphic($DBD8,8,13,1,1))]
 @ $DBD8 label=bitmap_hero_left_down
 B $DBD8,26,2 Masked, inverted bitmap data
 N $DBF2 Right of car (8x14)
-N $DBF2 #HTML[#CALL:graphic($DBF2,8,14,1,1)]
+N $DBF2 #HTML[#CALL(graphic($DBF2,8,14,1,1))]
 @ $DBF2 label=bitmap_hero_right_down
 B $DBF2,28,2 Masked, inverted bitmap data
 N $DC0E Down + Turn right parts
 N $DC0E Top of car (40x8)
-N $DC0E #HTML[#CALL:graphic($DC0E,40,8,1,1)]
+N $DC0E #HTML[#CALL(graphic($DC0E,40,8,1,1))]
 @ $DC0E label=bitmap_hero_top_down_right
 B $DC0E,80,10 Masked, inverted bitmap data
 N $DC5E Bottom of car (40x4)
-N $DC5E #HTML[#CALL:graphic($DC5E,40,4,1,1)]
+N $DC5E #HTML[#CALL(graphic($DC5E,40,4,1,1))]
 @ $DC5E label=bitmap_hero_bottom_down_right
 B $DC5E,40,10 Masked, inverted bitmap data
 N $DC86 Left of car (8x13)
-N $DC86 #HTML[#CALL:graphic($DC86,8,13,1,1)]
+N $DC86 #HTML[#CALL(graphic($DC86,8,13,1,1))]
 @ $DC86 label=bitmap_hero_left_down_right
 B $DC86,26,2 Masked, inverted bitmap data
 N $DCA0 Right of car (8x13)
-N $DCA0 #HTML[#CALL:graphic($DCA0,8,13,1,1)]
+N $DCA0 #HTML[#CALL(graphic($DCA0,8,13,1,1))]
 @ $DCA0 label=bitmap_hero_right_down_right
 B $DCA0,26,2 Masked, inverted bitmap data
 N $DCBA Down + Turn right hard parts
 N $DCBA Top of car (40x8)
-N $DCBA #HTML[#CALL:graphic($DCBA,40,8,1,1)]
+N $DCBA #HTML[#CALL(graphic($DCBA,40,8,1,1))]
 @ $DCBA label=bitmap_hero_top_down_right_hard
 B $DCBA,80,10 Masked, inverted bitmap data
 N $DD0A Bottom of car (40x4)
-N $DD0A #HTML[#CALL:graphic($DD0A,40,4,1,1)]
+N $DD0A #HTML[#CALL(graphic($DD0A,40,4,1,1))]
 @ $DD0A label=bitmap_hero_bottom_down_right_hard
 B $DD0A,40,10 Masked, inverted bitmap data
 N $DD32 Left of car (8x13)
-N $DD32 #HTML[#CALL:graphic($DD32,8,13,1,1)]
+N $DD32 #HTML[#CALL(graphic($DD32,8,13,1,1))]
 @ $DD32 label=bitmap_hero_left_down_right_hard
 B $DD32,26,2 Masked, inverted bitmap data
 N $DD4C Right of car (8x15)
-N $DD4C #HTML[#CALL:graphic($DD4C,8,15,1,1)]
+N $DD4C #HTML[#CALL(graphic($DD4C,8,15,1,1))]
 @ $DD4C label=bitmap_hero_right_down_right_hard
 B $DD4C,30,2 Masked, inverted bitmap data
 N $DD6A Shadow parts
 N $DD6A Shadow + Straight (56x12)
-N $DD6A #HTML[#CALL:graphic($DD6A,56,12,1,1)]
+N $DD6A #HTML[#CALL(graphic($DD6A,56,12,1,1))]
 @ $DD6A label=bitmap_shadow_straight
 B $DD6A,168,14 Masked, inverted bitmap data
 N $DE12 Shadow + Turn right (56x12)
-N $DE12 #HTML[#CALL:graphic($DE12,56,12,1,1)]
+N $DE12 #HTML[#CALL(graphic($DE12,56,12,1,1))]
 @ $DE12 label=bitmap_shadow_turn_right
 B $DE12,168,14 Masked, inverted bitmap data
 N $DEBA Shadow + Turn right hard (56x12)
-N $DEBA #HTML[#CALL:graphic($DEBA,56,12,1,1)]
+N $DEBA #HTML[#CALL(graphic($DEBA,56,12,1,1))]
 @ $DEBA label=bitmap_shadow_turn_right_hard
 B $DEBA,168,14 Masked, inverted bitmap data
 b $DF62 [Graphics] LED style numeric font used for scores
 D $DF62 8x15 pixels, digits 0..9 only
-D $DF62 #HTML[#CALL:graphic($DF62,8,10*15,0,0)]
+D $DF62 #HTML[#CALL(graphic($DF62,8,10*15,0,0))]
 @ $DF62 label=ledfont
 B $DF62,150,15
 b $DFF8 [Graphics] Mini font used for in-game messages
 D $DFF8 8x6 pixels, though the digits are thinner than 8, A-Z + five symbols.
-D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
+D $DFF8 #HTML[#CALL(graphic($DFF8,8,31*6,0,0))]
 @ $DFF8 label=minifont
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
 D $E0B2 Note: The definitions may use subsections of graphic data.
 N $E0B2 TODO: Ensure these graphic calls don't clash with other emissions.
-N $E0B2 Regular: #HTML[#CALL:graphic($7AB1,16,16,0,1)]
+N $E0B2 Regular: #HTML[#CALL(graphic($7AB1,16,16,0,1))]
+@ $E0B2 label=fire1_defns
 B $E0B2,1,1 Width (bytes)
 B $E0B3,1,1 Flags
 B $E0B4,1,1 Height (pixels)
 W $E0B5,2,2 Bitmap
 W $E0B7,2,2 Pre-shifted bitmap
-N $E0B9 Regular: #HTML[#CALL:graphic($7B31,24,8,1,1)]
+N $E0B9 Regular: #HTML[#CALL(graphic($7B31,24,8,1,1))]
 B $E0B9,1,1 Width (bytes)
 B $E0BA,1,1 Flags
 B $E0BB,1,1 Height (pixels)
 W $E0BC,2,2 Bitmap
 W $E0BE,2,2 Pre-shifted bitmap
-N $E0C0 Regular: #HTML[#CALL:graphic($7B91,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+N $E0C0 Regular: #HTML[#CALL(graphic($7B91,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA5,16,5,1,1))]
 B $E0C0,1,1 Width (bytes)
 B $E0C1,1,1 Flags
 B $E0C2,1,1 Height (pixels)
 W $E0C3,2,2 Bitmap
 W $E0C5,2,2 Pre-shifted bitmap
-N $E0C7 Regular: #HTML[#CALL:graphic($7B95,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
+N $E0C7 Regular: #HTML[#CALL(graphic($7B95,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA9,16,4,1,1))]
 B $E0C7,1,1 Width (bytes)
 B $E0C8,1,1 Flags
 B $E0C9,1,1 Height (pixels)
 W $E0CA,2,2 Bitmap
 W $E0CC,2,2 Pre-shifted bitmap
-N $E0CE Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E0CE Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E0CE,1,1 Width (bytes)
 B $E0CF,1,1 Flags
 B $E0D0,1,1 Height (pixels)
 W $E0D1,2,2 Bitmap
 W $E0D3,2,2 Pre-shifted bitmap
-N $E0D5 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E0D5 Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E0D5,1,1 Width (bytes)
 B $E0D6,1,1 Flags
 B $E0D7,1,1 Height (pixels)
 W $E0D8,2,2 Bitmap
 W $E0DA,2,2 Pre-shifted bitmap
-N $E0DC Regular: #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+N $E0DC Regular: #HTML[#CALL(graphic($7AF1,32,16,0,1))]
+@ $E0DC label=fire2_defns
 B $E0DC,1,1 Width (bytes)
 B $E0DD,1,1 Flags
 B $E0DE,1,1 Height (pixels)
 W $E0DF,2,2 Bitmap
 W $E0E1,2,2 Pre-shifted bitmap
-N $E0E3 Regular: #HTML[#CALL:graphic($7B61,24,8,1,1)]
+N $E0E3 Regular: #HTML[#CALL(graphic($7B61,24,8,1,1))]
 B $E0E3,1,1 Width (bytes)
 B $E0E4,1,1 Flags
 B $E0E5,1,1 Height (pixels)
 W $E0E6,2,2 Bitmap
 W $E0E8,2,2 Pre-shifted bitmap
-N $E0EA Regular: #HTML[#CALL:graphic($7BB9,16,6,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD1,16,6,1,1)]
+N $E0EA Regular: #HTML[#CALL(graphic($7BB9,16,6,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD1,16,6,1,1))]
 B $E0EA,1,1 Width (bytes)
 B $E0EB,1,1 Flags
 B $E0EC,1,1 Height (pixels)
 W $E0ED,2,2 Bitmap
 W $E0EF,2,2 Pre-shifted bitmap
-N $E0F1 Regular: #HTML[#CALL:graphic($7BBD,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD5,16,5,1,1)]
+N $E0F1 Regular: #HTML[#CALL(graphic($7BBD,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD5,16,5,1,1))]
 B $E0F1,1,1 Width (bytes)
 B $E0F2,1,1 Flags
 B $E0F3,1,1 Height (pixels)
 W $E0F4,2,2 Bitmap
 W $E0F6,2,2 Pre-shifted bitmap
-N $E0F8 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
+N $E0F8 Regular: #HTML[#CALL(graphic($7BC1,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD9,16,4,1,1))]
 B $E0F8,1,1 Width (bytes)
 B $E0F9,1,1 Flags
 B $E0FA,1,1 Height (pixels)
 W $E0FB,2,2 Bitmap
 W $E0FD,2,2 Pre-shifted bitmap
-N $E0FF Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E0FF Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E0FF,1,1 Width (bytes)
 B $E100,1,1 Flags
 B $E101,1,1 Height (pixels)
 W $E102,2,2 Bitmap
 W $E104,2,2 Pre-shifted bitmap
-N $E106 Regular: #HTML[#CALL:graphic($7AC5,32,11,0,1)]
+N $E106 Regular: #HTML[#CALL(graphic($7AC5,32,11,0,1))]
+@ $E106 label=fire3_defns
 B $E106,1,1 Width (bytes)
 B $E107,1,1 Flags
 B $E108,1,1 Height (pixels)
 W $E109,2,2 Bitmap
 W $E10B,2,2 Pre-shifted bitmap
-N $E10D Regular: #HTML[#CALL:graphic($7B3D,24,6,1,1)]
+N $E10D Regular: #HTML[#CALL(graphic($7B3D,24,6,1,1))]
 B $E10D,1,1 Width (bytes)
 B $E10E,1,1 Flags
 B $E10F,1,1 Height (pixels)
 W $E110,2,2 Bitmap
 W $E112,2,2 Pre-shifted bitmap
-N $E114 Regular: #HTML[#CALL:graphic($7B3D,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
+N $E114 Regular: #HTML[#CALL(graphic($7B3D,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA9,16,4,1,1))]
 B $E114,1,1 Width (bytes)
 B $E115,1,1 Flags
 B $E116,1,1 Height (pixels)
 W $E117,2,2 Bitmap
 W $E119,2,2 Pre-shifted bitmap
-N $E11B Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E11B Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E11B,1,1 Width (bytes)
 B $E11C,1,1 Flags
 B $E11D,1,1 Height (pixels)
 W $E11E,2,2 Bitmap
 W $E120,2,2 Pre-shifted bitmap
-N $E122 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E122 Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E122,1,1 Width (bytes)
 B $E123,1,1 Flags
 B $E124,1,1 Height (pixels)
 W $E125,2,2 Bitmap
 W $E127,2,2 Pre-shifted bitmap
-N $E129 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E129 Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E129,1,1 Width (bytes)
 B $E12A,1,1 Flags
 B $E12B,1,1 Height (pixels)
 W $E12C,2,2 Bitmap
 W $E12E,2,2 Pre-shifted bitmap
-N $E130 Regular: #HTML[#CALL:graphic($7B05,32,11,0,1)]
+N $E130 Regular: #HTML[#CALL(graphic($7B05,32,11,0,1))]
+@ $E130 label=fire4_defns
 B $E130,1,1 Width (bytes)
 B $E131,1,1 Flags
 B $E132,1,1 Height (pixels)
 W $E133,2,2 Bitmap
 W $E135,2,2 Pre-shifted bitmap
-N $E137 Regular: #HTML[#CALL:graphic($7B6D,24,6,1,1)]
+N $E137 Regular: #HTML[#CALL(graphic($7B6D,24,6,1,1))]
 B $E137,1,1 Width (bytes)
 B $E138,1,1 Flags
 B $E139,1,1 Height (pixels)
 W $E13A,2,2 Bitmap
 W $E13C,2,2 Pre-shifted bitmap
-N $E13E Regular: #HTML[#CALL:graphic($7BA1,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,5,1,1)]
+N $E13E Regular: #HTML[#CALL(graphic($7BA1,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,5,1,1))]
 B $E13E,1,1 Width (bytes)
 B $E13F,1,1 Flags
 B $E140,1,1 Height (pixels)
 W $E141,2,2 Bitmap
 W $E143,2,2 Pre-shifted bitmap
-N $E145 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
+N $E145 Regular: #HTML[#CALL(graphic($7BC1,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD9,16,4,1,1))]
 B $E145,1,1 Width (bytes)
 B $E146,1,1 Flags
 B $E147,1,1 Height (pixels)
 W $E148,2,2 Bitmap
 W $E14A,2,2 Pre-shifted bitmap
-N $E14C Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E14C Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E14C,1,1 Width (bytes)
 B $E14D,1,1 Flags
 B $E14E,1,1 Height (pixels)
 W $E14F,2,2 Bitmap
 W $E151,2,2 Pre-shifted bitmap
-N $E153 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
+N $E153 Regular: #HTML[#CALL(graphic($7BC9,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE1,16,2,1,1))]
 B $E153,1,1 Width (bytes)
 B $E154,1,1 Flags
 B $E155,1,1 Height (pixels)
 W $E156,2,2 Bitmap
 W $E158,2,2 Pre-shifted bitmap
-N $E15A Regular: #HTML[#CALL:graphic($7AD9,32,6,0,1)]
+N $E15A Regular: #HTML[#CALL(graphic($7AD9,32,6,0,1))]
+@ $E15A label=fire5_defns
 B $E15A,1,1 Width (bytes)
 B $E15B,1,1 Flags
 B $E15C,1,1 Height (pixels)
 W $E15D,2,2 Bitmap
 W $E15F,2,2 Pre-shifted bitmap
-N $E161 Regular: #HTML[#CALL:graphic($7B4F,24,3,1,1)]
+N $E161 Regular: #HTML[#CALL(graphic($7B4F,24,3,1,1))]
 B $E161,1,1 Width (bytes)
 B $E162,1,1 Flags
 B $E163,1,1 Height (pixels)
 W $E164,2,2 Bitmap
 W $E166,2,2 Pre-shifted bitmap
-N $E168 Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E168 Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E168,1,1 Width (bytes)
 B $E169,1,1 Flags
 B $E16A,1,1 Height (pixels)
 W $E16B,2,2 Bitmap
 W $E16D,2,2 Pre-shifted bitmap
-N $E16F Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E16F Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E16F,1,1 Width (bytes)
 B $E170,1,1 Flags
 B $E171,1,1 Height (pixels)
 W $E172,2,2 Bitmap
 W $E174,2,2 Pre-shifted bitmap
-N $E176 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E176 Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E176,1,1 Width (bytes)
 B $E177,1,1 Flags
 B $E178,1,1 Height (pixels)
 W $E179,2,2 Bitmap
 W $E17B,2,2 Pre-shifted bitmap
-N $E17D Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E17D Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E17D,1,1 Width (bytes)
 B $E17E,1,1 Flags
 B $E17F,1,1 Height (pixels)
 W $E180,2,2 Bitmap
 W $E182,2,2 Pre-shifted bitmap
-N $E184 Regular: #HTML[#CALL:graphic($7B19,32,6,0,1)]
+N $E184 Regular: #HTML[#CALL(graphic($7B19,32,6,0,1))]
+@ $E184 label=fire6_defns
 B $E184,1,1 Width (bytes)
 B $E185,1,1 Flags
 B $E186,1,1 Height (pixels)
 W $E187,2,2 Bitmap
 W $E189,2,2 Pre-shifted bitmap
-N $E18B Regular: #HTML[#CALL:graphic($7B7F,24,3,1,1)]
+N $E18B Regular: #HTML[#CALL(graphic($7B7F,24,3,1,1))]
 B $E18B,1,1 Width (bytes)
 B $E18C,1,1 Flags
 B $E18D,1,1 Height (pixels)
 W $E18E,2,2 Bitmap
 W $E190,2,2 Pre-shifted bitmap
-N $E192 Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E192 Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E192,1,1 Width (bytes)
 B $E193,1,1 Flags
 B $E194,1,1 Height (pixels)
 W $E195,2,2 Bitmap
 W $E197,2,2 Pre-shifted bitmap
-N $E199 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
+N $E199 Regular: #HTML[#CALL(graphic($7BC9,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE1,16,2,1,1))]
 B $E199,1,1 Width (bytes)
 B $E19A,1,1 Flags
 B $E19B,1,1 Height (pixels)
 W $E19C,2,2 Bitmap
 W $E19E,2,2 Pre-shifted bitmap
-N $E1A0 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
+N $E1A0 Regular: #HTML[#CALL(graphic($7BCD,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE5,16,1,1,1))]
 B $E1A0,1,1 Width (bytes)
 B $E1A1,1,1 Flags
 B $E1A2,1,1 Height (pixels)
 W $E1A3,2,2 Bitmap
 W $E1A5,2,2 Pre-shifted bitmap
-N $E1A7 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
+N $E1A7 Regular: #HTML[#CALL(graphic($7BCD,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE5,16,1,1,1))]
 B $E1A7,1,1 Width (bytes)
 B $E1A8,1,1 Flags
 B $E1A9,1,1 Height (pixels)
 W $E1AA,2,2 Bitmap
 W $E1AC,2,2 Pre-shifted bitmap
 N $E1AE Smoke graphics (drawn over perp's car when smashed)
-N $E1AE #HTML[#CALL:graphic($7A0F,16,13,1,1)]
+N $E1AE #HTML[#CALL(graphic($7A0F,16,13,1,1))]
 @ $E1AE label=smoke_defns
 B $E1AE,1,1 Width (bytes)
 B $E1AF,1,1 Flags
 B $E1B0,1,1 Height (pixels)
 W $E1B1,2,2 Bitmap
 W $E1B3,2,2 Pre-shifted bitmap
-N $E1B5 #HTML[#CALL:graphic($7A43,16,11,1,1)]
+N $E1B5 #HTML[#CALL(graphic($7A43,16,11,1,1))]
 B $E1B5,1,1 Width (bytes)
 B $E1B6,1,1 Flags
 B $E1B7,1,1 Height (pixels)
 W $E1B8,2,2 Bitmap
 W $E1BA,2,2 Pre-shifted bitmap
-N $E1BC #HTML[#CALL:graphic($7A6F,16,9,1,1)]
+N $E1BC #HTML[#CALL(graphic($7A6F,16,9,1,1))]
 B $E1BC,1,1 Width (bytes)
 B $E1BD,1,1 Flags
 B $E1BE,1,1 Height (pixels)
 W $E1BF,2,2 Bitmap
 W $E1C1,2,2 Pre-shifted bitmap
-N $E1C3 #HTML[#CALL:graphic($7A93,8,7,1,1)]
+N $E1C3 #HTML[#CALL(graphic($7A93,8,7,1,1))]
 B $E1C3,1,1 Width (bytes)
 B $E1C4,1,1 Flags
 B $E1C5,1,1 Height (pixels)
 W $E1C6,2,2 Bitmap
 W $E1C8,2,2 Pre-shifted bitmap
-N $E1CA #HTML[#CALL:graphic($7AA1,8,5,1,1)]
+N $E1CA #HTML[#CALL(graphic($7AA1,8,5,1,1))]
 B $E1CA,1,1 Width (bytes)
 B $E1CB,1,1 Flags
 B $E1CC,1,1 Height (pixels)
 W $E1CD,2,2 Bitmap
 W $E1CF,2,2 Pre-shifted bitmap
-N $E1D1 #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+N $E1D1 #HTML[#CALL(graphic($7AAB,8,3,1,1))]
 B $E1D1,1,1 Width (bytes)
 B $E1D2,1,1 Flags
 B $E1D3,1,1 Height (pixels)
 W $E1D4,2,2 Bitmap
 W $E1D6,2,2 Pre-shifted bitmap
 N $E1D8 Arrow graphic (incl. HERE!)
-N $E1D8 #HTML[#CALL:graphic($D03F,24,28,1,1)]
-@ $E1D8 label=floating_arrow_big_defn
+N $E1D8 #HTML[#CALL(graphic($D03F,24,28,1,1))]
+@ $E1D8 label=floating_arrow_here_defn
 B $E1D8,1,1 Width (bytes)
 B $E1D9,1,1 Flags
 B $E1DA,1,1 Height (pixels)
 W $E1DB,2,2 Bitmap
 W $E1DD,2,2 Pre-shifted bitmap
-N $E1DF #HTML[#CALL:graphic($D03F,24,21,1,1)]
-@ $E1DF label=floating_arrow_defns
+N $E1DF #HTML[#CALL(graphic($D03F,24,21,1,1))]
+@ $E1DF label=floating_arrow_left_defn
 B $E1DF,1,1 Width (bytes)
 B $E1E0,1,1 Flags
 B $E1E1,1,1 Height (pixels)
 W $E1E2,2,2 Bitmap
-N $E1E4 #HTML[#CALL:graphic($D03F,24,21,1,1)] (but should be flipped L-R)
+N $E1E4 #HTML[#CALL(graphic($D03F,24,21,1,1))] (but should be flipped L-R)
+@ $E1E4 label=floating_arrow_right_defn
 B $E1E4,1,1 Width (bytes)
 B $E1E5,1,1 Flags
 B $E1E6,1,1 Height (pixels)
@@ -11668,106 +12321,151 @@ B $E224,1,1 Height (pixels)
 W $E225,2,2 Bitmap
 W $E227,2,2 Pre-shifted bitmap
 N $E229 Tunnel light (16x16)
-N $E229 #HTML[#CALL:graphic($E229,16,16,0,1)]
+N $E229 #HTML[#CALL(graphic($E229,16,16,0,1))]
 @ $E229 label=bitmap_tunnellight_1
 B $E229,32,8 Bitmap data
 N $E249 Tunnel light (16x12)
-N $E249 #HTML[#CALL:graphic($E249,16,12,0,1)]
+N $E249 #HTML[#CALL(graphic($E249,16,12,0,1))]
 @ $E249 label=bitmap_tunnellight_2
 B $E249,24,8 Bitmap data
-N $E261 #HTML[#CALL:graphic($E261,8,8,0,1)]
+N $E261 #HTML[#CALL(graphic($E261,8,8,0,1))]
 N $E261 Tunnel light (8x8)
 @ $E261 label=bitmap_tunnellight_3
 B $E261,8,8 Bitmap data
-N $E269 #HTML[#CALL:graphic($E269,8,6,0,1)]
+N $E269 #HTML[#CALL(graphic($E269,8,6,0,1))]
 N $E269 Tunnel light (8x6)
 @ $E269 label=bitmap_tunnellight_4
 B $E269,6,6 Bitmap data
-N $E26F #HTML[#CALL:graphic($E26F,8,5,0,1)]
+N $E26F #HTML[#CALL(graphic($E26F,8,5,0,1))]
 N $E26F Tunnel light (8x5)
 @ $E26F label=bitmap_tunnellight_5
 B $E26F,5,5 Bitmap data
-N $E274 #HTML[#CALL:graphic($E274,16,6,1,1)]
+N $E274 #HTML[#CALL(graphic($E274,16,6,1,1))]
 N $E274 Tunnel light masked (16x6)
 @ $E274 label=tunnellight_6
 B $E274,24,8 Masked bitmap data
 N $E28C Tunnel light masked shifted (16x6)
-N $E28C #HTML[#CALL:graphic($E28C,16,6,1,1)]
+N $E28C #HTML[#CALL(graphic($E28C,16,6,1,1))]
 @ $E28C label=tunnellight_6s
 B $E28C,24,8 Masked bitmap data
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
+N $E2A4 #HTML[#CALL(hazards_for_c($E2A4))]
 @ $E2A4 label=perp_escape_hazards
-B $E2A4,6,6
+B $E2A4,1,1 Wait for 27 units
+B $E2A5,2,2 Escape, Command 9 (Start Spawning Two Barriers)
+B $E2A7,1,1 Wait for 1 unit
+B $E2A8,2,2 Escape, Command 3 (Stop Spawning Barriers)
 N $E2AA Perp escape scene, curvature
+N $E2AA #HTML[#CALL(curvature_for_c($E2AA))]
 @ $E2AA label=perp_escape_curvature
-B $E2AA,1,1 Straight
+B $E2AA,1,1 Straight for 15 units
 B $E2AB,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2AD,2,2 Loop
 N $E2AF Perp escape scene, height
+N $E2AF #HTML[#CALL(height_for_c($E2AF))]
 @ $E2AF label=perp_escape_height
-B $E2AF,1,1 Level ground
+B $E2AF,1,1 Level Road for 15 units
 B $E2B0,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2B2,2,2 Loop
 N $E2B4 Perp escape scene, lanes
+N $E2B4 #HTML[#CALL(lanes_for_c($E2B4))]
 @ $E2B4 label=perp_escape_lanes
-B $E2B4,1,1 Length byte ?
-B $E2B5,1,1 Lanes byte ?
-@ $E2B8 label=perp_escape_lanes_loop
-B $E2B6,6,1
+B $E2B4,2,2 53 units of 3 Lanes L
+B $E2B6,2,2 255 units of Tunnel  -- Is no explicit stop required here since the camera stops?
+N $E2B8 Fork scene, hazards
+N $E2B8 #HTML[#CALL(hazards_for_c($E2B8))]
+@ $E2B8 label=fork_hazards
+B $E2B8,1,1 Wait for 12
+B $E2B9,2,2 Escape, Command 10 (Set Floating Arrow Off)
+B $E2BB,1,1 Wait for 255
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2BE,2,2 Loop (partial)
-N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
-@ $E2C0 label=perp_escape_leftobjs
-@ $E2C1 label=perp_escape_leftobjs_loop
-B $E2C0,2,1
+W $E2BE,2,2 Loop
+N $E2C0 Fork scene, left and right hand objects This first byte of the data is only used when drawing objects on the left hand side. Perhaps to stop the initial pole drawing twice?
+N $E2C0 #HTML[#CALL(objects_for_c($E2C0))]
+@ $E2C0 label=fork_leftrightobjs
+B $E2C0,1,1 1 units of Nothing
+@ $E2C1 label=fork_leftrightobjs_loop
+B $E2C1,1,1 15 units of Short Pole
 B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2C4,2,2 Loop (partial)
+W $E2C4,2,2 Loop
 b $E2C6 Data for road forks
 N $E2C6 Road fork, curvature
+N $E2C6 #HTML[#CALL(curvature_for_c($E2C6))]
 @ $E2C6 label=forked_road_curvature
-B $E2C6,1,1
+B $E2C6,1,1 Straight for 1 unit
 @ $E2C7 label=forked_road_curvature_loop
-B $E2C7,1,1 Curve left (67%)
+B $E2C7,1,1 Curve Left Hard for 15 units
 B $E2C8,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2CA,2,2 Loop (partial)
+W $E2CA,2,2 Loop
 N $E2CC Road fork, height
+N $E2CC #HTML[#CALL(height_for_c($E2CC))]
 @ $E2CC label=forked_road_height
-B $E2CC,1,1
+B $E2CC,1,1 Level Road for 15 units
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
-N $E2D1 Road fork, hazards? Previously thought this was lane data...
-@ $E2D1 label=forked_road_hazards
-B $E2D1,5,5
-@ $E2D6 label=forked_road_rightobjs
-B $E2D6,4,4 rightside data  [flips around depending on who's accessing it]
-@ $E2DA label=forked_road_leftobjs
-B $E2DA,4,4 leftside data   [flips]
-b $E2DE Data for road fork exits
-D $E2DE Possibly off-by-one here, if the terminator is ($00,$01)
+N $E2D1 Road fork, lanes
+N $E2D1 BROKEN! HTML[CALL:lanes_for_c($E2D1)]
+@ $E2D1 label=forked_road_lanes
+B $E2D1,2,2 Forked Road for 255 units
+b $E2D3 Data for road fork exits
+D $E2D3 Data used when exiting from road forks.
+N $E2D3 Road fork exit, hazards
+N $E2D3 #HTML[#CALL(hazards_for_c($E2D3))]
+@ $E2D3 label=forked_road_exit_hazards
+B $E2D3,1,1 Wait for 18 units
+B $E2D4,2,2 Escape, Command 1 (Fork End)
+N $E2D6 Road fork exit, right objects
+N $E2D6 #HTML[#CALL(objects_for_c($E2D6))]
+@ $E2D6 label=forked_road_exit_rightobjs
+B $E2D6,1,1 Short Pole for 5 units
+B $E2D7,1,1 Nothing for 13 units
+B $E2D8,2,2 Escape, Command 1 (Fork End)
+N $E2DA Road fork exit, left objects
+N $E2DA #HTML[#CALL(objects_for_c($E2DA))]
+@ $E2DA label=forked_road_exit_leftobjs
+B $E2DA,1,1 Nothing for 5 units
+B $E2DB,1,1 Nothing for 13 units
+B $E2DC,2,2 Escape, Command 1 (Fork End)
 N $E2DE Road fork exit, curvature
+N $E2DE #HTML[#CALL(curvature_for_c($E2DE))]
 @ $E2DE label=forked_road_exit_curvature
-B $E2DE,5,5 [ (15x straight), (15x straight), (6x straight), FORK_END ]
+B $E2DE,1,1 Straight for 15 units
+B $E2DF,1,1 Straight for 15 units
+B $E2E0,1,1 Straight for 6 units
+B $E2E1,2,2 Escape, Command 1 (Fork End)
 N $E2E3 Road fork exit, height
+N $E2E3 #HTML[#CALL(height_for_c($E2E3))]
 @ $E2E3 label=forked_road_exit_height
-B $E2E3,5,5 [ (15x level), (15x level), (6x level), FORK_END ]
+B $E2E3,1,1 Level Road for 15 units
+B $E2E4,1,1 Level Road for 15 units
+B $E2E5,1,1 Level Road for 6 units
+B $E2E6,2,2 Escape, Command 1 (Fork End)
 N $E2E8 Road fork exit, lanes (left fork)
+N $E2E8 #HTML[#CALL(lanes_for_c($E2E8))]
 @ $E2E8 label=forked_road_exit_left_lanes
-B $E2E8,7,7 [ (10x Two lanes), (2x $2D?), (10x Three lanes), (2x Widening 3-4 R), (12x Four lanes), FORK_END ]
-B $E2EF,5,5
+B $E2E8,2,2 2 Lanes L for 10 units
+B $E2EA,2,2 2-3 Widening L for 2 units
+B $E2EC,2,2 3 Lanes L for 10 units
+B $E2EE,2,2 3-4 Widening L for 2 units
+B $E2F0,2,2 4 Lanes for 12 units
+B $E2F2,2,2 Escape, Command 1 (Fork End)
 N $E2F4 Road fork exit, lanes (right fork)
+N $E2F4 #HTML[#CALL(lanes_for_c($E2F4))]
 @ $E2F4 label=forked_road_exit_right_lanes
-B $E2F4,7,7 [ (10x Two lanes), (2x Widening 2-3 L), (10x Three lanes), (2x Widening 3-4 L), (12x Four lanes), FORK_END ]
-B $E2FB,5,5
-b $E300 Data block at E300
+B $E2F4,2,2 2 Lanes R for 10 units
+B $E2F6,2,2 2-3 Widening R for 2 units
+B $E2F8,2,2 3 Lanes R for 10 units
+B $E2FA,2,2 3-4 Widening R for 2 units
+B $E2FC,2,2 4 Lanes for 12 units
+B $E2FE,2,2 Escape, Command 1 (Fork End)
+b $E300 Data block at E300 - height table?
 @ $E300 label=table_e300
 B $E300,1,1
 S $E301,31,$1F
 b $E320 Data block at E320
 @ $E320 label=table_e320
-S $E320,21,$15 21 entries. Used by $CC8E
-u $E335 Unused
-S $E335,1,$01 padding byte or the start of the next table?
+S $E320,22,$16 22 entries. Used by $CC8E
 b $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
@@ -11780,49 +12478,53 @@ u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
-S $E34F,21,$15
+S $E34F,21,$15 21 entries
 b $E364 Transition masks
 N $E364 Spiral inward animation mask (8x8, 11 frames)
-N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
-N $E364 #HTML[#CALL:graphic($E364,8,11*8,0,0)]
+N $E364 This is not relocated.
+N $E364 #HTML[#CALL(anim($E364,8,8,0,0,11))]
+N $E364 #HTML[#CALL(graphic($E364,8,11*8,0,0))]
+@ $E364 label=spiral_transition_mask
 B $E364,88,8
 N $E3BC Circle expanding animation mask (8x8, 7 frames)
-N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
-N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
+N $E3BC This is not relocated.
+N $E3BC #HTML[#CALL(anim($E3BC,8,8,0,0,7))]
+N $E3BC #HTML[#CALL(graphic($E3BC,8,7*8,0,0))]
+@ $E3BC label=circle_transition_mask
 B $E3BC,56,8
 u $E3F4 Unused
 B $E3F4,28,8*3,4
 b $E410 [Graphics] Road edge markings
 D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
-N $E410 #HTML[#CALL:graphic($E410,16,8,1,1)]
+N $E410 #HTML[#CALL(graphic($E410,16,8,1,1))]
 @ $E410 label=edge_markings
 B $E410,8,8 Widest edge. White.
 B $E418,24,8
-N $E430 #HTML[#CALL:graphic($E430,16,8,1,1)]
+N $E430 #HTML[#CALL(graphic($E430,16,8,1,1))]
 B $E430,8,8 Widest edge. Black.
 B $E438,24,8
-N $E450 #HTML[#CALL:graphic($E450,16,8,1,1)]
+N $E450 #HTML[#CALL(graphic($E450,16,8,1,1))]
 B $E450,8,8 Middle edge. White.
 B $E458,24,8
-N $E470 #HTML[#CALL:graphic($E470,16,8,1,1)]
+N $E470 #HTML[#CALL(graphic($E470,16,8,1,1))]
 B $E470,8,8 Middle edge. Black.
 B $E478,24,8
-N $E490 #HTML[#CALL:graphic($E490,16,8,1,1)]
+N $E490 #HTML[#CALL(graphic($E490,16,8,1,1))]
 B $E490,8,8 Thinnest edge. White.
 B $E498,24,8
-N $E4B0 #HTML[#CALL:graphic($E4B0,16,8,1,1)]
+N $E4B0 #HTML[#CALL(graphic($E4B0,16,8,1,1))]
 B $E4B0,8,8 Thinnest edge. Black.
 B $E4B8,24,8
 b $E4D0 [Graphics] Road lane markings
 D $E4D0 Three sets of 16x8 pixels. Unmasked. Stored bottom up. 16 bytes each.
-N $E4D0 #HTML[#CALL:graphic($E4D0,16,8,0,1)]
+N $E4D0 #HTML[#CALL(graphic($E4D0,16,8,0,1))]
 @ $E4D0 label=lane_markings
 B $E4D0,8,8 Widest marking.
 B $E4D8,8,8
-N $E4E0 #HTML[#CALL:graphic($E4E0,16,8,0,1)]
+N $E4E0 #HTML[#CALL(graphic($E4E0,16,8,0,1))]
 B $E4E0,8,8 Middle marking.
 B $E4E8,8,8
-N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
+N $E4F0 #HTML[#CALL(graphic($E4F0,16,8,0,1))]
 B $E4F0,8,8 Thinnest marking.
 B $E4F8,8,8
 b $E500 Outward bend table
@@ -11836,29 +12538,29 @@ W $E540,192,2
 b $E600 Road/object animation tables
 D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. E6B0 and E760 used in regular driving... Have only seen a single byte in each row accessed ($E6BB etc.) IGNORE THAT S.A. was leading me astray. 8 animation frames? Set the values to zero you get the road fully flush against the RHS.
 R $E600 vertical = lower moves values UP
-@ $E600 label=vertical_e600
+@ $E600 label=persp_y_scale
 B $E600,176,22
 N $E6B0 horizontal = lower moves the road RIGHT
-@ $E6B0 label=horizontal_e6b0
+@ $E6B0 label=persp_x_scale_right
 B $E6B0,176,22
 N $E760 affects horizontal too = lower moves the road LEFT earlier bytes affect nearest, later bytes affect the distance
-@ $E760 label=horizontal_e760
+@ $E760 label=persp_x_delta_left
 B $E760,176,22
 c $E810 Called once the memory map has been setup
 @ $E810 label=entrypt_48k
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
 C $E813,3 Jump to common
-@ $E816 label=entrypt_128k
-C $E816,3 Call clear_game_attrs
+@ $E816 label=*entrypt_128k
+C $E816,3 Call clear_playfield_attrs
 C $E819,2 Set 128K flag to one (128K mode)
 C $E81B,2 5 relocations to do in 128K mode
-@ $E81D label=entrypt_common
+@ $E81D label=*entrypt_common
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
 C $E823,1 Preserve the count in #REGb
-C $E824,11 Copy status panel initial pixels to the top of the screen
-C $E82F,6 Copy status panel initial attributes to the top of the attribute file
+C $E824,11 Copy marquee initial pixels to the top of the screen
+C $E82F,6 Copy marquee initial attributes to the top of the attribute file
 C $E835,4 Call stop_the_tape_48k if not in 128K mode
 N $E839 Now that "stop the tape" has run we can relocate the game into position.
 C $E839,1 Restore #REGb
@@ -11877,9 +12579,9 @@ C $E852,3 Set up the stack
 C $E855,3 Exit via bootstrap  -- start the game
 @ $E858 label=relocations
 W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
-W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
-W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
-W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
+W $E85E,6,2 Copy 40 bytes from square_transition_mask to $EB00
+W $E864,6,2 Copy 48 bytes from diamond_transition_mask to $EA00
+W $E86A,6,2 Copy 926 bytes from load_stage_128k onwards to $8014 [128K only]
 W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B5 [128K only]
 @ $E876 label=hooks_128k
 @ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
@@ -11888,8 +12590,8 @@ C $E876,3 Replaces 48K start_siren_hook
 C $E879,3 Replaces 48K play_engine_or_siren_sfx_hook
 @ $E87C ssub=JP silence_audio_128k - hooks_128k + all_hooks
 C $E87C,3 Replaces 48K silence_audio_hook
-@ $E87F ssub=JP write_registers_128k - hooks_128k + all_hooks
-C $E87F,3 Replaces 48K write_registers_hook
+@ $E87F ssub=JP write_audio_registers_128k - hooks_128k + all_hooks
+C $E87F,3 Replaces 48K write_audio_registers_hook
 @ $E882 ssub=JP setup_turbo_sfx_128k - hooks_128k + all_hooks
 C $E882,3 Replaces 48K setup_engine_sfx_hook
 @ $E885 ssub=JP play_turbo_sfx_128k - hooks_128k + all_hooks
@@ -11900,31 +12602,36 @@ C $E888,3 Replaces 48K play_speech_hook
 C $E88B,3 Replaces 48K attract_mode_hook
 N $E88E Copied to $EC00 - transitions?
 @ $E88E label=data_e88e
-B $E88E,1,1
-W $E88F,2,2
-B $E891,1,1
-W $E892,2,2
-B $E894,1,1
-W $E895,2,2
-B $E897,1,1
-W $E898,2,2
-B $E89A,1,1
-W $E89B,2,2
-B $E89D,1,1
-W $E89E,2,2
-B $E8A0,1,1
-W $E8A1,2,2
-B $E8A3,1,1
-W $E8A4,2,2
+B $E88E,1,1 6 frames
+W $E88F,2,2 Address of frames
+B $E891,1,1 12 frames
+W $E892,2,2 Address of frames
+B $E894,1,1 8 frames
+@ $E895 keep
+W $E895,2,2 Address of frames
+B $E897,1,1 7 frames
+W $E898,2,2 Address of frames
+B $E89A,1,1 6 frames
+W $E89B,2,2 Address of frames
+B $E89D,1,1 12 frames
+@ $E89E keep
+W $E89E,2,2 Address of frames
+B $E8A0,1,1 8 frames
+@ $E8A1 keep
+W $E8A1,2,2 Address of frames
+B $E8A3,1,1 7 frames
+W $E8A4,2,2 Address of frames
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
-N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
-N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
-@ $E8A6 label=square_zoom_in_mask
+N $E8A6 This is relocated.
+N $E8A6 #HTML[#CALL(anim($E8A6,8,8,0,0,5))]
+N $E8A6 #HTML[#CALL(graphic($E8A6,8,5*8,0,0))]
+@ $E8A6 label=square_transition_mask
 B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
-N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
-N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
-@ $E8CE label=diamond_zoom_in_mask
+N $E8CE This is relocated.
+N $E8CE #HTML[#CALL(anim($E8CE,8,8,0,0,6))]
+N $E8CE #HTML[#CALL(graphic($E8CE,8,6*8,0,0))]
+@ $E8CE label=diamond_transition_mask
 B $E8CE,48,8
 c $E8FE "Stop the tape" handler (48K mode only)
 D $E8FE Used by the routine at #R$E810.
@@ -11979,7 +12686,7 @@ C $E963,6 Populate Quit/Pause/Turbo keys at $A0CD+
 C $E969,7 Populate Gear/Accelerate/Brake/Left/Right keys at $A0D2+
 N $E970 Warn the player that they can't return to this screen.
 C $E970,3 Call clear_screen
-C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
+C $E973,3 Load address of "control options cannot be remodified" text (NUL terminated)
 C $E976,3 Call menu_draw_strings
 N $E979 Wait for key up.
 @ $E979 label=stt_debounce_loop2
@@ -12131,7 +12838,7 @@ N $EC16 #REGhl' is screen address, #REGde' is attribute address
 C $EC16,1 Get screen address and preserve old #REGhl
 C $EC17,2 Preserve regs
 @ $EC19 label=menu_draw_string_loop
-C $EC19,3 Mask off terminator bit
+C $EC19,3 Isolate terminator bit
 C $EC1C,5 Draw character in #REGa
 C $EC21,2 End of string?
 C $EC23,1 Advance to next char irrespective
@@ -12162,14 +12869,14 @@ C $EC54,3 Anything else becomes a full stop
 C $EC57,2 ASCII - 32 - offset in #REGc
 @ $EC59 label=mdc_have_glyph
 C $EC59,6 Multiply #REGc by seven - the height of a glyph
-C $EC5F,5 #REGbc = #REGa  -- Why the RL?
+C $EC5F,5 #REGbc = #REGa  -- Using RL to shift the carry in
 C $EC64,3 Point #REGhl at 8x7 font
 C $EC67,1 Point at glyph
-C $EC68,1 bank
-C $EC69,1 push banked scr addr
-C $EC6A,1 advance banked scr addr
-C $EC6B,1 unbank
-C $EC6C,1 pop scr addr as-was
+C $EC68,1 Bank
+C $EC69,1 Push banked scr addr
+C $EC6A,1 Advance banked scr addr
+C $EC6B,1 Unbank
+C $EC6C,1 Pop scr addr as-was
 C $EC6D,4 If the banked carry flag is set then draw single height characters
 @ $EC71 label=mdc_double_height
 C $EC71,2 Copy a row of glyph to screen (not advancing)
@@ -12180,8 +12887,8 @@ C $EC77,1 Move to next scanline
 C $EC78,7 Row 2/7
 C $EC80,6 Row 3/7
 C $EC86,5 Row 4/7
-C $EC8B,7 Move to next scanline after boundary (DE += $F81F)
-C $EC92,8 Row 5/7
+C $EC8B,8 Move to next scanline after boundary (DE += $F81F)
+C $EC93,7 Row 5/7
 C $EC9A,7 Row 6/7
 C $ECA1,7 Row 7/7
 C $ECA8,2 why writing a blank?
@@ -12198,6 +12905,7 @@ C $ECB8,1 Unbank
 C $ECB9,1 Return
 N $ECBA Plot 8x7 character  HL->character, DE->screen
 @ $ECBA label=mdc_single_height
+C $ECBA,1 Put A back
 C $ECBB,4 Row 1/7
 C $ECBF,4 Row 2/7
 C $ECC3,4 Row 3/7
@@ -12254,9 +12962,9 @@ C $ED2D,2 Advance
 C $ED2F,1 Return if no match
 C $ED30,2 Loop rdk_loop_3 while #REGb > 0
 N $ED32 Matched: Show the test mode screen.
-C $ED32,5 Set test mode fla
+C $ED32,5 Set test mode flag
 C $ED37,3 Call clear_screen
-C $ED3A,3 Address of TEST MODE strings
+C $ED3A,3 Load address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
 N $ED40 Wait for any key.
 @ $ED40 label=rdk_wait
@@ -12293,7 +13001,7 @@ C $ED66,1 Decrement #REGe
 C $ED67,2 Rotate the half-row selector ($FE -> $FD -> $FB -> .. -> $7F)
 C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
 C $ED6B,2 Set Z
-c $ED6D Defines a single key.
+c $ED6D Defines a single key
 D $ED6D Used by the routine at #R$ECF3.
 R $ED6D I:C Index of key to define
 R $ED6D I:DE ...
@@ -12346,7 +13054,7 @@ C $EDC8,4 Return if B != 4
 C $EDCC,4 E += 32
 C $EDD1,4 D += 8
 C $EDD5,1 Return
-t $EDD6 Names of keys, two characters per key.
+t $EDD6 Names of keys, two characters per key
 @ $EDD6 label=key_names
 T $EDD6,10,10 $7F
 T $EDE0,10,10 $BF
@@ -12369,11 +13077,11 @@ b $EE38 Temporary keydefs
 @ $EE38 label=temp_keydefs
 B $EE38,8,8
 c $EE40 Interrupt setup
-D $EE40 Used by the routine at #R$E8CE.
+D $EE40 Used by the routine at #R$E8FE.
 D $EE40 See http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/interrupts
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
-C $EE41,3 Address of interrupt vector table
+C $EE41,3 Load address of interrupt vector table
 C $EE44,1 Interrupt vector table high byte
 N $EE45 Point the 128 interrupt vector table words at $FD00 to $FEFE.
 C $EE45,2 256 iterations
@@ -12390,16 +13098,17 @@ C $EE52,5 $FEFE = Opcode for JP
 C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
 c $EE5E Reset music
-D $EE5E Used by the routine at #R$E8CE.
+D $EE5E Used by the routine at #R$E8FE.
 @ $EE5E label=reset_music
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
 C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
 C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
-C $EE68,3 Address of music patterns
+C $EE68,3 Load address of music patterns
 C $EE6B,3 Jump to np_start_at_hl
 c $EE6E Setup the next music pattern
-D $EE6E Used by the routine at #R$EE9E. Keep playing current pattern until this counter becomes zero.
+D $EE6E Used by the routine at #R$EE9E.
+N $EE6E Keep playing current pattern until this counter becomes zero.
 @ $EE6E label=next_pattern
 C $EE6E,2 Load number of pattern repetitions. Self modified by #R$EE7E, and below.
 C $EE70,1 Decrease
@@ -12416,7 +13125,7 @@ C $EE81,2 Read music data offset
 C $EE83,3 Self modify #R$EE75 above (pattern addr)
 N $EE86 Calculate address of music data.
 C $EE86,2 #REGbc = #REGc
-C $EE88,3 Address of base of music data
+C $EE88,3 Load address of base of music data
 C $EE8B,1 Combine with offset
 C $EE8C,2 A = *HL++ -- load first byte of music data
 C $EE8E,3 Self modify #R$EEB9 (first byte of pattern)
@@ -12461,7 +13170,7 @@ C $EED3,3 Update <addr of next music byte> above
 C $EED6,1 Compensate for earlier decrement
 C $EED7,4 Jump if music byte < 128
 N $EEDB A byte of the form 0b1aaaaiii (1 is delay bit)
-C $EEDB,2 Mask off delay bit
+C $EEDB,2 Isolate delay bit
 C $EEDD,1 Bank
 C $EEDE,5 Self modify 'LD A' @ #R$EEAD  (setting <delay data byte thing> to 1)
 C $EEE3,3 Self modify 'LD A' @ #R$EF00 below
@@ -12492,23 +13201,23 @@ N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 C $EF13,5 Loop while waiting for this <interrupt flag> to be set
 C $EF18,1 Return
 c $EF19 Interrupt entry point
-D $EF19 #R$EE40 builds a table at $FD00 containing 257 occurences of $FE. Address $FEFE contains a JP $EF19 to here.
+D $EF19 #R$EE40 builds a table at $FD00 containing 257 occurrences of $FE. Address $FEFE contains a JP $EF19 to here.
 @ $EF19 label=interrupt_entry
 C $EF19,1 Preserve registers
 C $EF1A,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ #R$EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
-c $EF22 Drum sample player
+c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
 R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
-C $EF22,3 Address of drum 2 data
+C $EF22,3 Load address of drum 2 data
 C $EF25,2 108 sample bytes
 C $EF27,2 Jump to pd_start
 N $EF29 This entry point is used by the routine at #R$EE9E.
 @ $EF29 label=playdrum_1
-C $EF29,3 Address of drum 1 data
+C $EF29,3 Load address of drum 1 data
 C $EF2C,2 252 sample bytes
 N $EF2E This modifies the number of bits of each sample byte that is output.
 @ $EF2E label=pd_start
@@ -12579,15 +13288,16 @@ C $F0ED,3 Clear EAR + MIC bits
 @ $F0F0 label=n_continue
 C $F0F0,1 Decrement inner counter
 C $F0F1,2 Jump to n_loop if non-zero
-N $F0F3 This whole interrupt check is redundant since AND A + RET C results in the return never being taken. Should it be RET NZ instead? RET Z messed things up.
+N $F0F3 This whole interrupt check is redundant since AND A + RET C results in the return never being taken. Should it be RET NZ instead? (RET Z messed things up when I tried it.)
 C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- <interrupt flag>
 C $F0F6,1 Set flags
-C $F0F7,1 Carry is cleared by AND A so this makes no sense
+C $F0F7,1 Bug: Carry is cleared by AND A so this makes no sense
 C $F0F8,1 Decrement duration counter
 C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Exit via pm_wait_for_interrupt
 b $F0FE Music patterns
 @ $F0FE label=music_patterns
+@ $F100 label=mp_restart
 B $F0FE,16,2 Patterns (repetitions, data offset)
 B $F10E,1,1 End marker
 W $F10F,2,2 Pattern restart address
@@ -12603,213 +13313,267 @@ B $F1DE,32,8 Pattern data G
 B $F1FE,34,8*4,2 Pattern data H
 c $F220 128K mode routines and data
 D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
-@ $F220 label=page_in_stage_128k
+@ $F220 label=load_stage_128k
 C $F220,3 Load wanted_stage_number
-C $F223,3 Address of current_stage_number
+C $F223,3 Load address of current_stage_number
 C $F226,2 Return if the stage is already loaded
-C $F228,1 wanted_stage_number = current_stage_number
-N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF.
+C $F228,1 Set wanted_stage_number to current_stage_number
+N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF (from the horizon backdrop to just before the turbo icons).
 C $F229,8 Point #REGhl at stage_data_locations[current_stage_number]
 C $F231,1 Load paging flags byte
-C $F232,1 HL++
-C $F233,2 #REGhl = Source data address (#REGb is zero)
+C $F232,1 Advance to source data address high byte
+C $F233,1 Load source data address high byte
+C $F234,1 #REGhl is source data address (#REGb is zero)
 C $F235,5 128K: Page in required bank
-C $F23A,3 Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)
+C $F23A,3 Set destination to $5C00
 C $F23D,3 Bytes to copy (worst case)
 C $F240,2 Copy
 C $F242,3 Exit via relocated reset_paging_128k
 N $F245 Pairs of (top byte of source data address, paging flags).
 @ $F245 label=stage_data_locations
-W $F245,2,2 Level 1. Source = $C000, Paging = bank 1
-W $F247,2,2 Level 2. Source = $E000, Paging = bank 1
-W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
-W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
-W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
-W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
-c $F251 Start the siren sound effect.
-D $F251 $8045 once relocated.
+@ $F245 keep
+W $F245,2,2 Level 1: Source at $C000, Paging from bank 1
+W $F247,2,2 Level 2: Source at $E000, Paging from bank 1
+W $F249,2,2 Level 3: Source at $C000, Paging from bank 6
+W $F24B,2,2 Level 4: Source at $E000, Paging from bank 6
+@ $F24D keep
+W $F24D,2,2 Level 5: Source at $C000, Paging from bank 7
+W $F24F,2,2 Level 6: Source at $E000, Paging from bank 7
+> $F251 ; Audio Notes:
+> $F251 ;
+> $F251 ; On ZX Spectrum 128K models the AY chip is clocked at 1.77345 MHz (half CPU
+> $F251 ; clock). The output frequency is equal to the AY clock frequency over 16
+> $F251 ; further divided by the respective pitch register value.
+> $F251 ;
+> $F251 ; e.g.
+> $F251 ; A4 would be (1773450 / 16) / 252 = ~439.84Hz
+> $F251 ; C4 would be (1773450 / 16) / 424 = ~261.41Hz
+c $F251 Start the siren sound effect (128K)
+D $F251 Lives at $8045 when relocated.
 @ $F251 label=start_siren_128k
-C $F251,5 Store 140 to channel A fine pitch
+C $F251,5 Store 140 to channel A fine pitch (~792Hz)
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
-N $F260 Set alternating pattern for siren tone.
-C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position) below
+N $F260 Initialise alternating pattern for siren tone.
+C $F260,5 Self modify 'LD A,x' @ #R$F271 below
 C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
-c $F269 Plays the siren sound effect.
+c $F269 Play the siren sound effect (128K)
+D $F269 If the siren is enabled this produces an alternating rising and falling siren sound effect. AY channels A and B are used.
+D $F269 Lives at $805D when relocated.
 @ $F269 label=play_siren_sfx_128k
 C $F269,5 Return if siren disabled
 C $F26E,3 Load channel A fine pitch
-C $F271,2 Load 50-50 alternating pattern (self modified above)
+C $F271,2 Load 50-50 alternating pattern (self modified @ #R$F260 above)
 C $F273,4 Jump to increasing case if top bit was set
 N $F277 Decreasing case.
 @ $F277 label=pss_decreasing
-C $F277,2 Decrease pitch by 3
-C $F279,4 Jump to set regs if new pitch >= 90
+C $F277,2 Decrease fine pitch by 3
+C $F279,4 Jump to set registers if new fine pitch >= 90
 C $F27D,2 Otherwise went too far: jump to pss_change
 N $F27F Increasing case.
 @ $F27F label=pss_increasing
-C $F27F,2 Increase pitch by 3
-C $F281,4 Jump to set regs if new pitch < 140
-N $F285 Arrive here if new pitch is outside of 90..139.
+C $F27F,2 Increase fine pitch by 3
+C $F281,4 Jump to set registers if new fine pitch < 140
+N $F285 Arrive here if new fine pitch is outside of 90..139.
 @ $F285 label=pss_change
-C $F285,1 Preserve new pitch
-C $F286,4 Store rotating pattern (self modifying above)
-C $F28A,1 Restore new pitch
-N $F28B Arrive here if new pitch is 90..139.
+C $F285,1 Preserve new fine pitch
+C $F286,4 Store rotating pattern (self modifying #R$F271 above)
+C $F28A,1 Restore new fine pitch
+N $F28B Arrive here if new fine pitch is 90..139.
 @ $F28B label=pss_set_regs
 C $F28B,3 Update channel A fine pitch
-C $F28E,5 and store 4 less to channel B fine pitch
+C $F28E,5 and store 4 less to channel B fine pitch (~23Hz higher than A)
 C $F293,8 Set mixer to enable tone A & B
-C $F29B,2 Exit via write_registers_128k
-c $F29D Routine at F29D
+C $F29B,2 Exit via write_audio_registers_128k
+c $F29D Silence audio (128K)
+D $F29D Silences all audio by setting all channels to disabled.
+D $F29D Lives at $8091 when relocated.
 @ $F29D label=silence_audio_128k
-C $F29D,5 Initialise mixer to $3F (all noise and tone off)
+C $F29D,5 Initialise mixer to $3F (all noise and tone channels disabled)
 E $F29D FALLTHROUGH
-c $F2A2 writing the full register set?
-D $F2A2 Used by the routine at #R$F269.
-@ $F2A2 label=write_registers_128k
-C $F2A2,3 Address of sound register value(s) -- other values must be earlier
+c $F2A2 Write the AY audio registers (128K)
+D $F2A2 Writes the complete set of AY audio registers, final register first.
+D $F2A2 Lives at $8096 when relocated. Used by the routine at #R$F269.
+@ $F2A2 label=write_audio_registers_128k
+C $F2A2,3 Load address of final AY register value
+C $F2A5,2 Select AY-3-8912 sound chip register 11: envelope fine duration
+C $F2A7,2 Load constant for port writes
 @ $F2A9 label=wr_loop
-C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
-C $F2AD,4 Write to the register from (HL), then decrement B and HL
-C $F2B1,1 Next register down
+C $F2A9,2 Writing to port $FFFD
+C $F2AB,2 Select register #REGa
+C $F2AD,2 Writing to port $BFFD
+C $F2AF,2 Write to the register from (#REGhl), then decrement #REGb and #REGhl
+C $F2B1,1 Advance to next register down
+@ $F2B2 keep
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
-c $F2B6 Plays engine effect.
-D $F2B6 Used by the routine at #R$F2FA.
+c $F2B6 Play the engine sound effect
+D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY Channel C is used.
+D $F2B6 Lives at $80AA when relocated. Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
-C $F2B9,2 Bottom bit of #REGh moves to carry  -- is H now empty?
-C $F2BB,1 Speed low byte
+C $F2B9,2 Move bottom bit of #REGh to carry
+N $F2BB #REGh is now zero since speed can never exceed 511.
+C $F2BB,1 Get speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
-C $F2BD,2 L = ~A  -- why complement?
+N $F2BD This is now part of the pitch divisor that we'll set later.
+C $F2BD,1 Invert the divisor (and the pitch)
+C $F2BE,1 Widen to #REGhl
 C $F2BF,6 Jump if in low gear
-@ $F2C9 label=esfs_1
+N $F2C5 We're in high gear.
+C $F2C5,4 Double divisor in #REGhl to lower the pitch
+@ $F2C9 label=esfs_low_gear
+C $F2C9,8 Quadruple divisor in #REGhl to lower the pitch more
 C $F2D1,3 Read tunnel_sfx
 C $F2D4,1 Set flags
-C $F2D5,3 Non-tunnel tone value
-C $F2D8,2 Non-tunnel volume
+C $F2D5,3 Not-in-tunnel base divisor (~277Hz)
+C $F2D8,2 Not-in-tunnel volume
 C $F2DA,2 Jump if tunnel_sfx was zero (not in tunnel)
-N $F2DC In tunnel.
-C $F2DC,3 In-tunnel tone value
+N $F2DC We're in the tunnel.
+C $F2DC,3 In-tunnel base divisor (~185Hz)
 C $F2DF,2 In-tunnel volume
-@ $F2E1 label=esfs_2
-C $F2E1,1 -- speed value + tone?
-C $F2E2,3 Set channel C pitch (both fine and coarse)
-C $F2E5,3 Set channel C volume
-C $F2E8,8 Set mixer to enable tone C
+@ $F2E1 label=esfs_tone_chosen
+C $F2E1,1 Add speed divisor to base divisor
+C $F2E2,3 Set Channel C pitch divisor (12-bit combined, fine and coarse registers)
+C $F2E5,3 Set Channel C volume
+C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
-c $F2F1 Routine at F2F1
+c $F2F1 Set up turbo sound effect
+D $F2F1 Lives at $8035 when relocated.
+N $F2F1 Note that this sets a 5-bit field to 60. The playing routine below uses this value to set the channel C pitch too.
 @ $F2F1 label=setup_turbo_sfx_128k
-C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
-C $F2F6,3 turbo_sfx_enabled = $3C  -- set flag?
+C $F2F1,2 Initial noise pitch value
+C $F2F3,3 Set AY noise pitch -- this is a 5-bit field so is it masked and becomes 28?
+C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
-c $F2FA Plays turbo effect, exits via engine effect.
+c $F2FA Play turbo sound effect
+D $F2FA Lives at $80EE when relocated.
 @ $F2FA label=play_turbo_sfx_128k
-C $F2FA,6 Jump if turbo_sfx_enabled is zero
+C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_noise_pitch is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
-C $F302,3 Address of noise pitch register soft copy
+C $F302,3 Load address of AY noise pitch register soft copy
 C $F305,1 Decrement in-place
-C $F306,2 Jump if zero
-C $F308,6 Increment noise pitch register soft copy by 10
-C $F30E,3 Set channel C pitch (both fine and coarse)
-C $F311,8 Set mixer to enable tone C and noise C
-C $F319,5 Set channel C volume to 13
+C $F306,2 Jump to pts_stop if zero
+C $F308,1 Load noise pitch register soft copy
+C $F309,2 Increment by 10
+C $F30B,3 Widen result to #REGhl
+C $F30E,3 Set Channel C pitch (both fine and coarse)
+C $F311,8 Set mixer to enable Tone C and Noise C
+C $F319,5 Set Channel C volume to 13
 C $F31E,1 Return
-@ $F31F label=ses_1
-C $F31F,8 Set mixer to disable tone C and noise C
-C $F327,4 turbo_sfx_enabled = 0
+@ $F31F label=pts_stop
+C $F31F,8 Set mixer to disable Tone C and Noise C
+C $F327,4 Clear turbo_sfx_noise_pitch
 C $F32B,3 Exit via engine_sfx_from_speed_128k
-c $F32E Play speech
-D $F32E Relocated to $8122
+c $F32E Play a sampled sound effect (mostly speech)
+D $F32E Lives at $8122 when relocated.
+R $F32E I:A Input index (1..5)
 N $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
-W $F32E,2,2 length
-W $F330,2,2 address
+W $F32E,2,2 Length
+W $F330,2,2 Address (in bank 4)
 N $F332 "Let's go Mr. Driver!"
-W $F332,2,2 length
-W $F334,2,2 address
+W $F332,2,2 Length
+@ $F334 keep
+W $F334,2,2 Address (in bank 4)
 N $F336 "Hold on man!"
-W $F336,2,2 length
-W $F338,2,2 address
+W $F336,2,2 Length
+W $F338,2,2 Address (in bank 4)
 N $F33A "Your time's up"
-W $F33A,2,2 length
-W $F33C,2,2 address
+W $F33A,2,2 Length
+W $F33C,2,2 Address (in bank 4)
 N $F33E Start noise
-W $F33E,2,2 length
-W $F340,2,2 address
+W $F33E,2,2 Length
+W $F340,2,2 Address (in bank 4)
 @ $F342 label=play_speech_128k
-C $F342,1 Bank input index (sample indices are 1..5)
+C $F342,1 Bank input index
 C $F343,3 Call silence_audio_128k
 C $F346,7 128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0
+C $F34D,2 Set up #REGc as $FD for forming port values
+C $F34F,3 Set up #REGh as $FF and #REGl as $BF for forming port values
+C $F352,2 Set up #REGd as 8 for Channel A volume register
+C $F354,1 Bank
 C $F355,1 Unbank input index
-C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
-C $F35F,4 DE = wordat(HL); HL += 2  -- read length
-C $F363,4 HL = wordat(HL)  -- read address
+C $F356,9 Compute address of speech_samples_table[#REGa] (accounting for relocation and being 1-indexed)
+C $F35F,4 Load length into #REGde and advance #REGhl
+C $F363,4 Load address into #REGhl
+N $F367 There are two samples per byte so we iterate here.
 @ $F367 label=plsp_1
-C $F367,2 C = 2  -- iterations (two nibbles)
-C $F369,1 A = *HL  -- read a sample (or two?)
-C $F36A,4 A = A ROR 4
+C $F367,2 Set nibble counter to 2
+C $F369,1 Read a byte of sample data
+C $F36A,4 Use high nibble first
 @ $F36E label=plsp_2
-C $F36E,2 A &= 15
-C $F372,1 B = H which is $FF
-C $F373,1 A = D which is 8  -- register 8: Channel A volume
-C $F374,2 C is $FD
-C $F376,1 B = L which is $BF
-C $F377,1 A = value loaded above
-C $F378,2 Write to register
-C $F37A,1 Bank it again
-C $F37B,1 8 -> 9  -- register 9: Channel B volume
-C $F37C,1 B = $FF
-C $F37D,2 C is $FD
-C $F37F,1 B = L which is $BF
-C $F380,1 A = value loaded above
+C $F36E,2 Isolate next sample
+C $F370,1 Bank it
+C $F371,1 Unbank
+N $F372 Write sample as Channel A volume.
+C $F372,1 Load $FF into #REGb to set high byte of port
+C $F373,1 Load 8 into #REGa
+N $F374 #REGc is $FD here.
+C $F374,2 Write to $FFFD to select register 8: Channel A volume
+C $F376,1 Load $BF into #REGb
+C $F377,1 Unbank sample
+C $F378,2 Write to $BFFD to write volume register
+C $F37A,1 Bank sample again
+N $F37B Write sample as Channel B volume.
+C $F37B,1 Increment #REGa from 8 to 9
+C $F37C,1 Load $FF into #REGb to set high byte of port
+C $F37D,2 Write to $FFFD to select register 9: Channel B volume
+C $F37F,1 Load $BF into #REGb
+C $F380,1 Unbank sample
 C $F381,2 Write to register
-C $F383,1 Bank it again
-C $F384,1 9 -> 10  -- register 9: Channel C volume
-C $F385,1 B = $FF
-C $F386,2 C is $FD
-C $F388,1 B = L which is $BF
-C $F389,1 A = value loaded above
+C $F383,1 Bank sample again
+N $F384 Write sample as Channel C volume.
+C $F384,1 Increment #REGa from 9 to 10
+C $F385,1 Load $FF into #REGb to set high byte of port
+C $F386,2 Write to $FFFD to select register 10: Channel C volume
+C $F388,1 Load $BF into #REGb
+C $F389,1 Unbank sample
 C $F38A,2 Write to register
+C $F38C,1 Bank
+N $F38D Delay for 19 DJNZ's.
+@ $F38F label=plsp_delay
 C $F38D,4 Delay loop (lower value => higher frequency)
-C $F391,1 Load next nibble (same byte, but next nibble)
+C $F391,1 Load next sample (same byte, but next nibble)
 C $F392,1 Decrement nibble counter
-C $F393,2 Loop plsp_2
+C $F393,2 Loop to plsp_2
 C $F395,1 Advance to next byte of sample data
 C $F396,1 Decrement sample data counter
 C $F397,5 Loop to plsp_1 while sample data remains
 C $F39C,3 Exit via relocated reset_paging_128k
-c $F39F something done in phase 4 when perp is caught (play sample?)
+c $F39F Phase 4 of catching the perp - likely plays the success music
+D $F39F Lives at $???? when relocated.
 @ $F39F label=handle_perp_caught_128k
 C $F39F,6 Return if overlay frame delay < 42
 C $F3A5,3 Call silence_audio_hook
 C $F3A8,4 Stop siren
-C $F3AC,1 A = 1
-C $F3AD,3 Load var_a23a  -- copy of noise pitch
-C $F3B0,3 Self modify #R$8E49
+C $F3AC,1 Set #REGa to 1
+C $F3AD,3 Set turbo_sfx_noise_pitch to 1
+C $F3B0,3 Self modify #R$8E49 - reset overlay frame delay
 C $F3B3,3 Entry point for success music in bank 3
 E $F39F FALLTHROUGH
-c $F3B6 Call a routine in bank 3
+c $F3B6 Call a routine in RAM bank 3
 R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
 @ $F3B6 label=call_bank_3_128k
-C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
-C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
-C $F3C7,4 Self modify 'LD SP,xxxx' @ #R$81CD ($F3D9 here - below)
+C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 (#R$F3D1 here - below)
+C $F3B9,9 Set up registers to copy 4096 bytes from $B000 to $F000
+C $F3C2,3 Preserve registers for later
+C $F3C5,2 Copy 4096 bytes from $B000 to $F000
+C $F3C7,4 Self modify 'LD SP,xxxx' @ $81CD (#R$F3D9 here - below)
 C $F3CB,3 Set stack pointer
-C $F3CE,3 Call relocated f3e2_128k  -- page in?
+C $F3CE,3 Call page_128k to page in
 C $F3D1,3 Call the entry point requested. Self modified by #R$F3B6
-C $F3D4,1 Preserve ?
-C $F3D5,3 Call relocated f3e2_128k  -- page out?
-C $F3D8,1 Restore ?
+C $F3D4,1 Preserve (why?)
+C $F3D5,3 Call page_128k to page out
+C $F3D8,1 Restore
 C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
-C $F3DC,3 Copy 4096 bytes from $B000 to $F000
-C $F3DF,2 Copy
+C $F3DC,3 Restore registers but swap source and destination around
+C $F3DF,2 Copy 4096 bytes from $F000 to $B000
 C $F3E1,1 Return
-c $F3E2 Routine at F3E2
-@ $F3E2 label=f3e2_128k
+c $F3E2 Page in/out a RAM bank?
+@ $F3E2 label=page_128k
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
 C $F3E7,1 E = 0
@@ -12836,11 +13600,11 @@ C $F40F,1 H = D
 C $F410,1 Restore iterations
 C $F411,2 Loop to f3e8_loop
 C $F413,1 Return
-c $F414 Routine at F414
+c $F414 Reset the paging register
 @ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
-c $F41B Routine at F41B
+c $F41B Attract mode (128K)
 @ $F41B label=attract_mode_128k
 C $F41B,3 Entry point for title animations
 C $F41E,3 Call relocated call_bank_3_128k
@@ -12851,7 +13615,7 @@ C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
 @ $F434 label=am1_loop
 C $F434,3 Call cpu_driver
-C $F437,3 Load attract_cycle
+C $F437,3 Load controls_selected
 C $F43A,1 Set flags
 C $F43B,3 -> enter_for_options_messages
 C $F43E,2 Jump to f44b_key_check
@@ -12910,13 +13674,13 @@ T $F57D,28,27:n1 "2ND  35678000   4     1  ABC"
 B $F599,7,7
 T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
-b $F5BE Status panel initial image
+b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
 R $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
-@ $F5BE label=status_panel
+@ $F5BE label=marquee
 B $F5BE,2048,32
-b $FDBE Status panel initial attributes
-@ $FDBE label=status_panel_attrs
+b $FDBE Marquee initial attributes
+@ $FDBE label=marquee_attrs
 B $FDBE,256,8
 u $FEBE Unused
 B $FEBE,322,8*40,2

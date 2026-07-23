@@ -10,7 +10,12 @@ This is an in-progress disassembly and rebuild of the [ZX Spectrum conversion of
 
 **Note: I'm currently working on the 128K version of the game over on [the 128k branch](https://github.com/dpt/ChaseHQ/tree/128k). I've also started porting the game logic to C.**
 
-In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This disassembles the game when it's in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate the required steps.
+The repository is split into two top-level directories:
+
+- `Speccy/` — the SkoolKit disassembly sources (control files, skool files, Makefile).
+- `C/` — the hand-written C reimplementation of the game engine.
+
+In `Speccy/` is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This disassembles the game when it's in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate the required steps. Run the `make` commands below from inside `Speccy/`.
 
 The current disassembly output is [available here](https://dpt.github.io/ChaseHQ/).
 
@@ -20,7 +25,7 @@ To find out how it works! (and maybe one day we could make new levels...)
 
 ## Status
 
-**Disassembly**: both the 48K (`ChaseHQ.ctl`) and 128K (`ChaseHQ-128K.ctl`) versions are under active disassembly. Most current effort is on 128K bank 3 — the title screen and its music/sound-effect driver.
+**Disassembly** (`Speccy/`): both the 48K (`ChaseHQ.ctl`) and 128K (`ChaseHQ-128K.ctl`) versions are under active disassembly. Most current effort is on 128K bank 3 — the title screen and its music/sound-effect driver.
 
 **C port** (`C/`): a hand-written, human-readable reimplementation of the game engine — not a decompiler dump — built with CMake and SDL3.
 

@@ -1,6 +1,6 @@
 # SkoolKit extension for Chase H.Q. by Ocean Software.
 #
-# by David Thomas, 2023-2025
+# by David Thomas, 2023-2026
 #
 # Formatted using "shed".
 #
