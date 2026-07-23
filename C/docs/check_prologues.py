@@ -159,6 +159,10 @@ def check_function(filename, lineno, comment_lines, return_type, params):
     if content[i] == "" and content[i - 1] == "":
       errors.append("repeated empty comment line at row %d" % i)
 
+  for p in split_paragraphs(content):
+    if " ".join(p).count("Conv:") > 1:
+      errors.append("multiple 'Conv:' notes in one paragraph, split into separate paragraphs: %r" % p)
+
   if content[0].startswith("$"):
     if not TITLE_RE.match(content[0]):
       errors.append("title line missing '$XXXX: description' format: %r" % content[0])

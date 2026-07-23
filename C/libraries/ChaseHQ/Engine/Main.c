@@ -2797,16 +2797,20 @@ void sfx_bipbow(chqstate_t *state, int param1, int param2)
  *
  * Conv: At phase 6, the Z80 uses `POP HL; JP $8401` to discard the return
  * address and jump directly into main_loop, bypassing the rest of the frame. C
- * returns 1 and the caller skips the loop body instead. Conv: At the phase 5/6
- * boundary ($8A69) the Z80 banks the remaining phase value in A' via EX AF,AF'
- * so that A can test transition_control without losing A. C uses explicit
- * conditionals without banking. Conv: EX AF,AF' pairs throughout the score
- * phase bank ASCII digits via A'; C uses Adash to hold the banked value. Conv:
- * The Z80 at $8B3D has a known bug (credit: Russell Marks): EX AF,AF' before LD
- * B,A causes B to receive the wrong (pre-exchange) value, so the time-bonus
- * increment loop runs zero times for any non-zero low digit. C applies the fix:
- * Biterations is assigned from A (the low digit) directly, before it could be
- * clobbered.
+ * returns 1 and the caller skips the loop body instead.
+ *
+ * Conv: At the phase 5/6 boundary ($8A69) the Z80 banks the remaining phase
+ * value in A' via EX AF,AF' so that A can test transition_control without
+ * losing A. C uses explicit conditionals without banking.
+ *
+ * Conv: EX AF,AF' pairs throughout the score phase bank ASCII digits via A'; C
+ * uses Adash to hold the banked value.
+ *
+ * Conv: The Z80 at $8B3D has a known bug (credit: Russell Marks): EX AF,AF'
+ * before LD B,A causes B to receive the wrong (pre-exchange) value, so the
+ * time-bonus increment loop runs zero times for any non-zero low digit. C
+ * applies the fix: Biterations is assigned from A (the low digit) directly,
+ * before it could be clobbered.
  *
  * \return 1 when phase 6 is reached (advance to next stage); 0 otherwise.
  */
@@ -3282,9 +3286,12 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
  * state->transition_frame_stride.
  *
  * Conv: Z80 table index is A * 3 into a byte-packed layout; C reads from a
- * transition_t struct array directly. Conv: Z80 widens the [stride] into BC by
- * setting B = $FF when negative; C uses a signed int throughout. Conv: Points
- * at non-relocated table transitions_e88e rather than $EC00.
+ * transition_t struct array directly.
+ *
+ * Conv: Z80 widens the [stride] into BC by setting B = $FF when negative; C
+ * uses a signed int throughout.
+ *
+ * Conv: Points at non-relocated table transitions_e88e rather than $EC00.
  *
  * \param[in] stride Per-frame mask-pointer step: +8 forward, −8 reverse.
  *   (was A)
@@ -3402,8 +3409,10 @@ static void draw_overlay_messages(chqstate_t *state)
  * (draw_string_with_style via its alternate entry point).
  *
  * Conv: messages[0] (the flags byte) is skipped with INC HL in the Z80; C reads
- * messages[1] directly and ignores messages[0]. Conv: Z80 preserves BC with
- * PUSH/POP around the call; C locals survive calls without banking.
+ * messages[1] directly and ignores messages[0].
+ *
+ * Conv: Z80 preserves BC with PUSH/POP around the call; C locals survive calls
+ * without banking.
  *
  * \param[in] style Rendering style selector. (was A)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
@@ -3484,8 +3493,9 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
  *
  * Conv: Z80 loads the perp mugshot address from ($5CF0) — the end of the
  * per-stage mugshot data; C reads it from
- * state->stage->addrof_perp_mugshot_attributes. Conv: Z80 JR $8E42 tail-calls
- * draw_overlay_messages; C calls it directly.
+ * state->stage->addrof_perp_mugshot_attributes.
+ *
+ * Conv: Z80 JR $8E42 tail-calls draw_overlay_messages; C calls it directly.
  *
  */
 static void draw_mugshots(chqstate_t *state)
@@ -3520,9 +3530,12 @@ static void draw_mugshots(chqstate_t *state)
  * address is still in HL after the loop. C preserves it in HLsaved.
  *
  * Conv: Z80 LDD copies (HL)→(DE) with decrement; C indexes backbuffer directly.
+ *
  * Conv: Z80 PUSH/POP HL saves the mugshot attributes pointer; C uses HLsaved.
- * Conv: Z80 DEC H / rollover for scanline advance; C uses prev_buf_row(). Conv:
- * JP PO branches when BC wraps to zero after LDD; C checks counter == 0.
+ *
+ * Conv: Z80 DEC H / rollover for scanline advance; C uses prev_buf_row().
+ *
+ * Conv: JP PO branches when BC wraps to zero after LDD; C checks counter == 0.
  *
  * \param[in] BCattrs Screen attribute address for the face. (was BC)
  * \param[in] DEbackbuf Back-buffer address of the last bitmap byte. (was DE)
@@ -3574,9 +3587,10 @@ static void draw_mugshot(chqstate_t *state,
  * prev-scanline address arithmetic; C abstracts this into prev_buf_row().
  *
  * Conv: Z80 uses EX AF,AF' to preserve smash_counter across the segment call; C
- * keeps it in A_nsmashsegs which survives the call naturally. Conv: Z80
- * computes nsolid as CPL(A*3)+$3F (bit-complement + 63); C uses the equivalent
- * arithmetic expression.
+ * keeps it in A_nsmashsegs which survives the call naturally.
+ *
+ * Conv: Z80 computes nsolid as CPL(A*3)+$3F (bit-complement + 63); C uses the
+ * equivalent arithmetic expression.
  *
  */
 static void draw_smash_bar(chqstate_t *state)
@@ -4364,10 +4378,11 @@ void draw_object_left(chqstate_t *state,
  * writes it to doc_col_pos directly.
  *
  * Conv: Z80 self-modifies the operand at $933E to hold [Acol_offset] (later
- * read as D in draw_object_common); C stores it in state->doc_col_pos. Conv:
- * Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct field
- * access on depthset_t. The Z80 indexing is 1-based (A=1 → pair[0]); C uses
- * pairs[Bdepth-1] to match.
+ * read as D in draw_object_common); C stores it in state->doc_col_pos.
+ *
+ * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
+ * field access on depthset_t. The Z80 indexing is 1-based (A=1 → pair[0]); C
+ * uses pairs[Bdepth-1] to match.
  *
  * \param[in] Acol_offset Column offset added to the object position. (was A)
  * \param[in] Bdepth Depth index into the depthset table. (was B)
@@ -4563,9 +4578,11 @@ void draw_object_right(chqstate_t *state,
  * from the depthset table before calling draw_object_right_stretchy_entrypt.
  *
  * Conv: Z80 self-modifies the operand at $933E to hold [Acol_offset]; C writes
- * it to state->doc_col_pos. Conv: Z80 index arithmetic `HL += A*2−1` / byte
- * reads replaced by struct field access on depthset_t. The Z80 indexing is
- * 1-based (A=1 → pair[0]); C uses pairs[Bdepth-1] to match.
+ * it to state->doc_col_pos.
+ *
+ * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
+ * field access on depthset_t. The Z80 indexing is 1-based (A=1 → pair[0]); C
+ * uses pairs[Bdepth-1] to match.
  *
  * \param[in] Acol_offset Column offset added to the object position. (was A)
  * \param[in] Bdepth Depth index into the depthset table. (was B)
@@ -5182,9 +5199,10 @@ unmasked_inverted:
  * in the unrolled POP loop to enter.
  *
  * Conv: Z80 uses `SRL A` to test the carry (bit 0 of A) and halve A
- * simultaneously; C uses a bit test and a right shift separately. Conv: Row
- * advance is via DEC H with a multi-step rollover in the Z80; C delegates to
- * prev_buf_row().
+ * simultaneously; C uses a bit test and a right shift separately.
+ *
+ * Conv: Row advance is via DEC H with a multi-step rollover in the Z80; C
+ * delegates to prev_buf_row().
  *
  * \param[in] width_bytes Draw width of bitmap, in bytes. (was A)
  * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
@@ -5236,10 +5254,15 @@ static void plot_sprite(chqstate_t *state,
  *
  * Conv: Z80 sets SP = HL (bitmap pointer) and uses POP DE to load two bytes at
  * a time — the fastest possible load on Z80. C uses a plain src pointer with
- * `*src++` pairs. Conv: Z80 enters the unrolled POP loop via `JP (IX)` (IX =
- * table base + [jump_offset]); C uses switch/case with fallthrough. Conv: Z80
- * self-modifies `LD SP,$0000` at $94BF to save the original SP; not needed in
- * C. Conv: Row advance uses DEC H with multi-step carry correction in Z80; C
+ * `*src++` pairs.
+ *
+ * Conv: Z80 enters the unrolled POP loop via `JP (IX)` (IX = table base +
+ * [jump_offset]); C uses switch/case with fallthrough.
+ *
+ * Conv: Z80 self-modifies `LD SP,$0000` at $94BF to save the original SP; not
+ * needed in C.
+ *
+ * Conv: Row advance uses DEC H with multi-step carry correction in Z80; C
  * delegates to prev_buf_row().
  *
  * \param[in] jump_offset Byte offset into the unrolled POP table. (was IX)
@@ -5302,9 +5325,11 @@ plot_sprite_even_start:
  * Z80 function falls through directly to ps_odd_jumptable.
  *
  * Conv: Z80 uses INC A; CPL; ADD A,5 to compute (4 - A) for the jump offset; C
- * uses a direct expression. Conv: Z80 uses SP and POP for source reads; C uses
- * a plain src pointer. Conv: Row advance uses DEC H with carry correction; C
- * uses prev_buf_row().
+ * uses a direct expression.
+ *
+ * Conv: Z80 uses SP and POP for source reads; C uses a plain src pointer.
+ *
+ * Conv: Row advance uses DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] width_bytes Number of byte pairs in the bitmap width (halved).
  *   (was A)
@@ -5388,8 +5413,10 @@ plot_sprite_odd_start:
  * written, giving a horizontal mirror of the source sprite.
  *
  * Conv: Z80 uses `SRL A` to test the carry (bit 0 of A) and halve A
- * simultaneously; C uses a bit test and a right shift separately. Conv: Row
- * advance via DEC H with carry correction in Z80; C uses prev_buf_row().
+ * simultaneously; C uses a bit test and a right shift separately.
+ *
+ * Conv: Row advance via DEC H with carry correction in Z80; C uses
+ * prev_buf_row().
  *
  * \param[in] width_bytes Draw width of bitmap, in bytes. (was A)
  * \param[in] backbuf_addr Back-buffer address of the leftmost byte to draw.
@@ -5444,9 +5471,12 @@ static void plot_sprite_flipped(chqstate_t *state,
  * unrolled inner loop is entered via [jump_offset] (9 bytes per operation).
  *
  * Conv: Z80 uses SP = HL bitmap pointer and POP DE for two-byte reads; C uses a
- * plain src pointer. Conv: Z80 enters the flip+write loop via `JP (IX)`; C uses
- * switch/case with fallthrough. Conv: Row advance via DEC H with carry
- * correction; C uses prev_buf_row().
+ * plain src pointer.
+ *
+ * Conv: Z80 enters the flip+write loop via `JP (IX)`; C uses switch/case with
+ * fallthrough.
+ *
+ * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] jump_offset Byte offset into the unrolled flip-POP table. (was IX)
  * \param[in] flip_table 256-entry bit-reversal look-up table. (was DE)
@@ -5516,10 +5546,12 @@ plot_sprite_flipped_even_start:
  * state->flipped. The Z80 function adds 1 to [width_bytes] before computing the
  * jump offset, making the effective range ([width_bytes]+1) = 1..4 pairs.
  *
- * Conv: Z80 uses SP and POP for source reads; C uses a plain src pointer. Conv:
- * Z80 enters the unrolled loop via `JP (IX)`; C uses switch/case with
- * fallthrough. Conv: Row advance via DEC H with carry correction; C uses
- * prev_buf_row().
+ * Conv: Z80 uses SP and POP for source reads; C uses a plain src pointer.
+ *
+ * Conv: Z80 enters the unrolled loop via `JP (IX)`; C uses switch/case with
+ * fallthrough.
+ *
+ * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] width_bytes Number of byte pairs (halved width from caller).
  *   (was A)
@@ -5795,8 +5827,10 @@ void drive_chatter_stop(chqstate_t *state)
  * position (176,8), then pc_chatter_message is called to queue the message.
  *
  * Conv: Z80 computes face bitmap address via repeated ADD HL,DE (multiply by
- * $B4=180); C indexes directly into bitmap_faces[]. Conv: Chatter block entries
- * were Z80 addresses; C uses table indices into chatter_blocks[].
+ * $B4=180); C indexes directly into bitmap_faces[].
+ *
+ * Conv: Chatter block entries were Z80 addresses; C uses table indices into
+ * chatter_blocks[].
  */
 static void print_chatter(chqstate_t *state)
 {
@@ -6139,8 +6173,9 @@ static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
  *
  * Conv: Z80 self-modifies three operands ($9B61, $9B64, $9B89) and uses a
  * jump-table cascade (SRL B; RR C repeated) for the pixel shift; C uses local
- * variables and a single right-shift of a 16-bit composite word. Conv: Row
- * counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
+ * variables and a single right-shift of a 16-bit composite word.
+ *
+ * Conv: Row counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
  */
 static void plot_mini_font_char(
     chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2)
@@ -6299,6 +6334,7 @@ static void clear_message_line(chqstate_t *state)
  * (4): quitting is in progress; do nothing.
  *
  * Conv: Z80 implements the FSM via self-modifying JP; C uses a switch dispatch.
+ *
  * Conv: BCD time decrement uses DAA_sub with the Z80 half-borrow (H flag).
  */
 static void check_time_up(chqstate_t *state)
@@ -6679,11 +6715,15 @@ static void calc_overtake_bonus(chqstate_t *state)
  *
  * Conv: The Z80 instruction at $9D9B is self-modified by add_bonus ($9D0E LD
  * ($9D9C),HL) to point HL at the first significant digit of bonus_string. C
- * models this via state->SM_address_of_score_digits. Conv: The five-byte clear
- * loop ($9D8D) and the five-cell attribute write ($9DBF) are replaced by
- * memset. Conv: INC H to advance one ZX scanline is modelled as += 256 in the
- * pixel array. Conv: draw_string_screen passes 0/dummy attrs because style=0
- * ignores them.
+ * models this via state->SM_address_of_score_digits.
+ *
+ * Conv: The five-byte clear loop ($9D8D) and the five-cell attribute write
+ * ($9DBF) are replaced by memset.
+ *
+ * Conv: INC H to advance one ZX scanline is modelled as += 256 in the pixel
+ * array.
+ *
+ * Conv: draw_string_screen passes 0/dummy attrs because style=0 ignores them.
  *
  */
 static void update_scoreboard(chqstate_t *state)
@@ -6827,11 +6867,13 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
  * each of the three remaining HUD digit groups.
  *
  * Conv: Z80 uses SP as a fast bitmap source pointer (LD SP,HL; POP DE); C uses
- * a typed u16* (SPbitmap) with explicit *SPbitmap++ reads. Conv: Z80
- * self-modifies $9E45 to store the animation frame address and $9E79 to restore
- * SP; C uses local variables SM_9e45 and restores nothing. Conv: EXX banks main
- * DE/HL/BC into shadow registers before the speed multiply; C uses distinct
- * DEdash/HLdash/BCdash names.
+ * a typed u16* (SPbitmap) with explicit *SPbitmap++ reads.
+ *
+ * Conv: Z80 self-modifies $9E45 to store the animation frame address and $9E79
+ * to restore SP; C uses local variables SM_9e45 and restores nothing.
+ *
+ * Conv: EXX banks main DE/HL/BC into shadow registers before the speed
+ * multiply; C uses distinct DEdash/HLdash/BCdash names.
  */
 static void plot_turbos_and_digits(chqstate_t *state)
 {
@@ -7091,6 +7133,7 @@ ptad_led_plot_2nd:
  * \return Pointer to the next digit column (orig_screen + 1).
  *
  * Conv: Z80 uses EXX to bank main registers around LDI; C uses plain locals.
+ *
  * Conv: LDI (HL→DE, both increment, BC--) unrolled to indexed loops.
  */
 static u8 *ledfont_plot(int ord, u8 *screen)
@@ -7229,8 +7272,9 @@ static const u8 *draw_string_core(chqstate_t *state,
  *   exit)
  *
  * Conv: Z80 uses EX AF,AF' / EXX to bank [style] and attribute registers; C
- * passes all values as explicit parameters. Conv: Z80 dispatch is a DEC C; JP Z
- * ladder; C uses a switch.
+ * passes all values as explicit parameters.
+ *
+ * Conv: Z80 dispatch is a DEC C; JP Z ladder; C uses a switch.
  */
 static void draw_char(chqstate_t *state,
                       int         character,
@@ -7878,10 +7922,13 @@ set_off_road:
  * use the centre and centre-right tables directly.
  *
  * Conv: Z80 uses SP as a descending stack pointer into $EB00; C uses an
- * explicit s16 pointer SP walked with prefix decrement. Conv: Z80 byte offset
- * L' = (~(IY[0]*2)) & 0xFF; C translates directly to the s16 array index 127 -
- * (objpos2[0] & 0x7F). Conv: EXX banks DE (lanes byte) and IY/HL' (tables)
- * around the inner loop body; C uses distinct named locals.
+ * explicit s16 pointer SP walked with prefix decrement.
+ *
+ * Conv: Z80 byte offset L' = (~(IY[0]*2)) & 0xFF; C translates directly to the
+ * s16 array index 127 - (objpos2[0] & 0x7F).
+ *
+ * Conv: EXX banks DE (lanes byte) and IY/HL' (tables) around the inner loop
+ * body; C uses distinct named locals.
  */
 static void layout_objects(chqstate_t *state)
 {
@@ -9423,10 +9470,11 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
  * prior hit).
  *
  * Conv: Z80 uses `RLC (IX+$00); JR NC` to test bit 7 of `used`; C uses `!=
- * HAZARD_UNUSED`. Equivalent because `used` is always 0x00 or 0xFF. Conv: Z80
- * pushes $AD4B (the loop-advance address) before the per-slot checks so that
- * early `RET`s jump directly to the DJNZ tail; C uses `goto chc_continue` for
- * the same effect.
+ * HAZARD_UNUSED`. Equivalent because `used` is always 0x00 or 0xFF.
+ *
+ * Conv: Z80 pushes $AD4B (the loop-advance address) before the per-slot checks
+ * so that early `RET`s jump directly to the DJNZ tail; C uses `goto
+ * chc_continue` for the same effect.
  *
  */
 static void check_hazard_collisions(chqstate_t *state)
@@ -9474,10 +9522,12 @@ chc_continue:
  *
  * Conv: Z80 uses D as both the "no-hit" return value (caller sets D=0 before
  * the CALL) and the collision flag (set to 1 at $AD9D). C separates these into
- * the [default_retval] parameter and the u8 return value. Conv: Z80 leaves [HL]
- * = (horz_clip<<8)|horz_pos at the point of return, but the one call site that
- * mattered ($AE7A) discards it -- horz_pos/horz_clip are written by the caller
- * before the CALL, not read back after -- so the C port has no output parameter.
+ * the [default_retval] parameter and the u8 return value.
+ *
+ * Conv: Z80 leaves [HL] = (horz_clip<<8)|horz_pos at the point of return, but
+ * the one call site that mattered ($AE7A) discards it -- horz_pos/horz_clip are
+ * written by the caller before the CALL, not read back after -- so the C port
+ * has no output parameter.
  *
  * \param[in]     default_retval value returned when no collision (was D).
  * \param[in]     HL Initial HL; unused within the function body, kept for
@@ -9599,8 +9649,11 @@ static void advance_hazards(chqstate_t *state)
  * the hazard's function pointer.
  *
  * Conv: Z80 uses PUSH IX / POP DE to get IX as a pointer into DE; C stores the
- * hazard slot index ([IXhazard] - hazards[0]) instead. Conv: Z80 calls the hit
- * handler via JP (HL) ($AEC8–$AECE); C calls the function pointer directly.
+ * hazard slot index ([IXhazard] - hazards[0]) instead.
+ *
+ * Conv: Z80 calls the hit handler via JP (HL) ($AEC8–$AECE); C calls the
+ * function pointer directly.
+ *
  * Conv: Z80 LDDR at $AEBA shifts the draw list down by bytes; C uses a
  * pointer-decrement loop over s16 words.
  *
@@ -15950,13 +16003,15 @@ bct_endbit_negative:
  * (the one-frame-lagged delta) to scroll the sky/ground colour boundary.
  *
  * Conv: IY is used in the Z80 for the height-channel road buffer pointer; C
- * uses ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET) for the same address. Conv: EXX
- * at $CD63 banks C (Cmin) and HL (HLpvtab) into shadow registers so the inner
- * loop can use B, DE and HL freely; C locals need no banking. Conv: The 7-bit
- * shift-and-add multiply at $CD84–$CDA9 is replaced by the equivalent
- * expression ((A_height & 0x7F) * DE_v) >> 7. Each of the 7 bits of A
- * contributes DE × 2^(bit_position); summing and taking the high byte gives (A
- * & 0x7F) * DE / 128.
+ * uses ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET) for the same address.
+ *
+ * Conv: EXX at $CD63 banks C (Cmin) and HL (HLpvtab) into shadow registers so
+ * the inner loop can use B, DE and HL freely; C locals need no banking.
+ *
+ * Conv: The 7-bit shift-and-add multiply at $CD84–$CDA9 is replaced by the
+ * equivalent expression ((A_height & 0x7F) * DE_v) >> 7. Each of the 7 bits of
+ * A contributes DE × 2^(bit_position); summing and taking the high byte gives
+ * (A & 0x7F) * DE / 128.
  *
  */
 static void build_height_table(chqstate_t *state)
@@ -16701,8 +16756,10 @@ static void setup_interrupts(chqstate_t *state)
  * pattern table).
  *
  * Conv: Z80 writes directly to SM operands at $EF0E, $EF01 and $EEA3; C writes
- * to the equivalent state fields. Conv: Z80 JP $EE78 is a tail call to
- * np_start_at_hl; C calls next_pattern_at_addr.
+ * to the equivalent state fields.
+ *
+ * Conv: Z80 JP $EE78 is a tail call to np_start_at_hl; C calls
+ * next_pattern_at_addr.
  *
  */
 static void reset_music(chqstate_t *state)
@@ -16721,8 +16778,10 @@ static void reset_music(chqstate_t *state)
  * falls through to np_next → np_start_at_hl to load the address of the next
  * pattern and start it.
  *
- * Conv: Z80 SM counter at $EE6F → state->music.pattern_repeats. Conv: Z80 falls
- * through via jp-less control flow; C calls next_pattern_at_addr.
+ * Conv: Z80 SM counter at $EE6F → state->music.pattern_repeats.
+ *
+ * Conv: Z80 falls through via jp-less control flow; C calls
+ * next_pattern_at_addr.
  *
  */
 static void next_pattern(chqstate_t *state)
@@ -16933,15 +16992,17 @@ static void playdrum_bank_go(chqstate_t *state,
  * \param[in]     HLdata Pointer to the next sample byte in state->drum1[] or
  *   state->drum2[]. (was HL)
  *
- * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions
- * across 8 iterations -- the byte doubles as its own iteration counter, no
- * separate bit-index register needed. This rotation mutates the sample data
- * in place (only a full 8-bit rotation restores it), so the drum samples
- * live in state as mutable copies of drum1_template/drum2_template. Conv:
- * the inter-OUT delay code is
- * modelled as speccy->logtime so the host can reconstruct the bit timing.
- * Conv: C has no mid-sample interrupts, so the early-return resume path
- * never triggers and the sample always plays to completion in one call.
+ * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
+ * 8 iterations -- the byte doubles as its own iteration counter, no separate
+ * bit-index register needed. This rotation mutates the sample data in place
+ * (only a full 8-bit rotation restores it), so the drum samples live in state
+ * as mutable copies of drum1_template/drum2_template.
+ *
+ * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
+ * reconstruct the bit timing.
+ *
+ * Conv: C has no mid-sample interrupts, so the early-return resume path never
+ * triggers and the sample always plays to completion in one call.
  */
 static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
 {

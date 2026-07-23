@@ -1158,16 +1158,17 @@ static void es_reset_music(chqstate_t *state)
  * \param[in]     HLdata  Pointer to the next sample byte in
  *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
  *
- * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions
- * across 8 iterations -- the byte doubles as its own iteration counter, no
- * separate bit-index register needed. This rotation mutates the sample data
- * in place (only a full 8-bit rotation restores it), so the drum samples
- * live in bank7 state as mutable copies of
- * es_drum2_template/es_drum1_template. Conv: the
- * inter-OUT delay code is modelled as speccy->logtime so the host can
- * reconstruct the bit timing. Conv: C has no mid-sample interrupts, so the
- * early-return resume path never triggers and the sample always plays to
- * completion in one call.
+ * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
+ * 8 iterations -- the byte doubles as its own iteration counter, no separate
+ * bit-index register needed. This rotation mutates the sample data in place
+ * (only a full 8-bit rotation restores it), so the drum samples live in bank7
+ * state as mutable copies of es_drum2_template/es_drum1_template.
+ *
+ * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
+ * reconstruct the bit timing.
+ *
+ * Conv: C has no mid-sample interrupts, so the early-return resume path never
+ * triggers and the sample always plays to completion in one call.
  */
 static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
 {
