@@ -805,7 +805,6 @@ reset_row_counter:
  *    bits in the mixer cache and forces that same self-modified operand to
  *    $41.
  *
- * \param[in]  state       Pointer to game state.
  * \param[in]  IX_channel  Pointer to this channel's tracker record. (was IX)
  * \param[out] A_volume_out Receives the phase-1/-2 volume (+$13). (was A)
  *
@@ -1023,7 +1022,6 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * immediate tempo refresh, and arms the tune-active flag for
  * ts_music_service ($EC71) to pick up on its next call.
  *
- * \param[in,out] state  Pointer to game state.
  * \param[in]     A_tune Tune number to start; index into the 7-byte-stride
  *                       tune-select table at $F225. (was A)
  *
@@ -1176,7 +1174,6 @@ static void start_tune(chqstate_t *state, u8 A_tune)
  * block at $A213 -- kept as a distinct function because it walks the
  * title-tune engine's own register cache at $EFAF-$EFBA, not the in-game one.
  *
- * \param[in] state Pointer to game state.
  *
  * Conv: the Z80 uses the OUTD instruction (LD B,$FF / OUT (C),A / LD B,$BF /
  * OUTD in sequence); C issues two separate out() calls per register, as in
@@ -1212,7 +1209,6 @@ static void write_title_ay_registers(chqstate_t *state)
  *
  * Called once per frame by the routine at $F82F.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the skool re-tests title_music.tune_active a second time at $ECCA
  * (tms_output_registers) before flushing, since that label is also reached
@@ -1306,7 +1302,6 @@ static void ts_music_service(chqstate_t *state)
  * its own thread. This function is a no-op in the C port, matching the
  * existing 48K setup_interrupts stub.
  *
- * \param[in] state Pointer to game state.
  */
 static void setup_im2_interrupt_table(chqstate_t *state)
 {
@@ -1327,7 +1322,6 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * paced iteration instead), so there is no flag to set. Adding one would be
  * dead state, the same way the 48K irq_flag field was.
  *
- * \param[in,out] state Pointer to game state.
  */
 static void frame_interrupt_handler(chqstate_t *state)
 {
@@ -1343,7 +1337,6 @@ static void frame_interrupt_handler(chqstate_t *state)
  * SFX "busy" flags at $F837/$F895/$F8A2 before falling into the SFX
  * script-byte-code reader.
  *
- * \param[in,out] state Pointer to game state.
  * \param[in] A_tune Tune number to start (was A).
  *
  * Conv: the digitised-sample SFX subsystem is out of scope (per scope
@@ -1579,7 +1572,6 @@ static void oss_op_accel_x_c(struct title_object *rec)
  * how the decelerate/accelerate modes overload the x_step/y_step fields as
  * curve-lookup counters.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
  * with no PUSH anywhere in this call chain, that pops object_script_step's
@@ -1756,7 +1748,6 @@ static void object_script_step(chqstate_t *state)
  * bytes backward from HL, DJNZ-looped 8 times per character row, stepping
  * through the $x00 third boundary via the usual ADD A,$20 / carry pattern.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the PUSH-fill collapses to one memset per scanline; the real stack
  * save/restore at $CC04/$CC4C-$CC4F has no C equivalent (SP is never
@@ -1807,7 +1798,6 @@ static void clear_playfield_buffer(chqstate_t *state)
  * blitters when a frame overruns the interrupt deadline, or the whole call
  * stack being abandoned elsewhere when fire is pressed to start the game.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the self-looping structure and its stack-unwind escape hatch are not
  * modelled; this function always draws one frame then returns, matching how
@@ -1989,7 +1979,6 @@ static void advance_glyph_scanline(int *H, int *L)
  * sprite. Advances the screen address one scanline at a time via
  * advance_glyph_scanline.
  *
- * \param[in,out] state         Pointer to game state.
  * \param[in]     H             Destination screen address high byte.
  * \param[in]     L             Destination screen address low byte.
  * \param[in]     src           Glyph bitmap source pointer.
@@ -2134,7 +2123,6 @@ static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
  * falls through to blit_width6 -- blit_width7 is unreachable from this
  * dispatcher (see its own Conv note).
  *
- * \param[in,out] state          Pointer to game state.
  * \param[in]     H              Destination screen address high byte.
  * \param[in]     L              Destination screen address low byte.
  * \param[in]     src            Glyph bitmap source pointer.
@@ -2162,7 +2150,6 @@ static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
  * 1..6 explicitly, so blit_width7 (unreachable from the foreground
  * dispatcher above) is reached here as the default case.
  *
- * \param[in,out] state          Pointer to game state.
  * \param[in]     H              Destination screen address high byte.
  * \param[in]     L              Destination screen address low byte.
  * \param[in]     src            Glyph bitmap source pointer.
@@ -2196,7 +2183,6 @@ static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
  * nothing is drawn. Otherwise dispatches to the width-specific OR-blit
  * routine.
  *
- * \param[in,out] state Pointer to game state.
  * \param[in]     B_y   Object Y screen position (was B).
  * \param[in]     C_x   Object X screen position (was C).
  * \param[in]     L_row Object row/height byte (was L).
@@ -2258,7 +2244,6 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
  * consumption) and explicitly guards the skip count against the u8-wrap
  * quirk noted in compute_glyph_blit_params (forcing a minimum of 1).
  *
- * \param[in,out] state Pointer to game state.
  * \param[in]     B_y   Object Y screen position (was B).
  * \param[in]     C_x   Object X screen position (was C).
  * \param[in]     L_row Object row/height byte (was L).
@@ -2305,7 +2290,6 @@ static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x, u8 L_
  * or a procedural noise generator ($FA3A). Called once per frame from
  * $C06E, $C16A, $C59E, $F7C7 and $FBC8.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: music-only translation, per scope decision. Only the CALL $EC71 is
  * translated; the frame-flag clear at $F832-$F833 is omitted because nothing
@@ -2330,7 +2314,6 @@ static void sfx_music_service(chqstate_t *state)
  *
  * Same as clear_screen (which this bank overlaps).
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the Z80 self-fills via `LD (HL),L` (both ranges start on a $x00
  * boundary, so L is already zero) then LDIR; this collapses to two plain
@@ -2358,7 +2341,6 @@ static void clear_screen_bitmap_and_attrs(chqstate_t *state)
  * $45 (flash bit set; paper/ink in bits 0-5), then 2 more bytes of
  * attribute 0.
  *
- * \param[in,out] state Pointer to game state.
  */
 static void clear_and_fill_border_attrs(chqstate_t *state)
 {
@@ -2389,7 +2371,6 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * scene each frame while polling for coin/fire/keyboard input to start a
  * game. Called from $C000 and $FBC8.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
  * state->title_animation; see the TODO in ts_wait_loop where the "any
@@ -2518,7 +2499,6 @@ static void title_screen_driver(chqstate_t *state)
  * frame via $C61E; title_screen_driver ($C59E) is re-run (new scene) when a
  * key other than fire is pressed.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame
  * pacing described in the skool ("one $F82F service call per frame") is
@@ -2700,7 +2680,6 @@ static u8 ts_wait_loop(chqstate_t *state)
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
  * into the shared name-table refresh tail at ts_refresh_name_table.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the $8011 push is a stack marker discarded by the shared tail's
  * `POP AF` ($C6C2) -- it has no other effect and is not modelled.
@@ -2717,7 +2696,6 @@ static void ts_coin_inserted(chqstate_t *state)
  * buffer pointed to by ($800A), each row split into 15+7+6 byte segments
  * with 2-byte gaps skipped between segments.
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: stubbed per scope decision -- nothing in the C port yet models the
  * destination buffer or a $800A-equivalent state field, and this task's
@@ -2782,7 +2760,6 @@ static const u8 shocked_keydef_sequence[8] = {
  * combined with the row number into a single packed code (see
  * read_new_key_definition for how the code is unpacked again).
  *
- * \param[in,out] state Pointer to game state.
  * \param[out] D_key_code_out Packed key code: 8*(4-bit) + (7-row). Left at
  * 0xFF if no key was held in any row (was D).
  * \return 1 if more than one row (or more than one bit within a row) was
@@ -2875,7 +2852,6 @@ static u16 advance_key_label_column(u16 DE_screen)
  * column (twice, when B_remaining is exactly 4 -- see
  * advance_key_label_column).
  *
- * \param[in,out] state Pointer to game state.
  * \param[in,out] DE_screen Screen address to print the key's name at;
  * updated to the next label position on return (was DE).
  * \param[in] B_remaining Controls remaining in the outer 8-control loop,
@@ -2952,7 +2928,6 @@ rescan:
  * any mismatch, returns immediately (the ordinary case -- the new mapping
  * is kept).
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: modelled as an outer for(;;) that only exits via return (mismatch)
  * -- matching the Z80, which has no path back to the caller once the
@@ -3034,7 +3009,6 @@ static void redefine_keys_screen(chqstate_t *state)
  * Runs one frame of the SFX/music service and, if no tune is currently
  * active, restarts tune 0.
  *
- * \param[in,out] state Pointer to game state.
  */
 static void run_title_tune(chqstate_t *state)
 {
@@ -3052,7 +3026,6 @@ static void run_title_tune(chqstate_t *state)
  * bails out as soon as the port's value changes (a joystick is moving or
  * present).
  *
- * \param[in,out] state Pointer to game state.
  *
  * \return 0 if Kempston port activity was detected within the sample
  * window -- the caller must return to the poll loop without installing any
@@ -3100,7 +3073,6 @@ static u8 detect_kempston_joystick(chqstate_t *state)
  * BRIGHT set on the upper row) or single-height (7 font bytes, one scanline
  * each), selected by the header's style bit.
  *
- * \param[in,out] state Pointer to game state.
  * \param[in] HL_record Pointer to the 3-byte header + character stream (was HL).
  * \return Pointer to the byte following the record's terminator (was HL).
  *
@@ -3237,7 +3209,6 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
  * The final zero byte is a pad, not part of any record (e.g. the $FC29
  * block's "$FD96 pad byte").
  *
- * \param[in,out] state Pointer to game state.
  * \param[in] HLstring Pointer to the first record (was HL).
  */
 static void print_string(chqstate_t *state, const u8 *HLstring)
@@ -3258,7 +3229,6 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
  * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
  *
- * \param[in,out] state Pointer to game state.
  *
  * Conv: the Z80 does this as three LDIR chunks (attrs, then bitmap split
  * into two chunks of $082F and $07D0 bytes) with a sound-service call
@@ -3293,7 +3263,6 @@ static void clear_options_screen(chqstate_t *state)
  * Once a scheme is chosen (any path other than "5"), installs the
  * active-control-config header and hands off to the title screen.
  *
- * \param[in,out] state Pointer to game state.
  *
  * \return 1 always, at the point corresponding to the Z80's `JP $C59E`
  * ($FC11) -- the caller should now (re-)run title_screen_driver.
@@ -3417,7 +3386,6 @@ shared_tail:
  * existing TODO ("fire pressed -> start the game via $FBA2") should call
  * omd_redraw_and_poll(state), not this function.
  *
- * \param[in,out] state Pointer to game state.
  *
  * \return 1 always -- see omd_redraw_and_poll's return-value doc.
  */
@@ -3443,7 +3411,6 @@ static u8 options_menu_driver(chqstate_t *state)
  * interrupt via HALT synchronisation. In the Z80 this loop is unconditional
  * (`CALL $F82F` / `JR $F7D1`) and never returns to its caller.
  *
- * \param[in,out] state Pointer to game state.
  *
  * \return Nothing (was RET never reached).
  *
@@ -3486,7 +3453,6 @@ static void play_success_music(chqstate_t *state)
  * BANK3_INPUT_SELECTION sets controls_selected and returns 0 to prompt the
  * caller's loop to exit; all other cases return 1.
  *
- * \param[in] state Pointer to game state.
  * \param[in] HLroutine Z80 address of the bank 3 routine to invoke. (was HL)
  *
  * \return 1 on success; 0 to signal an early return in the caller's loop

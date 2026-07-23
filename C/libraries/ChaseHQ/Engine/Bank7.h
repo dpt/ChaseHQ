@@ -31,7 +31,6 @@
  * dispatch skeleton are ported; the draw/glyph-plot handler bodies and
  * script_data content are not yet (see Bank7.c).
  *
- * \param[in] state Pointer to game state.
  */
 void show_end_screen(chqstate_t *state);
 

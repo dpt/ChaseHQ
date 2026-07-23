@@ -6,7 +6,6 @@
  * attribute address, and then the NUL-terminated string itself. Returns a
  * pointer past the string so the caller can advance to the next message.
  *
- * \param[in] state    Pointer to game state.
  * \param[in] style    Rendering style selector. (was A)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
  *

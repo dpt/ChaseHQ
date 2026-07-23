@@ -61,7 +61,6 @@
  * bytes of the "backbuffer" area, which alias the attribute portion of the
  * end-screen montage/glyph drawing area ($F000 = &state->backbuffer[0]).
  *
- * \param[in] state Pointer to game state.
  */
 static void es_clear(chqstate_t *state)
 {
@@ -241,7 +240,6 @@ static u16 next_screen_row(u16 addr)
  * calls ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer,
  * so the row-wrap arithmetic can mirror the Z80 exactly.
  *
- * \param[in] state       Pointer to game state.
  * \param[in] image       Bitmap+attribute source blob (was HL).
  * \param[in] screen_addr Top-left destination screen address (was DE).
  */
@@ -306,7 +304,6 @@ static const u8 *z80addrtoendshot(u16 addr)
  * $E2DE es_draw_frame_common: Read an image+destination pair from the
  * script and blit it, without the backbuffer-clear prefix.
  *
- * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced past the two
  *                        words consumed.
  */
@@ -330,7 +327,6 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 /**
  * $E2D9: Clear the backbuffer, then draw an end-screen graphic frame
  *
- * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced past the two
  *                       words consumed.
  */
@@ -358,7 +354,6 @@ static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
  * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
  * wraparound reproduces this bug-for-bug.
  *
- * \param[in] state Pointer to game state.
  */
 static void es_attribute_fade_in(chqstate_t *state)
 {
@@ -416,7 +411,6 @@ static void es_attribute_fade_in(chqstate_t *state)
  * them back together, which drops those bits on every write. Matched
  * bug-for-bug.
  *
- * \param[in] state Pointer to game state.
  * \param[in] flag  Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
  */
 static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
@@ -454,7 +448,6 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 /**
  * $E472 es_handler_glyph_fade_b: Fade the $5C6C-gated glyph attribute band
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_glyph_fade_b(chqstate_t *state)
 {
@@ -464,7 +457,6 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
 /**
  * $E46D es_handler_glyph_fade_c: Fade the $5C6D-gated glyph attribute band
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_glyph_fade_c(chqstate_t *state)
 {
@@ -496,7 +488,6 @@ static void es_handler_handshake_advance(chqstate_t *state);
  * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
  * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_handshake(chqstate_t *state)
 {
@@ -519,7 +510,6 @@ static void es_handler_handshake(chqstate_t *state)
  * dispatch to directly ($5FBA in the relocated table), skipping the $5C6C
  * fade-b call that only the plain ESCMD_HANDSHAKE entry point runs.
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_handshake_advance(chqstate_t *state)
 {
@@ -562,7 +552,6 @@ static void es_handler_handshake_advance(chqstate_t *state)
 /**
  * $E2D8 (stub): Idle per-frame handler (no drawing)
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_idle(chqstate_t *state)
 {
@@ -587,7 +576,6 @@ static void es_handler_idle(chqstate_t *state)
  * it is non-zero or a digit has already been printed, otherwise print a
  * space.
  *
- * \param[in] state Pointer to game state.
  */
 static void es_handler_draw_score(chqstate_t *state)
 {
@@ -707,7 +695,6 @@ static void es_chatter(chqstate_t *state)
  * the new handler and reload count, ready for show_end_screen's loop to
  * count down and re-invoke run_script when it reaches zero.
  *
- * \param[in] state Pointer to game state.
  * \param[in] handler New per-frame handler (was DE).
  * \param[in] reload New $A170 frame-delay reload count (was C).
  */
@@ -815,7 +802,6 @@ have_single:
  * established precedent in draw_endshot's attribute-row loop above -- this
  * bank-7 memory range is not standard $5800-$5AFF attribute space.
  *
- * \param[in]     state  Pointer to game state.
  * \param[in]     A_char Script character byte, EOS bit already masked off
  *                       by the caller (was A).
  * \param[in]     Drow   Screen destination row byte; constant for the
@@ -897,7 +883,6 @@ static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
  * does, then plots each following script character via plot_char until the
  * EOS-terminated (top-bit-set) character has been drawn.
  *
- * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced past the
  *                       3-byte header and the whole character run.
  */
@@ -934,7 +919,6 @@ static void render_text_common(chqstate_t *state, const u8 **script)
 /**
  * $E2F0: Clear the backbuffer, then render an end-screen text run
  *
- * \param[in]     state  Pointer to game state.
  * \param[in,out] script Script read pointer (was HL); advanced as per
  *                       render_text_common.
  */
@@ -958,7 +942,6 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  * their text run within this same call rather than arming a per-frame
  * handler -- see render_text_common and plot_char above.
  *
- * \param[in] state Pointer to game state.
  */
 static void run_script(chqstate_t *state)
 {
@@ -1055,7 +1038,6 @@ rs_exit:
  * (es_setup_interrupts onward in the skool), relocated into the copied
  * $F300 buffer.
  *
- * \param[in] state Pointer to game state.
  */
 static void es_setup_interrupts(chqstate_t *state)
 {
@@ -1079,7 +1061,6 @@ static void es_setup_interrupts(chqstate_t *state)
  * es_music_patterns/es_music_data tables and es_music state instead of the
  * shared in-game music engine's.
  *
- * \param[in,out] state     Pointer to game state.
  * \param[in]     HLpataddr Pattern-list read pointer (was HL).
  */
 static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
@@ -1116,7 +1097,6 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
  * just played. Same structure as Main.c's next_pattern, operating on bank
  * 7's own es_music state.
  *
- * \param[in,out] state Pointer to game state.
  */
 static void es_advance_pattern(chqstate_t *state)
 {
@@ -1133,7 +1113,6 @@ static void es_advance_pattern(chqstate_t *state)
  * es_music_patterns, exactly as Main.c's reset_music does for the shared
  * in-game engine.
  *
- * \param[in] state Pointer to game state.
  */
 static void es_reset_music(chqstate_t *state)
 {
@@ -1157,7 +1136,6 @@ static void es_reset_music(chqstate_t *state)
  * cleared. Identical in structure to Main.c's playdrum_go, operating on
  * bank 7's own es_music state and es_drum2/es_drum1 buffers.
  *
- * \param[in,out] state   Pointer to game state.
  * \param[in]     Dlength Number of sample bytes remaining to output (was D).
  * \param[in]     HLdata  Pointer to the next sample byte in
  *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
@@ -1213,7 +1191,6 @@ pd_end_of_sample:
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_2/playdrum_start.
  *
- * \param[in,out] state  Pointer to game state.
  * \param[in]     Aspeed Playback speed: inner loop count per sample byte
  *   (was A).
  */
@@ -1231,7 +1208,6 @@ static void es_playdrum_2(chqstate_t *state, int Aspeed)
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_1/playdrum_start.
  *
- * \param[in,out] state  Pointer to game state.
  * \param[in]     Aspeed Playback speed: inner loop count per sample byte
  *   (was A).
  */
@@ -1251,7 +1227,6 @@ static void es_playdrum_1(chqstate_t *state, int Aspeed)
  * routine, operating on the same fixed-address state->rng_seed -- so
  * rather than duplicate it, this calls the shared implementation directly.
  *
- * \param[in,out] state  Pointer to game state.
  * \param[in]     Aparam Noise duration: outer loop count and pulse timing
  *   (was A).
  */
@@ -1287,7 +1262,6 @@ static void es_play_noise(chqstate_t *state, int Aparam)
  * i.e. does no music processing at all that tick. C returns immediately in
  * that case.
  *
- * \param[in,out] state Pointer to game state.
  */
 static void es_play_music_48k(chqstate_t *state)
 {
@@ -1371,7 +1345,6 @@ pm_reset_pattern:
  * discarded here, following the load_stage precedent -- the C functions
  * below are simply called directly.
  *
- * \param[in] state Pointer to game state.
  */
 void show_end_screen(chqstate_t *state)
 {
