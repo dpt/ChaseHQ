@@ -15,20 +15,20 @@ const u8 *print_message(chqstate_t *state,
                         u8          style,
                         const u8   *messages)
 {
-  u8  Aattr;     /* attribute byte for the string (was A) */
-  u16 DEbackbuf; /* back-buffer destination address (was DE) */
-  u16 BCtarget;  /* screen attribute address (was BC) */
+  u8  A_attr;     /* attribute byte for the string (was A) */
+  u16 DE_backbuf; /* back-buffer destination address (was DE) */
+  u16 BC_target;  /* screen attribute address (was BC) */
 
   /* Conv: header fields read explicitly rather than via INC HL chains. */
-  Aattr     = messages[1]; /* messages[0] is a flags byte we ignore */
-  DEbackbuf = wordat(messages + 2);
-  BCtarget  = wordat(messages + 4);
+  A_attr     = messages[1]; /* messages[0] is a flags byte we ignore */
+  DE_backbuf = wordat(messages + 2);
+  BC_target  = wordat(messages + 4);
   messages += 6;
 
   return draw_string_with_style(state,
-                                Aattr,
-                                ADDRTOSCREEN(BCtarget),
-                                ADDRTOBACKBUF(DEbackbuf),
+                                A_attr,
+                                ADDRTOSCREEN(BC_target),
+                                ADDRTOBACKBUF(DE_backbuf),
                                 messages,
                                 style);
 }
