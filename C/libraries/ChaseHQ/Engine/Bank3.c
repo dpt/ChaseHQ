@@ -1929,9 +1929,9 @@ static void compute_glyph_geometry(u8                     B_y,
   /* $C8CE-$C8DC / $C958-$C966: D = destination screen address high byte. */
   B_screen_rows = (u8) (0xAF - B_clamped);
   A = B_screen_rows;
-  carry = 0; RR(A); /* AND A ; RRA */
-  carry = 1; RR(A); /* SCF   ; RRA */
-  carry = 0; RR(A); /* AND A ; RRA */
+  carry = 0; RR(A);
+  carry = 1; RR(A);
+  carry = 0; RR(A);
   A ^= B_screen_rows;
   A &= 0xF8;
   A ^= B_screen_rows;

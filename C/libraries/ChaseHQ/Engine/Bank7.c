@@ -263,7 +263,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
    * function entry -- NOT the row loop's final DE_screen_addr. Must use the
    * screen_addr parameter, which the loop above never mutates. */
   Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
-  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
+  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF);
   attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
 
   for (attrrow = 8; attrrow != 0; attrrow--) {
@@ -918,7 +918,7 @@ static void render_text_common(chqstate_t *state, const u8 **script)
   E_scr  = *HL_script++;
   D_scr  = *HL_script++;
 
-  H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
+  H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF);
   L_attr = E_scr;
 
   do {

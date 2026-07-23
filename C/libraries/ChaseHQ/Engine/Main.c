@@ -4192,7 +4192,7 @@ dso_loop_continue:
   case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_25PC */
   case 7: goto dso_continue;    /* data type STRETCHY_TYPE_100PC */
   }
-  Avertical *= 2;               /* data type STRETCHY_TYPE_200PC: Z80 ADD A,A */
+  Avertical *= 2;               /* data type STRETCHY_TYPE_200PC */
   goto dso_continue;
 
 dso_case_25pc:
@@ -4491,7 +4491,7 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     // 2 bits with $FC before rotating. Here bits rotated off the bottom wrap
     // into bits 7-6, so a plain >>= 2 silently drops them instead of setting
     // them (pitfall: rotate mistranslated as shift).
-    Awidth_bytes = ((Awidth_bytes >> 2) | (Awidth_bytes << 6)) & 0xFF; /* RRCA x2 */
+    Awidth_bytes = ((Awidth_bytes >> 2) | (Awidth_bytes << 6)) & 0xFF;
     state->doc_shift_select = Awidth_bytes;
     Awidth_bytes = Ebitmap_stride - 1;
     // Conv: if width_bytes == 1, Awidth_bytes == 0 → nothing to draw.
@@ -6100,7 +6100,7 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
   int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
 
   A_attrhi = screen >> 8;
-  A_attrhi = (A_attrhi >> 3) & 3; /* RRC A x3; AND 3 */
+  A_attrhi = (A_attrhi >> 3) & 3;
   A_attrhi += 0x58;
   screen = (A_attrhi << 8) | (screen & 0xFF);
   screen -= SCREEN_ATTRIBUTES_START_ADDRESS; // Conv: address -> offset
@@ -6677,7 +6677,7 @@ static void calc_overtake_bonus(chqstate_t *state)
   Biterations = Acounter;
   HLbcd       = &state->overtake_bonus_bcd;
   do {
-    Acounter = DAA_add(*HLbcd + 2, NULL); /* ADD A,$02; DAA */
+    Acounter = DAA_add(*HLbcd + 2, NULL);
     if (Acounter >= 0x80) Acounter = 0x80;
     *HLbcd = Acounter;
     add_bonus(state, 0, 0, Acounter); /* bonus = Acounter * 100 */
@@ -7469,7 +7469,7 @@ u8 keyscan(chqstate_t *state)
     Akempston = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     // PUSH AF
     Akeys = keyscan_keydefs(state, 0x20, &state->keydefs[0]); // 3 bits max
-    Akeys = (Akeys & 0x07) << 5; /* RRC A x3; AND 0xE0 */
+    Akeys = (Akeys & 0x07) << 5;
     // POP DE
     Ekeys = Akeys | Akempston;
   } else {
@@ -16118,11 +16118,11 @@ static int8_t scale_curvature_or_height(int8_t a, int8_t c)
   do {
     carry  = (E_copy >> 7) & 1; /* RL E — shift MSB into carry */
     E_copy <<= 1;
-    if (carry) a += c;          /* ADD A,C */
-    a <<= 1;                    /* ADD A,A */
+    if (carry) a += c;
+    a <<= 1;
   } while (--B_iters);
   a    >>= 1;        /* RRA — undo final doubling */
-  a    >>= 2;        /* SRA A; SRA A */
+  a    >>= 2;
   carry  = a & 1;
   a      = (a >> 1) + carry; /* SRA A; ADC A,$00 — round */
   return a;
