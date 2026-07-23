@@ -76,16 +76,16 @@ typedef struct glyph_blit_geometry
 
 /* ----------------------------------------------------------------------- */
 
-static u8   acp_read_byte(title_tune_channel_t *IX_channel,
-                          const u8 **DE_pattern);
+static u8 acp_read_byte(title_tune_channel_t *IX_channel,
+                        const u8            **DE_pattern);
 static const u8 *resolve_phrase_addr(u16 addr);
 static void advance_channel_phrase(title_tune_channel_t *IX_channel,
-                                   const u8 **DE_pattern);
-static void advance_channel_pattern(chqstate_t *state,
+                                   const u8            **DE_pattern);
+static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel);
-static u16  compute_channel_ay_registers(chqstate_t *state,
-                                         title_tune_channel_t *IX_channel,
-                                         u8 *A_volume_out);
+static u16 compute_channel_ay_registers(chqstate_t           *state,
+                                        title_tune_channel_t *IX_channel,
+                                        u8                   *A_volume_out);
 static void start_tune(chqstate_t *state, u8 A_tune);
 static void write_title_ay_registers(chqstate_t *state);
 static void ts_music_service(chqstate_t *state);
@@ -95,7 +95,7 @@ static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune);
 static void ts_animate_frame(chqstate_t *state);
 static void clear_playfield_buffer(chqstate_t *state);
 static void object_script_step(chqstate_t *state);
-static u8   oss_lookup_speed(u8 C_idx);
+static u8 oss_lookup_speed(u8 C_idx);
 static void oss_apply_x_step(struct title_object *rec);
 static void oss_apply_y_step(struct title_object *rec);
 static void oss_op_velocity(struct title_object *rec);
@@ -104,54 +104,72 @@ static void oss_op_decel_y(struct title_object *rec);
 static void oss_op_accel_x_a(struct title_object *rec);
 static void oss_op_accel_x_b(struct title_object *rec);
 static void oss_op_accel_x_c(struct title_object *rec);
-static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
-                                    glyph_blit_geometry_t *out);
+static void compute_glyph_geometry(u8                     B_y,
+                                   u8                     C_x,
+                                   u8                     L_row,
+                                   glyph_blit_geometry_t *out);
 static void advance_glyph_scanline(int *H, int *L);
-static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
-                            int B_height_pairs, int row_bytes);
-static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs);
-static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
-                                        const u8 *src, int B_height_pairs,
-                                        int C_width_select);
-static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
-                                          const u8 *src, int B_height_pairs,
-                                          int C_width_select);
-static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
-                                       u8 L_row);
-static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x,
-                                         u8 L_row);
+static void blit_glyph_rows(chqstate_t *state,
+                            int         H,
+                            int         L,
+                            const u8   *src,
+                            int         B_height_pairs,
+                            int         row_bytes);
+static void blit_width1(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width2(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width3(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width4(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width5(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width6(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_width7(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static void blit_masked_sprite_dispatch(chqstate_t *state,
+                                        int         H,
+                                        int         L,
+                                        const u8   *src,
+                                        int         B_height_pairs,
+                                        int         C_width_select);
+static void blit_masked_sprite_dispatch_b(chqstate_t *state,
+                                          int         H,
+                                          int         L,
+                                          const u8   *src,
+                                          int         B_height_pairs,
+                                          int         C_width_select);
+static void compute_glyph_blit_params(chqstate_t *state,
+                                      u8          B_y,
+                                      u8          C_x,
+                                      u8          L_row);
+static void compute_glyph_blit_params_b(chqstate_t *state,
+                                        u8          B_y,
+                                        u8          C_x,
+                                        u8          L_row);
 static void sfx_music_service(chqstate_t *state);
 static void clear_screen_bitmap_and_attrs(chqstate_t *state);
 static void clear_and_fill_border_attrs(chqstate_t *state);
 static void title_screen_driver(chqstate_t *state);
-static u8   ts_wait_loop(chqstate_t *state);
+static u8 ts_wait_loop(chqstate_t *state);
 static void ts_coin_inserted(chqstate_t *state);
 static void ts_refresh_name_table(chqstate_t *state);
-static u8   scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out);
-static u16  advance_key_label_column(u16 DE_screen);
-static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
-                                     u8 B_remaining, u8 C_control_index);
+static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out);
+static u16 advance_key_label_column(u16 DE_screen);
+static void read_new_key_definition(chqstate_t *state,
+                                    u16        *DE_screen,
+                                    u8          B_remaining,
+                                    u8          C_control_index);
 static void redefine_keys_screen(chqstate_t *state);
 static void run_title_tune(chqstate_t *state);
-static u8   detect_kempston_joystick(chqstate_t *state);
+static u8 detect_kempston_joystick(chqstate_t *state);
 static const u8 *print_character(chqstate_t *state, const u8 *HL_record);
 static void print_string(chqstate_t *state, const u8 *HLstring);
 static void clear_options_screen(chqstate_t *state);
-static u8   omd_redraw_and_poll(chqstate_t *state);
-static u8   options_menu_driver(chqstate_t *state);
+static u8 omd_redraw_and_poll(chqstate_t *state);
+static u8 options_menu_driver(chqstate_t *state);
 static void play_success_music(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
@@ -221,8 +239,7 @@ static void play_success_music(chqstate_t *state);
  * the extracted arrays only cover a finite prefix of the real Z80 data, whose
  * true loop point was not transcribed.
  */
-static u8 acp_read_byte(title_tune_channel_t *IX_channel,
-                        const u8            **DE_pattern)
+static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
 {
   u8        A_byte;    /* byte read before advancing the cursor (was A) */
   const u8 *array_end; /* end of whichever tune array this channel's data lives in */
@@ -1889,7 +1906,9 @@ static void ts_animate_frame(chqstate_t *state)
  * Z80.h and the replace-bits-under-a-mask idiom, matching the style already
  * used for the AY register merge in compute_channel_ay_registers.
  */
-static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
+static void compute_glyph_geometry(u8                     B_y,
+                                   u8                     C_x,
+                                   u8                     L_row,
                                    glyph_blit_geometry_t *out)
 {
   u8                   B_clamped;     /* Y, clamped to a maximum of $6F (was B) */
@@ -2024,8 +2043,12 @@ static void advance_glyph_scanline(int *H, int *L)
  * address/source advance below still runs unconditionally so the timing and
  * any later in-range rows stay correct.
  */
-static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
-                            int B_height_pairs, int row_bytes)
+static void blit_glyph_rows(chqstate_t *state,
+                            int         H,
+                            int         L,
+                            const u8   *src,
+                            int         B_height_pairs,
+                            int         row_bytes)
 {
   u8 *dst;    /* current scanline's destination byte(s) (was HL) */
   int row;    /* 0 or 1: which scanline of the current row-pair */
@@ -2059,8 +2082,8 @@ static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width1(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 1);
 }
@@ -2075,8 +2098,8 @@ static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width2(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 2);
 }
@@ -2091,8 +2114,8 @@ static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width3(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 3);
 }
@@ -2107,8 +2130,8 @@ static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width4(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 4);
 }
@@ -2123,8 +2146,8 @@ static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width5(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 5);
 }
@@ -2148,8 +2171,8 @@ static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width6(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 2);
 }
@@ -2168,8 +2191,8 @@ static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in] src            Glyph bitmap source pointer.
  * \param[in] B_height_pairs Number of row-pairs to draw.
  */
-static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
-                        int B_height_pairs)
+static void blit_width7(
+    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs)
 {
   blit_glyph_rows(state, H, L, src, B_height_pairs, 1);
 }
@@ -2188,9 +2211,12 @@ static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
  * \param[in]     B_height_pairs Number of row-pairs to draw.
  * \param[in]     C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
-                                        const u8 *src, int B_height_pairs,
-                                        int C_width_select)
+static void blit_masked_sprite_dispatch(chqstate_t *state,
+                                        int         H,
+                                        int         L,
+                                        const u8   *src,
+                                        int         B_height_pairs,
+                                        int         C_width_select)
 {
   switch (C_width_select) {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
@@ -2215,9 +2241,12 @@ static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
  * \param[in]     B_height_pairs Number of row-pairs to draw.
  * \param[in]     C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
-                                          const u8 *src, int B_height_pairs,
-                                          int C_width_select)
+static void blit_masked_sprite_dispatch_b(chqstate_t *state,
+                                          int         H,
+                                          int         L,
+                                          const u8   *src,
+                                          int         B_height_pairs,
+                                          int         C_width_select)
 {
   switch (C_width_select) {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
@@ -2270,8 +2299,10 @@ static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
  * below guards against it explicitly), not a translation bug, and is
  * preserved via A_skip_pairs' u8 wraparound rather than "fixed".
  */
-static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
-                                       u8 L_row)
+static void compute_glyph_blit_params(chqstate_t *state,
+                                      u8          B_y,
+                                      u8          C_x,
+                                      u8          L_row)
 {
   glyph_blit_geometry_t g;
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
@@ -2307,7 +2338,10 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
  * \param[in]     C_x   Object X screen position (was C).
  * \param[in]     L_row Object row/height byte (was L).
  */
-static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x, u8 L_row)
+static void compute_glyph_blit_params_b(chqstate_t *state,
+                                        u8          B_y,
+                                        u8          C_x,
+                                        u8          L_row)
 {
   glyph_blit_geometry_t g;
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
@@ -2919,8 +2953,10 @@ static u16 advance_key_label_column(u16 DE_screen)
  * \param[in] C_control_index 1-based index of the control being defined,
  * into state->control_keys[] (was C).
  */
-static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
-                                     u8 B_remaining, u8 C_control_index)
+static void read_new_key_definition(chqstate_t *state,
+                                    u16        *DE_screen,
+                                    u8          B_remaining,
+                                    u8          C_control_index)
 {
   u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
   u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */

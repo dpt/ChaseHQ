@@ -709,8 +709,8 @@ static void es_chatter(chqstate_t *state)
  * \param[in] reload New $A170 frame-delay reload count (was C).
  */
 static void es_set_dispatch(chqstate_t *state,
-                            void      (*handler)(chqstate_t *state),
-                            u8          reload)
+                            void (*handler)(chqstate_t *state),
+                            u8 reload)
 {
   state->bank7->es_handler     = handler;
   state->bank7->es_frame_count = reload;
@@ -827,8 +827,13 @@ have_single:
  *                       at $E2F5 and held constant for the whole call
  *                       (was C, Set M) -- see the Conv note above.
  */
-static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol,
-                      u8 Hattr, u8 *Lattr, u8 A_attr)
+static void plot_char(chqstate_t *state,
+                      u8          A_char,
+                      u8          Drow,
+                      u8         *Ecol,
+                      u8          Hattr,
+                      u8         *Lattr,
+                      u8          A_attr)
 {
   int       character; /* character code, offset by ' ' (was A) */
   int       glyphid;   /* glyph index into font[] (was C during the ladder) */

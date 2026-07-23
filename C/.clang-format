@@ -39,6 +39,10 @@ AlignAfterOpenBracket: Align
 BinPackParameters: false
 BinPackArguments: false
 
+# Never split "return_type\nname(" onto two lines -- always wrap at the
+# parameter list instead, keeping return type and name together
+PenaltyReturnTypeOnItsOwnLine: 1000
+
 # Don't reorder the hand-grouped #include blocks
 SortIncludes: Never
 

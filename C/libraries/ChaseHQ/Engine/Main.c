@@ -229,7 +229,10 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 #define SCREENTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.pixels[0])
 
-static int z80screentooffset(chqstate_t *state, const u8 *ptr, int left, int right)
+static int z80screentooffset(chqstate_t *state,
+                             const u8   *ptr,
+                             int         left,
+                             int         right)
 {
   int off;
   assert(VALID_SCREEN_LR(ptr, left, right));
@@ -248,7 +251,10 @@ static int z80screentooffset(chqstate_t *state, const u8 *ptr, int left, int rig
 #define BACKBUFTOOFFSET_M(ptr) \
   ((ptr) - &state->backbuffer[0])
 
-static int z80backbuftooffset(chqstate_t *state, const u8 *ptr, int left, int right)
+static int z80backbuftooffset(chqstate_t *state,
+                              const u8   *ptr,
+                              int         left,
+                              int         right)
 {
   int off;
   assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
@@ -265,7 +271,10 @@ static int z80backbuftooffset(chqstate_t *state, const u8 *ptr, int left, int ri
 #define SCREENTOADDR_M(ptr) \
   (SCREEN_START_ADDRESS + SCREENTOOFFSET_M(ptr))
 
-static int z80screentoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+static int z80screentoaddr(chqstate_t *state,
+                           const u8   *ptr,
+                           int         left,
+                           int         right)
 {
   int addr;
   assert(VALID_SCREEN_LR(ptr, left, right));
@@ -295,7 +304,10 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
 #define BACKBUFTOADDR_M(ptr) \
   (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET_M(ptr))
 
-static int z80backbuftoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+static int z80backbuftoaddr(chqstate_t *state,
+                            const u8   *ptr,
+                            int         left,
+                            int         right)
 {
   int addr;
   assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
@@ -550,8 +562,7 @@ static void draw_pregame(chqstate_t *state);
 
 static void escape_scene(chqstate_t *state);
 
-static void set_up_stage(chqstate_t        *state,
-                         const scenedata_t *scene_data);
+static void set_up_stage(chqstate_t *state, const scenedata_t *scene_data);
 static void set_up_stage_reset_lights(u8 *attrptr);
 
 static void check_user_input(chqstate_t *state);
@@ -587,16 +598,22 @@ static const u8 *print_message(chqstate_t *state,
 
 static void setup_overlay_messages(chqstate_t *state, const u8 *message);
 static void setup_overlay_messages_with_transition(chqstate_t *state,
-    int          transition,
-    const u8   *message);
+                                                   int         transition,
+                                                   const u8   *message);
 
 static void draw_mugshots(chqstate_t *state);
 
-static void draw_mugshot(chqstate_t *state, int BCattrs, int DEbackbuf,
-                         const u8 *HLmugshot);
+static void draw_mugshot(chqstate_t *state,
+                         int         BCattrs,
+                         int         DEbackbuf,
+                         const u8   *HLmugshot);
 static void draw_smash_bar(chqstate_t *state);
-static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf);
-static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbuf);
+static u16 draw_smash_bar_segments(chqstate_t *state,
+                                   int         C_nsegs,
+                                   int         HLbackbuf);
+static u16 draw_smash_bar_solid_bit(chqstate_t *state,
+                                    int         B_nrows,
+                                    int         HLbackbuf);
 
 static void draw_scene_objects(chqstate_t *state);
 
@@ -628,9 +645,9 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               const u8       *IY_height);
 
 static void draw_object_left_width_entrypt(chqstate_t     *state,
-                                                int             Awidth_bytes,
-                                                const bitmap_t *HLbitmap,
-                                                const u8       *IYheight);
+                                           int             Awidth_bytes,
+                                           const bitmap_t *HLbitmap,
+                                           const u8       *IYheight);
 
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       int               Acol_offset,
@@ -646,9 +663,9 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                const u8       *IYheight);
 
 static void draw_object_right_width_entrypt(chqstate_t     *state,
-                                                 int             Awidth_bytes,
-                                                 const bitmap_t *HLbitmap,
-                                                 const u8       *IYheight);
+                                            int             Awidth_bytes,
+                                            const bitmap_t *HLbitmap,
+                                            const u8       *IYheight);
 
 static void draw_object_perspective_entrypt(chqstate_t     *state,
                                             int             Awidth_bytes,
@@ -724,8 +741,8 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
 static u8 rng(chqstate_t *state);
 
 void start_chatter(chqstate_t       *state,
-                    chatterpriority_t priority,
-                    const u8         *chatterblk);
+                   chatterpriority_t priority,
+                   const u8         *chatterblk);
 
 
 static void print_chatter(chqstate_t *state);
@@ -736,24 +753,13 @@ static void drive_noise_effect(chqstate_t *state, int counter);
 static void draw_noise_effect(chqstate_t *state, int counter);
 static void ne_plot_attrs(chqstate_t *state, int attr);
 
-static void plot_face(chqstate_t *state,
-                      int         screen,
-                      const u8   *face);
-static void plot_face_attributes(chqstate_t *state,
-                                 int         screen,
-                                 const u8   *face);
+static void plot_face(chqstate_t *state, int screen, const u8 *face);
+static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face);
 
-static void plot_mini_font_cursor_off(chqstate_t *state,
-                                      int         x,
-                                      char        character);
-static void plot_mini_font_cursor_on(chqstate_t *state,
-                                     int         x,
-                                     char        character);
-static void plot_mini_font_char(chqstate_t *state,
-                                int         x,
-                                char        ascii,
-                                int         extrabm1,
-                                int         extrabm2);
+static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character);
+static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character);
+static void plot_mini_font_char(
+    chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2);
 
 static void clear_message_line(chqstate_t *state);
 
@@ -774,10 +780,7 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
-void ptad_led_digits(int         iterations,
-                     const u8   *digits,
-                     u8         *stored,
-                     u8         *screen);
+void ptad_led_digits(int iterations, const u8 *digits, u8 *stored, u8 *screen);
 
 static u8 *ledfont_plot(int ord, u8 *screen);
 
@@ -787,11 +790,8 @@ static const u8 *draw_string_with_style(chqstate_t *state,
                                         u8         *backbuf,
                                         const u8   *string,
                                         int         style);
-static const u8 *draw_string_screen(chqstate_t *state,
-                                     int        attrval,
-                                     u8        *attrs,
-                                     u8        *dst,
-                                     const u8  *string);
+static const u8 *draw_string_screen(
+    chqstate_t *state, int attrval, u8 *attrs, u8 *dst, const u8 *string);
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *dst,
                                   const u8   *string,
@@ -801,11 +801,11 @@ static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *attrs);
 
 static void draw_char(chqstate_t *state,
-                      int          character,
+                      int         character,
                       u8         *dst,
-                      int          style,
-                      int          attrval,
-                      int          attrstride,
+                      int         style,
+                      int         attrval,
+                      int         attrstride,
                       u8         *attrs,
                       u8        **new_screen,
                       u8        **new_attrs);
@@ -818,8 +818,9 @@ static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed);
 
 static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold);
 
-static void check_fork_scenery_collisions(chqstate_t *state, int DEdash,
-    int HLdash);
+static void check_fork_scenery_collisions(chqstate_t *state,
+                                          int         DEdash,
+                                          int         HLdash);
 
 static void layout_objects(chqstate_t *state);
 
@@ -833,12 +834,13 @@ static void choose_dirt_and_stones(chqstate_t *state);
 
 static void layout_dirt_and_stones(chqstate_t *state);
 
-static void draw_dirt_and_stones(chqstate_t *state, int Biterations,
-                              const u8 *IYheight);
+static void draw_dirt_and_stones(chqstate_t *state,
+                                 int         Biterations,
+                                 const u8   *IYheight);
 
 static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight);
 static void draw_helicoper_part(chqstate_t                *state,
-                                int                         Acol_pos,
+                                int                        Acol_pos,
                                 const heli_bitmap_inner_t *DEinnerbitmap,
                                 const u8                  *IYheight);
 
@@ -848,36 +850,38 @@ static void drive_helicopter(chqstate_t *state);
 
 static void spawn_hazards(chqstate_t *state);
 static int sh_find_free(chqstate_t *state,
-                        int          Bhorz_pos,
-                        int          Cdistance,
+                        int         Bhorz_pos,
+                        int         Cdistance,
                         int         DEhittable_offset);
 
 static hazard_handler_t hazard_hit;
 
 static void check_hazard_collisions(chqstate_t *state);
 
-static u8 check_collision(chqstate_t *state, int default_retval, int HL,
-                          hazard_t *hazard);
+static u8 check_collision(chqstate_t *state,
+                          int         default_retval,
+                          int         HL,
+                          hazard_t   *hazard);
 
 static void advance_hazards(chqstate_t *state);
 static void advance_hazard(chqstate_t *state,
-                               hazard_t   *IXhazard,
-                               const u8   *IYbase);
+                           hazard_t   *IXhazard,
+                           const u8   *IYbase);
 static void draw_hazard_sprites(chqstate_t *state,
-                                  int          Biterations,
-                                  const u8   *IYheight);
+                                int         Biterations,
+                                const u8   *IYheight);
 static void dhs_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight);
 static void dhs_draw(chqstate_t     *state,
-                    int              Bx,
-                    int              Cy,
-                    int             DEoffset,
-                    const bitmap_t *HLbitmaps,
-                    const u8       *IYheight);
+                     int             Bx,
+                     int             Cy,
+                     int             DEoffset,
+                     const bitmap_t *HLbitmaps,
+                     const u8       *IYheight);
 static void dhs_draw_bitmap(chqstate_t     *state,
-                           int              Bx,
-                           int              Cy,
-                           const bitmap_t *HLbitmap,
-                           const u8       *IYheight);
+                            int             Bx,
+                            int             Cy,
+                            const bitmap_t *HLbitmap,
+                            const u8       *IYheight);
 
 static void move_hero_car(chqstate_t *state);
 
@@ -893,69 +897,73 @@ static void draw_debris(chqstate_t *state);
 static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble);
 
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
-    int               Cwidth_bytes,
-    int               Dy,
-    int               Ex,
-    const carpart_t *HLpart);
+                                           int              Cwidth_bytes,
+                                           int              Dy,
+                                           int              Ex,
+                                           const carpart_t *HLpart);
 
 static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag);
 
-static void draw_cherry_light(chqstate_t *state, int Aframe_index,
-                              int Bturn_limit, int Cturn_delta);
+static void draw_cherry_light(chqstate_t *state,
+                              int         Aframe_index,
+                              int         Bturn_limit,
+                              int         Cturn_delta);
 static void draw_crash_unflipped(chqstate_t *state, int Aframe_index);
 
-static void draw_crash(chqstate_t *state, int Aframe_index, int Bdash_flip_flag,
-                       int Cdash);
+static void draw_crash(chqstate_t *state,
+                       int         Aframe_index,
+                       int         Bdash_flip_flag,
+                       int         Cdash);
 
 static void draw_part(chqstate_t *state,
-                      int          height,
-                      int          width,
-                      int          y,
-                      int          x,
+                      int         height,
+                      int         width,
+                      int         y,
+                      int         x,
                       const u8   *bitmap,
-                      int          Bdash_flip_flag,
-                      int          Cdash,
-                      int          Edash_bitmap_stride);
+                      int         Bdash_flip_flag,
+                      int         Cdash,
+                      int         Edash_bitmap_stride);
 static void draw_part_entrypt2(chqstate_t *state,
-                             int          Bheight,
-                             int          Cwidth_bytes,
-                             int          Dy,
-                             int          Ex,
-                             const u8   *HLbitmap_data,
-                             int          Bdash_flip_flag,
-                             int          Cdash,
-                             int          Edash_bitmap_stride);
+                               int         Bheight,
+                               int         Cwidth_bytes,
+                               int         Dy,
+                               int         Ex,
+                               const u8   *HLbitmap_data,
+                               int         Bdash_flip_flag,
+                               int         Cdash,
+                               int         Edash_bitmap_stride);
 static void draw_part_plot_masked_sprite(chqstate_t *state,
-    int          Awidth_bytes,
-    u8         *HLbackbuf_addr,
-    int          Bdash_height,
-    int          Edash_bitmap_stride,
-    const u8   *HLdash_bitmap_data);
+                                         int         Awidth_bytes,
+                                         u8         *HLbackbuf_addr,
+                                         int         Bdash_height,
+                                         int         Edash_bitmap_stride,
+                                         const u8   *HLdash_bitmap_data);
 
 static u8 *plot_masked_sprite(chqstate_t *state,
                               int         jump_offset,
-                              int          height,
+                              int         height,
                               int         bitmap_stride,
                               const u8   *bitmap_data,
                               u8         *backbuf_addr);
 
 static void plot_masked_sprite_flipped(chqstate_t *state,
-                                       int          width_bytes,
+                                       int         width_bytes,
                                        u8         *backbuf_addr,
-                                       int          height,
+                                       int         height,
                                        int         bitmap_stride,
                                        const u8   *bitmap_data);
 static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
-    int          width_bytes,
-    u8         *backbuf_addr,
-    int          height,
-    int         bitmap_stride,
-    const u8   *bitmap_data);
+                                                int         width_bytes,
+                                                u8         *backbuf_addr,
+                                                int         height,
+                                                int         bitmap_stride,
+                                                const u8   *bitmap_data);
 
 static void plot_masked_sprite_inverted(chqstate_t *state,
-                                        int          Awidth_bytes,
+                                        int         Awidth_bytes,
                                         u8         *HLbackbuf_addr,
-                                        int          Bdash_height,
+                                        int         Bdash_height,
                                         int         Edash_bitmap_stride,
                                         const u8   *HLdash_bitmap_data);
 
@@ -988,37 +996,84 @@ static void draw_road_lanes_change(chqstate_t *state,
                                    const u8  **IY_heightptr);
 
 static void draw_road(chqstate_t *state);
-static void dr_read_lanes(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                          int DEbackbuf, int Lrow, u8 *IXlanesptr,
-                          const u8 *IYheightptr);
-static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int Ccounter, int DEbackbuf, int Lrow,
-                                 u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
-                                 int Ccounter, int DEbackbuf, int Lrow,
+static void dr_read_lanes(chqstate_t *state,
+                          int         Bfill_pattern,
+                          int         Ccounter,
+                          int         DEbackbuf,
+                          int         Lrow,
+                          u8         *IXlanesptr,
+                          const u8   *IYheightptr);
+static void dr_four_lane_highway(chqstate_t *state,
+                                 int         Bfill_pattern,
+                                 int         Ccounter,
+                                 int         DEbackbuf,
+                                 int         Lrow,
+                                 u8        **IXlanesptr,
+                                 const u8  **IYheightptr);
+static void dr_set_lane_callback(chqstate_t    *state,
+                                 int            Bfill_pattern,
+                                 int            Ccounter,
+                                 int            DEbackbuf,
+                                 int            Lrow,
                                  dr_callback_t *HLdash_callback,
-                                 u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                             int DEbackbuf, int Lrow,
-                             u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_advance_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                int Lrow, int Adash_fill_pattern,
-                                u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                       int Lrow, int Adash_fill_pattern,
-                                       u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                   int Lrow, int Adash_fill_pattern,
-                                   u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                int Lrow, int Adash_fill_pattern,
-                                u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounter, int DEbackbuf,
-                            int Lrow, u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf, int Lrow,
-                    int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
-static void dr_fill(chqstate_t *state, int Ccounter, int DEbackbuf, int Lrow,
-                    int Adash_fill_pattern, u8 **IXlanesptr, const u8 **IYheightptr);
+                                 u8           **IXlanesptr,
+                                 const u8     **IYheightptr);
+static void dr_dispatch(chqstate_t *state,
+                        int         Bfill_pattern,
+                        int         Ccounter,
+                        int         DEbackbuf,
+                        int         Lrow,
+                        u8        **IXlanesptr,
+                        const u8  **IYheightptr);
+static void dr_advance_unfilled(chqstate_t *state,
+                                int         Ccounter,
+                                int         DEbackbuf,
+                                int         Lrow,
+                                int         Adash_fill_pattern,
+                                u8        **IXlanesptr,
+                                const u8  **IYheightptr);
+static void dr_write_scanline_unfilled(chqstate_t *state,
+                                       int         Ccounter,
+                                       int         DEbackbuf,
+                                       int         Lrow,
+                                       int         Adash_fill_pattern,
+                                       u8        **IXlanesptr,
+                                       const u8  **IYheightptr);
+static void dr_rollover_filled(chqstate_t *state,
+                               int         Ccounter,
+                               int         DEbackbuf,
+                               int         Lrow,
+                               int         Adash_fill_pattern,
+                               u8        **IXlanesptr,
+                               const u8  **IYheightptr);
+static void dr_rollover_unfilled(chqstate_t *state,
+                                 int         Ccounter,
+                                 int         DEbackbuf,
+                                 int         Lrow,
+                                 int         Adash_fill_pattern,
+                                 u8        **IXlanesptr,
+                                 const u8  **IYheightptr);
+static void dr_dispatch_filled(chqstate_t *state,
+                               int         Afill_pattern,
+                               int         Ccounter,
+                               int         DEbackbuf,
+                               int         Lrow,
+                               u8        **IXlanesptr,
+                               const u8  **IYheightptr);
+static void dr_advance_filled(chqstate_t *state,
+                              int         Ccounter,
+                              int         DEbackbuf,
+                              int         Lrow,
+                              int         Adash_fill,
+                              u8        **IXlanesptr,
+                              const u8  **IYheightptr);
+static void dr_fill(chqstate_t *state,
+                    int         Ccounter,
+                    int         DEbackbuf,
+                    int         Lrow,
+                    int         Adash_fill_pattern,
+                    u8        **IXlanesptr,
+                    const u8  **IYheightptr);
 static void dr_fill_left_stripe(chqstate_t *state,
                                 u8         *SPoutput,
                                 int         jump_index,
@@ -1035,9 +1090,13 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
 static void pre_shift_backdrop(chqstate_t *state);
 
-static void draw_forked_road(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                             int DEbackbuf, int Lrow, const u8 *IXlanes,
-                             const u8 *IYheight);
+static void draw_forked_road(chqstate_t *state,
+                             int         Bfill_pattern,
+                             int         Ccounter,
+                             int         DEbackbuf,
+                             int         Lrow,
+                             const u8   *IXlanes,
+                             const u8   *IYheight);
 
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow);
 static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow);
@@ -1060,9 +1119,9 @@ void stop_the_tape_48k(chqstate_t *state);
 
 void menu_draw_strings(chqstate_t *state, const u8 *strings);
 const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring);
-static void menu_draw_char(int   Achar,
-                           int   Fdash,
-                           int   Cdash,
+static void menu_draw_char(int  Achar,
+                           int  Fdash,
+                           int  Cdash,
                            u8  *DEdash,
                            u8  *HLdash,
                            u8 **DEdash_out,
@@ -1072,8 +1131,10 @@ static void clear_screen(chqstate_t *state);
 
 static void redefine_keys_48k(chqstate_t *state);
 static u8 redefine_keyscan(chqstate_t *state, u8 *Dkeydef_out);
-static int define_a_key(chqstate_t *state, int Bindex, int Cindex,
-                        int DEscreen);
+static int define_a_key(chqstate_t *state,
+                        int         Bindex,
+                        int         Cindex,
+                        int         DEscreen);
 static u16 dak_move_down(int DEscreen);
 
 static void setup_interrupts(chqstate_t *state);
@@ -1083,10 +1144,13 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr);
 static void play_music_48k(chqstate_t *state);
 static void playdrum_2(chqstate_t *state, int Aspeed);
 static void playdrum_1(chqstate_t *state, int Aspeed);
-static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
-                           u8 *HLdata);
-static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
-                             u8 *HLdash_data);
+static void playdrum_start(chqstate_t *state,
+                           int         Aspeed,
+                           int         Dlength,
+                           u8         *HLdata);
+static void playdrum_bank_go(chqstate_t *state,
+                             int         Ddash_length,
+                             u8         *HLdash_data);
 static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
 void play_noise(chqstate_t *state, int Aparam);
 
@@ -2127,8 +2191,7 @@ static void escape_scene(chqstate_t *state)
  * pointer) and POP HL after; C has no equivalent need. LDIR zero fills are
  * replaced with memset. Struct assignment replaces field-by- field LDIR copies.
  */
-static void set_up_stage(chqstate_t        *state,
-                         const scenedata_t *scene_data)
+static void set_up_stage(chqstate_t *state, const scenedata_t *scene_data)
 {
   int iterations; /* map reader prime loop count (was B) */
 
@@ -3358,9 +3421,7 @@ static void draw_overlay_messages(chqstate_t *state)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
  * \return Pointer to the byte following the NUL terminator.
  */
-static const u8 *print_message(chqstate_t *state,
-                               int         style,
-                               const u8   *messages)
+static const u8 *print_message(chqstate_t *state, int style, const u8 *messages)
 {
   u8  A_attr;    /* attribute byte for the string (was A) */
   u16 DEbackbuf; /* back-buffer destination address (was DE) */
@@ -3571,7 +3632,9 @@ static void draw_smash_bar(chqstate_t *state)
  * \param[in] HLbackbuf Back-buffer address at which to start. (was HL)
  * \return Back-buffer address after the last row written.
  */
-static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf)
+static u16 draw_smash_bar_segments(chqstate_t *state,
+                                   int         C_nsegs,
+                                   int         HLbackbuf)
 {
   do {
     *ADDRTOBACKBUF(HLbackbuf) = X______X;
@@ -3594,7 +3657,9 @@ static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf
  * \param[in] HLbackbuf Back-buffer address at which to start. (was HL)
  * \return Back-buffer address after the last row written.
  */
-static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbuf)
+static u16 draw_smash_bar_solid_bit(chqstate_t *state,
+                                    int         B_nrows,
+                                    int         HLbackbuf)
 {
   do {
     *ADDRTOBACKBUF(HLbackbuf) = XXXXXXXX;
@@ -4256,10 +4321,10 @@ void draw_tunnel_light_right(chqstate_t *state,
  * \param[in] IYheight Height table pointer. (was IY)
  */
 static void draw_tunnel_light_common(chqstate_t            *state,
-                                     int                     Bdepth,
+                                     int                    Bdepth,
                                      const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
-                                     const s16              *IXxpos,
+                                     const s16             *IXxpos,
                                      const u8              *IYheight)
 {
   int A; /* perspective-adjusted column offset passed to callback (was A) */
@@ -5263,9 +5328,9 @@ plot_sprite_even_start:
  * \return Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_odd(chqstate_t *state,
-                           int          width_bytes,
+                           int         width_bytes,
                            u8         *backbuf_addr,
-                           int          height,
+                           int         height,
                            int         bitmap_stride,
                            const u8   *bitmap_data)
 {
@@ -5290,7 +5355,7 @@ static u8 *plot_sprite_odd(chqstate_t *state,
 static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
                                    int         jump_offset,
                                    u8         *backbuf_addr,
-                                   int          height,
+                                   int         height,
                                    int         bitmap_stride,
                                    const u8   *bitmap_data)
 {
@@ -5476,10 +5541,10 @@ plot_sprite_flipped_even_start:
  * \param[in] bitmap_data Source bitmap data. (was HL')
  */
 static void plot_sprite_flipped_odd(chqstate_t *state,
-                                    int          width_bytes,
+                                    int         width_bytes,
                                     u8         *backbuf_addr,
-                                    int          height,
-                                    int          bitmap_stride,
+                                    int         height,
+                                    int         bitmap_stride,
                                     const u8   *bitmap_data)
 {
   int       jump_offset;  /* unroll jump index into the flip-write table (was IX) */
@@ -5970,9 +6035,7 @@ static void ne_plot_attrs(chqstate_t *state, int attr)
  * \param[in] face Pointer to face data: bitmap bytes followed immediately
  * by attribute bytes. (was HL)
  */
-static void plot_face(chqstate_t *state,
-                      int         screen,
-                      const u8   *face)
+static void plot_face(chqstate_t *state, int screen, const u8 *face)
 {
   u16 saved_screen; /* screen start address saved for the attribute pass (was PUSH DE) */
   int counter;      /* byte countdown: FACEBITMAPBYTES (160) down to 0 (was BC) */
@@ -6008,9 +6071,7 @@ static void plot_face(chqstate_t *state,
  * \param[in] face Pointer to the attribute bytes that follow the bitmap
  * data in the [face] data block. (was HL)
  */
-static void plot_face_attributes(chqstate_t *state,
-                                 int         screen,
-                                 const u8   *face)
+static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
 {
   static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
     176, 144, 208, 184
@@ -6051,9 +6112,7 @@ static void plot_face_attributes(chqstate_t *state,
  * off-screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
-static void plot_mini_font_cursor_off(chqstate_t *state,
-                                      int          x,
-                                      char        character)
+static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character)
 {
   plot_mini_font_char(state, x, character, ________, ________);
 }
@@ -6069,9 +6128,7 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
  * off-screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
-static void plot_mini_font_cursor_on(chqstate_t *state,
-                                     int          x,
-                                     char        character)
+static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
 {
   plot_mini_font_char(state, x, character, _____XXX, X_______);
 }
@@ -6099,11 +6156,8 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
  * variables and a single right-shift of a 16-bit composite word. Conv: Row
  * counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
  */
-static void plot_mini_font_char(chqstate_t *state,
-                                int         x,
-                                char        ascii,
-                                int         extrabm1,
-                                int         extrabm2)
+static void plot_mini_font_char(
+    chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2)
 {
   static const zxbox_t message_line_box = { /* chatter message area: ZX rows 53–58 */
     0, 133, SCREEN_WIDTH, 139
@@ -6999,10 +7053,7 @@ ptad_turbo_setup:
  * \param[in,out] screen Pointer to the screen column for the first digit;
  * advanced one column per plotted or skipped digit. (was DE')
  */
-void ptad_led_digits(int         iterations,
-                     const u8   *digits,
-                     u8         *stored,
-                     u8         *screen)
+void ptad_led_digits(int iterations, const u8 *digits, u8 *stored, u8 *screen)
 {
   int Adigits; /* packed BCD digit pair read from the digits buffer (was A) */
   int Cdigits; /* saved copy of Adigits for the low-nibble pass (was C) */
@@ -7093,11 +7144,11 @@ static u8 *ledfont_plot(int ord, u8 *screen)
  * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_with_style(chqstate_t *state,
-                                        int          attrval,
+                                        int         attrval,
                                         u8         *attrs,
                                         u8         *backbuf,
                                         const u8   *string,
-                                        int          style)
+                                        int         style)
 {
   return draw_string_core(state,
                           backbuf,
@@ -7121,11 +7172,8 @@ static const u8 *draw_string_with_style(chqstate_t *state,
  * \param[in] string NUL-terminated (top-bit-set) string data. (was HL)
  * \return Pointer to the byte after the NUL terminator.
  */
-static const u8 *draw_string_screen(chqstate_t *state,
-                                     int         attrval,
-                                     u8         *attrs,
-                                     u8         *dst,
-                                     const u8   *string)
+static const u8 *draw_string_screen(
+    chqstate_t *state, int attrval, u8 *attrs, u8 *dst, const u8 *string)
 {
   return draw_string_core(state,
                           dst,
@@ -8767,8 +8815,9 @@ ldas_do_work:
  * selection. (was B)
  * \param[in] IYheight Pointer into the height table. (was IY)
  */
-static void draw_dirt_and_stones(chqstate_t *state, int Biterations,
-                                 const u8 *IYheight)
+static void draw_dirt_and_stones(chqstate_t *state,
+                                 int         Biterations,
+                                 const u8   *IYheight)
 {
   u8              *HLparticle;                /* byte pointer into the $ED28 table via ddas_particle_ptr (was HL) */
   u8               Atype;                     /* type byte: 1=stone, 2=dirt (was A) */
@@ -9244,8 +9293,8 @@ sh_add_hazards_done:
 }
 
 static int sh_find_free(chqstate_t *state,
-                        int          Bhorz_pos,
-                        int          Cdistance,
+                        int         Bhorz_pos,
+                        int         Cdistance,
                         int         DEhittable_offset)
 {
   int       iterations; /* was B */
@@ -9456,9 +9505,9 @@ chc_continue:
  * \return 1 on collision, [default_retval] otherwise (was D).
  */
 static u8 check_collision(chqstate_t *state,
-                          int          default_retval,
-                          int          HL,
-                          hazard_t    *hazard)
+                          int         default_retval,
+                          int         HL,
+                          hazard_t   *hazard)
 {
   int L_horz_pos;  /* hazard horizontal position byte (was L) */
   int H_horz_clip; /* hazard clip flag byte; non-zero means off-screen (was H) */
@@ -10064,11 +10113,11 @@ static void dhs_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
  * \param[in] IYheight Pointer into the height table. (was IY)
  */
 static void dhs_draw(chqstate_t     *state,
-                    int             Bx,
-                    int             Cy,
-                    int             DEoffset,
-                    const bitmap_t *HLbitmaps,
-                    const u8       *IYheight)
+                     int             Bx,
+                     int             Cy,
+                     int             DEoffset,
+                     const bitmap_t *HLbitmaps,
+                     const u8       *IYheight)
 {
   dhs_draw_bitmap(state, Bx, Cy, &HLbitmaps[DEoffset / 7], IYheight);
 }
@@ -10091,10 +10140,10 @@ static void dhs_draw(chqstate_t     *state,
  * \param[in] IYheight Pointer into the height table. (was IY)
  */
 static void dhs_draw_bitmap(chqstate_t     *state,
-                           int             Bx,
-                           int             Cy,
-                           const bitmap_t *HLbitmap,
-                           const u8       *IYheight)
+                            int             Bx,
+                            int             Cy,
+                            const bitmap_t *HLbitmap,
+                            const u8       *IYheight)
 {
   int Ewidth_bits;  /* pixel width of bitmap: width_bytes * 8 (was E) */
   int Ahorz_clip;   /* SM horz_clip value: sign and zero determine draw path (was A) */
@@ -11052,10 +11101,10 @@ static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble)
  * \return Pointer to the following carpart_t entry. (was HL)
  */
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
-    int               Cwidth_bytes,
-    int               Dy,
-    int               Ex,
-    const carpart_t *HLpart)
+                                           int              Cwidth_bytes,
+                                           int              Dy,
+                                           int              Ex,
+                                           const carpart_t *HLpart)
 {
   int       Ay;                   /* copy of Dy: base y before part offset subtraction (was A) */
   u8        Dnew_y;               /* Ay minus the part's y offset (was D) */
@@ -11175,9 +11224,9 @@ static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag)
  *   (was C)
  */
 static void draw_cherry_light(chqstate_t *state,
-                              int          Aframe_index,
-                              int          Bturn_limit,
-                              int          Cturn_delta)
+                              int         Aframe_index,
+                              int         Bturn_limit,
+                              int         Cturn_delta)
 {
   int Aturn_speed; /* turn-derived frame offset: Cturn_delta * 1 or 2 (was A) */
   int Cturn_speed; /* copy of Aturn_speed passed to Aframe_index (was C) */
@@ -11226,9 +11275,9 @@ static void draw_crash_unflipped(chqstate_t *state, int Aframe_index)
  * \param[in]     Cdash Horizontal start offset within the sprite (was C')
  */
 static void draw_crash(chqstate_t *state,
-                       int          Aframe_index,
-                       int          Bdash_flip_flag,
-                       int          Cdash)
+                       int         Aframe_index,
+                       int         Bdash_flip_flag,
+                       int         Cdash)
 {
   const carframe_t     *frame;         /* pointer to car_frames[Aframe_index] (was HL) */
   u8                    y;             /* base vertical position: frame->y + 121 adjusted for jump/pitch (was D) */
@@ -11282,14 +11331,14 @@ static void draw_crash(chqstate_t *state,
  * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_part(chqstate_t *state,
-                      int          height,
-                      int          width,
-                      int          y,
-                      int          x,
+                      int         height,
+                      int         width,
+                      int         y,
+                      int         x,
                       const u8   *bitmap,
-                      int          Bdash_flip_flag,
-                      int          Cdash,
-                      int          Edash_bitmap_stride)
+                      int         Bdash_flip_flag,
+                      int         Cdash,
+                      int         Edash_bitmap_stride)
 {
   draw_part_entrypt2(state,
                    height,
@@ -11327,7 +11376,7 @@ static void draw_part_entrypt2(chqstate_t *state,
                                int         Cwidth_bytes,
                                int         Dy,
                                int         Ex,
-                               const u8  *HLbitmap_data,
+                               const u8   *HLbitmap_data,
                                int         Bdash_flip_flag,
                                int         Cdash,
                                int         Edash_bitmap_stride)
@@ -11388,11 +11437,11 @@ static void draw_part_entrypt2(chqstate_t *state,
  * \param[in]     HLdash_bitmap_data Source masked sprite data. (was HL')
  */
 static void draw_part_plot_masked_sprite(chqstate_t *state,
-    int          Awidth_bytes,
-    u8         *HLbackbuf_addr,
-    int          Bdash_height,
-    int          Edash_bitmap_stride,
-    const u8   *HLdash_bitmap_data)
+                                         int         Awidth_bytes,
+                                         u8         *HLbackbuf_addr,
+                                         int         Bdash_height,
+                                         int         Edash_bitmap_stride,
+                                         const u8   *HLdash_bitmap_data)
 {
   int IXjump_offset; /* fall-through index: (8 − Awidth_bytes) × 6 (was IX) */
 
@@ -11545,11 +11594,11 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
  * \param[in]     bitmap_data Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
-    int         width_bytes,
-    u8         *backbuf_addr,
-    int         height,
-    int         bitmap_stride,
-    const u8   *bitmap_data)
+                                                int         width_bytes,
+                                                u8         *backbuf_addr,
+                                                int         height,
+                                                int         bitmap_stride,
+                                                const u8   *bitmap_data)
 {
   int       jump_offset;   /* fall-through start: 8 − width_bytes (was IX) */
   const u8 *src;           /* pointer to current mask/data pair in the source (was SP) */
@@ -13930,9 +13979,13 @@ static void draw_road(chqstate_t *state)
  * \param[in]     IYheightptr Pointer into height_table at the current row.
  *   (was IY)
  */
-static void dr_read_lanes(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                          int DEbackbuf, int Lrow, u8 *IXlanesptr,
-                          const u8 *IYheightptr)
+static void dr_read_lanes(chqstate_t *state,
+                          int         Bfill_pattern,
+                          int         Ccounter,
+                          int         DEbackbuf,
+                          int         Lrow,
+                          u8         *IXlanesptr,
+                          const u8   *IYheightptr)
 {
   int carry;                /* carry from SLA of lane byte; indicates left-side occupancy (carry) */
   int Aleft_offset;         /* left-offset field of the lane byte (was A) */
@@ -14046,9 +14099,13 @@ static void dr_read_lanes(chqstate_t *state, int Bfill_pattern, int Ccounter,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int Ccounter, int DEbackbuf, int Lrow,
-                                 u8 **IXlanesptr, const u8 **IYheightptr)
+static void dr_four_lane_highway(chqstate_t *state,
+                                 int         Bfill_pattern,
+                                 int         Ccounter,
+                                 int         DEbackbuf,
+                                 int         Lrow,
+                                 u8        **IXlanesptr,
+                                 const u8  **IYheightptr)
 {
   // EXX - BANK (we enter unbanked)
 
@@ -14077,10 +14134,14 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
-                                 int Ccounter, int DEbackbuf, int Lrow,
+static void dr_set_lane_callback(chqstate_t    *state,
+                                 int            Bfill_pattern,
+                                 int            Ccounter,
+                                 int            DEbackbuf,
+                                 int            Lrow,
                                  dr_callback_t *HLdash_callback,
-                                 u8 **IXlanesptr, const u8 **IYheightptr)
+                                 u8           **IXlanesptr,
+                                 const u8     **IYheightptr)
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
@@ -14102,9 +14163,13 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                             int DEbackbuf, int Lrow,
-                             u8 **IXlanesptr, const u8 **IYheightptr)
+static void dr_dispatch(chqstate_t *state,
+                        int         Bfill_pattern,
+                        int         Ccounter,
+                        int         DEbackbuf,
+                        int         Lrow,
+                        u8        **IXlanesptr,
+                        const u8  **IYheightptr)
 {
   // ENTERED UNBANKED
 
@@ -14140,12 +14205,12 @@ static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
 static void dr_advance_unfilled(chqstate_t *state,
-                                int Ccounter,
-                                int DEbackbuf,
-                                int Lrow,
-                                int Adash_fill_pattern,
-                                u8 **IXlanesptr,
-                                const u8 **IYheightptr)
+                                int         Ccounter,
+                                int         DEbackbuf,
+                                int         Lrow,
+                                int         Adash_fill_pattern,
+                                u8        **IXlanesptr,
+                                const u8  **IYheightptr)
 {
   // ENTERED UNBANKED (but AF is banked)
 
@@ -14177,9 +14242,13 @@ static void dr_advance_unfilled(chqstate_t *state,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                       int Lrow, int Adash_fill_pattern,
-                                       u8 **IXlanesptr, const u8 **IYheightptr)
+static void dr_write_scanline_unfilled(chqstate_t *state,
+                                       int         Ccounter,
+                                       int         DEbackbuf,
+                                       int         Lrow,
+                                       int         Adash_fill_pattern,
+                                       u8        **IXlanesptr,
+                                       const u8  **IYheightptr)
 {
   // ENTERED UNBANKED (but AF is banked)
 
@@ -14242,9 +14311,13 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                               int Lrow, int Adash_fill_pattern,
-                               u8 **IXlanesptr, const u8 **IYheightptr)
+static void dr_rollover_filled(chqstate_t *state,
+                               int         Ccounter,
+                               int         DEbackbuf,
+                               int         Lrow,
+                               int         Adash_fill_pattern,
+                               u8        **IXlanesptr,
+                               const u8  **IYheightptr)
 {
   LO_ADD(DEbackbuf, -32);
   if ((DEbackbuf & 0xFF) < 224) // if no carry: D += 16
@@ -14266,9 +14339,13 @@ static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                                 int Lrow, int Adash_fill_pattern,
-                                 u8 **IXlanesptr, const u8 **IYheightptr)
+static void dr_rollover_unfilled(chqstate_t *state,
+                                 int         Ccounter,
+                                 int         DEbackbuf,
+                                 int         Lrow,
+                                 int         Adash_fill_pattern,
+                                 u8        **IXlanesptr,
+                                 const u8  **IYheightptr)
 {
   LO_ADD(DEbackbuf, -32);
   if ((DEbackbuf & 0xFF) < 224) // if no carry: D += 16
@@ -14291,9 +14368,13 @@ static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounter,
-                               int DEbackbuf, int Lrow, u8 **IXlanesptr,
-                               const u8 **IYheightptr)
+static void dr_dispatch_filled(chqstate_t *state,
+                               int         Afill_pattern,
+                               int         Ccounter,
+                               int         DEbackbuf,
+                               int         Lrow,
+                               u8        **IXlanesptr,
+                               const u8  **IYheightptr)
 {
   // ENTERED UNBANKED
 
@@ -14319,9 +14400,13 @@ static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounte
  * \param[in,out] IXlanesptr Pointer into road_buffer lane data. (was IX)
  * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
-static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
-                              int Lrow, int Adash_fill, u8 **IXlanesptr,
-                              const u8 **IYheightptr)
+static void dr_advance_filled(chqstate_t *state,
+                              int         Ccounter,
+                              int         DEbackbuf,
+                              int         Lrow,
+                              int         Adash_fill,
+                              u8        **IXlanesptr,
+                              const u8  **IYheightptr)
 {
   // ENTERED UNBANKED (but AF is banked)
 
@@ -15083,9 +15168,13 @@ static void pre_shift_backdrop(chqstate_t *state)
  * \param[in,out] IYheight Height table pointer; advanced once per block
  *   (was IY).
  */
-static void draw_forked_road(chqstate_t *state, int Bfill_pattern, int Ccounter,
-                             int DEbackbuf, int Lrow, const u8 *IXlanes,
-                             const u8 *IYheight)
+static void draw_forked_road(chqstate_t *state,
+                             int         Bfill_pattern,
+                             int         Ccounter,
+                             int         DEbackbuf,
+                             int         Lrow,
+                             const u8   *IXlanes,
+                             const u8   *IYheight)
 {
   u8  sm_CB65;    /* road edge thickness countdown (was $CB65) */
   u8  sm_CB36;    /* stripe-pair toggle state (was $CB36) */
@@ -16246,9 +16335,9 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
  * \param[out] HLdash_out Updated screen attribute address after drawing
  *   (was HL').
  */
-static void menu_draw_char(int   Achar,
-                           int   Fdash,
-                           int   Cdash,
+static void menu_draw_char(int  Achar,
+                           int  Fdash,
+                           int  Cdash,
                            u8  *DEdash,
                            u8  *HLdash,
                            u8 **DEdash_out,
@@ -16521,8 +16610,7 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *Dkeydef_out)
  *   (was DE)
  * \return Updated screen address after the drawn key name.
  */
-static int define_a_key(chqstate_t *state, int Bindex, int Cindex,
-                        int DEscreen)
+static int define_a_key(chqstate_t *state, int Bindex, int Cindex, int DEscreen)
 {
   int       carry;        /* carry from SRL in redefine_keyscan (not used directly here) (carry) */
   u8        Dkeydef;      /* keydef byte returned by redefine_keyscan: kkkkkrrr (was D) */
@@ -16820,8 +16908,10 @@ static void playdrum_1(chqstate_t *state, int Aspeed)
  * \param[in]     Dlength Total number of sample bytes to output. (was D)
  * \param[in]     HLdata Pointer to the start of the drum sample data. (was HL)
  */
-static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
-                           u8 *HLdata)
+static void playdrum_start(chqstate_t *state,
+                           int         Aspeed,
+                           int         Dlength,
+                           u8         *HLdata)
 {
   state->music.drum_speed = Aspeed;
   state->music.drum_active  = 1;
@@ -16843,8 +16933,9 @@ static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
  * Conv: Z80 EXX banks the arguments into shadow registers; C passes them
  * directly to playdrum_go, which uses the same parameter names.
  */
-static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
-                             u8 *HLdash_data)
+static void playdrum_bank_go(chqstate_t *state,
+                             int         Ddash_length,
+                             u8         *HLdash_data)
 {
   /* EXX */
   playdrum_go(state, Ddash_length, HLdash_data);
@@ -17603,7 +17694,9 @@ void chq_test_draw_road(chqstate_t *state)
   draw_road(state);
 }
 
-void chq_test_draw_road_lanes_change(chqstate_t *state, u8 lane_flags, int height_offset)
+void chq_test_draw_road_lanes_change(chqstate_t *state,
+                                     u8          lane_flags,
+                                     int         height_offset)
 {
   u8       *local_IX;
   const u8 *local_IY;
