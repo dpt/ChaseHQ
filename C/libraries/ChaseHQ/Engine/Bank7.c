@@ -379,7 +379,7 @@ static void es_attribute_fade_in(chqstate_t *state)
     if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
       continue;
 
-    A_target = *DE_back & 0x3F;
+    A_target = *DE_back & (ATTR_INK_MASK | ATTR_PAPER_MASK);
     if (A_target == *HL_attr) {
       *HL_attr = *DE_back;
       continue; // already there
@@ -468,12 +468,12 @@ static void es_handler_glyph_fade_c(chqstate_t *state)
   es_attribute_fade_out(state, &state->bank7->es_fade_gate_c);
 }
 
-/* $E3A5 handshake_table: row-count + source bitmap per animation frame,
+/* $E3A5 handshake_frames: row-count + source bitmap per animation frame,
  * cycling 1-2-3-4-3-2 (see routine_e3b7 below). */
 static const struct {
-  u8         rows;
-  const u8  *image;
-} handshake_table[6] = {
+  u8        rows;
+  const u8 *image;
+} handshake_frames[6] = {
   { 37, &bitmap_handshake_1[0] },
   { 35, &bitmap_handshake_2[0] },
   { 34, &bitmap_handshake_3[0] },
@@ -506,7 +506,7 @@ static void es_handler_handshake(chqstate_t *state)
  *
  * Rotates the gate byte at $5C6D: when its old top bit was clear, the
  * animation-advance block below is skipped entirely; otherwise the 0-5
- * ping-pong frame index ($A172) advances into handshake_table, that frame's
+ * ping-pong frame index ($A172) advances into handshake_frames, that frame's
  * rows are LDIR'd to screen $48AC (8 bytes/row, wraparound-stepped via
  * next_screen_row), and 3 further 8-byte rows are zero-filled to pad every
  * frame out to a fixed height. Either way, finishes by stamping a fixed
@@ -520,39 +520,39 @@ static void es_handler_handshake(chqstate_t *state)
  */
 static void es_handler_handshake_advance(chqstate_t *state)
 {
-  int       carry;    /* carry flag set by RLC (carry) */
-  u8        A_index;  /* frame index 0..5, wrapped (was A/B) */
-  const u8 *HL_image; /* handshake bitmap source, walked forward (was HL) */
-  u16       DE;       /* screen destination address (was DE) */
-  int       row;      /* bitmap row counter for this frame (was B) */
-  int       blank;    /* blank-row counter, 3 down to 0 (was C) */
-  u8       *HL_attr;  /* decorative attribute cell (was HL) */
-  int       group;    /* decorative attribute group counter, 5 down to 0 (was C) */
+  int       carry;     /* carry flag set by RLC (carry) */
+  u8        A_index;   /* frame index 0..5, wrapped (was A/B) */
+  const u8 *HL_image;  /* handshake bitmap source, walked forward (was HL) */
+  u16       DE_screen; /* screen destination address (was DE) */
+  int       row;       /* bitmap row counter for this frame (was B) */
+  int       blank;     /* blank-row counter, 3 down to 0 (was C) */
+  u8       *HL_attr;   /* decorative attribute cell (was HL) */
+  int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
 
   RLC(state->bank7->es_fade_gate_c);
   if (carry) {
     A_index = state->bank7->es_handshake_index;
-    state->bank7->es_handshake_index = (u8) (A_index + 1 == 6 ? 0 : A_index + 1);
+    state->bank7->es_handshake_index = (u8) ((A_index + 1 == 6) ? 0 : A_index + 1);
 
-    HL_image = handshake_table[A_index].image;
-    DE      = 0x48AC;
+    HL_image = handshake_frames[A_index].image;
+    DE_screen = 0x48AC;
 
-    for (row = handshake_table[A_index].rows; row != 0; row--) {
-      memcpy(ADDRTOSCREEN(DE), HL_image, 8);
+    for (row = handshake_frames[A_index].rows; row != 0; row--) {
+      memcpy(ADDRTOSCREEN(DE_screen), HL_image, 8);
       HL_image += 8;
-      DE = next_screen_row(DE);
+      DE_screen = next_screen_row(DE_screen);
     }
 
     for (blank = 3; blank != 0; blank--) {
-      memset(ADDRTOSCREEN(DE), 0, 8);
-      DE = next_screen_row(DE);
+      memset(ADDRTOSCREEN(DE_screen), 0, 8);
+      DE_screen = next_screen_row(DE_screen);
     }
   }
 
   HL_attr = ADDRTOATTRS(0x59AC);
   for (group = 5; group != 0; group--) {
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
-    HL_attr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
+    HL_attr += SCREEN_ATTRIBUTES_WIDTH;
   }
 }
 
@@ -598,7 +598,7 @@ static void es_handler_draw_score(chqstate_t *state)
   for (tally = 1000; tally != 0; tally--) {
     increment_score(state, 0, 0x00, 0x50);
     ptad_led_digits(4, &state->score_bcd[3], &state->session.score_digits[7],
-                     ADDRTOSCREEN(0x4126));
+                    ADDRTOSCREEN(0x4126));
     sfx_bipbow(state, 2, 2);
   }
 
@@ -612,23 +612,23 @@ static void es_handler_draw_score(chqstate_t *state)
     A_nibble = (*DE_bcd >> 4) & 0x0F;
     if (A_nibble != 0 || C_seen != 0) {
       C_seen    = 0xFF;
-      *HL_dst++ = 0x30 + A_nibble;
+      *HL_dst++ = '0' + A_nibble;
     } else {
-      *HL_dst++ = 0x20;
+      *HL_dst++ = ' ';
     }
 
     A_nibble = *DE_bcd & 0x0F;
     if (A_nibble != 0 || C_seen != 0) {
       C_seen    = 0xFF;
-      *HL_dst++ = 0x30 + A_nibble;
+      *HL_dst++ = '0' + A_nibble;
     } else {
-      *HL_dst++ = 0x20;
+      *HL_dst++ = ' ';
     }
 
     DE_bcd--;
   }
 
-  HL_dst[-1] |= EOS; /* SET 7,(HL): mark this text run's terminator byte */
+  HL_dst[-1] |= EOS;
 }
 
 /**
@@ -644,7 +644,7 @@ static void es_handler_draw_score(chqstate_t *state)
  *                 EX DE,HL at $E2B7).
  * \return Matching data block, or NULL if unrecognised.
  */
-static const u8 *resolve_chatterblk(u16 addr)
+static const u8 *z80addrtochatterblk(u16 addr)
 {
   switch (addr) {
   case 0x5C6E: return &chatterblk_nancy_congratulates[0];
@@ -690,7 +690,7 @@ static void es_chatter(chqstate_t *state)
   target_addr = wordat(HL_script_ptr);
   HL_script_ptr += 2;
 
-  chatterblk = resolve_chatterblk(target_addr);
+  chatterblk = z80addrtochatterblk(target_addr);
   start_chatter(state, 1, chatterblk);
 
   state->bank7->es_script_ptr = HL_script_ptr;
@@ -725,7 +725,7 @@ static void es_set_dispatch(chqstate_t *state,
  * reinvented) because both routines index the same font[41*7] table.
  *
  * \param[in] character ASCII character, already offset by ' ' (was A after
- *                        SUB $20; space and 0 are handled by the caller).
+ *                      SUB $20; space and 0 are handled by the caller).
  * \return Glyph index into font[] (multiply by 7 for the row pointer).
  */
 static int ascii_to_glyph_id(int character)
@@ -912,8 +912,8 @@ static void render_text_common(chqstate_t *state, const u8 **script)
   HL_script = *script;
 
   C_attr = *HL_script++;
-  E_scr    = *HL_script++;
-  D_scr    = *HL_script++;
+  E_scr  = *HL_script++;
+  D_scr  = *HL_script++;
 
   H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF); /* RRCA x3; AND 3; ADD $EF */
   L_attr = E_scr;
