@@ -35,6 +35,7 @@
 #include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
+#include "ZXSpectrum/slopay-chip.h"
 
 #include "ChaseHQ/ChaseHQ.h"
 
@@ -1211,7 +1212,7 @@ static void write_title_ay_registers(chqstate_t *state)
 
   speccy = state->speccy;
   values = &state->bank3->title_ay_regs.env_fine;
-  regno  = 11;
+  regno  = AY_REG_ENVELOPE_FINE_DURATION;
   do {
     speccy->out(speccy, port_AY_REGISTER, regno);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
@@ -3679,7 +3680,7 @@ static void bank3_state_initialise(chqstate_t *state)
   state->bank3->title_ay_regs.chan_b_pitch = 0x0000;
   state->bank3->title_ay_regs.chan_c_pitch = 0x0000;
   state->bank3->title_ay_regs.noise_pitch  = 0x00;
-  state->bank3->title_ay_regs.mixer        = 0x3F;
+  state->bank3->title_ay_regs.mixer        = AY_MIXER_ALL_OFF;
   state->bank3->title_ay_regs.chan_a_vol   = 0x0F;
   state->bank3->title_ay_regs.chan_b_vol   = 0x0F;
   state->bank3->title_ay_regs.chan_c_vol   = 0x0F;

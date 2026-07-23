@@ -84,6 +84,7 @@
 #include "ZXSpectrum/Pixels.h"
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
+#include "ZXSpectrum/slopay-chip.h"
 
 #include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Data/SoundSamples.h"
@@ -17137,7 +17138,7 @@ set_regs:
   // Arrive here if new fine pitch is 90..139.
   state->ay_regs.chan_a_pitch = (state->ay_regs.chan_a_pitch & 0xFF00) | pitch;
   state->ay_regs.chan_b_pitch = (state->ay_regs.chan_b_pitch & 0xFF00) | (pitch - 4);
-  state->ay_regs.mixer &= 0x3C; // enable tone A & B
+  state->ay_regs.mixer &= AY_MIXER_MASK & ~(AY_MIXER_NO_TONE_A | AY_MIXER_NO_TONE_B); // enable tone A & B
   write_audio_registers_128k(state); /* tail call */
 }
 
@@ -17152,7 +17153,7 @@ set_regs:
  */
 static void silence_audio_128k(chqstate_t *state)
 {
-  state->ay_regs.mixer = 0x3F; /* disable all noise and tone channels */
+  state->ay_regs.mixer = AY_MIXER_ALL_OFF; /* disable all noise and tone channels */
   write_audio_registers_128k(state); /* was FALLTHROUGH */
 }
 
@@ -17177,7 +17178,7 @@ static void write_audio_registers_128k(chqstate_t *state)
 
   speccy  = state->speccy;
   values  = &state->ay_regs.env_fine;
-  regno   = 11;
+  regno   = AY_REG_ENVELOPE_FINE_DURATION;
   do {
     speccy->out(speccy, port_AY_REGISTER, regno);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
@@ -17219,7 +17220,7 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
   }
   state->ay_regs.chan_c_pitch = pitch + base_pitch;
   state->ay_regs.chan_c_vol   = volume;
-  state->ay_regs.mixer       &= 0x3B;
+  state->ay_regs.mixer       &= AY_MIXER_MASK & ~AY_MIXER_NO_TONE_C;
 }
 
 /**
@@ -17261,12 +17262,12 @@ static void play_engine_or_turbo_sfx_128k(chqstate_t *state)
 
   if (--state->ay_regs.noise_pitch) {
     state->ay_regs.chan_c_pitch = state->ay_regs.noise_pitch + 10;
-    state->ay_regs.mixer &= 0x1B; // Set mixer to enable Tone C and Noise C
+    state->ay_regs.mixer &= AY_MIXER_MASK & ~(AY_MIXER_NO_TONE_C | AY_MIXER_NO_NOISE_C); // Set mixer to enable Tone C and Noise C
     state->ay_regs.chan_c_vol = 13;
     return;
   }
 
-  state->ay_regs.mixer |= 0x24; // Set mixer to disable Tone C and Noise C
+  state->ay_regs.mixer |= AY_MIXER_NO_TONE_C | AY_MIXER_NO_NOISE_C; // Set mixer to disable Tone C and Noise C
   state->turbo_sfx_pitch = 0;
   engine_sfx_from_speed_128k(state); /* tail call */
 }
