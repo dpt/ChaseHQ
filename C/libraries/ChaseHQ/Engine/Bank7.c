@@ -483,21 +483,23 @@ static const struct {
 };
 
 /**
- * $E3B7 es_handler_handshake: Advance the handshake animation frame
+ * $E3BA: Advance the handshake animation frame
  *
- * Always fades the $5C6C attribute band one step first (routine_e472's
- * shared tail, called directly rather than duplicated). Then rotates the
- * gate byte at $5C6D: when its old top bit was clear, the animation-advance
- * block below is skipped entirely; otherwise the 0-5 ping-pong frame index
- * ($A172) advances into handshake_table, that frame's rows are LDIR'd to
- * screen $48AC (8 bytes/row, wraparound-stepped via next_screen_row), and 3
- * further 8-byte rows are zero-filled to pad every frame out to a fixed
- * height. Either way, finishes by stamping a fixed 5-group x 8-byte
- * decorative attribute pattern at $59AC.
+ * Rotates the gate byte at $5C6D: when its old top bit was clear, the
+ * animation-advance block below is skipped entirely; otherwise the 0-5
+ * ping-pong frame index ($A172) advances into handshake_table, that frame's
+ * rows are LDIR'd to screen $48AC (8 bytes/row, wraparound-stepped via
+ * next_screen_row), and 3 further 8-byte rows are zero-filled to pad every
+ * frame out to a fixed height. Either way, finishes by stamping a fixed
+ * 5-group x 8-byte decorative attribute pattern at $59AC.
+ *
+ * This is the entry point ESCMD_RESET_HANDSHAKE and ESCMD_HANDSHAKE_AGAIN
+ * dispatch to directly ($5FBA in the relocated table), skipping the $5C6C
+ * fade-b call that only the plain ESCMD_HANDSHAKE entry point runs.
  *
  * \param[in] state Pointer to game state.
  */
-static void es_handler_handshake(chqstate_t *state)
+static void es_handler_handshake_advance(chqstate_t *state)
 {
   int       carry;    /* carry flag set by RLC (carry) */
   u8        A_index;  /* frame index 0..5, wrapped (was A/B) */
@@ -507,8 +509,6 @@ static void es_handler_handshake(chqstate_t *state)
   int       blank;    /* blank-row counter, 3 down to 0 (was C) */
   u8       *HL_attr;  /* decorative attribute cell (was HL) */
   int       group;    /* decorative attribute group counter, 5 down to 0 (was C) */
-
-  es_handler_glyph_fade_b(state);
 
   RLC(state->bank7->es_flag_5c6d);
   if (carry) {
@@ -535,6 +535,23 @@ static void es_handler_handshake(chqstate_t *state)
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
   }
+}
+
+/**
+ * $E3B7 es_handler_handshake: Fade the $5C6C attribute band one step
+ * (routine_e472's shared tail, called directly rather than duplicated),
+ * then run the handshake animation-advance ($E3BA, es_handler_handshake_advance).
+ *
+ * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
+ * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
+ * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_handshake(chqstate_t *state)
+{
+  es_handler_glyph_fade_b(state);
+  es_handler_handshake_advance(state);
 }
 
 /**
@@ -989,12 +1006,12 @@ static void run_script(chqstate_t *state)
     case ESCMD_RESET_HANDSHAKE_VAL:
       C_reload = *HL_script++;
       state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
-      es_set_dispatch(state, es_handler_handshake, C_reload);
+      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
       goto rs_exit;
 
     case ESCMD_HANDSHAKE_AGAIN_VAL:
       C_reload = *HL_script++;
-      es_set_dispatch(state, es_handler_handshake, C_reload);
+      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
       goto rs_exit;
 
     case ESCMD_DRAW_TEXT_NO_CLEAR_VAL:
@@ -1147,6 +1164,14 @@ int bank7_state_create(chqstate_t *state)
   state->bank7 = calloc(1, sizeof(*state->bank7));
   if (state->bank7 == NULL)
     return -1;
+
+  /* $E06C/$E06D initial bytes (relocated to $5C6C/$5C6D): these flip-flop
+   * gate bytes live in what was code space before relocation, so calloc's
+   * zero is wrong -- RLC(0) is always 0 with no carry, which permanently
+   * disables the GLYPH_B fade and the handshake animation's advance/draw
+   * block. */
+  state->bank7->es_flag_5c6c = 0xAA;
+  state->bank7->es_flag_5c6d = 0x88;
 
   return 0;
 }
