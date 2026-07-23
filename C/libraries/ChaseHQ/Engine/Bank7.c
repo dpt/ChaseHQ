@@ -194,8 +194,15 @@ static const u8 es_script[] = {
   ESCMD_FADE_IN_A,
   ESCMD_CHATTER(0x5C78), /* -> chatterblk_press_gear */
   ESCMD_IDLE(0x00),
-  0x0E /* unrecognised command: defensive stop (rs_exit) terminates the script */
+  0x0E /* unrecognised command: run_script's default case resets HL here (see
+        * ES_SCRIPT_RESET_OFFSET below) rather than stopping */
 };
+
+/* Conv: skool $E251 "LD HL,$5E04 / JR $E20D" -- on an unrecognised command
+ * byte the Z80 resets HL to the CHATTER(0x5C78) command three bytes back
+ * and re-enters the loop rather than returning, which is what makes
+ * "PRESS GEAR TO CONTINUE" blink forever instead of a one-shot draw. */
+#define ES_SCRIPT_RESET_OFFSET (sizeof(es_script) - 6)
 
 /**
  * Advance a raw Z80 screen address by one character-cell row.
@@ -960,6 +967,8 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  * their text run within this same call rather than arming a per-frame
  * handler -- see render_text_common and plot_char above.
  *
+ * An unrecognised command byte resets HL_script to ES_SCRIPT_RESET_OFFSET
+ * and loops rather than returning, matching skool $E251.
  */
 static void run_script(chqstate_t *state)
 {
@@ -1039,9 +1048,10 @@ static void run_script(chqstate_t *state)
       continue;
 
     default:
-      /* Unrecognised command: matches the Z80 fallback (reset to a fixed
-       * script offset) closely enough for a defensive stop. */
-      goto rs_exit;
+      /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
+       * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
+      HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
+      continue;
     }
   }
 
