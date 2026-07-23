@@ -22,6 +22,10 @@ PLAIN_TITLE_RE = re.compile(r"^\S.*$")  # C-only helper with no Z80 address
 PARAM_RE = re.compile(r"^\\param\[(in|out|in,out)\]\s+(\S+)\s+\S.*$")
 RETURN_RE = re.compile(r"^\\return\s+\S.*$")
 DOUBLE_SPACE_AFTER_PERIOD_RE = re.compile(r"[.!?]  ")
+# A real Conv: note starts a sentence (start of paragraph or after ". "); this
+# excludes mentions of the word inside quotes, e.g. a comment discussing
+# another function's "Conv: ..." note by name.
+CONV_NOTE_RE = re.compile(r"(?:^|\. )Conv:")
 
 
 def check_prose_lines(lines):
@@ -160,7 +164,7 @@ def check_function(filename, lineno, comment_lines, return_type, params):
       errors.append("repeated empty comment line at row %d" % i)
 
   for p in split_paragraphs(content):
-    if " ".join(p).count("Conv:") > 1:
+    if len(CONV_NOTE_RE.findall(" ".join(p))) > 1:
       errors.append("multiple 'Conv:' notes in one paragraph, split into separate paragraphs: %r" % p)
 
   if content[0].startswith("$"):
@@ -208,7 +212,12 @@ def check_function(filename, lineno, comment_lines, return_type, params):
            and not content[idx].startswith("\\return")):
       idx += 1
 
-  if found_names != expected_names and found_names != expected_names_with_state:
+  missing_names = [n for n in expected_names if n not in found_names]
+  if missing_names:
+    errors.append(
+      "missing \\param for parameter(s): %s" % ", ".join(missing_names)
+    )
+  elif found_names != expected_names and found_names != expected_names_with_state:
     errors.append(
       "\\param names %r do not match signature params %r (state optional)"
       % (found_names, expected_names)
