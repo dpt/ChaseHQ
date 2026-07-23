@@ -302,6 +302,7 @@ void  increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
 void  ptad_led_digits(int iterations, const u8 *digits, u8 *stored,
                        u8 *screen);
 void  sfx_bipbow(chqstate_t *state, int param1, int param2);
+void  play_noise(chqstate_t *state, int Aparam);
 
 /* ----------------------------------------------------------------------- */
 

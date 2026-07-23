@@ -1144,49 +1144,115 @@ static void es_start_music(chqstate_t *state)
 }
 
 /**
- * $F3CA (stub): Play bank 7 drum sample 2 for the current tick
+ * Output bank 7's PCM drum sample (address not recovered from the skool;
+ * only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
+ * sample tables were decoded this pass)
  *
- * TODO: not yet ported. Analogous to Main.c's playdrum_2; the end-screen
- * fanfare currently plays silently on instrument notes.
+ * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
+ * sample byte, an inner loop runs drum_speed iterations; each iteration
+ * writes bit 7 of the current sample byte to the EAR bit of
+ * port_BORDER_EAR_MIC, then rotates the sample byte left in-place (RLC) so
+ * successive iterations output successive bits -- 1-bit PCM at drum_speed
+ * bits per byte. When all [Dlength] bytes have been output, drum_active is
+ * cleared. Identical in structure to Main.c's playdrum_go, operating on
+ * bank 7's own es_music state and es_drum2/es_drum1 buffers.
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aspeed Playback speed argument, unused until implemented (was A).
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Dlength Number of sample bytes remaining to output (was D).
+ * \param[in]     HLdata Pointer to the next sample byte in
+ *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
+ *
+ * Conv: the RLC (HL) rotation mutates the sample data in place (only a full
+ * 8-bit rotation restores it), so the drum samples live in bank7 state as
+ * mutable copies of es_drum2_template/es_drum1_template. Conv: the
+ * inter-OUT delay code is modelled as speccy->logtime so the host can
+ * reconstruct the bit timing. Conv: C has no mid-sample interrupts, so the
+ * early-return resume path never triggers and the sample always plays to
+ * completion in one call.
+ */
+static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
+{
+  int carry;            /* carry flag used by RLC (carry) */
+  int Bdash_iterations; /* inner loop counter: drum_speed ticks per sample byte (was B') */
+  int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+
+  carry = 0;
+  do {
+    Bdash_iterations = state->bank7->es_music.drum_speed;
+    do {
+      A = port_MASK_EAR; // speaker bit
+      if ((*HLdata & (1 << 7)) == 0)
+        A = 0;
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
+      RLC(*HLdata); /* rotate sample byte in place */
+      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
+      state->speccy->logtime(state->speccy, 63);
+    } while (--Bdash_iterations > 0);
+    HLdata++;
+    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
+    state->speccy->logtime(state->speccy, 46);
+    if (--Dlength == 0)
+      goto pd_end_of_sample;
+  } while (1);
+  // EXX unbank
+  return;
+
+pd_end_of_sample:
+  state->bank7->es_music.drum_active = 0;
+}
+
+/**
+ * $F3CA: Play bank 7 drum sample 2 for the current tick
+ *
+ * Starts playback of drum sample 2 (94 bytes). Records the drum speed and
+ * marks the drum as active, then calls es_playdrum_go to output it.
+ * Analogous to Main.c's playdrum_2/playdrum_start.
+ *
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ *   (was A).
  */
 static void es_playdrum_2(chqstate_t *state, int Aspeed)
 {
-  NOT_USED(state);
-  NOT_USED(Aspeed);
+  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_active = 1;
+  es_playdrum_go(state, sizeof(state->bank7->es_drum2), &state->bank7->es_drum2[0]);
 }
 
 /**
- * $F3D1 (stub): Play bank 7 drum sample 1 for the current tick
+ * $F3D1: Play bank 7 drum sample 1 for the current tick
  *
- * TODO: not yet ported. Analogous to Main.c's playdrum_1; the end-screen
- * fanfare currently plays silently on instrument notes.
+ * Starts playback of drum sample 1 (160 bytes). Records the drum speed and
+ * marks the drum as active, then calls es_playdrum_go to output it.
+ * Analogous to Main.c's playdrum_1/playdrum_start.
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aspeed Playback speed argument, unused until implemented (was A).
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ *   (was A).
  */
 static void es_playdrum_1(chqstate_t *state, int Aspeed)
 {
-  NOT_USED(state);
-  NOT_USED(Aspeed);
+  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_active = 1;
+  es_playdrum_go(state, sizeof(state->bank7->es_drum1), &state->bank7->es_drum1[0]);
 }
 
 /**
- * $F504 (stub): Play bank 7's noise instrument for the current tick
+ * $F504: Play bank 7's noise instrument for the current tick
  *
- * TODO: not yet ported. Analogous to Main.c's play_noise; the end-screen
- * fanfare currently plays silently on instrument notes.
+ * Bank 7's own copy of Main.c's play_noise routine, decoded by hand from
+ * the raw bytes at source $F9F3-$FA2A (56 bytes) after the disassembler
+ * mislabelled the region as data. Confirmed identical to the shared
+ * routine, operating on the same fixed-address state->rng_seed -- so
+ * rather than duplicate it, this calls the shared implementation directly.
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aparam Instrument parameter argument, unused until implemented
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aparam Noise duration: outer loop count and pulse timing
  *   (was A).
  */
 static void es_play_noise(chqstate_t *state, int Aparam)
 {
-  NOT_USED(state);
-  NOT_USED(Aparam);
+  play_noise(state, Aparam); /* tail call */
 }
 
 /**
@@ -1377,6 +1443,12 @@ int bank7_state_create(chqstate_t *state)
    * block. */
   state->bank7->es_fade_gate_ab = 0xAA;
   state->bank7->es_fade_gate_c = 0x88;
+
+  /* es_playdrum_go rotates each sample byte in place during playback (RLC),
+   * so bank 7 needs its own mutable copies of the drum templates, refreshed
+   * per instance exactly like chqstate_t's own drum1/drum2 (Create.c). */
+  memcpy(state->bank7->es_drum2, es_drum2_template, sizeof(es_drum2_template));
+  memcpy(state->bank7->es_drum1, es_drum1_template, sizeof(es_drum1_template));
 
   return 0;
 }

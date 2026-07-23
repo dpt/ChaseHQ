@@ -43,11 +43,19 @@ extern const u8 chatterblk_nancy_congratulates[6];
 extern const u8 chatterblk_press_gear[3];
 
 /* Bank 7's own copy of the 48K music engine's pattern/data tables, played by
- * play_turbo_sfx_128k et al (Bank7.c). Same (repeats, offset) / note-stream
+ * es_play_music_48k et al (Bank7.c). Same (repeats, offset) / note-stream
  * format as CommonData.c's music_patterns/music_data, but a separate tune
  * and a separate table (relocated base $F53C, not $F0FE). */
 extern const u8 es_music_patterns[23];
 extern const u8 es_music_data[172];
+
+/* Bank 7's own drum sample templates, played by es_playdrum_2/es_playdrum_1
+ * (Bank7.c). Byte-for-byte identical to CommonData.c's drum2_template/
+ * drum1_template for all but the final byte -- not aliases of those tables,
+ * since that last byte differs (0x00 here vs 0xFF there), and bank 7 uses
+ * shorter lengths (94/160 vs 108/252) throughout. */
+extern const u8 es_drum2_template[94];
+extern const u8 es_drum1_template[160];
 
 /* ----------------------------------------------------------------------- */
 

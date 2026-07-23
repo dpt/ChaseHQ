@@ -60,16 +60,22 @@ static int fake_sleep(zxspectrum_t *s, int ticks)
   return 0;
 }
 
+static void fake_logtime(zxspectrum_t *s, int duration)
+{
+  NOT_USED(s); NOT_USED(duration);
+}
+
 static zxspectrum_t g_speccy;
 
 static void speccy_init(void)
 {
   memset(&g_speccy, 0, sizeof(g_speccy));
-  g_speccy.in    = fake_in;
-  g_speccy.out   = fake_out;
-  g_speccy.draw  = fake_draw;
-  g_speccy.stamp = fake_stamp;
-  g_speccy.sleep = fake_sleep;
+  g_speccy.in      = fake_in;
+  g_speccy.out     = fake_out;
+  g_speccy.draw    = fake_draw;
+  g_speccy.stamp   = fake_stamp;
+  g_speccy.sleep   = fake_sleep;
+  g_speccy.logtime = fake_logtime;
   g_speccy.screen.width  = SCREEN_WIDTH;
   g_speccy.screen.height = SCREEN_HEIGHT;
 }

@@ -1075,7 +1075,7 @@ static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
 static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
                              u8 *HLdash_data);
 static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
-static void play_noise(chqstate_t *state, int Aparam);
+void play_noise(chqstate_t *state, int Aparam);
 
 static void start_siren_128k(chqstate_t *state);
 static void play_siren_sfx_128k(chqstate_t *state);
@@ -17097,7 +17097,7 @@ pd_end_of_sample:
  * write via speccy->out and models the delay loops as speccy->logtime so the
  * host can reconstruct the pulse timing.
  */
-static void play_noise(chqstate_t *state, int Aparam)
+void play_noise(chqstate_t *state, int Aparam)
 {
   int carry;       /* carry from RLC/RRC operations on seed bytes (carry) */
   int Eduration;   /* outer loop count and pulse high/low timing parameter (was E) */
