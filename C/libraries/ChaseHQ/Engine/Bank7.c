@@ -20,9 +20,12 @@
  * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
- * See show_end_screen() below. bank7_setup_interrupts, play_turbo_sfx_128k
- * and es_service_speech remain stubs (48K sound engine, turbo-siren fanfare,
- * speech playback) -- see their own prologues.
+ * See show_end_screen() below. bank7_setup_interrupts and es_service_speech
+ * remain stubs -- see their own prologues. play_turbo_sfx_128k only primes
+ * the fanfare's playback state (es_reset_music); the per-tick player and
+ * drum/noise instruments (b7_play_music_48k, relocated to $F340 -- the real
+ * target of the es_service_speech call, not speech as originally guessed;
+ * b7_playdrum_X/Y) remain unported.
  */
 
 #include <setjmp.h>
@@ -1060,25 +1063,80 @@ static void bank7_setup_interrupts(chqstate_t *state)
 }
 
 /**
- * $F300 (stub): Start the end-screen fanfare
+ * $F318 es_next_pattern_at_addr: Load the pattern at pattern_addr into the
+ * bank-7 music engine's playback state
  *
- * TODO: not yet ported. This is bank 7's own copy of the turbo-siren sound
- * code, relocated into the copied $F300 buffer -- distinct from Main.c's
- * play_engine_or_turbo_sfx_128k.
+ * Reads the pattern's repeat count; $FF marks the end of the pattern list
+ * and restarts from the word-pointer that follows it (an offset from
+ * es_music_patterns' own base, $F53C when relocated -- see
+ * z80addrtoendshot for the same "es_script only ever encodes one literal
+ * table base" reasoning). Otherwise stores the repeat count and advances
+ * pattern_addr past it, reads the one-byte offset into es_music_data,
+ * and primes note_delay/note_delay_reload/pattern_start_ptr from the note
+ * stream at that offset.
+ *
+ * Same structure as Main.c's next_pattern_at_addr, operating on bank 7's own
+ * es_music_patterns/es_music_data tables and es_music state instead of the
+ * shared in-game music engine's.
+ *
+ * \param[in,out] state       Pointer to game state.
+ * \param[in]     HLpataddr Pattern-list read pointer (was HL).
+ */
+static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
+{
+  int       An_repeats; /* pattern repeat count just read, or 0xFF end marker (was A) */
+  int       Coffset;    /* offset into es_music_data for this pattern's notes (was C) */
+  const u8 *HLdata;     /* es_music_data read pointer, walked past the note-delay byte (was HL) */
+
+  for (;;) {
+    An_repeats = *HLpataddr++;
+    if (An_repeats != 0xFF) {
+      // not end of pattern(s)
+      state->bank7->es_music.pattern_repeats = (u8) An_repeats;
+      Coffset = *HLpataddr++;
+      state->bank7->es_music.pattern_addr = HLpataddr;
+
+      // Calculate address of music data
+      HLdata = &es_music_data[Coffset];
+      state->bank7->es_music.note_delay_reload = state->bank7->es_music.note_delay = *HLdata++;
+      state->bank7->es_music.pattern_start_ptr = HLdata;
+      return;
+    } else {
+      // Restart
+      HLpataddr = &es_music_patterns[wordat(HLpataddr) - 0xF53C];
+    }
+  }
+}
+
+/**
+ * $F300 es_reset_music (play_turbo_sfx_128k): Start the end-screen fanfare
+ *
+ * Clears the three playback flags that carry state across ticks
+ * (drum_active, extra_delay, started) then loads the first pattern in
+ * es_music_patterns, exactly as Main.c's reset_music does for the shared
+ * in-game engine. This primes the engine only -- per-tick playback (the
+ * $F340 handler show_end_screen's loop calls every frame, es_service_speech
+ * here) and the drum/noise instrument players remain unported.
  *
  * \param[in] state Pointer to game state.
  */
 static void play_turbo_sfx_128k(chqstate_t *state)
 {
-  NOT_USED(state);
+  state->bank7->es_music.drum_active = 0;
+  state->bank7->es_music.extra_delay = 0;
+  state->bank7->es_music.started     = 0;
+  es_next_pattern_at_addr(state, &es_music_patterns[0]);
 }
 
 /**
- * $F340 (stub): Service end-screen speech playback for the current frame
+ * $F340 (stub): Service the end-screen fanfare for the current frame
  *
- * TODO: not yet ported. Skool comment marks this as living two bytes before
- * the shared play_speech_128k in the relocated buffer; not confirmed to be
- * the same routine.
+ * TODO: not yet ported. Its real relocated target is b7_play_music_48k
+ * ($F82F, source address) -- bank 7's own per-tick music driver, analogous
+ * to Main.c's play_music_48k. An earlier pass guessed this was speech
+ * playback (living two bytes before the shared play_speech_128k); tracing
+ * the $E026 CALL $F340 dispatch through the inner relocation ($F82F -
+ * 0x4EF = $F340) disproves that.
  *
  * \param[in] state Pointer to game state.
  */

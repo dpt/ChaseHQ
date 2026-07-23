@@ -42,6 +42,13 @@ extern const u8 bitmap_handshake_4[256];
 extern const u8 chatterblk_nancy_congratulates[6];
 extern const u8 chatterblk_press_gear[3];
 
+/* Bank 7's own copy of the 48K music engine's pattern/data tables, played by
+ * play_turbo_sfx_128k et al (Bank7.c). Same (repeats, offset) / note-stream
+ * format as CommonData.c's music_patterns/music_data, but a separate tune
+ * and a separate table (relocated base $F53C, not $F0FE). */
+extern const u8 es_music_patterns[23];
+extern const u8 es_music_data[172];
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK7DATA_H */
