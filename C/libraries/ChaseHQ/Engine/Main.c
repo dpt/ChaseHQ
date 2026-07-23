@@ -17099,7 +17099,6 @@ static void start_siren_128k(chqstate_t *state)
  * and the pitch is clamped. Writes the updated fine pitch to channels A and B
  * (B is 4 below A) and flushes all AY registers.
  *
- *
  * Conv: Z80 stores the updated pattern to a self-modifying 'LD B,n' operand at
  * $8066; C stores to state->siren_pattern. The EX AF,AF' pair at $F285/$F28A
  * that preserves the new pitch across the SM write is unnecessary in C (locals
@@ -17110,6 +17109,7 @@ static void play_siren_sfx_128k(chqstate_t *state)
   int carry;   /* carry flag; set/cleared by RLC (carry) */
   u8  pitch;   /* channel A fine pitch, adjusted each frame (was A) */
   u8  pattern; /* alternating siren pattern; rotated left each frame (was B) */
+
   carry = 0;
 
   if (state->siren_enabled == 0)
@@ -17179,8 +17179,8 @@ static void write_audio_registers_128k(chqstate_t *state)
   values  = &state->ay_regs.env_fine;
   regno   = 11;
   do {
-    speccy->out(speccy, 0xFFFD, regno);
-    speccy->out(speccy, 0xBFFD, *values--); /* was OUTD */
+    speccy->out(speccy, port_AY_REGISTER, regno);
+    speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
   } while ((s8) --regno >= 0);
 }
 
@@ -17320,7 +17320,7 @@ void play_speech_128k(chqstate_t *state, int index)
 
   // EX AF,AF' - Bank index
   silence_audio_128k(state);
-  speccy->out(speccy, 0x7FFD, 4);
+  speccy->out(speccy, port_128K_PAGING, 4);
 
   Cport_lo = 0xFD;
   Hff      = 0xFF;
