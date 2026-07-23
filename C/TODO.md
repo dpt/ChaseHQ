@@ -2,6 +2,9 @@
 
 ## P1 — Bugs / broken behaviour
 
+- end screen: 'press gear to continue' not repeating
+- end screen: music missing
+
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
@@ -61,6 +64,7 @@
 - Scan for type problems
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)
+- Remove test Stage 6 by default
 
 ## P6 — Features / extras
 

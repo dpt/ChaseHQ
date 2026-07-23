@@ -20,8 +20,8 @@
  * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
- * See show_end_screen() below. bank7_setup_interrupts and es_service_speech
- * remain stubs -- see their own prologues. play_turbo_sfx_128k only primes
+ * See show_end_screen() below. es_setup_interrupts and es_service_speech
+ * remain stubs -- see their own prologues. es_start_music only primes
  * the fanfare's playback state (es_reset_music); the per-tick player and
  * drum/noise instruments (b7_play_music_48k, relocated to $F340 -- the real
  * target of the es_service_speech call, not speech as originally guessed;
@@ -1049,21 +1049,21 @@ rs_exit:
 }
 
 /**
- * $E01E (stub): Set up bank 7's own interrupt handler and 48K music engine
+ * $E01E: Set up bank 7's own interrupt handler and 48K music engine
  *
  * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
- * (bank7_setup_interrupts onward in the skool), relocated into the copied
+ * (es_setup_interrupts onward in the skool), relocated into the copied
  * $F300 buffer.
  *
  * \param[in] state Pointer to game state.
  */
-static void bank7_setup_interrupts(chqstate_t *state)
+static void es_setup_interrupts(chqstate_t *state)
 {
   NOT_USED(state);
 }
 
 /**
- * $F318 es_next_pattern_at_addr: Load the pattern at pattern_addr into the
+ * $F318: Load the pattern at pattern_addr into the
  * bank-7 music engine's playback state
  *
  * Reads the pattern's repeat count; $FF marks the end of the pattern list
@@ -1079,10 +1079,10 @@ static void bank7_setup_interrupts(chqstate_t *state)
  * es_music_patterns/es_music_data tables and es_music state instead of the
  * shared in-game music engine's.
  *
- * \param[in,out] state       Pointer to game state.
+ * \param[in,out] state     Pointer to game state.
  * \param[in]     HLpataddr Pattern-list read pointer (was HL).
  */
-static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
+static void es_next_pattern(chqstate_t *state, const u8 *HLpataddr)
 {
   int       An_repeats; /* pattern repeat count just read, or 0xFF end marker (was A) */
   int       Coffset;    /* offset into es_music_data for this pattern's notes (was C) */
@@ -1091,7 +1091,7 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
   for (;;) {
     An_repeats = *HLpataddr++;
     if (An_repeats != 0xFF) {
-      // not end of pattern(s)
+      // Not end of pattern(s)
       state->bank7->es_music.pattern_repeats = (u8) An_repeats;
       Coffset = *HLpataddr++;
       state->bank7->es_music.pattern_addr = HLpataddr;
@@ -1109,7 +1109,7 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
 }
 
 /**
- * $F300 es_reset_music (play_turbo_sfx_128k): Start the end-screen fanfare
+ * $F300: Start the end-screen fanfare
  *
  * Clears the three playback flags that carry state across ticks
  * (drum_active, extra_delay, started) then loads the first pattern in
@@ -1120,16 +1120,16 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
  *
  * \param[in] state Pointer to game state.
  */
-static void play_turbo_sfx_128k(chqstate_t *state)
+static void es_start_music(chqstate_t *state)
 {
   state->bank7->es_music.drum_active = 0;
   state->bank7->es_music.extra_delay = 0;
   state->bank7->es_music.started     = 0;
-  es_next_pattern_at_addr(state, &es_music_patterns[0]);
+  es_next_pattern(state, &es_music_patterns[0]);
 }
 
 /**
- * $F340 (stub): Service the end-screen fanfare for the current frame
+ * $F340: Service the end-screen fanfare for the current frame
  *
  * TODO: not yet ported. Its real relocated target is b7_play_music_48k
  * ($F82F, source address) -- bank 7's own per-tick music driver, analogous
@@ -1169,8 +1169,8 @@ void show_end_screen(chqstate_t *state)
   int outer_count; /* per-keyscan frame divider, reloads to 5/6 (was A171) */
 
   es_clear(state);
-  bank7_setup_interrupts(state);
-  play_turbo_sfx_128k(state);
+  es_setup_interrupts(state);
+  es_start_music(state);
 
   assert(sizeof(es_script) == sizeof(state->bank7->es_script));
   memcpy(state->bank7->es_script, es_script, sizeof(es_script));
