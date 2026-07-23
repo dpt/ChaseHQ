@@ -3332,7 +3332,7 @@ static void clear_options_screen(chqstate_t *state)
 }
 
 /**
- * $FBA2 (omd_redraw_and_poll): options-menu redraw + poll + dispatch loop
+ * $FBA2: options-menu redraw + poll + dispatch loop
  *
  * Draws the control-select screen text, then polls half-row $F7FE (keys
  * "1"-"5") and dispatches: "1" -> Sinclair joystick key list, "2" -> Cursor

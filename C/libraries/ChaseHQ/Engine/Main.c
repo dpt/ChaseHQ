@@ -12299,9 +12299,9 @@ lr_badf:
  */
 static void exit_fork(chqstate_t *state)
 {
-  int D_curve_type;   /* curvature byte to fill: +4 (right turn) or -4 (left) (was D) */
-  int E_lanes_type;   /* lanes byte to fill: 0x03 (right fork) or 0x01 (left) (was E) */
-  int C_obj_offset;   /* extra road-buffer offset for zeroing object bytes (was C) */
+  int D_curve_type; /* curvature byte to fill: +4 (right turn) or -4 (left) (was D) */
+  int E_lanes_type; /* lanes byte to fill: 0x03 (right fork) or 0x01 (left) (was E) */
+  int C_obj_offset; /* extra road-buffer offset for zeroing object bytes (was C) */
 
   /* $BB69: return if fork_distance high byte is zero */
   if ((state->fork_distance & 0xFF00) == 0)
@@ -16340,7 +16340,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 }
 
 /**
- * $EC2C menu_draw_char: Render one character into screen/attribute buffers
+ * $EC2C: Render one character into screen/attribute buffers
  *
  * Maps the ASCII character to a glyph index, then copies the 8×7 font data into
  * the screen buffer. A space advances both pointers by one column without

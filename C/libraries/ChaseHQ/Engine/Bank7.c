@@ -301,14 +301,14 @@ static const u8 *z80addrtoendshot(u16 addr)
 }
 
 /**
- * $E2DE es_draw_frame_common: Read an image+destination pair and blit it
+ * $E2DE: Read an image+destination pair and blit it
  *
  * Reads a bitmap address word and a destination screen address word from
  * the script, then blits the resolved image there. Does not clear the
  * backbuffer first; see es_clear_then_draw_frame for the variant that does.
  *
  * \param[in,out] script Script read pointer (was HL); advanced past the two
- *                        words consumed.
+ *                       words consumed.
  */
 static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 {
@@ -342,7 +342,7 @@ static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
 }
 
 /**
- * $E42E es_attribute_fade_in: Sweep attributes toward the target colours
+ * $E42E: Sweep attributes toward the target colours
  *
  * Gate: only runs every other call (RLC flip-flops $5C6C; returns
  * immediately when the old top bit was set). When it runs, walks all 512
@@ -415,7 +415,7 @@ static void es_attribute_fade_in(chqstate_t *state)
  * them back together, which drops those bits on every write. Matched
  * bug-for-bug.
  *
- * \param[in] flag  Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
+ * \param[in] flag Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
  */
 static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 {
@@ -450,7 +450,7 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 }
 
 /**
- * $E472 es_handler_glyph_fade_b: Fade the $5C6C-gated glyph attribute band
+ * $E472: Fade the $5C6C-gated glyph attribute band
  *
  * Thin wrapper: es_attribute_fade_out against es_fade_gate_ab.
  */
@@ -460,7 +460,7 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
 }
 
 /**
- * $E46D es_handler_glyph_fade_c: Fade the $5C6D-gated glyph attribute band
+ * $E46D: Fade the $5C6D-gated glyph attribute band
  *
  * Thin wrapper: es_attribute_fade_out against es_fade_gate_c.
  */
@@ -486,7 +486,7 @@ static const struct {
 static void es_handler_handshake_advance(chqstate_t *state);
 
 /**
- * $E3B7 es_handler_handshake: Fade the $5C6C attribute band, then advance
+ * $E3B7: Fade the $5C6C attribute band, then advance
  *
  * Fades the attribute band one step (routine_e472's shared tail, called
  * directly rather than duplicated), then runs the handshake animation-advance
@@ -655,7 +655,7 @@ static const u8 *z80addrtochatterblk(u16 addr)
 }
 
 /**
- * $E2B2: es_chatter: Call a script-supplied handler with a literal argument
+ * $E2B2: Call a script-supplied handler with a literal argument
  *
  * Reads a 2-byte little-endian pointer word from the script, advances the
  * script pointer past it, then calls start_chatter with priority 1 (Z80
@@ -698,7 +698,7 @@ static void es_chatter(chqstate_t *state)
 }
 
 /**
- * $E2CD es_set_dispatch: Set the per-frame handler and its frame-delay reload
+ * $E2CD: Set the per-frame handler and its frame-delay reload
  *
  * Common tail shared by the run_script commands that hand off to a
  * self-modified per-frame handler rather than running immediately: stores
@@ -759,7 +759,7 @@ have_single:
 }
 
 /**
- * $E31F plot_char: Render one end-screen text character
+ * $E31F: Render one end-screen text character
  *
  * Space ($E323-$E327): advances both persistent cursors by one column and
  * draws nothing.
@@ -891,7 +891,7 @@ static void plot_char(chqstate_t *state,
 }
 
 /**
- * $E2F5 render_text_common: Parse and draw a script text-render command
+ * $E2F5: Parse and draw a script text-render command
  *
  * Reads a colour byte and a screen destination word from the script (3
  * bytes total), derives the attribute-row address exactly as draw_endshot

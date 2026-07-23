@@ -86,7 +86,7 @@ def param_name(param):
 
 
 def parse_signature(code_after_comment):
-  """Return (return_type, params, is_definition) or None if not a function."""
+  """Return (return_type, params, is_definition, name) or None if not a function."""
   open_idx = code_after_comment.find("(")
   if open_idx == -1:
     return None
@@ -113,7 +113,7 @@ def parse_signature(code_after_comment):
     return None
   return_type = header[: name_match.start()].strip()
   params = split_params(params_str)
-  return return_type, params, is_definition
+  return return_type, params, is_definition, name_match.group(1)
 
 
 def split_paragraphs(lines):
@@ -132,7 +132,7 @@ def split_paragraphs(lines):
   return paragraphs
 
 
-def check_function(filename, lineno, comment_lines, return_type, params):
+def check_function(filename, lineno, comment_lines, return_type, params, func_name):
   errors = []
 
   # The leading chqstate_t *state parameter is usually left undocumented,
@@ -170,6 +170,11 @@ def check_function(filename, lineno, comment_lines, return_type, params):
   if content[0].startswith("$"):
     if not TITLE_RE.match(content[0]):
       errors.append("title line missing '$XXXX: description' format: %r" % content[0])
+    title_prefix = content[0].split(":", 1)[0]
+    if re.search(r"\b%s\b" % re.escape(func_name), title_prefix):
+      errors.append(
+        "title line repeats function name before the colon: %r" % content[0]
+      )
   elif not PLAIN_TITLE_RE.match(content[0]):
     errors.append("empty title line")
   errors.extend(check_prose_lines(content[:1]))
@@ -269,11 +274,11 @@ def check_file(filename):
     parsed = parse_signature(after)
     if parsed is None:
       continue
-    return_type, params, is_definition = parsed
+    return_type, params, is_definition, func_name = parsed
     if not is_definition:
       continue
 
-    errors = check_function(filename, lineno, comment_lines, return_type, params)
+    errors = check_function(filename, lineno, comment_lines, return_type, params, func_name)
     results.append((lineno, errors))
   return results
 
