@@ -482,6 +482,25 @@ static const struct {
   { 35, &bitmap_handshake_2[0] },
 };
 
+static void es_handler_handshake_advance(chqstate_t *state);
+
+/**
+ * $E3B7 es_handler_handshake: Fade the $5C6C attribute band one step
+ * (routine_e472's shared tail, called directly rather than duplicated),
+ * then run the handshake animation-advance ($E3BA, es_handler_handshake_advance).
+ *
+ * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
+ * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
+ * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
+ *
+ * \param[in] state Pointer to game state.
+ */
+static void es_handler_handshake(chqstate_t *state)
+{
+  es_handler_glyph_fade_b(state);
+  es_handler_handshake_advance(state);
+}
+
 /**
  * $E3BA: Advance the handshake animation frame
  *
@@ -535,23 +554,6 @@ static void es_handler_handshake_advance(chqstate_t *state)
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
   }
-}
-
-/**
- * $E3B7 es_handler_handshake: Fade the $5C6C attribute band one step
- * (routine_e472's shared tail, called directly rather than duplicated),
- * then run the handshake animation-advance ($E3BA, es_handler_handshake_advance).
- *
- * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
- * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
- * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
- *
- * \param[in] state Pointer to game state.
- */
-static void es_handler_handshake(chqstate_t *state)
-{
-  es_handler_glyph_fade_b(state);
-  es_handler_handshake_advance(state);
 }
 
 /**
