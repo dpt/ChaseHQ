@@ -28,5 +28,18 @@
  */
 #define NOT_USED(v) ((void) (v))
 
+/**
+ * Standard ZX Spectrum pixel address: x in [0,255], y in [0,191].
+ */
+#define XYTOSCREEN(x, y) \
+  (0x4000 | (((y) & 0xC0) << 5) | (((y) & 0x07) << 8) | \
+   (((y) & 0x38) << 2) | ((x) >> 3))
+
+/**
+ * Standard ZX Spectrum attribute address: x in [0,255], y in [0,191].
+ */
+#define XYTOATTRS(x, y) \
+  (0x5800 | (((y) & 0xF8) << 2) | ((x) >> 3))
+
 #endif /* ZXSPECTRUM_MACROS_H */
 

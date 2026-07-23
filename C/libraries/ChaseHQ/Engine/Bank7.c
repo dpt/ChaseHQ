@@ -99,11 +99,6 @@ static void es_clear(chqstate_t *state)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
 #define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
-/* Standard ZX Spectrum pixel address: x in [0,255], y in [0,191]. */
-#define XYTOSCREEN(x, y) \
-  (0x4000 | (((y) & 0xC0) << 5) | (((y) & 0x07) << 8) | \
-   (((y) & 0x38) << 2) | ((x) >> 3))
-
 /**
  * $E0FE-$E209: Raw end-screen script bytes.
  *
