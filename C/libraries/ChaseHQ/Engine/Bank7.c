@@ -17,10 +17,12 @@
 
 /* Notes
  *
- * This file will hold the C translation of ZX Spectrum 128K "bank 7" -- the
- * end-of-game results/credits sequence. Paged into $C000-$FFFF and reached
- * via an inner relocation from $F7EF to $F300, driven by a script
- * interpreter at $E20A. Not yet ported; see show_end_screen() in Main.c.
+ * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
+ * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
+ * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
+ * See show_end_screen() below. bank7_setup_interrupts, play_turbo_sfx_128k
+ * and es_service_speech remain stubs (48K sound engine, turbo-siren fanfare,
+ * speech playback) -- see their own prologues.
  */
 
 #include <setjmp.h>
@@ -30,6 +32,7 @@
 #include "C99/Types.h"
 
 #include "ZXSpectrum/Macros.h"
+#include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
 #include "ChaseHQ/ChaseHQ.h"
@@ -96,6 +99,11 @@ static void es_clear(chqstate_t *state)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
 #define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
+/* Standard ZX Spectrum pixel address: x in [0,255], y in [0,191]. */
+#define XYTOSCREEN(x, y) \
+  (0x4000 | (((y) & 0xC0) << 5) | (((y) & 0x07) << 8) | \
+   (((y) & 0x38) << 2) | ((x) >> 3))
+
 /**
  * $E0FE-$E209: Raw end-screen script bytes.
  *
@@ -117,32 +125,32 @@ static void es_clear(chqstate_t *state)
 static const u8 script_data[] = {
   ESCMD_CHATTER(0x5C6E), /* -> chatterblk_nancy_congratulates */
   ESCMD_IDLE(0xC0),
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, 0x4889), // bitmap_endshot_1, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(72, 96)), // bitmap_endshot_1, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6489, 0x4889), // bitmap_endshot_2, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(0x6489, XYTOSCREEN(72, 96)), // bitmap_endshot_2, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6831, 0x4889), // bitmap_endshot_3, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(0x6831, XYTOSCREEN(72, 96)), // bitmap_endshot_3, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6BD9, 0x4889), // bitmap_endshot_4, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(0x6BD9, XYTOSCREEN(72, 96)), // bitmap_endshot_4, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, 0x4802), // bitmap_endshot_1, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(16, 64)), // bitmap_endshot_1, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6489, 0x4811), // bitmap_endshot_2, screen dst
+  ESCMD_DRAW_WORD(0x6489, XYTOSCREEN(136, 64)), // bitmap_endshot_2, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6831, 0x5002), // bitmap_endshot_3, screen dst
+  ESCMD_DRAW_WORD(0x6831, XYTOSCREEN(16, 128)), // bitmap_endshot_3, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6BD9, 0x5011), // bitmap_endshot_4, screen dst
+  ESCMD_DRAW_WORD(0x6BD9, XYTOSCREEN(136, 128)), // bitmap_endshot_4, screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
   ESCMD_RESET_HANDSHAKE(0xC0),
@@ -150,41 +158,41 @@ static const u8 script_data[] = {
   ESCMD_HANDSHAKE,
   ESCMD_HANDSHAKE_AGAIN(0xB0),
   ESCMD_FADE_IN_B,
-  ESCMD_DRAW_TEXT(0x47, 0x4848), /* clear */
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(64, 80)), /* clear */
   'C', 'O', 'N', 'G', 'R', 'A', 'T', 'U', 'L', 'A', 'T', 'I', 'O', 'N', 'S', '!' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x08),
-  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x48CB),
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(88, 112)),
   'A', 'L', 'L', ' ', ' ', 'C', 'L', 'E', 'A', 'R' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x08),
-  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x5049),
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(72, 144)),
   '5', ',', '0', '0', '0', ',', '0', '0', '0', ' ', ' ', 'P', 'T', 'S', '.' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xC0),
   ESCMD_FADE_IN_C,
   ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(0x47, 0x4884), /* clear */
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(32, 96)), /* clear */
   '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
-  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x5043),
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(24, 144)),
   '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xF0),
   ESCMD_FADE_IN_C,
   ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(0x47, 0x48CC), /* clear */
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 112)), /* clear */
   'T', 'H', 'E', ' ', ' ', 'E', 'N', 'D' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xF0),
   ESCMD_IDLE(0x60),
   ESCMD_FADE_IN_C,
   ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(0x45, 0x48AA), /* clear */
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_CYAN_OVER_BLACK, XYTOSCREEN(80, 104)), /* clear */
   'F', 'I', 'N', 'A', 'L', ' ', ' ', 'S', 'C', 'O', 'R', 'E' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x1E),
   ESCMD_DRAW_SCORE, /* tallies bonus, patches offset 0xFD below with score ASCII */
-  ESCMD_DRAW_TEXT_NO_CLEAR(0x47, 0x502C), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 136)), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | EOS,
   ESCMD_FADE_IN_A,
   ESCMD_CHATTER(0x5C78), /* -> chatterblk_press_gear */
@@ -265,7 +273,12 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
   for (attrrow = 8; attrrow != 0; attrrow--) {
     memcpy(ADDRTOBACKBUF(attraddr), image, 13);
     image += 13;
-    attraddr = (u16) (attraddr + 19);
+    /* Conv: the skool's LDIR ($E4D6) advances DE by 13 as a side effect of
+     * the copy itself, then adds a further 19 to skip the remaining columns
+     * of the 32-byte attribute row (skool comment at $E4D8: "13+19 = 32").
+     * memcpy has no such side effect on attraddr, so both parts of that
+     * total must be added explicitly here. */
+    attraddr = (u16) (attraddr + 13 + 19);
   }
 }
 
@@ -524,7 +537,7 @@ static void es_handler_handshake(chqstate_t *state)
 
   HL_attr = ADDRTOATTRS(0x59AC);
   for (group = 5; group != 0; group--) {
-    memset(HL_attr, 0x07, 8);
+    memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += 0x20; /* 8-byte fill + $0018 stride, matches ADD HL,DE */
   }
 }
@@ -549,8 +562,8 @@ static void es_handler_idle(chqstate_t *state)
  * and visual. Sets es_input_mask so the very next fire press exits the end
  * screen (see Bank7State.h). Then formats the final score as ASCII -- most
  * significant BCD byte first, blanking leading zeros -- directly into the
- * "GBP________ PTS" placeholder already sitting in script_data (offset
- * 0xFD, $5DFB relocated), so the later draw-word command renders it.
+ * "GBP________ PTS" placeholder already sitting in state->bank7->es_script
+ * (offset 0xFD, $5DFB relocated), so the later draw-text command renders it.
  *
  * Conv: the leading-zero blank/print decision (Z80: RLC C carry chain) is
  * modelled as a sticky "seen a non-blank digit yet" flag: print the digit if
@@ -765,8 +778,8 @@ have_single:
  * physical register set read at $E2F5 -- the ladder's own use of C
  * ($E328-$E356) is a completely different (Set S) C that plot_char's own
  * LDI calls decrement into irrelevance and never reads back. Confirmed
- * against script_data: the byte read here for "CONGRATULATIONS!" is $47 =
- * BRIGHT, PAPER black, INK white -- a plausible text colour, not a row
+ * against script_data: the byte read here for "CONGRATULATIONS!" is
+ * attribute_BRIGHT_WHITE_OVER_BLACK -- a plausible text colour, not a row
  * count. It survives unclobbered in Set M across the whole render_text call
  * and is written verbatim into both glyph-cell attributes at $E399/$E3A0.
  *

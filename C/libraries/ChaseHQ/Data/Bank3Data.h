@@ -20,10 +20,10 @@
 
 /* ----------------------------------------------------------------------- */
 
-const u8 title_screen_credits_text[56];
-const u8 title_screen_overlay_text[47];
+extern const u8 title_screen_credits_text[56];
+extern const u8 title_screen_overlay_text[47];
 
-const u8 options_menu_text[366];
+extern const u8 options_menu_text[366];
 
 /* Index names for note_periods[] below, in scientific pitch notation
  * (A4 = 440 Hz, C4 = middle C), derived from each entry's AY tone period. */
@@ -44,7 +44,7 @@ enum note_index {
  * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
  * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
  * extend this array into it. Indices name-checked against enum note_index. */
-const u16 note_periods[96];
+extern const u16 note_periods[96];
 
 /* One tune's entry in the tune-select table below: a tempo/speed byte plus
  * the raw Z80 address of each of the 3 channels' pattern-data blocks. */
@@ -57,7 +57,7 @@ typedef struct tune {
  * one per tune. Indexed by start_tune ($EB9E@bank3). The pattern-data
  * pointers are raw Z80 addresses, resolved into title_tune0_data/
  * title_tune1_data below by start_tune and advance_channel_phrase. */
-const tune_t tunes[4];
+extern const tune_t tunes[4];
 
 /* 128K bank 3: title-tune engine raw pattern-data region for tune 0 (title
  * screen), transcribed byte-exact from bank3.bin, $F241-$F600 (the byte
@@ -68,14 +68,14 @@ const tune_t tunes[4];
  * table are walked. Addresses read from the header or phrase table are
  * resolved to a C pointer into this array via simple offset arithmetic from
  * $F241 (see resolve_phrase_addr in Bank3.c). */
-const u8 title_tune0_data[1026];
+extern const u8 title_tune0_data[1026];
 
 /* As title_tune0_data, for tune 1 (perp-caught success jingle),
  * $F601-$F6DE -- covers channel 3's wraparound pattern prefix (156 bytes,
  * see tune_pattern_lens in start_tune) in full, the deepest of the three
  * channels' reach into this region. Tune 2 begins at $F666, inside this
  * range; tune 2 is not itself extracted. */
-const u8 title_tune1_data[222];
+extern const u8 title_tune1_data[222];
 
 /* ----------------------------------------------------------------------- */
 

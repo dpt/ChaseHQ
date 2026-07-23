@@ -25,22 +25,22 @@
  * draw_endshot ($E4A9, Bank7.c). Row/attribute counts are not exactly
  * 64*13+8*13 in every case -- sizes here are taken verbatim from the skool's
  * label boundaries, not recomputed from the nominal 104x64 dimensions. */
-const u8 bitmap_endshot_1[936];
-const u8 bitmap_endshot_2[936];
-const u8 bitmap_endshot_3[936];
-const u8 bitmap_endshot_4[936];
+extern const u8 bitmap_endshot_1[936];
+extern const u8 bitmap_endshot_2[936];
+extern const u8 bitmap_endshot_3[936];
+extern const u8 bitmap_endshot_4[936];
 
 /* Handshake animation frames: 8-byte-wide rows only, no attribute data
  * (handshake's own routine_e3b7 supplies attributes via the fixed $59AC
  * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
  * from skool label boundaries. */
-const u8 bitmap_handshake_1[296];
-const u8 bitmap_handshake_2[280];
-const u8 bitmap_handshake_3[272];
-const u8 bitmap_handshake_4[256];
+extern const u8 bitmap_handshake_1[296];
+extern const u8 bitmap_handshake_2[280];
+extern const u8 bitmap_handshake_3[272];
+extern const u8 bitmap_handshake_4[256];
 
-const u8 chatterblk_nancy_congratulates[6];
-const u8 chatterblk_press_gear[3];
+extern const u8 chatterblk_nancy_congratulates[6];
+extern const u8 chatterblk_press_gear[3];
 
 /* ----------------------------------------------------------------------- */
 

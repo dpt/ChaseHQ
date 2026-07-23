@@ -252,6 +252,11 @@ const u8 bitmap_endshot_3[936] = {
   //_X_X____, X_______, ________, ________, _XXXX___, ________, ________, ___X_X_X,
 };
 
+/* Conv: the original binary's table for bitmap_endshot_4 is only 928 bytes; draw_endshot's
+ * fixed 72-row (64 bitmap + 8 attribute) loop always consumes 936 bytes, so
+ * the original spills 8 bytes into the next label (handshake_1, $F381:
+ * $C0,$00,$00,$00,$00,$00,$00,$00). Reproduced verbatim below rather than
+ * zero-padding. */
 const u8 bitmap_endshot_4[936] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, XXXXX_XX, _X_X____, XX_XXXXX, XXXXXXXX, __XXXXXX, _XXXX___, _____XXX, XXXX____, ____X___,
@@ -324,7 +329,8 @@ const u8 bitmap_endshot_4[936] = {
   _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XX_____, _XX_____, _XX_____, _XXXX___, _XXXX___, _XXXX___, _XXXX___,
   _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XX_____, _XX_____, _XXXX___, _XXX____, _XXX____, _XXXX___, _XXXX___,
   _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___,
-  _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___,
+  _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, XX______, ________, ________,
+  ________, ________, ________, ________, ________,
 };
 
 const u8 bitmap_handshake_1[296] = {
