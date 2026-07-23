@@ -355,10 +355,16 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
   (&state->roadbuf_start[ROADBUF_FWD2IDX(N)])
 
 /**
- * Fill 'count' bytes of the (256-byte, ring-wrapped) road buffer starting
+ * Fill a run of the ring-wrapped road buffer with a constant byte
+ *
+ * Fills 'count' bytes of the (256-byte, ring-wrapped) road buffer starting
  * 'offset' bytes ahead of roadbufptr. Splits at the wrap point into at most
  * two memsets rather than one, since the run may cross the end of the array
  * and continue from offset 0.
+ *
+ * \param[in] offset Distance ahead of roadbufptr to start filling.
+ * \param[in] value  Byte value to fill with.
+ * \param[in] count  Number of bytes to fill.
  */
 static void roadbuf_fill(chqstate_t *state, int offset, u8 value, int count)
 {
@@ -455,11 +461,18 @@ static u16 prev_buf_row(int backbuf)
 }
 
 /**
- * Given a ZX Chase HQ Z80 map address return the equivalent C conversion
- * pointer.
+ * Map a Z80 address to its equivalent C conversion pointer
  *
- * This is for mapping addresses that I've decided to leave in-place for the
- * time being.
+ * Given a ZX Chase HQ Z80 map address return the equivalent C conversion
+ * pointer. This is for mapping addresses that I've decided to leave
+ * in-place for the time being.
+ *
+ * \param[in] current_stage_number Stage whose per-stage lookup table to
+ *                                  fall back on for addresses not handled
+ *                                  by the fork/escape tables below.
+ * \param[in] z80                  Z80 address to map.
+ *
+ * \return Pointer to the equivalent C data.
  */
 static const void *lookup_map_goto(int current_stage_number, int z80)
 {
@@ -5181,6 +5194,8 @@ static void plot_sprite(chqstate_t *state,
  * \param[in] height Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data Source bitmap data. (was HL')
+ *
+ * \return Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_even(chqstate_t *state,
                             int         jump_offset,
@@ -5244,6 +5259,8 @@ plot_sprite_even_start:
  * \param[in] height Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data Source bitmap data. (was HL')
+ *
+ * \return Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_odd(chqstate_t *state,
                            int          width_bytes,
@@ -11411,6 +11428,8 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
  *   (was HL)
  * \param[in]     backbuf_addr Back-buffer write address for the first row.
  *   (was HL')
+ *
+ * \return Back-buffer address of the last row drawn.
  */
 static u8 *plot_masked_sprite(chqstate_t *state,
                               int         jump_offset,
@@ -13485,8 +13504,14 @@ dt_exit:
 }
 
 /**
- * Return pointer to the start of the 256-byte Z80 road-position page
- * ($E8..$ED).
+ * Map a Z80 road-position page high byte to its xpos table
+ *
+ * Selects the state->xpos_road_* table that corresponds to the high byte
+ * of a Z80 road-position pointer ($E8..$ED).
+ *
+ * \param[in] hi High byte of the Z80 road-position address.
+ *
+ * \return Pointer to the start of the matching xpos table.
  */
 static s16 *hi_to_xpostab(chqstate_t *state, int hi)
 {
@@ -15936,8 +15961,7 @@ static void build_height_table(chqstate_t *state)
 }
 
 /**
- * $CDD6: Scale a curvature or height byte: multiply the top three bits of A
- * by C, divide by 8, with rounding
+ * $CDD6: Scale a curvature/height byte by top 3 bits of A, div 8, rounded
  *
  * Three iterations of RL E / conditional ADD A,C / ADD A,A extract bits 7, 6
  * and 5 of the multiplier one at [a] time and accumulate their contribution to
@@ -16194,8 +16218,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 }
 
 /**
- * $EC2C: menu_draw_char — render one character into the screen and attribute
- * buffers.
+ * $EC2C menu_draw_char: Render one character into screen/attribute buffers
  *
  * Maps the ASCII character to a glyph index, then copies the 8×7 font data into
  * the screen buffer. A space advances both pointers by one column without

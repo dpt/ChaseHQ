@@ -15,11 +15,11 @@ const u8 *print_message(chqstate_t *state,
                         u8          style,
                         const u8   *messages)
 {
-  u8        Aattr;       /* attribute byte for the string (was A) */
-  u16       DEbackbuf;   /* back-buffer destination address (was DE) */
-  u16       BCtarget;    /* screen attribute address (was BC) */
+  u8  Aattr;     /* attribute byte for the string (was A) */
+  u16 DEbackbuf; /* back-buffer destination address (was DE) */
+  u16 BCtarget;  /* screen attribute address (was BC) */
 
-  // Conv: header fields read explicitly rather than via INC HL chains.
+  /* Conv: header fields read explicitly rather than via INC HL chains. */
   Aattr     = messages[1]; /* messages[0] is a flags byte we ignore */
   DEbackbuf = wordat(messages + 2);
   BCtarget  = wordat(messages + 4);

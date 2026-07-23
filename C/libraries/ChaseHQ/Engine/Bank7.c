@@ -301,8 +301,11 @@ static const u8 *z80addrtoendshot(u16 addr)
 }
 
 /**
- * $E2DE es_draw_frame_common: Read an image+destination pair from the
- * script and blit it, without the backbuffer-clear prefix.
+ * $E2DE es_draw_frame_common: Read an image+destination pair and blit it
+ *
+ * Reads a bitmap address word and a destination screen address word from
+ * the script, then blits the resolved image there. Does not clear the
+ * backbuffer first; see es_clear_then_draw_frame for the variant that does.
  *
  * \param[in,out] script Script read pointer (was HL); advanced past the two
  *                        words consumed.
@@ -327,6 +330,8 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 /**
  * $E2D9: Clear the backbuffer, then draw an end-screen graphic frame
  *
+ * Thin wrapper: es_clear followed by es_draw_frame_common.
+ *
  * \param[in,out] script Script read pointer (was HL); advanced past the two
  *                       words consumed.
  */
@@ -337,8 +342,7 @@ static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
 }
 
 /**
- * $E42E es_attribute_fade_in: Sweep the middle attribute band toward
- * the backbuffer target colours
+ * $E42E es_attribute_fade_in: Sweep attributes toward the target colours
  *
  * Gate: only runs every other call (RLC flip-flops $5C6C; returns
  * immediately when the old top bit was set). When it runs, walks all 512
@@ -448,6 +452,7 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 /**
  * $E472 es_handler_glyph_fade_b: Fade the $5C6C-gated glyph attribute band
  *
+ * Thin wrapper: es_attribute_fade_out against es_fade_gate_ab.
  */
 static void es_handler_glyph_fade_b(chqstate_t *state)
 {
@@ -457,6 +462,7 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
 /**
  * $E46D es_handler_glyph_fade_c: Fade the $5C6D-gated glyph attribute band
  *
+ * Thin wrapper: es_attribute_fade_out against es_fade_gate_c.
  */
 static void es_handler_glyph_fade_c(chqstate_t *state)
 {
@@ -480,9 +486,11 @@ static const struct {
 static void es_handler_handshake_advance(chqstate_t *state);
 
 /**
- * $E3B7 es_handler_handshake: Fade the $5C6C attribute band one step
- * (routine_e472's shared tail, called directly rather than duplicated),
- * then run the handshake animation-advance ($E3BA, es_handler_handshake_advance).
+ * $E3B7 es_handler_handshake: Fade the $5C6C attribute band, then advance
+ *
+ * Fades the attribute band one step (routine_e472's shared tail, called
+ * directly rather than duplicated), then runs the handshake animation-advance
+ * ($E3BA, es_handler_handshake_advance).
  *
  * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
  * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
@@ -552,6 +560,8 @@ static void es_handler_handshake_advance(chqstate_t *state)
 /**
  * $E2D8 (stub): Idle per-frame handler (no drawing)
  *
+ * Does nothing; dispatched between animation beats when a script step has no
+ * per-frame work to do.
  */
 static void es_handler_idle(chqstate_t *state)
 {
@@ -919,6 +929,9 @@ static void render_text_common(chqstate_t *state, const u8 **script)
 /**
  * $E2F0: Clear the backbuffer, then render an end-screen text run
  *
+ * Clears the backbuffer before handing off to render_text_common, used for
+ * script commands that redraw the whole end-screen text area from scratch.
+ *
  * \param[in,out] script Script read pointer (was HL); advanced as per
  *                       render_text_common.
  */
@@ -1045,8 +1058,7 @@ static void es_setup_interrupts(chqstate_t *state)
 }
 
 /**
- * $F318: Load the pattern at pattern_addr into the
- * bank-7 music engine's playback state
+ * $F318: Load the pattern at pattern_addr into bank 7 music state
  *
  * Reads the pattern's repeat count; $FF marks the end of the pattern list
  * and restarts from the word-pointer that follows it (an offset from
@@ -1123,9 +1135,10 @@ static void es_reset_music(chqstate_t *state)
 }
 
 /**
- * Output bank 7's PCM drum sample (address not recovered from the skool;
- * only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
- * sample tables were decoded this pass)
+ * Output bank 7 PCM drum sample (address unrecovered from the skool)
+ *
+ * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
+ * sample tables were decoded this pass.
  *
  * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
  * sample byte, an inner loop runs drum_speed iterations; each iteration
@@ -1236,7 +1249,7 @@ static void es_play_noise(chqstate_t *state, int Aparam)
 }
 
 /**
- * $F340 Service the end-screen beatbox for the current frame
+ * $F340: Service the end-screen beatbox for the current frame
  *
  * Per-tick music driver for bank 7's own 48K music engine, almost identical
  * to Main.c's play_music_48k operating on es_music/es_music_patterns/

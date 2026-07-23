@@ -181,7 +181,11 @@ static void play_success_music(chqstate_t *state);
  *    advanced pattern pointer, and normalise a pending one-shot mute request.
  *
  * \param[in,out] IX_channel Pointer to this channel's tracker record. (was IX)
- * \param[in,out] DE_pattern ...
+ * \param[in,out] DE_pattern Pointer to the channel's pattern-stream read
+ *   cursor; advanced past the byte read, wrapping to pattern_base if it runs
+ *   past the extracted tune array. (was DE)
+ *
+ * \return The byte at the cursor position before advancing. (was A)
  *
  * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
  * $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
@@ -249,11 +253,16 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel,
 #define PHRASE_TABLE_REPEATING_ENTRY  2 /* 1-byte repeat count + 2-byte pointer follow */
 
 /**
- * Resolve a raw Z80 address from the title-tune phrase-pointer table (or its
- * 2-byte pattern-data header) to a C pointer into the transcribed raw data.
+ * Resolve a phrase-table or pattern-header address to a data pointer
+ *
+ * Converts a raw Z80 address, as found in the title-tune phrase-pointer
+ * table or in a 2-byte pattern-data header, into a C pointer into the
+ * transcribed title_tune0_data / title_tune1_data arrays.
  *
  * \param[in] addr Raw Z80 address, as stored little-endian in the table or
  *                  header. (was DE/HL)
+ *
+ * \return Pointer into the matching transcribed array. (was DE/HL)
  *
  * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
  * phrase_ptr are C pointers into title_tune0_data/title_tune1_data,
@@ -272,8 +281,7 @@ static const u8 *resolve_phrase_addr(u16 addr)
 }
 
 /**
- * $F1AE (bank 3): Walk a channel's phrase-pointer table for pattern command
- * 0x87
+ * $F1AE (bank 3): Walk a channel's phrase-pointer table for command 0x87
  *
  * Reached via advance_channel_pattern's computed dispatch for pattern
  * command byte 0x87 (see that function's Conv note on the dispatch table).
@@ -764,8 +772,7 @@ reset_row_counter:
 }
 
 /**
- * $EE9E (bank 3): Recompute one title-tune channel's AY tone-period and
- * volume/mixer values
+ * $EE9E (bank 3): Recompute one channel's AY tone-period and mixer values
  *
  * Part of the 128K animated title screen's music driver (distinct from the
  * 48K play_music_48k engine, which happens to share this address in a
@@ -1389,6 +1396,8 @@ static u8 oss_lookup_speed(u8 C_idx)
 /**
  * $C7A2: Apply the current X step to the X position
  *
+ * Adds x_step to x, unconditionally, once per frame.
+ *
  * \param[in,out] rec Object record to update (was IX).
  */
 static void oss_apply_x_step(struct title_object *rec)
@@ -1398,6 +1407,8 @@ static void oss_apply_x_step(struct title_object *rec)
 
 /**
  * $C7AC: Apply the current Y step to the Y position
+ *
+ * Adds y_step to y, unconditionally, once per frame.
  *
  * \param[in,out] rec Object record to update (was IX).
  */
@@ -1855,8 +1866,7 @@ static void ts_animate_frame(chqstate_t *state)
 }
 
 /**
- * $C8CD-$C902 / $C957-$C98C: Compute destination address and glyph-table
- * entry for a title-screen object
+ * $C8CD-$C902 / $C957-$C98C: Compute glyph destination address and table entry
  *
  * Shared by compute_glyph_blit_params and compute_glyph_blit_params_b, which
  * are otherwise identical apart from the row-offset walk and dispatch table
@@ -1937,9 +1947,11 @@ static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
 }
 
 /**
- * $C9F3 (and the 13 further copies at $CA05, $CA40, $CA52, $CA98, $CAAA,
- * $CAF3, $CB05, $CB57, $CB69, $CBA1, $CBB3, $CBE0, $CBF2): Advance a glyph-
- * blit screen address to the next scanline
+ * $C9F3: Advance a glyph-blit screen address to the next scanline
+ *
+ * Also covers the 13 further copies of this same sequence at $CA05, $CA40,
+ * $CA52, $CA98, $CAAA, $CAF3, $CB05, $CB57, $CB69, $CBA1, $CBB3, $CBE0,
+ * $CBF2.
  *
  * The caller increments H before calling this; this function applies the
  * ZX Spectrum screen memory's non-linear "third boundary" correction when a
@@ -1970,8 +1982,10 @@ static void advance_glyph_scanline(int *H, int *L)
 }
 
 /**
- * $C9D5 (and identically-shaped copies at $CA17, $CA64, $CABC, $CB17,
- * $CB7B, $CBC5): Masked-sprite OR-blit, row_bytes wide
+ * $C9D5: Masked-sprite OR-blit, row_bytes wide
+ *
+ * Also covers the identically-shaped copies at $CA17, $CA64, $CABC, $CB17,
+ * $CB7B, $CBC5.
  *
  * Draws B_height_pairs row-pairs (2 scanlines each) from src into the
  * screen bitmap starting at (H,L), OR-ing row_bytes source bytes into each
@@ -2037,6 +2051,13 @@ static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
 
 /**
  * $C9D5: Width-1 masked-sprite OR-blit (1 byte per scanline).
+ *
+ * Thin wrapper around blit_glyph_rows with row_bytes fixed at 1.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2046,6 +2067,13 @@ static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
 
 /**
  * $CA17: Width-2 masked-sprite OR-blit (2 bytes per scanline).
+ *
+ * Thin wrapper around blit_glyph_rows with row_bytes fixed at 2.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2055,6 +2083,13 @@ static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
 
 /**
  * $CA64: Width-3 masked-sprite OR-blit (3 bytes per scanline).
+ *
+ * Thin wrapper around blit_glyph_rows with row_bytes fixed at 3.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2064,6 +2099,13 @@ static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
 
 /**
  * $CABC: Width-4 masked-sprite OR-blit (4 bytes per scanline).
+ *
+ * Thin wrapper around blit_glyph_rows with row_bytes fixed at 4.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2073,6 +2115,13 @@ static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
 
 /**
  * $CB17: Width-5 masked-sprite OR-blit (5 bytes per scanline).
+ *
+ * Thin wrapper around blit_glyph_rows with row_bytes fixed at 5.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2093,6 +2142,11 @@ static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
  * therefore be drawn with its rightmost columns missing and its source data
  * under-consumed -- an original-game quirk, not a translation bug, and is
  * not "fixed" here.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -2108,6 +2162,11 @@ static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
  * shape to blit_width1 -- draws only 1 byte per scanline despite its
  * position at the end of the width-7 dispatch chain. See blit_width6's note
  * above; the same quirk applies here one width class down.
+ *
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
  */
 static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
                         int B_height_pairs)
@@ -3403,16 +3462,13 @@ static u8 options_menu_driver(chqstate_t *state)
 }
 
 /**
- * $F7C7: Boot entry point — set up interrupts, start tune 1, and run the
- * success-jingle sound loop
+ * $F7C7: Boot entry point — set up interrupts and run the success jingle
  *
  * Calls setup_im2_interrupt_table, starts tune 1, then falls into
  * basl_service_loop ($F7D1), which calls sfx_music_service once per 50Hz
  * interrupt via HALT synchronisation. In the Z80 this loop is unconditional
- * (`CALL $F82F` / `JR $F7D1`) and never returns to its caller.
- *
- *
- * \return Nothing (was RET never reached).
+ * (`CALL $F82F` / `JR $F7D1`) and never returns to its caller (was RET never
+ * reached).
  *
  * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
  * call_bank_3_128k, whose caller (handle_perp_caught_128k, and in turn its
@@ -3486,6 +3542,10 @@ u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
 
 /**
  * Sets every state->bank3 field to its power-on default.
+ *
+ * Called once when bank 3 is entered, so every field the title-screen music
+ * and animation code reads has a defined value even on paths that run
+ * before start_tune has had a chance to initialise it properly.
  *
  * \param[in,out] state Game state (bank3 must already be allocated).
  */
