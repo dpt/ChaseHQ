@@ -57,7 +57,7 @@
 #define KEMPSTON_MUSIC_TSTATES  (100000) // TODO: Calibrate
 #define OMD_MUSIC_TSTATES       (100000) // TODO: Calibrate
 #define SUCCESS_MUSIC_TSTATES   (100000) // TODO: Calibrate
-#define END_SCREEN_TSTATES      (69888) // one PAL interrupt frame; TODO: Calibrate
+#define END_SCREEN_TSTATES       (60000) // TODO: Calibrate
 
 /* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
  * summed from the skool T-state counts. Covers the three OUT (C),A triplets
