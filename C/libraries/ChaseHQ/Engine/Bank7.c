@@ -20,12 +20,12 @@
  * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
- * See show_end_screen() below. es_setup_interrupts and es_service_speech
- * remain stubs -- see their own prologues. es_start_music only primes
- * the fanfare's playback state (es_reset_music); the per-tick player and
- * drum/noise instruments (b7_play_music_48k, relocated to $F340 -- the real
- * target of the es_service_speech call, not speech as originally guessed;
- * b7_playdrum_X/Y) remain unported.
+ * See show_end_screen() below. es_setup_interrupts remains a stub -- see its
+ * own prologue. es_play_music_48k drives the fanfare each frame (relocated
+ * to $F340 -- the real target of that call, not speech as originally
+ * guessed) but its drum/noise instruments (es_playdrum_2/1, es_play_noise)
+ * remain unported stubs, so playback is currently silent on instrument
+ * notes.
  */
 
 #include <setjmp.h>
@@ -1109,14 +1109,29 @@ static void es_next_pattern(chqstate_t *state, const u8 *HLpataddr)
 }
 
 /**
+ * $F310: Advance to the next pattern once the current one's repeats expire
+ *
+ * Decrements pattern_repeats and returns immediately while repeats remain;
+ * once it reaches zero, loads the pattern whose address follows the one
+ * just played. Same structure as Main.c's next_pattern, operating on bank
+ * 7's own es_music state.
+ *
+ * \param[in,out] state Pointer to game state.
+ */
+static void es_advance_pattern(chqstate_t *state)
+{
+  if (--state->bank7->es_music.pattern_repeats)
+    return;
+  es_next_pattern(state, state->bank7->es_music.pattern_addr);
+}
+
+/**
  * $F300: Start the end-screen fanfare
  *
  * Clears the three playback flags that carry state across ticks
  * (drum_active, extra_delay, started) then loads the first pattern in
  * es_music_patterns, exactly as Main.c's reset_music does for the shared
- * in-game engine. This primes the engine only -- per-tick playback (the
- * $F340 handler show_end_screen's loop calls every frame, es_service_speech
- * here) and the drum/noise instrument players remain unported.
+ * in-game engine.
  *
  * \param[in] state Pointer to game state.
  */
@@ -1129,20 +1144,150 @@ static void es_start_music(chqstate_t *state)
 }
 
 /**
- * $F340: Service the end-screen fanfare for the current frame
+ * $F3CA (stub): Play bank 7 drum sample 2 for the current tick
  *
- * TODO: not yet ported. Its real relocated target is b7_play_music_48k
- * ($F82F, source address) -- bank 7's own per-tick music driver, analogous
- * to Main.c's play_music_48k. An earlier pass guessed this was speech
- * playback (living two bytes before the shared play_speech_128k); tracing
- * the $E026 CALL $F340 dispatch through the inner relocation ($F82F -
- * 0x4EF = $F340) disproves that.
+ * TODO: not yet ported. Analogous to Main.c's playdrum_2; the end-screen
+ * fanfare currently plays silently on instrument notes.
  *
- * \param[in] state Pointer to game state.
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aspeed Playback speed argument, unused until implemented (was A).
  */
-static void es_service_speech(chqstate_t *state)
+static void es_playdrum_2(chqstate_t *state, int Aspeed)
 {
   NOT_USED(state);
+  NOT_USED(Aspeed);
+}
+
+/**
+ * $F3D1 (stub): Play bank 7 drum sample 1 for the current tick
+ *
+ * TODO: not yet ported. Analogous to Main.c's playdrum_1; the end-screen
+ * fanfare currently plays silently on instrument notes.
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aspeed Playback speed argument, unused until implemented (was A).
+ */
+static void es_playdrum_1(chqstate_t *state, int Aspeed)
+{
+  NOT_USED(state);
+  NOT_USED(Aspeed);
+}
+
+/**
+ * $F504 (stub): Play bank 7's noise instrument for the current tick
+ *
+ * TODO: not yet ported. Analogous to Main.c's play_noise; the end-screen
+ * fanfare currently plays silently on instrument notes.
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aparam Instrument parameter argument, unused until implemented
+ *   (was A).
+ */
+static void es_play_noise(chqstate_t *state, int Aparam)
+{
+  NOT_USED(state);
+  NOT_USED(Aparam);
+}
+
+/**
+ * $F340 (b7_play_music_48k): Service the end-screen fanfare for the current
+ * frame
+ *
+ * Per-tick music driver for bank 7's own 48K music engine, almost identical
+ * to Main.c's play_music_48k operating on es_music/es_music_patterns/
+ * es_music_data instead of the shared in-game engine's tables. Either
+ * initialises playback on the first call or decrements the note delay
+ * counter; when the delay expires, reads the next byte from the pattern
+ * stream (a terminating byte of 1 advances to the next pattern via
+ * es_advance_pattern). Bytes with bit 7 set carry a one-tick extra delay
+ * flag; the lower three bits of the remaining byte select the instrument
+ * (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise).
+ *
+ * An earlier pass guessed this function's real target was speech playback
+ * (living two bytes before the shared play_speech_128k); tracing the $E026
+ * CALL $F340 dispatch through the inner relocation ($F82F - 0x4EF = $F340)
+ * disproved that -- it is bank 7's music player.
+ *
+ * Conv: the Z80 clears an interrupt flag ($F3BC) on entry then, once its
+ * own processing is done, busy-waits on that flag in a loop
+ * (b7pm_wait_for_interrupt) until the next interrupt sets it -- this is how
+ * the routine paces itself to one call per frame. show_end_screen's loop
+ * already paces each call via state->speccy->sleep, so both the flag and
+ * the wait loop are omitted; this function represents one already-paced
+ * tick, same as Main.c's play_music_48k.
+ *
+ * Conv: the Z80 checks es_input_mask ($A16F) first and, if it is non-zero
+ * (the player has pressed fire once already, skipping ahead to the
+ * congratulations script), jumps straight to the wait-for-interrupt loop --
+ * i.e. does no music processing at all that tick. C returns immediately in
+ * that case.
+ *
+ * \param[in,out] state Pointer to game state.
+ */
+static void es_play_music_48k(chqstate_t *state)
+{
+  int       Adelay;       /* note_delay-1; tests whether the current note's delay has expired (was A) */
+  const u8 *HLdata;       /* pattern byte-stream read pointer (was HL) */
+  int       An_note;      /* raw music byte minus 1; zero marks the end-of-pattern sentinel (was A) */
+  int       Dnote;        /* adjusted music byte: delay bit consumed, upper bits = param, lower 3 = instrument (was D) */
+  int       Binstrument;  /* instrument index: lower 3 bits of Dnote (was B) */
+  int       Aparam;       /* pitch/parameter value passed to the instrument handler (was A) */
+
+  if (state->bank7->es_input_mask != 0)
+    return; // Conv: wait-for-interrupt loop is a no-op here (see prologue)
+
+  if (state->bank7->es_music.started == 0) {
+    state->bank7->es_music.started = 1;
+    goto pm_reset_pattern;
+  }
+
+  Adelay = state->bank7->es_music.note_delay - 1;
+  if (Adelay) {
+    state->bank7->es_music.note_delay = Adelay;
+  } else {
+    state->bank7->es_music.note_delay = state->bank7->es_music.note_delay_reload;
+    HLdata = state->bank7->es_music.data_ptr;
+
+    for (;;) {
+      An_note = *HLdata - 1;
+      if (An_note)
+        break;
+
+      es_advance_pattern(state);
+
+pm_reset_pattern:
+      HLdata = state->bank7->es_music.pattern_start_ptr;
+      state->bank7->es_music.data_ptr = HLdata;
+    }
+
+    state->bank7->es_music.data_ptr = ++HLdata;
+    if (++An_note > 128) {
+      // A byte of the form 0b1aaaaiii (1 is the delay bit)
+      An_note &= 0x7F;
+      state->bank7->es_music.note_delay = 1;
+      state->bank7->es_music.extra_delay = 1;
+    }
+
+    Dnote       = An_note;
+    Binstrument = Dnote & 7;
+    if (Binstrument) {
+      Aparam = Dnote >> 3;
+      switch (Binstrument) {
+      case 1: es_playdrum_2(state, Aparam); return;
+      case 2: es_playdrum_1(state, Aparam); return;
+      case 3: es_play_noise(state, Aparam); return;
+      }
+    }
+  }
+
+  if (state->bank7->es_music.extra_delay) {
+    state->bank7->es_music.note_delay--;
+    state->bank7->es_music.extra_delay--;
+  }
+
+  // Conv: b7pm_start_drums/b7pm_wait_for_interrupt -- resuming a drum sample
+  // suspended by a real Z80 interrupt has no equivalent here; playdrum
+  // playback (once ported) will always run to completion within one call.
 }
 
 /**
@@ -1187,7 +1332,7 @@ void show_end_screen(chqstate_t *state)
 
     state->speccy->stamp(state->speccy);
 
-    es_service_speech(state);
+    es_play_music_48k(state);
     if (--state->bank7->es_frame_count == 0)
       run_script(state);
     state->bank7->es_handler(state);
