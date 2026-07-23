@@ -1181,7 +1181,6 @@ static void attract_mode_128k(chqstate_t *state);
  * removed in C; stage data is pre-loaded as read-only arrays in
  * Stage1Data.c (and future stage files).
  *
- *
  * Conv: Tape loading, header validation, screen clearing and transition setup
  * are all removed. C switches state->stage to the pre-loaded data table for the
  * requested stage.
@@ -1212,7 +1211,6 @@ static void load_stage(chqstate_t *state)
  * higher pitch). In a tunnel, the off-phase delay is reduced from 3 to 1. The
  * computed values are stored in SM fields and play_engine_sfx_48k is called to
  * emit a tone pulse.
- *
  *
  * Conv: Z80 stores nloops and delays via self-modifying LD C,n / LD B,n
  * instructions inside play_engine_sfx_48k at $8243/$8249/$8251; C stores to the
@@ -1251,7 +1249,6 @@ static void setup_engine_sfx_48k(chqstate_t *state)
  * Toggles port $FE between 0 and $18 (EAR+MIC) nloops times, with off-phase and
  * on-phase delay loops to tune the pitch. The Z80 inner loop body is: OUT
  * ($FE),0; B DJNZ loops; OUT ($FE),$18; B DJNZ loops; DEC C; JR NZ.
- *
  *
  * Conv: Z80 uses OUT ($FE) to drive the border/speaker port and idle DJNZ
  * busy-loops to set the duty cycle. C issues the OUTs via speccy->out and
@@ -1302,7 +1299,6 @@ static void play_engine_sfx_48k(chqstate_t *state)
  * second message blinks by rotating a pattern through RRCA each frame. When the
  * transition is stopped, alternates between showing the credits and copyright
  * messages via setup_overlay_messages.
- *
  *
  * Conv: Z80 uses two self-modifying LD A,n operands: one at $8277 for the RRCA
  * blink pattern (C field: state->attract_blinker) and one at $828C for the
@@ -1483,7 +1479,6 @@ static void attract_mode_hook(chqstate_t *state)
  * (overtake bonus, score, stage number, credits), call main_loop, and
  * optionally call the 128K bank 3 bootstrap routine.
  *
- *
  * Conv: Z80 loops back via JR $83CD; C uses for(;;). The five-byte clear (DJNZ
  * loop) is replaced with memset.
  */
@@ -1546,7 +1541,6 @@ static void bootstrap(chqstate_t *state)
  * through the game until the perp is caught or the player quits. When stage 6
  * is requested, the end screen runs and control returns to bootstrap. Called
  * "main loop" in the skool; it is really a subroutine of bootstrap.
- *
  *
  * Conv: Z80 uses POP / JP to restart the frame loop on stage transition; C uses
  * nested for(;;) loops and break. The quit path at $8A57 in the Z80 calls
@@ -1712,7 +1706,6 @@ static void main_loop(chqstate_t *state)
  * target gear. Then executes a reduced frame tick (read_map → animate_hero_car)
  * without scoring, hazards or overlay logic.
  *
- *
  * Conv: The host_quit longjmp check is a C addition (the Z80 has no clean-exit
  * mechanism). The CHECK assert macros are also C-only debug guards. The sleep()
  * at the end is a timing approximation.
@@ -1772,7 +1765,6 @@ static void drive_attract_demo(chqstate_t *state)
  * The pregame frame loop was extracted into run_pregame_screen_loop so the
  * caller can drive it from main_loop.
  *
- *
  * Conv: dont_draw_screen_attrs is set to 1; the Z80 used 0xF8 (non-zero but
  * with palette bits set). Pregame loop extracted (run_pregame_screen_loop).
  * Dead code at the end of the Z80 routine removed.
@@ -1801,7 +1793,6 @@ static void run_pregame_screen(chqstate_t *state)
  * the perp car reveal animation, drives the transition and flushes the screen.
  * Returns zero once the transition has completed and the chatter sequence is
  * idle, or immediately if the player presses fire to skip the intro.
- *
  *
  * \return 1 to continue looping; 0 when the pregame screen is complete.
  *
@@ -1855,7 +1846,6 @@ exit:
  * rows show until the counter reaches the sprite's full height). On stage 5 the
  * car is suppressed entirely.
  *
- *
  * Conv: Z80 stores the reveal height in a self-modifying LD A,n operand at
  * $85EB; C uses state->pregame_car_revealed_height. Z80 banks parameters via
  * EXX before calling plot_sprite and uses JP (tail call); C passes parameters
@@ -1902,7 +1892,6 @@ static void reveal_perp_car(chqstate_t *state)
  * the meter level up (positive) or down (negative), clamping to 0–7. Each level
  * is rendered by am_set_attrs as a row of up to seven coloured attribute cells
  * (green = signal, red = noise).
- *
  *
  * Conv: Z80 stores each meter level in a self-modifying LD A,n operand ($8614
  * and $8631); C uses state->meter_1_level and meter_2_level.
@@ -2361,7 +2350,6 @@ static void set_up_stage_reset_lights(u8 *attrptr)
  * released then wait for any key then debounce; boost → arm a 60-tick boost and
  * start turbo chatter.
  *
- *
  * Conv: Z80 tests for TRANSITIONCONTROL_FADE with CP $04; C uses the named
  * constant. The quit-key path at $88A9 is a separate function in C
  * (check_user_input_quit_key) rather than a fall-through at $88A9.
@@ -2509,7 +2497,6 @@ static void start_sfx(chqstate_t *state, int index, int priority)
  * siren and register-write hooks. If sfx_index is non-zero, looks up the SFX
  * entry in the 9-entry table ($893C), clears the index and priority, and calls
  * the handler with the entry's two parameters.
- *
  *
  * Conv: Z80 uses RLCA+RLCA to multiply sfx_index by 4 for a 4-byte stride
  * table; C uses sfx_index−1 as a direct array index into a struct array and
@@ -5677,7 +5664,6 @@ void start_chatter(chqstate_t       *state,
  *
  * Triggers a screen draw at the end of every call.
  *
- *
  * Conv: The idle cursor blink byte ($AA/$55 alternator) was self-modified at
  * $9982; C reads and writes state->chatter_cursor_blink instead.
  */
@@ -5807,7 +5793,6 @@ void drive_chatter_stop(chqstate_t *state)
  * first non-$FC byte is the speaking character's ID (0=pilot, 1=Nancy,
  * 2=Raymond, 3=Tony). The corresponding face bitmap is plotted at screen
  * position (176,8), then pc_chatter_message is called to queue the message.
- *
  *
  * Conv: Z80 computes face bitmap address via repeated ADD HL,DE (multiply by
  * $B4=180); C indexes directly into bitmap_faces[]. Conv: Chatter block entries
@@ -6313,7 +6298,6 @@ static void clear_message_line(chqstate_t *state)
  * second; FIRE resets the mission and restarts; expiry triggers quit. - WAITING
  * (4): quitting is in progress; do nothing.
  *
- *
  * Conv: Z80 implements the FSM via self-modifying JP; C uses a switch dispatch.
  * Conv: BCD time decrement uses DAA_sub with the Z80 half-borrow (H flag).
  */
@@ -6483,7 +6467,6 @@ static void play_start_noise(chqstate_t *state)
  * four (SRL×2), then BCD-corrected and any remaining carry is folded in. The
  * result is treated as the low BCD digit pair of the increment; the high pairs
  * are zero.
- *
  *
  * Conv: Z80 comment in skool notes "This code makes little sense" — the
  * rotation direction and carry handling appear to be a coding quirk rather than
@@ -6842,7 +6825,6 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
  *
  * 3. Time/distance/score digits ($9EC7–$9F12): delegates to ptad_led_digits for
  * each of the three remaining HUD digit groups.
- *
  *
  * Conv: Z80 uses SP as a fast bitmap source pointer (LD SP,HL; POP DE); C uses
  * a typed u16* (SPbitmap) with explicit *SPbitmap++ reads. Conv: Z80
@@ -7533,7 +7515,6 @@ static int keyscan_inner(const chqstate_t *state, int Ainput)
  * buffer, looks up their collision thresholds, and calls csc_hit_scenery if the
  * car's x position falls within the zone.
  *
- *
  * Conv: EXX at entry banks HLdash_road_pos_a/$0048 and DEdash_road_pos_b/ $01D8
  * into shadow registers as default ahc_road_pos values; a second EXX inside the
  * tunnel path overwrites them with tunnel-specific values. C models both banks
@@ -7895,7 +7876,6 @@ set_off_road:
  * 1:0) select which xpos table to use for the left boundary; bits 7:2 determine
  * the right boundary table via a separate lane-shift calculation. Fork slots
  * use the centre and centre-right tables directly.
- *
  *
  * Conv: Z80 uses SP as a descending stack pointer into $EB00; C uses an
  * explicit s16 pointer SP walked with prefix decrement. Conv: Z80 byte offset
@@ -11728,21 +11708,21 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
  */
 static void scroll_horizon(chqstate_t *state)
 {
-  int        carry;                     /* carry from RL operations on Adash (carry) */
-  int        speed;                     /* hero car speed; early-out if zero (was HL) */
-  int        current_curvature;         /* current_curvature: selects horizontal scroll path (was A) */
-  u8         Adash;                     /* banked A': approximated as 0 — Z80 carried this in from $B296 (was A') */
-  u8         Bhorizon_table_value;      /* high byte of horizon_table entry: reload for horizon_x_scroll (was B) */
-  u8         Chorizon_x_delta;         /* low byte of horizon_table entry: signed direction for x-scroll (was C) */
-  int        Aregular;                  /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
-  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
-  int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was B) */
-  int        Eset_if_incline_negative;  /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
-  int        Aincline;                  /* state->incline value; magnitude used for table index (was A) */
-  const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
-  int        Adiff;                     /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
-  int        Chorizon_table_value;      /* threshold from horizon_table for the vertical scroll rate (was C) */
-  int        BCcounter;                 /* signed tick count: positive=uphill, negative=downhill (was BC) */
+  int       carry;                    /* carry from RL operations on Adash (carry) */
+  int       speed;                    /* hero car speed; early-out if zero (was HL) */
+  int       current_curvature;        /* current_curvature: selects horizontal scroll path (was A) */
+  u8        Adash;                    /* banked A': approximated as 0 — Z80 carried this in from $B296 (was A') */
+  u8        Bhorizon_table_value;     /* high byte of horizon_table entry: reload for horizon_x_scroll (was B) */
+  u8        Chorizon_x_delta;         /* low byte of horizon_table entry: signed direction for x-scroll (was C) */
+  int       Aregular;                 /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
+  int       Ahorizon_y_a25a_delta;    /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
+  int       Bcounter;                 /* number of horizon_y ticks consumed this frame (was B) */
+  int       Eset_if_incline_negative; /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
+  int       Aincline;                 /* state->incline value; magnitude used for table index (was A) */
+  const u8 *HLhorizon_table;          /* pointer into horizon_table for incline-rate lookup (was HL) */
+  int       Adiff;                    /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
+  int       Chorizon_table_value;     /* threshold from horizon_table for the vertical scroll rate (was C) */
+  int       BCcounter;                /* signed tick count: positive=uphill, negative=downhill (was BC) */
 
   carry = 0;
 
@@ -16102,7 +16082,6 @@ static int8_t scale_curvature_or_height(int8_t a, int8_t c)
  * In the Z80 version the mode flag is set via XOR A, B is loaded with 3, then
  * JP $E81D transfers control to entry_common.
  *
- *
  * Conv: Z80 uses JP $E81D; C calls entry_common directly.
  */
 static void entry_48k(chqstate_t *state)
@@ -16119,7 +16098,6 @@ static void entry_48k(chqstate_t *state)
  *
  * In the Z80 version the code falls through from $E816 into entry_common at
  * $E81D after storing A (mode flag) and B (relocation count).
- *
  *
  * Conv: Z80 falls through to $E81D; C calls entry_common explicitly.
  */
@@ -16207,7 +16185,6 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
  * stored in controls_selected.
  *
  * Only reached in 48K mode; entry_128k does not call this function.
- *
  *
  * Conv: Removed. The C host loads the game directly without tape loading, so
  * neither the tape prompt nor the controller menu is needed.
@@ -17075,7 +17052,6 @@ void play_noise(chqstate_t *state, int Aparam)
  * tone: channel A fine pitch 140, channel A volume 14, channel B volume 12.
  * Seeds the rotating siren pattern and enables the siren flag.
  *
- *
  * Conv: Z80 writes only the fine (low) byte of channel A pitch to $A213; C
  * assigns the full ay_chan_a_pitch register. The Z80 stores the siren pattern
  * to a self-modifying 'LD B,n' operand at $8066 ($F271 before relocation); C
@@ -17148,7 +17124,6 @@ set_regs:
  * Sets the AY mixer register to $3F, disabling all noise and tone channels for
  * all three voices, then flushes the AY register soft copies to the hardware.
  *
- *
  * Conv: Z80 falls through into write_audio_registers_128k; C calls it.
  */
 static void silence_audio_128k(chqstate_t *state)
@@ -17165,7 +17140,6 @@ static void silence_audio_128k(chqstate_t *state)
  * then writing its value via port $BFFD. The loop uses OUTD which decrements HL
  * and B after each write; the JP P condition exits when A underflows from 0 to
  * −1 (i.e. once register 0 has been written).
- *
  *
  * Conv: Z80 uses the OUTD instruction (LD B,$FF / OUT (C),A / LD B,$BF / OUTD
  * in sequence); C issues two separate out() calls per register.
@@ -17194,7 +17168,6 @@ static void write_audio_registers_128k(chqstate_t *state)
  * doubled once more to lower the pitch further. A tunnel-dependent constant
  * ($0190 outside a tunnel, $0258 inside) is then added. Sets channel C pitch
  * (12-bit fine+coarse), volume and enables tone C in the mixer.
- *
  *
  * Conv: Z80 computes ~(HL>>1) via RR H / LD A,L / RRA / CPL / LD L,A; C uses
  * ~(state->speed >> 1) on a u16 directly. The tunnel check is restructured to
@@ -17245,7 +17218,6 @@ static void setup_turbo_sfx_128k(chqstate_t *state)
  * effect is complete and control falls through to the engine sound. The noise
  * pitch register drives AY channel C; once it reaches zero, tone and noise C
  * are disabled and the engine effect takes over.
- *
  *
  * Conv: Z80 uses JP $80AA (tail call to engine_sfx_from_speed_128k after
  * relocation); C calls it directly.
@@ -17400,7 +17372,6 @@ void play_speech_128k(chqstate_t *state, int index)
  * flag, resets the turbo SFX countdown to 1 and triggers the success music
  * sequence via bank 3.
  *
- *
  * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into call_bank_3_128k; C
  * passes BANK3_SUCCESS_MUSIC explicitly. The LD ($8E4A),A at $F3B0 self-modifies
  * overlay_delay; C assigns state->overlay_delay directly. Now that
@@ -17435,7 +17406,6 @@ static void handle_perp_caught_128k(chqstate_t *state)
  * restore the memory pager. Driven entirely by 128K hardware memory-bank
  * switching.
  *
- *
  * Conv: Removed. C has no 128K memory-paging hardware to drive.
  */
 static void page_128k(chqstate_t *state)
@@ -17449,7 +17419,6 @@ static void page_128k(chqstate_t *state)
  *
  * Writes zero to the 128K paging register at port $7FFD via OUT (C),A,
  * restoring the default memory layout (ROM 0, RAM bank 0, screen 0).
- *
  *
  * Conv: Removed. C has no hardware OUT port for 128K memory paging.
  */
@@ -17471,7 +17440,6 @@ static void reset_paging_128k(chqstate_t *state)
  * transition_control reaches zero, the countdown decrements: positive values
  * show credits, zero shows best-officers, negative restarts the loop. FIRE
  * exits attract mode and starts the game.
- *
  *
  * Conv: Z80 uses JP for looping and bank-3 call dispatch; C uses gotos and
  * call_bank_3_128k which dispatches via switch. The RRA for ENTER detection is

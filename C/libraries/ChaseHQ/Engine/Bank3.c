@@ -1199,7 +1199,6 @@ static void start_tune(chqstate_t *state, u8 A_tune)
  * block at $A213 -- kept as a distinct function because it walks the
  * title-tune engine's own register cache at $EFAF-$EFBA, not the in-game one.
  *
- *
  * Conv: the Z80 uses the OUTD instruction (LD B,$FF / OUT (C),A / LD B,$BF /
  * OUTD in sequence); C issues two separate out() calls per register, as in
  * write_audio_registers_128k.
@@ -1233,7 +1232,6 @@ static void write_title_ay_registers(chqstate_t *state)
  * register block to the AY chip via write_title_ay_registers.
  *
  * Called once per frame by the routine at $F82F.
- *
  *
  * Conv: the skool re-tests title_music.tune_active a second time at $ECCA
  * (tms_output_registers) before flushing, since that label is also reached
@@ -1601,7 +1599,6 @@ static void oss_op_accel_x_c(struct title_object *rec)
  * how the decelerate/accelerate modes overload the x_step/y_step fields as
  * curve-lookup counters.
  *
- *
  * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
  * with no PUSH anywhere in this call chain, that pops object_script_step's
  * own return address as data and returns via the frame beneath it, aborting
@@ -1777,7 +1774,6 @@ static void object_script_step(chqstate_t *state)
  * bytes backward from HL, DJNZ-looped 8 times per character row, stepping
  * through the $x00 third boundary via the usual ADD A,$20 / carry pattern.
  *
- *
  * Conv: the PUSH-fill collapses to one memset per scanline; the real stack
  * save/restore at $CC04/$CC4C-$CC4F has no C equivalent (SP is never
  * repurposed as a data pointer here) and is omitted.
@@ -1826,7 +1822,6 @@ static void clear_playfield_buffer(chqstate_t *state)
  * operation — the only exits are a stack-unwinding trick inside the
  * blitters when a frame overruns the interrupt deadline, or the whole call
  * stack being abandoned elsewhere when fire is pressed to start the game.
- *
  *
  * Conv: the self-looping structure and its stack-unwind escape hatch are not
  * modelled; this function always draws one frame then returns, matching how
@@ -2384,7 +2379,6 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
  * or a procedural noise generator ($FA3A). Called once per frame from
  * $C06E, $C16A, $C59E, $F7C7 and $FBC8.
  *
- *
  * Conv: music-only translation, per scope decision. Only the CALL $EC71 is
  * translated; the frame-flag clear at $F832-$F833 is omitted because nothing
  * in this port ever polls $F8A8 (wait_for_frame_flag is unused outside the
@@ -2407,7 +2401,6 @@ static void sfx_music_service(chqstate_t *state)
  * untouched. Called by $C0EC and clear_and_fill_border_attrs ($C8A9).
  *
  * Same as clear_screen (which this bank overlaps).
- *
  *
  * Conv: the Z80 self-fills via `LD (HL),L` (both ranges start on a $x00
  * boundary, so L is already zero) then LDIR; this collapses to two plain
@@ -2464,7 +2457,6 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * falls into the attract-mode wait loop (ts_wait_loop) which animates the
  * scene each frame while polling for coin/fire/keyboard input to start a
  * game. Called from $C000 and $FBC8.
- *
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
  * state->title_animation; see the TODO in ts_wait_loop where the "any
@@ -2592,7 +2584,6 @@ static void title_screen_driver(chqstate_t *state)
  * input to start the game or jump to a fresh title screen. Re-entered every
  * frame via $C61E; title_screen_driver ($C59E) is re-run (new scene) when a
  * key other than fire is pressed.
- *
  *
  * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame
  * pacing described in the skool ("one $F82F service call per frame") is
@@ -2774,7 +2765,6 @@ static u8 ts_wait_loop(chqstate_t *state)
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
  * into the shared name-table refresh tail at ts_refresh_name_table.
  *
- *
  * Conv: the $8011 push is a stack marker discarded by the shared tail's
  * `POP AF` ($C6C2) -- it has no other effect and is not modelled.
  */
@@ -2789,7 +2779,6 @@ static void ts_coin_inserted(chqstate_t *state)
  * Copies the 3 preset high-score name/rank rows from $C403 into the work
  * buffer pointed to by ($800A), each row split into 15+7+6 byte segments
  * with 2-byte gaps skipped between segments.
- *
  *
  * Conv: stubbed per scope decision -- nothing in the C port yet models the
  * destination buffer or a $800A-equivalent state field, and this task's
@@ -3024,7 +3013,6 @@ rescan:
  * any mismatch, returns immediately (the ordinary case -- the new mapping
  * is kept).
  *
- *
  * Conv: modelled as an outer for(;;) that only exits via return (mismatch)
  * -- matching the Z80, which has no path back to the caller once the
  * secret code has been entered other than by looping back to $FEA9 itself.
@@ -3121,7 +3109,6 @@ static void run_title_tune(chqstate_t *state)
  * Samples the Kempston port 20 times, servicing sound each iteration, and
  * bails out as soon as the port's value changes (a joystick is moving or
  * present).
- *
  *
  * \return 0 if Kempston port activity was detected within the sample
  * window -- the caller must return to the poll loop without installing any
@@ -3325,7 +3312,6 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
  * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
  *
- *
  * Conv: the Z80 does this as three LDIR chunks (attrs, then bitmap split
  * into two chunks of $082F and $07D0 bytes) with a sound-service call
  * between each pair; the bitmap fill collapses to one memset since nothing
@@ -3358,7 +3344,6 @@ static void clear_options_screen(chqstate_t *state)
  *
  * Once a scheme is chosen (any path other than "5"), installs the
  * active-control-config header and hands off to the title screen.
- *
  *
  * \return 1 always, at the point corresponding to the Z80's `JP $C59E`
  * ($FC11) -- the caller should now (re-)run title_screen_driver.
@@ -3481,7 +3466,6 @@ shared_tail:
  * omd_redraw_and_poll directly, skipping this one-time setup -- ts_wait_loop's
  * existing TODO ("fire pressed -> start the game via $FBA2") should call
  * omd_redraw_and_poll(state), not this function.
- *
  *
  * \return 1 always -- see omd_redraw_and_poll's return-value doc.
  */

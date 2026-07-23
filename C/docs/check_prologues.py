@@ -21,6 +21,21 @@ TITLE_RE = re.compile(r"^\$[0-9A-Fa-f]+.*:\s*\S.*$")
 PLAIN_TITLE_RE = re.compile(r"^\S.*$")  # C-only helper with no Z80 address
 PARAM_RE = re.compile(r"^\\param\[(in|out|in,out)\]\s+(\S+)\s+\S.*$")
 RETURN_RE = re.compile(r"^\\return\s+\S.*$")
+DOUBLE_SPACE_AFTER_PERIOD_RE = re.compile(r"[.!?]  ")
+
+
+def check_prose_lines(lines):
+  """Flag old-style double spaces after sentence-ending punctuation.
+
+  Only checks title/description/\\return/Conv prose, not \\param blocks or
+  continuation lines, which are hand-aligned into columns (ReflowComments is
+  off) and legitimately contain runs of spaces unrelated to sentence spacing.
+  """
+  errors = []
+  for line in lines:
+    if DOUBLE_SPACE_AFTER_PERIOD_RE.search(line):
+      errors.append("double space after sentence-ending punctuation: %r" % line)
+  return errors
 
 DEFAULT_GLOB = "libraries/ChaseHQ/Engine/*.c"
 
@@ -140,11 +155,16 @@ def check_function(filename, lineno, comment_lines, return_type, params):
     errors.append("empty prologue")
     return errors
 
+  for i in range(1, len(content)):
+    if content[i] == "" and content[i - 1] == "":
+      errors.append("repeated empty comment line at row %d" % i)
+
   if content[0].startswith("$"):
     if not TITLE_RE.match(content[0]):
       errors.append("title line missing '$XXXX: description' format: %r" % content[0])
   elif not PLAIN_TITLE_RE.match(content[0]):
     errors.append("empty title line")
+  errors.extend(check_prose_lines(content[:1]))
 
   idx = 1
   if idx >= len(content) or content[idx] != "":
@@ -164,6 +184,7 @@ def check_function(filename, lineno, comment_lines, return_type, params):
     errors.append("missing description paragraph")
   elif idx < len(content) and description_lines[-1] != "":
     errors.append("missing blank line before \\param/\\return section")
+  errors.extend(check_prose_lines(description_lines))
 
   expected_names = [param_name(p) for p in params_without_state]
   expected_names_with_state = (
@@ -207,10 +228,15 @@ def check_function(filename, lineno, comment_lines, return_type, params):
     elif not RETURN_RE.match(remaining[0]):
       errors.append("expected \\return line, got: %r" % remaining[0])
     else:
+      errors.extend(check_prose_lines(remaining[:1]))
       tail_paragraphs = split_paragraphs(content[idx:])[1:]
       stray = [p for p in tail_paragraphs if not p[0].startswith("Conv:")]
       if stray:
         errors.append("trailing content after \\return: %r" % stray[0])
+
+  if content[idx:]:
+    tail_lines = [l for p in split_paragraphs(content[idx:]) if p[0].startswith("Conv:") for l in p]
+    errors.extend(check_prose_lines(tail_lines))
 
   return errors
 
