@@ -65,14 +65,16 @@ struct chq_bank7_state {
   // render_score's unconditional set).
   u8           es_input_mask;
 
-  // $5C6C (SM): flip-flop gate byte, rotated (RLC) once per call by both
-  // routine_e42e (GLYPH_A) and routine_e472 (GLYPH_B, also called by
-  // routine_e3b7's handshake handler before its own animation logic).
-  u8           es_flag_5c6c;
+  // $5C6C (SM): GLYPH_A/GLYPH_B flip-flop cadence gate, rotated (RLC) once
+  // per call by both routine_e42e (GLYPH_A) and routine_e472 (GLYPH_B, also
+  // called by routine_e3b7's handshake handler before its own animation
+  // logic).
+  u8           es_fade_gate_ab;
 
-  // $5C6D (SM): flip-flop gate byte, rotated (RLC) once per call by both
-  // routine_e46d (GLYPH_C) and routine_e3b7 (HANDSHAKE) itself.
-  u8           es_flag_5c6d;
+  // $5C6D (SM): GLYPH_C flip-flop cadence gate, rotated (RLC) once per call
+  // by both routine_e46d (GLYPH_C) and routine_e3b7 (HANDSHAKE) itself, where
+  // it also gates the animation-advance block.
+  u8           es_fade_gate_c;
 
   // $A172 (SM): handshake animation frame index (0..5), advanced and
   // wrapped by routine_e3b7 each call; indexes handshake_table.

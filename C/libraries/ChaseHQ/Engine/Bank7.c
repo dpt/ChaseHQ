@@ -368,7 +368,7 @@ static void es_attribute_fade_in(chqstate_t *state)
   u8  B_target; /* masked target colour read from the backbuffer (was B) */
   u8  C_ink;    /* merged ink field (was C) */
 
-  RLC(state->bank7->es_flag_5c6c);
+  RLC(state->bank7->es_fade_gate_ab);
   if (carry)
     return;
 
@@ -455,7 +455,7 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
  */
 static void es_handler_glyph_fade_b(chqstate_t *state)
 {
-  es_attribute_fade_out(state, &state->bank7->es_flag_5c6c);
+  es_attribute_fade_out(state, &state->bank7->es_fade_gate_ab);
 }
 
 /**
@@ -465,7 +465,7 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
  */
 static void es_handler_glyph_fade_c(chqstate_t *state)
 {
-  es_attribute_fade_out(state, &state->bank7->es_flag_5c6d);
+  es_attribute_fade_out(state, &state->bank7->es_fade_gate_c);
 }
 
 /* $E3A5 handshake_table: row-count + source bitmap per animation frame,
@@ -529,7 +529,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   u8       *HL_attr;  /* decorative attribute cell (was HL) */
   int       group;    /* decorative attribute group counter, 5 down to 0 (was C) */
 
-  RLC(state->bank7->es_flag_5c6d);
+  RLC(state->bank7->es_fade_gate_c);
   if (carry) {
     A_index = state->bank7->es_handshake_index;
     state->bank7->es_handshake_index = (u8) (A_index + 1 == 6 ? 0 : A_index + 1);
@@ -1172,8 +1172,8 @@ int bank7_state_create(chqstate_t *state)
    * zero is wrong -- RLC(0) is always 0 with no carry, which permanently
    * disables the GLYPH_B fade and the handshake animation's advance/draw
    * block. */
-  state->bank7->es_flag_5c6c = 0xAA;
-  state->bank7->es_flag_5c6d = 0x88;
+  state->bank7->es_fade_gate_ab = 0xAA;
+  state->bank7->es_fade_gate_c = 0x88;
 
   return 0;
 }
