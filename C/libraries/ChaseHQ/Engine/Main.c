@@ -17313,8 +17313,8 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
  * $F2F1: Initialise the turbo boost sound effect
  *
  * Seeds both the AY noise pitch and the turbo SFX countdown to $3C (60).
- * play_turbo_sfx_128k then decrements these each frame to produce a descending
- * noise burst before handing off to the engine sound.
+ * play_engine_or_turbo_sfx_128k then decrements these each frame to produce a
+ * descending noise burst before handing off to the engine sound.
  *
  * \param[in] state Pointer to game state.
  */

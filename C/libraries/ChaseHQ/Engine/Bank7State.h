@@ -83,7 +83,7 @@ struct chq_bank7_state {
   // Bank 7's own copy of the 48K music engine's playback state (SM fields at
   // $F311/$F318/$F34B/$F356/$F362/$F372/$F3A9/$F3B6 in the relocated $F300
   // buffer), driving es_music_patterns/es_music_data via
-  // play_turbo_sfx_128k. Same shape as chqstate_t's own "music" struct
+  // es_play_music_48k. Same shape as chqstate_t's own "music" struct
   // (State.h) -- a separate instance because bank 7 pages in its own copy of
   // the engine rather than sharing the in-game one.
   struct {
