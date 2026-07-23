@@ -100,9 +100,9 @@ static void es_clear(chqstate_t *state)
 #define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
 /**
- * $E0FE-$E209: Raw end-screen script bytes.
+ * $E0FE-$E209: End-screen script bytecode.
  *
- * Verbatim transcription of the skool's script_data block (268 bytes):
+ * Verbatim transcription of the skool's es_script block (268 bytes):
  * command/argument bytes interleaved with bitmap addresses (as raw
  * little-endian DEFW pairs) and embedded high-bit-terminated ASCII text
  * ("CONGRATULATIONS!", "ALL  CLEAR", "(C) 1989 OCEAN SOFTWARE", "(C) 1988
@@ -114,10 +114,10 @@ static void es_clear(chqstate_t *state)
  * state->bank7->es_script at entry; es_handler_draw_score patches the
  * "GBP________ PTS" placeholder text in-place (offset 0xFD, matching $5DFB
  * relocated) in that per-instance copy, not here, exactly as the original
- * self-modifies its own script_data at that address but without concurrent
+ * self-modifies its own es_script at that address but without concurrent
  * game instances trampling each other's score text.
  */
-static const u8 script_data[] = {
+static const u8 es_script[] = {
   ESCMD_CHATTER(0x5C6E), /* -> chatterblk_nancy_congratulates */
   ESCMD_IDLE(0xC0),
   ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(72, 96)), // bitmap_endshot_1, screen dst
@@ -280,7 +280,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 /**
  * Resolve a script-embedded end-shot bitmap address to its C data array.
  *
- * Conv: the original walks a real (relocated) Z80 pointer; script_data only
+ * Conv: the original walks a real (relocated) Z80 pointer; es_script only
  * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME_VAL
  * entries above), so a small lookup replaces pointer arithmetic into
  * relocated bank memory the C port does not model byte-for-byte.
@@ -288,7 +288,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
  * \param[in] addr Raw address word read from the script (was HL).
  * \return Matching bitmap_endshot_N array.
  */
-static const u8 *resolve_endshot(u16 addr)
+static const u8 *z80addrtoendshot(u16 addr)
 {
   switch (addr) {
   case 0x60E1: return &bitmap_endshot_1[0];
@@ -319,7 +319,7 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
   screen_addr = wordat(HL_script + 2);
   HL_script += 4;
 
-  draw_endshot(state, resolve_endshot(image_addr), screen_addr);
+  draw_endshot(state, z80addrtoendshot(image_addr), screen_addr);
 
   *script = HL_script;
 }
@@ -375,7 +375,7 @@ static void es_attribute_fade_in(chqstate_t *state)
   HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
   DE_back = ADDRTOBACKBUF(0xF000);
 
-  for (c = 32 * 16; c != 0; c--, HL_attr++, DE_back++) {
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++) {
     if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
       continue;
 
@@ -387,12 +387,12 @@ static void es_attribute_fade_in(chqstate_t *state)
 
     B_target = A_target;
 
-    C_ink = *HL_attr & 0x07; // Ink
-    if ((B_target & 0x07) != C_ink)
+    C_ink = *HL_attr & ATTR_INK_MASK;
+    if ((B_target & ATTR_INK_MASK) != C_ink)
       C_ink++;
 
-    A_paper = *HL_attr & 0x38; // Paper
-    if ((B_target & 0x38) != A_paper)
+    A_paper = *HL_attr & ATTR_PAPER_MASK;
+    if ((B_target & ATTR_PAPER_MASK) != A_paper)
       A_paper = (u8) (A_paper + 0x08);
 
     *HL_attr = (u8) (A_paper | C_ink);
@@ -431,16 +431,16 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 
   HL_pattrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
 
-  for (c = 32 * 16; c != 0; c--, HL_pattrs++) {
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_pattrs++) {
     A_attr = *HL_pattrs;
     if (A_attr == 0)
       continue;
 
-    B_ink = A_attr & 0x07;
+    B_ink = A_attr & ATTR_INK_MASK;
     if (B_ink != 0)
       B_ink--;
 
-    A_paper = A_attr & 0x38;
+    A_paper = A_attr & ATTR_PAPER_MASK;
     if (A_paper != 0)
       A_paper = (u8) (A_paper - 0x08);
 
@@ -590,7 +590,7 @@ static void es_handler_draw_score(chqstate_t *state)
 {
   int       tally;    /* bonus-tally animation iteration counter (was BC) */
   const u8 *DE_bcd;   /* packed-BCD score pointer, walked backwards (was DE) */
-  u8       *HL_dst;   /* destination ASCII bytes in script_data (was HL) */
+  u8       *HL_dst;   /* destination ASCII bytes in es_script (was HL) */
   u8        C_seen;   /* sticky "non-blank digit already printed" flag (was C) */
   int       pair;     /* BCD byte-pair iteration counter (was B) */
   u8        A_nibble; /* nibble being converted to ASCII (was A) */
@@ -634,7 +634,7 @@ static void es_handler_draw_score(chqstate_t *state)
 /**
  * Resolve a script-embedded argument word to its C data array.
  *
- * Conv: as with resolve_endshot, script_data only ever encodes one literal
+ * Conv: as with z80addrtoendshot, es_script only ever encodes one literal
  * value here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E
  * via the bank's uniform +0x8400 rule), so a small lookup replaces pointer
  * arithmetic into relocated bank memory the C port does not model
@@ -792,7 +792,7 @@ have_single:
  * physical register set read at $E2F5 -- the ladder's own use of C
  * ($E328-$E356) is a completely different (Set S) C that plot_char's own
  * LDI calls decrement into irrelevance and never reads back. Confirmed
- * against script_data: the byte read here for "CONGRATULATIONS!" is
+ * against es_script: the byte read here for "CONGRATULATIONS!" is
  * attribute_BRIGHT_WHITE_OVER_BLACK -- a plausible text colour, not a row
  * count. It survives unclobbered in Set M across the whole render_text call
  * and is written verbatim into both glyph-cell attributes at $E399/$E3A0.
@@ -804,7 +804,7 @@ have_single:
  * "did this cross a screen third" branch. Reproduced literally as two
  * independent 8-bit adds rather than substituting next_screen_row, since
  * the two are only equivalent when no such carry occurs -- true for every
- * script-supplied text position in script_data, but not guaranteed in
+ * script-supplied text position in es_script, but not guaranteed in
  * general.
  *
  * Conv: the attribute-row address computed from Drow (Hattr, range
@@ -1114,8 +1114,8 @@ void show_end_screen(chqstate_t *state)
   bank7_setup_interrupts(state);
   play_turbo_sfx_128k(state);
 
-  assert(sizeof(script_data) == sizeof(state->bank7->es_script));
-  memcpy(state->bank7->es_script, script_data, sizeof(script_data));
+  assert(sizeof(es_script) == sizeof(state->bank7->es_script));
+  memcpy(state->bank7->es_script, es_script, sizeof(es_script));
   state->bank7->es_script_ptr  = state->bank7->es_script;
   state->bank7->es_frame_count = 1;
   state->bank7->es_handler     = es_handler_idle;

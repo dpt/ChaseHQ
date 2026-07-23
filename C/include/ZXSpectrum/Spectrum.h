@@ -32,6 +32,8 @@ extern "C"
 #define ATTR_YELLOW                     (6)
 #define ATTR_WHITE                      (7)
 
+#define ATTR_INK_MASK                   (7)
+#define ATTR_PAPER_MASK                 (7<<3)
 #define ATTR_BRIGHT                     (1<<6)
 
 /**
