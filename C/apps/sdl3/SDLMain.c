@@ -89,6 +89,14 @@
 
 // -----------------------------------------------------------------------------
 
+static void chq_update_window_title(SDL_Window *window, int speed)
+{
+  char title[64];
+
+  SDL_snprintf(title, sizeof(title), "Chase H.Q. - Speed: %d%%", speed);
+  SDL_SetWindowTitle(window, title);
+}
+
 static int chq_window_width(int scale)
 {
   return (GAMEWIDTH + BORDER * 2) * scale;
@@ -618,6 +626,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
                    SPEED_MIN, SPEED_MAX);
 
       state->speed = speed;
+      chq_update_window_title(state->window, speed);
       printf("Speed: %d%%\n", speed);
     }
     return;
@@ -853,6 +862,8 @@ int main(void)
   }
 
   state.window = window;
+
+  chq_update_window_title(window, state.speed);
 
 #if !CHQ_CRT_SHADER
   state.renderer = SDL_CreateRenderer(window, NULL);
