@@ -59,7 +59,6 @@
 - Sort macros
 - Update summaries of major functions to docs/
 - Hoist out all interesting Z80 addresses to constants
-- Factor out more constants (e.g. 21)
 - Scan for type problems
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)

@@ -34,6 +34,10 @@
  * and the 1..21 valid range of height_table, terminated at index 22). */
 #define PERSP_TABLE_COLS (22)
 
+/** Populated road/perspective slots: height_table[1..21], excludes the [0]
+ * sentinel. */
+#define ROAD_SLOT_COUNT (PERSP_TABLE_COLS - 1)
+
 /* ----------------------------------------------------------------------- */
 
 // Conv: The C version uses IDs for strings and blocks rather than inline

@@ -3716,20 +3716,20 @@ static void draw_scene_objects(chqstate_t *state)
 
   HLheight_table = &state->height_table[1];
   DEclamped_heights = &state->clamped_heights[0];
-  Biterations = 21;
+  Biterations = ROAD_SLOT_COUNT;
   do {
     assert(HLheight_table >= &state->height_table[0]
            && HLheight_table < &state->height_table[PERSP_TABLE_COLS]);
     assert(DEclamped_heights >= &state->clamped_heights[0]
-           && DEclamped_heights < &state->clamped_heights[21]);
+           && DEclamped_heights < &state->clamped_heights[ROAD_SLOT_COUNT]);
     *HLheight_table++ += 32;
     *DEclamped_heights++ += 32;
   } while (--Biterations > 0);
   assert(HLheight_table == &state->height_table[PERSP_TABLE_COLS]);
-  assert(DEclamped_heights == &state->clamped_heights[21]);
+  assert(DEclamped_heights == &state->clamped_heights[ROAD_SLOT_COUNT]);
 
-  IYheight_table = &state->height_table[21];
-  assert(IYheight_table == &state->height_table[21]);
+  IYheight_table = &state->height_table[ROAD_SLOT_COUNT];
+  assert(IYheight_table == &state->height_table[ROAD_SLOT_COUNT]);
   if (state->dee_draw_tunnel_1)
     draw_tunnel(state, IYheight_table);
   IYheight_table--;
@@ -7951,7 +7951,7 @@ static void layout_objects(chqstate_t *state)
   carry = 0;
 
   objpos = &state->object_positions[0];
-  iterations = 21; // iterations
+  iterations = ROAD_SLOT_COUNT; // iterations
   total = 0;
   do {
     total += *objpos;
@@ -7961,7 +7961,7 @@ static void layout_objects(chqstate_t *state)
   SP = &state->xpos_road_centre_right[0]; // OR should this be ea00[256] ?
   bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
   objpos2 = &state->object_positions[0];
-  iterations = 21; // iterations
+  iterations = ROAD_SLOT_COUNT; // iterations
   if (state->fork_visible == 0)
     goto positions_loop;
 
@@ -8038,7 +8038,7 @@ load_and_store_right:
   }
 
   // Forking
-  A = 21 - countdown;
+  A = ROAD_SLOT_COUNT - countdown;
   if (A == 0)
     return; // no fork, or not about to fork?
 
@@ -15890,7 +15890,7 @@ static void build_curve_table_fill(chqstate_t *state,
   assert(DEroadpos >= INT16_MIN && DEroadpos <= INT16_MAX);
 
   IYheight_table = &state->height_table[0];
-  Biterations = 21;
+  Biterations = ROAD_SLOT_COUNT;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
   do {
@@ -16036,7 +16036,7 @@ static void build_height_table(chqstate_t *state)
 
   /* Conv: EXX at $CD63 — Cmin stays in C; HLpvtab stays in HL (shadow).
    * B' = 21 and DE' = &height_table[1] are loaded into main registers. */
-  Bdash_iters = 21;
+  Bdash_iters = ROAD_SLOT_COUNT;
   DEphtab     = &state->height_table[1];
   do {
     /* $CD69 — unbank: HL (HLpvtab) and C (Cmin) restored from shadow */
@@ -16064,7 +16064,7 @@ static void build_height_table(chqstate_t *state)
   /* Phase 2 — $CDB7 bht_loop2: copy to clamped_heights, tracking minimum */
   HLdst   = &state->clamped_heights[0];
   DEsrc   = &state->height_table[1];
-  B_iters = 21;
+  B_iters = ROAD_SLOT_COUNT;
   Cmin    = 96;
   do {
     A_height = *DEsrc;

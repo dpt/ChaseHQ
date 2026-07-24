@@ -710,13 +710,13 @@ struct chqstate {
   // $E320
   u8        curvature_table[PERSP_TABLE_COLS]; // per-depth curvature adjustment; built by build_curve_table
   // $E336
-  u8        clamped_heights[21]; // running-minimum clamp of height_table[1..21]; built by build_height_table
+  u8        clamped_heights[ROAD_SLOT_COUNT]; // running-minimum clamp of height_table[1..21]; built by build_height_table
   // $E34B
   u8        horizon_attr[3]; // horizon attribute scroll state: [0]=initial delta, [1]=current level, [2]=previous level
   // $E34E - unused pad byte; kept so pointer arithmetic ending at $E34E/$E34F (advance_hazard, draw_tunnel) lands correctly
   u8        horizon_attr_pad;
   // $E34F
-  u8        object_positions[21];
+  u8        object_positions[ROAD_SLOT_COUNT];
   // Horizontal pixel positions per screen row (index = row, 0..127, only the
   // visible depth range is populated per frame). 0..255 is on-screen; values
   // outside that range are off-screen left/right during curves and are
