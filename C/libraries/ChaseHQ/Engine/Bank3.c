@@ -41,7 +41,6 @@
 
 #include "ChaseHQ/Data/Bank3Data.h"
 #include "ChaseHQ/Data/CommonData.h"
-#include "ChaseHQ/Data/TitleScreenData.h"
 
 #include "Types.h"
 #include "Internal.h"
@@ -1665,18 +1664,18 @@ static u8 object_script_step(chqstate_t *state)
           rec->opcode = A_byte;
 
           switch (A_byte) {
-          case 0xC8: /* set screen-row byte, 1 operand */
+          case OSS_OP_SET_ROW:
             rec->row = *HLscript++;
             continue;
 
-          case 0xC9: /* set velocity, 3 operand bytes: x,y,wait */
+          case OSS_OP_VELOCITY:
             rec->x_step = (s8) *HLscript++;
             rec->y_step = (s8) *HLscript++;
             rec->wait   = *HLscript++;
             break;                          /* -> save cursor below */
 
-          case 0xCA: /* decelerate X, 3 operand bytes */
-          case 0xCB: /* decelerate Y, same operand layout */
+          case OSS_OP_DECEL_X:
+          case OSS_OP_DECEL_Y:
             /* $C7DC-$C7E8: note the y_step slot is read first here -- it
              * seeds the deceleration-curve counter, not a real Y step; see
              * oss_op_decel_x/oss_op_decel_y. */
@@ -1685,9 +1684,9 @@ static u8 object_script_step(chqstate_t *state)
             rec->x_step = (s8) *HLscript++;
             break;
 
-          case 0xCC: /* accelerate X variant a */
-          case 0xCD: /* accelerate X variant c */
-          case 0xCE: /* accelerate X variant b */
+          case OSS_OP_ACCEL_X_A:
+          case OSS_OP_ACCEL_X_C:
+          case OSS_OP_ACCEL_X_B:
             /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
              * counter here, not a real X step; see oss_op_accel_x_*. */
             rec->x_step = (s8) *HLscript++;
@@ -1695,20 +1694,20 @@ static u8 object_script_step(chqstate_t *state)
             rec->y_step = (s8) *HLscript++;
             break;
 
-          case 0xCF: /* "wait N frames", 1 operand byte */
+          case OSS_OP_WAIT:
             rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
             break;
 
-          case 0xD0: /* jump to absolute position, 2 operand bytes */
+          case OSS_OP_JUMP_POSITION:
             rec->x = *HLscript++;
             rec->y = *HLscript++;
             continue;
 
-          case 0xD2: /* end of script -- see this function's own Conv note */
+          case OSS_OP_END_SCRIPT: /* see this function's own Conv note */
             return 1;
 
-          default: /* $D1 and anything else: no operand bytes, falls
-                    * straight to oss_save_cursor ($C76C-$C772) */
+          default: /* OSS_OP_DEAD and anything else: no operand bytes,
+                    * falls straight to oss_save_cursor ($C76C-$C772) */
             break;
           }
 
@@ -1724,17 +1723,17 @@ static u8 object_script_step(chqstate_t *state)
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
       recognized = 1;
       switch (rec->opcode) {
-        case 0xC9: oss_op_velocity(rec);  break;
-        case 0xCA: oss_op_decel_x(rec);   break;
-        case 0xCB: oss_op_decel_y(rec);   break;
-        case 0xCC: oss_op_accel_x_a(rec); break;
-        case 0xCD: oss_op_accel_x_c(rec); break;
-        case 0xCE: oss_op_accel_x_b(rec); break;
-        case 0xCF: break; /* "wait": no per-frame movement of its own --
-                           * falls straight to the countdown below */
+        case OSS_OP_VELOCITY:  oss_op_velocity(rec);  break;
+        case OSS_OP_DECEL_X:   oss_op_decel_x(rec);   break;
+        case OSS_OP_DECEL_Y:   oss_op_decel_y(rec);   break;
+        case OSS_OP_ACCEL_X_A: oss_op_accel_x_a(rec); break;
+        case OSS_OP_ACCEL_X_C: oss_op_accel_x_c(rec); break;
+        case OSS_OP_ACCEL_X_B: oss_op_accel_x_b(rec); break;
+        case OSS_OP_WAIT: break; /* no per-frame movement of its own --
+                                  * falls straight to the countdown below */
         default:
-          /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. the dead
-           * value $D1 emitted by every title scene's object 0 script --
+          /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. OSS_OP_DEAD
+           * emitted by every title scene's object 0 script --
            * see this function's own prologue and the ctl note at $C705)
            * never reaches oss_countdown, so the object's wait counter is
            * never decremented and it can never go idle again. A genuine

@@ -18,12 +18,47 @@
 #ifndef CHASEHQ_BANK3DATA_H
 #define CHASEHQ_BANK3DATA_H
 
+#include "C99/Types.h"
+
 /* ----------------------------------------------------------------------- */
 
 extern const u8 title_screen_credits_text[56];
 extern const u8 title_screen_overlay_text[47];
 
-extern const u8 options_menu_text[366];
+#define TITLE_SCENE_COUNT          (5)
+#define TITLE_SCENE_DATA_BASE (0xCCB7)
+#define TITLE_GLYPH_COUNT        (115)
+
+typedef struct title_glyph {
+  u8        height_pairs; /* number of scanline-pairs to blit */
+  u8        width_bytes;  /* glyph width in screen bytes (1-7) */
+  const u8 *bitmap;      /* source pixel bytes, OR-blitted verbatim */
+} title_glyph_t;
+
+extern const u8 title_scene_data[1467];
+extern const u16 title_scene_table_offset[TITLE_SCENE_COUNT];
+extern const u8 title_speed_curve[36];
+extern const u8 title_glyph_bitmaps[5948];
+extern const title_glyph_t title_glyph_table[TITLE_GLYPH_COUNT];
+
+/* Object animation script opcodes (title_object::opcode / script byte-code
+ * in title_scene_data above). Bytes with the sign bit clear ($00-$7F) are
+ * immediate step deltas, not opcodes -- see oss_op_immediate_step in
+ * object_script_step's prologue (Bank3.c). */
+#define OSS_OP_SET_ROW        (0xC8) /* set screen-row byte, 1 operand */
+#define OSS_OP_VELOCITY       (0xC9) /* constant velocity, 3 operands: x,y,wait */
+#define OSS_OP_DECEL_X        (0xCA) /* decelerate X, 3 operands */
+#define OSS_OP_DECEL_Y        (0xCB) /* decelerate Y, 3 operands */
+#define OSS_OP_ACCEL_X_A      (0xCC) /* accelerate X variant a, 3 operands */
+#define OSS_OP_ACCEL_X_C      (0xCD) /* accelerate X variant c, 3 operands */
+#define OSS_OP_ACCEL_X_B      (0xCE) /* accelerate X variant b, 3 operands */
+#define OSS_OP_WAIT           (0xCF) /* wait N frames, 1 operand */
+#define OSS_OP_JUMP_POSITION  (0xD0) /* jump to absolute position, 2 operands */
+#define OSS_OP_DEAD           (0xD1) /* unrecognized/dead value -- never explicitly
+                                       * emitted as a case, falls to default in both
+                                       * switches; see object_script_step's prologue */
+#define OSS_OP_END_SCRIPT     (0xD2) /* end of script -- POP HL; RET stack unwind,
+                                       * see object_script_step's own Conv note */
 
 /* Index names for note_periods[] below, in scientific pitch notation
  * (A4 = 440 Hz, C4 = middle C), derived from each entry's AY tone period. */
@@ -76,6 +111,8 @@ extern const u8 title_tune0_data[1026];
  * channels' reach into this region. Tune 2 begins at $F666, inside this
  * range; tune 2 is not itself extracted. */
 extern const u8 title_tune1_data[222];
+
+extern const u8 options_menu_text[366];
 
 /* ----------------------------------------------------------------------- */
 

@@ -60,8 +60,6 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/Stage4Data.h
         libraries/ChaseHQ/Data/Stage5Data.c
         libraries/ChaseHQ/Data/Stage5Data.h
-        libraries/ChaseHQ/Data/TitleScreenData.c
-        libraries/ChaseHQ/Data/TitleScreenData.h
         libraries/ChaseHQ/Data/Bank3Data.c
         libraries/ChaseHQ/Data/Bank3Data.h
         libraries/ChaseHQ/Data/Bank7Data.c
@@ -106,7 +104,6 @@ set(TEST_SOURCE_FILES
         libraries/ChaseHQ/Data/Stage3Data.c
         libraries/ChaseHQ/Data/Stage4Data.c
         libraries/ChaseHQ/Data/Stage5Data.c
-        libraries/ChaseHQ/Data/TitleScreenData.c
         libraries/ChaseHQ/Data/Bank3Data.c
         libraries/ChaseHQ/Data/Bank3Data.h
         libraries/ChaseHQ/Data/Bank7Data.c
