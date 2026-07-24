@@ -8850,11 +8850,12 @@ static void draw_dirt_and_stones(chqstate_t *state,
   u8               Atype;                     /* type byte: 1=stone, 2=dirt (was A) */
   const bitmap_t (*DEbitmaps)[SPRITE_FRAMES]; /* bitmap LOD array: stones_lods or dust_lods (was DE) */
   int              Cx;                        /* x-position low byte from the particle table (was C) */
-  int              Ax;                        /* LOD index (was A) */
+  int              Ax;                        /* x-position byte, low then high (was A) */
   const bitmap_t  *HLbitmap;                  /* selected bitmap frame for the current LOD level (was HL) */
   int              Ewidth;                    /* pixel width of selected bitmap: width_bytes * 8 (was E) */
   int              saved_A;                   /* banked x-position high byte; sign selects the draw path (was A') */
   int              Aiterations;               /* (was A) */
+  int              Awidth_bytes;              /* Ax + Ewidth once past the edge check: available draw width (was A) */
 
   if (state->ddas_enabled == 0)
     return;
@@ -8904,16 +8905,16 @@ ddas_bitmaps:
       draw_object_right_width_entrypt(state, Ax, HLbitmap,
                                       IYheight); /* tail call */
     } else {
-      Ax += Ewidth;
-      draw_object_left_width_entrypt(state, Ax, HLbitmap,
+      Awidth_bytes = Ax + Ewidth;
+      draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                      IYheight); /* tail call */
     }
   } else {
     if (Ax + Ewidth <= 255) /* fully off-screen when the add doesn't overflow */
       return;
 
-    Ax += Ewidth; /* Conv: wraps as the Z80 ADD does */
-    draw_object_left_width_entrypt(state, Ax, HLbitmap,
+    Awidth_bytes = Ax + Ewidth; /* Conv: wraps as the Z80 ADD does */
+    draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                    IYheight);  /* tail call */
   }
 }
@@ -9024,6 +9025,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   int             Atop;       /* was A */
   u8              Abot;       /* was A; Conv: u8 so += wraps mod 256 like the Z80 ADD A,B */
   int             C;          /* was C */
+  u8              Awidth_bytes; /* Abot + Bwidth once past the edge check: available draw width (was A) */
 
   BC_helipos = state->dhl_helipos;
   state->doc_col_pos = -Acol_pos; // in draw_object_common
@@ -9045,17 +9047,17 @@ static void draw_helicoper_part(chqstate_t                *state,
       draw_object_right_width_entrypt(state, Abot, HLbitmap,
                                            IYheight); /* tail call */
     } else {
-      Abot += Bwidth;
-      draw_object_left_width_entrypt(state, Abot, HLbitmap,
+      Awidth_bytes = Abot + Bwidth;
+      draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                           IYheight); /* tail call */
     }
   } else {
     carry = (Abot + Bwidth) > 255;
-    Abot += Bwidth;
+    Awidth_bytes = Abot + Bwidth; /* Conv: wraps as the Z80 ADD does */
     if (!carry)
       return;
 
-    draw_object_left_width_entrypt(state, Abot, HLbitmap,
+    draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                         IYheight); /* tail call */
   }
 }
@@ -9940,6 +9942,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   int             Ahorz_clip;          /* hazard's horizontal clip flag: zero=on-screen, non-zero=clipped (was A) */
   u8              Ahorz_pos;           /* hazard's horizontal screen position (was A) */
   int             Asum;                /* Ahorz_pos + Ewidth_bits; wide int to detect the 8-bit carry (was A) */
+  u8              Awidth_bytes;        /* Ahorz_pos turned into an available draw width past the edge check (was A) */
   int             Aindex;              /* smoke_bitmap_index: LOD level for the arrow offset lookup (was A) */
   const u8       *HLarrows;            /* pointer into arrow_offsets for the floating arrow x,y (was HL) */
   int             Asmash_level;        /* smash_level at time of fire/smoke dispatch (was A) */
@@ -9985,17 +9988,17 @@ static void draw_hazard_sprites(chqstate_t *state,
       Asum = Ahorz_pos + Ewidth_bits;
       if (Asum < 0x100) // no carry
         goto dafs_draw_done_1;
-      Ahorz_pos = (u8) Asum;
+      Awidth_bytes = (u8) Asum;
     } else if (Ahorz_clip != 0) {
       goto dafs_draw_done_1;
     } else {
       if (Ahorz_pos >= 128)
         goto dafs_draw_right_1;
 
-      Ahorz_pos += Ewidth_bits;
+      Awidth_bytes = Ahorz_pos + Ewidth_bits;
     }
 
-    draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
+    draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
     goto dafs_draw_done_1;
 
 dafs_draw_right_1:
@@ -10179,6 +10182,7 @@ static void dhs_draw_bitmap(chqstate_t     *state,
   int Ewidth_bits;  /* pixel width of bitmap: width_bytes * 8 (was E) */
   int Ahorz_clip;   /* SM horz_clip value: sign and zero determine draw path (was A) */
   u8  Ahorz_pos;    /* SM horz_pos value adjusted by Cy; unsigned for carry detection (was A) */
+  u8  Awidth_bytes; /* Ahorz_pos + Ewidth_bits once past the edge check: available draw width (was A) */
 
   Ewidth_bits = HLbitmap->width_bytes * 8;
   state->doc_col_pos = state->dhs_col_pos + Bx;
@@ -10198,8 +10202,8 @@ static void dhs_draw_bitmap(chqstate_t     *state,
                                            IYheight); /* tail call */
     } else {
 dhs_exit_1:
-      Ahorz_pos += Ewidth_bits; // add pixel width
-      draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap,
+      Awidth_bytes = Ahorz_pos + Ewidth_bits; // add pixel width
+      draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                           IYheight); /* tail call */
     }
   } else {
@@ -10207,9 +10211,9 @@ dhs_exit_1:
     if (Ahorz_pos < Cy) // carried
       goto dhs_exit_1;
 
-    Ahorz_pos += Ewidth_bits;
-    if (Ahorz_pos < Ewidth_bits) // carried
-      draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap,
+    Awidth_bytes = Ahorz_pos + Ewidth_bits;
+    if (Awidth_bytes < Ewidth_bits) // carried
+      draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                           IYheight); /* tail call */
   }
 }

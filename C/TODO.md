@@ -52,7 +52,6 @@
 
 ## P5 — Clarity pass
 
-- Fix `Awidth_bytes` vars which seem to be x coords
 - Remove Z80 macros where it clarifies
 - Audit "Conv: added" vars
 - Match up menu funcs for string printing with the main code - are they the same code?
