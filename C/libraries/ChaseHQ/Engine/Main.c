@@ -16950,8 +16950,8 @@ static void playdrum_start(chqstate_t *state,
                            int         Dlength,
                            u8         *HLdata)
 {
-  state->music.drum_speed = Aspeed;
-  state->music.drum_active  = 1;
+  state->music.drum_speed  = Aspeed;
+  state->music.drum_active = 1;
   playdrum_bank_go(state, Dlength, HLdata); /* was FALLTHROUGH */
 }
 
@@ -17056,12 +17056,12 @@ pd_end_of_sample:
  */
 void play_noise(chqstate_t *state, int Aparam)
 {
-  int carry;       /* carry from RLC/RRC operations on seed bytes (carry) */
-  int Eduration;   /* outer loop count and pulse high/low timing parameter (was E) */
-  int Dinner;      /* inner loop count: 50 noise steps per tick (was D) */
-  u8 *seed;        /* pointer into rng_seed[]: walked for each LFSR step (was HL) */
-  int B;           /* intermediate seed byte read during LFSR update (was B) */
-  u8  A;           /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
+  int carry;     /* carry from RLC/RRC operations on seed bytes (carry) */
+  int Eduration; /* outer loop count and pulse high/low timing parameter (was E) */
+  int Dinner;    /* inner loop count: 50 noise steps per tick (was D) */
+  u8 *seed;      /* pointer into rng_seed[]: walked for each LFSR step (was HL) */
+  int B;         /* intermediate seed byte read during LFSR update (was B) */
+  u8  A;         /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
 
   carry = 0;
 
@@ -17123,8 +17123,9 @@ static void start_siren_128k(chqstate_t *state)
   state->ay_regs.chan_a_pitch = 140; /* Conv: full register; Z80 wrote low byte only */
   state->ay_regs.chan_a_vol   = 14;
   state->ay_regs.chan_b_vol   = 12;
-  state->siren_pattern   = 0xAA;
-  state->siren_enabled   = 0xAA;
+
+  state->siren_pattern = 0xAA;
+  state->siren_enabled = 0xAA;
 }
 
 /**
@@ -17246,11 +17247,11 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
   pitch <<= 2;   /* quadruple divisor further */
   // Conv: tunnel check restructured to if-else; Z80 loads non-tunnel defaults then overwrites
   if (state->tunnel_sfx == 0) {
-    base_pitch  = 0x190; /* non-tunnel base divisor (~277 Hz) */
-    volume = 15;
+    base_pitch = 400; /* non-tunnel base divisor (~277 Hz) */
+    volume     = 15;
   } else {
-    base_pitch  = 0x258; /* in-tunnel base divisor (~185 Hz) */
-    volume = 12;
+    base_pitch = 600; /* in-tunnel base divisor (~185 Hz) */
+    volume     = 12;
   }
   state->ay_regs.chan_c_pitch = pitch + base_pitch;
   state->ay_regs.chan_c_vol   = volume;
@@ -17267,8 +17268,8 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
  */
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
-  state->ay_regs.noise_pitch  = 0x3C;
-  state->turbo_sfx_pitch = 0x3C;
+  state->ay_regs.noise_pitch = 60;
+  state->turbo_sfx_pitch     = 60;
 }
 
 /**
