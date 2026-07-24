@@ -885,8 +885,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       A_env_step = IX_channel->envelope_speed;
       IX_channel->envelope_step_counter = A_env_step;
 
-      HL_env_shape = IX_channel->envelope_shape_ptr;
-      HL_env_shape++;
+      HL_env_shape = IX_channel->envelope_shape_ptr + 1;
       A_env_byte = *HL_env_shape;
       if ((s8) A_env_byte >= 0) { /* SEQ_END_BIT clear */
         /* Not an end-of-table marker: commit the advance. */
@@ -983,8 +982,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     } else {
       C_slide_step = IX_channel->slide_step;
 
-      HL_slide_accum = IX_channel->slide_accum;
-      HL_slide_accum += (s16) C_slide_step; // sign-extended add
+      HL_slide_accum = IX_channel->slide_accum + (s16) C_slide_step; // sign-extended add
       IX_channel->slide_accum = HL_slide_accum;
 
       DE_period += HL_slide_accum;
@@ -1020,8 +1018,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     A_mute_flag &= (u8) ~CHMUTE_GATE_BIT;
     IX_channel->mute_pending = A_mute_flag;
 
-    A_noise_mask = IX_channel->mixer_mask & CHMIXER_NOISE_MASK;
-    A_noise_mask = (u8) ~A_noise_mask;
+    A_noise_mask = (u8) ~(IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
     state->bank3->title_ay_regs.mixer &= A_noise_mask;
 
     state->bank3->title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
@@ -1668,51 +1665,51 @@ static u8 object_script_step(chqstate_t *state)
           rec->opcode = A_byte;
 
           switch (A_byte) {
-            case 0xC8: /* set screen-row byte, 1 operand */
-              rec->row = *HLscript++;
-              continue;
+          case 0xC8: /* set screen-row byte, 1 operand */
+            rec->row = *HLscript++;
+            continue;
 
-            case 0xC9: /* set velocity, 3 operand bytes: x,y,wait */
-              rec->x_step = (s8) *HLscript++;
-              rec->y_step = (s8) *HLscript++;
-              rec->wait   = *HLscript++;
-              break;                          /* -> save cursor below */
+          case 0xC9: /* set velocity, 3 operand bytes: x,y,wait */
+            rec->x_step = (s8) *HLscript++;
+            rec->y_step = (s8) *HLscript++;
+            rec->wait   = *HLscript++;
+            break;                          /* -> save cursor below */
 
-            case 0xCA: /* decelerate X, 3 operand bytes */
-            case 0xCB: /* decelerate Y, same operand layout */
-              /* $C7DC-$C7E8: note the y_step slot is read first here -- it
-               * seeds the deceleration-curve counter, not a real Y step; see
-               * oss_op_decel_x/oss_op_decel_y. */
-              rec->y_step = (s8) *HLscript++;
-              rec->wait   = *HLscript++;
-              rec->x_step = (s8) *HLscript++;
-              break;
+          case 0xCA: /* decelerate X, 3 operand bytes */
+          case 0xCB: /* decelerate Y, same operand layout */
+            /* $C7DC-$C7E8: note the y_step slot is read first here -- it
+             * seeds the deceleration-curve counter, not a real Y step; see
+             * oss_op_decel_x/oss_op_decel_y. */
+            rec->y_step = (s8) *HLscript++;
+            rec->wait   = *HLscript++;
+            rec->x_step = (s8) *HLscript++;
+            break;
 
-            case 0xCC: /* accelerate X variant a */
-            case 0xCD: /* accelerate X variant c */
-            case 0xCE: /* accelerate X variant b */
-              /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
-               * counter here, not a real X step; see oss_op_accel_x_*. */
-              rec->x_step = (s8) *HLscript++;
-              rec->wait   = *HLscript++;
-              rec->y_step = (s8) *HLscript++;
-              break;
+          case 0xCC: /* accelerate X variant a */
+          case 0xCD: /* accelerate X variant c */
+          case 0xCE: /* accelerate X variant b */
+            /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
+             * counter here, not a real X step; see oss_op_accel_x_*. */
+            rec->x_step = (s8) *HLscript++;
+            rec->wait   = *HLscript++;
+            rec->y_step = (s8) *HLscript++;
+            break;
 
-            case 0xCF: /* "wait N frames", 1 operand byte */
-              rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
-              break;
+          case 0xCF: /* "wait N frames", 1 operand byte */
+            rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
+            break;
 
-            case 0xD0: /* jump to absolute position, 2 operand bytes */
-              rec->x = *HLscript++;
-              rec->y = *HLscript++;
-              continue;
+          case 0xD0: /* jump to absolute position, 2 operand bytes */
+            rec->x = *HLscript++;
+            rec->y = *HLscript++;
+            continue;
 
-            case 0xD2: /* end of script -- see this function's own Conv note */
-              return 1;
+          case 0xD2: /* end of script -- see this function's own Conv note */
+            return 1;
 
-            default: /* $D1 and anything else: no operand bytes, falls
-                      * straight to oss_save_cursor ($C76C-$C772) */
-              break;
+          default: /* $D1 and anything else: no operand bytes, falls
+                    * straight to oss_save_cursor ($C76C-$C772) */
+            break;
           }
 
           /* $C772-$C778 oss_save_cursor: persist the advanced cursor. */
@@ -2575,10 +2572,9 @@ static void title_screen_driver(chqstate_t *state)
      * many frames as that takes, then this loop ends and the scene is left
      * on its final frame while the tune starts and the (non-animating) wait
      * loop below takes over. */
-    while (ts_animate_frame(state)) {
+    while (ts_animate_frame(state))
       if (state->host_quit)
         longjmp(state->host_quit_jmp, 1);
-    }
 
     /* Show "PRESS ENTER FOR OPTIONS" unconditionally. */
     print_character(state, &title_screen_overlay_text[21]);
@@ -2593,7 +2589,6 @@ static void title_screen_driver(chqstate_t *state)
 
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
-    // state->speccy->stamp(state->speccy);
 
     if (!ts_wait_loop(state)) /* $C61D falls through to $C61E */
       return;
@@ -2759,9 +2754,8 @@ static u8 ts_wait_loop(chqstate_t *state)
      * screen with a freshly seeded scene selector. */
     /* was IN+CPL */
     A_anykey = ~state->speccy->in(state->speccy, port_KEYBOARD_12345);
-    if ((A_anykey & 0x1F) == 0) {
+    if ((A_anykey & 0x1F) == 0)
       continue; /* Conv: no balancing sleep() needed -- see prologue */
-    }
 
     RRC(A_anykey);
     /* TODO: seed scene-selector SM operand ($C5A2) with A_anykey -- the
@@ -2811,13 +2805,13 @@ static void ts_refresh_name_table(chqstate_t *state)
   NOT_USED(state);
 }
 
-/* $FFE5-$FFE9: "list A" -- Sinclair Interface II joystick key-scan codes,
+/* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
  * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
  * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
  * not arbitrary key choices. */
 static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
 
-/* $FFEA-$FFEE: "list B" -- Cursor/Protek joystick key-scan codes, installed
+/* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
  * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
 static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
 
@@ -2847,7 +2841,6 @@ static const u8 control_key_names[80] = {
 static const u8 shocked_keydef_sequence[8] = {
   0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
 };
-
 
 /**
  * $FF0C: Scans the keyboard matrix for a single currently-held key
@@ -3079,14 +3072,13 @@ static void redefine_keys_screen(chqstate_t *state)
     } while (--B_remaining != 0);
 
     B_wait = 0x14;
-    do {
+    do
       run_title_tune(state);
-    } while (--B_wait != 0);
+    while (--B_wait != 0);
 
-    for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) {
+    for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
       if (state->bank3->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
         return; /* $FEEE RET NZ: mismatch -- ordinary case, keep the new mapping */
-    }
 
     state->test_mode = 1;
 
@@ -3133,14 +3125,14 @@ static void run_title_tune(chqstate_t *state)
  */
 static u8 detect_kempston_joystick(chqstate_t *state)
 {
-  int B_count;     /* sample loop countdown, 20 iterations (was B) */
-  u8  C_baseline;  /* first Kempston sample (was C) */
-  u8  A_sample;    /* current Kempston sample (was A) */
+  int B_count;    /* sample loop countdown, 20 iterations (was B) */
+  u8  C_baseline; /* first Kempston sample (was C) */
+  u8  A_sample;   /* current Kempston sample (was A) */
 
   A_sample   = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
   C_baseline = A_sample;
 
-  B_count = 0x14;
+  B_count = 20;
   do {
     A_sample = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
     if (A_sample != C_baseline)
@@ -3635,13 +3627,13 @@ static void bank3_state_initialise(chqstate_t *state)
      * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */
     switch (titlechan) {
     case 0:
-      state->bank3->title_music.channel[titlechan].mixer_mask = 0x09;
+      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_A | AY_MIXER_NO_TONE_A;
       break;
     case 1:
-      state->bank3->title_music.channel[titlechan].mixer_mask = 0x12;
+      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
       break;
     case 2:
-      state->bank3->title_music.channel[titlechan].mixer_mask = 0x24;
+      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
       break;
     }
   }
@@ -3661,7 +3653,7 @@ static void bank3_state_initialise(chqstate_t *state)
   // $EC9A/$EED1/$EF7A (128K bank 3): further scratch bytes written by
   // start_tune/advance_channel_pattern; 0 matches start_tune's explicit
   // clear of $EED1 and is the natural power-on state of the other two.
-  state->bank3->title_music.tune_tempo         = 0x00; // $EC9A
+  state->bank3->title_music.tune_tempo          = 0x00; // $EC9A
   state->bank3->title_music.pattern_driver_flag = 0x00; // $EED1
   state->bank3->title_music.pending_mixer_bits  = 0x00; // $EF7A
 
