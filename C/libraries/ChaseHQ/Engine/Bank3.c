@@ -1664,18 +1664,18 @@ static u8 object_script_step(chqstate_t *state)
           rec->opcode = A_byte;
 
           switch (A_byte) {
-          case OSS_OP_SET_ROW:
+          case OSS_OP_SET_ROW_VAL:
             rec->row = *HLscript++;
             continue;
 
-          case OSS_OP_VELOCITY:
+          case OSS_OP_VELOCITY_VAL:
             rec->x_step = (s8) *HLscript++;
             rec->y_step = (s8) *HLscript++;
             rec->wait   = *HLscript++;
             break;                          /* -> save cursor below */
 
-          case OSS_OP_DECEL_X:
-          case OSS_OP_DECEL_Y:
+          case OSS_OP_DECEL_X_VAL:
+          case OSS_OP_DECEL_Y_VAL:
             /* $C7DC-$C7E8: note the y_step slot is read first here -- it
              * seeds the deceleration-curve counter, not a real Y step; see
              * oss_op_decel_x/oss_op_decel_y. */
@@ -1684,9 +1684,9 @@ static u8 object_script_step(chqstate_t *state)
             rec->x_step = (s8) *HLscript++;
             break;
 
-          case OSS_OP_ACCEL_X_A:
-          case OSS_OP_ACCEL_X_C:
-          case OSS_OP_ACCEL_X_B:
+          case OSS_OP_ACCEL_X_A_VAL:
+          case OSS_OP_ACCEL_X_C_VAL:
+          case OSS_OP_ACCEL_X_B_VAL:
             /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
              * counter here, not a real X step; see oss_op_accel_x_*. */
             rec->x_step = (s8) *HLscript++;
@@ -1694,16 +1694,16 @@ static u8 object_script_step(chqstate_t *state)
             rec->y_step = (s8) *HLscript++;
             break;
 
-          case OSS_OP_WAIT:
+          case OSS_OP_WAIT_VAL:
             rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
             break;
 
-          case OSS_OP_JUMP_POSITION:
+          case OSS_OP_JUMP_POSITION_VAL:
             rec->x = *HLscript++;
             rec->y = *HLscript++;
             continue;
 
-          case OSS_OP_END_SCRIPT: /* see this function's own Conv note */
+          case OSS_OP_END_SCRIPT_VAL: /* see this function's own Conv note */
             return 1;
 
           default: /* OSS_OP_DEAD and anything else: no operand bytes,
@@ -1723,13 +1723,13 @@ static u8 object_script_step(chqstate_t *state)
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
       recognized = 1;
       switch (rec->opcode) {
-        case OSS_OP_VELOCITY:  oss_op_velocity(rec);  break;
-        case OSS_OP_DECEL_X:   oss_op_decel_x(rec);   break;
-        case OSS_OP_DECEL_Y:   oss_op_decel_y(rec);   break;
-        case OSS_OP_ACCEL_X_A: oss_op_accel_x_a(rec); break;
-        case OSS_OP_ACCEL_X_C: oss_op_accel_x_c(rec); break;
-        case OSS_OP_ACCEL_X_B: oss_op_accel_x_b(rec); break;
-        case OSS_OP_WAIT: break; /* no per-frame movement of its own --
+        case OSS_OP_VELOCITY_VAL:  oss_op_velocity(rec);  break;
+        case OSS_OP_DECEL_X_VAL:   oss_op_decel_x(rec);   break;
+        case OSS_OP_DECEL_Y_VAL:   oss_op_decel_y(rec);   break;
+        case OSS_OP_ACCEL_X_A_VAL: oss_op_accel_x_a(rec); break;
+        case OSS_OP_ACCEL_X_C_VAL: oss_op_accel_x_c(rec); break;
+        case OSS_OP_ACCEL_X_B_VAL: oss_op_accel_x_b(rec); break;
+        case OSS_OP_WAIT_VAL: break; /* no per-frame movement of its own --
                                   * falls straight to the countdown below */
         default:
           /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. OSS_OP_DEAD
@@ -2723,10 +2723,9 @@ static u8 ts_wait_loop(chqstate_t *state)
      * block branch: $C61E is the loop head, so test_mode == 0 skips the
      * "any key" check below too, not just this one. */
     A_test_mode = state->test_mode;
-    if (!A_test_mode) {
+    if (!A_test_mode)
       continue; /* Conv: no balancing sleep() needed -- already closed out by
                  * the stamp()/sleep() pair at the top of this loop */
-    }
 
     /* was IN+CPL */
     A_key6 = ~state->speccy->in(state->speccy, port_KEYBOARD_09876);

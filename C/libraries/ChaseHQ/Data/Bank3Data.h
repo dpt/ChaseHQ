@@ -44,21 +44,38 @@ extern const title_glyph_t title_glyph_table[TITLE_GLYPH_COUNT];
 /* Object animation script opcodes (title_object::opcode / script byte-code
  * in title_scene_data above). Bytes with the sign bit clear ($00-$7F) are
  * immediate step deltas, not opcodes -- see oss_op_immediate_step in
- * object_script_step's prologue (Bank3.c). */
-#define OSS_OP_SET_ROW        (0xC8) /* set screen-row byte, 1 operand */
-#define OSS_OP_VELOCITY       (0xC9) /* constant velocity, 3 operands: x,y,wait */
-#define OSS_OP_DECEL_X        (0xCA) /* decelerate X, 3 operands */
-#define OSS_OP_DECEL_Y        (0xCB) /* decelerate Y, 3 operands */
-#define OSS_OP_ACCEL_X_A      (0xCC) /* accelerate X variant a, 3 operands */
-#define OSS_OP_ACCEL_X_C      (0xCD) /* accelerate X variant c, 3 operands */
-#define OSS_OP_ACCEL_X_B      (0xCE) /* accelerate X variant b, 3 operands */
-#define OSS_OP_WAIT           (0xCF) /* wait N frames, 1 operand */
-#define OSS_OP_JUMP_POSITION  (0xD0) /* jump to absolute position, 2 operands */
-#define OSS_OP_DEAD           (0xD1) /* unrecognized/dead value -- never explicitly
-                                       * emitted as a case, falls to default in both
-                                       * switches; see object_script_step's prologue */
-#define OSS_OP_END_SCRIPT     (0xD2) /* end of script -- POP HL; RET stack unwind,
-                                       * see object_script_step's own Conv note */
+ * object_script_step's prologue (Bank3.c).
+ *
+ * Each opcode has a _VAL form (its raw byte value, used as a switch case
+ * label in object_script_step) and a function-like macro of the same name
+ * that emits the opcode byte followed by its operand bytes in on-disk
+ * order, for use inside title_scene_data's initializer below. */
+#define OSS_OP_SET_ROW_VAL        (0xC8) /* set screen-row byte, 1 operand */
+#define OSS_OP_VELOCITY_VAL       (0xC9) /* constant velocity, 3 operands: x,y,wait */
+#define OSS_OP_DECEL_X_VAL        (0xCA) /* decelerate X, 3 operands */
+#define OSS_OP_DECEL_Y_VAL        (0xCB) /* decelerate Y, 3 operands */
+#define OSS_OP_ACCEL_X_A_VAL      (0xCC) /* accelerate X variant a, 3 operands */
+#define OSS_OP_ACCEL_X_C_VAL      (0xCD) /* accelerate X variant c, 3 operands */
+#define OSS_OP_ACCEL_X_B_VAL      (0xCE) /* accelerate X variant b, 3 operands */
+#define OSS_OP_WAIT_VAL           (0xCF) /* wait N frames, 1 operand */
+#define OSS_OP_JUMP_POSITION_VAL  (0xD0) /* jump to absolute position, 2 operands */
+#define OSS_OP_DEAD_VAL           (0xD1) /* unrecognized/dead value -- never explicitly
+                                           * emitted as a case, falls to default in both
+                                           * switches; see object_script_step's prologue */
+#define OSS_OP_END_SCRIPT_VAL     (0xD2) /* end of script -- POP HL; RET stack unwind,
+                                           * see object_script_step's own Conv note */
+
+#define OSS_OP_SET_ROW(row)                     OSS_OP_SET_ROW_VAL, (row)
+#define OSS_OP_VELOCITY(x_step, y_step, wait)   OSS_OP_VELOCITY_VAL, (x_step), (y_step), (wait)
+#define OSS_OP_DECEL_X(y_step_seed, wait, x_step) OSS_OP_DECEL_X_VAL, (y_step_seed), (wait), (x_step)
+#define OSS_OP_DECEL_Y(y_step_seed, wait, x_step) OSS_OP_DECEL_Y_VAL, (y_step_seed), (wait), (x_step)
+#define OSS_OP_ACCEL_X_A(x_step_seed, wait, y_step) OSS_OP_ACCEL_X_A_VAL, (x_step_seed), (wait), (y_step)
+#define OSS_OP_ACCEL_X_C(x_step_seed, wait, y_step) OSS_OP_ACCEL_X_C_VAL, (x_step_seed), (wait), (y_step)
+#define OSS_OP_ACCEL_X_B(x_step_seed, wait, y_step) OSS_OP_ACCEL_X_B_VAL, (x_step_seed), (wait), (y_step)
+#define OSS_OP_WAIT(wait)                       OSS_OP_WAIT_VAL, (wait)
+#define OSS_OP_JUMP_POSITION(x, y)              OSS_OP_JUMP_POSITION_VAL, (x), (y)
+#define OSS_OP_DEAD()                           OSS_OP_DEAD_VAL
+#define OSS_OP_END_SCRIPT()                     OSS_OP_END_SCRIPT_VAL
 
 /* Index names for note_periods[] below, in scientific pitch notation
  * (A4 = 440 Hz, C4 = middle C), derived from each entry's AY tone period. */
