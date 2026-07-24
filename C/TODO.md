@@ -2,9 +2,6 @@
 
 ## P1 — Bugs / broken behaviour
 
-- end screen: 'press gear to continue' not repeating
-- end screen: music missing
-
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
@@ -13,6 +10,8 @@
   - animations don't stop in some cases
   - animations don't work if screen clearing is enabled
   - title screen doesn't stop and yield to attract mode
+- End screen
+  - interrupt mechanism wasn't ported so is the timing a bit off?
 
 ## P2 — Game feel / calibration / timing
 
@@ -25,6 +24,7 @@
 
 ## P3 — Incomplete / missing content
 
+- Ensure that funcs are in the original game order (esp. Bank7)
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
 - `Stage3Data.c` / `Stage5Data.c`: decode `addrof_helicopter_stuff_1`/`addrof_helicopter_stuff_2`, currently NULL raw data

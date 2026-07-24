@@ -54,8 +54,8 @@ extern const u8 es_music_data[172];
  * drum1_template for all but the final byte -- not aliases of those tables,
  * since that last byte differs (0x00 here vs 0xFF there), and bank 7 uses
  * shorter lengths (94/160 vs 108/252) throughout. */
-extern const u8 es_drum2_template[94];
-extern const u8 es_drum1_template[160];
+extern const u8 es_drum_sample_2_template[94];
+extern const u8 es_drum_sample_1_template[160];
 
 /* ----------------------------------------------------------------------- */
 

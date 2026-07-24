@@ -1150,7 +1150,7 @@ static void es_reset_music(chqstate_t *state)
 }
 
 /**
- * Output bank 7 PCM drum sample (address unrecovered from the skool)
+ * $F8C5: Output bank 7 PCM drum sample
  *
  * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
  * sample tables were decoded this pass.
@@ -1172,7 +1172,7 @@ static void es_reset_music(chqstate_t *state)
  * 8 iterations -- the byte doubles as its own iteration counter, no separate
  * bit-index register needed. This rotation mutates the sample data in place
  * (only a full 8-bit rotation restores it), so the drum samples live in bank7
- * state as mutable copies of es_drum2_template/es_drum1_template.
+ * state as mutable copies of es_drum_sample_2_template/es_drum_sample_1_template.
  *
  * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
  * reconstruct the bit timing.
@@ -1329,21 +1329,21 @@ pm_reset_pattern:
     }
 
     state->bank7->es_music.data_ptr = ++HLdata;
-    if (++An_note > 128) {
-      // A byte of the form 0b1aaaaiii (1 is the delay bit)
-      An_note &= 0x7F;
+    if (++An_note > NOTE_XDELAY_FLAG) {
+      // A byte of the form 0b1aaaaiii (1 is the delay flag bit)
+      An_note &= ~NOTE_XDELAY_FLAG;
       state->bank7->es_music.note_delay = 1;
       state->bank7->es_music.extra_delay = 1;
     }
 
     Dnote       = An_note;
-    Binstrument = Dnote & 7;
+    Binstrument = Dnote & NOTE_INST_MASK;
     if (Binstrument) {
       Aparam = Dnote >> 3;
       switch (Binstrument) {
-      case 1: es_playdrum_2(state, Aparam); return;
-      case 2: es_playdrum_1(state, Aparam); return;
-      case 3: es_play_noise(state, Aparam); return;
+      case NOTE_DRUM2_VAL: es_playdrum_2(state, Aparam); return;
+      case NOTE_DRUM1_VAL: es_playdrum_1(state, Aparam); return;
+      case NOTE_NOISE_VAL: es_play_noise(state, Aparam); return;
       }
     }
   }
@@ -1448,8 +1448,8 @@ int bank7_state_create(chqstate_t *state)
   /* es_playdrum_go rotates each sample byte in place during playback (RLC),
    * so bank 7 needs its own mutable copies of the drum templates, refreshed
    * per instance exactly like chqstate_t's own drum1/drum2 (Create.c). */
-  memcpy(state->bank7->es_drum2, es_drum2_template, sizeof(es_drum2_template));
-  memcpy(state->bank7->es_drum1, es_drum1_template, sizeof(es_drum1_template));
+  memcpy(state->bank7->es_drum2, es_drum_sample_2_template, sizeof(es_drum_sample_2_template));
+  memcpy(state->bank7->es_drum1, es_drum_sample_1_template, sizeof(es_drum_sample_1_template));
 
   return 0;
 }

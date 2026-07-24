@@ -510,58 +510,98 @@ const u8 es_music_patterns[23] = {
   0x04, 0x44,
   0x05, 0x56,
   0x01, 0x68,
-  0x04, 0x7A,
+  0x04, 0x7A, // weird separate repeat of same part
   0x04, 0x7A,
   0x03, 0x7A,
   0x01, 0x8C,
-  0x3C, 0xA9, // restart is here
+  0x3C, 0xA9, // silence: 60x repeat of the single silent note at 0xA9
   0xFF, // stop marker
   TWOBYTES(0xF54E) // restart address
 };
 
 // $F553 (relocated; source $FA42)
+//
+// Layout: each block is a delay-reload byte (ticks per note) followed by a
+// note stream, terminated by NOTE_END. NOTE_* macros are defined in
+// Internal.h. See es_play_music_48k (Bank7.c) for the byte-level decode this
+// is built from.
 const u8 es_music_data[172] = {
-  0x06, 0x4B, 0x1B, 0x1B, 0x1B, 0x4B, 0x1B, 0x1B,
-  0x1B, 0x1B, 0x4B, 0x1B, 0x1B, 0x4B, 0x1B, 0x1B,
-  0x1B, 0x4B, 0x1B, 0x1B, 0x1B, 0x4B, 0x1B, 0x1B,
-  0x4B, 0x1B, 0x4B, 0x1B, 0x4B, 0x4B, 0x1B, 0x4B,
-  0x1B,
-  0x01,
-  0x06, 0x41, 0x1B, 0x1B, 0x1B, 0x42, 0x1B, 0x1B,
-  0x1B, 0x1B, 0x41, 0x1B, 0x41, 0x42, 0x1B, 0x41,
-  0x1B, 0x41, 0x1B, 0x1B, 0x1B, 0x42, 0x1B, 0x1B,
-  0x1B, 0x1B, 0x41, 0x1B, 0x41, 0x42, 0x1B, 0x42,
-  0x42,
-  0x01,
-  0x06, 0x41, 0x1B, 0x41, 0x1B, 0x42, 0x1B, 0x1B,
-  0x41, 0x1B, 0x41, 0x1B, 0x41, 0x42, 0x1B, 0x42,
-  0x1B,
-  0x01,
-  0x06, 0x41, 0x1B, 0x41, 0x1B, 0x42, 0x41, 0x1B,
-  0x41, 0x41, 0x1B, 0x41, 0x1B, 0x42, 0x41, 0x42,
-  0x1B,
-  0x01,
-  0x06, 0x41, 0x1B, 0x41, 0x1B, 0x42, 0x41, 0x1B,
-  0x41, 0x42, 0x1B, 0x42, 0x1B, 0x42, 0x42, 0x42,
-  0x1B,
-  0x01,
-  0x06, 0x41, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B,
-  0x41, 0x41, 0x41, 0x1B, 0x41, 0x1B, 0x41, 0x1B,
-  0x41,
-  0x01,
-  0x06, 0x41, 0x1B, 0x41, 0x1B, 0x42, 0x1B, 0x42,
-  0x41, 0x42, 0x42, 0x1B, 0x42, 0x42, 0x41, 0x42,
-  0x00,
-  0x5B, 0x53, 0x4B, 0x43, 0x3B, 0x33, 0x2B, 0x23,
-  0x1B, 0x13, 0x0B,
-  0x01,
-  0xFF,
-  0x00,
-  0x01
+  // 0x00 (delay=6) - noise-only hi-hat pattern
+  NOTE_DELAY(6),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(3), NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(9),
+  NOTE_NOISE(3), NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(9),
+  NOTE_NOISE(9), NOTE_NOISE(3), NOTE_NOISE(9), NOTE_NOISE(3),
+  NOTE_END,
+
+  // 0x22 (delay=6) - drum2/drum1/noise beat
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8), NOTE_DRUM1(8),
+  NOTE_END,
+
+  // 0x44 (delay=6) - drum2/drum1/noise beat
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8), NOTE_NOISE(3),
+  NOTE_END,
+
+  // 0x56 (delay=6) - drum2/drum1/noise beat
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_DRUM2(8), NOTE_DRUM1(8), NOTE_NOISE(3),
+  NOTE_END,
+
+  // 0x68 (delay=6) - drum2/drum1/noise beat
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_DRUM1(8), NOTE_DRUM1(8), NOTE_NOISE(3),
+  NOTE_END,
+
+  // 0x7A (delay=6) - drum2/noise beat
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3),
+  NOTE_NOISE(3), NOTE_NOISE(3), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_DRUM2(8), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
+  NOTE_END,
+
+  // 0x8C (delay=6) - drum2/drum1 beat, a silent note, then a descending
+  // noise fade-out sweep (param 11..1) before END
+  NOTE_DELAY(6),
+  NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
+  NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8), NOTE_DRUM2(8),
+  NOTE_DRUM1(8), NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8),
+  NOTE_DRUM1(8), NOTE_DRUM2(8), NOTE_DRUM1(8), NOTE_SILENCE,
+  NOTE_NOISE(11), NOTE_NOISE(10), NOTE_NOISE(9), NOTE_NOISE(8),
+  NOTE_NOISE(7), NOTE_NOISE(6), NOTE_NOISE(5), NOTE_NOISE(4),
+  NOTE_NOISE(3), NOTE_NOISE(2), NOTE_NOISE(1),
+  NOTE_END,
+
+  // 0xA9 (delay=0xFF) - single silent note, long pause before restart
+  NOTE_DELAY(0xFF),
+  NOTE_SILENCE,
+  NOTE_END,
 };
 
 // $F8F5 (source; used by es_playdrum_2)
-const u8 es_drum2_template[94] = {
+const u8 es_drum_sample_2_template[94] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
   0xFF, 0xDE, 0x00, 0xFF, 0x81, 0xFF, 0xFF, 0xFF,
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF4, 0x3B, 0x80,
@@ -577,7 +617,7 @@ const u8 es_drum2_template[94] = {
 };
 
 // $F953 (source; used by es_playdrum_1)
-const u8 es_drum1_template[160] = {
+const u8 es_drum_sample_1_template[160] = {
   0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xFF, 0xFF,
   0xEF, 0xFF, 0xFF, 0xFF, 0xBE, 0x36, 0x10, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

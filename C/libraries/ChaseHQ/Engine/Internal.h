@@ -202,6 +202,24 @@
 
 /* ----------------------------------------------------------------------- */
 
+/* 48K music engine note bytes: shared by music_data (CommonData.c) and
+ * es_music_data (Bank7Data.c). See play_music_48k (Main.c) / es_play_music_48k
+ * (Bank7.c) for the byte-level decode these are built from. */
+#define NOTE_DELAY(ticks) (ticks) // ticks between notes, reloaded into note_delay
+#define NOTE_INST_MASK    (0x07)
+#define NOTE_DRUM2_VAL    (1)
+#define NOTE_DRUM1_VAL    (2)
+#define NOTE_NOISE_VAL    (3)
+#define NOTE_DRUM2(param) (((param) << 3) | NOTE_DRUM2_VAL)
+#define NOTE_DRUM1(param) (((param) << 3) | NOTE_DRUM1_VAL)
+#define NOTE_NOISE(param) (((param) << 3) | NOTE_NOISE_VAL)
+#define NOTE_SILENCE      (0)
+#define NOTE_XDELAY_FLAG  (0x80)
+#define NOTE_XDELAY(note) ((note) | NOTE_XDELAY_FLAG) // adds a one-tick extra delay
+#define NOTE_END          (1) // sentinel: advance to the next pattern
+
+/* ----------------------------------------------------------------------- */
+
 /* Enumeration constants */
 
 #define QUITSTATE_IDLE               (0)

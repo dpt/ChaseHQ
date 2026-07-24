@@ -99,7 +99,7 @@ struct chq_bank7_state {
     u8        drum_speed;      // (SM): inner loop count per sample byte
   } es_music;
 
-  // Mutable per-instance copies of es_drum2_template/es_drum1_template
+  // Mutable per-instance copies of es_drum_sample_2_template/es_drum_sample_1_template
   // (Bank7Data.c), played by es_playdrum_2/es_playdrum_1 (Bank7.c). Mutable
   // because playdrum_go's RLC rotates each sample byte in place during
   // playback, matching the same pattern chqstate_t uses for its own

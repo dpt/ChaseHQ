@@ -16832,12 +16832,12 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
  */
 static void play_music_48k(chqstate_t *state)
 {
-  int       Adelay;  /* note_delay decremented each tick; zero triggers next note (was A) */
-  const u8 *HL;      /* pointer walking the current music pattern byte stream (was HL) */
-  int       A;       /* raw pattern byte minus 1; zero means end-of-pattern sentinel (was A) */
-  int       D;       /* copy of adjusted pattern byte; upper bits = pitch param, lower = instrument (was D) */
-  int       B;       /* instrument index: lower three bits of D (was B) */
-  int       Aparam;  /* pitch/parameter value: upper five bits of D, passed to instrument handler (was A) */
+  int       Adelay;       /* note_delay decremented each tick; zero triggers next note (was A) */
+  const u8 *HL;           /* pointer walking the current music pattern byte stream (was HL) */
+  int       A;            /* raw pattern byte minus 1; zero means end-of-pattern sentinel (was A) */
+  int       D;            /* copy of adjusted pattern byte; upper bits = pitch param, lower = instrument (was D) */
+  int       B_instrument; /* instrument index: lower three bits of D (was B) */
+  int       Aparam;       /* pitch/parameter value: upper five bits of D, passed to instrument handler (was A) */
 
   if (state->music.started == 0) {
     state->music.started = 1;
@@ -16868,9 +16868,9 @@ pm_reset_pattern:
 
     //pm_continue_pattern:
     state->music.data_ptr = ++HL;
-    if (++A > 128) {
+    if (++A > NOTE_XDELAY_FLAG) {
       // A byte of the form 0b1aaaaiii (1 is delay bit)
-      A &= 0x7F;
+      A &= ~NOTE_XDELAY_FLAG;
       // EX AF,AF' bank
       state->music.note_delay = 1;
       state->music.extra_delay = 1;
@@ -16878,14 +16878,14 @@ pm_reset_pattern:
     }
 
     D = A;
-    B = D & 7;
-    if (B) {
+    B_instrument = D & NOTE_INST_MASK;
+    if (B_instrument) {
       Aparam = D >> 3; // general parameter
-      // the call-return setup needs analysing here
-      switch (B) {
-      case 1: playdrum_2(state, Aparam); return;
-      case 2: playdrum_1(state, Aparam); return;
-      case 3: play_noise(state, Aparam); return;
+      // TODO: the call-return setup needs analysing here
+      switch (B_instrument) {
+      case NOTE_DRUM2_VAL: playdrum_2(state, Aparam); return;
+      case NOTE_DRUM1_VAL: playdrum_1(state, Aparam); return;
+      case NOTE_NOISE_VAL: play_noise(state, Aparam); return;
       }
     }
   }
@@ -17011,7 +17011,7 @@ static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
   int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
 
   carry = 0;
-  do {
+  for (;;) {
     Bdash_iterations = state->music.drum_speed; // aka speed
     do {
       A = port_MASK_EAR; // speaker bit
@@ -17028,7 +17028,7 @@ static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
     state->speccy->logtime(state->speccy, 46);
     if (--Dlength == 0)
       goto pd_end_of_sample;
-  } while (1);
+  }
   // EXX unbank
   return;
 
