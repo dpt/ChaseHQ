@@ -4887,7 +4887,6 @@ doc_y_range_is_zero:
       goto doc_compute_bitmap;
     }
 
-doc_y_range_nonzero:
     // Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects ADD A,D (D negative) or
     // SUB D (D positive/zero) -- net effect is always A -= |D|. doc_col_pos
     // (D_col_pos) is s8 and CAN be positive: draw_hazard_sprites sets it to
@@ -10035,7 +10034,6 @@ dafs_af50:
     Ahorz_pos += Ewidth_bits;
   }
 
-dafs_draw_left_2:
   draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
   goto dafs_done_draw_object;
 
@@ -10709,7 +10707,6 @@ ahc_assign_road_pos_2:
 
   draw_debris(state);
 
-ahc_load_flip_flag:
   Aflipping = state->ahc_crash_spin;
   if (Aflipping) {
     Cflipping = Aflipping * 3 + 24;
@@ -15581,7 +15578,6 @@ dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
 #undef FRP_RIGHT_EDGE
   }
 
-dfr_after_marking:
   L--;
   /* $CB30: DEC C -- this DEC lands on shadow C' due to the marking
    * section's odd EXX count (see Cdash setup above); Cdash is the
@@ -17577,10 +17573,12 @@ call_bank_3:
 CHQ_API void chq_setup(chqstate_t *state)
 {
   if (setjmp(state->host_quit_jmp) == 0)
+  {
     if (1)
       entry_128k(state);
     else
       entry_48k(state);
+  }
 }
 
 CHQ_API void chq_stop(chqstate_t *state)
