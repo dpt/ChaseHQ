@@ -41,7 +41,12 @@
 #define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
 
 #define MINSTAGE                     (1)
-#define MAXSTAGE                     (6) /* five original stages plus a test level */
+
+#ifdef CHQ_ENABLE_TEST_STAGE
+#define MAXSTAGE                     (6) /* five original stages plus the port-added test level */
+#else
+#define MAXSTAGE                     (5) /* five original stages; port-added stage 6 test level excluded (see Stages.c) */
+#endif
 
 #define SUBSECOND_TICKS_PER_SECOND  (15) /* used to calibrate the 60s game countdown */
 

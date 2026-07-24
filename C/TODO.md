@@ -62,7 +62,6 @@
 - Scan for type problems
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)
-- Remove test Stage 6 by default
 
 ## P6 — Features / extras
 

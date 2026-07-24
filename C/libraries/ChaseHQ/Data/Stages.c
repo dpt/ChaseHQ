@@ -20,17 +20,29 @@
 #include "Stage3Data.h"
 #include "Stage4Data.h"
 #include "Stage5Data.h"
+#ifdef CHQ_ENABLE_TEST_STAGE
 #include "Stage6Data.h"
+#endif
 
 #include "Stages.h"
 
-const stage_t *stages[MAXSTAGE + 2] = {
-  &stage1, /* [0]: pregame (wanted_stage_number=0) */
-  &stage1, /* [1]: game stage 1 */
-  &stage2, /* [2]: game stage 2 */
-  &stage3, /* [3]: game stage 3 */
-  &stage4, /* [4]: game stage 4 */
-  &stage5, /* [5]: game stage 5 */
-  &stage6, /* [6]: game stage 6 (Conv: additional for testing) */
-  &stage5, /* [7]: end-sequence reload (wanted_stage_number briefly hits 6) */
+#ifdef CHQ_ENABLE_TEST_STAGE
+const stage_t *stages[7] = {
+  &stage1, /* [0]: game stage 1 */
+  &stage2, /* [1]: game stage 2 */
+  &stage3, /* [2]: game stage 3 */
+  &stage4, /* [3]: game stage 4 */
+  &stage5, /* [4]: game stage 5 */
+  &stage6, /* [5]: game stage 6 (Conv: additional for testing) */
+  &stage5, /* [6]: end-sequence reload (wanted_stage_number briefly hits 6) */
 };
+#else
+const stage_t *stages[6] = {
+  &stage1, /* [0]: game stage 1 */
+  &stage2, /* [1]: game stage 2 */
+  &stage3, /* [2]: game stage 3 */
+  &stage4, /* [3]: game stage 4 */
+  &stage5, /* [4]: game stage 5 */
+  &stage5, /* [5]: end-sequence reload (wanted_stage_number briefly hits 6) */
+};
+#endif

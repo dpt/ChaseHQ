@@ -433,7 +433,11 @@ typedef struct stage {
 
 /* ----------------------------------------------------------------------- */
 
-const stage_t *stages[MAXSTAGE + 2]; /* [0]=pregame, [1..5]=game stages, [6]=end-sequence */
+#ifdef CHQ_ENABLE_TEST_STAGE
+const stage_t *stages[7]; /* [0..4]=game stages, [5]=stage 6 test level, [6]=end-sequence reload */
+#else
+const stage_t *stages[6]; /* [0..4]=game stages, [5]=end-sequence reload */
+#endif
 
 /* ----------------------------------------------------------------------- */
 

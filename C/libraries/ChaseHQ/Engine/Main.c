@@ -93,7 +93,9 @@
 #include "ChaseHQ/Data/Stage3Data.h"
 #include "ChaseHQ/Data/Stage4Data.h"
 #include "ChaseHQ/Data/Stage5Data.h"
+#ifdef CHQ_ENABLE_TEST_STAGE
 #include "ChaseHQ/Data/Stage6Data.h"
+#endif
 #include "ChaseHQ/Data/Stages.h"
 
 #include "Types.h"
@@ -495,7 +497,9 @@ static const void *lookup_map_goto(int current_stage_number, int z80)
     stage3_lookup_map_goto,
     stage4_lookup_map_goto,
     stage5_lookup_map_goto,
+#ifdef CHQ_ENABLE_TEST_STAGE
     stage6_lookup_map_goto,
+#endif
   };
 
   switch (z80) {
@@ -1194,7 +1198,7 @@ static void load_stage(chqstate_t *state)
     return;
 
   state->current_stage_number = wanted;
-  state->stage = stages[wanted];
+  state->stage = stages[wanted - 1]; /* stages[] has no pregame [0] entry */
 }
 
 // $80B9 tape_load_to_5c00

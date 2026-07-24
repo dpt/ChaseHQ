@@ -12,6 +12,8 @@ add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initial
 add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
 add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
+option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
+
 find_package(SDL3 REQUIRED)
 
 set(INCLUDE_DIRS include libraries)
@@ -58,8 +60,6 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/Stage4Data.h
         libraries/ChaseHQ/Data/Stage5Data.c
         libraries/ChaseHQ/Data/Stage5Data.h
-        libraries/ChaseHQ/Data/Stage6Data.c
-        libraries/ChaseHQ/Data/Stage6Data.h
         libraries/ChaseHQ/Data/TitleScreenData.c
         libraries/ChaseHQ/Data/TitleScreenData.h
         libraries/ChaseHQ/Data/Bank3Data.c
@@ -74,6 +74,10 @@ set(SOURCE_FILES
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
 target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
+if(CHQ_ENABLE_TEST_STAGE)
+  target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
+  target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
 target_link_libraries(ChaseHQ SDL3::SDL3)
 if(APPLE)
   target_link_libraries(ChaseHQ "-framework CoreFoundation")
@@ -102,7 +106,6 @@ set(TEST_SOURCE_FILES
         libraries/ChaseHQ/Data/Stage3Data.c
         libraries/ChaseHQ/Data/Stage4Data.c
         libraries/ChaseHQ/Data/Stage5Data.c
-        libraries/ChaseHQ/Data/Stage6Data.c
         libraries/ChaseHQ/Data/TitleScreenData.c
         libraries/ChaseHQ/Data/Bank3Data.c
         libraries/ChaseHQ/Data/Bank3Data.h
@@ -112,6 +115,10 @@ set(TEST_SOURCE_FILES
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE ${INCLUDE_DIRS})
+if(CHQ_ENABLE_TEST_STAGE)
+  target_sources(ChaseHQ_Tests PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
+  target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
 
 # ---- Stretchy object renderer (visual debug tool, no SDL2 dependency) ------
 
@@ -122,6 +129,10 @@ list(APPEND STRETCHY_SOURCE_FILES Tests/RenderStretchyObject.c)
 add_executable(StretchyRenderer ${STRETCHY_SOURCE_FILES})
 target_compile_definitions(StretchyRenderer PRIVATE CHQ_TESTS)
 target_include_directories(StretchyRenderer PRIVATE ${INCLUDE_DIRS})
+if(CHQ_ENABLE_TEST_STAGE)
+  target_sources(StretchyRenderer PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
+  target_compile_definitions(StretchyRenderer PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
 
 # ---- Stage data generation --------------------------------------------------
 # Regenerate committed .c files from their skool sources.
