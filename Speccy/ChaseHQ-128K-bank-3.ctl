@@ -422,7 +422,7 @@ C $C69A,1 Entry point also reached directly after the ~180- frame attract-tune w
 C $C69C,3 (not traced -- likely a sound/ROM-switch helper)
 C $C69F,35 Copy the 3 preset high-score name/rank rows from $C403 into the work buffer pointed to by ($800A), 3 times (A = 3), each copy split into 15+7+6 bytes with 2-byte gaps skipped between segments
 C $C6C2,1 Discard the flag/counter pushed by the caller
-N $C6C4 Per-frame animation driver: waits for the next interrupt, draws the 6 "foreground" objects (records 0-5 of the $BB00 array) via #R$C8C5, steps the object animation scripts (#R$C705), clears the playfield bitmap (#R$CC04), then draws the 3 "background" objects (records 6-8) via the alternate blitter #R$C94F. Loops forever -- exited only by #R$C93C / #R$C9D3-style RET-via-restored-SP inside the blitters when a draw overruns the interrupt, or by the caller of #R$C6C4 abandoning the wait loop (e.g. fire pressed). Uses EXX around each #R$C8C5/#R$C94F call: the object record's script pointer (B/C) and screen-position byte (L) are loaded into the shadow registers so the blitter can use HL/DE/BC freely without disturbing the loop's own IX/DE/B state in the main set.
+N $C6C4 Per-frame animation driver: waits for the next interrupt, draws the 6 "foreground" objects (records 0-5 of the $BB00 array) via #R$C8C5, steps the object animation scripts (#R$C705), clears the playfield bitmap (#R$CC04), then draws the 3 "background" objects (records 6-8) via the alternate blitter #R$C94F. Loops forever in the ordinary case, but #R$C705 (via #R$C746's $D2 "end of script" handling, `POP HL : RET` with no matching PUSH) will pop this loop's own return address as data and RET again beneath it, unwinding straight out of this self-loop back to #R$C6C4's *caller* (#R$C605's own continuation) the moment any object's script reaches $D2 -- see #R$C746. This is the normal exit: whichever scene object's script ends first stops the whole per-frame animation and hands control back to title_screen_driver, which is what starts the tune and enters the (non-animating) attract-mode wait loop. #R$C93C / #R$C9D3-style RET-via-restored-SP inside the blitters is a separate, unrelated mechanism (aborting one partially off-screen glyph draw, not this loop). Uses EXX around each #R$C8C5/#R$C94F call: the object record's script pointer (B/C) and screen-position byte (L) are loaded into the shadow registers so the blitter can use HL/DE/BC freely without disturbing the loop's own IX/DE/B state in the main set.
 @ $C6C4 label=ts_animate_frame
 C $C6C7,2 6 foreground objects
 C $C6C9,3 Object record stride (9 bytes)
@@ -466,8 +466,10 @@ C $C75D,1 ($CC/$CD/$CE = accelerate variants, 3 operand
 C $C75E,2 bytes)
 C $C766,1 ($CF = "wait N frames", 1 operand byte)
 C $C769,1 ($D0 = jump to absolute position, 2 operand bytes)
-C $C76C,2 ($D2 = end of script: restore the caller's saved
-C $C76E,2 HL and return, i.e. stop animating this object)
+C $C76C,2 ($D2 = end of script. No PUSH anywhere in this call
+C $C76E,2 chain, so the POP HL below pops #R$C705's own
+C $C770,1 return address as data, and the RET after it
+C $C771,1 returns to the frame *beneath* that -- unwinding past #R$C705's caller and out through #R$C6C4's self-loop in one go, back to #R$C6C4's own caller. Not "stop animating this object": this ends the whole frame and the whole per-frame animation loop.)
 @ $C772 label=oss_save_cursor
 C $C772,3 Save the advanced script cursor back to the object
 C $C775,3 record, then loop back to re-fetch/execute

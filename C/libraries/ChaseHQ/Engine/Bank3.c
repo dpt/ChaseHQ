@@ -93,9 +93,9 @@ static void ts_music_service(chqstate_t *state);
 static void setup_im2_interrupt_table(chqstate_t *state);
 static void frame_interrupt_handler(chqstate_t *state);
 static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune);
-static void ts_animate_frame(chqstate_t *state);
+static u8   ts_animate_frame(chqstate_t *state);
 static void clear_playfield_buffer(chqstate_t *state);
-static void object_script_step(chqstate_t *state);
+static u8   object_script_step(chqstate_t *state);
 static u8 oss_lookup_speed(u8 C_idx);
 static void oss_apply_x_step(struct title_object *rec);
 static void oss_apply_y_step(struct title_object *rec);
@@ -1602,15 +1602,15 @@ static void oss_op_accel_x_c(struct title_object *rec)
  * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
  * with no PUSH anywhere in this call chain, that pops object_script_step's
  * own return address as data and returns via the frame beneath it, aborting
- * all the way back into ts_animate_frame's *caller* and skipping the rest of
- * that frame's work (clear_playfield_buffer, background-object draw,
- * stamp/sleep). This is the same class of self-looping/stack-unwind escape
- * hatch already left unmodelled in ts_animate_frame's own prologue (its
- * $C702 self-jump and the blitters' overrun escape). Since this port already
- * treats ts_animate_frame as a plain function that always returns to its
- * caller once per frame, the in-scope equivalent here is to stop processing
- * any further objects this frame (an early `return`) rather than unwind into
- * frames this function does not own.
+ * all the way back into ts_animate_frame's *caller* (title_screen_driver's
+ * own per-frame loop) and skipping the rest of that frame's work
+ * (clear_playfield_buffer, background-object draw, stamp/sleep). This is
+ * exactly what makes the attract-mode scene animate for a while and then
+ * freeze once the tune starts: whichever object's script reaches $D2 first
+ * is the one that ends the self-loop. Modelled here with a u8 return (1 =
+ * hit $D2, stop processing further objects this frame) that ts_animate_frame
+ * propagates to its own caller, rather than the raw stack-unwind trick
+ * itself -- see ts_animate_frame's prologue.
  *
  * Conv: oss_op_immediate_step's Y-magnitude extraction rotates A right
  * through the carry flag 3 times before masking with AND $03; the carry bit
@@ -1626,7 +1626,7 @@ static void oss_op_accel_x_c(struct title_object *rec)
  * fetch loop that model oss_fetch_opcode_cont's own re-fetch jumps ($C8,
  * $D0). See the project's "verify back-edges" pitfall.
  */
-static void object_script_step(chqstate_t *state)
+static u8 object_script_step(chqstate_t *state)
 {
   int                  obj;       /* object-loop index, 0-8 (was B, DJNZ counter) */
   struct title_object *rec;       /* current object record (was IX) */
@@ -1708,7 +1708,7 @@ static void object_script_step(chqstate_t *state)
               continue;
 
             case 0xD2: /* end of script -- see this function's own Conv note */
-              return;
+              return 1;
 
             default: /* $D1 and anything else: no operand bytes, falls
                       * straight to oss_save_cursor ($C76C-$C772) */
@@ -1757,6 +1757,8 @@ static void object_script_step(chqstate_t *state)
       break; /* $C73B oss_next_object: move on to the next object */
     }
   }
+
+  return 0; /* $C73F RET: all 9 objects stepped, no $D2 hit this frame */
 }
 
 /**
@@ -1823,15 +1825,26 @@ static void clear_playfield_buffer(chqstate_t *state)
  * blitters when a frame overruns the interrupt deadline, or the whole call
  * stack being abandoned elsewhere when fire is pressed to start the game.
  *
- * Conv: the self-looping structure and its stack-unwind escape hatch are not
- * modelled; this function always draws one frame then returns, matching how
- * other per-frame functions in this port are called once per iteration from
- * a caller-owned loop (e.g. drive_attract_demo). Only the EI/HALT
- * frame-pacing point is translated, via the same stamp/sleep idiom used
- * elsewhere. Continuous animation during the attract-mode wait is driven by
- * ts_wait_loop calling this function once per iteration — see its own Conv
- * note for why that caller-owned loop, rather than this function's literal
- * self-loop, is where repeated invocation lives in the C port.
+ * Conv: the self-looping structure is not modelled directly; this function
+ * draws one frame then returns, matching how other per-frame functions in
+ * this port are called once per iteration from a caller-owned loop (e.g.
+ * drive_attract_demo). Only the EI/HALT frame-pacing point is translated,
+ * via the same stamp/sleep idiom used elsewhere. Continuous animation is
+ * driven by title_screen_driver calling this function once per iteration
+ * until it returns 0 — see its own call site.
+ *
+ * Conv: the stack-unwind escape hatch *is* modelled, via the return value.
+ * object_script_step returns 1 when an object's script hits its $D2
+ * end-of-script opcode, which on real hardware pops straight out of this
+ * whole self-loop back to title_screen_driver. When that happens, this
+ * function skips the rest of the frame's work (clear_playfield_buffer,
+ * background-object draw, present, sleep) and returns 0 to tell its caller
+ * to stop animating and fall through to the (non-animating) attract-mode
+ * wait loop — matching the "scene animates, then freezes once the tune
+ * starts" behaviour of the original game.
+ *
+ * \return 1 if the caller should call this function again next frame, 0 if
+ * an object's script ended the self-loop this frame (final frame drawn).
  *
  * Conv: the fg/bg draw loops' EXX pairs ($C6D0/$C6DD, $C6E2, $C6E9/$C6FD)
  * only protect the loop counter (B) and record-stride (DE) from being
@@ -1848,7 +1861,7 @@ static void clear_playfield_buffer(chqstate_t *state)
  * single frame drawn by title_screen_driver before this function starts
  * looping.
  */
-static void ts_animate_frame(chqstate_t *state)
+static u8 ts_animate_frame(chqstate_t *state)
 {
   static const zxbox_t  playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
@@ -1864,7 +1877,8 @@ static void ts_animate_frame(chqstate_t *state)
     compute_glyph_blit_params(state, rec->y, rec->x, rec->row);
   }
 
-  object_script_step(state);
+  if (object_script_step(state))
+    return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
 
   clear_playfield_buffer(state);
 
@@ -1876,6 +1890,8 @@ static void ts_animate_frame(chqstate_t *state)
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
   state->speccy->sleep(state->speccy, 220167*57/100); // hacking
+
+  return 1;
 }
 
 /**
@@ -2489,8 +2505,6 @@ static void title_screen_driver(chqstate_t *state)
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
 
-  return; // TEMP
-
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
@@ -2552,9 +2566,19 @@ static void title_screen_driver(chqstate_t *state)
 
     setup_im2_interrupt_table(state);
 
-    /* draw the first frame immediately, so the scene is visible before the wait
-     * loop starts polling. */
-    ts_animate_frame(state);
+    /* $C605 CALL $C6C4: on real hardware this call never returns under
+     * normal play -- $C6C4 self-loops, animating every frame, until some
+     * object's script hits its $D2 end-of-script opcode, which unwinds the
+     * whole call chain straight back here (see object_script_step's and
+     * ts_animate_frame's own Conv notes). Modelled as an explicit loop
+     * rather than the stack-unwind trick itself: the scene animates for as
+     * many frames as that takes, then this loop ends and the scene is left
+     * on its final frame while the tune starts and the (non-animating) wait
+     * loop below takes over. */
+    while (ts_animate_frame(state)) {
+      if (state->host_quit)
+        longjmp(state->host_quit_jmp, 1);
+    }
 
     /* Show "PRESS ENTER FOR OPTIONS" unconditionally. */
     print_character(state, &title_screen_overlay_text[21]);
@@ -2579,32 +2603,25 @@ static void title_screen_driver(chqstate_t *state)
 /**
  * $C61E: Title-screen attract-mode wait loop
  *
- * Animates the current scene once per interrupt (via sfx_music_service, the
- * per-frame sound/music tick) and polls for coin-insert / fire / any-key
- * input to start the game or jump to a fresh title screen. Re-entered every
- * frame via $C61E; title_screen_driver ($C59E) is re-run (new scene) when a
- * key other than fire is pressed.
+ * Services sound (sfx_music_service, the per-frame sound/music tick) and
+ * polls for coin-insert / fire / any-key input to start the game or jump to
+ * a fresh title screen. Does NOT animate the scene -- on real hardware this
+ * loop body is just `CALL $F82F` with no call to $C6C4; by the time this
+ * loop is reached, title_screen_driver's own per-frame loop has already run
+ * the scene's animation to completion (an object's script hit its $D2
+ * end-of-script opcode) and the scene sits frozen on its final frame for
+ * the rest of the attract-mode wait. Re-entered every frame via $C61E;
+ * title_screen_driver ($C59E) is re-run (new scene) when a key other than
+ * fire is pressed.
  *
  * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame
  * pacing described in the skool ("one $F82F service call per frame") is
  * informal; the real hardware relies on the background IM2 interrupt firing
  * asynchronously while this loop spins. The C port makes the frame boundary
- * explicit with stamp()/sleep() once per iteration, matching every other
+ * explicit with stamp()/sleep() once per iteration (the same TITLE_MUSIC_TSTATES
+ * idiom used a few lines below for the tune-4 wait), matching every other
  * per-frame loop in this file (attract_mode_128k, drive_attract_demo,
  * run_pregame_screen_loop).
- *
- * Conv: real hardware drives continuous scene animation from ts_animate_frame
- * ($C6C4) itself -- it never returns under normal operation (see its own
- * prologue). Since the established Conv already treats ts_animate_frame as a
- * single-frame-per-call function (matching its one call site at $C605, which
- * only ever draws frame 1), this loop is the actual caller-owned per-frame
- * loop that must invoke it repeatedly for the scene to animate while waiting
- * for input -- the same shape as drive_attract_demo calling its own per-frame
- * worker once per iteration. ts_animate_frame(state) therefore replaces this
- * loop's own stamp() call below (it already does its own stamp()/sleep(),
- * sandwiching the frame's draw/script-step work), and the two "balance this
- * iteration's stamp()" sleep() calls before `continue` are removed --
- * they are already balanced by ts_animate_frame's internal sleep().
  *
  * Conv: DI/EI have no C equivalent (SDL owns interrupt delivery, matching
  * setup_im2_interrupt_table) and are omitted throughout.
@@ -2639,10 +2656,9 @@ static u8 ts_wait_loop(chqstate_t *state)
     if (state->host_quit)
       longjmp(state->host_quit_jmp, 1);
 
-    ts_animate_frame(state); /* Conv: drives continuous scene animation from
-                               * this caller-owned loop -- see prologue. */
-
+    state->speccy->stamp(state->speccy);
     sfx_music_service(state);
+    state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
 
     if (!state->bank3->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
@@ -2715,7 +2731,7 @@ static u8 ts_wait_loop(chqstate_t *state)
     A_test_mode = state->test_mode;
     if (!A_test_mode) {
       continue; /* Conv: no balancing sleep() needed -- already closed out by
-                 * ts_animate_frame's own sleep() (see prologue) */
+                 * the stamp()/sleep() pair at the top of this loop */
     }
 
     /* was IN+CPL */
