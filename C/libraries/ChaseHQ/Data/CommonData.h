@@ -276,8 +276,8 @@ const heli_bitmap_t heli_part3_frame0;
 const heli_bitmap_t heli_part3_frame1;
 const heli_bitmap_t heli_part4_frame0;
 const heli_bitmap_t heli_part4_frame1;
-const heli_bitmap_inner_t heli_rotor_frame0;
-const heli_bitmap_inner_t heli_rotor_frame1;
+const heli_bitmap_xonly_t heli_rotor_frame0;
+const heli_bitmap_xonly_t heli_rotor_frame1;
 const heli_part_ptr_t heli_table_frame0[SPRITE_FRAMES];
 const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES];
 

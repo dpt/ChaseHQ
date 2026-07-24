@@ -4269,11 +4269,11 @@ const heli_bitmap_t heli_part4_frame1 = {
 };
 
 // $ECD7
-const heli_bitmap_inner_t heli_rotor_frame0 = {
+const heli_bitmap_xonly_t heli_rotor_frame0 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[390], &bitmap_helicopter[390] }
 };
 // $ECDF
-const heli_bitmap_inner_t heli_rotor_frame1 = {
+const heli_bitmap_xonly_t heli_rotor_frame1 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[490], &bitmap_helicopter[490] }
 };
 

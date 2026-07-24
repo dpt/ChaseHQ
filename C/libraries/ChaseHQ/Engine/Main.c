@@ -842,7 +842,7 @@ static void draw_dirt_and_stones(chqstate_t *state,
 static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight);
 static void draw_helicoper_part(chqstate_t                *state,
                                 int                        Acol_pos,
-                                const heli_bitmap_inner_t *DEinnerbitmap,
+                                const heli_bitmap_xonly_t *DEinnerbitmap,
                                 const u8                  *IYheight);
 
 static void move_helicopter(chqstate_t *state);
@@ -8960,8 +8960,8 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   u8                         Atotal;       /* high byte of multiply result, halved for rotor position (was A) */
   int                        frame;        /* animation frame index: anim_counter bit 0 selects bitmap set (was A) */
   const heli_part_ptr_t     *heliframes;   /* pointer to current 6-entry table of part pointers (was HL) */
-  const heli_bitmap_t       *helipart;     /* body part block: y_offset + inner bitmap (was DE) */
-  const heli_bitmap_inner_t *helirotor;    /* rotor block: bare inner bitmap, no y_offset (was DE) */
+  const heli_bitmap_t       *helipart;     /* body part block: y_offset + bitmap_x bitmap (was DE) */
+  const heli_bitmap_xonly_t *helirotor;    /* rotor block: bare bitmap_x bitmap, no y_offset (was DE) */
 
   carry = 0;
 
@@ -8998,23 +8998,23 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
 
   // Conv: the table is six 16-bit pointers to per-part blocks (HL advances 2
   // bytes per part; pitfall #29), not six consecutive heli_bitmap_t structs.
-  // Parts 1-5 are heli_bitmap_t (y_offset + inner); part 6 (rotor, $AA86) is
-  // a bare heli_bitmap_inner_t with no y_offset byte, so it is read via a
+  // Parts 1-5 are heli_bitmap_t (y_offset + bitmap_x); part 6 (rotor, $AA86) is
+  // a bare heli_bitmap_xonly_t with no y_offset byte, so it is read via a
   // separate pointer type after the loop.
   do {
     helipart = (const heli_bitmap_t *) *heliframes++;
     draw_helicoper_part(state, helipart->y_offset + state->dhs_heli_y_offset,
-                        &helipart->inner, IYheight);
+                        &helipart->bitmap_x, IYheight);
   } while (--Biterations2 > 0);
 
-  helirotor = (const heli_bitmap_inner_t *) *heliframes;
+  helirotor = (const heli_bitmap_xonly_t *) *heliframes;
   // A = 0; // an apparently useless op
   draw_helicoper_part(state, state->dhs_heli_rotor_pos, helirotor, IYheight);
 }
 
 static void draw_helicoper_part(chqstate_t                *state,
                                 int                        Acol_pos,
-                                const heli_bitmap_inner_t *DEinnerbitmap,
+                                const heli_bitmap_xonly_t *DEinnerbitmap,
                                 const u8                  *IYheight)
 {
   int             carry;
@@ -9029,7 +9029,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   BC_helipos = state->dhl_helipos;
   state->doc_col_pos = -Acol_pos; // in draw_object_common
 
-  screen_pos = DEinnerbitmap->horz_offset + BC_helipos;
+  screen_pos = DEinnerbitmap->x_offset + BC_helipos;
 
   HLbitmap  = &DEinnerbitmap->bm; // Conv: Ops shuffled a bit
 

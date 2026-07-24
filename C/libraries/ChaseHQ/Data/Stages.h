@@ -298,19 +298,19 @@ typedef struct hittable {
   const bitmap_t *bitmaps;
 } hittable_t;
 
-typedef struct heli_bitmap_inner {
-  s8       horz_offset;
-  bitmap_t bm;
-} heli_bitmap_inner_t;
+typedef struct heli_bitmap_xonly {
+  s8                  x_offset;
+  bitmap_t            bm;
+} heli_bitmap_xonly_t;
 
 typedef struct heli_bitmap {
   u8                  y_offset;
-  heli_bitmap_inner_t inner;
+  heli_bitmap_xonly_t bitmap_x;
 } heli_bitmap_t;
 
 // Table of 6 part pointers used by draw_helicopter: entries 0-4 point to a
 // heli_bitmap_t (body parts, which carry a y_offset); entry 5 points to a
-// bare heli_bitmap_inner_t (the rotor, whose Z80 block has no y_offset
+// bare heli_bitmap_xonly_t (the rotor, whose Z80 block has no y_offset
 // byte). The Z80 never type-checks these, so the C table is a flat array of
 // untyped pointers, cast to the right type at each of the two use sites.
 typedef const void *heli_part_ptr_t;
