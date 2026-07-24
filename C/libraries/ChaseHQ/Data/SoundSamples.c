@@ -17,6 +17,7 @@
 
 #include "SoundSamples.h"
 
+// $C000 (bank 4)
 const u8 sound_samples[16384] = {
   // Sample: "Giddy up boy!"
   0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0xAA,

@@ -1482,6 +1482,7 @@ const scenedata_t escape_scene_data = {
   &perp_escape_hazards[-1],
 };
 
+// $8728
 const hazard_t escape_scene_perp = {
   HAZARD_USED,
   1,      // distance
@@ -1901,6 +1902,7 @@ const session_t saved_game_state = {
 
 #define PERP_INITIAL_DISTANCE (868)
 
+// $A159
 const hazard_t saved_game_state_perp_hazard = {
   0,
   PERP_INITIAL_DISTANCE & 0xFF,
@@ -4225,41 +4227,52 @@ const u8 bitmap_helicopter[590] = {
   XXXXXXXX, ________, XXXXXXX_, _______X, X_X____X, _X_XXXX_, XX_X_XXX, __X_X___, XXXXXXXX, ________,
 };
 
+// $ECAA
 const heli_bitmap_t heli_part0 = {
   0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[266], &bitmap_helicopter[266] } }
 };
 
+// $EC8F
 const heli_bitmap_t heli_part1_frame0 = {
   0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[112], &bitmap_helicopter[112] } }
 };
+// $ECA1
 const heli_bitmap_t heli_part1_frame1 = {
   0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[245], &bitmap_helicopter[245] } }
 };
 
+// $EC86
 const heli_bitmap_t heli_part2_frame0 = {
   0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[0], &bitmap_helicopter[0] } }
 };
+// $EC98
 const heli_bitmap_t heli_part2_frame1 = {
   0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[133], &bitmap_helicopter[133] } }
 };
 
+// $ECB3
 const heli_bitmap_t heli_part3_frame0 = {
   0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_helicopter[326], &bitmap_helicopter[326] } }
 };
+// $ECC5
 const heli_bitmap_t heli_part3_frame1 = {
   0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_helicopter[352], &bitmap_helicopter[352] } }
 };
 
+// $ECBC
 const heli_bitmap_t heli_part4_frame0 = {
   0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[338], &bitmap_helicopter[338] } }
 };
+// $ECCE
 const heli_bitmap_t heli_part4_frame1 = {
   0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[362], &bitmap_helicopter[362] } }
 };
 
+// $ECD7
 const heli_bitmap_inner_t heli_rotor_frame0 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[390], &bitmap_helicopter[390] }
 };
+// $ECDF
 const heli_bitmap_inner_t heli_rotor_frame1 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[490], &bitmap_helicopter[490] }
 };
@@ -5123,6 +5136,7 @@ const u8 shocked_keydefs[8] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $EF5E
 const u8 drum1_template[252] = {
   0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xFF, 0xFF,
   0xEF, 0xFF, 0xFF, 0xFF, 0xBE, 0x36, 0x10, 0x00,
@@ -5158,6 +5172,7 @@ const u8 drum1_template[252] = {
   0x9F, 0xFF, 0xEF, 0x00
 };
 
+// $F05A
 const u8 drum2_template[108] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
   0xFF, 0xDE, 0x00, 0xFF, 0x81, 0xFF, 0xFF, 0xFF,

@@ -236,6 +236,7 @@ static const u8 stage2_perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
+// $E145 (bank 1)
 static const char *stage2_chatter_strings[4] = {
   "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
   "EMERGENCY HERE. CARLOS, THE NEW YOR\xCB",

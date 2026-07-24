@@ -278,6 +278,7 @@ static const u8 stage1_perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
+// $C145 (bank 1)
 // Conv: Additional
 static const char *stage1_chatter_strings[4] = {
   "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
@@ -1986,6 +1987,7 @@ static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $CE46
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
   { 2, BITMAPFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
@@ -1995,6 +1997,7 @@ static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
 };
 
+// $CE70
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
