@@ -52,7 +52,7 @@
 
 ## P5 — Clarity pass
 
-- Remove Z80 macros where it clarifies
+- Audit `RR(Atotal)` in Main.c:8988 (`// halve?`) — carry-in provenance from the preceding multiply loop is unclear, unlike the two confirmed/removed forced-carry-0 cases
 - Audit "Conv: added" vars
 - Match up menu funcs for string printing with the main code - are they the same code?
 - Big reformat pass once happy with code

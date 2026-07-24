@@ -4504,7 +4504,7 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     Ebitmap_stride = HLbitmap->width_bytes;
     Awidth_bytes = ((u8)Awidth_bytes & 0xFC) >> 2;
     state->doc_shift_select = Awidth_bytes;
-    carry = 0; RR(Awidth_bytes);
+    Awidth_bytes >>= 1; /* was RR with carry forced to 0; carry-out overwritten below unread */
     Bheight = Awidth_bytes;
     Awidth_bytes += Ebitmap_stride;
     Awidth_bytes -= 33;
@@ -14547,12 +14547,11 @@ static void dr_fill(chqstate_t *state,
 
   HLdash_ptr = (u8 *)hi_to_xpostab(state, state->dr_right_table_hi_2) + Ldash_row;
   Arightval = *HLdash_ptr;
-  carry = 0;
   if (Arightval) {
     Aright_stripe_width = ((s8) Arightval < 0) ? 0 : 15;
   } else {
     Aright_stripe_width = (HLdash_ptr[-1] & Cdash_mask) >> 3;
-    RR(Aright_stripe_width); /* carry is 0 as set above */
+    Aright_stripe_width >>= 1; /* was RR with carry forced to 0 above; carry-out unused */
   }
   assert(Aright_stripe_width <= 15);
 
