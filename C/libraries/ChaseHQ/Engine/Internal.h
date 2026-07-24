@@ -65,6 +65,13 @@
  * per-nibble output rate, not just the explicit delay. */
 #define SPEECH_NIBBLE_TSTATES      (375) // TODO: Calibrate
 
+/* $E256 loop body (es_handler_draw_score, Bank7.c): one bonus-tally
+ * increment, comprising increment_score, ptad_led_digits and a sfx_bipbow(2,
+ * 2) tone. Dominated by sfx_bipbow's DJNZ delay loops (~37200 T-states of
+ * the total); a single stamp/sleep models the whole per-increment body, not
+ * just the beeper delay. */
+#define SCORE_TALLY_TSTATES      (38000) // TODO: Calibrate
+
 /* 48K beeper sfx timing. The Z80 pitches its bit-banged speaker output with
  * busy-wait delay loops; the C translations do no busy-waiting and instead
  * advance the speccy's virtual T-state clock via speccy->logtime so the host
