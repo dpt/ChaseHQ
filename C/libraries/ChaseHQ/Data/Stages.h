@@ -311,9 +311,12 @@ typedef struct heli_bitmap {
 // Table of 6 part pointers used by draw_helicopter: entries 0-4 point to a
 // heli_bitmap_t (body parts, which carry a y_offset); entry 5 points to a
 // bare heli_bitmap_xonly_t (the rotor, whose Z80 block has no y_offset
-// byte). The Z80 never type-checks these, so the C table is a flat array of
-// untyped pointers, cast to the right type at each of the two use sites.
-typedef const void *heli_part_ptr_t;
+// byte). The Z80 never type-checks these; the union lets each of the two use
+// sites pick the right member instead of casting an untyped pointer.
+typedef union heli_part_ptr {
+  const heli_bitmap_t       *part;  // entries 0-4
+  const heli_bitmap_xonly_t *rotor; // entry 5
+} heli_part_ptr_t;
 
 /// Depth Set offset
 /// (7 is original game sizeof(bitmap_t))

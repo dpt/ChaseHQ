@@ -9002,12 +9002,12 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   // a bare heli_bitmap_xonly_t with no y_offset byte, so it is read via a
   // separate pointer type after the loop.
   do {
-    helipart = (const heli_bitmap_t *) *heliframes++;
+    helipart = (*heliframes++).part;
     draw_helicoper_part(state, helipart->y_offset + state->dhs_heli_y_offset,
                         &helipart->bitmap_x, IYheight);
   } while (--Biterations2 > 0);
 
-  helirotor = (const heli_bitmap_xonly_t *) *heliframes;
+  helirotor = (*heliframes).rotor;
   // A = 0; // an apparently useless op
   draw_helicoper_part(state, state->dhs_heli_rotor_pos, helirotor, IYheight);
 }

@@ -4279,11 +4279,13 @@ const heli_bitmap_xonly_t heli_rotor_frame1 = {
 
 // $ED93 (stage 2) / $EC6E (stage 4) in the original banks.
 const heli_part_ptr_t heli_table_frame0[SPRITE_FRAMES] = {
-  &heli_part0, &heli_part1_frame0, &heli_part2_frame0, &heli_part3_frame0, &heli_part4_frame0, &heli_rotor_frame0,
+  {.part = &heli_part0}, {.part = &heli_part1_frame0}, {.part = &heli_part2_frame0},
+  {.part = &heli_part3_frame0}, {.part = &heli_part4_frame0}, {.rotor = &heli_rotor_frame0},
 };
 // $ED9F (stage 2) / $EC7A (stage 4) in the original banks.
 const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES] = {
-  &heli_part0, &heli_part1_frame1, &heli_part2_frame1, &heli_part3_frame1, &heli_part4_frame1, &heli_rotor_frame1,
+  {.part = &heli_part0}, {.part = &heli_part1_frame1}, {.part = &heli_part2_frame1},
+  {.part = &heli_part3_frame1}, {.part = &heli_part4_frame1}, {.rotor = &heli_rotor_frame1},
 };
 
 /* ----------------------------------------------------------------------- */
