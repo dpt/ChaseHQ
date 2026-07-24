@@ -185,8 +185,7 @@ const stage_t stage2 = {
   &stage2_left_obj_defs_E25B[2],  /* addrof_left_hand_short_pole_object */
   &stage2_perp_description[0],  /* addrof_perp_description */
   &stage2_arrest_messages_E1DD[0],  /* addrof_arrest_messages */
-  heli_table_frame0,  /* addrof_helicopter_stuff_1 ($ED93) */
-  heli_table_frame1,  /* addrof_helicopter_stuff_2 ($ED9F) */
+  { heli_table_frame0, heli_table_frame1 },  /* addrof_helicopter_frames ($ED93, $ED9F) */
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */

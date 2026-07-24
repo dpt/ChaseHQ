@@ -391,7 +391,7 @@ typedef struct scenedata {
 
 /* ----------------------------------------------------------------------- */
 
-#define SPRITE_FRAMES 6   /* bitmaps per sprite sequence (distance LODs / animation frames) */
+#define SPRITE_FRAMES (6) /* bitmaps per sprite sequence (distance LODs / animation frames) */
 
 typedef struct stage {
   u8                backdrop[BACKDROP_LENGTH];
@@ -407,8 +407,7 @@ typedef struct stage {
   const obj_t      *addrof_left_hand_short_pole_object;
   const u8         *addrof_perp_description;
   const u8         *addrof_arrest_messages;
-  const heli_part_ptr_t *addrof_helicopter_stuff_1;
-  const heli_part_ptr_t *addrof_helicopter_stuff_2;
+  const heli_part_ptr_t *addrof_helicopter_frames[2];
 
   const bitmap_t  (*bitmaps_stones)[SPRITE_FRAMES];
   const bitmap_t  (*bitmaps_dust)[SPRITE_FRAMES];

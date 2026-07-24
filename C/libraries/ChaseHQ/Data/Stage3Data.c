@@ -179,8 +179,7 @@ const stage_t stage3 = {
   &stage3_left_obj_defs_C25E[2],  /* addrof_left_hand_short_pole_object */
   &stage3_perp_description[0],  /* addrof_perp_description */
   &stage3_arrest_messages_C1E8[0],  /* addrof_arrest_messages */
-  NULL,  /* TODO: addrof_helicopter_stuff_1 - raw data, not decoded yet */
-  NULL,  /* TODO: addrof_helicopter_stuff_2 - raw data, not decoded yet */
+  { NULL, NULL },
 
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[0],  /* bitmaps_stones */
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CE1B[0],  /* bitmaps_dust */

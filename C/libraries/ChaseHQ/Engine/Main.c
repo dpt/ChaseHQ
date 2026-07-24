@@ -8959,7 +8959,7 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   int                        Biterations2; /* loop counter: 8 for multiply, 5 for body-part draw (was B) */
   u8                         Atotal;       /* high byte of multiply result, halved for rotor position (was A) */
   int                        frame;        /* animation frame index: anim_counter bit 0 selects bitmap set (was A) */
-  const heli_part_ptr_t     *helitable;    /* pointer to current 6-entry table of part pointers (was HL) */
+  const heli_part_ptr_t     *heliframes;   /* pointer to current 6-entry table of part pointers (was HL) */
   const heli_bitmap_t       *helipart;     /* body part block: y_offset + inner bitmap (was DE) */
   const heli_bitmap_inner_t *helirotor;    /* rotor block: bare inner bitmap, no y_offset (was DE) */
 
@@ -8968,7 +8968,7 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   if (Bdistance != 3)
     return;
 
-  if (state->stage->addrof_helicopter_stuff_1 == NULL)
+  if (state->stage->addrof_helicopter_frames[0] == NULL)
     return;
 
   diff = state->object_positions[Bdistance] -
@@ -8994,8 +8994,7 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   Biterations2 = 5; // iterations (draw first five)
   frame = state->anim_counter & 1; // heli frame
 
-  helitable = (frame == 0) ? state->stage->addrof_helicopter_stuff_1 :
-                             state->stage->addrof_helicopter_stuff_2;
+  heliframes = state->stage->addrof_helicopter_frames[frame];
 
   // Conv: the table is six 16-bit pointers to per-part blocks (HL advances 2
   // bytes per part; pitfall #29), not six consecutive heli_bitmap_t structs.
@@ -9003,12 +9002,12 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   // a bare heli_bitmap_inner_t with no y_offset byte, so it is read via a
   // separate pointer type after the loop.
   do {
-    helipart = (const heli_bitmap_t *)*helitable++;
+    helipart = (const heli_bitmap_t *) *heliframes++;
     draw_helicoper_part(state, helipart->y_offset + state->dhs_heli_y_offset,
                         &helipart->inner, IYheight);
   } while (--Biterations2 > 0);
 
-  helirotor = (const heli_bitmap_inner_t *)*helitable;
+  helirotor = (const heli_bitmap_inner_t *) *heliframes;
   // A = 0; // an apparently useless op
   draw_helicoper_part(state, state->dhs_heli_rotor_pos, helirotor, IYheight);
 }

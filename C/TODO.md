@@ -41,6 +41,7 @@
   - "fire pressed -> start game via `$FBA2`" wiring
   - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
 - `Main.c:1090` stub function body, "Write this"
+- Fix void *heli_part_ptr_t awfulness
 
 ## P4 — Polish / visual correctness
 

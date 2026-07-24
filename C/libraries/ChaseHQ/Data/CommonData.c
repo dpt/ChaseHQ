@@ -4112,7 +4112,7 @@ const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
 // Helicopter sprite ($AA38 draw_helicopter). Stages 2 and 4 both reference
 // this identical part/bitmap data from their own banks (only the two frame
 // table addresses differ in the original); stages 1, 3 and 5 have no
-// helicopter (addrof_helicopter_stuff_1/2 are NULL).
+// helicopter (addrof_helicopter_frames is { NULL, NULL }).
 //
 // Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
 // distinct bitmap per frame, selected by anim_counter bit 0.

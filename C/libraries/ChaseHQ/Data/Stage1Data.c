@@ -225,8 +225,7 @@ const stage_t stage1 = {
   &stage1_left_hand_graphics_defs[2], // short pole
   &stage1_perp_description[0],
   &stage1_arrest_messages[0],
-  NULL, // unused on this level - addrof_helicopter_stuff_1
-  NULL, // unused on this level - addrof_helicopter_stuff_2 - Conv: was &000C
+  { NULL, NULL }, // unused on this level - addrof_helicopter_frames - Conv: was &000C
 
   &stage1_stones_bitmaps,
   &stage1_dust_bitmaps,

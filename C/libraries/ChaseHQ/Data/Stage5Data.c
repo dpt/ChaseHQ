@@ -192,8 +192,7 @@ const stage_t stage5 = {
   &stage5_left_obj_defs_C270[2],  /* addrof_left_hand_short_pole_object */
   &stage5_perp_description[0],  /* addrof_perp_description */
   &stage5_arrest_messages_C1E6[0],  /* addrof_arrest_messages */
-  NULL,  /* TODO: addrof_helicopter_stuff_1 - raw data, not decoded yet */
-  NULL,  /* TODO: addrof_helicopter_stuff_2 - raw data, not decoded yet */
+  { NULL, NULL },
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
