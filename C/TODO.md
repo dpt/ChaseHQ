@@ -5,6 +5,7 @@
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
+  - `title_screen_driver` (`Bank3.c:2492`) currently disabled (`return; // TEMP`) — bugs below unverifiable until re-enabled
   - music still not right (e.g. playing things twice or more over before stopping)
   - music plays while animating
   - animations don't stop in some cases
@@ -19,7 +20,7 @@
 - Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - Calibrate `TITLE_MUSIC_TSTATES`, `KEMPSTON_MUSIC_TSTATES`, `OMD_MUSIC_TSTATES`, `SUCCESS_MUSIC_TSTATES`, `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder values
-- Title jingle T-state count is a guess, tune by ear (`Bank3.c:3458`)
+- Title jingle T-state count is a guess, tune by ear (`Bank3.c:3502`)
 - Need to model RAM bank contention?
 
 ## P3 — Incomplete / missing content
@@ -28,7 +29,7 @@
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
 - `Stage3Data.c` / `Stage5Data.c`: decode `addrof_helicopter_stuff_1`/`addrof_helicopter_stuff_2`, currently NULL raw data
-- Border colour not implemented, always black (`SDLMain.c:297`, `SDLMain.c:780`)
+- Border colour not implemented, always black (`SDLMain.c:305`, `SDLMain.c:789`)
 - `Bank3.c` SFX subsystem gaps (out of scope stubs, need wiring):
   - SFX trigger-table setup (`$F7DB`-`$F82C`) and `stst_load_sfx_script` call
   - digitised-sample SFX subsystem (`$F837`/`$F895`/`$F8A2`)
@@ -38,9 +39,7 @@
   - high-score name/rank copy from `$C403`
   - active-control-config header write at (`$8008`)
   - scene-selector SM operand seed with `A_anykey`
-  - "fire pressed -> start game via `$FBA2`" wiring
   - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
-- `Main.c:1090` stub function body, "Write this"
 
 ## P4 — Polish / visual correctness
 
