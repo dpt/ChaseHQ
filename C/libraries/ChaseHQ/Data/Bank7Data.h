@@ -39,6 +39,15 @@ extern const u8 bitmap_handshake_2[280];
 extern const u8 bitmap_handshake_3[272];
 extern const u8 bitmap_handshake_4[256];
 
+/* $E3A5 handshake_frames: row-count + source bitmap per animation frame,
+ * cycling 1-2-3-4-3-2 (es_handler_handshake_advance, Bank7.c). */
+typedef struct {
+  u8        rows;
+  const u8 *image;
+} handshake_frame_t;
+
+extern const handshake_frame_t handshake_frames[6];
+
 extern const u8 chatterblk_nancy_congratulates[6];
 extern const u8 chatterblk_press_gear[3];
 

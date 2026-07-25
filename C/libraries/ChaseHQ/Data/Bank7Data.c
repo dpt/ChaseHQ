@@ -639,3 +639,12 @@ const u8 es_drum_sample_1_template[160] = {
   0x20, 0x00, 0x0E, 0x00, 0x00, 0x3F, 0x18, 0x8F,
   0x9F, 0xFF, 0xFF, 0xDF, 0xFF, 0xFF, 0xFF, 0x00
 };
+
+const handshake_frame_t handshake_frames[6] = {
+  { 37, &bitmap_handshake_1[0] },
+  { 35, &bitmap_handshake_2[0] },
+  { 34, &bitmap_handshake_3[0] },
+  { 32, &bitmap_handshake_4[0] },
+  { 34, &bitmap_handshake_3[0] },
+  { 35, &bitmap_handshake_2[0] },
+};
