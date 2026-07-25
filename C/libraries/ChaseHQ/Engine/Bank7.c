@@ -53,22 +53,6 @@
 #include <assert.h>
 
 /* ----------------------------------------------------------------------- */
-
-/**
- * $E499: Clear the playfield ready for the end screen
- *
- * Zeros the on-screen playfield (attributes and bitmap) plus the first 512
- * bytes of the "backbuffer" area, which alias the attribute portion of the
- * end-screen montage/glyph drawing area ($F000 = &state->backbuffer[0]).
- *
- */
-static void es_clear(chqstate_t *state)
-{
-  clear_playfield(state);
-  memset(&state->backbuffer[0], 0, 512);
-}
-
-/* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
 #define ESCMD_CLEAR_DRAW_FRAME_VAL    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
 #define ESCMD_DRAW_WORD_VAL           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
 #define ESCMD_FADE_IN_A_VAL           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
@@ -207,383 +191,230 @@ static const u8 es_script[] = {
  * "PRESS GEAR TO CONTINUE" blink forever instead of a one-shot draw. */
 #define ES_SCRIPT_RESET_OFFSET (sizeof(es_script) - 6)
 
-/**
- * Advance a raw Z80 screen address by one character-cell row.
- *
- * Common wraparound arithmetic shared by draw_endshot ($E4A9) and
- * routine_e3b7's handshake blit ($E3E9-$E3F8, $E407-$E416): within a
- * character row D climbs through its low 3 bits (one pixel scanline per
- * call); when that wraps, E jumps on by 32 (next character row) and D drops
- * back by 8 unless E itself carried into the next screen third.
- *
- * \param[in] addr Current screen address (was DE).
- * \return Screen address one row down.
- */
-static u16 next_screen_row(u16 addr)
-{
-  u8 Dhi; /* screen address high byte after +1 scanline (was D via A) */
-  u8 Elo; /* screen address low byte after +32 column step (was E via A) */
-
-  Dhi = (u8) ((addr >> 8) + 1);
-  if ((Dhi & 0x07) != 0)
-    return (u16) ((Dhi << 8) | (addr & 0xFF));
-
-  Elo = (u8) ((addr & 0xFF) + 0x20);
-  if (Elo < 0x20) /* carry out of E: stay in the next screen third */
-    return (u16) ((Dhi << 8) | Elo);
-  else
-    return (u16) (((Dhi - 0x08) << 8) | Elo);
-}
-
-/**
- * $E4A9: Blit an end-game montage shot to the screen
- *
- * Copies a 13-byte-wide bitmap, 64 rows tall, from image into the screen at
- * screen_addr, then 8 rows of attribute bytes into the corresponding
- * attribute third. Row addressing mimics the Z80's raw D/E screen-address
- * increment: within a character row D climbs through its low 3 bits: when
- * that wraps, E jumps on by 32 (next character column pair... actually next
- * character row) and D drops back by 8 unless E itself carried into the next
- * screen third.
- *
- * Conv: operates on the raw 16-bit Z80 screen address (screen_addr) and
- * calls ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer,
- * so the row-wrap arithmetic can mirror the Z80 exactly.
- *
- * \param[in] image       Bitmap+attribute source blob (was HL).
- * \param[in] screen_addr Top-left destination screen address (was DE).
- */
-static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
-{
-  int row;            /* bitmap row counter, 64 down to 1 (was B) */
-  u16 DE_screen_addr; /* current screen row address (was DE) */
-  u8  Dattr;          /* attribute row address high byte (was D after RRCA x3) */
-  u16 attraddr;       /* current attribute row address (was DE in the attr loop) */
-  int attrrow;        /* attribute row counter, 8 down to 1 (was A) */
-
-  DE_screen_addr = screen_addr;
-
-  for (row = ENDSHOT_HEIGHT; row != 0; row--) {
-    memcpy(ADDRTOSCREEN(DE_screen_addr), image, ENDSHOT_WIDTH / 8);
-    image += ENDSHOT_WIDTH / 8;
-    DE_screen_addr = next_screen_row(DE_screen_addr);
-  }
-
-  /* Conv: skool POPs DE here, restoring the original destination pushed at
-   * function entry -- NOT the row loop's final DE_screen_addr. Must use the
-   * screen_addr parameter, which the loop above never mutates. */
-  Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
-  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF);
-  attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
-
-  for (attrrow = 8; attrrow != 0; attrrow--) {
-    memcpy(ADDRTOBACKBUF(attraddr), image, 13);
-    image += 13;
-    /* Conv: the skool's LDIR ($E4D6) advances DE by 13 as a side effect of
-     * the copy itself, then adds a further 19 to skip the remaining columns
-     * of the 32-byte attribute row (skool comment at $E4D8: "13+19 = 32").
-     * memcpy has no such side effect on attraddr, so both parts of that
-     * total must be added explicitly here. */
-    attraddr = (u16) (attraddr + 13 + 19);
-  }
-
-  update_screen(state, screen_addr, ENDSHOT_WIDTH, ENDSHOT_HEIGHT); /* Conv: added */
-}
-
-/**
- * Resolve a script-embedded end-shot bitmap address to its C data array.
- *
- * Conv: the original walks a real (relocated) Z80 pointer; es_script only
- * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME_VAL
- * entries above), so a small lookup replaces pointer arithmetic into
- * relocated bank memory the C port does not model byte-for-byte.
- *
- * \param[in] addr Raw address word read from the script (was HL).
- * \return Matching bitmap_endshot_N array.
- */
-static const u8 *z80addrtoendshot(u16 addr)
-{
-  switch (addr) {
-  case 0x60E1: return &bitmap_endshot_1[0];
-  case 0x6489: return &bitmap_endshot_2[0];
-  case 0x6831: return &bitmap_endshot_3[0];
-  case 0x6BD9: return &bitmap_endshot_4[0];
-  default:     assert(0); return NULL;
-  }
-}
-
-/**
- * $E2DE: Read an image+destination pair and blit it
- *
- * Reads a bitmap address word and a destination screen address word from
- * the script, then blits the resolved image there. Does not clear the
- * backbuffer first; see es_clear_then_draw_frame for the variant that does.
- *
- * \param[in,out] script Script read pointer (was HL); advanced past the two
- *                       words consumed.
- */
-static void es_draw_frame_common(chqstate_t *state, const u8 **script)
-{
-  const u8 *HL_script;   /* script read pointer (was HL) */
-  u16       image_addr;  /* raw bitmap address word read from script */
-  u16       screen_addr; /* destination screen address word read from script */
-
-  HL_script = *script;
-
-  image_addr  = wordat(HL_script);
-  screen_addr = wordat(HL_script + 2);
-  HL_script += 4;
-
-  draw_endshot(state, z80addrtoendshot(image_addr), screen_addr);
-
-  *script = HL_script;
-}
-
-/**
- * $E2D9: Clear the backbuffer, then draw an end-screen graphic frame
- *
- * Thin wrapper: es_clear followed by es_draw_frame_common.
- *
- * \param[in,out] script Script read pointer (was HL); advanced past the two
- *                       words consumed.
- */
-static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
-{
-  es_clear(state);
-  es_draw_frame_common(state, script);
-}
-
-/**
- * $E42E: Sweep attributes toward the target colours
- *
- * Gate: only runs every other call (RLC flip-flops $5C6C; returns
- * immediately when the old top bit was set). When it runs, walks all 512
- * attribute cells $5900-$5AFF against the corresponding backbuffer bytes at
- * $F000-$F1FF (the glyph shapes rasterised there by other code): cells with
- * the BRIGHT bit set are left untouched; cells whose masked colour already
- * matches the backbuffer target are copied verbatim; every other cell steps
- * its ink and paper fields one unit toward the target. Called repeatedly
- * this produces a gradual colour reveal as glyphs are plotted into the
- * backbuffer over several frames.
- *
- * Conv: the ink-field increment (`INC C`, $E45D) and paper-field increment
- * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
- * wraparound reproduces this bug-for-bug.
- *
- */
-static void es_attribute_fade_in(chqstate_t *state)
-{
-  int carry;    /* carry flag set by RLC (carry) */
-  u8 *HL_attr;  /* current attribute cell (was HL) */
-  u8 *DE_back;  /* current backbuffer cell (was DE) */
-  int c;        /* attribute cell counter, 512 down to 0 (was H reaching $5B) */
-  u8  A_target; /* masked target colour read from the backbuffer (was A) */
-  u8  A_paper;  /* working accumulator (was A) */
-  u8  B_target; /* masked target colour read from the backbuffer (was B) */
-  u8  C_ink;    /* merged ink field (was C) */
-
-  RLC(state->bank7->es_fade_gate_ab);
-  if (carry)
-    return;
-
-  HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  DE_back = ADDRTOBACKBUF(0xF000);
-
-  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++) {
-    if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
-      continue;
-
-    A_target = *DE_back & (ATTR_INK_MASK | ATTR_PAPER_MASK);
-    if (A_target == *HL_attr) {
-      *HL_attr = *DE_back;
-      continue; // already there
-    }
-
-    B_target = A_target;
-
-    C_ink = *HL_attr & ATTR_INK_MASK;
-    if ((B_target & ATTR_INK_MASK) != C_ink)
-      C_ink++;
-
-    A_paper = *HL_attr & ATTR_PAPER_MASK;
-    if ((B_target & ATTR_PAPER_MASK) != A_paper)
-      A_paper = (u8) (A_paper + 0x08);
-
-    *HL_attr = (u8) (A_paper | C_ink);
-  }
-
-  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
-}
-
-/**
- * $E475: Shared fade-to-black tail for routine_e472/routine_e46d
- *
- * Sweeps the same 512-cell attribute band as es_attribute_fade_in,
- * decrementing each cell's ink field by 1 (floor 0) and paper field by one
- * unit (floor 0) every call it runs. Gated by rlc8 on *flag -- $5C6C for
- * routine_e472 (GLYPH_B, also called directly by the handshake handler),
- * $5C6D for routine_e46d (GLYPH_C).
- *
- * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here --
- * the original ANDs each byte down to its ink/paper fields before OR-ing
- * them back together, which drops those bits on every write. Matched
- * bug-for-bug.
- *
- * \param[in] flag Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
- */
-static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
-{
-  int carry;     /* carry flag set by RLC (carry) */
-  u8 *HL_pattrs; /* current attribute cell (was HL) */
-  int c;         /* attribute cell counter, 512 down to 0 (was D pages) */
-  u8  A_attr;    /* attribute cell (was A) */
-  u8  B_ink;     /* new ink field (was B) */
-  u8  A_paper;   /* working accumulator (was A) */
-
-  RLC(*flag);
-  if (!carry)
-    return;
-
-  HL_pattrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-
-  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_pattrs++) {
-    A_attr = *HL_pattrs;
-    if (A_attr == 0)
-      continue;
-
-    B_ink = A_attr & ATTR_INK_MASK;
-    if (B_ink != 0)
-      B_ink--;
-
-    A_paper = A_attr & ATTR_PAPER_MASK;
-    if (A_paper != 0)
-      A_paper = (u8) (A_paper - 0x08);
-
-    *HL_pattrs = (u8) (A_paper | B_ink);
-  }
-
-  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
-}
-
-/**
- * $E472: Fade the $5C6C-gated glyph attribute band
- *
- * Thin wrapper: es_attribute_fade_out against es_fade_gate_ab.
- */
-static void es_handler_glyph_fade_b(chqstate_t *state)
-{
-  es_attribute_fade_out(state, &state->bank7->es_fade_gate_ab);
-}
-
-/**
- * $E46D: Fade the $5C6D-gated glyph attribute band
- *
- * Thin wrapper: es_attribute_fade_out against es_fade_gate_c.
- */
-static void es_handler_glyph_fade_c(chqstate_t *state)
-{
-  es_attribute_fade_out(state, &state->bank7->es_fade_gate_c);
-}
-
-/* $E3A5 handshake_frames: row-count + source bitmap per animation frame,
- * cycling 1-2-3-4-3-2 (see routine_e3b7 below). */
-static const struct {
-  u8        rows;
-  const u8 *image;
-} handshake_frames[6] = {
-  { 37, &bitmap_handshake_1[0] },
-  { 35, &bitmap_handshake_2[0] },
-  { 34, &bitmap_handshake_3[0] },
-  { 32, &bitmap_handshake_4[0] },
-  { 34, &bitmap_handshake_3[0] },
-  { 35, &bitmap_handshake_2[0] },
-};
-
+/* ----------------------------------------------------------------------- */
+static void es_clear(chqstate_t *state);
+static u16 next_screen_row(u16 addr);
+static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr);
+static const u8 * z80addrtoendshot(u16 addr);
+static void es_draw_frame_common(chqstate_t *state, const u8 **script);
+static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script);
+static void es_attribute_fade_in(chqstate_t *state);
+static void es_attribute_fade_out(chqstate_t *state, u8 *flag);
+static void es_handler_glyph_fade_b(chqstate_t *state);
+static void es_handler_glyph_fade_c(chqstate_t *state);
+static void es_handler_handshake(chqstate_t *state);
 static void es_handler_handshake_advance(chqstate_t *state);
+static void es_handler_idle(chqstate_t *state);
+static void es_handler_draw_score(chqstate_t *state);
+static const u8 * z80addrtochatterblk(u16 addr);
+static void es_chatter(chqstate_t *state);
+static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *state), u8 reload);
+static int ascii_to_glyph_id(int character);
+static void plot_char(chqstate_t *state, u8          A_char, u8          Drow, u8         *Ecol, u8          Hattr, u8         *Lattr, u8          A_attr);
+static void render_text_common(chqstate_t *state, const u8 **script);
+static void es_handler_render_text(chqstate_t *state, const u8 **script);
+static void run_script(chqstate_t *state);
+static void es_setup_interrupts(chqstate_t *state);
+static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr);
+static void es_advance_pattern(chqstate_t *state);
+static void es_reset_music(chqstate_t *state);
+static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
+static void es_playdrum_2(chqstate_t *state, int Aspeed);
+static void es_playdrum_1(chqstate_t *state, int Aspeed);
+static void es_play_noise(chqstate_t *state, int Aparam);
+static void es_play_music_48k(chqstate_t *state);
 
+/* ----------------------------------------------------------------------- */
 /**
- * $E3B7: Fade the $5C6C attribute band, then advance
+ * $E000: Show the end screen
  *
- * Fades the attribute band one step (routine_e472's shared tail, called
- * directly rather than duplicated), then runs the handshake animation-advance
- * ($E3BA, es_handler_handshake_advance).
+ * Displays the end-of-game results screen: clears the playfield, starts the
+ * beatbox and bank 7's own interrupt-driven music/script engine, then loops
+ * driving the script/frame-advance dispatch and drive_chatter each frame
+ * until the fire key is pressed twice (once to reach the congratulations
+ * script, once more to exit), clearing the queued key each time.
  *
- * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
- * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
- * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
+ * Conv: the Z80 entry point LDIRs itself from $E000 to $5C00, then LDIRs a
+ * second, inner 768-byte block from $F7EF to $F300 and runs from there (see
+ * project memory project-endscreen-bank7-double-relocation). Both
+ * relocations are pure ZX paging/self-modification artefacts and are
+ * discarded here, following the load_stage precedent -- the C functions
+ * below are simply called directly.
  *
  */
-static void es_handler_handshake(chqstate_t *state)
+void show_end_screen(chqstate_t *state)
 {
-  es_handler_glyph_fade_b(state);
-  es_handler_handshake_advance(state);
+  u8  Ainput;      /* keyscan result, tested for the fire bit (was A) */
+  int outer_count; /* per-keyscan frame divider, reloads to 5/6 (was A171) */
+
+  es_clear(state);
+  es_setup_interrupts(state);
+  es_reset_music(state);
+
+  assert(sizeof(es_script) == sizeof(state->bank7->es_script));
+  memcpy(state->bank7->es_script, es_script, sizeof(es_script));
+  state->bank7->es_script_ptr  = state->bank7->es_script;
+  state->bank7->es_frame_count = 1;
+  state->bank7->es_handler     = es_handler_idle;
+  state->bank7->es_input_mask  = 0;
+
+  outer_count = 6;
+
+  for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
+    state->speccy->stamp(state->speccy);
+
+    es_play_music_48k(state);
+    if (--state->bank7->es_frame_count == 0)
+      run_script(state);
+    state->bank7->es_handler(state);
+
+    state->speccy->sleep(state->speccy, END_SCREEN_TSTATES);
+
+    if (--outer_count != 0)
+      continue;
+    outer_count = 5;
+
+    drive_chatter(state);
+    Ainput = keyscan(state);
+    if (!(Ainput & USERINPUTFLAG_FIRE))
+      continue;
+
+    if (state->bank7->es_input_mask == 0) {
+      /* First fire press: skip ahead to the congratulations script. */
+      state->bank7->es_input_mask = 1;
+      drive_chatter_stop(state);
+      while (keyscan(state) & USERINPUTFLAG_FIRE)
+        ;
+      continue;
+    }
+
+    /* Second fire press: leave the end screen. */
+    break;
+  }
+
+  drive_chatter_stop(state);
 }
 
 /**
- * $E3BA: Advance the handshake animation frame
+ * $E01E: Set up bank 7's own interrupt handler and 48K music engine
  *
- * Rotates the gate byte at $5C6D: when its old top bit was clear, the
- * animation-advance block below is skipped entirely; otherwise the 0-5
- * ping-pong frame index ($A172) advances into handshake_frames, that frame's
- * rows are LDIR'd to screen $48AC (8 bytes/row, wraparound-stepped via
- * next_screen_row), and 3 further 8-byte rows are zero-filled to pad every
- * frame out to a fixed height. Either way, finishes by stamping a fixed
- * 5-group x 8-byte decorative attribute pattern at $59AC.
- *
- * This is the entry point ESCMD_RESET_HANDSHAKE and ESCMD_HANDSHAKE_AGAIN
- * dispatch to directly ($5FBA in the relocated table), skipping the $5C6C
- * fade-b call that only the plain ESCMD_HANDSHAKE entry point runs.
+ * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
+ * (es_setup_interrupts onward in the skool), relocated into the copied
+ * $F300 buffer.
  *
  */
-static void es_handler_handshake_advance(chqstate_t *state)
-{
-  int       carry;     /* carry flag set by RLC (carry) */
-  u8        A_index;   /* frame index 0..5, wrapped (was A/B) */
-  const u8 *HL_image;  /* handshake bitmap source, walked forward (was HL) */
-  u16       DE_screen; /* screen destination address (was DE) */
-  int       row;       /* bitmap row counter for this frame (was B) */
-  int       blank;     /* blank-row counter, 3 down to 0 (was C) */
-  u8       *HL_attr;   /* decorative attribute cell (was HL) */
-  int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
-
-  RLC(state->bank7->es_fade_gate_c);
-  if (carry) {
-    A_index = state->bank7->es_handshake_index;
-    state->bank7->es_handshake_index = (u8) ((A_index + 1 == 6) ? 0 : A_index + 1);
-
-    HL_image = handshake_frames[A_index].image;
-    DE_screen = 0x48AC;
-
-    for (row = handshake_frames[A_index].rows; row != 0; row--) {
-      memcpy(ADDRTOSCREEN(DE_screen), HL_image, 8);
-      HL_image += 8;
-      DE_screen = next_screen_row(DE_screen);
-    }
-
-    for (blank = 3; blank != 0; blank--) {
-      memset(ADDRTOSCREEN(DE_screen), 0, 8);
-      DE_screen = next_screen_row(DE_screen);
-    }
-  }
-
-  HL_attr = ADDRTOATTRS(0x59AC);
-  for (group = 5; group != 0; group--) {
-    memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
-    HL_attr += SCREEN_ATTRIBUTES_WIDTH;
-  }
-
-  update_attrs(state, 0x59AC, 8 * 8, 5 * 8); /* Conv: added */
-}
-
-/**
- * $E2D8 (stub): Idle per-frame handler (no drawing)
- *
- * Does nothing; dispatched between animation beats when a script step has no
- * per-frame work to do.
- */
-static void es_handler_idle(chqstate_t *state)
+static void es_setup_interrupts(chqstate_t *state)
 {
   NOT_USED(state);
+}
+
+/**
+ * $E20A: Run the current end-screen script
+ *
+ * Reads and dispatches script command bytes from state->es_script_ptr in a
+ * DEC A/JP Z chain matching the ESCMD_* constants above. "Immediate" commands
+ * (draw frame, call word, draw score) run their handler stub straight away
+ * and loop for the next command in the same call; all other commands instead
+ * arm state->es_handler/es_frame_count via es_set_dispatch and return,
+ * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
+ *
+ * ESCMD_DRAW_TEXT_NO_CLEAR_VAL/ESCMD_DRAW_TEXT_VAL (render_text/plot_char) also run immediately, drawing
+ * their text run within this same call rather than arming a per-frame
+ * handler -- see render_text_common and plot_char above.
+ *
+ * An unrecognised command byte resets HL_script to ES_SCRIPT_RESET_OFFSET
+ * and loops rather than returning, matching skool $E251.
+ */
+static void run_script(chqstate_t *state)
+{
+  const u8 *HL_script; /* script program counter (was HL) */
+  u8        A_cmd;     /* command byte just read (was A) */
+  u8        C_reload;  /* frame-delay reload value about to be applied (was C) */
+
+  HL_script = state->bank7->es_script_ptr;
+
+  for (;;) {
+    A_cmd = *HL_script++;
+
+    /* Conv: es_chatter reads/advances state->bank7->es_script_ptr directly
+     * rather than taking &HL_script like the other handlers, so it must see
+     * the pointer already advanced past A_cmd before it runs. */
+    state->bank7->es_script_ptr = HL_script;
+
+    switch (A_cmd) {
+    case ESCMD_CLEAR_DRAW_FRAME_VAL:
+      es_clear_then_draw_frame(state, &HL_script);
+      continue;
+
+    case ESCMD_DRAW_WORD_VAL:
+      /* $E2DE is $E2D9's tail half, entered directly for this command
+       * (skipping E2D9's own backbuffer-clear prefix). */
+      es_draw_frame_common(state, &HL_script);
+      continue;
+
+    case ESCMD_FADE_IN_A_VAL:
+      es_set_dispatch(state, es_attribute_fade_in, 16);
+      goto rs_exit;
+
+    case ESCMD_FADE_IN_B_VAL:
+      es_set_dispatch(state, es_handler_glyph_fade_b, 16);
+      goto rs_exit;
+
+    case ESCMD_HANDSHAKE_VAL:
+      es_set_dispatch(state, es_handler_handshake, 16);
+      goto rs_exit;
+
+    case ESCMD_FADE_IN_C_VAL:
+      es_set_dispatch(state, es_handler_glyph_fade_c, 32);
+      goto rs_exit;
+
+    case ESCMD_IDLE_VAL:
+      C_reload = *HL_script++;
+      es_set_dispatch(state, es_handler_idle, C_reload);
+      goto rs_exit;
+
+    case ESCMD_RESET_HANDSHAKE_VAL:
+      C_reload = *HL_script++;
+      state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
+      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
+      goto rs_exit;
+
+    case ESCMD_HANDSHAKE_AGAIN_VAL:
+      C_reload = *HL_script++;
+      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
+      goto rs_exit;
+
+    case ESCMD_DRAW_TEXT_NO_CLEAR_VAL:
+      /* $E2F5 entered directly: no backbuffer-clear prefix. */
+      render_text_common(state, &HL_script);
+      continue;
+
+    case ESCMD_DRAW_TEXT_VAL:
+      es_handler_render_text(state, &HL_script);
+      continue;
+
+    case ESCMD_CHATTER_VAL:
+      es_chatter(state);
+      HL_script = state->bank7->es_script_ptr; /* es_chatter advanced it directly */
+      continue;
+
+    case ESCMD_DRAW_SCORE_VAL:
+      es_handler_draw_score(state);
+      continue;
+
+    default:
+      /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
+       * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
+      HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
+      continue;
+    }
+  }
+
+rs_exit:
+  state->bank7->es_script_ptr = HL_script;
 }
 
 /**
@@ -785,6 +616,114 @@ have_single:
 }
 
 /**
+ * $E2D8 (stub): Idle per-frame handler (no drawing)
+ *
+ * Does nothing; dispatched between animation beats when a script step has no
+ * per-frame work to do.
+ */
+static void es_handler_idle(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $E2D9: Clear the backbuffer, then draw an end-screen graphic frame
+ *
+ * Thin wrapper: es_clear followed by es_draw_frame_common.
+ *
+ * \param[in,out] script Script read pointer (was HL); advanced past the two
+ *                       words consumed.
+ */
+static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script)
+{
+  es_clear(state);
+  es_draw_frame_common(state, script);
+}
+
+/**
+ * $E2DE: Read an image+destination pair and blit it
+ *
+ * Reads a bitmap address word and a destination screen address word from
+ * the script, then blits the resolved image there. Does not clear the
+ * backbuffer first; see es_clear_then_draw_frame for the variant that does.
+ *
+ * \param[in,out] script Script read pointer (was HL); advanced past the two
+ *                       words consumed.
+ */
+static void es_draw_frame_common(chqstate_t *state, const u8 **script)
+{
+  const u8 *HL_script;   /* script read pointer (was HL) */
+  u16       image_addr;  /* raw bitmap address word read from script */
+  u16       screen_addr; /* destination screen address word read from script */
+
+  HL_script = *script;
+
+  image_addr  = wordat(HL_script);
+  screen_addr = wordat(HL_script + 2);
+  HL_script += 4;
+
+  draw_endshot(state, z80addrtoendshot(image_addr), screen_addr);
+
+  *script = HL_script;
+}
+
+/**
+ * $E2F0: Clear the backbuffer, then render an end-screen text run
+ *
+ * Clears the backbuffer before handing off to render_text_common, used for
+ * script commands that redraw the whole end-screen text area from scratch.
+ *
+ * \param[in,out] script Script read pointer (was HL); advanced as per
+ *                       render_text_common.
+ */
+static void es_handler_render_text(chqstate_t *state, const u8 **script)
+{
+  es_clear(state);
+  render_text_common(state, script);
+}
+
+/**
+ * $E2F5: Parse and draw a script text-render command
+ *
+ * Reads a colour byte and a screen destination word from the script (3
+ * bytes total), derives the attribute-row address exactly as draw_endshot
+ * does, then plots each following script character via plot_char until the
+ * EOS-terminated (top-bit-set) character has been drawn.
+ *
+ * \param[in,out] script Script read pointer (was HL); advanced past the
+ *                       3-byte header and the whole character run.
+ */
+static void render_text_common(chqstate_t *state, const u8 **script)
+{
+  const u8 *HL_script; /* script read pointer (was HL) */
+  u8        C_attr;    /* attribute byte read from the script (was C) */
+  u8        E_scr;     /* screen destination column byte (was E) */
+  u8        D_scr;     /* screen destination row byte (was D) */
+  u8        H_attr;    /* attribute-row address high byte (was H, $E304) */
+  u8        L_attr;    /* attribute address column byte (was L, $E305) */
+  u8        raw;       /* raw script byte, EOS bit intact (was (HL) at $E312) */
+  u8        A_char;    /* script character byte, EOS bit masked off (was A) */
+
+  HL_script = *script;
+
+  C_attr = *HL_script++;
+  E_scr  = *HL_script++;
+  D_scr  = *HL_script++;
+
+  H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF);
+  L_attr = E_scr;
+
+  do {
+    raw    = *HL_script;
+    A_char = raw & (u8) ~EOS;
+    plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
+    HL_script++;
+  } while ((raw & EOS) == 0);
+
+  *script = HL_script;
+}
+
+/**
  * $E31F: Render one end-screen text character
  *
  * Space ($E323-$E327): advances both persistent cursors by one column and
@@ -921,178 +860,363 @@ static void plot_char(chqstate_t *state,
 }
 
 /**
- * $E2F5: Parse and draw a script text-render command
+ * $E3B7: Fade the $5C6C attribute band, then advance
  *
- * Reads a colour byte and a screen destination word from the script (3
- * bytes total), derives the attribute-row address exactly as draw_endshot
- * does, then plots each following script character via plot_char until the
- * EOS-terminated (top-bit-set) character has been drawn.
+ * Fades the attribute band one step (routine_e472's shared tail, called
+ * directly rather than duplicated), then runs the handshake animation-advance
+ * ($E3BA, es_handler_handshake_advance).
  *
- * \param[in,out] script Script read pointer (was HL); advanced past the
- *                       3-byte header and the whole character run.
+ * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
+ * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
+ * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
+ *
  */
-static void render_text_common(chqstate_t *state, const u8 **script)
+static void es_handler_handshake(chqstate_t *state)
 {
-  const u8 *HL_script; /* script read pointer (was HL) */
-  u8        C_attr;    /* attribute byte read from the script (was C) */
-  u8        E_scr;     /* screen destination column byte (was E) */
-  u8        D_scr;     /* screen destination row byte (was D) */
-  u8        H_attr;    /* attribute-row address high byte (was H, $E304) */
-  u8        L_attr;    /* attribute address column byte (was L, $E305) */
-  u8        raw;       /* raw script byte, EOS bit intact (was (HL) at $E312) */
-  u8        A_char;    /* script character byte, EOS bit masked off (was A) */
-
-  HL_script = *script;
-
-  C_attr = *HL_script++;
-  E_scr  = *HL_script++;
-  D_scr  = *HL_script++;
-
-  H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF);
-  L_attr = E_scr;
-
-  do {
-    raw    = *HL_script;
-    A_char = raw & (u8) ~EOS;
-    plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
-    HL_script++;
-  } while ((raw & EOS) == 0);
-
-  *script = HL_script;
+  es_handler_glyph_fade_b(state);
+  es_handler_handshake_advance(state);
 }
 
 /**
- * $E2F0: Clear the backbuffer, then render an end-screen text run
+ * $E3BA: Advance the handshake animation frame
  *
- * Clears the backbuffer before handing off to render_text_common, used for
- * script commands that redraw the whole end-screen text area from scratch.
+ * Rotates the gate byte at $5C6D: when its old top bit was clear, the
+ * animation-advance block below is skipped entirely; otherwise the 0-5
+ * ping-pong frame index ($A172) advances into handshake_frames, that frame's
+ * rows are LDIR'd to screen $48AC (8 bytes/row, wraparound-stepped via
+ * next_screen_row), and 3 further 8-byte rows are zero-filled to pad every
+ * frame out to a fixed height. Either way, finishes by stamping a fixed
+ * 5-group x 8-byte decorative attribute pattern at $59AC.
  *
- * \param[in,out] script Script read pointer (was HL); advanced as per
- *                       render_text_common.
+ * This is the entry point ESCMD_RESET_HANDSHAKE and ESCMD_HANDSHAKE_AGAIN
+ * dispatch to directly ($5FBA in the relocated table), skipping the $5C6C
+ * fade-b call that only the plain ESCMD_HANDSHAKE entry point runs.
+ *
  */
-static void es_handler_render_text(chqstate_t *state, const u8 **script)
+static void es_handler_handshake_advance(chqstate_t *state)
 {
-  es_clear(state);
-  render_text_common(state, script);
-}
+  int       carry;     /* carry flag set by RLC (carry) */
+  u8        A_index;   /* frame index 0..5, wrapped (was A/B) */
+  const u8 *HL_image;  /* handshake bitmap source, walked forward (was HL) */
+  u16       DE_screen; /* screen destination address (was DE) */
+  int       row;       /* bitmap row counter for this frame (was B) */
+  int       blank;     /* blank-row counter, 3 down to 0 (was C) */
+  u8       *HL_attr;   /* decorative attribute cell (was HL) */
+  int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
 
-/**
- * $E20A: Run the current end-screen script
- *
- * Reads and dispatches script command bytes from state->es_script_ptr in a
- * DEC A/JP Z chain matching the ESCMD_* constants above. "Immediate" commands
- * (draw frame, call word, draw score) run their handler stub straight away
- * and loop for the next command in the same call; all other commands instead
- * arm state->es_handler/es_frame_count via es_set_dispatch and return,
- * leaving show_end_screen's per-frame loop to invoke the handler on a delay.
- *
- * ESCMD_DRAW_TEXT_NO_CLEAR_VAL/ESCMD_DRAW_TEXT_VAL (render_text/plot_char) also run immediately, drawing
- * their text run within this same call rather than arming a per-frame
- * handler -- see render_text_common and plot_char above.
- *
- * An unrecognised command byte resets HL_script to ES_SCRIPT_RESET_OFFSET
- * and loops rather than returning, matching skool $E251.
- */
-static void run_script(chqstate_t *state)
-{
-  const u8 *HL_script; /* script program counter (was HL) */
-  u8        A_cmd;     /* command byte just read (was A) */
-  u8        C_reload;  /* frame-delay reload value about to be applied (was C) */
+  RLC(state->bank7->es_fade_gate_c);
+  if (carry) {
+    A_index = state->bank7->es_handshake_index;
+    state->bank7->es_handshake_index = (u8) ((A_index + 1 == 6) ? 0 : A_index + 1);
 
-  HL_script = state->bank7->es_script_ptr;
+    HL_image = handshake_frames[A_index].image;
+    DE_screen = 0x48AC;
 
-  for (;;) {
-    A_cmd = *HL_script++;
+    for (row = handshake_frames[A_index].rows; row != 0; row--) {
+      memcpy(ADDRTOSCREEN(DE_screen), HL_image, 8);
+      HL_image += 8;
+      DE_screen = next_screen_row(DE_screen);
+    }
 
-    /* Conv: es_chatter reads/advances state->bank7->es_script_ptr directly
-     * rather than taking &HL_script like the other handlers, so it must see
-     * the pointer already advanced past A_cmd before it runs. */
-    state->bank7->es_script_ptr = HL_script;
-
-    switch (A_cmd) {
-    case ESCMD_CLEAR_DRAW_FRAME_VAL:
-      es_clear_then_draw_frame(state, &HL_script);
-      continue;
-
-    case ESCMD_DRAW_WORD_VAL:
-      /* $E2DE is $E2D9's tail half, entered directly for this command
-       * (skipping E2D9's own backbuffer-clear prefix). */
-      es_draw_frame_common(state, &HL_script);
-      continue;
-
-    case ESCMD_FADE_IN_A_VAL:
-      es_set_dispatch(state, es_attribute_fade_in, 16);
-      goto rs_exit;
-
-    case ESCMD_FADE_IN_B_VAL:
-      es_set_dispatch(state, es_handler_glyph_fade_b, 16);
-      goto rs_exit;
-
-    case ESCMD_HANDSHAKE_VAL:
-      es_set_dispatch(state, es_handler_handshake, 16);
-      goto rs_exit;
-
-    case ESCMD_FADE_IN_C_VAL:
-      es_set_dispatch(state, es_handler_glyph_fade_c, 32);
-      goto rs_exit;
-
-    case ESCMD_IDLE_VAL:
-      C_reload = *HL_script++;
-      es_set_dispatch(state, es_handler_idle, C_reload);
-      goto rs_exit;
-
-    case ESCMD_RESET_HANDSHAKE_VAL:
-      C_reload = *HL_script++;
-      state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
-      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
-      goto rs_exit;
-
-    case ESCMD_HANDSHAKE_AGAIN_VAL:
-      C_reload = *HL_script++;
-      es_set_dispatch(state, es_handler_handshake_advance, C_reload);
-      goto rs_exit;
-
-    case ESCMD_DRAW_TEXT_NO_CLEAR_VAL:
-      /* $E2F5 entered directly: no backbuffer-clear prefix. */
-      render_text_common(state, &HL_script);
-      continue;
-
-    case ESCMD_DRAW_TEXT_VAL:
-      es_handler_render_text(state, &HL_script);
-      continue;
-
-    case ESCMD_CHATTER_VAL:
-      es_chatter(state);
-      HL_script = state->bank7->es_script_ptr; /* es_chatter advanced it directly */
-      continue;
-
-    case ESCMD_DRAW_SCORE_VAL:
-      es_handler_draw_score(state);
-      continue;
-
-    default:
-      /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
-       * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
-      HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
-      continue;
+    for (blank = 3; blank != 0; blank--) {
+      memset(ADDRTOSCREEN(DE_screen), 0, 8);
+      DE_screen = next_screen_row(DE_screen);
     }
   }
 
-rs_exit:
-  state->bank7->es_script_ptr = HL_script;
+  HL_attr = ADDRTOATTRS(0x59AC);
+  for (group = 5; group != 0; group--) {
+    memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
+    HL_attr += SCREEN_ATTRIBUTES_WIDTH;
+  }
+
+  update_attrs(state, 0x59AC, 8 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
- * $E01E: Set up bank 7's own interrupt handler and 48K music engine
+ * $E42E: Sweep attributes toward the target colours
  *
- * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
- * (es_setup_interrupts onward in the skool), relocated into the copied
- * $F300 buffer.
+ * Gate: only runs every other call (RLC flip-flops $5C6C; returns
+ * immediately when the old top bit was set). When it runs, walks all 512
+ * attribute cells $5900-$5AFF against the corresponding backbuffer bytes at
+ * $F000-$F1FF (the glyph shapes rasterised there by other code): cells with
+ * the BRIGHT bit set are left untouched; cells whose masked colour already
+ * matches the backbuffer target are copied verbatim; every other cell steps
+ * its ink and paper fields one unit toward the target. Called repeatedly
+ * this produces a gradual colour reveal as glyphs are plotted into the
+ * backbuffer over several frames.
+ *
+ * Conv: the ink-field increment (`INC C`, $E45D) and paper-field increment
+ * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
+ * wraparound reproduces this bug-for-bug.
  *
  */
-static void es_setup_interrupts(chqstate_t *state)
+static void es_attribute_fade_in(chqstate_t *state)
 {
-  NOT_USED(state);
+  int carry;    /* carry flag set by RLC (carry) */
+  u8 *HL_attr;  /* current attribute cell (was HL) */
+  u8 *DE_back;  /* current backbuffer cell (was DE) */
+  int c;        /* attribute cell counter, 512 down to 0 (was H reaching $5B) */
+  u8  A_target; /* masked target colour read from the backbuffer (was A) */
+  u8  A_paper;  /* working accumulator (was A) */
+  u8  B_target; /* masked target colour read from the backbuffer (was B) */
+  u8  C_ink;    /* merged ink field (was C) */
+
+  RLC(state->bank7->es_fade_gate_ab);
+  if (carry)
+    return;
+
+  HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+  DE_back = ADDRTOBACKBUF(0xF000);
+
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++) {
+    if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
+      continue;
+
+    A_target = *DE_back & (ATTR_INK_MASK | ATTR_PAPER_MASK);
+    if (A_target == *HL_attr) {
+      *HL_attr = *DE_back;
+      continue; // already there
+    }
+
+    B_target = A_target;
+
+    C_ink = *HL_attr & ATTR_INK_MASK;
+    if ((B_target & ATTR_INK_MASK) != C_ink)
+      C_ink++;
+
+    A_paper = *HL_attr & ATTR_PAPER_MASK;
+    if ((B_target & ATTR_PAPER_MASK) != A_paper)
+      A_paper = (u8) (A_paper + 0x08);
+
+    *HL_attr = (u8) (A_paper | C_ink);
+  }
+
+  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
+}
+
+/**
+ * $E46D: Fade the $5C6D-gated glyph attribute band
+ *
+ * Thin wrapper: es_attribute_fade_out against es_fade_gate_c.
+ */
+static void es_handler_glyph_fade_c(chqstate_t *state)
+{
+  es_attribute_fade_out(state, &state->bank7->es_fade_gate_c);
+}
+
+/**
+ * $E472: Fade the $5C6C-gated glyph attribute band
+ *
+ * Thin wrapper: es_attribute_fade_out against es_fade_gate_ab.
+ */
+static void es_handler_glyph_fade_b(chqstate_t *state)
+{
+  es_attribute_fade_out(state, &state->bank7->es_fade_gate_ab);
+}
+
+/**
+ * $E475: Shared fade-to-black tail for routine_e472/routine_e46d
+ *
+ * Sweeps the same 512-cell attribute band as es_attribute_fade_in,
+ * decrementing each cell's ink field by 1 (floor 0) and paper field by one
+ * unit (floor 0) every call it runs. Gated by rlc8 on *flag -- $5C6C for
+ * routine_e472 (GLYPH_B, also called directly by the handshake handler),
+ * $5C6D for routine_e46d (GLYPH_C).
+ *
+ * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here --
+ * the original ANDs each byte down to its ink/paper fields before OR-ing
+ * them back together, which drops those bits on every write. Matched
+ * bug-for-bug.
+ *
+ * \param[in] flag Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
+ */
+static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
+{
+  int carry;     /* carry flag set by RLC (carry) */
+  u8 *HL_pattrs; /* current attribute cell (was HL) */
+  int c;         /* attribute cell counter, 512 down to 0 (was D pages) */
+  u8  A_attr;    /* attribute cell (was A) */
+  u8  B_ink;     /* new ink field (was B) */
+  u8  A_paper;   /* working accumulator (was A) */
+
+  RLC(*flag);
+  if (!carry)
+    return;
+
+  HL_pattrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_pattrs++) {
+    A_attr = *HL_pattrs;
+    if (A_attr == 0)
+      continue;
+
+    B_ink = A_attr & ATTR_INK_MASK;
+    if (B_ink != 0)
+      B_ink--;
+
+    A_paper = A_attr & ATTR_PAPER_MASK;
+    if (A_paper != 0)
+      A_paper = (u8) (A_paper - 0x08);
+
+    *HL_pattrs = (u8) (A_paper | B_ink);
+  }
+
+  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
+}
+
+/**
+ * $E499: Clear the playfield ready for the end screen
+ *
+ * Zeros the on-screen playfield (attributes and bitmap) plus the first 512
+ * bytes of the "backbuffer" area, which alias the attribute portion of the
+ * end-screen montage/glyph drawing area ($F000 = &state->backbuffer[0]).
+ *
+ */
+static void es_clear(chqstate_t *state)
+{
+  clear_playfield(state);
+  memset(&state->backbuffer[0], 0, 512);
+}
+
+/* Script command bytes, $E20D's DEC A/JP Z chain (1-based, in read order). */
+
+/**
+ * Advance a raw Z80 screen address by one character-cell row.
+ *
+ * Common wraparound arithmetic shared by draw_endshot ($E4A9) and
+ * routine_e3b7's handshake blit ($E3E9-$E3F8, $E407-$E416): within a
+ * character row D climbs through its low 3 bits (one pixel scanline per
+ * call); when that wraps, E jumps on by 32 (next character row) and D drops
+ * back by 8 unless E itself carried into the next screen third.
+ *
+ * \param[in] addr Current screen address (was DE).
+ * \return Screen address one row down.
+ */
+static u16 next_screen_row(u16 addr)
+{
+  u8 Dhi; /* screen address high byte after +1 scanline (was D via A) */
+  u8 Elo; /* screen address low byte after +32 column step (was E via A) */
+
+  Dhi = (u8) ((addr >> 8) + 1);
+  if ((Dhi & 0x07) != 0)
+    return (u16) ((Dhi << 8) | (addr & 0xFF));
+
+  Elo = (u8) ((addr & 0xFF) + 0x20);
+  if (Elo < 0x20) /* carry out of E: stay in the next screen third */
+    return (u16) ((Dhi << 8) | Elo);
+  else
+    return (u16) (((Dhi - 0x08) << 8) | Elo);
+}
+
+/**
+ * $E4A9: Blit an end-game montage shot to the screen
+ *
+ * Copies a 13-byte-wide bitmap, 64 rows tall, from image into the screen at
+ * screen_addr, then 8 rows of attribute bytes into the corresponding
+ * attribute third. Row addressing mimics the Z80's raw D/E screen-address
+ * increment: within a character row D climbs through its low 3 bits: when
+ * that wraps, E jumps on by 32 (next character column pair... actually next
+ * character row) and D drops back by 8 unless E itself carried into the next
+ * screen third.
+ *
+ * Conv: operates on the raw 16-bit Z80 screen address (screen_addr) and
+ * calls ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer,
+ * so the row-wrap arithmetic can mirror the Z80 exactly.
+ *
+ * \param[in] image       Bitmap+attribute source blob (was HL).
+ * \param[in] screen_addr Top-left destination screen address (was DE).
+ */
+static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
+{
+  int row;            /* bitmap row counter, 64 down to 1 (was B) */
+  u16 DE_screen_addr; /* current screen row address (was DE) */
+  u8  Dattr;          /* attribute row address high byte (was D after RRCA x3) */
+  u16 attraddr;       /* current attribute row address (was DE in the attr loop) */
+  int attrrow;        /* attribute row counter, 8 down to 1 (was A) */
+
+  DE_screen_addr = screen_addr;
+
+  for (row = ENDSHOT_HEIGHT; row != 0; row--) {
+    memcpy(ADDRTOSCREEN(DE_screen_addr), image, ENDSHOT_WIDTH / 8);
+    image += ENDSHOT_WIDTH / 8;
+    DE_screen_addr = next_screen_row(DE_screen_addr);
+  }
+
+  /* Conv: skool POPs DE here, restoring the original destination pushed at
+   * function entry -- NOT the row loop's final DE_screen_addr. Must use the
+   * screen_addr parameter, which the loop above never mutates. */
+  Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
+  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF);
+  attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
+
+  for (attrrow = 8; attrrow != 0; attrrow--) {
+    memcpy(ADDRTOBACKBUF(attraddr), image, 13);
+    image += 13;
+    /* Conv: the skool's LDIR ($E4D6) advances DE by 13 as a side effect of
+     * the copy itself, then adds a further 19 to skip the remaining columns
+     * of the 32-byte attribute row (skool comment at $E4D8: "13+19 = 32").
+     * memcpy has no such side effect on attraddr, so both parts of that
+     * total must be added explicitly here. */
+    attraddr = (u16) (attraddr + 13 + 19);
+  }
+
+  update_screen(state, screen_addr, ENDSHOT_WIDTH, ENDSHOT_HEIGHT); /* Conv: added */
+}
+
+/**
+ * Resolve a script-embedded end-shot bitmap address to its C data array.
+ *
+ * Conv: the original walks a real (relocated) Z80 pointer; es_script only
+ * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME_VAL
+ * entries above), so a small lookup replaces pointer arithmetic into
+ * relocated bank memory the C port does not model byte-for-byte.
+ *
+ * \param[in] addr Raw address word read from the script (was HL).
+ * \return Matching bitmap_endshot_N array.
+ */
+static const u8 *z80addrtoendshot(u16 addr)
+{
+  switch (addr) {
+  case 0x60E1: return &bitmap_endshot_1[0];
+  case 0x6489: return &bitmap_endshot_2[0];
+  case 0x6831: return &bitmap_endshot_3[0];
+  case 0x6BD9: return &bitmap_endshot_4[0];
+  default:     assert(0); return NULL;
+  }
+}
+
+/**
+ * $F300: Start the end-screen beatbox
+ *
+ * Clears the three playback flags that carry state across ticks
+ * (drum_active, extra_delay, started) then loads the first pattern in
+ * es_music_patterns, exactly as Main.c's reset_music does for the shared
+ * in-game engine.
+ *
+ */
+static void es_reset_music(chqstate_t *state)
+{
+  state->bank7->es_music.drum_active = 0;
+  state->bank7->es_music.extra_delay = 0;
+  state->bank7->es_music.started     = 0;
+  es_next_pattern_at_addr(state, &es_music_patterns[0]);
+}
+
+/**
+ * $F310: Advance to the next pattern once the current one's repeats expire
+ *
+ * Decrements pattern_repeats and returns immediately while repeats remain;
+ * once it reaches zero, loads the pattern whose address follows the one
+ * just played. Same structure as Main.c's next_pattern, operating on bank
+ * 7's own es_music state.
+ *
+ */
+static void es_advance_pattern(chqstate_t *state)
+{
+  if (--state->bank7->es_music.pattern_repeats)
+    return;
+  es_next_pattern_at_addr(state, state->bank7->es_music.pattern_addr);
 }
 
 /**
@@ -1137,154 +1261,6 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
       HLpataddr = &es_music_patterns[wordat(HLpataddr) - 0xF53C];
     }
   }
-}
-
-/**
- * $F310: Advance to the next pattern once the current one's repeats expire
- *
- * Decrements pattern_repeats and returns immediately while repeats remain;
- * once it reaches zero, loads the pattern whose address follows the one
- * just played. Same structure as Main.c's next_pattern, operating on bank
- * 7's own es_music state.
- *
- */
-static void es_advance_pattern(chqstate_t *state)
-{
-  if (--state->bank7->es_music.pattern_repeats)
-    return;
-  es_next_pattern_at_addr(state, state->bank7->es_music.pattern_addr);
-}
-
-/**
- * $F300: Start the end-screen beatbox
- *
- * Clears the three playback flags that carry state across ticks
- * (drum_active, extra_delay, started) then loads the first pattern in
- * es_music_patterns, exactly as Main.c's reset_music does for the shared
- * in-game engine.
- *
- */
-static void es_reset_music(chqstate_t *state)
-{
-  state->bank7->es_music.drum_active = 0;
-  state->bank7->es_music.extra_delay = 0;
-  state->bank7->es_music.started     = 0;
-  es_next_pattern_at_addr(state, &es_music_patterns[0]);
-}
-
-/**
- * $F8C5: Output bank 7 PCM drum sample
- *
- * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
- * sample tables were decoded this pass.
- *
- * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
- * sample byte, an inner loop runs drum_speed iterations; each iteration
- * writes bit 7 of the current sample byte to the EAR bit of
- * port_BORDER_EAR_MIC, then rotates the sample byte left in-place (RLC) so
- * successive iterations output successive bits -- 1-bit PCM at drum_speed
- * bits per byte. When all [Dlength] bytes have been output, drum_active is
- * cleared. Identical in structure to Main.c's playdrum_go, operating on
- * bank 7's own es_music state and es_drum2/es_drum1 buffers.
- *
- * \param[in]     Dlength Number of sample bytes remaining to output (was D).
- * \param[in]     HLdata  Pointer to the next sample byte in
- *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
- *
- * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
- * 8 iterations -- the byte doubles as its own iteration counter, no separate
- * bit-index register needed. This rotation mutates the sample data in place
- * (only a full 8-bit rotation restores it), so the drum samples live in bank7
- * state as mutable copies of es_drum_sample_2_template/es_drum_sample_1_template.
- *
- * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
- * reconstruct the bit timing.
- *
- * Conv: C has no mid-sample interrupts, so the early-return resume path never
- * triggers and the sample always plays to completion in one call.
- */
-static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
-{
-  zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
-  int           carry;  /* carry flag used by RLC (carry) */
-  int           i;      /* inner loop counter: drum_speed ticks per sample byte (was B') */
-  int           bits;   /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
-
-  speccy = state->speccy;
-  carry  = 0;
-  for (;;) {
-    i = state->bank7->es_music.drum_speed;
-    do {
-      bits = port_MASK_EAR; // speaker bit
-      if ((*HLdata & (1 << 7)) == 0)
-        bits = 0;
-      speccy->out(speccy, port_BORDER_EAR_MIC, bits);
-      RLC(*HLdata); /* rotate sample byte in place */
-      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
-      speccy->logtime(speccy, 63);
-    } while (--i > 0);
-    HLdata++;
-    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
-    speccy->logtime(speccy, 46);
-    if (--Dlength == 0)
-      goto pd_end_of_sample;
-  }
-  // EXX unbank
-  return;
-
-pd_end_of_sample:
-  state->bank7->es_music.drum_active = 0;
-}
-
-/**
- * $F3CA: Play bank 7 drum sample 2 for the current tick
- *
- * Starts playback of drum sample 2 (94 bytes). Records the drum speed and
- * marks the drum as active, then calls es_playdrum_go to output it.
- * Analogous to Main.c's playdrum_2/playdrum_start.
- *
- * \param[in]     Aspeed Playback speed: inner loop count per sample byte
- *   (was A).
- */
-static void es_playdrum_2(chqstate_t *state, int Aspeed)
-{
-  state->bank7->es_music.drum_speed  = Aspeed;
-  state->bank7->es_music.drum_active = 1;
-  es_playdrum_go(state, sizeof(state->bank7->es_drum2), &state->bank7->es_drum2[0]);
-}
-
-/**
- * $F3D1: Play bank 7 drum sample 1 for the current tick
- *
- * Starts playback of drum sample 1 (160 bytes). Records the drum speed and
- * marks the drum as active, then calls es_playdrum_go to output it.
- * Analogous to Main.c's playdrum_1/playdrum_start.
- *
- * \param[in]     Aspeed Playback speed: inner loop count per sample byte
- *   (was A).
- */
-static void es_playdrum_1(chqstate_t *state, int Aspeed)
-{
-  state->bank7->es_music.drum_speed  = Aspeed;
-  state->bank7->es_music.drum_active = 1;
-  es_playdrum_go(state, sizeof(state->bank7->es_drum1), &state->bank7->es_drum1[0]);
-}
-
-/**
- * $F504: Play bank 7's noise instrument for the current tick
- *
- * Bank 7's own copy of Main.c's play_noise routine, decoded by hand from
- * the raw bytes at source $F9F3-$FA2A (56 bytes) after the disassembler
- * mislabelled the region as data. Confirmed identical to the shared
- * routine, operating on the same fixed-address state->rng_seed -- so
- * rather than duplicate it, this calls the shared implementation directly.
- *
- * \param[in]     Aparam Noise duration: outer loop count and pulse timing
- *   (was A).
- */
-static void es_play_noise(chqstate_t *state, int Aparam)
-{
-  play_noise(state, Aparam); /* tail call */
 }
 
 /**
@@ -1382,78 +1358,121 @@ pm_reset_pattern:
 }
 
 /**
- * $E000: Show the end screen
+ * $F3CA: Play bank 7 drum sample 2 for the current tick
  *
- * Displays the end-of-game results screen: clears the playfield, starts the
- * beatbox and bank 7's own interrupt-driven music/script engine, then loops
- * driving the script/frame-advance dispatch and drive_chatter each frame
- * until the fire key is pressed twice (once to reach the congratulations
- * script, once more to exit), clearing the queued key each time.
+ * Starts playback of drum sample 2 (94 bytes). Records the drum speed and
+ * marks the drum as active, then calls es_playdrum_go to output it.
+ * Analogous to Main.c's playdrum_2/playdrum_start.
  *
- * Conv: the Z80 entry point LDIRs itself from $E000 to $5C00, then LDIRs a
- * second, inner 768-byte block from $F7EF to $F300 and runs from there (see
- * project memory project-endscreen-bank7-double-relocation). Both
- * relocations are pure ZX paging/self-modification artefacts and are
- * discarded here, following the load_stage precedent -- the C functions
- * below are simply called directly.
- *
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ *   (was A).
  */
-void show_end_screen(chqstate_t *state)
+static void es_playdrum_2(chqstate_t *state, int Aspeed)
 {
-  u8  Ainput;      /* keyscan result, tested for the fire bit (was A) */
-  int outer_count; /* per-keyscan frame divider, reloads to 5/6 (was A171) */
-
-  es_clear(state);
-  es_setup_interrupts(state);
-  es_reset_music(state);
-
-  assert(sizeof(es_script) == sizeof(state->bank7->es_script));
-  memcpy(state->bank7->es_script, es_script, sizeof(es_script));
-  state->bank7->es_script_ptr  = state->bank7->es_script;
-  state->bank7->es_frame_count = 1;
-  state->bank7->es_handler     = es_handler_idle;
-  state->bank7->es_input_mask  = 0;
-
-  outer_count = 6;
-
-  for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
-
-    state->speccy->stamp(state->speccy);
-
-    es_play_music_48k(state);
-    if (--state->bank7->es_frame_count == 0)
-      run_script(state);
-    state->bank7->es_handler(state);
-
-    state->speccy->sleep(state->speccy, END_SCREEN_TSTATES);
-
-    if (--outer_count != 0)
-      continue;
-    outer_count = 5;
-
-    drive_chatter(state);
-    Ainput = keyscan(state);
-    if (!(Ainput & USERINPUTFLAG_FIRE))
-      continue;
-
-    if (state->bank7->es_input_mask == 0) {
-      /* First fire press: skip ahead to the congratulations script. */
-      state->bank7->es_input_mask = 1;
-      drive_chatter_stop(state);
-      while (keyscan(state) & USERINPUTFLAG_FIRE)
-        ;
-      continue;
-    }
-
-    /* Second fire press: leave the end screen. */
-    break;
-  }
-
-  drive_chatter_stop(state);
+  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_active = 1;
+  es_playdrum_go(state, sizeof(state->bank7->es_drum2), &state->bank7->es_drum2[0]);
 }
 
+/**
+ * $F3D1: Play bank 7 drum sample 1 for the current tick
+ *
+ * Starts playback of drum sample 1 (160 bytes). Records the drum speed and
+ * marks the drum as active, then calls es_playdrum_go to output it.
+ * Analogous to Main.c's playdrum_1/playdrum_start.
+ *
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ *   (was A).
+ */
+static void es_playdrum_1(chqstate_t *state, int Aspeed)
+{
+  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_active = 1;
+  es_playdrum_go(state, sizeof(state->bank7->es_drum1), &state->bank7->es_drum1[0]);
+}
+
+/**
+ * $F504: Play bank 7's noise instrument for the current tick
+ *
+ * Bank 7's own copy of Main.c's play_noise routine, decoded by hand from
+ * the raw bytes at source $F9F3-$FA2A (56 bytes) after the disassembler
+ * mislabelled the region as data. Confirmed identical to the shared
+ * routine, operating on the same fixed-address state->rng_seed -- so
+ * rather than duplicate it, this calls the shared implementation directly.
+ *
+ * \param[in]     Aparam Noise duration: outer loop count and pulse timing
+ *   (was A).
+ */
+static void es_play_noise(chqstate_t *state, int Aparam)
+{
+  play_noise(state, Aparam); /* tail call */
+}
+
+/**
+ * $F8C5: Output bank 7 PCM drum sample
+ *
+ * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
+ * sample tables were decoded this pass.
+ *
+ * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
+ * sample byte, an inner loop runs drum_speed iterations; each iteration
+ * writes bit 7 of the current sample byte to the EAR bit of
+ * port_BORDER_EAR_MIC, then rotates the sample byte left in-place (RLC) so
+ * successive iterations output successive bits -- 1-bit PCM at drum_speed
+ * bits per byte. When all [Dlength] bytes have been output, drum_active is
+ * cleared. Identical in structure to Main.c's playdrum_go, operating on
+ * bank 7's own es_music state and es_drum2/es_drum1 buffers.
+ *
+ * \param[in]     Dlength Number of sample bytes remaining to output (was D).
+ * \param[in]     HLdata  Pointer to the next sample byte in
+ *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
+ *
+ * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
+ * 8 iterations -- the byte doubles as its own iteration counter, no separate
+ * bit-index register needed. This rotation mutates the sample data in place
+ * (only a full 8-bit rotation restores it), so the drum samples live in bank7
+ * state as mutable copies of es_drum_sample_2_template/es_drum_sample_1_template.
+ *
+ * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
+ * reconstruct the bit timing.
+ *
+ * Conv: C has no mid-sample interrupts, so the early-return resume path never
+ * triggers and the sample always plays to completion in one call.
+ */
+static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
+{
+  zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
+  int           carry;  /* carry flag used by RLC (carry) */
+  int           i;      /* inner loop counter: drum_speed ticks per sample byte (was B') */
+  int           bits;   /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+
+  speccy = state->speccy;
+  carry  = 0;
+  for (;;) {
+    i = state->bank7->es_music.drum_speed;
+    do {
+      bits = port_MASK_EAR; // speaker bit
+      if ((*HLdata & (1 << 7)) == 0)
+        bits = 0;
+      speccy->out(speccy, port_BORDER_EAR_MIC, bits);
+      RLC(*HLdata); /* rotate sample byte in place */
+      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
+      speccy->logtime(speccy, 63);
+    } while (--i > 0);
+    HLdata++;
+    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
+    speccy->logtime(speccy, 46);
+    if (--Dlength == 0)
+      goto pd_end_of_sample;
+  }
+  // EXX unbank
+  return;
+
+pd_end_of_sample:
+  state->bank7->es_music.drum_active = 0;
+}
+
+/* ----------------------------------------------------------------------- */
 int bank7_state_create(chqstate_t *state)
 {
   state->bank7 = calloc(1, sizeof(*state->bank7));
