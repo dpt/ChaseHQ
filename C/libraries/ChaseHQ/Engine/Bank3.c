@@ -1723,32 +1723,31 @@ static u8 object_script_step(chqstate_t *state)
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
       recognized = 1;
       switch (rec->opcode) {
-        case OSS_OP_VELOCITY_VAL:  oss_op_velocity(rec);  break;
-        case OSS_OP_DECEL_X_VAL:   oss_op_decel_x(rec);   break;
-        case OSS_OP_DECEL_Y_VAL:   oss_op_decel_y(rec);   break;
-        case OSS_OP_ACCEL_X_A_VAL: oss_op_accel_x_a(rec); break;
-        case OSS_OP_ACCEL_X_C_VAL: oss_op_accel_x_c(rec); break;
-        case OSS_OP_ACCEL_X_B_VAL: oss_op_accel_x_b(rec); break;
-        case OSS_OP_WAIT_VAL: break; /* no per-frame movement of its own --
-                                  * falls straight to the countdown below */
-        default:
-          /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. OSS_OP_DEAD
-           * emitted by every title scene's object 0 script --
-           * see this function's own prologue and the ctl note at $C705)
-           * never reaches oss_countdown, so the object's wait counter is
-           * never decremented and it can never go idle again. A genuine
-           * original-game quirk, faithfully reproduced -- not a bug in
-           * this port. */
-          recognized = 0;
-          break;
+      case OSS_OP_VELOCITY_VAL:  oss_op_velocity(rec);  break;
+      case OSS_OP_DECEL_X_VAL:   oss_op_decel_x(rec);   break;
+      case OSS_OP_DECEL_Y_VAL:   oss_op_decel_y(rec);   break;
+      case OSS_OP_ACCEL_X_A_VAL: oss_op_accel_x_a(rec); break;
+      case OSS_OP_ACCEL_X_C_VAL: oss_op_accel_x_c(rec); break;
+      case OSS_OP_ACCEL_X_B_VAL: oss_op_accel_x_b(rec); break;
+      case OSS_OP_WAIT_VAL: break; /* no per-frame movement of its own --
+                                    * falls straight to the countdown below */
+      default:
+        /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. OSS_OP_DEAD
+         * emitted by every title scene's object 0 script --
+         * see this function's own prologue and the ctl note at $C705)
+         * never reaches oss_countdown, so the object's wait counter is
+         * never decremented and it can never go idle again. A genuine
+         * original-game quirk, faithfully reproduced -- not a bug in
+         * this port. */
+        recognized = 0;
+        break;
       }
 
-      if (recognized) {
+      if (recognized)
         /* $C731-$C737 oss_countdown: tick the wait counter; go idle (so the
          * next frame re-fetches) once it reaches 0. */
         if (--rec->wait == 0)
           rec->opcode = 0;
-      }
 
       break; /* $C73B oss_next_object: move on to the next object */
     }
@@ -1777,7 +1776,7 @@ static u8 object_script_step(chqstate_t *state)
  * repurposed as a data pointer here) and is omitted.
  */
 static void clear_playfield_buffer(chqstate_t *state)
-{return;
+{
   int H;          /* screen address high byte (was H) */
   int L;          /* screen address low byte (was L) */
   int B_scanline; /* scanline countdown within one character row, 8 (was B) */
@@ -2020,11 +2019,11 @@ static void advance_glyph_scanline(int *H, int *L)
  * sprite. Advances the screen address one scanline at a time via
  * advance_glyph_scanline.
  *
- * \param[in]     H             Destination screen address high byte.
- * \param[in]     L             Destination screen address low byte.
- * \param[in]     src           Glyph bitmap source pointer.
- * \param[in]     B_height_pairs Number of row-pairs to draw.
- * \param[in]     row_bytes     Bytes to OR into each scanline.
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
+ * \param[in] row_bytes      Bytes to OR into each scanline.
  *
  * Conv: the Z80 draws each row-pair via "LD SP,HL; POP DE", i.e. two source
  * bytes at a time (E first, then D) -- see the project's known "LD SP,HL;
@@ -2058,10 +2057,10 @@ static void blit_glyph_rows(chqstate_t *state,
                             int         B_height_pairs,
                             int         row_bytes)
 {
-  u8 *dst;    /* current scanline's destination byte(s) (was HL) */
-  int row;    /* 0 or 1: which scanline of the current row-pair */
-  int i;      /* byte offset within the current scanline */
-  int addr;   /* destination Z80 screen address for this scanline */
+  u8 *dst;  /* current scanline's destination byte(s) (was HL) */
+  int row;  /* 0 or 1: which scanline of the current row-pair */
+  int i;    /* byte offset within the current scanline */
+  int addr; /* destination Z80 screen address for this scanline */
 
   do {
     for (row = 0; row < 2; row++) {
@@ -2439,24 +2438,23 @@ static void clear_screen_bitmap_and_attrs(chqstate_t *state)
  * all 512 bytes): 2 bytes of attribute 0 (black), 28 bytes of attribute
  * $45 (flash bit set; paper/ink in bits 0-5), then 2 more bytes of
  * attribute 0.
- *
  */
 static void clear_and_fill_border_attrs(chqstate_t *state)
 {
-  u8 *HLattr;  /* attribute write cursor (was HL) */
-  int C_count; /* outer repeat count, 16 (was C) */
+  u8 *attrs; /* attribute write cursor (was HL) */
+  int c;     /* outer repeat count, 16 (was C) */
 
   clear_screen_bitmap_and_attrs(state);
 
-  HLattr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  C_count = PLAYFIELD_HEIGHT / 8;
+  attrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+  c = PLAYFIELD_HEIGHT / 8;
   do {
-    *HLattr++ = attribute_BLACK_OVER_BLACK;
-    *HLattr++ = attribute_BLACK_OVER_BLACK;
-    memset(HLattr, attribute_BRIGHT_CYAN_OVER_BLACK, 28); HLattr += 28; /* Conv: replaced loop */
-    *HLattr++ = attribute_BLACK_OVER_BLACK;
-    *HLattr++ = attribute_BLACK_OVER_BLACK;
-  } while (--C_count);
+    *attrs++ = attribute_BLACK_OVER_BLACK;
+    *attrs++ = attribute_BLACK_OVER_BLACK;
+    memset(attrs, attribute_BRIGHT_CYAN_OVER_BLACK, 28); attrs += 28; /* Conv: memset replaces loop */
+    *attrs++ = attribute_BLACK_OVER_BLACK;
+    *attrs++ = attribute_BLACK_OVER_BLACK;
+  } while (--c);
 }
 
 /**
@@ -2981,10 +2979,9 @@ rescan:
   A_key_code = D_key_code;
 
   B_dup_count = (u8) (C_control_index - 1);
-  for (dup_i = 0; dup_i < B_dup_count; dup_i++) {
+  for (dup_i = 0; dup_i < B_dup_count; dup_i++)
     if (A_key_code == state->bank3->control_keys[dup_i])
       goto rescan; /* $FF45 JR Z,$FF2E: duplicate -- rescan */
-  }
 
   state->bank3->control_keys[C_control_index - 1] = A_key_code;
 
@@ -2993,9 +2990,9 @@ rescan:
   char1 = control_key_names[index_bytes + 1] | EOS;
 
   state->bank3->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
-                                         * $FD97; never rewritten by this
-                                         * routine (see key-name-table
-                                         * comment in the skool). */
+                                               * $FD97; never rewritten by this
+                                               * routine (see key-name-table
+                                               * comment in the skool). */
   setwordat(&state->bank3->options_key_string[1], *DE_screen);
   state->bank3->options_key_string[3] = char0;
   state->bank3->options_key_string[4] = char1;
@@ -3481,9 +3478,9 @@ static u8 options_menu_driver(chqstate_t *state)
   start_tune_and_sfx_table(state, 0);
 
   state->speccy->stamp(state->speccy); /* $FBA0 EI / $FBA1 HALT: sync to the
-                                         * next interrupt before entering the
-                                         * poll loop (same EI/HALT -> stamp()
-                                         * convention as title_screen_driver). */
+                                        * next interrupt before entering the
+                                        * poll loop (same EI/HALT -> stamp()
+                                        * convention as title_screen_driver). */
 
   return omd_redraw_and_poll(state); /* $FBA2: falls straight in */
 }

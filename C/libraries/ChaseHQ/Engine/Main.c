@@ -12582,7 +12582,7 @@ static void update_screen(chqstate_t *state)
   }
 
 exit:
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: Added */
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
