@@ -101,6 +101,9 @@ static void es_clear(chqstate_t *state)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
 #define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
+#define ENDSHOT_WIDTH  (13 * 8) /* pixel width of an end-screen bitmap */
+#define ENDSHOT_HEIGHT (64)     /* pixel height of an end-screen bitmap */
+
 /**
  * $E0FE-$E209: End-screen script bytecode.
  *
@@ -260,9 +263,9 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 
   DE_screen_addr = screen_addr;
 
-  for (row = 64; row != 0; row--) {
-    memcpy(ADDRTOSCREEN(DE_screen_addr), image, 13);
-    image += 13;
+  for (row = ENDSHOT_HEIGHT; row != 0; row--) {
+    memcpy(ADDRTOSCREEN(DE_screen_addr), image, ENDSHOT_WIDTH / 8);
+    image += ENDSHOT_WIDTH / 8;
     DE_screen_addr = next_screen_row(DE_screen_addr);
   }
 
@@ -283,6 +286,8 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
      * total must be added explicitly here. */
     attraddr = (u16) (attraddr + 13 + 19);
   }
+
+  update_screen(state, screen_addr, ENDSHOT_WIDTH, ENDSHOT_HEIGHT); /* Conv: added */
 }
 
 /**
@@ -406,6 +411,8 @@ static void es_attribute_fade_in(chqstate_t *state)
 
     *HL_attr = (u8) (A_paper | C_ink);
   }
+
+  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
 }
 
 /**
@@ -454,6 +461,8 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 
     *HL_pattrs = (u8) (A_paper | B_ink);
   }
+
+  update_attrs(state, SCREEN_PLAYFIELD_ATTRS_ADDR, SCREEN_WIDTH, PLAYFIELD_HEIGHT); /* Conv: added */
 }
 
 /**
@@ -555,6 +564,8 @@ static void es_handler_handshake_advance(chqstate_t *state)
       memset(ADDRTOSCREEN(DE_screen), 0, 8);
       DE_screen = next_screen_row(DE_screen);
     }
+
+    update_screen(state, 0x48AC, 8 * 8, handshake_frames[A_index].rows + 3); /* Conv: added */
   }
 
   HL_attr = ADDRTOATTRS(0x59AC);
@@ -562,6 +573,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += SCREEN_ATTRIBUTES_WIDTH;
   }
+  update_attrs(state, 0x59AC, 8 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
@@ -854,6 +866,7 @@ static void plot_char(chqstate_t *state,
   int       glyphid;   /* glyph index into font[] (was C during the ladder) */
   const u8 *HLfont;    /* current font row pointer, walked forward (was HL) */
   u8        Ecur;      /* this character's draw column (was E, Set S) */
+  u16       starting_addr; /* glyph's first screen byte, saved for the dirty-box call (Conv: added) */
   u8        Dcur;      /* current screen row byte during the blit (was D) */
   int       i;         /* pass loop index (Conv: no Z80 register) */
   int       data;      /* font byte read for the current scanline pair (was A) */
@@ -871,6 +884,7 @@ static void plot_char(chqstate_t *state,
   HLfont  = &font[glyphid * 7];
 
   Ecur = *Ecol;
+  starting_addr = (u16) (((u16) Drow << 8) | Ecur);
   (*Ecol)++; // $E35D: persistent cursor advances for the NEXT character now.
 
   // Pass 1 ($E360-$E378): font bytes 0-3, double height.
@@ -897,6 +911,8 @@ static void plot_char(chqstate_t *state,
     Dcur++;
   }
   *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = 0;
+
+  update_screen(state, starting_addr, 8, 16); /* Conv: added */
 
   // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
   Lcur = *Lattr;
