@@ -6374,11 +6374,11 @@ static void clear_message_line(chqstate_t *state)
   HLscreen = 0x45C1;
   A_rows   = MFHEIGHT;
   do {
-    memset(ADDRTOSCREEN(HLscreen + 1), 0, 29); /* Conv: replaces LD (HL),B + LDIR */
+    memset(ADDRTOSCREEN(HLscreen + 1), 0xAA, 29); /* Conv: replaces LD (HL),B + LDIR */
     HLscreen = next_scr_row(HLscreen);
   } while (--A_rows);
 
-  update_screen(state, 0x45C1, 29 * 8, MFHEIGHT); /* Conv: added */
+  update_screen(state, 0x45C2, 29 * 8, MFHEIGHT); /* Conv: added */
 }
 
 /**
