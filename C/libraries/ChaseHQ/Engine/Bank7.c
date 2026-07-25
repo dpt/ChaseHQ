@@ -607,9 +607,8 @@ static void es_handler_draw_score(chqstate_t *state)
     state->speccy->stamp(state->speccy);
 
     increment_score(state, 0, 0x00, 0x50);
-    ptad_led_digits(4, &state->score_bcd[3], &state->session.score_digits[7],
-                    ADDRTOSCREEN(0x4126));
-    state->speccy->draw(state->speccy, NULL); /* Conv: added */
+    ptad_led_digits(state, 4, &state->score_bcd[3],
+                    &state->session.score_digits[7], ADDRTOSCREEN(0x4126));
     sfx_bipbow(state, 2, 2);
 
     // Sleeps out the whole per-increment body timed from the stamp() above,

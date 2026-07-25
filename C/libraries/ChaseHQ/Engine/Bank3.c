@@ -150,7 +150,7 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
                                         u8          C_x,
                                         u8          L_row);
 static void sfx_music_service(chqstate_t *state);
-static void clear_screen_bitmap_and_attrs(chqstate_t *state);
+static void clear_playfield_and_attrs(chqstate_t *state);
 static void clear_and_fill_border_attrs(chqstate_t *state);
 static void title_screen_driver(chqstate_t *state);
 static u8 ts_wait_loop(chqstate_t *state);
@@ -1858,10 +1858,6 @@ static void clear_playfield_buffer(chqstate_t *state)
  */
 static u8 ts_animate_frame(chqstate_t *state)
 {
-  static const zxbox_t  playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   int                  obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
   struct title_object *rec; /* current object record (was IX) */
 
@@ -1882,7 +1878,7 @@ static u8 ts_animate_frame(chqstate_t *state)
     compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row);
   }
 
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 
   state->speccy->sleep(state->speccy, 220167*57/100); // hacking
 
@@ -2405,7 +2401,7 @@ static void sfx_music_service(chqstate_t *state)
 }
 
 /**
- * $C890: Clear the screen bitmap and attribute area
+ * $C890: Clear the playfield bitmap and attribute area
  *
  * Zero-fills the attribute area $5900-$5AFF and the bitmap $4800-$57FF --
  * the lower two-thirds of the screen, leaving $4000-$47FF (the top third)
@@ -2417,23 +2413,18 @@ static void sfx_music_service(chqstate_t *state)
  * boundary, so L is already zero) then LDIR; this collapses to two plain
  * memset calls, per the skool's own Conv note at $C890.
  */
-static void clear_screen_bitmap_and_attrs(chqstate_t *state)
+static void clear_playfield_and_attrs(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
- * $C8A9: Clear the screen then paint the border attribute rows
+ * $C8A9: Clear the playfield then paint the border attribute rows
  *
- * Calls clear_screen_bitmap_and_attrs, then overwrites the attribute area
+ * Calls clear_playfield_and_attrs, then overwrites the attribute area
  * $5900-$5AFF with a fixed pattern, 32 bytes at a time (16 times, covering
  * all 512 bytes): 2 bytes of attribute 0 (black), 28 bytes of attribute
  * $45 (flash bit set; paper/ink in bits 0-5), then 2 more bytes of
@@ -2444,7 +2435,7 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
   u8 *attrs; /* attribute write cursor (was HL) */
   int c;     /* outer repeat count, 16 (was C) */
 
-  clear_screen_bitmap_and_attrs(state);
+  clear_playfield_and_attrs(state);
 
   attrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
   c = PLAYFIELD_HEIGHT / 8;
@@ -2455,6 +2446,8 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
     *attrs++ = attribute_BLACK_OVER_BLACK;
     *attrs++ = attribute_BLACK_OVER_BLACK;
   } while (--c);
+
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -2494,10 +2487,7 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * request a restart and this function loops.
  */
 static void title_screen_driver(chqstate_t *state)
-{
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
+{return; // TEMP
 
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
@@ -2582,7 +2572,7 @@ static void title_screen_driver(chqstate_t *state)
 
     start_tune_and_sfx_table(state, 0);
 
-    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+    update_whole_playfield(state); /* Conv: added */
 
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
@@ -3028,10 +3018,6 @@ rescan:
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   u16 DE_screen;       /* current label print position (was DE) */
   u8  B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
@@ -3048,7 +3034,7 @@ static void redefine_keys_screen(chqstate_t *state)
     print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
                                                     * LEFT/RIGHT/QUIT/PAUSE/TURBO */
 
-    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+    update_whole_playfield(state); /* Conv: added */
 
     DE_screen       = 0x48D6;
     B_remaining     = 8;      /* $FEBE LD BC,$0801: B half */
@@ -3080,7 +3066,7 @@ static void redefine_keys_screen(chqstate_t *state)
     clear_options_screen(state);
     print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
 
-    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+    update_whole_playfield(state); /* Conv: added */
 
     do {
       run_title_tune(state);
@@ -3310,7 +3296,7 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  * $FE7F: Clears the options-menu screen area (attributes and bitmap)
  *
  * Zero-fills the same $5900-$5AFF attribute range and $4800-$57FF bitmap
- * range as clear_screen_bitmap_and_attrs, servicing sound (sfx_music_service,
+ * range as clear_playfield_and_attrs, servicing sound (sfx_music_service,
  * via run_title_tune) between passes so the title tune keeps
  * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
  * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
@@ -3369,10 +3355,6 @@ static void clear_options_screen(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = {
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
                            * bit3=key"4" (was A) */
   const u8 *HL_ctrl_list; /* joystick key-list source, list A or B (was HL) */
@@ -3387,7 +3369,7 @@ redraw:
   print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
                                                 * P1-P5 control-scheme list. */
 
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 
 poll: /* $FBAB omd_service_and_read_keys */
   do {
@@ -3434,7 +3416,7 @@ shared_tail:
 
   clear_options_screen(state);
 
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 
   do {
     state->speccy->stamp(state->speccy);

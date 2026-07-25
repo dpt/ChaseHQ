@@ -95,6 +95,7 @@
 #define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
 #define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
 
+#define MARQUEE_WIDTH              (256) // pixels
 #define MARQUEE_HEIGHT           (8 * 8) // rows
 #define PLAYFIELD_HEIGHT        (16 * 8) // rows
 
@@ -313,6 +314,10 @@
 
 /* ----------------------------------------------------------------------- */
 
+void  update_screen(chqstate_t *state, int screen, int width, int height);
+void  update_attrs(chqstate_t *state, int attrs, int width, int height);
+void  update_whole_playfield(chqstate_t *state);
+
 /* Shared with Bank3.c */
 
 u8   *z80addrtoscreen(chqstate_t *state, int addr, int left, int right);
@@ -329,8 +334,11 @@ void  drive_chatter_stop(chqstate_t *state);
 u8    keyscan(chqstate_t *state);
 void  play_speech_128k(chqstate_t *state, int index);
 void  increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
-void  ptad_led_digits(int iterations, const u8 *digits, u8 *stored,
-                       u8 *screen);
+void ptad_led_digits(chqstate_t *state,
+                     int         iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen);
 void  sfx_bipbow(chqstate_t *state, int param1, int param2);
 void  play_noise(chqstate_t *state, int Aparam);
 

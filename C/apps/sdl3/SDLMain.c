@@ -63,6 +63,7 @@
 #endif
 
 #define MAXSTAMPS            (4) // max depth of timestamps stack
+#define MAXDIRTYRECTS        (8) // max dirty rects captured per frame before we coalesce to full-screen
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
 #define AY_SAMPLE_RATE   (44100)
@@ -181,6 +182,16 @@ typedef struct
   int                replay_anchored;      // bool; cleared when queue runs dry
   int                audio_muted;          // bool; mute sound if true
 
+  // Dirty-rect overlay: the game (thread) reports each screen region it
+  // refreshes via chq_draw_handler; we stash them here and outline them over
+  // the rendered frame so refreshed regions are visible on screen. Cleared
+  // once drawn. dirty_mutex guards all fields in this group.
+  SDL_Mutex         *dirty_mutex;
+  zxbox_t            dirty_rects[MAXDIRTYRECTS];
+  int                dirty_count;
+  int                dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
+  int                show_dirty_overlay; // bool; toggled with F3, off by default
+
   SDL_Window              *window;
 #if CHQ_CRT_SHADER
   chq_CRT_shader_t         crt;
@@ -200,10 +211,18 @@ chq_sdl_state_t;
 static void chq_draw_handler(const zxbox_t *dirty,
                              void          *opaque)
 {
+  chq_sdl_state_t *state = opaque;
+
   // SDL_UpdateTexture must be called from the main thread (Metal requirement).
-  // The main loop picks up changes via zxspectrum_claim_screen.
-  NOT_USED(dirty);
-  NOT_USED(opaque);
+  // The main loop picks up changes via zxspectrum_claim_screen. Here we only
+  // stash the dirty region (game thread) for the main loop to outline once it
+  // renders the frame.
+  SDL_LockMutex(state->dirty_mutex);
+  if (dirty == NULL)
+    state->dirty_full_screen = 1;
+  else if (state->dirty_count < MAXDIRTYRECTS)
+    state->dirty_rects[state->dirty_count++] = *dirty;
+  SDL_UnlockMutex(state->dirty_mutex);
 }
 
 static void chq_stamp_handler(void *opaque)
@@ -596,6 +615,13 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     return;
   }
 
+  if (sym == SDLK_F3)
+  {
+    if (k->down && !k->repeat)
+      state->show_dirty_overlay = !state->show_dirty_overlay;
+    return;
+  }
+
   if (sym == SDLK_MINUS || sym == SDLK_EQUALS)
   {
     if (k->down && !k->repeat)
@@ -704,6 +730,89 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   }
 }
 
+#if !CHQ_CRT_SHADER
+// Outlines the screen regions chq_draw_handler reported dirty since the last
+// frame, so refreshed areas are visible over the rendered texture. Rects are
+// in game pixel space (256x192, bottom-left origin); (x, y) is the top-left
+// of the game view within the window, already scaled.
+#define DIRTYOVERLAY_THICKNESS (8) // outline thickness in window pixels
+
+// Draws 'rect' as a filled-in outline DIRTYOVERLAY_THICKNESS pixels thick by
+// insetting and stroking it repeatedly (SDL_RenderRect has no line-width).
+static void chq_render_thick_rect(SDL_Renderer *renderer, const SDL_FRect *rect)
+{
+  int i;
+
+  for (i = 0; i < DIRTYOVERLAY_THICKNESS; i++)
+  {
+    SDL_FRect inset;
+
+    inset.x = rect->x + i;
+    inset.y = rect->y + i;
+    inset.w = rect->w - i * 2;
+    inset.h = rect->h - i * 2;
+    if (inset.w <= 0 || inset.h <= 0)
+      break;
+
+    SDL_RenderRect(renderer, &inset);
+  }
+}
+
+static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
+{
+  zxbox_t rects[MAXDIRTYRECTS];
+  int     count;
+  int     full_screen;
+  int     scale;
+  int     i;
+
+  SDL_LockMutex(state->dirty_mutex);
+  count       = state->dirty_count;
+  full_screen = state->dirty_full_screen;
+  for (i = 0; i < count; i++)
+    rects[i] = state->dirty_rects[i];
+  state->dirty_count       = 0;
+  state->dirty_full_screen = 0;
+  SDL_UnlockMutex(state->dirty_mutex);
+
+  if (!state->show_dirty_overlay)
+    return;
+
+  if (count > 0 || full_screen)
+    fprintf(stderr, "[dirty] count=%d full_screen=%d\n", count, full_screen); // TEMP debug
+
+  scale = state->scale;
+
+  if (full_screen)
+  {
+    SDL_FRect rect;
+
+    rect.x = (float) x;
+    rect.y = (float) y;
+    rect.w = (float) (GAMEWIDTH  * scale);
+    rect.h = (float) (GAMEHEIGHT * scale);
+
+    SDL_SetRenderDrawColor(state->renderer, 0xFF, 0x00, 0x00, 0xFF); // red: full-screen refresh
+    chq_render_thick_rect(state->renderer, &rect);
+  }
+
+  SDL_SetRenderDrawColor(state->renderer, 0x00, 0xFF, 0x00, 0xFF); // green: partial refresh
+  for (i = 0; i < count; i++)
+  {
+    const zxbox_t *box = &rects[i];
+    SDL_FRect      rect;
+
+    // box is bottom-left origin; flip to the window's top-down space.
+    rect.x = (float) (x + box->x0 * scale);
+    rect.y = (float) (y + (GAMEHEIGHT - box->y1) * scale);
+    rect.w = (float) ((box->x1 - box->x0) * scale);
+    rect.h = (float) ((box->y1 - box->y0) * scale);
+
+    chq_render_thick_rect(state->renderer, &rect);
+  }
+}
+#endif
+
 // type: em_arg_callback_func
 static void chq_sdl_main_loop(void *opaque)
 {
@@ -794,6 +903,7 @@ static void chq_sdl_main_loop(void *opaque)
       // Note that this will inhibit image stretching.
 
       SDL_RenderTexture(state->renderer, state->texture, NULL, &dstrect);
+      chq_draw_dirty_overlay(state, x, y);
       SDL_RenderPresent(state->renderer);
     }
 #endif
@@ -920,6 +1030,13 @@ int main(void)
     goto failure;
   }
 
+  state.dirty_mutex = SDL_CreateMutex();
+  if (state.dirty_mutex == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
+    goto failure;
+  }
+
   // Conv: force mono output. The chip defaults to ABC stereo separation
   // (left = A+B, right = B+C), which sounds right-heavy or left-heavy
   // depending on which channels a given tune favours; we don't know whether
@@ -999,6 +1116,7 @@ int main(void)
   SDL_DestroyAudioStream(state.audio_stream);
   slopay_chip_destroy(state.ay);
   SDL_DestroyMutex(state.audio_queue_mutex);
+  SDL_DestroyMutex(state.dirty_mutex);
 
 #if CHQ_CRT_SHADER
   chq_CRT_shader_destroy(&state.crt, window);

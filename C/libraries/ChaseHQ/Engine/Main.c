@@ -355,6 +355,84 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * Mark a rectangular screen-bitmap region dirty and redraw it.
+ *
+ * Decodes the ZX Spectrum pixel row/column encoded in [screen] and converts
+ * to a zxbox_t (bottom-left origin, per zxspectrum_t::draw) covering
+ * [width] x [height] pixels from there.
+ *
+ * \param[in] screen Z80 screen bitmap address of the region's top-left pixel.
+ * \param[in] width  Region width in pixels.
+ * \param[in] height Region height in pixels.
+ */
+void update_screen(chqstate_t *state, int screen, int width, int height)
+{
+  zxbox_t pixelbox;
+  int     x;
+  int     y;
+
+  assert(VALID_SCREEN_ADDR_LR(screen, 0, 0));
+
+  x = (screen & 0x1F) * 8;
+  y = ((screen >> 11) & 3) * 64 + ((screen >> 5) & 7) * 8 + ((screen >> 8) & 7);
+
+  pixelbox.x0 = x;
+  pixelbox.y0 = SCREEN_HEIGHT - (y + height);
+  pixelbox.x1 = x + width;
+  pixelbox.y1 = SCREEN_HEIGHT - y;
+
+  state->speccy->draw(state->speccy, &pixelbox);
+}
+
+/**
+ * Mark a rectangular screen-attributes region dirty and redraw it.
+ *
+ * Decodes the ZX Spectrum attribute row/column encoded in [attrs] and
+ * converts to a zxbox_t (bottom-left origin, per zxspectrum_t::draw)
+ * covering [width] x [height] pixels from there.
+ *
+ * \param[in] attrs  Z80 screen attributes address of the region's top-left
+ *   attribute cell.
+ * \param[in] width  Region width in pixels.
+ * \param[in] height Region height in pixels.
+ */
+void update_attrs(chqstate_t *state, int attrs, int width, int height)
+{
+  zxbox_t attrsbox;
+  int     offset;
+  int     x;
+  int     y;
+
+  assert(VALID_ATTRS_ADDR_LR(attrs, 0, 0));
+
+  offset = attrs - SCREEN_ATTRIBUTES_START_ADDRESS;
+  x      = (offset % SCREEN_ATTRIBUTES_ROWBYTES) * 8;
+  y      = (offset / SCREEN_ATTRIBUTES_ROWBYTES) * 8;
+
+  attrsbox.x0 = x;
+  attrsbox.y0 = SCREEN_HEIGHT - (y + height);
+  attrsbox.x1 = x + width;
+  attrsbox.y1 = SCREEN_HEIGHT - y;
+
+  state->speccy->draw(state->speccy, &attrsbox);
+}
+
+/**
+ * Mark the entire playfield area as dirty.
+ *
+ * Avoid calling this in favour of the above menthods where possible.
+ */
+void update_whole_playfield(chqstate_t *state)
+{
+  static const zxbox_t playfield_box = {
+    8, 0, SCREEN_WIDTH - 8, PLAYFIELD_HEIGHT
+  };
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+}
+
+/* ----------------------------------------------------------------------- */
+
 /* Road buffer macros */
 
 /** Given a road buffer pointer return a new wrapped-around buffer index. */
@@ -756,7 +834,7 @@ static void pc_clear_line(chqstate_t *state, int x);
 
 static void drive_noise_effect(chqstate_t *state, int counter);
 static void draw_noise_effect(chqstate_t *state, int counter);
-static void ne_plot_attrs(chqstate_t *state, int attr);
+static void clear_face_attributes(chqstate_t *state, int attr);
 
 static void plot_face(chqstate_t *state, int screen, const u8 *face);
 static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face);
@@ -785,9 +863,13 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
-void ptad_led_digits(int iterations, const u8 *digits, u8 *stored, u8 *screen);
+void ptad_led_digits(chqstate_t *state,
+                     int         iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen);
 
-static u8 *ledfont_plot(int ord, u8 *screen);
+static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen);
 
 static const u8 *draw_string_with_style(chqstate_t *state,
                                         int         attrval,
@@ -980,7 +1062,7 @@ static void layout_road(chqstate_t *state);
 
 static void exit_fork(chqstate_t *state);
 
-static void update_screen(chqstate_t *state);
+static void send_playfield(chqstate_t *state);
 
 static void set_playfield_attrs(chqstate_t *state);
 
@@ -1358,7 +1440,7 @@ static void attract_mode_48k(chqstate_t *state)
     }
 
     transition(state);
-    update_screen(state);
+    send_playfield(state);
   }
 }
 
@@ -1642,7 +1724,7 @@ static void main_loop(chqstate_t *state)
       draw_smash_bar(state);
       transition(state);
       play_regular_sfx_hook(state);
-      update_screen(state);
+      send_playfield(state);
       exit_fork(state);
       state->speccy->sleep(state->speccy, MAIN_LOOP_TSTATES);
 
@@ -1819,7 +1901,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   reveal_perp_car(state);
   animate_meters(state);
   transition(state);
-  update_screen(state);
+  send_playfield(state);
   if (state->transition_control == 0) {
     if (state->chatter_state == CHATTERSTATE_IDLE) {
       rc = 0; // stop
@@ -1902,9 +1984,6 @@ static void reveal_perp_car(chqstate_t *state)
  */
 static void animate_meters(chqstate_t *state)
 {
-  static const zxbox_t meters_box = { /* speed meter columns 23–29, attr rows 16 and 18 */
-    184, 40, 240, 64
-  };
   int random; /* signed RNG result; sign determines direction (was A) */
   int level;  /* current meter level, 0–7 (was A) */
 
@@ -1921,6 +2000,7 @@ static void animate_meters(chqstate_t *state)
 set_level:
   state->meter_1_level = level;
   am_set_attrs(level, ADDRTOATTRS(0x5A17));
+  update_attrs(state, 0x5A17, 7 * 8, 8); /* Conv: added */
 
   // Update the second meter. Essentially duplicates the above code.
   random = (s8) rng(state);
@@ -1934,7 +2014,7 @@ set_level:
 set_level2:
   state->meter_2_level = level;
   am_set_attrs(level, ADDRTOATTRS(0x5A57));
-  state->speccy->draw(state->speccy, &meters_box); /* Conv: added */
+  update_attrs(state, 0x5A57, 7 * 8, 8); /* Conv: added */
 }
 
 /**
@@ -1983,10 +2063,6 @@ static void am_set_attrs(int counter, u8 *attrs)
  */
 static void draw_pregame(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   int       carry;      /* carry from attribute-address shift computation (carry) */
   const u8 *cmds;       /* pointer walking pregame_data[] command stream (was HL) */
   int       cmd;        /* current command byte from the stream (was A) */
@@ -2095,7 +2171,7 @@ dp_repeat_or_plot_tile:
                              DRAWCHARSTYLE_SINGLE_INVERTED,
                              messages);
   while (--iterations > 0);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -2142,7 +2218,7 @@ static void escape_scene(chqstate_t *state)
     update_scoreboard(state);
     drive_chatter(state);
     transition(state);
-    update_screen(state);
+    send_playfield(state);
     state->speccy->sleep(state->speccy, ESCAPE_SCENE_TSTATES);
 
     // Loop unless the tunnel has appeared - and is right size?
@@ -2439,14 +2515,10 @@ static void check_user_input_quit_key(chqstate_t *state)
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR),
          attribute_BLACK_OVER_BLACK,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -2459,15 +2531,11 @@ static void clear_playfield_attrs(chqstate_t *state)
  */
 void clear_playfield(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   clear_playfield_attrs(state);
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR),
          ________,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -3332,10 +3400,6 @@ static void setup_transition(chqstate_t *state, int stride)
  */
 static void fill_attributes(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   u8 *HLsrc;      /* pointer to first attribute of current row (was HL) */
   u8 *DEdst;      /* destination: HLsrc + 1 each iteration (was DE) */
   int A_rows;     /* row counter, 16 down to 1 (was A) */
@@ -3351,7 +3415,7 @@ static void fill_attributes(chqstate_t *state)
   } while (--A_rows > 0);
 
   state->transition_control = TRANSITIONCONTROL_STOP;
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -5730,7 +5794,7 @@ void drive_chatter(chqstate_t *state)
 
     // enter idle state, hide face by wiping attrs to black on black
     state->chatter_state = CHATTERSTATE_IDLE;
-    ne_plot_attrs(state, 0 /* black on black attrs */);
+    clear_face_attributes(state, 0 /* black on black attrs */);
   }
 
   // idle state (0)
@@ -5802,7 +5866,7 @@ clear:
   drive_noise_effect(state, 4); /* tail call */
 
 exit:
-  state->speccy->draw(state->speccy, NULL); /* Conv: added */
+  ;//state->speccy->draw(state->speccy, NULL); /* Conv: added */
 }
 
 /**
@@ -5993,6 +6057,7 @@ static void draw_noise_effect(chqstate_t *state, int counter)
     plot_mini_font_cursor_on(state, x, character);
   else
     plot_mini_font_cursor_off(state, x, character);
+
   DEscreen = 0x4036; // Set plot address to (176,8)
   C = 40; // rows
   do {
@@ -6012,8 +6077,8 @@ static void draw_noise_effect(chqstate_t *state, int counter)
     DEscreen = next_scr_row(DEscreen);
   } while (--C > 0);
 
-  ne_plot_attrs(state, attribute_BRIGHT_WHITE_OVER_BLACK);
-  /* was FALLTHROUGH */
+  /* the following will call draw() for us */
+  clear_face_attributes(state, attribute_BRIGHT_WHITE_OVER_BLACK); /* was FALLTHROUGH */
 }
 
 /**
@@ -6026,11 +6091,8 @@ static void draw_noise_effect(chqstate_t *state, int counter)
  *
  * \param[in] attr Attribute byte to fill the face area with. (was A)
  */
-static void ne_plot_attrs(chqstate_t *state, int attr)
+static void clear_face_attributes(chqstate_t *state, int attr)
 {
-  static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
-    176, 144, 208, 184
-  };
   u8 *addr;       /* pointer to the current attribute row in the face area (was HL) */
   int iterations; /* row countdown, 5 rows (was B) */
 
@@ -6042,7 +6104,8 @@ static void ne_plot_attrs(chqstate_t *state, int attr)
     memset(addr, attr, FACEATTRWIDTH);
     addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
-  state->speccy->draw(state->speccy, &face_box); /* Conv: added */
+
+  update_attrs(state, 0x5836, 4 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
@@ -6078,6 +6141,7 @@ static void plot_face(chqstate_t *state, int screen, const u8 *face)
     screen = next_scr_row(screen);
   }
 
+  /* the following will call draw() for us */
   plot_face_attributes(state, saved_screen, face); /* was fallthrough */
 }
 
@@ -6096,11 +6160,8 @@ static void plot_face(chqstate_t *state, int screen, const u8 *face)
  */
 static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
 {
-  static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
-    176, 144, 208, 184
-  };
-  u8  A_attrhi;  /* screen high byte, rotated to extract band, then biased to $58 (was A) */
-  int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
+  u8  A_attrhi; /* screen high byte, rotated to extract band, then biased to $58 (was A) */
+  int counter;  /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
 
   A_attrhi = screen >> 8;
   A_attrhi = (A_attrhi >> 3) & 3;
@@ -6122,7 +6183,8 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
      * (this +0x1C plus the +4 already applied above). */
     screen += 0x1C;
   }
-  state->speccy->draw(state->speccy, &face_box); /* Conv: added */
+
+  update_attrs(state, 0x5836, 4 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
@@ -6183,9 +6245,6 @@ static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
 static void plot_mini_font_char(
     chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2)
 {
-  static const zxbox_t message_line_box = { /* chatter message area: ZX rows 53–58 */
-    0, 133, SCREEN_WIDTH, 139
-  };
   int       carry;    /* carry from SRL/RR shift operations (carry) */
   int       extra2;   /* extra bits for right (low) glyph byte; self-modifies $9B61 (was C) */
   int       extra1;   /* extra bits ORed into left (high) glyph byte; self-modifies $9B64 (was B) */
@@ -6284,7 +6343,8 @@ pmf_have_ascii:
     fontdata++;
     HLscreen = next_scr_row(HLscreen);
   } while (--row > 0);
-  state->speccy->draw(state->speccy, &message_line_box); /* Conv: added */
+
+  update_screen(state, screen, 16, MFHEIGHT); /* Conv: added */
 }
 
 /**
@@ -6308,19 +6368,17 @@ pmf_have_ascii:
  */
 static void clear_message_line(chqstate_t *state)
 {
-  static const zxbox_t message_line_box = { /* chatter message area: ZX rows 53–58 */
-    0, 133, SCREEN_WIDTH, 139
-  };
   u16 HLscreen; /* screen address of first byte in the current scanline (was HL) */
   int A_rows;   /* scanline counter, 6 down to 1; banked to A' during loop body (was A) */
 
   HLscreen = 0x45C1;
-  A_rows   = 6;
+  A_rows   = MFHEIGHT;
   do {
     memset(ADDRTOSCREEN(HLscreen + 1), 0, 29); /* Conv: replaces LD (HL),B + LDIR */
     HLscreen = next_scr_row(HLscreen);
   } while (--A_rows);
-  state->speccy->draw(state->speccy, &message_line_box); /* Conv: added */
+
+  update_screen(state, 0x45C1, 29 * 8, MFHEIGHT); /* Conv: added */
 }
 
 /**
@@ -6792,6 +6850,7 @@ static void update_scoreboard(chqstate_t *state)
     C_attrval = carry ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BRIGHT_YELLOW_OVER_BLACK;
   /* $9DBA — write colour to 5 attribute cells at $5868 */
   memset(ADDRTOATTRS(0x5868), C_attrval, 5);
+  update_attrs(state, 0x5868, 5 * 8, 8); /* Conv: added */
 
 us_gear:
   /* $9DC3 — gear display: redraw only on change */
@@ -6813,8 +6872,6 @@ us_gear:
   }
 
   plot_turbos_and_digits(state);
-
-  state->speccy->draw(state->speccy, NULL); /* Conv: added */
 }
 
 /**
@@ -6834,12 +6891,11 @@ us_gear:
  */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
-  static const zxbox_t lights_box = { /* marquee lights: ZX rows 8–39, full width */
-    0, 152, SCREEN_WIDTH, 184
-  };
-  int B_rows; /* row counter, MARQUEELIGHT_HEIGHT down to 1 (was B) */
-  int C_attr; /* attribute XOR mask, $40 = BRIGHT (was C) */
+  int        B_rows;      /* row counter, MARQUEELIGHT_HEIGHT down to 1 (was B) */
+  int        C_attr;      /* attribute XOR mask, $40 = BRIGHT (was C) */
+  const u8  *start_attrs; /* first attribute byte, saved for the dirty-box call (Conv: added) */
 
+  start_attrs = attrs;
   B_rows = MARQUEELIGHT_HEIGHT;
   C_attr = ATTR_BRIGHT;
   do {
@@ -6850,7 +6906,8 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
     *attrs   ^= C_attr; /* fifth byte (INC L not applied after last) */
     attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHT_WIDTH - 1);
   } while (--B_rows > 0);
-  state->speccy->draw(state->speccy, &lights_box); /* Conv: added */
+
+  update_attrs(state, ATTRSTOADDR(start_attrs), MARQUEELIGHT_WIDTH * 8, MARQUEELIGHT_HEIGHT * 8); /* Conv: added */
 }
 
 /**
@@ -7004,13 +7061,13 @@ ptad_turbo_setup:
   A--; // correct for starting early
 
   // Plot speed digits
-  DEscreen = ledfont_plot(Ddash, DEscreen); // draw 10,000s
-  DEscreen = ledfont_plot(Edash, DEscreen); // draw  1,000s
-  (void) ledfont_plot(A, DEscreen); // draw    100s
+  DEscreen = ledfont_plot(state, Ddash, DEscreen); // draw 10,000s
+  DEscreen = ledfont_plot(state, Edash, DEscreen); // draw  1,000s
+  (void) ledfont_plot(state, A, DEscreen); // draw    100s
 
   // Time
   // EXX
-  ptad_led_digits(1, &state->session.time_bcd,
+  ptad_led_digits(state, 1, &state->session.time_bcd,
                   &state->session.time_digits[1],
                   ADDRTOSCREEN(0x412F)); // (120,9)
 
@@ -7054,13 +7111,13 @@ ptad_turbo_setup:
   A |= HLdistance & 0xFF; // OR in remainder
   DEbcd[-1] = A;
 
-  ptad_led_digits(2, &state->distance_bcd[1],
+  ptad_led_digits(state, 2, &state->distance_bcd[1],
                   &state->session.distance_digits[3],
                   ADDRTOSCREEN(0x4191)); /* was fallthrough */
 
   // Score
 
-  ptad_led_digits(4, &state->score_bcd[3], &state->session.score_digits[7],
+  ptad_led_digits(state, 4, &state->score_bcd[3], &state->session.score_digits[7],
                   ADDRTOSCREEN(0x4126)); /* was fallthrough */
 }
 
@@ -7081,7 +7138,11 @@ ptad_turbo_setup:
  * \param[in,out] screen Pointer to the screen column for the first digit;
  * advanced one column per plotted or skipped digit. (was DE')
  */
-void ptad_led_digits(int iterations, const u8 *digits, u8 *stored, u8 *screen)
+void ptad_led_digits(chqstate_t *state,
+                     int         iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen)
 {
   int Adigits; /* packed BCD digit pair read from the digits buffer (was A) */
   int Cdigits; /* saved copy of Adigits for the low-nibble pass (was C) */
@@ -7110,12 +7171,12 @@ ptad_led_next_whole:
 
 ptad_led_plot_1st:
   *stored = Adigits;
-  screen = ledfont_plot(Adigits, screen);
+  screen = ledfont_plot(state, Adigits, screen);
   goto ptad_led_next_half;
 
 ptad_led_plot_2nd:
   *stored = Adigits;
-  screen = ledfont_plot(Adigits, screen);
+  screen = ledfont_plot(state, Adigits, screen);
   goto ptad_led_next_whole;
 }
 
@@ -7139,7 +7200,7 @@ ptad_led_plot_2nd:
  *
  * Conv: LDI (HL→DE, both increment, BC--) unrolled to indexed loops.
  */
-static u8 *ledfont_plot(int ord, u8 *screen)
+static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
   const u8 *src;         /* pointer walking the LED font glyph data (was HL) */
   u8       *orig_screen; /* screen start for this digit, saved for next-column advance (was PUSH DE) */
@@ -7152,6 +7213,7 @@ static u8 *ledfont_plot(int ord, u8 *screen)
   for (i = 0; i < 7; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
   screen = orig_screen - 256 + 32;
   for (i = 0; i < 8; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
+  update_screen(state, SCREENTOADDR(orig_screen), 8, LEDFONT_HEIGHT); /* Conv: added */
   return orig_screen + 1;
 }
 
@@ -7438,6 +7500,7 @@ dc_screen:
     dst = ADDRTOSCREEN(next_scr_row(SCREENTOADDR(dst)));
   } while (--iterations > 0);
   dst = orig + 1; /* was POP dst */
+  update_screen(state, SCREENTOADDR(orig), 8, 7); /* Conv: added */
 
 dc_return:
   *new_screen = dst;
@@ -12387,7 +12450,7 @@ static void exit_fork(chqstate_t *state)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
 /**
- * $BC3E: Copy the backbuffer to the screen and update attributes.
+ * $BC3E: Copy the backbuffer to the playfield and update attributes.
  *
  * Transfers all 128 rows of the road backbuffer to the playfield area of the ZX
  * Spectrum screen ($4800–$57FF), then updates the sky/ground horizon colour row
@@ -12412,13 +12475,10 @@ static void exit_fork(chqstate_t *state)
  * $5962 with the smash-o-meter colour gradient when a perp is sighted.
  *
  */
-static void update_screen(chqstate_t *state)
+static void send_playfield(chqstate_t *state)
 {
   /* Conv: Z80 restores SP via a self-modified instruction at $BDBE; C
    * has no equivalent and passes the dirty rect to the host draw callback. */
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
 
   u8        *HLscr;        /* screen write pointer (was HL) */
   u8        *HLbuf;        /* backbuffer read pointer (was HL') */
@@ -12582,7 +12642,7 @@ static void update_screen(chqstate_t *state)
   }
 
 exit:
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -12598,10 +12658,6 @@ exit:
  */
 static void set_playfield_attrs(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   u8  *HLattrs;     /* attribute pointer walking left/right edge columns (was HL) */
   int  DEoffset;    /* byte distance from left to right edge column in one row (was DE) */
   int  Biterations; /* row iteration count (was B) */
@@ -12643,7 +12699,8 @@ static void set_playfield_attrs(chqstate_t *state)
     HLattrs   += DEoffset;
     *HLattrs++ = attribute_BLACK_OVER_BLACK; /* right edge: col 31 */
   } while (--Biterations > 0);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -16209,11 +16266,10 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
          sizeof(marquee_initial));
   memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
          sizeof(marquee_attrs));
-  state->speccy->draw(state->speccy, NULL); /* Conv: added — full-screen marquee copy */
+  update_screen(state, SCREEN_START_ADDRESS, MARQUEE_WIDTH, MARQUEE_HEIGHT); /* Conv: added */
 
-  if (Amode_128k == 0) {
-    // stop_the_tape_48k(state);
-  }
+  if (Amode_128k == 0)
+    stop_the_tape_48k(state);
 
 #if 0
   reloc      = &relocations[0];
@@ -16225,7 +16281,7 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 #endif
 
   // Conv: Load stage 1 data before attract mode starts (state->stage must not be NULL).
-  state->wanted_stage_number = 1;
+  state->wanted_stage_number  = 1;
   state->current_stage_number = 0;
   load_stage(state);
 
@@ -16486,15 +16542,11 @@ mdc_have_glyph:
  */
 static void clear_screen(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
-
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
-  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -17571,7 +17623,7 @@ call_bank_3:
     }
 
     transition(state);
-    update_screen(state);
+    send_playfield(state);
   }
 }
 
@@ -17695,7 +17747,7 @@ void chq_test_game_frame(chqstate_t *state)
   drive_chatter(state);
   draw_smash_bar(state);
   transition(state);
-  update_screen(state);
+  send_playfield(state);
   exit_fork(state);
 }
 
