@@ -259,9 +259,11 @@ def check_function(filename, lineno, comment_lines, return_type, params, func_na
   return errors
 
 
-def check_file(filename):
+def extract_functions(filename):
+  """Return (lineno, func_name, comment_lines, return_type, params) for every
+  prologue-documented function definition, in file order."""
   text = open(filename).read()
-  results = []
+  functions = []
   for m in re.finditer(r"/\*\*.*?\*/", text, re.DOTALL):
     raw_lines = [l.strip() for l in m.group(0).splitlines()]
     if raw_lines[0] != "/**" or raw_lines[-1] != "*/":
@@ -278,15 +280,64 @@ def check_file(filename):
     if not is_definition:
       continue
 
+    functions.append((lineno, func_name, comment_lines, return_type, params))
+  return functions
+
+
+def check_file(filename):
+  results = []
+  for lineno, func_name, comment_lines, return_type, params in extract_functions(filename):
     errors = check_function(filename, lineno, comment_lines, return_type, params, func_name)
     results.append((lineno, errors))
   return results
+
+
+ADDR_RE = re.compile(r"^\$([0-9A-Fa-f]{4})")
+
+
+def title_address(comment_lines):
+  """First Z80 address named in a prologue's title line, or None for a
+  C-only helper with no address of its own."""
+  for line in comment_lines:
+    if line.startswith("* "):
+      m = ADDR_RE.match(line[2:])
+      return int(m.group(1), 16) if m else None
+    if line == "*":
+      return None
+  return None
+
+
+def check_order(filename):
+  """Flag functions whose prologue address is lower than an earlier
+  function's, i.e. not declared in original-game (address) order.
+
+  Functions with no address in their title (Conv-only helpers) are skipped:
+  they have no fixed position of their own and are expected to sit next to
+  whichever addressed function uses them.
+  """
+  errors = []
+  running_max = None
+  running_max_name = None
+  for lineno, func_name, comment_lines, _return_type, _params in extract_functions(filename):
+    addr = title_address(comment_lines)
+    if addr is None:
+      continue
+    if running_max is not None and addr < running_max:
+      errors.append(
+        "%s:%d: %s ($%04X) declared after %s ($%04X) -- out of original game order"
+        % (filename, lineno, func_name, addr, running_max_name, running_max)
+      )
+    else:
+      running_max = addr
+      running_max_name = func_name
+  return errors
 
 
 def main(argv):
   files = argv[1:] if len(argv) > 1 else glob.glob(DEFAULT_GLOB)
   total_errors = 0
   total_checked = 0
+  order_errors = 0
   for filename in sorted(files):
     for lineno, errors in check_file(filename):
       total_checked += 1
@@ -295,8 +346,12 @@ def main(argv):
         print("%s:%d: FAIL" % (filename, lineno))
         for e in errors:
           print("    %s" % e)
+    for e in check_order(filename):
+      order_errors += 1
+      print(e)
   print("checked %d prologues, %d with errors" % (total_checked, total_errors))
-  return 1 if total_errors else 0
+  print("%d function(s) declared out of original game order" % order_errors)
+  return 1 if (total_errors or order_errors) else 0
 
 
 if __name__ == "__main__":
