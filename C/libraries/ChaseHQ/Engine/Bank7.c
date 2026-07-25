@@ -564,8 +564,6 @@ static void es_handler_handshake_advance(chqstate_t *state)
       memset(ADDRTOSCREEN(DE_screen), 0, 8);
       DE_screen = next_screen_row(DE_screen);
     }
-
-    update_screen(state, 0x48AC, 8 * 8, handshake_frames[A_index].rows + 3); /* Conv: added */
   }
 
   HL_attr = ADDRTOATTRS(0x59AC);
@@ -573,6 +571,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += SCREEN_ATTRIBUTES_WIDTH;
   }
+
   update_attrs(state, 0x59AC, 8 * 8, 5 * 8); /* Conv: added */
 }
 
