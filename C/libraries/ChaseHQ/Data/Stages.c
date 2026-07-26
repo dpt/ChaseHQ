@@ -26,6 +26,15 @@
 
 #include "Stages.h"
 
+/**
+ * stages
+ *
+ * Conv: host-side index table mapping game stage number to its data
+ * struct; the original Z80 code addresses each stage's tables directly
+ * via self-modified pointers rather than a single array, so there is no
+ * originating address. Built with the test stage (see Stage6Data.c)
+ * inserted at index 5.
+ */
 #ifdef CHQ_ENABLE_TEST_STAGE
 const stage_t *stages[7] = {
   &stage1, /* [0]: game stage 1 */
@@ -37,6 +46,11 @@ const stage_t *stages[7] = {
   &stage5, /* [6]: end-sequence reload (wanted_stage_number briefly hits 6) */
 };
 #else
+/**
+ * stages
+ *
+ * Conv: as above, without the test stage.
+ */
 const stage_t *stages[6] = {
   &stage1, /* [0]: game stage 1 */
   &stage2, /* [1]: game stage 2 */

@@ -28,8 +28,10 @@
 
 /* ----------------------------------------------------------------------- */
 
-// $CC50 -- copyright/credits text, drawn by title_screen_driver via
-// print_string ($FD9C) before the $CCB7 scene tables.
+/**
+ * $CC50 -- copyright/credits text, drawn by title_screen_driver via
+ * print_string ($FD9C) before the $CCB7 scene tables.
+ */
 const u8 title_screen_credits_text[56] = {
   0xC2, // attribute_BRIGHT_RED_OVER_BLACK + single height bit
   TWOBYTES(0x50C3),
@@ -40,9 +42,11 @@ const u8 title_screen_credits_text[56] = {
   0
 };
 
-// $CC88 -- drawn directly by title_screen_driver via print_character (not
-// walked as a list: no end marker, matching the Z80, which runs straight
-// into the $CCB7 scene tables afterwards).
+/**
+ * $CC88 -- drawn directly by title_screen_driver via print_character (not
+ * walked as a list: no end marker, matching the Z80, which runs straight
+ * into the $CCB7 scene tables afterwards).
+ */
 const u8 title_screen_overlay_text[47] = {
   0xC7, // attribute_BRIGHT_WHITE_OVER_BLACK + single height bit
   TWOBYTES(0x4826),
@@ -52,7 +56,11 @@ const u8 title_screen_overlay_text[47] = {
   'P', 'R', 'E', 'S', 'S', ' ', 'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
 };
 
-/* $CCB7-$D271: 5 scene tables (9x5-byte object records [x,y,row,ptr] + script bytecode). */
+/**
+ * $CCB7-$D271: title_scene_data
+ *
+ * 5 scene tables (9x5-byte object records [x,y,row,ptr] + script bytecode).
+ */
 const u8 title_scene_data[1467] = {
   // $CCB7: scene 0 -- 9 object records (x, y, row, script ptr)
   0x46, 0x8F, 0x00, TWOBYTES(0xCCEE), // obj0
@@ -589,6 +597,13 @@ const u8 title_scene_data[1467] = {
   OSS_OP_DEAD(), // $D271: object frozen here [obj1]
 };
 
+/**
+ * title_scene_table_offset
+ *
+ * Conv: byte offsets into title_scene_data for each scene's object-record
+ * block; not a Z80 table itself, so there is no single originating address
+ * -- each entry's corresponding scene start address is given inline below.
+ */
 const u16 title_scene_table_offset[TITLE_SCENE_COUNT] = {
   0x0000, /* $CCB7 */
   0x0098, /* $CD4F */
@@ -597,7 +612,7 @@ const u16 title_scene_table_offset[TITLE_SCENE_COUNT] = {
   0x04B5, /* $D16C */
 };
 
-/* $D272-$D295: 36-entry deceleration/acceleration speed curve. */
+/** $D272-$D295: title_speed_curve -- 36-entry deceleration/acceleration speed curve. */
 const u8 title_speed_curve[36] = {
   0x00,
   0x01,
@@ -637,7 +652,7 @@ const u8 title_speed_curve[36] = {
   0x3A,
 };
 
-/* $D462-$EB9D: glyph/sprite bitmap data (car, truck, logo letters). */
+/** $D462-$EB9D: title_glyph_bitmaps -- glyph/sprite bitmap data (car, truck, logo letters). */
 const u8 title_glyph_bitmaps[5948] = {
   ________, ______XX, XXXXXX__, ________,
   ________, __XXXX__, ______XX, ________,
@@ -2627,7 +2642,7 @@ const u8 title_glyph_bitmaps[5948] = {
   ______XX, ________,
 };
 
-/* $D296-$D461: 115 glyph metadata entries. */
+/** $D296-$D461: title_glyph_table -- 115 glyph metadata entries. */
 const title_glyph_t title_glyph_table[115] = {
   { 14, 4, &title_glyph_bitmaps[0x0000] },
   { 14, 4, &title_glyph_bitmaps[0x0070] },
@@ -2746,10 +2761,14 @@ const title_glyph_t title_glyph_table[115] = {
   { 1, 6, &title_glyph_bitmaps[0x1738] },
 };
 
-/* 128K bank 3: title-tune engine AY tone-period lookup table, $EFBC-$F07B.
- * 96 entries, one per note, transcribed directly from the skool's DEFB bytes
+/**
+ * $EFBC-$F07B: note_periods
+ *
+ * 128K bank 3: title-tune engine AY tone-period lookup table. 96 entries,
+ * one per note, transcribed directly from the skool's DEFB bytes
  * (little-endian pairs). Used by compute_channel_ay_registers ($EE9E@bank3)
- * to convert a note index into an AY tone-period value. */
+ * to convert a note index into an AY tone-period value.
+ */
 const u16 note_periods[96] = {
   0x0EF8, /* NOTE_AS0 */
   0x0E10, /* NOTE_B0 */
@@ -2849,14 +2868,18 @@ const u16 note_periods[96] = {
   0x000F /* NOTE_A8 */
 };
 
-/* 128K bank 3: title-tune engine tune-select table, $F225-$F240, transcribed
- * directly from the skool's DEFB bytes. 4 entries, 7 bytes each: tempo byte,
- * then 3 x 2-byte little-endian pattern-data pointers (channels 1-3). Used
- * by start_tune ($EB9E@bank3). Tune 0's channel-1 pointer ($F241) lands
- * exactly on the byte immediately following this table, confirming its
- * 4-entry extent. The pattern-data blocks these pointers reference are
- * extracted as title_tune0_data/title_tune1_data below, for tunes 0
- * and 1 -- see start_tune's Translation notes. */
+/**
+ * $F225-$F240: tunes
+ *
+ * 128K bank 3: title-tune engine tune-select table, transcribed directly
+ * from the skool's DEFB bytes. 4 entries, 7 bytes each: tempo byte, then
+ * 3 x 2-byte little-endian pattern-data pointers (channels 1-3). Used by
+ * start_tune ($EB9E@bank3). Tune 0's channel-1 pointer ($F241) lands exactly
+ * on the byte immediately following this table, confirming its 4-entry
+ * extent. The pattern-data blocks these pointers reference are extracted as
+ * title_tune0_data/title_tune1_data below, for tunes 0 and 1 -- see
+ * start_tune's Translation notes.
+ */
 const tune_t tunes[4] = {
   { 2, { 0xF241, 0xF25A, 0xF265 } },
   { 4, { 0xF601, 0xF605, 0xF609 } },
@@ -2864,12 +2887,14 @@ const tune_t tunes[4] = {
   { 3, { 0xF6F4, 0xF6F8, 0xF6FE } }
 };
 
-/* 128K bank 3: title-tune engine raw pattern-data regions for tunes 0 (title
- * screen) and 1 (perp-caught success jingle), transcribed byte-exact from
- * bank3.bin. See declaration comments in Bank3Data.h. Tunes 2 and 3 are not
- * extracted (unreachable from the code paths wired up so far). */
-
-/* $F241-$F642 */
+/**
+ * $F241-$F642: title_tune0_data
+ *
+ * 128K bank 3: title-tune engine raw pattern-data region for tune 0 (title
+ * screen), transcribed byte-exact from bank3.bin. See declaration comments
+ * in Bank3Data.h. Tunes 2 and 3 are not extracted (unreachable from the
+ * code paths wired up so far).
+ */
 const u8 title_tune0_data[1026] = {
   0x6E, /* $F241: HEADER_PATTERN_PTR [tune0ch0] */
   0xF2, /* $F242: (high byte) */
@@ -3910,7 +3935,7 @@ const u8 title_tune0_data[1026] = {
   0x87, /* $F642: PCMD_ADVANCE_PHRASE [tune0ch1] */
 };
 
-/* $F601-$F6DE */
+/** $F601-$F6DE: title_tune1_data */
 const u8 title_tune1_data[222] = {
   0x0D, /* $F601: HEADER_PATTERN_PTR [tune1ch0] */
   0xF6, /* $F602: (high byte) */
@@ -4136,24 +4161,26 @@ const u8 title_tune1_data[222] = {
   0x14, /* $F6DE: NOTE_FS2 [tune1ch2] */
 };
 
-// $FC29-$FD96 -- 128K control-select, key-redefinition and hidden test-mode
-// screen text, printed via print_string/print_character. Unlike the
-// messages_* lists above, print_string does not walk an end-marker-terminated
-// list: each 0x00 below terminates whichever call is in progress, so this one
-// data block actually holds four independent entry points, each reached via
-// its own literal HL constant in the original:
-//   offset   0 ($FC29): control-select screen -- wired into
-//                       omd_redraw_and_poll below.
-//   offset 114 ($FC9B): key-redefinition screen, header + GEAR/ACCELERATE/
-//                       BRAKE -- not yet wired up (needs redefine_keys_screen,
-//                       $FEA9).
-//   offset 160 ($FCC9): key-redefinition screen continued, LEFT/RIGHT/QUIT/
-//                       PAUSE/TURBO -- not yet wired up (see above).
-//   offset 199 ($FCF0): hidden test-mode screen -- not yet wired up (needs a
-//                       128K test-mode driver, $C06E).
-// "P1."-"P4."/"P5." labels in the skool comments are missing their leading
-// "P" in the actual data (confirmed byte-for-byte against the skool) --
-// presumably drawn as a separate fixed graphic; transcribed faithfully as-is.
+/**
+ * $FC29-$FD96 -- 128K control-select, key-redefinition and hidden test-mode
+ * screen text, printed via print_string/print_character. Unlike the
+ * messages_* lists above, print_string does not walk an end-marker-terminated
+ * list: each 0x00 below terminates whichever call is in progress, so this one
+ * data block actually holds four independent entry points, each reached via
+ * its own literal HL constant in the original:
+ *   offset   0 ($FC29): control-select screen -- wired into
+ *                       omd_redraw_and_poll below.
+ *   offset 114 ($FC9B): key-redefinition screen, header + GEAR/ACCELERATE/
+ *                       BRAKE -- not yet wired up (needs redefine_keys_screen,
+ *                       $FEA9).
+ *   offset 160 ($FCC9): key-redefinition screen continued, LEFT/RIGHT/QUIT/
+ *                       PAUSE/TURBO -- not yet wired up (see above).
+ *   offset 199 ($FCF0): hidden test-mode screen -- not yet wired up (needs a
+ *                       128K test-mode driver, $C06E).
+ * "P1."-"P4."/"P5." labels in the skool comments are missing their leading
+ * "P" in the actual data (confirmed byte-for-byte against the skool) --
+ * presumably drawn as a separate fixed graphic; transcribed faithfully as-is.
+ */
 const u8 options_menu_text[366] = {
   // $FC29 (offset 0): control-select screen
   attribute_RED_OVER_BLACK,

@@ -141,7 +141,7 @@ static const u8 stage2_bitmap_FA39[1479];
 
 /* ----------------------------------------------------------------------- */
 
-// $E000
+/** $E000: stage2 */
 const stage_t stage2 = {
   /* $E000 backdrop */
   // clang-format off
@@ -224,7 +224,7 @@ const stage_t stage2 = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E139
+/** $E139: stage2_perp_description */
 static const u8 stage2_perp_description[7] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PERP_DESC_1,
@@ -235,7 +235,7 @@ static const u8 stage2_perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
-// $E145 (bank 1)
+/** $E145 (bank 1) */
 static const char *stage2_chatter_strings[4] = {
   "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
   "EMERGENCY HERE. CARLOS, THE NEW YOR\xCB",
@@ -243,8 +243,11 @@ static const char *stage2_chatter_strings[4] = {
   "YELLOW SPORTS CAR ON THE FREEWAY... OVER\xAE",
 };
 
-// $E1DD
-// clang-format off
+/**
+ * $E1DD: stage2_arrest_messages_E1DD
+ *
+ * clang-format off
+ */
 static const u8 stage2_arrest_messages_E1DD[71] = {
   6,  // initial delay
 
@@ -267,13 +270,13 @@ static const u8 stage2_arrest_messages_E1DD[71] = {
 };
 // clang-format on
 
-// $E224
+/** $E224: stage2_hittable_objects_E224 */
 static const hittable_t stage2_hittable_objects_E224[2] = {
   { 32, &stage2_lods_FA0F[0] },
   { 32, &stage2_lods_FA0F[0] },
 };
 
-// $E22A
+/** $E22A: stage2_right_obj_defs_E22A */
 static const obj_t stage2_right_obj_defs_E22A[7] = {
   { 111, 41, 80, &tunnellight, draw_tunnel_light_right },
   { 0, 0, 0, NULL, NULL },
@@ -284,7 +287,7 @@ static const obj_t stage2_right_obj_defs_E22A[7] = {
   { 110, 53, 80, &stage2_stretchy_F912[0], draw_stretchy_object_right },
 };
 
-// $E25B
+/** $E25B: stage2_left_obj_defs_E25B */
 static const obj_t stage2_left_obj_defs_E25B[7] = {
   { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
   { 0, 0, 0, NULL, NULL },
@@ -295,7 +298,7 @@ static const obj_t stage2_left_obj_defs_E25B[7] = {
   { 132, 182, 80, &stage2_stretchy_F91F[0], draw_stretchy_object_left },
 };
 
-// $E28C
+/** $E28C: stage2_map_curv_E28C */
 static const u8 stage2_map_curv_E28C[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -330,7 +333,7 @@ static const u8 stage2_map_curv_E28C[] = {
   MAP_CMD_SPLIT(0x6039, 0x613C)
 };
 
-// $E2B0
+/** $E2B0: stage2_map_height_E2B0 */
 static const u8 stage2_map_height_E2B0[] = {
   MAP_HEIGHT_LEVEL(2),
   MAP_HEIGHT_UP1(7),
@@ -383,7 +386,7 @@ static const u8 stage2_map_height_E2B0[] = {
   MAP_CMD_SPLIT(0x604F, 0x614F)
 };
 
-// $E2E6
+/** $E2E6: stage2_map_lanes_E2E6 */
 static const u8 stage2_map_lanes_E2E6[] = {
   MAP_LANES_4(2),
   MAP_LANES_4TO3R(30),
@@ -396,7 +399,7 @@ static const u8 stage2_map_lanes_E2E6[] = {
   MAP_CMD_SPLIT(0x6074, 0x6161)
 };
 
-// $E2FC
+/** $E2FC: stage2_map_hazards_E2FC */
 static const u8 stage2_map_hazards_E2FC[] = {
   MAP_HAZARD_WAIT(38),
   MAP_ESC, (4),
@@ -432,7 +435,7 @@ static const u8 stage2_map_hazards_E2FC[] = {
   MAP_CMD_SPLIT(0x6088, 0x617B)
 };
 
-// $E330
+/** $E330: stage2_map_lobjs_E330 */
 static const u8 stage2_map_lobjs_E330[] = {
   MAP_OBJ_S2_LEAVES(1),
   MAP_OBJ_S2_NONE(1),
@@ -577,7 +580,7 @@ static const u8 stage2_map_lobjs_E330[] = {
   MAP_CMD_SPLIT(0x60A8, 0x6192)
 };
 
-// $E3C2
+/** $E3C2: stage2_map_robjs_E3C2 */
 static const u8 stage2_map_robjs_E3C2[] = {
   MAP_OBJ_S2_NONE(2),
   MAP_OBJ_S2_DOUBLE_LAMP(1),
@@ -695,7 +698,7 @@ static const u8 stage2_map_robjs_E3C2[] = {
   MAP_CMD_SPLIT(0x60F9, 0x61D0)
 };
 
-// $E439
+/** $E439: stage2_map_curv_E439 */
 static const u8 stage2_map_curv_E439[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -718,7 +721,7 @@ static const u8 stage2_map_curv_E439[] = {
   MAP_CMD_GOTO(0x620B)
 };
 
-// $E44F
+/** $E44F: stage2_map_height_E44F */
 static const u8 stage2_map_height_E44F[] = {
   MAP_HEIGHT_UP3(8),
   MAP_HEIGHT_UP5(6),
@@ -756,7 +759,7 @@ static const u8 stage2_map_height_E44F[] = {
   MAP_CMD_GOTO(0x621E)
 };
 
-// $E474
+/** $E474: stage2_map_lanes_E474 */
 static const u8 stage2_map_lanes_E474[] = {
   MAP_LANES_4(78),
   MAP_LANES_4TO3L(2),
@@ -769,7 +772,7 @@ static const u8 stage2_map_lanes_E474[] = {
   MAP_CMD_GOTO(0x622F)
 };
 
-// $E488
+/** $E488: stage2_map_hazards_E488 */
 static const u8 stage2_map_hazards_E488[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_CARS,
@@ -793,7 +796,7 @@ static const u8 stage2_map_hazards_E488[] = {
   MAP_CMD_GOTO(0x6243)
 };
 
-// $E4A8
+/** $E4A8: stage2_map_lobjs_E4A8 */
 static const u8 stage2_map_lobjs_E4A8[] = {
   MAP_OBJ_S2_PALM_TREE(1),
   MAP_OBJ_S2_NONE(1),
@@ -875,7 +878,7 @@ static const u8 stage2_map_lobjs_E4A8[] = {
   MAP_CMD_GOTO(0x6248)
 };
 
-// $E4F9
+/** $E4F9: stage2_map_robjs_E4F9 */
 static const u8 stage2_map_robjs_E4F9[] = {
   MAP_OBJ_S2_NONE(15),
   MAP_OBJ_S2_NONE(1),
@@ -943,7 +946,7 @@ static const u8 stage2_map_robjs_E4F9[] = {
   MAP_CMD_GOTO(0x6268)
 };
 
-// $E53C
+/** $E53C: stage2_map_curv_E53C */
 static const u8 stage2_map_curv_E53C[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -963,7 +966,7 @@ static const u8 stage2_map_curv_E53C[] = {
   MAP_CMD_GOTO(0x620B)
 };
 
-// $E54F
+/** $E54F: stage2_map_height_E54F */
 static const u8 stage2_map_height_E54F[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -982,7 +985,7 @@ static const u8 stage2_map_height_E54F[] = {
   MAP_CMD_GOTO(0x621E)
 };
 
-// $E561
+/** $E561: stage2_map_lanes_E561 */
 static const u8 stage2_map_lanes_E561[] = {
   MAP_LANES_4(6),
   MAP_LANES_4TO3L(2),
@@ -998,7 +1001,7 @@ static const u8 stage2_map_lanes_E561[] = {
   MAP_CMD_GOTO(0x622F)
 };
 
-// $E57B
+/** $E57B: stage2_map_hazards_E57B */
 static const u8 stage2_map_hazards_E57B[] = {
   MAP_HAZARD_WAIT(5),
   MAP_ESC, (15),
@@ -1016,7 +1019,7 @@ static const u8 stage2_map_hazards_E57B[] = {
   MAP_CMD_GOTO(0x6243)
 };
 
-// $E592
+/** $E592: stage2_map_lobjs_E592 */
 static const u8 stage2_map_lobjs_E592[] = {
   MAP_OBJ_S2_NONE(9),
   MAP_OBJ_S2_TUNNEL_LIGHT(15),
@@ -1079,7 +1082,7 @@ static const u8 stage2_map_lobjs_E592[] = {
   MAP_CMD_GOTO(0x6248)
 };
 
-// $E5D0
+/** $E5D0: stage2_map_robjs_E5D0 */
 static const u8 stage2_map_robjs_E5D0[] = {
   MAP_OBJ_S2_NONE(9),
   MAP_OBJ_S2_TUNNEL_LIGHT(15),
@@ -1139,7 +1142,7 @@ static const u8 stage2_map_robjs_E5D0[] = {
   MAP_CMD_GOTO(0x6268)
 };
 
-// $E60B
+/** $E60B: stage2_map_curv_E60B */
 static const u8 stage2_map_curv_E60B[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(13),
@@ -1159,7 +1162,7 @@ static const u8 stage2_map_curv_E60B[] = {
   MAP_CMD_GOTO(0x6274)
 };
 
-// $E61E
+/** $E61E: stage2_map_height_E61E */
 static const u8 stage2_map_height_E61E[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -1177,7 +1180,7 @@ static const u8 stage2_map_height_E61E[] = {
   MAP_CMD_GOTO(0x629C)
 };
 
-// $E62F
+/** $E62F: stage2_map_lanes_E62F */
 static const u8 stage2_map_lanes_E62F[] = {
   MAP_LANES_4(8),
   MAP_LANES_4TO3L(2),
@@ -1190,13 +1193,13 @@ static const u8 stage2_map_lanes_E62F[] = {
   MAP_CMD_GOTO(0x62E0)
 };
 
-// $E643
+/** $E643: stage2_map_hazards_E643 */
 static const u8 stage2_map_hazards_E643[] = {
   MAP_HAZARD_WAIT(95),
   MAP_CMD_GOTO(0x62F0)
 };
 
-// $E648
+/** $E648: stage2_map_lobjs_E648 */
 static const u8 stage2_map_lobjs_E648[] = {
   MAP_OBJ_S2_NONE(11),
   MAP_OBJ_S2_TUNNEL_LIGHT(14),
@@ -1229,7 +1232,7 @@ static const u8 stage2_map_lobjs_E648[] = {
   MAP_CMD_GOTO(0x6313)
 };
 
-// $E668
+/** $E668: stage2_map_robjs_E668 */
 static const u8 stage2_map_robjs_E668[] = {
   MAP_OBJ_S2_NONE(15),
   MAP_OBJ_S2_NONE(11),
@@ -1242,7 +1245,7 @@ static const u8 stage2_map_robjs_E668[] = {
   MAP_CMD_GOTO(0x639B)
 };
 
-// $E674
+/** $E674: stage2_map_curv_E674 */
 static const u8 stage2_map_curv_E674[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(13),
@@ -1283,7 +1286,7 @@ static const u8 stage2_map_curv_E674[] = {
   MAP_CMD_GOTO(0x6274)
 };
 
-// $E69C
+/** $E69C: stage2_map_height_E69C */
 static const u8 stage2_map_height_E69C[] = {
   MAP_HEIGHT_LEVEL(11),
   MAP_HEIGHT_UP3(14),
@@ -1352,7 +1355,7 @@ static const u8 stage2_map_height_E69C[] = {
   MAP_CMD_GOTO(0x629C)
 };
 
-// $E6E0
+/** $E6E0: stage2_map_lanes_E6E0 */
 static const u8 stage2_map_lanes_E6E0[] = {
   MAP_LANES_4(92),
   MAP_LANES_3L(46),
@@ -1363,7 +1366,7 @@ static const u8 stage2_map_lanes_E6E0[] = {
   MAP_CMD_GOTO(0x62E0)
 };
 
-// $E6F0
+/** $E6F0: stage2_map_hazards_E6F0 */
 static const u8 stage2_map_hazards_E6F0[] = {
   MAP_HAZARD_WAIT(19),
   MAP_ESC, (4),
@@ -1389,7 +1392,7 @@ static const u8 stage2_map_hazards_E6F0[] = {
   MAP_CMD_GOTO(0x62F0)
 };
 
-// $E713
+/** $E713: stage2_map_lobjs_E713 */
 static const u8 stage2_map_lobjs_E713[] = {
   MAP_OBJ_S2_DOUBLE_LAMP(1),
   MAP_OBJ_S2_NONE(1),
@@ -1526,7 +1529,7 @@ static const u8 stage2_map_lobjs_E713[] = {
   MAP_CMD_GOTO(0x6313)
 };
 
-// $E79B
+/** $E79B: stage2_map_robjs_E79B */
 static const u8 stage2_map_robjs_E79B[] = {
   MAP_OBJ_S2_NONE(2),
   MAP_OBJ_S2_LEAVES(1),
@@ -1703,8 +1706,11 @@ static const u8 stage2_map_robjs_E79B[] = {
   MAP_CMD_GOTO(0x639B)
 };
 
-// $E84B
-// clang-format off
+/**
+ * $E84B: stage2_perp_face
+ *
+ * clang-format off
+ */
 static const u8 stage2_perp_face[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXX__, ____XX_X, XX___X_X, XXXXXXXX,
@@ -1755,7 +1761,7 @@ static const u8 stage2_perp_face[180] = {
 };
 // clang-format on
 
-// $E8FF
+/** $E8FF: stage2_lods_E8FF */
 static const bitmap_t stage2_lods_E8FF[6] = {
   { 6, BITMAPFLAG_DEFAULT, 29, &stage2_bitmap_E97D[0], &stage2_bitmap_E97D[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &stage2_bitmap_E97D[174], &stage2_bitmap_E97D[174] },  // [1]
@@ -1765,7 +1771,7 @@ static const bitmap_t stage2_lods_E8FF[6] = {
   { 2, BITMAPFLAG_MASKED, 8, &stage2_bitmap_E97D[289], &stage2_bitmap_E97D[321] },  // [5]
 };
 
-// $E929
+/** $E929: stage2_lods_E929 */
 static const bitmap_t stage2_lods_E929[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage2_bitmap_E97D[353], &stage2_bitmap_E97D[353] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage2_bitmap_E97D[533], &stage2_bitmap_E97D[533] },  // [1]
@@ -1775,7 +1781,7 @@ static const bitmap_t stage2_lods_E929[6] = {
   { 2, BITMAPFLAG_MASKED, 8, &stage2_bitmap_E97D[666], &stage2_bitmap_E97D[698] },  // [5]
 };
 
-// $E953
+/** $E953: stage2_lods_E953 */
 static const bitmap_t stage2_lods_E953[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage2_bitmap_E97D[730], &stage2_bitmap_E97D[730] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage2_bitmap_E97D[910], &stage2_bitmap_E97D[910] },  // [1]
@@ -1785,8 +1791,11 @@ static const bitmap_t stage2_lods_E953[6] = {
   { 2, BITMAPFLAG_MASKED, 8, &stage2_bitmap_E97D[666], &stage2_bitmap_E97D[698] },  // [5]
 };
 
-// $E97D
-// clang-format off
+/**
+ * $E97D: stage2_bitmap_E97D
+ *
+ * clang-format off
+ */
 static const u8 stage2_bitmap_E97D[1046] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____, _XXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX,
@@ -1922,8 +1931,11 @@ static const u8 stage2_bitmap_E97D[1046] = {
 };
 // clang-format on
 
-// $F05A
-// clang-format off
+/**
+ * $F05A: stage2_pilot_mugshot
+ *
+ * clang-format off
+ */
 static const u8 stage2_pilot_mugshot[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXX__, _X_X_XX_, XXXXXXXX, XXX_X_XX,
@@ -1974,7 +1986,7 @@ static const u8 stage2_pilot_mugshot[180] = {
 };
 // clang-format on
 
-// $F10E
+/** $F10E: stage2_stretchy_F10E */
 static const stretchy_t stage2_stretchy_F10E[5] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F11B },
   { STRETCHY_TYPE_113PC, &stage2_depthset_F131 },
@@ -1984,7 +1996,7 @@ static const stretchy_t stage2_stretchy_F10E[5] = {
 };
 
 
-// $F11B
+/** $F11B: stage2_depthset_F11B */
 static const depthset_t stage2_depthset_F11B = {
   &stage2_lods_F1D8[0],
   {
@@ -2002,7 +2014,7 @@ static const depthset_t stage2_depthset_F11B = {
 };
 
 
-// $F131
+/** $F131: stage2_depthset_F131 */
 static const depthset_t stage2_depthset_F131 = {
   &stage2_lods_F1D8[0],
   {
@@ -2020,7 +2032,7 @@ static const depthset_t stage2_depthset_F131 = {
 };
 
 
-// $F147
+/** $F147: stage2_depthset_F147 */
 static const depthset_t stage2_depthset_F147 = {
   &stage2_lods_F1D8[0],
   {
@@ -2038,7 +2050,7 @@ static const depthset_t stage2_depthset_F147 = {
 };
 
 
-// $F15D
+/** $F15D: stage2_depthset_F15D */
 static const depthset_t stage2_depthset_F15D = {
   &stage2_lods_F1D8[0],
   {
@@ -2056,7 +2068,7 @@ static const depthset_t stage2_depthset_F15D = {
 };
 
 
-// $F173
+/** $F173: stage2_stretchy_F173 */
 static const stretchy_t stage2_stretchy_F173[5] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F180 },
   { STRETCHY_TYPE_113PC, &stage2_depthset_F196 },
@@ -2066,7 +2078,7 @@ static const stretchy_t stage2_stretchy_F173[5] = {
 };
 
 
-// $F180
+/** $F180: stage2_depthset_F180 */
 static const depthset_t stage2_depthset_F180 = {
   &stage2_lods_F264[0],
   {
@@ -2084,7 +2096,7 @@ static const depthset_t stage2_depthset_F180 = {
 };
 
 
-// $F196
+/** $F196: stage2_depthset_F196 */
 static const depthset_t stage2_depthset_F196 = {
   &stage2_lods_F264[0],
   {
@@ -2102,7 +2114,7 @@ static const depthset_t stage2_depthset_F196 = {
 };
 
 
-// $F1AC
+/** $F1AC: stage2_depthset_F1AC */
 static const depthset_t stage2_depthset_F1AC = {
   &stage2_lods_F264[0],
   {
@@ -2120,7 +2132,7 @@ static const depthset_t stage2_depthset_F1AC = {
 };
 
 
-// $F1C2
+/** $F1C2: stage2_depthset_F1C2 */
 static const depthset_t stage2_depthset_F1C2 = {
   &stage2_lods_F264[0],
   {
@@ -2138,7 +2150,7 @@ static const depthset_t stage2_depthset_F1C2 = {
 };
 
 
-// $F1D8
+/** $F1D8: stage2_lods_F1D8 */
 static const bitmap_t stage2_lods_F1D8[20] = {
   { 5, BITMAPFLAG_FLIPPED, 8, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [0]
   { 7, BITMAPFLAG_FLIPPED, 8, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [1]
@@ -2162,7 +2174,7 @@ static const bitmap_t stage2_lods_F1D8[20] = {
   { 3, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 2, &stage2_bitmap_F2F0[499], &stage2_bitmap_F2F0[525] },  // [19]
 };
 
-// $F264
+/** $F264: stage2_lods_F264 */
 static const bitmap_t stage2_lods_F264[20] = {
   { 5, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [0]
   { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [1]
@@ -2186,8 +2198,11 @@ static const bitmap_t stage2_lods_F264[20] = {
   { 3, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[499], &stage2_bitmap_F2F0[525] },  // [19]
 };
 
-// $F2F0
-// clang-format off
+/**
+ * $F2F0: stage2_bitmap_F2F0
+ *
+ * clang-format off
+ */
 static const u8 stage2_bitmap_F2F0[537] = {
   XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX, _X_XXXX_, XX_XXXXX, X_XXXXXX, _XXXXXXX,
   XXXXX_XX, __XX____, XXXX_XXX, _XXXXXX_, XXXXXX_X, XXXX_X__, _XX_____, X_X_X_XX,
@@ -2260,7 +2275,7 @@ static const u8 stage2_bitmap_F2F0[537] = {
 };
 // clang-format on
 
-// $F509
+/** $F509: stage2_stretchy_F509 */
 static const stretchy_t stage2_stretchy_F509[10] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F555 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F56B },
@@ -2275,7 +2290,7 @@ static const stretchy_t stage2_stretchy_F509[10] = {
 };
 
 
-// $F525
+/** $F525: stage2_stretchy_F525 */
 static const stretchy_t stage2_stretchy_F525[10] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F555 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5EF },
@@ -2290,7 +2305,7 @@ static const stretchy_t stage2_stretchy_F525[10] = {
 };
 
 
-// $F541
+/** $F541: stage2_stretchy_F541 */
 static const stretchy_t stage2_stretchy_F541[4] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5AD },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5C3 },
@@ -2299,7 +2314,7 @@ static const stretchy_t stage2_stretchy_F541[4] = {
 };
 
 
-// $F54B
+/** $F54B: stage2_stretchy_F54B */
 static const stretchy_t stage2_stretchy_F54B[4] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F631 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F647 },
@@ -2308,7 +2323,7 @@ static const stretchy_t stage2_stretchy_F54B[4] = {
 };
 
 
-// $F555
+/** $F555: stage2_depthset_F555 */
 static const depthset_t stage2_depthset_F555 = {
   &stage2_lods_F673[0],
   {
@@ -2326,7 +2341,7 @@ static const depthset_t stage2_depthset_F555 = {
 };
 
 
-// $F56B
+/** $F56B: stage2_depthset_F56B */
 static const depthset_t stage2_depthset_F56B = {
   &stage2_lods_F673[0],
   {
@@ -2344,7 +2359,7 @@ static const depthset_t stage2_depthset_F56B = {
 };
 
 
-// $F581
+/** $F581: stage2_depthset_F581 */
 static const depthset_t stage2_depthset_F581 = {
   &stage2_lods_F673[0],
   {
@@ -2362,7 +2377,7 @@ static const depthset_t stage2_depthset_F581 = {
 };
 
 
-// $F597
+/** $F597: stage2_depthset_F597 */
 static const depthset_t stage2_depthset_F597 = {
   &stage2_lods_F673[0],
   {
@@ -2380,7 +2395,7 @@ static const depthset_t stage2_depthset_F597 = {
 };
 
 
-// $F5AD
+/** $F5AD: stage2_depthset_F5AD */
 static const depthset_t stage2_depthset_F5AD = {
   &stage2_lods_F673[0],
   {
@@ -2398,7 +2413,7 @@ static const depthset_t stage2_depthset_F5AD = {
 };
 
 
-// $F5C3
+/** $F5C3: stage2_depthset_F5C3 */
 static const depthset_t stage2_depthset_F5C3 = {
   &stage2_lods_F673[0],
   {
@@ -2416,7 +2431,7 @@ static const depthset_t stage2_depthset_F5C3 = {
 };
 
 
-// $F5D9
+/** $F5D9: stage2_depthset_F5D9 */
 static const depthset_t stage2_depthset_F5D9 = {
   &stage2_lods_F673[0],
   {
@@ -2434,7 +2449,7 @@ static const depthset_t stage2_depthset_F5D9 = {
 };
 
 
-// $F5EF
+/** $F5EF: stage2_depthset_F5EF */
 static const depthset_t stage2_depthset_F5EF = {
   &stage2_lods_F673[0],
   {
@@ -2452,7 +2467,7 @@ static const depthset_t stage2_depthset_F5EF = {
 };
 
 
-// $F605
+/** $F605: stage2_depthset_F605 */
 static const depthset_t stage2_depthset_F605 = {
   &stage2_lods_F673[0],
   {
@@ -2470,7 +2485,7 @@ static const depthset_t stage2_depthset_F605 = {
 };
 
 
-// $F61B
+/** $F61B: stage2_depthset_F61B */
 static const depthset_t stage2_depthset_F61B = {
   &stage2_lods_F673[0],
   {
@@ -2488,7 +2503,7 @@ static const depthset_t stage2_depthset_F61B = {
 };
 
 
-// $F631
+/** $F631: stage2_depthset_F631 */
 static const depthset_t stage2_depthset_F631 = {
   &stage2_lods_F673[0],
   {
@@ -2506,7 +2521,7 @@ static const depthset_t stage2_depthset_F631 = {
 };
 
 
-// $F647
+/** $F647: stage2_depthset_F647 */
 static const depthset_t stage2_depthset_F647 = {
   &stage2_lods_F673[0],
   {
@@ -2524,7 +2539,7 @@ static const depthset_t stage2_depthset_F647 = {
 };
 
 
-// $F65D
+/** $F65D: stage2_depthset_F65D */
 static const depthset_t stage2_depthset_F65D = {
   &stage2_lods_F673[0],
   {
@@ -2542,7 +2557,7 @@ static const depthset_t stage2_depthset_F65D = {
 };
 
 
-// $F673
+/** $F673: stage2_lods_F673 */
 static const bitmap_t stage2_lods_F673[35] = {
   { 5, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F768[0], &stage2_bitmap_F768[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F768[20], &stage2_bitmap_F768[20] },  // [1]
@@ -2581,8 +2596,11 @@ static const bitmap_t stage2_lods_F673[35] = {
   { 2, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F768[366], &stage2_bitmap_F768[418] },  // [34]
 };
 
-// $F768
-// clang-format off
+/**
+ * $F768: stage2_bitmap_F768
+ *
+ * clang-format off
+ */
 static const u8 stage2_bitmap_F768[426] = {
   _X_X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, XXXXXXXX, XXXXXXXX, _X_XXXXX,
   XXXXXXXX, XXXXXXXX, __X__XXX, XXXXXXXX, _____XXX, XXXXXXXX, XX_X____, _______X,
@@ -2641,7 +2659,7 @@ static const u8 stage2_bitmap_F768[426] = {
 };
 // clang-format on
 
-// $F912
+/** $F912: stage2_stretchy_F912 */
 static const stretchy_t stage2_stretchy_F912[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_right },
@@ -2651,7 +2669,7 @@ static const stretchy_t stage2_stretchy_F912[5] = {
 };
 
 
-// $F91F
+/** $F91F: stage2_stretchy_F91F */
 static const stretchy_t stage2_stretchy_F91F[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_left },
@@ -2661,7 +2679,7 @@ static const stretchy_t stage2_stretchy_F91F[5] = {
 };
 
 
-// $F92C
+/** $F92C: stage2_depthset_F92C */
 static const depthset_t stage2_depthset_F92C = {
   &stage2_lods_F958[0],
   {
@@ -2679,7 +2697,7 @@ static const depthset_t stage2_depthset_F92C = {
 };
 
 
-// $F942
+/** $F942: stage2_depthset_F942 */
 static const depthset_t stage2_depthset_F942 = {
   &stage2_lods_F958[0],
   {
@@ -2697,7 +2715,7 @@ static const depthset_t stage2_depthset_F942 = {
 };
 
 
-// $F958
+/** $F958: stage2_lods_F958 */
 static const bitmap_t stage2_lods_F958[5] = {
   { 5, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F97B[0], &stage2_bitmap_F97B[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F97B[40], &stage2_bitmap_F97B[40] },  // [1]
@@ -2706,8 +2724,11 @@ static const bitmap_t stage2_lods_F958[5] = {
   { 2, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F97B[124], &stage2_bitmap_F97B[136] },  // [4]
 };
 
-// $F97B
-// clang-format off
+/**
+ * $F97B: stage2_bitmap_F97B
+ *
+ * clang-format off
+ */
 static const u8 stage2_bitmap_F97B[148] = {
   __XXXXX_, ________, XXX_XXX_, ________, _XXXXX__, _XX___XX, _______X, X_X_X_XX,
   ________, XX___XX_, _X_____X, _____XXX, __X_X__X, XX______, X_____X_, _X_____X,
@@ -2731,7 +2752,7 @@ static const u8 stage2_bitmap_F97B[148] = {
 };
 // clang-format on
 
-// $FA0F
+/** $FA0F: stage2_lods_FA0F */
 static const bitmap_t stage2_lods_FA0F[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage2_bitmap_FA39[0], &stage2_bitmap_FA39[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 17, &stage2_bitmap_FA39[0], &stage2_bitmap_FA39[0] },  // [1]
@@ -2741,8 +2762,11 @@ static const bitmap_t stage2_lods_FA0F[6] = {
   { 2, BITMAPFLAG_MASKED, 7, &stage2_bitmap_FA39[125], &stage2_bitmap_FA39[153] },  // [5]
 };
 
-// $FA39
-// clang-format off
+/**
+ * $FA39: stage2_bitmap_FA39
+ *
+ * clang-format off
+ */
 static const u8 stage2_bitmap_FA39[1479] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
   ____XX_X, __X___XX, _X___XX_, X__X____, ____XXX_, X_X___XX, XX___XXX, _X_X____,

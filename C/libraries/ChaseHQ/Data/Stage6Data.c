@@ -51,6 +51,15 @@ static const u8 stage6_bitmap_D64A[181];
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * stage6
+ *
+ * Conv: additional test stage, not present in the original game (see
+ * Stages.c, CHQ_ENABLE_TEST_STAGE). Road layout and graphics tables below
+ * carry their own Z80 addresses from bank 4 where they are reused from;
+ * the perp description and chatter text are placeholder content authored
+ * for this port with no originating address.
+ */
 const stage_t stage6 = {
   // clang-format off
   {
@@ -132,7 +141,7 @@ const stage_t stage6 = {
 
 /* ----------------------------------------------------------------------- */
 
-// $C139
+/** $C139: stage6_perp_description */
 static const u8 stage6_perp_description[7] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PERP_DESC_1,
@@ -140,12 +149,20 @@ static const u8 stage6_perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
+/**
+ * stage6_chatter_strings
+ *
+ * Conv: placeholder text for the test stage; no originating Z80 address.
+ */
 static const char *stage6_chatter_strings[4] = {
   "THIS IS A TEST LEVEL\xAE",
 };
 
-// $C1E6
-// clang-format off
+/**
+ * $C1E6: stage6_arrest_messages
+ *
+ * clang-format off
+ */
 static const u8 stage6_arrest_messages[83] = {
   6,  // initial delay
 
@@ -161,23 +178,23 @@ static const u8 stage6_arrest_messages[83] = {
 };
 // clang-format on
 
-// $C239
+/** $C239: stage6_hittable_objects */
 static const hittable_t stage6_hittable_objects[2] = {
   { 32, &stage6_lods_D620[0] },
   { 32, &stage6_lods_D620[0] },
 };
 
-// $C23F
+/** $C23F: stage6_right_hand_objects */
 static const obj_t stage6_right_hand_objects[7] = {
   { 111, 41, 80, &tunnellight, draw_tunnel_light_right },
 };
 
-// $C270
+/** $C270: stage6_left_hand_objects */
 static const obj_t stage6_left_hand_objects[7] = {
   { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
 };
 
-// $C65C
+/** $C65C: curvature */
 static const u8 curvature[] = {
   MAP_CURVE_LEFT(15),
   MAP_CURVE_LEFT(15),
@@ -198,7 +215,7 @@ static const u8 curvature[] = {
   MAP_CMD_GOTO(0xC65C)
 };
 
-// $C684
+/** $C684: height */
 static const u8 height[] = {
   MAP_HEIGHT_UP7(15),
   MAP_HEIGHT_LEVEL(15),
@@ -207,7 +224,7 @@ static const u8 height[] = {
   MAP_CMD_GOTO(0xC684)
 };
 
-// $C6BB
+/** $C6BB: lanes */
 static const u8 lanes[] = {
   MAP_LANES_2L(15),
 
@@ -228,7 +245,7 @@ static const u8 lanes[] = {
   MAP_CMD_GOTO(0xC6BB)
 };
 
-// $C6D1
+/** $C6D1: hazards */
 static const u8 hazards[] = {
   MAP_HAZARD_WAIT(252),
   MAP_CMD_START_TWO_BARRIERS,
@@ -237,20 +254,23 @@ static const u8 hazards[] = {
   MAP_CMD_GOTO(0xC6D1)
 };
 
-// $C6EE
+/** $C6EE: leftside */
 static const u8 leftside[] = {
   MAP_OBJ_S6_NONE(15),
   MAP_CMD_GOTO(0xC6EE)
 };
 
-// $C7A5
+/** $C7A5: rightside */
 static const u8 rightside[] = {
   MAP_OBJ_S6_NONE(15),
   MAP_CMD_GOTO(0xC7A5)
 };
 
-// $C82E
-// clang-format off
+/**
+ * $C82E: stage6_perp_face
+ *
+ * clang-format off
+ */
 static const u8 stage6_perp_face[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X_XXXXX_, XXX_XXX_, X_X_X__X,
@@ -301,7 +321,7 @@ static const u8 stage6_perp_face[180] = {
 };
 // clang-format on
 
-// $C8E2
+/** $C8E2: stage6_veh3 */
 static const bitmap_t stage6_veh3[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage6_bitmap_C960[0], &stage6_bitmap_C960[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &stage6_bitmap_C960[180], &stage6_bitmap_C960[180] },  // [1]
@@ -311,7 +331,7 @@ static const bitmap_t stage6_veh3[6] = {
   { 3, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[335], &stage6_bitmap_C960[383] },  // [5]
 };
 
-// $C90C
+/** $C90C: stage6_veh2 */
 static const bitmap_t stage6_veh2[6] = {
   { 6, BITMAPFLAG_DEFAULT, 39, &stage6_bitmap_C960[431], &stage6_bitmap_C960[431] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 29, &stage6_bitmap_C960[665], &stage6_bitmap_C960[665] },  // [1]
@@ -321,7 +341,7 @@ static const bitmap_t stage6_veh2[6] = {
   { 2, BITMAPFLAG_MASKED, 12, &stage6_bitmap_C960[870], &stage6_bitmap_C960[918] },  // [5]
 };
 
-// $C936
+/** $C936: stage6_veh1 */
 static const bitmap_t stage6_veh1[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage6_bitmap_C960[966], &stage6_bitmap_C960[966] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &stage6_bitmap_C960[1146], &stage6_bitmap_C960[1146] },  // [1]
@@ -331,8 +351,11 @@ static const bitmap_t stage6_veh1[6] = {
   { 2, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[1265], &stage6_bitmap_C960[1297] },  // [5]
 };
 
-// $C960
-// clang-format off
+/**
+ * $C960: stage6_bitmap_C960
+ *
+ * clang-format off
+ */
 static const u8 stage6_bitmap_C960[1329] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -504,7 +527,7 @@ static const u8 stage6_bitmap_C960[1329] = {
 };
 // clang-format on
 
-// $D620
+/** $D620: stage6_lods_D620 */
 static const bitmap_t stage6_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage6_bitmap_D64A[0], &stage6_bitmap_D64A[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 17, &stage6_bitmap_D64A[0], &stage6_bitmap_D64A[0] },  // [1]
@@ -514,8 +537,11 @@ static const bitmap_t stage6_lods_D620[6] = {
   { 2, BITMAPFLAG_MASKED, 7, &stage6_bitmap_D64A[125], &stage6_bitmap_D64A[153] },  // [5]
 };
 
-// $D64A
-// clang-format off
+/**
+ * $D64A: stage6_bitmap_D64A
+ *
+ * clang-format off
+ */
 static const u8 stage6_bitmap_D64A[181] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
   ____XX_X, __X___XX, _X___XX_, X__X____, ____XXX_, X_X___XX, XX___XXX, _X_X____,

@@ -182,6 +182,18 @@
 #define ADDRTOSCREEN_M(addr) \
   (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
 
+/**
+ * Return a screen bitmap pointer for a Z80 screen address.
+ *
+ * Conv: helper backing the ADDRTOSCREEN macro; not a Z80 routine, so there is
+ * no single originating address. Asserts the address (extended by [left]/
+ * [right]) is in range both before and after conversion.
+ *
+ * \param[in] addr  Z80 screen bitmap address.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Screen bitmap pointer.
+ */
 u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
 {
   u8 *ptr;
@@ -197,6 +209,18 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
 #define ADDRTOATTRS_M(addr) \
   (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
 
+/**
+ * Return a screen attributes pointer for a Z80 attributes address.
+ *
+ * Conv: helper backing the ADDRTOATTRS macro; not a Z80 routine, so there is
+ * no single originating address. Asserts the address (extended by [left]/
+ * [right]) is in range both before and after conversion.
+ *
+ * \param[in] addr  Z80 screen attributes address.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Screen attributes pointer.
+ */
 u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 {
   u8 *ptr;
@@ -212,6 +236,16 @@ u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 #define ADDRTOBACKBUF_M(addr) \
   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
+/**
+ * Return a backbuffer[] pointer for a Z80 backbuffer address.
+ *
+ * Conv: helper backing the ADDRTOBACKBUF macro; not a Z80 routine, so there
+ * is no single originating address. Addresses below $0020 are treated as
+ * having wrapped past $10000 (mirrors the Z80's 16-bit address wraparound).
+ *
+ * \param[in] addr Z80 backbuffer address.
+ * \return backbuffer[] pointer.
+ */
 u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 {
   u8 *ptr;
@@ -232,6 +266,18 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 #define SCREENTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.pixels[0])
 
+/**
+ * Return the byte offset of a screen[] pointer.
+ *
+ * Conv: helper backing the SCREENTOOFFSET macro; not a Z80 routine, so there
+ * is no single originating address. Asserts the pointer (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] ptr   Screen bitmap pointer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Byte offset into the screen bitmap.
+ */
 static int z80screentooffset(chqstate_t *state,
                              const u8   *ptr,
                              int         left,
@@ -254,6 +300,18 @@ static int z80screentooffset(chqstate_t *state,
 #define BACKBUFTOOFFSET_M(ptr) \
   ((ptr) - &state->backbuffer[0])
 
+/**
+ * Return the byte offset of a backbuffer[] pointer.
+ *
+ * Conv: helper backing the BACKBUFTOOFFSET macro; not a Z80 routine, so
+ * there is no single originating address. Asserts the pointer (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] ptr   Backbuffer pointer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Byte offset into the backbuffer.
+ */
 static int z80backbuftooffset(chqstate_t *state,
                               const u8   *ptr,
                               int         left,
@@ -274,6 +332,18 @@ static int z80backbuftooffset(chqstate_t *state,
 #define SCREENTOADDR_M(ptr) \
   (SCREEN_START_ADDRESS + SCREENTOOFFSET_M(ptr))
 
+/**
+ * Return the Z80 address of a screen[] pointer.
+ *
+ * Conv: helper backing the SCREENTOADDR macro; not a Z80 routine, so there
+ * is no single originating address. Asserts the pointer (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] ptr   Screen bitmap pointer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Z80 screen bitmap address.
+ */
 static int z80screentoaddr(chqstate_t *state,
                            const u8   *ptr,
                            int         left,
@@ -292,6 +362,18 @@ static int z80screentoaddr(chqstate_t *state,
 #define ATTRSTOADDR_M(ptr) \
   (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOOFFSET_M(ptr))
 
+/**
+ * Return the Z80 address of a screen attributes pointer.
+ *
+ * Conv: helper backing the ATTRSTOADDR macro; not a Z80 routine, so there is
+ * no single originating address. Asserts the pointer (extended by [left]/
+ * [right]) is in range both before and after conversion.
+ *
+ * \param[in] ptr   Screen attributes pointer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Z80 screen attributes address.
+ */
 static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
 {
   int addr;
@@ -307,6 +389,18 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
 #define BACKBUFTOADDR_M(ptr) \
   (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET_M(ptr))
 
+/**
+ * Return the Z80 address of a backbuffer[] pointer.
+ *
+ * Conv: helper backing the BACKBUFTOADDR macro; not a Z80 routine, so there
+ * is no single originating address. Asserts the pointer (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] ptr   Backbuffer pointer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Z80 backbuffer address.
+ */
 static int z80backbuftoaddr(chqstate_t *state,
                             const u8   *ptr,
                             int         left,
@@ -327,6 +421,18 @@ static int z80backbuftoaddr(chqstate_t *state,
 #define OFFSETTOSCREEN_M(off) \
   (&state->speccy->screen.pixels[off])
 
+/**
+ * Return a screen[] pointer for a given byte offset.
+ *
+ * Conv: helper backing the OFFSETTOSCREEN macro; not a Z80 routine, so
+ * there is no single originating address. Asserts the offset (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] off   Byte offset into the screen bitmap.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Screen bitmap pointer.
+ */
 static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
 {
   u8 *ptr;
@@ -342,6 +448,18 @@ static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
 #define OFFSETTOBACKBUF_M(off) \
   (&state->backbuffer[off])
 
+/**
+ * Return a backbuffer[] pointer for a given byte offset.
+ *
+ * Conv: helper backing the OFFSETTOBACKBUF macro; not a Z80 routine, so
+ * there is no single originating address. Asserts the offset (extended by
+ * [left]/[right]) is in range both before and after conversion.
+ *
+ * \param[in] off   Byte offset into the backbuffer.
+ * \param[in] left  Extra bytes the caller needs valid to the left.
+ * \param[in] right Extra bytes the caller needs valid to the right.
+ * \return Backbuffer pointer.
+ */
 static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 {
   u8 *ptr;
@@ -488,13 +606,31 @@ static void roadbuf_fill(chqstate_t *state, int offset, u8 value, int count)
 
 /* ----------------------------------------------------------------------- */
 
-/* Read an arbitrary native word */
+/**
+ * Read a little-endian 16-bit word from an arbitrary byte pointer.
+ *
+ * Conv: generic helper standing in for the many Z80 `LD E,(HL) / INC HL /
+ * LD D,(HL)` word-load idioms; not a Z80 routine, so there is no single
+ * originating address.
+ *
+ * \param[in] addr Pointer to the low byte of the word.
+ * \return The 16-bit word.
+ */
 u16 wordat(const u8 *addr)
 {
   return (addr[0] << 0) | (addr[1] << 8);
 }
 
-/* Write an arbitrary native word */
+/**
+ * Write a little-endian 16-bit word to an arbitrary byte pointer.
+ *
+ * Conv: generic helper standing in for the many Z80 `LD (HL),E / INC HL /
+ * LD (HL),D` word-store idioms; not a Z80 routine, so there is no single
+ * originating address.
+ *
+ * \param[in] addr  Pointer to the low byte of the word.
+ * \param[in] value 16-bit value to write.
+ */
 void setwordat(u8 *addr, int value)
 {
   addr[0] = value;
@@ -5431,7 +5567,26 @@ static u8 *plot_sprite_odd(chqstate_t *state,
                                  bitmap_data); /* was FALLTHROUGH */
 }
 
-// Direct entry point for plot_sprite_odd
+/**
+ * $9503: Direct entry point for plot_sprite_odd (ps_odd_entry)
+ *
+ * Runs the odd-width unrolled POP inner loop directly from a precomputed
+ * [jump_offset], skipping the width-to-offset calculation done by
+ * plot_sprite_odd. Used as a callback where the offset is already known.
+ *
+ * Conv: Z80 self-modifies `LD SP,$0000` at $9510 to save the original SP;
+ * not needed in C.
+ *
+ * Conv: Row advance uses DEC H with carry correction; C uses prev_buf_row().
+ *
+ * \param[in] jump_offset Byte offset into the unrolled POP table. (was IX)
+ * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
+ * \param[in] height Number of rows to draw. (was B')
+ * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
+ * \param[in] bitmap_data Source bitmap data. (was HL')
+ *
+ * \return Back-buffer address of the last row drawn.
+ */
 static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
                                    int         jump_offset,
                                    u8         *backbuf_addr,
@@ -7583,6 +7738,16 @@ static u8 keyscan_keydefs(chqstate_t *state, u8 Estopbit, const u8 *HLkeydefs)
   return Estopbit;
 }
 
+/**
+ * $A11E: Test whether a single key is pressed
+ *
+ * Decodes [Ainput] (%RRRRRPPP: P = port shift, R = result bit shift), reads
+ * the corresponding keyboard half-row port, and rotates the result down to
+ * bit 0. Called once per key slot by keyscan_keydefs.
+ *
+ * \param[in] Ainput Packed port/result shift byte. (was A)
+ * \return Carry: the tested key's pressed state (active low, as in Z80).
+ */
 static int keyscan_inner(const chqstate_t *state, int Ainput)
 {
   int carry = 0;
@@ -9080,6 +9245,22 @@ static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
   draw_helicoper_part(state, state->dhs_heli_rotor_pos, helirotor, IYheight);
 }
 
+/**
+ * $AA94: Draw one helicopter body part or its rotor
+ *
+ * Computes the on-screen column from [Acol_pos] plus the current helicopter
+ * screen position, and the draw width from the part's bitmap width plus the
+ * low byte of that column. Dispatches to the left- or right-edge stretchy
+ * object entry point depending on which side of the screen the part falls,
+ * matching draw_object_common's clipping logic.
+ *
+ * \param[in] Acol_pos Column offset of this part from the helicopter's
+ *   centre (negated and stored to doc_col_pos). (was A)
+ * \param[in] DEinnerbitmap Part bitmap block (x-offset + bitmap, or bare
+ *   bitmap for the rotor). (was DE)
+ * \param[in] IYheight Pointer into the height table, forwarded to the
+ *   stretchy-object draw routines. (was IY)
+ */
 static void draw_helicoper_part(chqstate_t                *state,
                                 int                        Acol_pos,
                                 const heli_bitmap_xonly_t *DEinnerbitmap,
@@ -9389,6 +9570,21 @@ sh_add_hazards_done:
   (void) sh_find_free(state, horz_pos, Cdistance, DEhittable_offset);
 }
 
+/**
+ * $ABF6: Populate the first free hazard slot
+ *
+ * Scans state->hazards[] for the first unused entry and, if found,
+ * initialises it with the given horizontal position, distance and hittable
+ * table offset, marking it used. Called by spawn_hazards once per barrier or
+ * tumbleweed to be placed.
+ *
+ * \param[in] Bhorz_pos X coordinate for the new hazard. (was B)
+ * \param[in] Cdistance Distance slot for the new hazard. (was C)
+ * \param[in] DEhittable_offset Offset into the hittable table selecting the
+ *   light or heavy variant. (was DE)
+ * \return Non-zero if no free slot was found (Conv: was POP HL, causing
+ *   spawn_hazards to return early).
+ */
 static int sh_find_free(chqstate_t *state,
                         int         Bhorz_pos,
                         int         Cdistance,
@@ -13672,7 +13868,16 @@ static s16 *hi_to_xpostab(chqstate_t *state, int hi)
   }
 }
 
-/** Return byte pointer into a road-position table given a Z80 address. */
+/**
+ * Return a byte pointer into a road-position table given a Z80 address.
+ *
+ * Conv: helper combining hi_to_xpostab's table lookup with the low byte
+ * offset; not a Z80 routine, so there is no single originating address.
+ *
+ * \param[in] H High byte of the Z80 road-position address ($E8..$ED).
+ * \param[in] L Low byte of the Z80 road-position address.
+ * \return Pointer into the matching xpos table.
+ */
 static u8 *addr_to_xpos(chqstate_t *state, int H, int L)
 {
   return (u8 *)hi_to_xpostab(state, H) + L;
@@ -15928,7 +16133,23 @@ static void build_curve_table(chqstate_t *state, int forked)
                          Bdash_iterations);
 }
 
-// HL -> points past end of destination table we're filling
+/**
+ * $CCA8: Convert curvature deltas into a road x-position table
+ *
+ * Walks the 21-entry height table, accumulating each row's height delta and
+ * road position into a running total, and writes the resulting x positions
+ * backward into [HLtableend] (which points just past the end of the
+ * destination table). Also updates object_positions[] with the per-row
+ * height deltas as a side effect.
+ *
+ * \param[in] DEroadpos Starting road position for this table (right- or
+ *   left-hand pass). (was DE)
+ * \param[in] HLtableend One-past-the-end pointer into the destination xpos
+ *   table (state->xpos_road_right/left/fork_right/centre_right). (was HL,
+ *   SM $CC72/$CCA7)
+ * \param[in] Bdash_alwayszero Shadow B register value; always 0 at call
+ *   sites. (was B')
+ */
 static void build_curve_table_fill(chqstate_t *state,
                                    int         DEroadpos,
                                    s16        *HLtableend,
@@ -16848,6 +17069,18 @@ static void next_pattern(chqstate_t *state)
   next_pattern_at_addr(state, state->music.pattern_addr); /* $EE75–$EE78 np_next */
 }
 
+/**
+ * $EE78: Load the next music pattern header and start it (np_start_at_hl)
+ *
+ * Reads the repeat-count byte at [HLpataddr]; if it is $FF (end of the
+ * pattern list) restarts from the pattern-list address embedded at that
+ * point instead. Otherwise stores the repeat count and pattern pointer,
+ * looks up the pattern's music data start via its offset byte, and primes
+ * the note-delay fields ready for playback.
+ *
+ * \param[in] HLpataddr Pointer into music_patterns[] to read the next
+ *   pattern header from. (was HL)
+ */
 static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
 {
   int       An_repeats; /* was A */
@@ -17632,6 +17865,13 @@ call_bank_3:
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * Run the game until a quit signal is received.
+ *
+ * Conv: host lifecycle entry point; has no Z80 counterpart. Installs the
+ * quit longjmp target then runs the 128K entry point (the 48K path is
+ * present but currently unreachable) until chq_stop's longjmp fires.
+ */
 CHQ_API void chq_setup(chqstate_t *state)
 {
   if (setjmp(state->host_quit_jmp) == 0)
@@ -17643,11 +17883,25 @@ CHQ_API void chq_setup(chqstate_t *state)
   }
 }
 
+/**
+ * Signal the running game to quit.
+ *
+ * Conv: host lifecycle entry point; has no Z80 counterpart. Sets the flag
+ * that the bootstrap loop checks each frame before longjmp'ing out via
+ * host_quit_jmp.
+ */
 CHQ_API void chq_stop(chqstate_t *state)
 {
   state->host_quit = 1;
 }
 
+/**
+ * Reserved modular entry point; not yet wired into the runtime path.
+ *
+ * Conv: host lifecycle entry point; has no Z80 counterpart. Declared in the
+ * public API for future modular use but not currently called; asserts if
+ * invoked.
+ */
 CHQ_API void chq_main(chqstate_t *state)
 {
   // There's no point calling this function yet. Not until the game logic is
@@ -17663,59 +17917,86 @@ CHQ_API void chq_main(chqstate_t *state)
 
 #include "ChaseHQ/Engine/Tests.h"
 
+/** Test hook: expose load_stage for direct invocation. Has no Z80 address. */
 void chq_test_load_stage(chqstate_t *state)
 {
   load_stage(state);
 }
 
+/** Test hook: expose set_up_stage(stage_data) for direct invocation. Has no
+ * Z80 address. */
 void chq_test_set_up_stage(chqstate_t *state)
 {
   set_up_stage(state, &state->stage->stage_data);
 }
 
+/** Test hook: expose set_up_stage(attract_data) for direct invocation. Has
+ * no Z80 address. */
 void chq_test_set_up_stage_attract(chqstate_t *state)
 {
   set_up_stage(state, &state->stage->attract_data);
 }
 
+/** Test hook: return a pointer to the road buffer's lane-flags slot. Has no
+ * Z80 address. */
 u8 *chq_test_lanes_slot(chqstate_t *state)
 {
   return ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 }
 
+/**
+ * Test hook: advance the road buffer offset by a fixed number of frames.
+ *
+ * Has no Z80 address. Lets a test "warm up" the ring-buffer offset before
+ * exercising other road logic, by repeatedly calling
+ * rm_cycle_buffer_offset.
+ *
+ * \param[in] iterations Number of frames to advance.
+ */
 void chq_test_prime_road(chqstate_t *state, int iterations)
 {
   while (iterations-- > 0)
     rm_cycle_buffer_offset(state, &state->fast_counter);
 }
 
+/** Test hook: expose build_height_table for direct invocation. Has no Z80
+ * address. */
 void chq_test_build_height_table(chqstate_t *state)
 {
   build_height_table(state);
 }
 
+/** Test hook: expose layout_road for direct invocation. Has no Z80
+ * address. */
 void chq_test_layout_road(chqstate_t *state)
 {
   layout_road(state);
 }
 
+/** Test hook: expose exit_fork for direct invocation. Has no Z80 address. */
 void chq_test_exit_fork(chqstate_t *state)
 {
   exit_fork(state);
 }
 
+/** Test hook: expose advance_hazards for direct invocation. Has no Z80
+ * address. */
 void chq_test_advance_hazards(chqstate_t *state)
 {
   advance_hazards(state);
 }
 
+/**
+ * Test hook: run one game-logic frame without input or audio.
+ *
+ * Has no Z80 address. Mirrors the run_game main-loop frame ($8401), omitting
+ * calls that need a live host (keyscan, check_user_input, drive_sfx and the
+ * sfx hooks). Ordering matches run_game; keep in sync when the main loop
+ * changes. Callers should top up time_bcd and keep hazards[0].used set to
+ * HAZARD_USED as run_game's pre-loop setup does.
+ */
 void chq_test_game_frame(chqstate_t *state)
 {
-  /* Mirrors the run_game main-loop frame ($8401), omitting input and audio
-   * calls that need a live host (keyscan, check_user_input, drive_sfx and the
-   * sfx hooks). Ordering matches run_game; keep in sync when the main loop
-   * changes. Callers should top up time_bcd and keep hazards[0].used set to
-   * HAZARD_USED as run_game's pre-loop setup does. */
   check_time_up(state);
   read_map(state);
   if (handle_perp_caught(state))
@@ -17754,14 +18035,21 @@ void chq_test_game_frame(chqstate_t *state)
   exit_fork(state);
 }
 
+/**
+ * Test hook: scan the road buffer's side-object slots for the largest id.
+ *
+ * Has no Z80 address. Replicates the draw_scene_objects right/left object
+ * scan so tests can detect corrupt object ids (> 9) without running the
+ * full draw.
+ *
+ * \return Largest object byte seen.
+ */
 int chq_test_max_side_object(chqstate_t *state)
 {
   u8  *HLroadbuf;   /* pointer into road_buffer, as in draw_scene_objects */
   int  max;         /* largest object byte seen */
   int  Biterations; /* loop counter, as in draw_scene_objects */
 
-  /* Replicates the draw_scene_objects right/left object scan so tests can
-   * detect corrupt object ids (> 9) without running the full draw. */
   HLroadbuf = ROADBUF_FWD2PTR(115);
   max = 0;
   Biterations = 20;
@@ -17779,11 +18067,28 @@ int chq_test_max_side_object(chqstate_t *state)
 /* Debug aid: road-only backbuffer snapshot taken by chq_test_game_frame. */
 u8 chq_test_backbuf_snapshot[BACKBUFFER_LENGTH];
 
+/** Test hook: expose draw_road for direct invocation. Has no Z80 address. */
 void chq_test_draw_road(chqstate_t *state)
 {
   draw_road(state);
 }
 
+/**
+ * Test hook: exercise draw_road_lanes_change with a single lane-flags byte.
+ *
+ * Has no Z80 address. Writes [lane_flags] at roadbufptr and calls
+ * draw_road_lanes_change directly with fixed fill/horizon/backbuf values.
+ *
+ * Conv: IX must point into road_buffer so that WRAP_INCREMENT_ASSIGN (used
+ * by the height-check secondary chain) stays within the buffer. Placing
+ * lane_flags at roadbufptr works because the immediately following bytes
+ * are 0 (calloc) and therefore straight; the height-check chain advances
+ * IYheightptr monotonically without oscillating.
+ *
+ * \param[in] lane_flags Byte written at roadbufptr before drawing.
+ * \param[in] height_offset Offset into state->height_table for the IY
+ *   argument.
+ */
 void chq_test_draw_road_lanes_change(chqstate_t *state,
                                      u8          lane_flags,
                                      int         height_offset)
@@ -17791,11 +18096,6 @@ void chq_test_draw_road_lanes_change(chqstate_t *state,
   u8       *local_IX;
   const u8 *local_IY;
 
-  /* Conv: IX must point into road_buffer so that WRAP_INCREMENT_ASSIGN (used by
-   * the height-check secondary chain) stays within the buffer. Placing
-   * lane_flags at roadbufptr works because the immediately following
-   * bytes are 0 (calloc) and therefore straight; the height-check chain
-   * advances IYheightptr monotonically without oscillating. */
   *state->roadbufptr = lane_flags;
   local_IX = state->roadbufptr;
   local_IY = &state->height_table[height_offset];

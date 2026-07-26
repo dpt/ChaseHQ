@@ -1345,6 +1345,15 @@ pd_end_of_sample:
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * Allocate and initialise the bank 7 sub-state.
+ *
+ * Conv: host lifecycle helper; has no Z80 address. Called once from
+ * chq_create. Sets the fade-gate bytes and drum-sample copies that calloc's
+ * zero fill would otherwise leave wrong (see the comments below).
+ *
+ * \return 0 on success, -1 if allocation failed.
+ */
 int bank7_state_create(chqstate_t *state)
 {
   state->bank7 = calloc(1, sizeof(*state->bank7));
@@ -1368,6 +1377,12 @@ int bank7_state_create(chqstate_t *state)
   return 0;
 }
 
+/**
+ * Free the bank 7 sub-state.
+ *
+ * Conv: host lifecycle helper; has no Z80 address. Called once from
+ * chq_destroy.
+ */
 void bank7_state_destroy(chqstate_t *state)
 {
   free(state->bank7);

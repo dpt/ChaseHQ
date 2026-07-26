@@ -2540,8 +2540,21 @@ finalize:
   IX_channel->phrase_table_offset = BC_table_offset;
 }
 
-/* Shared end-of-sequence marker bit, e.g. title_pitch_offset_seq_* and
- * title_envelope_shape_* tables. */
+/**
+ * $EDD6: Advance one channel's pattern by one tracker row
+ *
+ * Decrements the per-row wait counter; while it is still counting down,
+ * only the portamento/slide upkeep runs (nudging note_index by one
+ * semitone). Once it reaches zero, reads and decodes the next byte(s) from
+ * the pattern stream: a note value resets pitch/envelope pointers and
+ * volume; a command/effect byte is dispatched via decode_pattern_command.
+ *
+ * Shared end-of-sequence marker bit applies to the pitch-offset and
+ * envelope-shape sequence tables (e.g. title_pitch_offset_seq_* and
+ * title_envelope_shape_* tables).
+ *
+ * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
+ */
 static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel)
 {
@@ -3672,6 +3685,14 @@ static void bank3_state_initialise(chqstate_t *state)
   }
 }
 
+/**
+ * Allocate and initialise the bank 3 sub-state.
+ *
+ * Conv: host lifecycle helper; has no Z80 address. Called once from
+ * chq_create.
+ *
+ * \return 0 on success, -1 if allocation failed.
+ */
 int bank3_state_create(chqstate_t *state)
 {
   state->bank3 = calloc(1, sizeof(*state->bank3));
@@ -3683,6 +3704,12 @@ int bank3_state_create(chqstate_t *state)
   return 0;
 }
 
+/**
+ * Free the bank 3 sub-state.
+ *
+ * Conv: host lifecycle helper; has no Z80 address. Called once from
+ * chq_destroy.
+ */
 void bank3_state_destroy(chqstate_t *state)
 {
   free(state->bank3);

@@ -185,7 +185,7 @@ static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
 
 /* ----------------------------------------------------------------------- */
 
-// $5CF0
+/** $5CF0: stage1 */
 const stage_t stage1 = {
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -266,7 +266,7 @@ const stage_t stage1 = {
 
 /* ----------------------------------------------------------------------- */
 
-// $5D39
+/** $5D39: stage1_perp_description */
 static const u8 stage1_perp_description[7] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PERP_DESC_1,
@@ -277,8 +277,10 @@ static const u8 stage1_perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
-// $C145 (bank 1)
-// Conv: Additional
+/**
+ * $C145 (bank 1)
+ * Conv: Additional
+ */
 static const char *stage1_chatter_strings[4] = {
   "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
   "EMERGENCY HERE. RALPH THE IDAHO SLASHER\xAC",
@@ -288,7 +290,7 @@ static const char *stage1_chatter_strings[4] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $5DED
+/** $5DED: stage1_arrest_messages */
 static const u8 stage1_arrest_messages[83] = {
   6, // initial delay
 
@@ -319,13 +321,13 @@ static const u8 stage1_arrest_messages[83] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $5E40
+/** $5E40: stage1_hittable_object_defs */
 static const hittable_t stage1_hittable_object_defs[2] = {
   { 16, &stage1_tumbleweed_bitmaps[0] },
   { 32, &stage1_barrier_bitmaps[0]    },
 };
 
-// $5E46
+/** $5E46: stage1_right_hand_graphics_defs */
 static const obj_t stage1_right_hand_graphics_defs[9] = {
   { 111, 41, 80, &tunnellight,                         draw_tunnel_light_right    },
   {   0,  0,  0, NULL,                                 NULL },
@@ -338,7 +340,7 @@ static const obj_t stage1_right_hand_graphics_defs[9] = {
   { 100, 24, 70, &stage1_turn_sign_right,              draw_object_right          }
 };
 
-// $5E85
+/** $5E85: stage1_left_hand_graphics_defs */
 static const obj_t stage1_left_hand_graphics_defs[9] = {
   { 126, 188, 80, &tunnellight,                        draw_tunnel_light_left    },
   {   0,  0,  0,  NULL,                                NULL },
@@ -353,7 +355,7 @@ static const obj_t stage1_left_hand_graphics_defs[9] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $5EC4
+/** $5EC4: stage1_map_start_curvature */
 static const u8 stage1_map_start_curvature[32] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -384,7 +386,7 @@ static const u8 stage1_map_start_curvature[32] = {
   MAP_CMD_SPLIT(0x5FD2, 0x6088)
 };
 
-// 0x5EE4
+/** 0x5EE4: stage1_map_start_height */
 static const u8 stage1_map_start_height[43] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -426,7 +428,7 @@ static const u8 stage1_map_start_height[43] = {
   MAP_CMD_SPLIT(0x5FE6, 0x60A3)
 };
 
-// 0x5F0F
+/** 0x5F0F: stage1_map_start_lanes */
 static const u8 stage1_map_start_lanes[14] = {
   MAP_LANES_3L(30),
   MAP_LANES_3LTO4(2),
@@ -435,7 +437,7 @@ static const u8 stage1_map_start_lanes[14] = {
   MAP_CMD_SPLIT(0x6003, 0x60E5)
 };
 
-// 0x5F1D
+/** 0x5F1D: stage1_map_start_hazards */
 static const u8 stage1_map_start_hazards[13] = {
   MAP_HAZARD_WAIT(147),
   MAP_CMD_STOP_CARS,
@@ -445,7 +447,7 @@ static const u8 stage1_map_start_hazards[13] = {
   MAP_CMD_SPLIT(0x6009, 0x60EF)
 };
 
-// 0x5F2A
+/** 0x5F2A: stage1_map_start_leftobjs */
 static const u8 stage1_map_start_leftobjs[78] = {
   MAP_OBJ_S1_BUSH(1),
   MAP_OBJ_S1_NONE(1),
@@ -522,7 +524,7 @@ static const u8 stage1_map_start_leftobjs[78] = {
   MAP_CMD_SPLIT(0x6011, 0x6109)
 };
 
-// 0x5F78
+/** 0x5F78: stage1_map_start_rightobjs */
 static const u8 stage1_map_start_rightobjs[90] = {
   MAP_OBJ_S1_TREE(1),
   MAP_OBJ_S1_NONE(3),
@@ -613,7 +615,7 @@ static const u8 stage1_map_start_rightobjs[90] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $5FD2
+/** $5FD2: stage1_map_left_curvature */
 static const u8 stage1_map_left_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -634,7 +636,7 @@ static const u8 stage1_map_left_curvature[] = {
   MAP_CMD_GOTO(0x6173) // map_tunnel_curvature
 };
 
-// 0x5FE6
+/** 0x5FE6: stage1_map_left_height */
 static const u8 stage1_map_left_height[] = {
   MAP_HEIGHT_LEVEL(13),
   MAP_HEIGHT_UP1(4),
@@ -664,13 +666,13 @@ static const u8 stage1_map_left_height[] = {
   MAP_CMD_GOTO(0x6189) // map_tunnel_height
 };
 
-// 0x6003
+/** 0x6003: stage1_map_left_lanes */
 static const u8 stage1_map_left_lanes[] = {
   MAP_LANES_4(210),
   MAP_CMD_GOTO(0x61A5) // map_tunnel_lanes
 };
 
-// 0x6009
+/** 0x6009: stage1_map_left_hazards */
 static const u8 stage1_map_left_hazards[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_CARS,
@@ -678,7 +680,7 @@ static const u8 stage1_map_left_hazards[] = {
   MAP_CMD_GOTO(0x61B9) // map_tunnel_hazards
 };
 
-// 0x6011
+/** 0x6011: stage1_map_left_leftobjs */
 static const u8 stage1_map_left_leftobjs[] = {
   MAP_OBJ_S1_NONE(4),
   MAP_OBJ_S1_TREE(1),
@@ -744,7 +746,7 @@ static const u8 stage1_map_left_leftobjs[] = {
   MAP_CMD_GOTO(0x61BE)
 };
 
-// 0x6052
+/** 0x6052: stage1_map_left_rightobjs */
 static const u8 stage1_map_left_rightobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
@@ -801,7 +803,7 @@ static const u8 stage1_map_left_rightobjs[] = {
 
 /* ----------------------------------------------------------------------- */
 
-// 0x6088
+/** 0x6088: stage1_map_right_curvature */
 static const u8 stage1_map_right_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(8),
@@ -829,7 +831,7 @@ static const u8 stage1_map_right_curvature[] = {
   MAP_CMD_GOTO(0x6173)
 };
 
-// $60A3
+/** $60A3: stage1_map_right_height */
 static const u8 stage1_map_right_height[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(5),
@@ -896,7 +898,7 @@ static const u8 stage1_map_right_height[] = {
   MAP_CMD_GOTO(0x6189)
 };
 
-// $60E5
+/** $60E5: stage1_map_right_lanes */
 static const u8 stage1_map_right_lanes[] = {
   MAP_LANES_4(20),
   MAP_LANES_DIRTTRACK(178),
@@ -904,7 +906,7 @@ static const u8 stage1_map_right_lanes[] = {
   MAP_CMD_GOTO(0x61A5)
 };
 
-// $60EF
+/** $60EF: stage1_map_right_hazards */
 static const u8 stage1_map_right_hazards[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_TWO_BARRIERS,
@@ -924,7 +926,7 @@ static const u8 stage1_map_right_hazards[] = {
   MAP_CMD_GOTO(0x61B9)
 };
 
-// $6109
+/** $6109: stage1_map_right_leftobjs */
 static const u8 stage1_map_right_leftobjs[] = {
   MAP_OBJ_S1_NONE(10),
   MAP_OBJ_S1_SHORT_POLE(1),
@@ -983,7 +985,7 @@ static const u8 stage1_map_right_leftobjs[] = {
   MAP_CMD_GOTO(0x61BE)
 };
 
-// $6143
+/** $6143: stage1_map_right_rightobjs */
 static const u8 stage1_map_right_rightobjs[] = {
   MAP_OBJ_S1_STREET_LAMP(1),
   MAP_OBJ_S1_NONE(3),
@@ -1034,7 +1036,7 @@ static const u8 stage1_map_right_rightobjs[] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6173
+/** $6173: stage1_map_tunnel_curvature */
 static const u8 stage1_map_tunnel_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -1057,7 +1059,7 @@ static const u8 stage1_map_tunnel_curvature[] = {
   MAP_CMD_GOTO(0x61D4)
 };
 
-// $6189
+/** $6189: stage1_map_tunnel_height */
 static const u8 stage1_map_tunnel_height[] = {
   MAP_HEIGHT_DOWN5(15),
   MAP_HEIGHT_DOWN3(3),
@@ -1086,7 +1088,7 @@ static const u8 stage1_map_tunnel_height[] = {
   MAP_CMD_GOTO(0x6209)
 };
 
-// $61A5
+/** $61A5: stage1_map_tunnel_lanes */
 static const u8 stage1_map_tunnel_lanes[] = {
   MAP_LANES_4(44),
   MAP_LANES_4TO3L(2),
@@ -1099,13 +1101,13 @@ static const u8 stage1_map_tunnel_lanes[] = {
   MAP_CMD_GOTO(0x625D)
 };
 
-// $61B9
+/** $61B9: stage1_map_tunnel_hazards */
 static const u8 stage1_map_tunnel_hazards[] = {
   MAP_HAZARD_WAIT(95),
   MAP_CMD_GOTO(0x6277)
 };
 
-// $61BE
+/** $61BE: stage1_map_tunnel_leftobjs */
 static const u8 stage1_map_tunnel_leftobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
@@ -1117,7 +1119,7 @@ static const u8 stage1_map_tunnel_leftobjs[] = {
   MAP_CMD_GOTO(0x6294)
 };
 
-// $61C9
+/** $61C9: stage1_map_tunnel_rightobjs */
 static const u8 stage1_map_tunnel_rightobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
@@ -1131,7 +1133,7 @@ static const u8 stage1_map_tunnel_rightobjs[] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $61D4
+/** $61D4: stage1_map_loop_curvature */
 static const u8 stage1_map_loop_curvature[] = {
   MAP_CURVE_STRAIGHT(3),
   MAP_CURVE_LEFT(15),
@@ -1185,7 +1187,7 @@ static const u8 stage1_map_loop_curvature[] = {
   MAP_CMD_GOTO(0x61D4)
 };
 
-// $6209
+/** $6209: stage1_map_loop_height */
 static const u8 stage1_map_loop_height[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -1270,7 +1272,7 @@ static const u8 stage1_map_loop_height[] = {
   MAP_CMD_GOTO(0x6209)
 };
 
-// $625D
+/** $625D: stage1_map_loop_lanes */
 static const u8 stage1_map_loop_lanes[] = {
   MAP_LANES_4(254),
   MAP_LANES_4(36),
@@ -1286,7 +1288,7 @@ static const u8 stage1_map_loop_lanes[] = {
   MAP_CMD_GOTO(0x625D)
 };
 
-// 6277
+/** $6277: stage1_map_loop_hazards */
 static const u8 stage1_map_loop_hazards[] = {
   MAP_HAZARD_WAIT(42),
   MAP_CMD_START_BARRIERS_L,
@@ -1308,7 +1310,7 @@ static const u8 stage1_map_loop_hazards[] = {
   MAP_CMD_GOTO(0x6277)
 };
 
-// $6294
+/** $6294: stage1_map_loop_leftobjs */
 static const u8 stage1_map_loop_leftobjs[] = {
   MAP_OBJ_S1_NONE(3),
   MAP_OBJ_S1_STREET_LAMP(1),
@@ -1437,7 +1439,7 @@ static const u8 stage1_map_loop_leftobjs[] = {
   MAP_CMD_GOTO(0x6294)
 };
 
-// $6314
+/** $6314: stage1_map_loop_rightobjs */
 static const u8 stage1_map_loop_rightobjs[] = {
   MAP_OBJ_S1_NONE(2),
   MAP_OBJ_S1_TURN_SIGN_L(1),
@@ -1558,7 +1560,7 @@ static const u8 stage1_map_loop_rightobjs[] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $642A
+/** $642A: stage1_perp_face */
 static const u8 stage1_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XXXXX, X__XXXX_, __XXX___, ___XXX_X,
@@ -1612,7 +1614,7 @@ static const u8 stage1_perp_face[FACEBYTES] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $643E
+/** $643E: stage1_lambo_bitmaps */
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage1_bitmap_lambo_1[0], &stage1_bitmap_lambo_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_lambo_2[0], &stage1_bitmap_lambo_2[0]  },
@@ -1622,7 +1624,7 @@ static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES] = {
   { 3, BITMAPFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4s[0] },
 };
 
-// $6468
+/** $6468: stage1_truck_bitmaps */
 static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 39, &stage1_bitmap_truck_1[0], &stage1_bitmap_truck_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 29, &stage1_bitmap_truck_2[0], &stage1_bitmap_truck_2[0]  },
@@ -1632,7 +1634,7 @@ static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
 };
 
-// $6492
+/** $6492: stage1_car_bitmaps */
 static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
@@ -1642,7 +1644,7 @@ static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
   { 3, BITMAPFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
 };
 
-// $64BC
+/** $64BC: stage1_bitmap_lambo_1 */
 static const u8 stage1_bitmap_lambo_1[6 * 30] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
@@ -1676,7 +1678,7 @@ static const u8 stage1_bitmap_lambo_1[6 * 30] = {
   ___XXX__, ________, ________, ________, ________, ___XXX__,
 };
 
-// $6570
+/** $6570: stage1_bitmap_lambo_2 */
 static const u8 stage1_bitmap_lambo_2[5 * 22] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
@@ -1702,7 +1704,7 @@ static const u8 stage1_bitmap_lambo_2[5 * 22] = {
   ___XX___, ________, ________, ________, __XX____,
 };
 
-// $65DE
+/** $65DE: stage1_bitmap_lambo_3 */
 static const u8 stage1_bitmap_lambo_3[3 * 15] = {
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX__XXX, XXXXXXXX, XXX__XXX,
@@ -1721,7 +1723,7 @@ static const u8 stage1_bitmap_lambo_3[3 * 15] = {
   _XX_____, ________, _____XX_,
 };
 
-// $660B
+/** $660B: stage1_bitmap_truck_1 */
 static const u8 stage1_bitmap_truck_1[6 * 39] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
@@ -1764,7 +1766,7 @@ static const u8 stage1_bitmap_truck_1[6 * 39] = {
   ________, _____XXX, XXXXXXXX, XXXXXXXX, XXX_____, ________,
 };
 
-// $66F5
+/** $66F5: stage1_bitmap_truck_2 */
 static const u8 stage1_bitmap_truck_2[5 * 29] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
@@ -1797,7 +1799,7 @@ static const u8 stage1_bitmap_truck_2[5 * 29] = {
   ________, ____XXXX, XXXXXXXX, XXXX____, ________,
 };
 
-// $6786
+/** $6786: stage1_bitmap_truck_3 */
 static const u8 stage1_bitmap_truck_3[3 * 20] = {
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX_XXXX, XXXXXXXX, XXXX_XXX,
@@ -1821,7 +1823,7 @@ static const u8 stage1_bitmap_truck_3[3 * 20] = {
   ________, XXXXXXXX, X_______,
 };
 
-// $67C2
+/** $67C2: stage1_bitmap_car_1 */
 static const u8 stage1_bitmap_car_1[6 * 31] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
@@ -1856,7 +1858,7 @@ static const u8 stage1_bitmap_car_1[6 * 31] = {
   ________, ______XX, XXXXXXXX, XXXXXXXX, X_______, ________
 };
 
-// $687C
+/** $687C: stage1_bitmap_car_2 */
 static const u8 stage1_bitmap_car_2[5 * 22] = {
   ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
@@ -1882,7 +1884,7 @@ static const u8 stage1_bitmap_car_2[5 * 22] = {
   ________, ___XXXXX, XXXXXXXX, XXXX____, ________,
 };
 
-// $68EA
+/** $68EA: stage1_bitmap_car_3 */
 static const u8 stage1_bitmap_car_3[3 * 16] = {
   _____XXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
@@ -1902,7 +1904,7 @@ static const u8 stage1_bitmap_car_3[3 * 16] = {
   _______X, XXXXXXXX, XX______,
 };
 
-// $691A
+/** $691A: stage1_bitmap_lambo_4 */
 static const u8 stage1_bitmap_lambo_4[3 * 2 * 8] = {
   ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
@@ -1914,7 +1916,7 @@ static const u8 stage1_bitmap_lambo_4[3 * 2 * 8] = {
   ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
 };
 
-// $694A
+/** $694A: stage1_bitmap_lambo_4s */
 static const u8 stage1_bitmap_lambo_4s[3 * 2 * 8] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
@@ -1926,7 +1928,7 @@ static const u8 stage1_bitmap_lambo_4s[3 * 2 * 8] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
 };
 
-// $697A
+/** $697A: stage1_bitmap_truck_4 */
 static const u8 stage1_bitmap_truck_4[2 * 2 * 12] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
   ________, XX_XXXXX, _____XXX, XX_XX___,
@@ -1942,7 +1944,7 @@ static const u8 stage1_bitmap_truck_4[2 * 2 * 12] = {
   XXX_____, ___XXXXX, __XXXXXX, XX______,
 };
 
-// $69AA
+/** $69AA: stage1_bitmap_truck_4s */
 static const u8 stage1_bitmap_truck_4s[2 * 2 * 12] = {
   XXX_____, ___XXXXX, ________, XXXXXXXX,
   XXX_____, ___XX_XX, ________, XXXXX_XX,
@@ -1958,7 +1960,7 @@ static const u8 stage1_bitmap_truck_4s[2 * 2 * 12] = {
   XXXXXX__, ______XX, _____XXX, XXXXX___,
 };
 
-// $69DA
+/** $69DA: stage1_bitmap_car_4 */
 static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
   X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   ________, XXX_XXXX, ________, XXXX_XXX, XXXXXXXX, ________,
@@ -1971,7 +1973,7 @@ static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
   XXXX____, ____XXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
 };
 
-// $6A10
+/** $6A10: stage1_bitmap_car_4s */
 static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
   XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXX____, ____XXX_, ________, XXXXXXXX, ____XXXX, _XXX____,
@@ -1986,7 +1988,7 @@ static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CE46
+/** $CE46: stage1_stones_bitmaps */
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
   { 2, BITMAPFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
@@ -1996,7 +1998,7 @@ static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
 };
 
-// $CE70
+/** $CE70: stage1_dust_bitmaps */
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
@@ -2006,7 +2008,7 @@ static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] }
 };
 
-// $6A9A
+/** $6A9A: stage1_bitmap_stones_1 */
 static const u8 stage1_bitmap_stones_1[2 * 2 * 5] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____,
   ________, X_____X_, ____XXXX, XXXX____,
@@ -2015,7 +2017,7 @@ static const u8 stage1_bitmap_stones_1[2 * 2 * 5] = {
   XXX_____, ___XXXXX, XXXXXXXX, ________,
 };
 
-// $6AAE
+/** $6AAE: stage1_bitmap_stones_2 */
 static const u8 stage1_bitmap_stones_2[2 * 2 * 4] = {
   ________, XXXXXXXX, XXXXXXXX, ________,
   ________, X____XXX, _XXXXXXX, X_______,
@@ -2023,7 +2025,7 @@ static const u8 stage1_bitmap_stones_2[2 * 2 * 4] = {
   XX_____X, __XX_XX_, XXXXXXXX, ________,
 };
 
-// $6ABE
+/** $6ABE: stage1_bitmap_stones_2s */
 static const u8 stage1_bitmap_stones_2s[2 * 2 * 4] = {
   XXXX____, ____XXXX, ____XXXX, XXXX____,
   XXXX____, ____X___, _____XXX, _XXXX___,
@@ -2031,55 +2033,55 @@ static const u8 stage1_bitmap_stones_2s[2 * 2 * 4] = {
   XXXXXX__, ______XX, ___XXXXX, _XX_____,
 };
 
-// $6ACE
+/** $6ACE: stage1_bitmap_stones_3 */
 static const u8 stage1_bitmap_stones_3[2 * 2 * 3] = {
   _____XXX, XXXXX___, XXXXXXXX, ________,
   ______XX, X__X_X__, XXXXXXXX, ________,
   X____XXX, _X_XX___, XXXXXXXX, ________,
 };
 
-// $6ADA
+/** $6ADA: stage1_bitmap_stones_3s */
 static const u8 stage1_bitmap_stones_3s[2 * 2 * 3] = {
   XXXX____, ____XXXX, _XXXXXXX, X_______,
   XXXX____, ____X__X, __XXXXXX, _X______,
   XXXXX___, _____X_X, _XXXXXXX, X_______,
 };
 
-// $6AE6
+/** $6AE6: stage1_bitmap_stones_4 */
 static const u8 stage1_bitmap_stones_4[1 * 2 * 2] = {
   ____XXXX, XXXX____,
   ___XXXXX, X_X_____,
 };
 
-// $6AEA
+/** $6AEA: stage1_bitmap_stones_4s */
 static const u8 stage1_bitmap_stones_4s[1 * 2 * 2] = {
   XXXX____, ____XXXX,
   XXXX___X, ____X_X_,
 };
 
-// $6AEE
+/** $6AEE: stage1_bitmap_stones_5 */
 static const u8 stage1_bitmap_stones_5[1 * 2 * 1] = {
   __XXXXXX, XX______,
 };
 
-// $6AF0
+/** $6AF0: stage1_bitmap_stones_5s */
 static const u8 stage1_bitmap_stones_5s[1 * 2 * 1] = {
   XXXX__XX, ____XX__,
 };
 
-// $6AF2
+/** $6AF2: stage1_bitmap_dust_1 */
 static const u8 stage1_bitmap_dust_1[1 * 2 * 1] = {
   ___XXXXX, _X______,
 };
 
-// $6AF4
+/** $6AF4: stage1_bitmap_dust_1s */
 static const u8 stage1_bitmap_dust_1s[1 * 2 * 1] = {
   XXXX___X, _____X__,
 };
 
 /* ----------------------------------------------------------------------- */
 
-// $6AF6
+/** $6AF6: stage1_turn_sign_right */
 static const depthset_t stage1_turn_sign_right = {
   &stage1_turn_sign_bitmaps[0],
   {
@@ -2096,7 +2098,7 @@ static const depthset_t stage1_turn_sign_right = {
   }
 };
 
-// $6B0C
+/** $6B0C: stage1_turn_sign_left */
 static const depthset_t stage1_turn_sign_left = {
   &stage1_turn_sign_bitmaps[0],
   {
@@ -2113,7 +2115,7 @@ static const depthset_t stage1_turn_sign_left = {
   }
 };
 
-// $6B22
+/** $6B22: stage1_turn_sign_bitmaps */
 static const bitmap_t stage1_turn_sign_bitmaps[] = {
   { 4, BITMAPFLAG_DEFAULT,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
   { 3, BITMAPFLAG_DEFAULT,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
@@ -2127,7 +2129,7 @@ static const bitmap_t stage1_turn_sign_bitmaps[] = {
   { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
 };
 
-// $6B68
+/** $6B68: stage1_bitmap_turnsign_1 */
 static const u8 stage1_bitmap_turnsign_1[4 * 40] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
@@ -2171,7 +2173,7 @@ static const u8 stage1_bitmap_turnsign_1[4 * 40] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
 };
 
-// $6C08
+/** $6C08: stage1_bitmap_turnsign_2 */
 static const u8 stage1_bitmap_turnsign_2[3 * 30] = {
   __XXXXXX, XXXXXXXX, XXXXXX__,
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2205,7 +2207,7 @@ static const u8 stage1_bitmap_turnsign_2[3 * 30] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
 };
 
-// $6C62
+/** $6C62: stage1_bitmap_turnsign_3 */
 static const u8 stage1_bitmap_turnsign_3[2 * 20] = {
   _XXXXXXX, XXXXXXX_,
   XXXXXXXX, XXXXXXXX,
@@ -2229,7 +2231,7 @@ static const u8 stage1_bitmap_turnsign_3[2 * 20] = {
   XXXXXXXX, XXXXXXXX,
 };
 
-// $6C8A
+/** $6C8A: stage1_bitmap_turnsign_4 */
 static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16] = {
   X_______, _XXXXXXX, ____XXXX, XXXX____,
   ________, XXXXXXXX, _____XXX, XXXXX___,
@@ -2249,7 +2251,7 @@ static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
 };
 
-// $6CCA
+/** $6CCA: stage1_bitmap_turnsign_5 */
 static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13] = {
   X_______, _XXXXXXX,
   _XXXXXXX, X_______,
@@ -2279,7 +2281,7 @@ static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13] = {
   __XXXXXX, XX______,
 };
 
-// $6CFE
+/** $6CFE: stage1_bitmap_turnsign_5s */
 static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
   XXXXX___, _____XXX,
   _____XXX, XXXXX___,
@@ -2311,7 +2313,7 @@ static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6D82
+/** $6D82: stage1_tumbleweed_bitmaps */
 static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
   { 2, BITMAPFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
@@ -2321,7 +2323,7 @@ static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
 };
 
-// $6DAC
+/** $6DAC: stage1_bitmap_tumbleweed_1 */
 static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
   ___XX___, _X_XX___,
   ____XXXX, XXXX____,
@@ -2341,7 +2343,7 @@ static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
   ________, X_XX____,
 };
 
-// $6DCC
+/** $6DCC: stage1_bitmap_tumbleweed_2 */
 static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
   ____X__X, __XX____,
   _____XXX, XXX_____,
@@ -2356,7 +2358,7 @@ static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
   ________, X_X_____,
 };
 
-// $6DE2
+/** $6DE2: stage1_bitmap_tumbleweed_3 */
 static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
   __XXXXX_,
   _XXXXXXX,
@@ -2369,7 +2371,7 @@ static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
   __X__X__,
 };
 
-// $6DEB
+/** $6DEB: stage1_bitmap_tumbleweed_4 */
 static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
   __XXXX__,
   _XXXXXX_,
@@ -2382,7 +2384,7 @@ static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6DF2
+/** $6DF2: stage1_barrier_bitmaps */
 static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
   { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
@@ -2392,7 +2394,7 @@ static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
 };
 
-// $6E1C
+/** $6E1C: stage1_bitmap_barrier_1 */
 static const u8 stage1_bitmap_barrier_1[4 * 17] = {
   ___XXXXX, XX______, ______XX, XXXXX___,
   ___XXXX_, _X____XX, XX____XX, _X__X___,
@@ -2413,7 +2415,7 @@ static const u8 stage1_bitmap_barrier_1[4 * 17] = {
   ________, ____XXXX, XXXXX___, ________,
 };
 
-// $6E60
+/** $6E60: stage1_bitmap_barrier_2 */
 static const u8 stage1_bitmap_barrier_2[3 * 13] = {
   __XXXXXX, ________, XXXXXX__,
   __XXX_XX, ___XXX__, XX_X_X__,
@@ -2430,7 +2432,7 @@ static const u8 stage1_bitmap_barrier_2[3 * 13] = {
   ________, _XXXXXX_, ________,
 };
 
-// $6E87
+/** $6E87: stage1_bitmap_barrier_3 */
 static const u8 stage1_bitmap_barrier_3[2 * 9] = {
   _XXXX___, ___XXXX_,
   _XX_X__X, X__XX_X_,
@@ -2443,7 +2445,7 @@ static const u8 stage1_bitmap_barrier_3[2 * 9] = {
   ______XX, XX______,
 };
 
-// $6E99
+/** $6E99: stage1_bitmap_barrier_4 */
 static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
   X__XXXXX, _XX_____, X__XXXXX, _XX_____,
   X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
@@ -2454,7 +2456,7 @@ static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
   XXXX____, ____XXXX, XXXXXXXX, ________,
 };
 
-// $6EB5
+/** $6EB5: stage1_bitmap_barrier_4s */
 static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
   XXXXX__X, _____XX_, XXXXX__X, _____XX_,
   XXXXX___, _____XXX, X__X___X, _XX_XXX_,
@@ -2467,7 +2469,7 @@ static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6ED1
+/** $6ED1: stage1_stretchy_streetlamp_right */
 static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right     },
   { STRETCHY_TYPE_50PC,  &streetlampmiddle2_right    },
@@ -2476,7 +2478,7 @@ static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
   { STRETCHY_TYPE_END,   NULL }
 };
 
-// $6EDE
+/** $6EDE: stage1_stretchy_streetlamp_left */
 static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left     },
   { STRETCHY_TYPE_50PC,  &streetlampmiddle2_left    },
@@ -2485,7 +2487,7 @@ static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
   { STRETCHY_TYPE_END,   NULL }
 };
 
-// $6EEB
+/** $6EEB: stage1_streetlamptop_right */
 static const depthset_t stage1_streetlamptop_right = {
   &stage1_streetlamptop_bitmaps[0],
   {
@@ -2502,7 +2504,7 @@ static const depthset_t stage1_streetlamptop_right = {
   }
 };
 
-// $6F01
+/** $6F01: stage1_streetlamptop_left */
 static const depthset_t stage1_streetlamptop_left = {
   &stage1_streetlamptop_flipped_bitmaps[0],
   {
@@ -2519,7 +2521,7 @@ static const depthset_t stage1_streetlamptop_left = {
   }
 };
 
-// $6F17
+/** $6F17: stage1_streetlamptop_bitmaps */
 static const bitmap_t stage1_streetlamptop_bitmaps[5] = {
   { 4, BITMAPFLAG_DEFAULT, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
   { 3, BITMAPFLAG_DEFAULT, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
@@ -2528,7 +2530,7 @@ static const bitmap_t stage1_streetlamptop_bitmaps[5] = {
   { 2, BITMAPFLAG_MASKED,  3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
 };
 
-// $6F3A
+/** $6F3A: stage1_streetlamptop_flipped_bitmaps */
 static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5] = {
   { 4, BITMAPFLAG_FLIPPED, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
   { 3, BITMAPFLAG_FLIPPED, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
@@ -2537,7 +2539,7 @@ static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5] = {
   { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
 };
 
-// $6F5D
+/** $6F5D: stage1_bitmap_streetlamptop_1 */
 static const u8 stage1_bitmap_streetlamptop_1[4 * 8] = {
   ________, ________, ________, XXX__X__,
   ___XXXXX, XXXXXXX_, _______X, X_X__X__,
@@ -2549,7 +2551,7 @@ static const u8 stage1_bitmap_streetlamptop_1[4 * 8] = {
   __XXXXXX, XXXXXXX_, ________, ________
 };
 
-// $6F7D
+/** $6F7D: stage1_bitmap_streetlamptop_2 */
 static const u8 stage1_bitmap_streetlamptop_2[3 * 5] = {
   _XXXXXXX, XX_____X, X_X_X___,
   X_______, __X__XX_, _X__X___,
@@ -2558,7 +2560,7 @@ static const u8 stage1_bitmap_streetlamptop_2[3 * 5] = {
   _XXXXXXX, XXXXX___, __XX____
 };
 
-// $6F8C
+/** $6F8C: stage1_bitmap_streetlamptop_3 */
 static const u8 stage1_bitmap_streetlamptop_3[3 * 4] = {
   ______XX, XXXX___X, _XX_____,
   _____X__, ____XXX_, X_X_____,
@@ -2566,7 +2568,7 @@ static const u8 stage1_bitmap_streetlamptop_3[3 * 4] = {
   _____XXX, XXXXXXX_, ________
 };
 
-// $6F98
+/** $6F98: stage1_bitmap_streetlamptop_3s */
 static const u8 stage1_bitmap_streetlamptop_3s[3 * 4] = {
   ________, __XXXXXX, ___X_XX_,
   ________, _X______, XXX_X_X_,
@@ -2574,7 +2576,7 @@ static const u8 stage1_bitmap_streetlamptop_3s[3 * 4] = {
   ________, _XXXXXXX, XXX_____
 };
 
-// $6FA4
+/** $6FA4: stage1_bitmap_streetlamptop_4 */
 static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
   XXXXXXXX, ________,
   X___XXXX, _XXX____,
@@ -2586,7 +2588,7 @@ static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
   XXXXXXXX, ________
 };
 
-// $6FB4
+/** $6FB4: stage1_bitmap_streetlamptop_4s */
 static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
   XXXXXXXX, ________,
   XXX___XX, ___XXX__,
@@ -2598,7 +2600,7 @@ static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
   XXXXXXXX, ________
 };
 
-// $6FC4
+/** $6FC4: stage1_bitmap_streetlamptop_5 */
 static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 4] = {
   XXXXXXX_, _______X,
   _XXXXXXX, X_______,
@@ -2608,7 +2610,7 @@ static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 4] = {
   XXXXXXXX, ________
 };
 
-// $6FD0
+/** $6FD0: stage1_bitmap_streetlamptop_5s */
 static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
   XXXXXXXX, ________,
   XXX__XXX, ___XX___,
@@ -2620,7 +2622,7 @@ static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6FDC
+/** $6FDC: stage1_stretchy_telegraphpole_right */
 static const stretchy_t stage1_stretchy_telegraphpole_right[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
@@ -2628,7 +2630,7 @@ static const stretchy_t stage1_stretchy_telegraphpole_right[5] = {
   { STRETCHY_TYPE_END, NULL }
 };
 
-// $6FE6
+/** $6FE6: stage1_stretchy_telegraphpole_left */
 static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
@@ -2636,7 +2638,7 @@ static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
   { STRETCHY_TYPE_END, NULL }
 };
 
-// $6FF0
+/** $6FF0: stage1_telegraphpoletop_left */
 static const depthset_t stage1_telegraphpoletop_left = {
   &stage1_telegraphpoletop_bitmaps[0],
   {
@@ -2653,7 +2655,7 @@ static const depthset_t stage1_telegraphpoletop_left = {
   }
 };
 
-// $7006
+/** $7006: stage1_telegraphpoletop_right */
 static const depthset_t stage1_telegraphpoletop_right = {
   &stage1_telegraphpoletop_bitmaps[0],
   {
@@ -2670,7 +2672,7 @@ static const depthset_t stage1_telegraphpoletop_right = {
   }
 };
 
-// $701C
+/** $701C: stage1_telegraphpoletop_bitmaps */
 static const bitmap_t stage1_telegraphpoletop_bitmaps[5] = {
   { 3, BITMAPFLAG_DEFAULT, 13, stage1_bitmap_telegraphpoletop_1, stage1_bitmap_telegraphpoletop_1  },
   { 3, BITMAPFLAG_DEFAULT, 10, stage1_bitmap_telegraphpoletop_2, stage1_bitmap_telegraphpoletop_2  },
@@ -2679,7 +2681,7 @@ static const bitmap_t stage1_telegraphpoletop_bitmaps[5] = {
   { 2, BITMAPFLAG_MASKED,   4, stage1_bitmap_telegraphpoletop_5, stage1_bitmap_telegraphpoletop_5s }
 };
 
-// $703F
+/** $703F: stage1_bitmap_telegraphpoletop_1 */
 static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13] = {
   ____XXXX, XXX__XXX, XXX_____,
   ___X____, ___X_XX_, ___X____,
@@ -2696,7 +2698,7 @@ static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13] = {
   ________, _XXXXX__, ________
 };
 
-// $7066
+/** $7066: stage1_bitmap_telegraphpoletop_2 */
 static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10] = {
   ______XX, XX__XXXX, X_______,
   _____X__, __X_XX__, X_______,
@@ -2710,7 +2712,7 @@ static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10] = {
   ____X_X_, _XXXX__X, _X______
 };
 
-// $7084
+/** $7084: stage1_bitmap_telegraphpoletop_3 */
 static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7] = {
   ______XX, XXXXXX__, ________,
   _____X__, __X__X__, ________,
@@ -2721,7 +2723,7 @@ static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7] = {
   _____X__, XXX___X_, ________
 };
 
-// $7099
+/** $7099: stage1_bitmap_telegraphpoletop_3s */
 static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
   ________, __XXXXXX, XX______,
   ________, _X____X_, _X______,
@@ -2732,7 +2734,7 @@ static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
   ________, _X__XXX_, __X_____
 };
 
-// $70AE
+/** $70AE: stage1_bitmap_telegraphpoletop_4 */
 static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
   XXXXXXX_, _______X, ______XX, XX_XXX__,
   XXXXXXX_, _______X, ______XX, _X_X_X__,
@@ -2741,7 +2743,7 @@ static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
   XXXXXX__, ______X_, ______XX, X___X___
 };
 
-// $70C2
+/** $70C2: stage1_bitmap_telegraphpoletop_4s */
 static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
   XXXXXXXX, ________, X_______, _XXX_XXX,
   XXXXXXXX, ________, X_______, _X_X_X_X,
@@ -2750,7 +2752,7 @@ static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
   XXXXXXXX, ________, ________, X_X___X_
 };
 
-// $70D6
+/** $70D6: stage1_bitmap_telegraphpoletop_5 */
 static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
   XXXXXX__, ______XX, ___XXXXX, XXX_____,
   XXXXXX__, ______XX, ___XXXXX, __X_____,
@@ -2758,7 +2760,7 @@ static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
   XXXXX___, _____X_X, ____XXXX, __XX____
 };
 
-// $70E6
+/** $70E6: stage1_bitmap_telegraphpoletop_5s */
 static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
   XXXXXXXX, ________, XX_____X, __XXXXX_,
   XXXXXXXX, ________, XX_____X, __XX__X_,
@@ -2768,7 +2770,7 @@ static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $70F6
+/** $70F6: stage1_stretchy_tree */
 static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES] = {
   { STRETCHY_TYPE_FIXED, &stage1_tree_bottom       },
   { STRETCHY_TYPE_38PC,  &stage1_tree_bottommiddle },
@@ -2778,7 +2780,7 @@ static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES] = {
   { STRETCHY_TYPE_END, NULL }
 };
 
-// $7106
+/** $7106: stage1_stretchy_bush */
 static const stretchy_t stage1_stretchy_bush[4] = {
   { STRETCHY_TYPE_FIXED, &stage1_tree_middle    },
   { STRETCHY_TYPE_38PC,  &stage1_tree_topmiddle },
@@ -2786,7 +2788,7 @@ static const stretchy_t stage1_stretchy_bush[4] = {
   { STRETCHY_TYPE_END, NULL }
 };
 
-// $7110
+/** $7110: stage1_tree_bottom */
 static const depthset_t stage1_tree_bottom = {
   &stage1_tree_bitmaps[0],
   {
@@ -2803,7 +2805,7 @@ static const depthset_t stage1_tree_bottom = {
   }
 };
 
-// $7126
+/** $7126: stage1_tree_bottommiddle */
 static const depthset_t stage1_tree_bottommiddle = {
   &stage1_tree_bitmaps[0],
   {
@@ -2820,7 +2822,7 @@ static const depthset_t stage1_tree_bottommiddle = {
   }
 };
 
-// $713C
+/** $713C: stage1_tree_middle */
 static const depthset_t stage1_tree_middle = {
   &stage1_tree_bitmaps[0],
   {
@@ -2837,7 +2839,7 @@ static const depthset_t stage1_tree_middle = {
   }
 };
 
-// $7152
+/** $7152: stage1_tree_topmiddle */
 static const depthset_t stage1_tree_topmiddle = {
   &stage1_tree_bitmaps[0],
   {
@@ -2854,7 +2856,7 @@ static const depthset_t stage1_tree_topmiddle = {
   }
 };
 
-// $7168
+/** $7168: stage1_tree_top */
 static const depthset_t stage1_tree_top = {
   &stage1_tree_bitmaps[0],
   {
@@ -2871,7 +2873,7 @@ static const depthset_t stage1_tree_top = {
   }
 };
 
-// $717E
+/** $717E: stage1_tree_bitmaps */
 static const bitmap_t stage1_tree_bitmaps[25] = {
   { 8, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tree_middle_64x16[0],        &stage1_bitmap_tree_middle_64x16[0] },
   { 8, BITMAPFLAG_DEFAULT,  5, &stage1_bitmap_tree_bottom_64x5[0],         &stage1_bitmap_tree_bottom_64x5[0]  },
@@ -2900,7 +2902,7 @@ static const bitmap_t stage1_tree_bitmaps[25] = {
   { 3, BITMAPFLAG_MASKED,   1, &stage1_bitmap_tree_shadow_24x1[0],         &stage1_bitmap_tree_shadow_24x1s[0] }
 };
 
-// $722D
+/** $722D: stage1_bitmap_tree_middle_64x16 */
 static const u8 stage1_bitmap_tree_middle_64x16[8 * 16] = {
   _XXXXXX_, X_XXXXXX, XXXXXXXX, XXX_X_XX, XX__X_XX, _X_XXXX_, X_X_XXXX, XXXXXX__,
   XXXX_XXX, XXX_XXXX, _X_XXX_X, XX_X_X_X, X____XX_, X_X_X_XX, _X_XXXXX, X_XXX___,
@@ -2920,7 +2922,7 @@ static const u8 stage1_bitmap_tree_middle_64x16[8 * 16] = {
   ____XXXX, XXXXX_X_, X_XX_X_X, XXXXXXXX, X_XX_XXX, XXXXX_XX, X_X_X_XX, XX_XXX__,
 };
 
-// $72AD
+/** $72AD: stage1_bitmap_tree_bottom_64x5 */
 static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5] = {
   ________, ____X__X, __X__X_X, XXX_X_X_, X_X____X, _X___X__, X___X__X, ________,
   ______XX, X_XXXX_X, _XX__XXX, XXXX_XXX, _XX_X___, X__X___X, _X_XX_X_, X_X_____,
@@ -2929,7 +2931,7 @@ static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5] = {
   _X_XXXX_, XX_X_XXX, X_XXXXX_, XXX_XXXX, XXXX_XXX, XXXXX_XX, X_XXX_XX, XX_XXXX_,
 };
 
-// $72D5
+/** $72D5: stage1_bitmap_tree_trunk_16x8 */
 static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8] = {
   X_X__X_X, _X_XX__X,
   XX__XX_X, __X__X_X,
@@ -2941,7 +2943,7 @@ static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8] = {
   XX_X_X_X, __X__X_X,
 };
 
-// $72E5
+/** $72E5: stage1_bitmap_tree_shadow_64x5 */
 static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX, XXXX__XX, XXXXXXXX, XXXXXXXX, XXXXX___,
@@ -2950,7 +2952,7 @@ static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5] = {
   ________, ___XXXXX, XXXXXXXX, ___X__X_, X_______, XXXXXXXX, XXXX____, ________,
 };
 
-// $730D
+/** $730D: stage1_bitmap_tree_middle_48x12 */
 static const u8 stage1_bitmap_tree_middle_48x12[6 * 12] = {
   _XXXX_XX, XXXXXXXX, XXXX_XXX, XX_XXX__, XXX_XX_X, XXXXXX__,
   XXX_XXX_, XX_X__XX, _XX____X, X___X_XX, _XXX__XX, XXX_XX__,
@@ -2966,7 +2968,7 @@ static const u8 stage1_bitmap_tree_middle_48x12[6 * 12] = {
   ___XXXXX, XXX_XXX_, _XXXXXXX, XXX_XXXX, XXXXXX_X, XXX_XX__,
 };
 
-// $7355
+/** $7355: stage1_bitmap_tree_bottom_48x4 */
 static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4] = {
   ______X_, _X_X_X__, _XXX_X__, X____X__, __X____X, _X______,
   ____XXXX, XX_XXX__, XXXXX_XX, _XXX__X_, X__X__XX, X_XX____,
@@ -2974,7 +2976,7 @@ static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4] = {
   __XXXXX_, XXXXXXXX, X_XXX_XX, XXX_XXXX, X_XXXXXX, XXX_XXX_,
 };
 
-// $736D
+/** $736D: stage1_bitmap_tree_shadow_48x4 */
 static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4] = {
   _______X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXX_XXXX, XXX_XXXX, XXXXXXXX, XXXXXX__,
@@ -2982,7 +2984,7 @@ static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4] = {
   ________, __XXXXXX, XXX____X, _____XXX, XXXXXXX_, ________,
 };
 
-// $7385
+/** $7385: stage1_bitmap_tree_middle_32x8 */
 static const u8 stage1_bitmap_tree_middle_32x8[4 * 8] = {
   XXXXXXXX, __X_XX__, X__X_XXX, XXXX_XXX,
   XXX_X_XX, X_XXX__X, X_XXXXXX, X_XXXXX_,
@@ -2994,20 +2996,20 @@ static const u8 stage1_bitmap_tree_middle_32x8[4 * 8] = {
   __XXXXXX, XX_XXXXX, X_XXX_XX, _XX_XXX_,
 };
 
-// $73A5
+/** $73A5: stage1_bitmap_tree_bottom_32x3 */
 static const u8 stage1_bitmap_tree_bottom_32x3[4 * 3] = {
   _X_X__X_, _X__XX_X, XX_XX___, X_X_____,
   __XXXX_X, X_XXXXXX, XXXX_XX_, XX_XX___,
   _XXXX__X, XXXXXXXX, XX_XXXXX, XXXXX_XX,
 };
 
-// $73B1
+/** $73B1: stage1_bitmap_tree_shadow_32x2 */
 static const u8 stage1_bitmap_tree_shadow_32x2[4 * 2] = {
   _XXXXXXX, XXXXX_XX, XXX_XXXX, XXXXXXX_,
   ___XXXXX, XXX_XX_X, _X_X_XXX, XXXXXX__,
 };
 
-// $73B9
+/** $73B9: stage1_bitmap_tree_middle_24x7 */
 static const u8 stage1_bitmap_tree_middle_24x7[3 * 7] = {
   _XXXXXX_, XXXXX__X, XX_XXXX_,
   XXX_X_XX, XX_XX_XX, _XXX_XXX,
@@ -3018,13 +3020,13 @@ static const u8 stage1_bitmap_tree_middle_24x7[3 * 7] = {
   _XXX_XX_, _X_XX_XX, XX_XX_XX,
 };
 
-// $73CE
+/** $73CE: stage1_bitmap_tree_bottom_24x2 */
 static const u8 stage1_bitmap_tree_bottom_24x2[3 * 2] = {
   ___X_XX_, XX_X__XX, __X_XX__,
   _XXXXXXX, X_X_XXX_, XXXXX_X_,
 };
 
-// $73D4
+/** $73D4: stage1_bitmap_tree_trunk_8x4 */
 static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4] = {
   _X_X_XX_,
   _XX_X_X_,
@@ -3032,13 +3034,13 @@ static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4] = {
   _XX___X_,
 };
 
-// $73D8
+/** $73D8: stage1_bitmap_tree_shadow_24x2 */
 static const u8 stage1_bitmap_tree_shadow_24x2[3 * 2] = {
   XXXXXXXX, X_XXXX_X, XXXXXXXX,
   __XXXXXX, _X_X__X_, XXXXXXX_,
 };
 
-// $73DE
+/** $73DE: stage1_bitmap_tree_top_64x13 */
 static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
   XXXX____, ____XX_X, ________, X___XXXX, ________, XX_XXXXX, ________, XX_X_XXX,
   ________, XX_X_XXX, ________, XXXXX_X_, ________, XX_XXX_X, _____XXX, XXXXX___,
@@ -3068,7 +3070,7 @@ static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
   XXXXXX__, ______XX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
 };
 
-// $74AE
+/** $74AE: stage1_bitmap_tree_top_48x10 */
 static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
   XXX_____, ___XXXXX, ________, __X_X__X, ________, XXXX__XX, ________, __X_XXXX, ________, XXX_X_XX, ______XX, _XXXXX__,
   XXX_____, ___XX_X_, ________, X__XXXXX, ________, _XX_XX_X, ________, XXXX_XXX, ________, _X_XXXXX, _____XXX, X_X_X___,
@@ -3082,7 +3084,7 @@ static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XX____XX, __XXXX__, XXXX____, ____XXXX, XXXXXXXX, ________, XXXXXXXX, ________,
 };
 
-// $7526
+/** $7526: stage1_bitmap_tree_top_32x5 */
 static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
   XXXXX___, _____X_X, ________, _XXXXX_X, ________, XXXX_X_X, ____XXXX, X_XX____,
   XXXXX___, _____XX_, ________, X_X_XXXX, ________, X_XXXXXX, __XXXXXX, XX______,
@@ -3091,7 +3093,7 @@ static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
   XXXXXXXX, ________, XXX___XX, ___XXX__, XX___XXX, __XXX___, XXXXXXXX, ________,
 };
 
-// $754E
+/** $754E: stage1_bitmap_tree_top_24x4 */
 static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
   XX______, __XXXXXX, ________, _XXX_XXX, _______X, XXXXX_X_,
   XXXX____, ____X_X_, ________, XXXXXX_X, ______XX, _XX_XX__,
@@ -3099,21 +3101,21 @@ static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
   XXXXXXX_, _______X, ____X___, XXXX_XXX, _XXXXXXX, X_______,
 };
 
-// $7566
+/** $7566: stage1_bitmap_tree_top_24x3 */
 static const u8 stage1_bitmap_tree_top_24x3[3 * 2 * 3] = {
   XXX_____, ___XX_XX, ________, _XXX_XXX, XXXXXXXX, ________,
   XXXX____, ____XXXX, _______X, XX_XXXX_, XXXXXXXX, ________,
   XXXXXX__, ______XX, XX___XXX, __XXX___, XXXXXXXX, ________,
 };
 
-// $7578
+/** $7578: stage1_bitmap_tree_top_24x3s */
 static const u8 stage1_bitmap_tree_top_24x3s[3 * 2 * 3] = {
   XXXXXXX_, _______X, ________, X_XX_XXX, ____XXXX, _XXX____,
   XXXXXXXX, ________, ________, XXXXXX_X, ___XXXXX, XXX_____,
   XXXXXXXX, ________, XX__XX__, __XX__XX, _XXXXXXX, X_______,
 };
 
-// $758A
+/** $758A: stage1_bitmap_tree_trunk_16x6 */
 static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
   XXX_____, ___X___X, _____XXX, __XXX___,
   XXX_____, ___X_X_X, _____XXX, _X__X___,
@@ -3123,7 +3125,7 @@ static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
   XX______, __X_X__X, _____XXX, _X__X___,
 };
 
-// $75A2
+/** $75A2: stage1_bitmap_tree_trunk_16x4 */
 static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
   XXXX____, ____XX_X, ____XXXX, _X_X____,
   XXXX____, ____XX_X, ____XXXX, ___X____,
@@ -3131,7 +3133,7 @@ static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
   XXXX____, ____XX_X, ____XXXX, _X_X____,
 };
 
-// $75B2
+/** $75B2: stage1_bitmap_tree_middle_24x5 */
 static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
   X_______, _XX_XXXX, ________, X_XXXXXX, ___XXXXX, _XX_____,
   ________, XX_XX_X_, ________, XXX_XX_X, __XXXXXX, XX______,
@@ -3140,25 +3142,25 @@ static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
   X_______, _XXX_XXX, ________, _XX_XXXX, __XXXXXX, XX______,
 };
 
-// $75D0
+/** $75D0: stage1_bitmap_tree_bottom_24x2_another */
 static const u8 stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2] = {
   XX_X_XX_, __X_X__X, ____XX_X, XX_X__X_, _XXXXXXX, X_______,
   X_______, _X_XXXX_, ________, XXXX_XXX, __XXXXXX, _X______,
 };
 
-// $75DC
+/** $75DC: stage1_bitmap_tree_trunk_24x3 */
 static const u8 stage1_bitmap_tree_trunk_24x3[3 * 2 * 3] = {
   XXXXXXXX, ________, ____XXXX, X__X____, XXXXXXXX, ________,
   XXXXXXX_, _______X, ____XXXX, X_XX____, XXXXXXXX, ________,
   XXXXXXX_, _______X, ____XXXX, _X_X____, XXXXXXXX, ________,
 };
 
-// $75EE
+/** $75EE: stage1_bitmap_tree_shadow_24x1 */
 static const u8 stage1_bitmap_tree_shadow_24x1[3 * 2 * 1] = {
   ________, XXXXXXX_, ________, _XX_XXXX, ____XXXX, XXXX____,
 };
 
-// $75F4
+/** $75F4: stage1_bitmap_tree_middle_24x5s */
 static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
   XXXXX___, _____XX_, ________, XXXXX_XX, _______X, XXXX_XX_,
   XXXX____, ____XX_X, ________, X_X_XXX_, ______XX, XX_XXX__,
@@ -3167,20 +3169,20 @@ static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
   XXXXX___, _____XXX, ________, _XXX_XX_, ______XX, XXXXXX__,
 };
 
-// $7612
+/** $7612: stage1_bitmap_tree_bottom_24x2s */
 static const u8 stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2] = {
   XXXXXX_X, ______X_, _XX_____, X__XXX_X, XX_X_XXX, __X_X___,
   XXXXX___, _____X_X, ________, XXX_XXXX, ______XX, _XXX_X__,
 };
 
-// $761E
+/** $761E: stage1_bitmap_tree_trunk_24x3s */
 static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
   XXXXXXXX, ________, XXXX____, ____X__X, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX_____, ___XX_XX, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX_____, ___X_X_X, XXXXXXXX, ________,
 };
 
-// $7630
+/** $7630: stage1_bitmap_tree_shadow_24x1s */
 static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
   XXXX____, ____XXXX, ________, XXX__XX_, ________, XXXXXXXX,
 };

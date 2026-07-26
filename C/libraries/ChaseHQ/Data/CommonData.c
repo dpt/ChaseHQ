@@ -30,7 +30,7 @@
 // [Graphics] Turbo icons
 //
 
-// $76F0
+/** $76F0: bitmap_turbospin */
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
   ________, ________, ___XXXXX, ________,
   ________, _XXXXXXX, ____XXXX, XXX_____,
@@ -78,9 +78,11 @@ const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
   XXXXX___, ________, ________, ________
 };
 
-// $7798
-//
-// Conv: Added unused bytes which original game omitted.
+/**
+ * $7798: pregame_messages
+ *
+ * Conv: Added unused bytes which original game omitted.
+ */
 const u8 pregame_messages[68] = {
   0xFF, // unused
   attribute_BRIGHT_BLACK_OVER_WHITE,
@@ -107,7 +109,7 @@ const u8 pregame_messages[68] = {
   'S', 'I', 'G', 'N', 'A', 'L' | EOS
 };
 
-// $77D8
+/** $77D8: pregame_data */
 const u8 pregame_data[207] = {
   0xDC, // Set colour 12 (Bright Green)
   0xE1, // Draw horizontally
@@ -285,9 +287,11 @@ const u8 pregame_data[207] = {
   0x00 // Stop
 };
 
-// $78A7
-//
-// 45 tiles used to draw the pre-game screen.
+/**
+ * $78A7: pregame_tiles
+ *
+ * 45 tiles used to draw the pre-game screen.
+ */
 const u8 pregame_tiles[45 * 8] = {
   ________,
   _X_X_X_X,
@@ -698,7 +702,7 @@ const u8 pregame_tiles[45 * 8] = {
 // [Graphics] Smoke and fire graphics
 //
 
-// $7A0F
+/** $7A0F: bitmap_smoke1 */
 const u8 bitmap_smoke1[4 * 13] = {
   XXXX____, ____XXXX, __XXXXXX, XX______,
   XX______, __XXXXXX, _____XXX, XXXXX___,
@@ -715,7 +719,7 @@ const u8 bitmap_smoke1[4 * 13] = {
   XXXX____, ____X_X_, ___XXXXX, X_X_____
 };
 
-// $7A43
+/** $7A43: bitmap_smoke2 */
 const u8 bitmap_smoke2[4 * 11] = {
   XXXXX___, _____XXX, _XXXXXXX, X_______,
   XXX_____, ___XXXXX, ____XXXX, XXXX____,
@@ -730,7 +734,7 @@ const u8 bitmap_smoke2[4 * 11] = {
   XXX____X, ___XX_X_, ____XXXX, X_XX____
 };
 
-// $7A6F
+/** $7A6F: bitmap_smoke3 */
 const u8 bitmap_smoke3[4 * 9] = {
   XXXX____, ____XXXX, __XXXXXX, XX______,
   XXX_____, ___XXXXX, ____XXXX, XXXX____,
@@ -743,7 +747,7 @@ const u8 bitmap_smoke3[4 * 9] = {
   XXXXX___, ______X_, ___XXXXX, X_X_____
 };
 
-// $7A93
+/** $7A93: bitmap_smoke4 */
 const u8 bitmap_smoke4[2 * 7] = {
   X_____XX, _XXXXX__,
   ________, XXXXXXXX,
@@ -754,7 +758,7 @@ const u8 bitmap_smoke4[2 * 7] = {
   XX_____X, __X_X_X_
 };
 
-// $7AA1
+/** $7AA1: bitmap_smoke5 */
 const u8 bitmap_smoke5[2 * 5] = {
   XX_____X, __XXXXX_,
   X______X, _XX_XXX_,
@@ -763,14 +767,14 @@ const u8 bitmap_smoke5[2 * 5] = {
   XX____XX, ___X_X__
 };
 
-// $7AAB
+/** $7AAB: bitmap_smoke6 */
 const u8 bitmap_smoke6[2 * 3] = {
   XX____XX, __XXXX__,
   XX____XX, __X__X__,
   XX____XX, __X_X___
 };
 
-// $7AB1
+/** $7AB1: bitmap_fire1 */
 const u8 bitmap_fire1[4 * 16] = {
   ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
   _______X, ________, ________, _X_XXX__,
@@ -790,7 +794,7 @@ const u8 bitmap_fire1[4 * 16] = {
   X__X_X__, ____XX__, ___X_X__, __X_____
 };
 
-// $7AF1
+/** $7AF1: bitmap_fire2 */
 const u8 bitmap_fire2[4 * 16] = {
   ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
   __X____X, ________, ________, _X_XXX__,
@@ -810,7 +814,7 @@ const u8 bitmap_fire2[4 * 16] = {
   ________, X___X___, __X____X, X____X_X
 };
 
-// $7B31
+/** $7B31: bitmap_fire3 */
 const u8 bitmap_fire3[6 * 8] = {
   XX______, __XXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   X_______, _X______, ________, ________, ____XXXX, ___X____,
@@ -822,7 +826,7 @@ const u8 bitmap_fire3[6 * 8] = {
   XX____XX, __XX_X__, X___X___, _X_X_X_X, X___XXXX, _X_X____
 };
 
-// $7B61
+/** $7B61: bitmap_fire4 */
 const u8 bitmap_fire4[6 * 8] = {
   XX____X_, __XXXX_X, ________, XXXXXXXX, ___XXXXX, XXX_____,
   X_______, _X____X_, ________, ________, ____XXXX, __XX____,
@@ -834,7 +838,7 @@ const u8 bitmap_fire4[6 * 8] = {
   X_X_____, _X_X_XX_, ____XX__, XX_X__XX, _XX_XXXX, ___X____
 };
 
-// $7B91
+/** $7B91: bitmap_fire5 */
 const u8 bitmap_fire5[4 * 5] = {
   X_______, _XXXXXXX, ___XXXXX, XXX_____,
   ________, X_______, ____XXXX, ___X____,
@@ -843,7 +847,7 @@ const u8 bitmap_fire5[4 * 5] = {
   XXXX_X_X, ____X_X_, XX_XXXXX, __X_____
 };
 
-// $7BA5
+/** $7BA5: bitmap_fire5s */
 const u8 bitmap_fire5s[4 * 5] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_,
   XXXX____, ____X___, ________, _______X,
@@ -852,7 +856,7 @@ const u8 bitmap_fire5s[4 * 5] = {
   XXXXXXXX, ________, _X_XXX_X, X_X___X_
 };
 
-// $7BB9
+/** $7BB9: bitmap_fire6 */
 const u8 bitmap_fire6[4 * 6] = {
   X_______, _XXXXXXX, __XXXXXX, XX______,
   ________, X_______, ___XXXXX, __X_____,
@@ -862,7 +866,7 @@ const u8 bitmap_fire6[4 * 6] = {
   XXXX_XXX, ____X___, XXXXXXXX, ________
 };
 
-// $7BD1
+/** $7BD1: bitmap_fire6s */
 const u8 bitmap_fire6s[4 * 6] = {
   XXXXX___, _____XXX, ______XX, XXXXXX__,
   XXXX____, ____X___, _______X, ______X_,
@@ -875,7 +879,7 @@ const u8 bitmap_fire6s[4 * 6] = {
 // [Graphics] Faces
 //
 
-// $7BE9
+/** $7BE9: bitmap_faces */
 const u8 bitmap_faces[FACEBYTES * NFACES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XX__X, X_______, ________, ____X_XX,
@@ -1022,15 +1026,25 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
 // [Graphics] Street lamps etc.
 //
 
+/**
+ * stretchy_shortpole
+ *
+ * Conv: host-side aggregate wrapping shortpole_bottom/shortpole_middle into
+ * the stretchy_t list format render_stretchy_object walks; not a Z80 table
+ * itself, so there is no single originating address -- see the components'
+ * own addresses below.
+ */
 const stretchy_t stretchy_shortpole[3] = {
   { STRETCHY_TYPE_FIXED, &shortpole_bottom },
   { STRETCHY_TYPE_50PC,  &shortpole_middle },
   { STRETCHY_TYPE_END, NULL } // Conv: NULL added
 };
 
-// $7E0C
-//
-// Why is the first column all zeroes?
+/**
+ * $7E0C: shortpole_bottom
+ *
+ * Why is the first column all zeroes?
+ */
 const depthset_t shortpole_bottom = {
   &streetlampbody_bitmaps[0],
   {
@@ -1047,7 +1061,7 @@ const depthset_t shortpole_bottom = {
   }
 };
 
-// $7E22
+/** $7E22: shortpole_middle */
 const depthset_t shortpole_middle = {
   &streetlampbody_bitmaps[0],
   {
@@ -1064,9 +1078,11 @@ const depthset_t shortpole_middle = {
   }
 };
 
-// $7E38
-//
-// seems to be shared streetlamp/telegraphpole
+/**
+ * $7E38: streetlampbottom_left
+ *
+ * seems to be shared streetlamp/telegraphpole
+ */
 const depthset_t streetlampbottom_left = {
   &streetlampbody_bitmaps[0],
   {
@@ -1083,7 +1099,7 @@ const depthset_t streetlampbottom_left = {
   }
 };
 
-// $7E4E
+/** $7E4E: streetlampbottom_right */
 const depthset_t streetlampbottom_right = {
   &streetlampbody_bitmaps[0],
   {
@@ -1100,7 +1116,7 @@ const depthset_t streetlampbottom_right = {
   }
 };
 
-// $7E64
+/** $7E64: streetlampmiddle2_left */
 const depthset_t streetlampmiddle2_left = {
   &streetlampbody_bitmaps[0],
   {
@@ -1117,7 +1133,7 @@ const depthset_t streetlampmiddle2_left = {
   }
 };
 
-// $7E7A
+/** $7E7A: streetlampmiddle2_right */
 const depthset_t streetlampmiddle2_right = {
   &streetlampbody_bitmaps[0],
   {
@@ -1134,7 +1150,7 @@ const depthset_t streetlampmiddle2_right = {
   }
 };
 
-// $7E90
+/** $7E90: streetlampmiddle_left */
 const depthset_t streetlampmiddle_left = {
   &streetlampbody_bitmaps[0],
   {
@@ -1151,7 +1167,7 @@ const depthset_t streetlampmiddle_left = {
   }
 };
 
-// $7EA6
+/** $7EA6: streetlampmiddle_right */
 const depthset_t streetlampmiddle_right = {
   &streetlampbody_bitmaps[0],
   {
@@ -1170,7 +1186,7 @@ const depthset_t streetlampmiddle_right = {
 
 static const u8 streetlampbody_shifted_pool[64]; /* defined below with 13s/14s/15s data */
 
-// $7EBC
+/** $7EBC: streetlampbody_bitmaps */
 const bitmap_t streetlampbody_bitmaps[15] = {
   { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
   { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
@@ -1189,132 +1205,136 @@ const bitmap_t streetlampbody_bitmaps[15] = {
   { 2, 1, 2, &bitmap_streetlampbody_15[0], &streetlampbody_shifted_pool[12] }
 };
 
-// $7F25
+/** $7F25: bitmap_streetlampbody_1 */
 const u8 bitmap_streetlampbody_1[4] = {
   X______X, _XXXXXX_,
   _______X, XXX__XX_
 };
 
-// $7F29
+/** $7F29: bitmap_streetlampbody_2 */
 const u8 bitmap_streetlampbody_2[4] = {
   _______X, XX____X_,
   _______X, X_X___X_
 };
 
-// $7F2D
+/** $7F2D: bitmap_streetlampbody_3 */
 const u8 bitmap_streetlampbody_3[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
-// $7F31
+/** $7F31: bitmap_streetlampbody_4 */
 const u8 bitmap_streetlampbody_4[4] = {
   XX____XX, __XXXX__,
   X______X, _X_X_XX_
 };
 
-// $7F35
+/** $7F35: bitmap_streetlampbody_5 */
 const u8 bitmap_streetlampbody_5[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
-// $7F39
+/** $7F39: bitmap_streetlampbody_6 */
 const u8 bitmap_streetlampbody_6[4] = {
   X____XXX, _X__X___,
   X____XXX, _X__X___
 };
 
-// $7F3D
+/** $7F3D: bitmap_streetlampbody_7 */
 const u8 bitmap_streetlampbody_7[2] = {
   ____XXXX, XXXX____
 };
 
-// $7F3F
+/** $7F3F: bitmap_streetlampbody_8 */
 const u8 bitmap_streetlampbody_8[4] = {
   ____XXXX, XX_X____,
   ____XXXX, XX_X____
 };
 
-// $7F43
+/** $7F43: bitmap_streetlampbody_9 */
 const u8 bitmap_streetlampbody_9[4] = {
   ___XXXXX, X_X_____,
   ___XXXXX, X_X_____
 };
 
-// $7F47
+/** $7F47: bitmap_streetlampbody_7s */
 const u8 bitmap_streetlampbody_7s[2] = {
   XXXX____, ____XXXX
 };
 
-// $7F49
+/** $7F49: bitmap_streetlampbody_8s */
 const u8 bitmap_streetlampbody_8s[4] = {
   XXXX____, ____XX_X,
   XXXX____, ____XX_X
 };
 
-// $7F4D
+/** $7F4D: bitmap_streetlampbody_9s */
 const u8 bitmap_streetlampbody_9s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
-// $7F51
+/** $7F51: bitmap_streetlampbody_10 */
 const u8 bitmap_streetlampbody_10[2] = {
   XX___XXX, __XXX___
 };
 
-// $7F53
+/** $7F53: bitmap_streetlampbody_11 */
 const u8 bitmap_streetlampbody_11[4] = {
   XX___XXX, __X_X___,
   XX___XXX, __X_X___
 };
 
-// $7F57
+/** $7F57: bitmap_streetlampbody_12 */
 const u8 bitmap_streetlampbody_12[4] = {
   XX__XXXX, __XX____,
   XX__XXXX, __XX____
 };
 
-// $7F5B
+/** $7F5B: bitmap_streetlampbody_10s */
 const u8 bitmap_streetlampbody_10s[2] = {
   XXXX___X, ____XXX_
 };
 
-// $7F5D
+/** $7F5D: bitmap_streetlampbody_11s */
 const u8 bitmap_streetlampbody_11s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
-// $7F61
+/** $7F61: bitmap_streetlampbody_12s */
 const u8 bitmap_streetlampbody_12s[4] = {
   XXXX__XX, ____XX__,
   XXXX__XX, ____XX__
 };
 
-// $7F65
+/** $7F65: bitmap_streetlampbody_13 */
 const u8 bitmap_streetlampbody_13[4] = {
   XXXXXXX_, _______X,
   _XXXXXXX, X_______
 };
 
-// $7F69
+/** $7F69: bitmap_streetlampbody_14 */
 const u8 bitmap_streetlampbody_14[8] = {
   XXXXXXX_, _______X, _XXXXXXX, X_______,
   XXXXXXX_, _______X, _XXXXXXX, X_______
 };
 
-// $7F71
+/** $7F71: bitmap_streetlampbody_15 */
 const u8 bitmap_streetlampbody_15[8] = {
   XXXXXXXX, ________, _XXXXXXX, X_______,
   XXXXXXXX, ________, _XXXXXXX, X_______
 };
 
-/* $7F79: pre-shifted bitmaps 13s/14s/15s, followed by unused zeros ($7F8D+).
- * The renderer reads across their boundaries as contiguous Z80 memory, so
- * they must be a single C array. Max read: start_offset=2 (1 row skipped),
- * max_height=30, draw_width=4: 2 + 2*29 + 3 = 63 → need 64 bytes. */
+/**
+ * $7F79: streetlampbody_shifted_pool
+ *
+ * Pre-shifted bitmaps 13s/14s/15s, followed by unused zeros ($7F8D+). The
+ * renderer reads across their boundaries as contiguous Z80 memory, so they
+ * must be a single C array. Max read: start_offset=2 (1 row skipped),
+ * max_height=30, draw_width=4: 2 + 2*29 + 3 = 63 -- need 64 bytes.
+ */
 static const u8 streetlampbody_shifted_pool[64] = {
   /* $7F79: bitmap_streetlampbody_13s */
   XXXXXXXX, ________, XXX__XXX, ___XX___,
@@ -1329,7 +1349,7 @@ static const u8 streetlampbody_shifted_pool[64] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $81DD
+/** $81DD: chatterblk_start_stage */
 const u8 chatterblk_start_stage[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_GIDDY_UP,
@@ -1337,21 +1357,27 @@ const u8 chatterblk_start_stage[4] = {
   CHATTERBLK_TONY_LETS_GO
 };
 
-// $81E4
+/** $81E4: chatterblk_tony_giddy_up */
 const u8 chatterblk_tony_giddy_up[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GIDDY_UP_BOY,
   CHATTERCMD_STOP
 };
 
-// $81E8
+/** $81E8: chatterblk_tony_hold_on */
 const u8 chatterblk_tony_hold_on[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_HOLD_ON_MAN,
   CHATTERCMD_STOP
 };
 
-// Conv: Chatter strings from two locations are combined into this table.
+/**
+ * common_chatter_strings
+ *
+ * Conv: chatter strings from two locations ($81EC and $97B5, marked inline
+ * below) are combined into this single table; not a Z80 table itself, so
+ * there is no single originating address.
+ */
 const char *common_chatter_strings[CHATTERSTR__LIMIT] = {
   // $81EC
   "GIDDY UP BOY\xA1",
@@ -1394,7 +1420,7 @@ const char *common_chatter_strings[CHATTERSTR__LIMIT] = {
   // CHATTERSTR_PERP_DESC_1..4 (36..39) -- these vary with stage
 };
 
-// $82A6
+/** $82A6: attract_messages */
 const u8 attract_messages[38] = {
   DRAWCHARSTYLE_DOUBLE,
   attribute_BLACK_OVER_BLACK, // zero
@@ -1409,7 +1435,7 @@ const u8 attract_messages[38] = {
   'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | EOS
 };
 
-// $82CC
+/** $82CC: credits_messages */
 const u8 credits_messages[84] = {
   10, // frame delay
   8, // vertical gap?
@@ -1434,7 +1460,7 @@ const u8 credits_messages[84] = {
   0
 };
 
-// $8320
+/** $8320: copyright_messages */
 const u8 copyright_messages[92] = {
   10,
   8,
@@ -1459,11 +1485,15 @@ const u8 copyright_messages[92] = {
   0
 };
 
-/* $86F6: backdrop blit instruction templates (36 bytes, two 18-byte chunks).
- * Chunk 0 (bytes 0–17):  INC L (0x2C) + NOP (0x00) × 9 — skip backdrop bytes.
- * Chunk 1 (bytes 18–35): LDI   (0xED, 0xA0) × 9       — copy backdrop bytes.
+/**
+ * $86F6: backdrop_copy_instrs_template
+ *
+ * Backdrop blit instruction templates (36 bytes, two 18-byte chunks).
+ * Chunk 0 (bytes 0-17):  INC L (0x2C) + NOP (0x00) x 9 -- skip backdrop bytes.
+ * Chunk 1 (bytes 18-35): LDI   (0xED, 0xA0) x 9       -- copy backdrop bytes.
  * dr_start_backdrop_fill copies 18 bytes starting at offset dr_backdrop_copy_jump into
- * state->dr_backdrop_copy_instrs, which the blit loop then interprets. */
+ * state->dr_backdrop_copy_instrs, which the blit loop then interprets.
+ */
 const u8 backdrop_copy_instrs_template[36] = {
   0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
   0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
@@ -1471,7 +1501,7 @@ const u8 backdrop_copy_instrs_template[36] = {
   0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0
 };
 
-// $871A
+/** $871A: escape_scene_data */
 const scenedata_t escape_scene_data = {
   308, // road_pos
   &perp_escape_curvature[-1],
@@ -1482,7 +1512,7 @@ const scenedata_t escape_scene_data = {
   &perp_escape_hazards[-1],
 };
 
-// $8728
+/** $8728: escape_scene_perp */
 const hazard_t escape_scene_perp = {
   HAZARD_USED,
   1,      // distance
@@ -1505,8 +1535,11 @@ const hazard_t escape_scene_perp = {
   0
 };
 
-// $897C
-// Conv: This is now a template copied into state.
+/**
+ * $897C: sfx_crash_table
+ *
+ * Conv: This is now a template copied into state.
+ */
 const u8 sfx_crash_table[93] = {
   0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xFF, 0xFF,
   0xEF, 0xFF, 0xFF, 0xFF, 0xBE, 0x36, 0x10, 0x00,
@@ -1522,8 +1555,11 @@ const u8 sfx_crash_table[93] = {
   0x38, 0xF0, 0x03, 0x80, 0x00
 };
 
-// $8C58
-// Conv: This is now a template copied into state.
+/**
+ * $8C58: score_messages_template
+ *
+ * Conv: This is now a template copied into state.
+ */
 const u8 score_messages_template[90] = {
   5, 4, 3,
   attribute_RED_OVER_BLACK,
@@ -1543,7 +1579,7 @@ const u8 score_messages_template[90] = {
   3, 0
 };
 
-// $8CB2
+/** $8CB2: sighting_message */
 const u8 sighting_message[36] = {
   0x01, 0x1E, 0x02,
   attribute_BLACK_OVER_BLACK,
@@ -1553,7 +1589,7 @@ const u8 sighting_message[36] = {
   0, 0
 };
 
-// $8CD6
+/** $8CD6: pull_over_message */
 const u8 pull_over_message[30] = {
   0x01, 0x1E, 0x02,
   attribute_BLACK_OVER_BLACK,
@@ -1563,7 +1599,7 @@ const u8 pull_over_message[30] = {
   0, 0
 };
 
-// $8CF4
+/** $8CF4: game_over_message */
 const u8 game_over_message[20] = {
   0x01, 0x1E, 0x03,
   attribute_BLACK_OVER_BLACK,
@@ -1573,7 +1609,7 @@ const u8 game_over_message[20] = {
   3, 0
 };
 
-// $8D07
+/** $8D07: time_up_message */
 const u8 time_up_message[20] = {
   0x01, 0x19, 0x03,
   attribute_BLACK_OVER_BLACK,
@@ -1583,7 +1619,7 @@ const u8 time_up_message[20] = {
   3, 0
 };
 
-// $8D18
+/** $8D18: continue_messages_template */
 const u8 continue_messages_template[119] = {
   0x01, 0x01, 0x03,
   attribute_BLACK_OVER_BLACK,
@@ -1618,12 +1654,12 @@ const u8 continue_messages_template[119] = {
   0x03, 0x00
 };
 
-// $9D5B
+/** $9D5B: stage_n_template */
 const u8 stage_n_template[7] = {
   'S', 'T', 'A', 'G', 'E', ' ', ' ' | EOS,
 };
 
-// $98A9
+/** $98A9: chatterblk_pilot_turn_left */
 const u8 chatterblk_pilot_turn_left[6] = {
   CHATTERCHR_PILOT,
   CHATTERSTR_THIS_IS_AIRBORNE,
@@ -1633,7 +1669,7 @@ const u8 chatterblk_pilot_turn_left[6] = {
   CHATTERBLK_TONY_LOUD_CLEAR
 };
 
-// $98B3
+/** $98B3: chatterblk_pilot_turn_right */
 const u8 chatterblk_pilot_turn_right[6] = {
   CHATTERCHR_PILOT,
   CHATTERSTR_THIS_IS_AIRBORNE,
@@ -1643,7 +1679,7 @@ const u8 chatterblk_pilot_turn_right[6] = {
   CHATTERBLK_TONY_LOUD_CLEAR
 };
 
-// $98BD
+/** $98BD: chatterblk_heroes_acknowledge */
 const u8 chatterblk_heroes_acknowledge[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_LOUD_CLEAR,
@@ -1651,28 +1687,28 @@ const u8 chatterblk_heroes_acknowledge[4] = {
   CHATTERBLK_TONY_GOTCHA,
 };
 
-// $98C4
+/** $98C4: chatterblk_tony_loud_clear */
 const u8 chatterblk_tony_loud_clear[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_READ_LOUD_CLEAR,
   CHATTERCMD_STOP
 };
 
-// $98C8
+/** $98C8: chatterblk_raymond_roger */
 const u8 chatterblk_raymond_roger[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_ROGER,
   CHATTERCMD_STOP
 };
 
-// $98CC
+/** $98CC: chatterblk_tony_gotcha */
 const u8 chatterblk_tony_gotcha[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GOTCHA_NANCY,
   CHATTERCMD_STOP
 };
 
-// $98D0
+/** $98D0: chatterblk_raymond_wrong_way */
 const u8 chatterblk_raymond_wrong_way[4] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_WHAT_YOU_DOING,
@@ -1680,7 +1716,7 @@ const u8 chatterblk_raymond_wrong_way[4] = {
   CHATTERCMD_STOP
 };
 
-// $98D6
+/** $98D6: chatterblk_raymond_smash */
 const u8 chatterblk_raymond_smash[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_BEAR_DOWN,
@@ -1688,35 +1724,35 @@ const u8 chatterblk_raymond_smash[4] = {
   CHATTERBLK_RAYMOND_PUSH_IT
 };
 
-// $98DD
+/** $98DD: chatterblk_raymond_bear_down */
 const u8 chatterblk_raymond_bear_down[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_BEAR_DOWN,
   CHATTERCMD_STOP
 };
 
-// $98E1
+/** $98E1: chatterblk_raymond_push_it */
 const u8 chatterblk_raymond_push_it[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_MORE_PUSH_MORE,
   CHATTERCMD_STOP
 };
 
-// $98E5
+/** $98E5: chatterblk_raymond_harder */
 const u8 chatterblk_raymond_harder[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_HARDER,
   CHATTERCMD_STOP
 };
 
-// $98E9
+/** $98E9: chatterblk_raymond_oh_man */
 const u8 chatterblk_raymond_oh_man[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OH_MAN,
   CHATTERCMD_STOP
 };
 
-// $98ED
+/** $98ED: chatterblk_raymond_random_pleas */
 const u8 chatterblk_raymond_random_pleas[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_OH_MAN,
@@ -1724,21 +1760,21 @@ const u8 chatterblk_raymond_random_pleas[4] = {
   CHATTERBLK_RAYMOND_PLEASE
 };
 
-// $98F4
+/** $98F4: chatterblk_raymond_please */
 const u8 chatterblk_raymond_please[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_PLEASE,
   CHATTERCMD_STOP
 };
 
-// $98F8
+/** $98F8: chatterblk_raymond_get_moving */
 const u8 chatterblk_raymond_get_moving[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_GET_MOVIN_MAN,
   CHATTERCMD_STOP
 };
 
-// $98FC
+/** $98FC: chatterblk_nancy_time_running_out */
 const u8 chatterblk_nancy_time_running_out[5] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_THIS_IS_NANCY,
@@ -1747,7 +1783,7 @@ const u8 chatterblk_nancy_time_running_out[5] = {
   CHATTERCMD_STOP
 };
 
-// $9904
+/** $9904: chatterblk_raymond_random_yelps */
 const u8 chatterblk_raymond_random_yelps[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_OHNO,
@@ -1755,28 +1791,28 @@ const u8 chatterblk_raymond_random_yelps[4] = {
   CHATTERBLK_RAYMOND_YAOW
 };
 
-// $990B
+/** $990B: chatterblk_raymond_ohno */
 const u8 chatterblk_raymond_ohno[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OH_NO,
   CHATTERCMD_STOP
 };
 
-// $990F
+/** $990F: chatterblk_raymond_ouch */
 const u8 chatterblk_raymond_ouch[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OUCH,
   CHATTERCMD_STOP
 };
 
-// $9913
+/** $9913: chatterblk_raymond_yaow */
 const u8 chatterblk_raymond_yaow[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_YAOW,
   CHATTERCMD_STOP
 };
 
-// $9917
+/** $9917: chatterblk_turbo */
 const u8 chatterblk_turbo[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_WHOA,
@@ -1784,28 +1820,28 @@ const u8 chatterblk_turbo[4] = {
   CHATTERBLK_RAYMOND_ONE_MORE_TIME
 };
 
-// $991E
+/** $991E: chatterblk_tony_whoa */
 const u8 chatterblk_tony_whoa[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_WHOA,
   CHATTERCMD_STOP
 };
 
-// $9922
+/** $9922: chatterblk_tony_great */
 const u8 chatterblk_tony_great[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GREAT,
   CHATTERCMD_STOP
 };
 
-// $9926
+/** $9926: chatterblk_raymond_one_more_time */
 const u8 chatterblk_raymond_one_more_time[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_ONE_MORE_TIME,
   CHATTERCMD_STOP
 };
 
-// $992A
+/** $992A: chatterblk_nancy_berates_hero */
 const u8 chatterblk_nancy_berates_hero[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_NANCY_WRONG_JOB,
@@ -1813,21 +1849,21 @@ const u8 chatterblk_nancy_berates_hero[4] = {
   CHATTERBLK_NANCY_MEDIOCRE_DRIVER
 };
 
-// $9931
+/** $9931: chatterblk_nancy_wrong_job */
 const u8 chatterblk_nancy_wrong_job[3] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PICKED_WRONG_JOB,
   CHATTERCMD_STOP
 };
 
-// $9937
+/** $9937: chatterblk_nancy_one_more_try */
 const u8 chatterblk_nancy_one_more_try[3] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_ONE_MORE_TRY,
   CHATTERCMD_STOP
 };
 
-// $993B
+/** $993B: chatterblk_nancy_mediocre_driver */
 const u8 chatterblk_nancy_mediocre_driver[4] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_MEDIOCRE_DRIVER,
@@ -1835,16 +1871,22 @@ const u8 chatterblk_nancy_mediocre_driver[4] = {
   CHATTERCMD_STOP
 };
 
-// $9941
+/** $9941: chatterblk_tony_lets_go */
 const u8 chatterblk_tony_lets_go[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_LETS_GO,
   CHATTERCMD_STOP
 };
 
-// Additional: List of all chatter blocks
-// Note: Strictly this only needs to be the blocks that are referred to from
-// other blocks.
+/**
+ * chatter_blocks
+ *
+ * Conv: host-side index of all chatter blocks, added so callers can look
+ * one up by enum instead of address; not a Z80 table itself, so there is
+ * no single originating address -- see each chatterblk_* array's own
+ * address above. Strictly this only needs to hold the blocks that are
+ * referred to from other blocks.
+ */
 const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
   &chatterblk_start_stage[0],
   &chatterblk_tony_giddy_up[0],
@@ -1882,7 +1924,7 @@ const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $A13E
+/** $A13E: saved_game_state */
 const session_t saved_game_state = {
   1, // spawn_accumulator
   100, // idle_timer
@@ -1902,7 +1944,7 @@ const session_t saved_game_state = {
 
 #define PERP_INITIAL_DISTANCE (868)
 
-// $A159
+/** $A159: saved_game_state_perp_hazard */
 const hazard_t saved_game_state_perp_hazard = {
   0,
   PERP_INITIAL_DISTANCE & 0xFF,
@@ -1925,7 +1967,7 @@ const hazard_t saved_game_state_perp_hazard = {
 
 /* ----------------------------------------------------------------------- */
 
-// $A27A
+/** $A27A: font */
 const u8 font[41 * 7] = {
   __XX____,
   _XXXX___,
@@ -2256,7 +2298,7 @@ const u8 font[41 * 7] = {
   _XXXXXX_
 };
 
-// $A623
+/** $A623: hazard_template */
 const hazard_t hazard_template = {
   HAZARD_USED,
   21, // distance
@@ -2278,7 +2320,7 @@ const hazard_t hazard_template = {
 
 /* ----------------------------------------------------------------------- */
 
-// $A7E7
+/** $A7E7: hazard_pos_speed */
 const u8 hazard_pos_speed[3 * 4] = {
   5, 80, 148, 216,    // road positions the hazard will align with
   140, 220, 170, 250, // hazard speed used when perp has not been sighted
@@ -2287,7 +2329,7 @@ const u8 hazard_pos_speed[3 * 4] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $B045
+/** $B045: hero_car_jump_table */
 const u8 hero_car_jump_table[10 * 2] = {
   0x03, 0x0D, // Pitch Up,    Delta  13
   0x03, 0x0A, // Pitch Up,    Delta  10
@@ -2301,9 +2343,11 @@ const u8 hero_car_jump_table[10 * 2] = {
   0x06, 0xF3  // Pitch Down,  Delta -13
 };
 
-// $B059
-//
-// Five pairs of (jump_arc_offset, y_height)
+/**
+ * $B059: car_jump_params
+ *
+ * Five pairs of (jump_arc_offset, y_height)
+ */
 const u8 car_jump_params[5 * 2] = {
   0x08, 0x02,
   0x06, 0x04,
@@ -2312,10 +2356,12 @@ const u8 car_jump_params[5 * 2] = {
   0x00, 0x0A
 };
 
-// $B828
-//
-// Byte table: scroll_horizon ($B265) reads HL=($B827+curvature) as a byte;
-// update_road_level ($B9BD) reads HL=($B828+speed_part+abs_curvature*4) as byte.
+/**
+ * $B828: horizon_table
+ *
+ * Byte table: scroll_horizon ($B265) reads HL=($B827+curvature) as a byte;
+ * update_road_level ($B9BD) reads HL=($B828+speed_part+abs_curvature*4) as byte.
+ */
 const u8 horizon_table[32] = {
   0xFF, 0x7F,  /* $B828: from DEFW $7FFF */
   0x55, 0x3F,  /* $B82A: from DEFW $3F55 */
@@ -2337,52 +2383,52 @@ const u8 horizon_table[32] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CE0C
+/** $CE0C: smoke_ce0c_template */
 const u8 smoke_ce0c_template[13] = {
   0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// $CE19
+/** $CE19: smoke_ce19_template */
 const u8 smoke_ce19_template[13] = {
   0x02, 0xF4, 0x10, 0xF8, 0x08, 0xFA, 0x08, 0xFC, 0x08, 0xFD, 0x08, 0xFE, 0x00
 };
 
-// $CE26
+/** $CE26: smoke_ce26_template */
 const u8 smoke_ce26_template[13] = {
   0x05, 0xF8, 0x20, 0xFA, 0x18, 0xFC, 0x10, 0xFE, 0x10, 0xFF, 0x08, 0x00, 0x08
 };
 
 /* ----------------------------------------------------------------------- */
 
-// $CE4B
+/** $CE4B: debris_subtable_1_template */
 const u8 debris_subtable_1_template[19] = {
   0x00, // counter
   0x32, 0x10, // y,x
   0x28, 0x20, 0x23, 0x30, 0x1E, 0x40, 0x23, 0x50, 0x28, 0x60, 0x32, 0x68, 0x46, 0x70, 0x5A, 0x78
 };
 
-// $CE5E
+/** $CE5E: debris_subtable_2_template */
 const u8 debris_subtable_2_template[19] = {
   0x01,
   0x1E, 0x48, // y,x
   0x14, 0x50, 0x0A, 0x58, 0x0A, 0x60, 0x14, 0x68, 0x1E, 0x70, 0x2D, 0x70, 0x41, 0x78, 0x5A, 0x78
 };
 
-// $CE71
+/** $CE71: debris_subtable_3_template */
 const u8 debris_subtable_3_template[19] = {
   0x03,
   0x0A, 0x80, // y,x
   0x05, 0x80, 0x05, 0x80, 0x0A, 0x80, 0x0F, 0x80, 0x19, 0x80, 0x28, 0x80, 0x3C, 0x80, 0x5A, 0x80
 };
 
-// $CE84
+/** $CE84: debris_subtable_4_template */
 const u8 debris_subtable_4_template[19] = {
   0x01,
   0x1E, 0xB0, // y,x
   0x14, 0xA8, 0x0A, 0xA0, 0x0A, 0x98, 0x14, 0x90, 0x1E, 0x88, 0x2D, 0x88, 0x41, 0x80, 0x5A, 0x80
 };
 
-// $CE97
+/** $CE97: debris_subtable_5_template */
 const u8 debris_subtable_5_template[19] = {
   0x02,
   0x32, 0xF0, // y,x
@@ -2391,10 +2437,12 @@ const u8 debris_subtable_5_template[19] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CEAA-$CED9: four 12-byte debris frames, contiguous in the original binary.
-// draw_debris indexes this as one 48-byte table (frame * 12), so it must stay
-// a single array; C does not guarantee the relative placement of four
-// separate globals.
+/**
+ * $CEAA-$CED9: four 12-byte debris frames, contiguous in the original binary.
+ * draw_debris indexes this as one 48-byte table (frame * 12), so it must stay
+ * a single array; C does not guarantee the relative placement of four
+ * separate globals.
+ */
 const u8 bitmap_debris[4][2 * 6] = {
   { // $CEAA
     XXXX___X, ____XXX_,
@@ -2432,7 +2480,7 @@ const u8 bitmap_debris[4][2 * 6] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CEDA
+/** $CEDA: hero_car_parts */
 const carpart_t hero_car_parts[9][5] = {
   {
     {  6, 14, bitmap_hero_centre_straight },
@@ -2499,14 +2547,14 @@ const carpart_t hero_car_parts[9][5] = {
   }
 };
 
-// $CF8E
+/** $CF8E: hero_car_shadow */
 const carpart_t hero_car_shadow[3] = {
   { 0, 12, bitmap_shadow_straight        },
   { 0, 12, bitmap_shadow_turn_right      },
   { 0, 12, bitmap_shadow_turn_right_hard }
 };
 
-// $CF9A
+/** $CF9A: hero_car_turbo_smoke */
 const carsmokeframe_t hero_car_turbo_smoke[4] = {
   {
     16, 4,
@@ -2532,7 +2580,7 @@ const carsmokeframe_t hero_car_turbo_smoke[4] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CFB2
+/** $CFB2: car_frames */
 const carframe_t car_frames[39] = {
   { 0xE1, 0x00, 0x00 }, // Cherry light
   { 0xE4, 0xF8, 0x04 }, // Flashing cherry light
@@ -2575,7 +2623,7 @@ const carframe_t car_frames[39] = {
   { 0xE8, 0xF0, 0x10 }  // Putting-cherry-on-roof anim frame 2
 };
 
-// $CFB2
+/** $CFB2: car_adornments */
 const caradornment_t car_adornments[6] = {
   {  7, 1, &bitmap_cherry_light[0] },
   { 14, 3, &bitmap_cherry_light_lit[0] },
@@ -2587,7 +2635,7 @@ const caradornment_t car_adornments[6] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $D03F
+/** $D03F: bitmap_arrow */
 const u8 bitmap_arrow[3 * 2 * 28] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   XX______, _____XXX, ______XX, XXXXXX__, XXXXXXXX, ________,
@@ -2619,7 +2667,7 @@ const u8 bitmap_arrow[3 * 2 * 28] = {
   XX__X_X_, ________, __X____X, ________, ___XX__X, ________
 };
 
-// $D0E7
+/** $D0E7: bitmap_cherry_light */
 const u8 bitmap_cherry_light[1 * 2 * 7] = {
   ________, _X____X_,
   ________, _XXXXXX_,
@@ -2630,7 +2678,7 @@ const u8 bitmap_cherry_light[1 * 2 * 7] = {
   XX____XX, ________
 };
 
-// $D0F5
+/** $D0F5: bitmap_cherry_light_lit */
 const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
@@ -2648,7 +2696,7 @@ const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________
 };
 
-// $D149
+/** $D149: bitmap_spark */
 const u8 bitmap_spark[3 * 2 * 20] = {
   XXXXXXX_, _______X, XXX___XX, ___X_X__, XX_XXXXX, __X_____,
   XXXXXX__, ______X_, __X___X_, XX_XXX_X, X___XXXX, _X_X____,
@@ -2672,7 +2720,7 @@ const u8 bitmap_spark[3 * 2 * 20] = {
   XXXXXXXX, ________, _XX_XXXX, X__X____, XX_XXXXX, __X_____
 };
 
-// $D1C1
+/** $D1C1: bitmap_cherryout_1 */
 const u8 bitmap_cherryout_1[2 * 2 * 4] = {
   XXXXXX__, ______XX, ___XXXXX, XXX_____,
   XXXXXXX_, _______X, X___XXXX, _XXX____,
@@ -2680,7 +2728,7 @@ const u8 bitmap_cherryout_1[2 * 2 * 4] = {
   XXXXXXXX, ________, ___XXXXX, XXX_____
 };
 
-// $D1D1
+/** $D1D1: bitmap_cherryout_2 */
 const u8 bitmap_cherryout_2[2 * 2 * 9] = {
   XXXXXXX_, _______X, ___X_XXX, XXX_____,
   XXXXXX_X, ______X_, ______XX, XXXXX___,
@@ -2693,7 +2741,7 @@ const u8 bitmap_cherryout_2[2 * 2 * 9] = {
   XXXXXXXX, ________, XXXXX_XX, ________
 };
 
-// $D1F5
+/** $D1F5: bitmap_cherryout_3 */
 const u8 bitmap_cherryout_3[1 * 2 * 12] = {
   _____XXX, XXXXX___,
   ______XX, XXXXX___,
@@ -2709,7 +2757,7 @@ const u8 bitmap_cherryout_3[1 * 2 * 12] = {
   X___XXXX, ________
 };
 
-// $D20D
+/** $D20D: bitmap_turbo_1 */
 const u8 bitmap_turbo_1[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2729,7 +2777,7 @@ const u8 bitmap_turbo_1[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__, XXXXXXXX, ________
 };
 
-// $D28D
+/** $D28D: bitmap_turbo_2 */
 const u8 bitmap_turbo_2[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X___XXX, X__XXXXX, _XX_____, XXXX____, ____XXXX, XXXXXXXX, ________,
@@ -2749,7 +2797,7 @@ const u8 bitmap_turbo_2[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________
 };
 
-// $D30D
+/** $D30D: bitmap_turbo_3 */
 const u8 bitmap_turbo_3[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X______X, _X___XX_, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2769,7 +2817,7 @@ const u8 bitmap_turbo_3[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__
 };
 
-// $D38D
+/** $D38D: bitmap_turbo_4 */
 const u8 bitmap_turbo_4[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2789,7 +2837,7 @@ const u8 bitmap_turbo_4[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ______X_
 };
 
-// $D40D
+/** $D40D: bitmap_hero_centre_straight */
 const u8 bitmap_hero_centre_straight[5 * 14] = {
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
@@ -2807,7 +2855,7 @@ const u8 bitmap_hero_centre_straight[5 * 14] = {
   __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_XX_
 };
 
-// $D453
+/** $D453: bitmap_hero_centre_straight_right */
 const u8 bitmap_hero_centre_straight_right[5 * 17] = {
   XXXXXXX_, XX__XXXX, XXXXXXXX, XX_XX__X, XXXXXXXX,
   XXXXXXXX, ___XX___, ________, XXX___XX, XXXXXXXX,
@@ -2828,7 +2876,7 @@ const u8 bitmap_hero_centre_straight_right[5 * 17] = {
   ___XXXXX, _XXXXXXX, XX__X_X_, XXXXXXXX, ___XX___
 };
 
-// $D4A8
+/** $D4A8: bitmap_hero_centre_straight_right_hard */
 const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
   XXXX_XX_, _XXXXXXX, XXXXXXX_, XX___XXX, XXXXXXXX,
   XXXXX___, XXX_____, ______XX, ____XXXX, XXXXXXXX,
@@ -2848,7 +2896,7 @@ const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX__XXX
 };
 
-// $D4F8
+/** $D4F8: bitmap_hero_centre_up */
 const u8 bitmap_hero_centre_up[5 * 14] = {
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2866,7 +2914,7 @@ const u8 bitmap_hero_centre_up[5 * 14] = {
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_
 };
 
-// $D53E
+/** $D53E: bitmap_hero_centre_up_right */
 const u8 bitmap_hero_centre_up_right[5 * 17] = {
   XXXXXXXX, X__XX___, ________, XXXX__XX, XXXXXXXX,
   XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
@@ -2887,7 +2935,7 @@ const u8 bitmap_hero_centre_up_right[5 * 17] = {
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXX__
 };
 
-// $D593
+/** $D593: bitmap_hero_centre_up_right_hard */
 const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
   XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2906,7 +2954,7 @@ const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXX_
 };
 
-// $D5DE
+/** $D5DE: bitmap_hero_centre_down */
 const u8 bitmap_hero_centre_down[5 * 14] = {
   XXXXXXXX, X____XXX, XXXXXXXX, XXXX____, XXXXXXXX,
   XXXXXXXX, X_XX_XX_, ________, __XX_XX_, XXXXXXXX,
@@ -2924,7 +2972,7 @@ const u8 bitmap_hero_centre_down[5 * 14] = {
   __XXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X__XXXX_
 };
 
-// $D624
+/** $D624: bitmap_hero_centre_down_right */
 const u8 bitmap_hero_centre_down_right[5 * 16] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X__XXXXX, XXXXXXXX, XXXX__XX, XXXXXXXX,
@@ -2944,7 +2992,7 @@ const u8 bitmap_hero_centre_down_right[5 * 16] = {
   _XX___XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__
 };
 
-// $D674
+/** $D674: bitmap_hero_centre_down_right_hard */
 const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXX_, _XXXXXXX, XXXXXXXX, XX__XXXX, XXXXXXXX,
@@ -2964,7 +3012,7 @@ const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
   X____XXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX
 };
 
-// $D6C4
+/** $D6C4: bitmap_hero_top_straight */
 const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
   XX__XX__, ___X__XX, XX______, __XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, X__XX__X, _XX__X__,
   XXX__X__, ____X_XX, XXX_____, ___XXXXX, XXXXXXXX, ________, X_____XX, _XXXXX__, X__X__XX, _XX_X___,
@@ -2977,7 +3025,7 @@ const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
-// $D71E
+/** $D71E: bitmap_hero_bottom_straight */
 const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
   XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
   XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
@@ -2987,7 +3035,7 @@ const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XX__XXX_, ________, ________, ________, __XXX__X, ________, XXXXXXXX
 };
 
-// $D75A
+/** $D75A: bitmap_hero_left_straight */
 const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
   XXXXXXX_, ________,
   XXXXXXX_, ________,
@@ -3005,7 +3053,7 @@ const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
   XXXXXXXX, ________
 };
 
-// $D776
+/** $D776: bitmap_hero_right_straight */
 const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
@@ -3023,7 +3071,7 @@ const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
-// $D792
+/** $D792: bitmap_hero_top_straight_right */
 const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
   XXX___XX, ____XX__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XXX__XXX, ___X____,
   XXXX__XX, _____X__, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX___XXX, __XX____,
@@ -3035,7 +3083,7 @@ const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
-// $D7E2
+/** $D7E2: bitmap_hero_bottom_straight_right */
 const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
   XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
   X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
@@ -3043,7 +3091,7 @@ const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, _______X, XXXXXXX_
 };
 
-// $D80A
+/** $D80A: bitmap_hero_left_straight_left */
 const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3060,7 +3108,7 @@ const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
   XXXXXXXX, ________
 };
 
-// $D824
+/** $D824: bitmap_hero_right_straight_right */
 const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -3077,7 +3125,7 @@ const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
   __XXXXXX, ________
 };
 
-// $D83E
+/** $D83E: bitmap_hero_top_straight_right_hard */
 const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
   X_______, ___XXXXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, ___XX___, XXX__XX_,
   XXX____X, _____XX_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, __XXX__X, XX___X__,
@@ -3090,7 +3138,7 @@ const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXX____, ________, ________, ________, ________, ________, XXXXXXXX, ________
 };
 
-// $D898
+/** $D898: bitmap_hero_bottom_straight_right_hard */
 const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
   XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
   X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
@@ -3098,7 +3146,7 @@ const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
   ________, XXXXX___, _XXXXXXX, X_______, XXXXXXX_, _______X, ________, ____XXXX, ______XX, XXXXXX__
 };
 
-// $D8C0
+/** $D8C0: bitmap_hero_left_straight_right_hard */
 const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3114,7 +3162,7 @@ const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
   XXXXXXX_, ________
 };
 
-// $D8D8
+/** $D8D8: bitmap_hero_right_straight_right_hard */
 const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
   _XXXXXXX, X_______,
   ___XXXXX, XX______,
@@ -3133,7 +3181,7 @@ const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
   ___XXXXX, ________
 };
 
-// $D8F6
+/** $D8F6: bitmap_hero_top_up */
 const u8 bitmap_hero_top_up[5 * 2 * 10] = {
   XX___XX_, ___XX__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XX___X, XX__XX__,
   XXX___X_, _____X_X, _X______, X_XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, __X___XX, XX_X____,
@@ -3147,7 +3195,7 @@ const u8 bitmap_hero_top_up[5 * 2 * 10] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
-// $D95A
+/** $D95A: bitmap_hero_bottom_up */
 const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
   XXX_____, ___XXXXX, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXX__X, _____XX_, ______XX, XXXXXX__,
   XX______, __X_____, ______XX, XX__XX__, XXXXXXXX, ________, XXXX____, ____X__X, _______X, X_____X_,
@@ -3157,7 +3205,7 @@ const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XXXXXXX_, ________, ________, ________, __XXXXXX, ________, XXXXXXXX
 };
 
-// $D996
+/** $D996: bitmap_hero_left_up */
 const u8 bitmap_hero_left_up[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3174,7 +3222,7 @@ const u8 bitmap_hero_left_up[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
-// $D9B0
+/** $D9B0: bitmap_hero_right_up */
 const u8 bitmap_hero_right_up[1 * 2 * 14] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -3192,7 +3240,7 @@ const u8 bitmap_hero_right_up[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
-// $D9CC
+/** $D9CC: bitmap_hero_top_right */
 const u8 bitmap_hero_top_right[5 * 2 * 9] = {
   XXX_____, _____XXX, ________, XXXXXXXX, ____X_X_, XXXX_X_X, X_______, _XXXXXXX, XXX___XX, ___X____,
   XXXX__XX, _____X__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XX__XXXX, __X_____,
@@ -3205,7 +3253,7 @@ const u8 bitmap_hero_top_right[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXXXX__, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
-// $DA26
+/** $DA26: bitmap_hero_bottom_right */
 const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
   XX______, __XXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXXX, _____XXX, XXXXX___,
   X_______, _X_____X, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, ______XX, _____X__,
@@ -3213,7 +3261,7 @@ const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ________, ____X___, ________, ________, ________, XXX____X, _______X, XXXXXXX_
 };
 
-// $DA4E
+/** $DA4E: bitmap_hero_left_right */
 const u8 bitmap_hero_left_right[1 * 2 * 12] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3229,7 +3277,7 @@ const u8 bitmap_hero_left_right[1 * 2 * 12] = {
   XXXXXXX_, ________
 };
 
-// $DA66
+/** $DA66: bitmap_hero_right_right */
 const u8 bitmap_hero_right_right[1 * 2 * 14] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -3247,7 +3295,7 @@ const u8 bitmap_hero_right_right[1 * 2 * 14] = {
   __XXXXXX, ________
 };
 
-// $DA82
+/** $DA82: bitmap_hero_up_right_hard */
 const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
   XXXX____, _____XXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, _XXX___X, X___X___,
   XXXXX__X, ______X_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, _XXX__XX, X___X___,
@@ -3260,7 +3308,7 @@ const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXXXXXX, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
-// $DADC
+/** $DADC: bitmap_hero_bottom_right_hard */
 const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
   XX__X___, __XX_XXX, XXXXXXXX, ________, XXXXXXXX, ________, ___XXXX_, XXX____X, ____XXXX, XXXX____,
   X_______, _X__X___, __XXXXXX, XX______, XXXXXXX_, _______X, ________, ___XXXX_, _____XXX, ____X___,
@@ -3270,7 +3318,7 @@ const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
   ________, XXXXXXXX, ________, XXX_____, ________, ______XX, ________, XXXXXXXX, ________, XXXXXXXX
 };
 
-// $DB18
+/** $DB18: bitmap_hero_left_right_hard */
 const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3285,7 +3333,7 @@ const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
   XXXXXXX_, ________
 };
 
-// $DB2E
+/** $DB2E: bitmap_hero_right_right_hard */
 const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
   ___XXXXX, XX______,
   ____XXXX, XXX_____,
@@ -3304,7 +3352,7 @@ const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
   __XXXXXX, ________
 };
 
-// $DB4C
+/** $DB4C: bitmap_hero_top_down */
 const u8 bitmap_hero_top_down[5 * 2 * 8] = {
   XX______, ___XXX__, ________, ________, ________, ________, ________, ________, _______X, __XXXX__,
   XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXX___,
@@ -3316,7 +3364,7 @@ const u8 bitmap_hero_top_down[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
-// $DB9C
+/** $DB9C: bitmap_hero_bottom_down */
 const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
   XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
   XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
@@ -3326,7 +3374,7 @@ const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XX__XXXX, ________, XXXXXXXX, ________, XXXXX__X, ________, XXXXXXXX
 };
 
-// $DBD8
+/** $DBD8: bitmap_hero_left_down */
 const u8 bitmap_hero_left_down[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXXX_, ________,
@@ -3343,7 +3391,7 @@ const u8 bitmap_hero_left_down[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
-// $DBF2
+/** $DBF2: bitmap_hero_right_down */
 const u8 bitmap_hero_right_down[1 * 2 * 14] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
@@ -3361,7 +3409,7 @@ const u8 bitmap_hero_right_down[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
-// $DC0E
+/** $DC0E: bitmap_hero_top_down_right */
 const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
   X_______, ___X____, ________, ________, ________, ________, ________, ________, ______XX, __XXX___,
   XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXX_____,
@@ -3373,7 +3421,7 @@ const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
-// $DC5E
+/** $DC5E: bitmap_hero_bottom_down_right */
 const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
   XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
   X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
@@ -3381,7 +3429,7 @@ const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXX____, ____XXXX, _______X, XXXXXXX_
 };
 
-// $DC86
+/** $DC86: bitmap_hero_left_down_right */
 const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3398,7 +3446,7 @@ const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
-// $DCA0
+/** $DCA0: bitmap_hero_right_down_right */
 const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
   __XXXXXX, ________,
   ___XXXXX, XX______,
@@ -3415,7 +3463,7 @@ const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
   __XXXXXX, ________
 };
 
-// $DCBA
+/** $DCBA: bitmap_hero_top_down_right_hard */
 const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
   ________, X_______, ________, ________, ________, ________, ________, ________, ___XX___, XXX__XX_,
   ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XX__X, XXX__X__,
@@ -3427,7 +3475,7 @@ const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ________, ________, XXXXXXXX, ________
 };
 
-// $DD0A
+/** $DD0A: bitmap_hero_bottom_down_right_hard */
 const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
   XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
   X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
@@ -3435,7 +3483,7 @@ const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XX______, __XXXXXX, ______XX, XXXXXX__
 };
 
-// $DD32
+/** $DD32: bitmap_hero_left_down_right_hard */
 const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3452,7 +3500,7 @@ const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
-// $DD4C
+/** $DD4C: bitmap_hero_right_down_right_hard */
 const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
   __XXXXXX, XX______,
   ____XXXX, XXX_____,
@@ -3471,7 +3519,7 @@ const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
   _XXXXXXX, ________
 };
 
-// $DD6A
+/** $DD6A: bitmap_shadow_straight */
 const u8 bitmap_shadow_straight[7 * 2 * 12] = {
   XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
@@ -3487,7 +3535,7 @@ const u8 bitmap_shadow_straight[7 * 2 * 12] = {
   XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________
 };
 
-// $DE12
+/** $DE12: bitmap_shadow_turn_right */
 const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
@@ -3503,7 +3551,7 @@ const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
   XXXXXXXX, ________, XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____
 };
 
-// $DEBA
+/** $DEBA: bitmap_shadow_turn_right_hard */
 const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
   XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,
@@ -3521,7 +3569,7 @@ const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $DF62
+/** $DF62: ledfont */
 const u8 ledfont[10 * LEDFONT_HEIGHT] = {
   _XXXXX__,
   X_XXX_X_,
@@ -3684,7 +3732,7 @@ const u8 ledfont[10 * LEDFONT_HEIGHT] = {
   _XXXXX__,
 };
 
-// $DFF8
+/** $DFF8: minifont */
 const u8 minifont[31 * MINIFONT_HEIGHT] = {
   _XX_____,
   X__X____,
@@ -3906,7 +3954,7 @@ const u8 minifont[31 * MINIFONT_HEIGHT] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E0B2
+/** $E0B2: fire1_defns */
 const bitmap_t fire1_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
   { 3, BITMAPFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
@@ -3916,7 +3964,7 @@ const bitmap_t fire1_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 }
 };
 
-// $E0DC
+/** $E0DC: fire2_defns */
 const bitmap_t fire2_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
   { 3, BITMAPFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
@@ -3926,7 +3974,7 @@ const bitmap_t fire2_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 }
 };
 
-// $E106
+/** $E106: fire3_defns */
 const bitmap_t fire3_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
   { 3, BITMAPFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
@@ -3936,7 +3984,7 @@ const bitmap_t fire3_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
 };
 
-// $E130
+/** $E130: fire4_defns */
 const bitmap_t fire4_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
   { 3, BITMAPFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
@@ -3946,7 +3994,7 @@ const bitmap_t fire4_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   2, bitmap_fire6 + 16, bitmap_fire6s + 16 }
 };
 
-// $E15A
+/** $E15A: fire5_defns */
 const bitmap_t fire5_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
   { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 30, bitmap_fire3 + 30  },
@@ -3956,7 +4004,7 @@ const bitmap_t fire5_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
 };
 
-// $E184
+/** $E184: fire6_defns */
 const bitmap_t fire6_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
   { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 30, bitmap_fire4 + 30  },
@@ -3966,7 +4014,7 @@ const bitmap_t fire6_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 }
 };
 
-// $E1AE
+/** $E1AE: smoke_defns */
 const bitmap_t smoke_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
   { 2, BITMAPFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
@@ -3976,26 +4024,26 @@ const bitmap_t smoke_defns[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED,  3, bitmap_smoke6, bitmap_smoke6 }
 };
 
-// $E1D8
+/** $E1D8: floating_arrow_here_defn */
 const bitmap_t floating_arrow_here_defn = {
   3, BITMAPFLAG_MASKED, 28, bitmap_arrow, bitmap_arrow
 };
 
 // Conv: Made these bitmap_t's and used NULL for the pre-shifted bitmap field.
 
-// $E1DF
+/** $E1DF: floating_arrow_left_defn */
 const bitmap_t floating_arrow_left_defn = {
   3, BITMAPFLAG_MASKED, 21, bitmap_arrow, NULL
 };
 
-// $E1E4
+/** $E1E4: floating_arrow_right_defn */
 const bitmap_t floating_arrow_right_defn = {
   3, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 21, bitmap_arrow, NULL
 };
 
 /* ----------------------------------------------------------------------- */
 
-// $E1E9
+/** $E1E9: tunnellight */
 const depthset_t tunnellight = {
   &tunnellight_bitmaps[0],
   0x1C, DEPTHSET_OFFSET(0, 0),
@@ -4010,7 +4058,7 @@ const depthset_t tunnellight = {
   0x08, DEPTHSET_OFFSET(5, 0)
 };
 
-// $E1FF
+/** $E1FF: tunnellight_bitmaps */
 const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
   { 2, BITMAPFLAG_DEFAULT, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
@@ -4020,7 +4068,7 @@ const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] }
 };
 
-// $E229
+/** $E229: bitmap_tunnellight_1 */
 const u8 bitmap_tunnellight_1[2 * 16] = {
   XXXXXXXX, _XXXXXXX,
   XX_XXXX_, _XXXXXXX,
@@ -4040,7 +4088,7 @@ const u8 bitmap_tunnellight_1[2 * 16] = {
   XXXXXXX_, XXXXXXXX,
 };
 
-// $E249
+/** $E249: bitmap_tunnellight_2 */
 const u8 bitmap_tunnellight_2[2 * 12] = {
   XXXXX_XX, XXXXXXXX,
   X_XXX_XX, X_XXXXXX,
@@ -4056,7 +4104,7 @@ const u8 bitmap_tunnellight_2[2 * 12] = {
   XXXXX_XX, XXXXXXXX,
 };
 
-// $E261
+/** $E261: bitmap_tunnellight_3 */
 const u8 bitmap_tunnellight_3[1 * 8] = {
   XXX_XXXX,
   X_X_X_XX,
@@ -4068,7 +4116,7 @@ const u8 bitmap_tunnellight_3[1 * 8] = {
   X_XX_XXX,
 };
 
-// $E269
+/** $E269: bitmap_tunnellight_4 */
 const u8 bitmap_tunnellight_4[1 * 6] = {
   XXXXXXXX,
   _X_X_XXX,
@@ -4078,7 +4126,7 @@ const u8 bitmap_tunnellight_4[1 * 6] = {
   _X_X_XXX,
 };
 
-// $E26F
+/** $E26F: bitmap_tunnellight_5 */
 const u8 bitmap_tunnellight_5[1 * 5] = {
   XX_XXXXX,
   X___XXXX,
@@ -4087,7 +4135,7 @@ const u8 bitmap_tunnellight_5[1 * 5] = {
   XX_XXXXX,
 };
 
-// $E274
+/** $E274: bitmap_tunnellight_6 */
 const u8 bitmap_tunnellight_6[2 * 2 * 6] = {
   XX__XXXX, __XX____, XXXXXXXX, ________,
   X____XXX, _X__X___, XXXXXXXX, ________,
@@ -4097,7 +4145,7 @@ const u8 bitmap_tunnellight_6[2 * 2 * 6] = {
   XX__XXXX, __XX____, XXXXXXXX, ________,
 };
 
-// $E28C
+/** $E28C: bitmap_tunnellight_6s */
 const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
   XXXXXX__, ______XX, XXXXXXXX, ________,
   XXXXX___, _____X__, _XXXXXXX, X_______,
@@ -4109,13 +4157,15 @@ const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
 
 /* ----------------------------------------------------------------------- */
 
-// Helicopter sprite ($AA38 draw_helicopter). Stages 2 and 4 both reference
-// this identical part/bitmap data from their own banks (only the two frame
-// table addresses differ in the original); stages 1, 3 and 5 have no
-// helicopter (addrof_helicopter_frames is { NULL, NULL }).
-//
-// Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
-// distinct bitmap per frame, selected by anim_counter bit 0.
+/**
+ * Helicopter sprite ($AA38 draw_helicopter). Stages 2 and 4 both reference
+ * this identical part/bitmap data from their own banks (only the two frame
+ * table addresses differ in the original); stages 1, 3 and 5 have no
+ * helicopter (addrof_helicopter_frames is { NULL, NULL }).
+ *
+ * Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
+ * distinct bitmap per frame, selected by anim_counter bit 0.
+ */
 const u8 bitmap_helicopter[590] = {
   _____X__, X_X_X___, ____X_X_, __XXXX_X, _X_X_X_X, ________, ________,
   ________, _X_XXXX_, ____X_X_, ___XX_X_, XXXXX_X_, ________, ___X____,
@@ -4227,62 +4277,62 @@ const u8 bitmap_helicopter[590] = {
   XXXXXXXX, ________, XXXXXXX_, _______X, X_X____X, _X_XXXX_, XX_X_XXX, __X_X___, XXXXXXXX, ________,
 };
 
-// $ECAA
+/** $ECAA: heli_part0 */
 const heli_bitmap_t heli_part0 = {
   0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[266], &bitmap_helicopter[266] } }
 };
 
-// $EC8F
+/** $EC8F: heli_part1_frame0 */
 const heli_bitmap_t heli_part1_frame0 = {
   0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[112], &bitmap_helicopter[112] } }
 };
-// $ECA1
+/** $ECA1: heli_part1_frame1 */
 const heli_bitmap_t heli_part1_frame1 = {
   0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[245], &bitmap_helicopter[245] } }
 };
 
-// $EC86
+/** $EC86: heli_part2_frame0 */
 const heli_bitmap_t heli_part2_frame0 = {
   0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[0], &bitmap_helicopter[0] } }
 };
-// $EC98
+/** $EC98: heli_part2_frame1 */
 const heli_bitmap_t heli_part2_frame1 = {
   0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[133], &bitmap_helicopter[133] } }
 };
 
-// $ECB3
+/** $ECB3: heli_part3_frame0 */
 const heli_bitmap_t heli_part3_frame0 = {
   0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_helicopter[326], &bitmap_helicopter[326] } }
 };
-// $ECC5
+/** $ECC5: heli_part3_frame1 */
 const heli_bitmap_t heli_part3_frame1 = {
   0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_helicopter[352], &bitmap_helicopter[352] } }
 };
 
-// $ECBC
+/** $ECBC: heli_part4_frame0 */
 const heli_bitmap_t heli_part4_frame0 = {
   0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[338], &bitmap_helicopter[338] } }
 };
-// $ECCE
+/** $ECCE: heli_part4_frame1 */
 const heli_bitmap_t heli_part4_frame1 = {
   0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[362], &bitmap_helicopter[362] } }
 };
 
-// $ECD7
+/** $ECD7: heli_rotor_frame0 */
 const heli_bitmap_xonly_t heli_rotor_frame0 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[390], &bitmap_helicopter[390] }
 };
-// $ECDF
+/** $ECDF: heli_rotor_frame1 */
 const heli_bitmap_xonly_t heli_rotor_frame1 = {
   -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[490], &bitmap_helicopter[490] }
 };
 
-// $ED93 (stage 2) / $EC6E (stage 4) in the original banks.
+/** $ED93 (stage 2) / $EC6E (stage 4) in the original banks. */
 const heli_part_ptr_t heli_table_frame0[SPRITE_FRAMES] = {
   {.part = &heli_part0}, {.part = &heli_part1_frame0}, {.part = &heli_part2_frame0},
   {.part = &heli_part3_frame0}, {.part = &heli_part4_frame0}, {.rotor = &heli_rotor_frame0},
 };
-// $ED9F (stage 2) / $EC7A (stage 4) in the original banks.
+/** $ED9F (stage 2) / $EC7A (stage 4) in the original banks. */
 const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES] = {
   {.part = &heli_part0}, {.part = &heli_part1_frame1}, {.part = &heli_part2_frame1},
   {.part = &heli_part3_frame1}, {.part = &heli_part4_frame1}, {.rotor = &heli_rotor_frame1},
@@ -4290,7 +4340,7 @@ const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E2A4
+/** $E2A4: perp_escape_hazards */
 const u8 perp_escape_hazards[6 + 5] = {
   MAP_HAZARD_WAIT(27),
   MAP_CMD_START_TWO_BARRIERS,
@@ -4301,25 +4351,25 @@ const u8 perp_escape_hazards[6 + 5] = {
   MAP_CMD_GOTO(0xE2AA) // loop
 };
 
-// $E2AA
+/** $E2AA: perp_escape_curvature */
 const u8 perp_escape_curvature[5] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CMD_GOTO(0xE2AA) // loop
 };
 
-// $E2AF
+/** $E2AF: perp_escape_height */
 const u8 perp_escape_height[5] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_CMD_GOTO(0xE2AF) // loop
 };
 
-// $E2B4
+/** $E2B4: perp_escape_lanes */
 const u8 perp_escape_lanes[4] = {
   MAP_LANES_3L(53),
   MAP_LANES_TUNNEL_ENTRY(255) // no explicit stop
 };
 
-// $E2B8
+/** $E2B8: fork_hazards */
 const u8 fork_hazards[8] = {
   MAP_HAZARD_WAIT(12),
   MAP_CMD_ARROW_OFF,
@@ -4327,52 +4377,52 @@ const u8 fork_hazards[8] = {
   MAP_CMD_GOTO(0xE2B8) // loop
 };
 
-// $E2C0
+/** $E2C0: fork_leftrightobjs */
 const u8 fork_leftrightobjs[6] = {
   MAP_OBJ_S1_NONE(1),
   MAP_OBJ_S1_SHORT_POLE(15),
   MAP_CMD_GOTO(0xE2C1) // loop (skipping)
 };
 
-// $E2C6
+/** $E2C6: forked_road_curvature */
 const u8 forked_road_curvature[6] = {
   MAP_CURVE_STRAIGHT(1),
   MAP_CURVE_LEFT_HARD(15),
   MAP_CMD_GOTO(0xE2C7) // loop (skipping)
 };
 
-// $E2CC
+/** $E2CC: forked_road_height */
 const u8 forked_road_height[5] = {
   MAP_CURVE_LEFT_HARD(15),
   MAP_CMD_GOTO(0xE2CC) // loop
 };
 
-// $E2D1
+/** $E2D1: forked_road_lanes */
 const u8 forked_road_lanes[2] = {
   MAP_LANES_FORKED(255)
 };
 
-// $ED23
+/** $ED23: forked_road_exit_hazards */
 const u8 forked_road_exit_hazards[3] = {
   MAP_HAZARD_WAIT(18),
   MAP_CMD_FORK_END
 };
 
-// $ED26
+/** $ED26: forked_road_exit_rightobjs */
 const u8 forked_road_exit_rightobjs[4] = {
   MAP_OBJ_S1_SHORT_POLE(5),
   MAP_OBJ_S1_NONE(13),
   MAP_CMD_FORK_END
 };
 
-// $E2DA
+/** $E2DA: forked_road_exit_leftobjs */
 const u8 forked_road_exit_leftobjs[4] = {
   MAP_OBJ_S1_NONE(5),
   MAP_OBJ_S1_NONE(13),
   MAP_CMD_FORK_END
 };
 
-// $E2DE
+/** $E2DE: forked_road_exit_curvature */
 const u8 forked_road_exit_curvature[5] = {
   MAP_CURVE_STRAIGHT(15), // 15 is max
   MAP_CURVE_STRAIGHT(15),
@@ -4380,7 +4430,7 @@ const u8 forked_road_exit_curvature[5] = {
   MAP_CMD_FORK_END
 };
 
-// $E2E3
+/** $E2E3: forked_road_exit_height */
 const u8 forked_road_exit_height[5] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -4388,7 +4438,7 @@ const u8 forked_road_exit_height[5] = {
   MAP_CMD_FORK_END
 };
 
-// $E2E8
+/** $E2E8: forked_road_exit_left_lanes */
 const u8 forked_road_exit_left_lanes[12] = {
   MAP_LANES_2L(10),
   MAP_LANES_2LTO3L(2),
@@ -4398,7 +4448,7 @@ const u8 forked_road_exit_left_lanes[12] = {
   MAP_CMD_FORK_END
 };
 
-// $E2F4
+/** $E2F4: forked_road_exit_right_lanes */
 const u8 forked_road_exit_right_lanes[12] = {
   MAP_LANES_2R(10),
   MAP_LANES_2RTO3R(2),
@@ -4410,7 +4460,7 @@ const u8 forked_road_exit_right_lanes[12] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E364
+/** $E364: spiral_transition_frames */
 const u8 spiral_transition_frames[11 * 8] = {
   XXXXXXXX, // 1
   ________,
@@ -4512,7 +4562,7 @@ const u8 spiral_transition_frames[11 * 8] = {
   XXXXXXXX
 };
 
-// $E3BC
+/** $E3BC: circle_transition_frames */
 const u8 circle_transition_frames[7 * 8] = {
   ________, // 1
   ________,
@@ -4580,10 +4630,12 @@ const u8 circle_transition_frames[7 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E400 - Road edge/lane markings ($E4xx page, 256 bytes)
-// $E400..$E40F: unused zeros (Z80 "draw nothing" state when stripe offset = 0)
-// $E410..$E4CF: edge markings (six 32-byte masked variants)
-// $E4D0..$E4FF: lane markings (three 16-byte unmasked variants)
+/**
+ * $E400 - Road edge/lane markings ($E4xx page, 256 bytes)
+ * $E400..$E40F: unused zeros (Z80 "draw nothing" state when stripe offset = 0)
+ * $E410..$E4CF: edge markings (six 32-byte masked variants)
+ * $E4D0..$E4FF: lane markings (three 16-byte unmasked variants)
+ */
 const u8 edge_markings[256] = {
   // $E400..$E40F: unused zeros
   ________,________,________,________,
@@ -4684,7 +4736,7 @@ const u8 edge_markings[256] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E500
+/** $E500: outward_bend_table */
 const u16 outward_bend_table[32] = {
   0x0000,
   0xEC22,
@@ -4720,8 +4772,10 @@ const u16 outward_bend_table[32] = {
   0xFFFA
 };
 
-// $E540 - Converts a curvature to a road X position
-// Approx? v[i] = round(128 * (1 + tan((i − 32) · π/128)))
+/**
+ * $E540 - Converts a curvature to a road X position
+ * Approx? v[i] = round(128 * (1 + tan((i − 32) · π/128)))
+ */
 const u16 curvature_to_xpos[96] = {
   0x0000,
   0x0006,
@@ -4821,7 +4875,7 @@ const u16 curvature_to_xpos[96] = {
   0x14DE
 };
 
-// $E600 - Vertical perspective weights — Y scale by speed and distance slot
+/** $E600 - Vertical perspective weights — Y scale by speed and distance slot */
 const u8 persp_y_scale[8][PERSP_TABLE_COLS] = {
   { 0x60, 0x4A, 0x3C, 0x32, 0x2B, 0x25, 0x21, 0x1E, 0x1B, 0x18, 0x16, 0x15, 0x13, 0x12, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A },
   { 0x60, 0x4C, 0x3D, 0x33, 0x2C, 0x26, 0x22, 0x1E, 0x1B, 0x19, 0x17, 0x15, 0x13, 0x12, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A },
@@ -4833,7 +4887,7 @@ const u8 persp_y_scale[8][PERSP_TABLE_COLS] = {
   { 0x60, 0x5D, 0x48, 0x3B, 0x31, 0x2A, 0x25, 0x21, 0x1D, 0x1A, 0x18, 0x16, 0x14, 0x13, 0x12, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0A }
 };
 
-// $E6B0 - Horizontal perspective multipliers for right road edge curvature
+/** $E6B0 - Horizontal perspective multipliers for right road edge curvature */
 const u8 persp_x_scale_right[8][PERSP_TABLE_COLS] = {
   { 0xEB, 0xC1, 0xAA, 0x8F, 0x8E, 0x6E, 0x5D, 0x66, 0x71, 0x55, 0x2E, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
   { 0xD5, 0xCA, 0xA7, 0x8C, 0x8B, 0x6B, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
@@ -4845,7 +4899,7 @@ const u8 persp_x_scale_right[8][PERSP_TABLE_COLS] = {
   { 0x20, 0xE7, 0xB9, 0xAD, 0x92, 0x79, 0x6E, 0x7C, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D }
 };
 
-// $E760 - Horizontal position deltas applied to shift left road edge relative to right
+/** $E760 - Horizontal position deltas applied to shift left road edge relative to right */
 const u8 persp_x_delta_left[8][PERSP_TABLE_COLS] = {
   { 0x42, 0x2A, 0x1E, 0x15, 0x12, 0x0C, 0x09, 0x09, 0x09, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
   { 0x3D, 0x2D, 0x1F, 0x15, 0x12, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
@@ -4857,9 +4911,12 @@ const u8 persp_x_delta_left[8][PERSP_TABLE_COLS] = {
   { 0x0A, 0x3F, 0x27, 0x1E, 0x15, 0x0F, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 }
 };
 
-// $E88E
-// Conv: Changed to point at fixed data only. Original game copied two of the
-// transition frames around during relocation.
+/**
+ * $E88E: transitions
+ *
+ * Conv: Changed to point at fixed data only. Original game copied two of the
+ * transition frames around during relocation.
+ */
 const transition_t transitions[8] = {
   /* Forward animations */
   {  6, &square_transition_frames[-1 * 8] },
@@ -4874,7 +4931,7 @@ const transition_t transitions[8] = {
   {  7, &diamond_transition_frames[6 * 8] },
 };
 
-// 0xE8A6
+/** 0xE8A6: square_transition_frames */
 const u8 square_transition_frames[5 * 8] = {
   ________, // 1
   ________,
@@ -4922,7 +4979,7 @@ const u8 square_transition_frames[5 * 8] = {
   XXXXXXXX
 };
 
-// 0xE8CE
+/** 0xE8CE: diamond_transition_frames */
 const u8 diamond_transition_frames[6 * 8] = {
   X______X, // 1
   _X____X_,
@@ -4981,7 +5038,7 @@ const u8 diamond_transition_frames[6 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E9B4
+/** $E9B4: messages_stop_the_tape */
 const u8 messages_stop_the_tape[45] = {
   attribute_GREEN_OVER_BLACK,
   TWOBYTES(0x488A),
@@ -4992,7 +5049,7 @@ const u8 messages_stop_the_tape[45] = {
   0 // end marker
 };
 
-// $E9E1
+/** $E9E1: messages_input_methods */
 const u8 messages_input_methods[112] = {
   attribute_GREEN_OVER_BLACK,
   TWOBYTES(0x484B),
@@ -5015,7 +5072,7 @@ const u8 messages_input_methods[112] = {
   0 // end marker
 };
 
-// $EA52
+/** $EA52: messages_redefine_keys */
 const u8 messages_redefine_keys[138] = {
   attribute_RED_OVER_BLACK,
   TWOBYTES(0x4849),
@@ -5047,7 +5104,7 @@ const u8 messages_redefine_keys[138] = {
   0 // end marker
 };
 
-// $EAE1
+/** $EAE1: messages_test_mode */
 const u8 messages_test_mode[151] = {
   0xC1,
   TWOBYTES(SCREEN_START_ADDRESS),
@@ -5073,7 +5130,7 @@ const u8 messages_test_mode[151] = {
   0
 };
 
-// $EB78
+/** $EB78: messages_cannot_be_remodified */
 const u8 messages_cannot_be_remodified[127] = {
   attribute_RED_OVER_BLACK,
   TWOBYTES(0x484B),
@@ -5095,7 +5152,7 @@ const u8 messages_cannot_be_remodified[127] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $EDD6
+/** $EDD6: key_names */
 const u8 key_names[10 * 8] =
   "B N M SYSP"
   "H J K L EN"
@@ -5106,7 +5163,7 @@ const u8 key_names[10 * 8] =
   "G F D S A "
   "V C X Z CP";
 
-// $EE26
+/** $EE26: sinclair_joy_keydefs */
 const u8 sinclair_joy_keydefs[5] = {
   KEYDEF(4, 3), // 0
   KEYDEF(3, 3), // 9
@@ -5115,7 +5172,7 @@ const u8 sinclair_joy_keydefs[5] = {
   KEYDEF(1, 3)  // 7
 };
 
-// $EE2B
+/** $EE2B: cursor_joy_keydefs */
 const u8 cursor_joy_keydefs[5] = {
   KEYDEF(4, 3), // 0
   KEYDEF(1, 3), // 7
@@ -5124,7 +5181,7 @@ const u8 cursor_joy_keydefs[5] = {
   KEYDEF(2, 3)  // 8
 };
 
-// $EE30
+/** $EE30: shocked_keydefs */
 const u8 shocked_keydefs[8] = {
   KEYDEF(3, 6), // S
   KEYDEF(0, 1), // H
@@ -5138,7 +5195,7 @@ const u8 shocked_keydefs[8] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $EF5E
+/** $EF5E: drum1_template */
 const u8 drum1_template[252] = {
   0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xFF, 0xFF,
   0xEF, 0xFF, 0xFF, 0xFF, 0xBE, 0x36, 0x10, 0x00,
@@ -5174,7 +5231,7 @@ const u8 drum1_template[252] = {
   0x9F, 0xFF, 0xEF, 0x00
 };
 
-// $F05A
+/** $F05A: drum2_template */
 const u8 drum2_template[108] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
   0xFF, 0xDE, 0x00, 0xFF, 0x81, 0xFF, 0xFF, 0xFF,
@@ -5194,7 +5251,7 @@ const u8 drum2_template[108] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $F0FE
+/** $F0FE: music_patterns */
 const u8 music_patterns[19] = {
   // (repetitions, offset)
   0x01, 0x29, // single noise hit
@@ -5209,13 +5266,15 @@ const u8 music_patterns[19] = {
   TWOBYTES(0xF100) // restart address
 };
 
-// $F111
-//
-// Layout: each block is a delay-reload byte (ticks per note) followed by a
-// note stream, terminated by NOTE_END. NOTE_* macros are defined in
-// Internal.h. Same format as es_music_data (Bank7Data.c), but this table also
-// uses bit7 "extra delay" notes (NOTE_XDELAY). See play_music_48k (Main.c)
-// for the byte-level decode this is built from.
+/**
+ * $F111: music_data
+ *
+ * Layout: each block is a delay-reload byte (ticks per note) followed by a
+ * note stream, terminated by NOTE_END. NOTE_* macros are defined in
+ * Internal.h. Same format as es_music_data (Bank7Data.c), but this table also
+ * uses bit7 "extra delay" notes (NOTE_XDELAY). See play_music_48k (Main.c)
+ * for the byte-level decode this is built from.
+ */
 const u8 music_data[271] = {
   // 0x00 (delay=5) - drum2/drum1/noise beat
   NOTE_DELAY(5),
@@ -5319,7 +5378,7 @@ const u8 music_data[271] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $F491
+/** $F491: press_gear_messages */
 const u8 press_gear_messages[17] = {
   DRAWCHARSTYLE_SINGLE,
   attribute_BLACK_OVER_BLACK,
@@ -5328,7 +5387,7 @@ const u8 press_gear_messages[17] = {
   'P', 'R', 'E', 'S', 'S', ' ', ' ', 'G', 'E', 'A', 'R' | EOS
 };
 
-// $F4A2
+/** $F4A2: enter_for_options_messages */
 const u8 enter_for_options_messages[23] = {
   DRAWCHARSTYLE_SINGLE,
   attribute_BLACK_OVER_BLACK,
@@ -5337,7 +5396,7 @@ const u8 enter_for_options_messages[23] = {
   'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
 };
 
-// $F4B9
+/** $F4B9: credits_messages_128 */
 const u8 credits_messages_128[98] = {
   10,
   8,
@@ -5368,7 +5427,7 @@ const u8 credits_messages_128[98] = {
   0
 };
 
-// $F51B
+/** $F51B: best_officers */
 const u8 best_officers[163] = {
   10,
   8,
@@ -5407,7 +5466,7 @@ const u8 best_officers[163] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $F5BE
+/** $F5BE: marquee_initial */
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00,
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x6C, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -5475,7 +5534,7 @@ const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-// $FDBE
+/** $FDBE: marquee_attrs */
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
   0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
   0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,

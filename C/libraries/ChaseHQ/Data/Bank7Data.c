@@ -144,6 +144,7 @@ const u8 es_script[268] = {
 
 /* ----------------------------------------------------------------------- */
 
+/** $60E1: bitmap_endshot_1 */
 const u8 bitmap_endshot_1[936] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X___, _______X, ___X_X_X, _XXXXXXX, XXXXXXXX,
   X_X_X_XX, _X_X_XXX, XXX__XX_, XXX_XXXX, _X_X__XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X__, ________, X_X_X_XX, XXXXXXXX, XXXXXXXX,
@@ -219,6 +220,7 @@ const u8 bitmap_endshot_1[936] = {
   _XX_X___, _XX_X___, _XX_X___, _XXX____, _XXX____, __XX____, _XXX____, _XX_X___, _XX_X___, _XXXX___, __X_X___, _XX_X___, _XX_X___,
 };
 
+/** $6489: bitmap_endshot_2 */
 const u8 bitmap_endshot_2[936] = {
   XXXXXXXX, XXX_X_X_, X_X_____, X_X_____, ________, ________, ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X______, ___X____,
   XXXXXXXX, XX_X_X_X, _X______, _X_X____, ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_____, X____X_X,
@@ -294,6 +296,7 @@ const u8 bitmap_endshot_2[936] = {
   _XXXX___, _XXXX___, _XXXX___, __X_X___, _XX_X___, _XX_X___, _XX_X___, __XX____, __XXX___, __XXX___, __XXX___, __XXX___, __XXX___,
 };
 
+/** $6831: bitmap_endshot_3 */
 const u8 bitmap_endshot_3[936] = {
   ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
@@ -370,11 +373,15 @@ const u8 bitmap_endshot_3[936] = {
   //_X_X____, X_______, ________, ________, _XXXX___, ________, ________, ___X_X_X,
 };
 
-/* Conv: the original binary's table for bitmap_endshot_4 is only 928 bytes; draw_endshot's
+/**
+ * $6BD9: bitmap_endshot_4
+ *
+ * Conv: the original binary's table for bitmap_endshot_4 is only 928 bytes; draw_endshot's
  * fixed 72-row (64 bitmap + 8 attribute) loop always consumes 936 bytes, so
  * the original spills 8 bytes into the next label (handshake_1, $F381:
  * $C0,$00,$00,$00,$00,$00,$00,$00). Reproduced verbatim below rather than
- * zero-padding. */
+ * zero-padding.
+ */
 const u8 bitmap_endshot_4[936] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, XXXXX_XX, _X_X____, XX_XXXXX, XXXXXXXX, __XXXXXX, _XXXX___, _____XXX, XXXX____, ____X___,
@@ -450,6 +457,7 @@ const u8 bitmap_endshot_4[936] = {
   _XXXX___, _XXXX___, _XXXX___, _XXXX___, _XXXX___, XX______, ________, ________, ________, ________, ________, ________, ________,
 };
 
+/** $F381: bitmap_handshake_1 */
 const u8 bitmap_handshake_1[296] = {
   XX______, ________, ________, ________, ________, ________, ________, ________,
   XXXX____, ________, ________, ________, ________, ________, ________, ________,
@@ -490,6 +498,7 @@ const u8 bitmap_handshake_1[296] = {
   ________, ________, ________, ________, _XX____X, X_______, ________, ________,
 };
 
+/** $F4A9: bitmap_handshake_2 */
 const u8 bitmap_handshake_2[280] = {
   XX______, ________, ________, ________, ________, ________, ________, _______X,
   XXXXX___, ________, ________, ________, ________, ________, ________, _____XXX,
@@ -528,6 +537,7 @@ const u8 bitmap_handshake_2[280] = {
   ________, ________, ________, ________, _XX____X, X_______, ________, ________,
 };
 
+/** $F5C1: bitmap_handshake_3 */
 const u8 bitmap_handshake_3[272] = {
   XX______, ________, ________, ________, ________, ________, ________, _____XXX,
   XXXXX___, ________, ________, ________, ________, ________, ________, ____XXXX,
@@ -565,6 +575,7 @@ const u8 bitmap_handshake_3[272] = {
   ________, ________, ________, ________, _XX____X, X_______, ________, ________,
 };
 
+/** $F6D1: bitmap_handshake_4 */
 const u8 bitmap_handshake_4[256] = {
   XXXXX___, ________, ________, ________, ________, ________, ________, ___XXXXX,
   XXXXXXXX, XX______, ________, ________, ________, ________, ________, __XXXXXX,
@@ -602,6 +613,7 @@ const u8 bitmap_handshake_4[256] = {
 
 /* ----------------------------------------------------------------------- */
 
+/** $5C6E: chatterblk_nancy_congratulates */
 const u8 chatterblk_nancy_congratulates[6] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_THIS_IS_NANCY,
@@ -611,6 +623,7 @@ const u8 chatterblk_nancy_congratulates[6] = {
   CHATTERCMD_STOP
 };
 
+/** $5C78: chatterblk_press_gear */
 const u8 chatterblk_press_gear[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_PRESS_GEAR,
@@ -619,7 +632,7 @@ const u8 chatterblk_press_gear[3] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $F53C (relocated; source $FA2B)
+/** $F53C (relocated; source $FA2B) */
 const u8 es_music_patterns[23] = {
   // (repetitions, offset)
   0x01, 0x00,
@@ -636,12 +649,14 @@ const u8 es_music_patterns[23] = {
   TWOBYTES(0xF54E) // restart address
 };
 
-// $F553 (relocated; source $FA42)
-//
-// Layout: each block is a delay-reload byte (ticks per note) followed by a
-// note stream, terminated by NOTE_END. NOTE_* macros are defined in
-// Internal.h. See es_play_music_48k (Bank7.c) for the byte-level decode this
-// is built from.
+/**
+ * $F553 (relocated; source $FA42)
+ *
+ * Layout: each block is a delay-reload byte (ticks per note) followed by a
+ * note stream, terminated by NOTE_END. NOTE_* macros are defined in
+ * Internal.h. See es_play_music_48k (Bank7.c) for the byte-level decode this
+ * is built from.
+ */
 const u8 es_music_data[172] = {
   // 0x00 (delay=6) - noise-only hi-hat pattern
   NOTE_DELAY(6),
@@ -717,7 +732,7 @@ const u8 es_music_data[172] = {
   NOTE_END,
 };
 
-// $F8F5 (source; used by es_playdrum_2)
+/** $F8F5 (source; used by es_playdrum_2) */
 const u8 es_drum_sample_2_template[94] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
   0xFF, 0xDE, 0x00, 0xFF, 0x81, 0xFF, 0xFF, 0xFF,
@@ -733,7 +748,7 @@ const u8 es_drum_sample_2_template[94] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00
 };
 
-// $F953 (source; used by es_playdrum_1)
+/** $F953 (source; used by es_playdrum_1) */
 const u8 es_drum_sample_1_template[160] = {
   0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xFF, 0xFF,
   0xEF, 0xFF, 0xFF, 0xFF, 0xBE, 0x36, 0x10, 0x00,
@@ -757,6 +772,12 @@ const u8 es_drum_sample_1_template[160] = {
   0x9F, 0xFF, 0xFF, 0xDF, 0xFF, 0xFF, 0xFF, 0x00
 };
 
+/**
+ * $E3A5: handshake_frames
+ *
+ * Row-count + source bitmap per animation frame, cycling 1-2-3-4-3-2
+ * (es_handler_handshake_advance, Bank7.c).
+ */
 const handshake_frame_t handshake_frames[6] = {
   { 37, &bitmap_handshake_1[0] },
   { 35, &bitmap_handshake_2[0] },
