@@ -857,28 +857,28 @@ static void chq_sdl_main_loop(void *opaque)
     {
       switch (event.type)
       {
-        case SDL_EVENT_QUIT:
-          state->quit = 1;
-          SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
-          break;
+      case SDL_EVENT_QUIT:
+        state->quit = 1;
+        SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
+        break;
 
-        case SDL_EVENT_KEY_DOWN:
-        case SDL_EVENT_KEY_UP:
-          chq_sdl_key_pressed(state, &event.key);
-          break;
+      case SDL_EVENT_KEY_DOWN:
+      case SDL_EVENT_KEY_UP:
+        chq_sdl_key_pressed(state, &event.key);
+        break;
 
-        case SDL_EVENT_TEXT_EDITING:
-        case SDL_EVENT_TEXT_INPUT:
-          break;
+      case SDL_EVENT_TEXT_EDITING:
+      case SDL_EVENT_TEXT_INPUT:
+        break;
 
-        case SDL_EVENT_MOUSE_MOTION:
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        case SDL_EVENT_MOUSE_BUTTON_UP:
-        case SDL_EVENT_MOUSE_WHEEL:
-          break;
+      case SDL_EVENT_MOUSE_MOTION:
+      case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      case SDL_EVENT_MOUSE_BUTTON_UP:
+      case SDL_EVENT_MOUSE_WHEEL:
+        break;
 
-        default:
-          break;
+      default:
+        break;
       }
     }
 

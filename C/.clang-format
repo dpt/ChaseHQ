@@ -11,8 +11,8 @@ ColumnLimit: 80
 # K&R braces: function-definition braces on a new line, control-flow on the same line
 BreakBeforeBraces: Linux
 
-# switch case labels indented one level inside the switch
-IndentCaseLabels: true
+# switch case labels align with the switch, not indented
+IndentCaseLabels: false
 
 # Pointer/reference declarator sticks to the name: int *p, void *opaque
 PointerAlignment: Right

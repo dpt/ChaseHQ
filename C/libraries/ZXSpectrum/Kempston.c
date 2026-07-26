@@ -21,12 +21,12 @@ void zxkempston_assign(zxkempston_t *kempston,
 
     switch (index)
     {
-        case zxjoystick_RIGHT: i = 0; break;
-        case zxjoystick_LEFT:  i = 1; break;
-        case zxjoystick_DOWN:  i = 2; break;
-        case zxjoystick_UP:    i = 3; break;
-        case zxjoystick_FIRE:  i = 4; break;
-        default: return;
+    case zxjoystick_RIGHT: i = 0; break;
+    case zxjoystick_LEFT:  i = 1; break;
+    case zxjoystick_DOWN:  i = 2; break;
+    case zxjoystick_UP:    i = 3; break;
+    case zxjoystick_FIRE:  i = 4; break;
+    default: return;
     }
 
     *kempston = (*kempston & ~(1 << i)) | on_off << i;
