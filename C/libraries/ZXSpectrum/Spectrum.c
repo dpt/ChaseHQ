@@ -335,7 +335,7 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
 {
   zxspectrum_private_t *prv;
 
-  prv = malloc(sizeof(*prv));
+  prv = calloc(1, sizeof(*prv));
   if (prv == NULL)
     return NULL;
 
