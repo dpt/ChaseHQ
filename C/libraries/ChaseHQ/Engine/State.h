@@ -28,14 +28,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state,
-                             int         Bfill_pattern,
-                             int         Chorizon,
-                             int         DEscreen_ptr,
-                             int         Lrow,
-                             u8        **IXlanesptr,
-                             const u8  **IYheightptr);
-
 /* Returns the back-buffer address advanced past the rows just drawn: on the
  * Z80 this value survives in the shadow HL' register across the repeat
  * loop's CALLs; the C translation must pass it back explicitly instead. */
@@ -648,8 +640,6 @@ struct chqstate {
   // $C2B8 (SM) in draw_tunnel
   u8        dt_far_wall_mode;
 
-  // $C4B2 (SM) in draw_road
-  dr_callback_t *dr_callback;
   // $C56C (SM) in draw_road
   u16       dr_backbuf_1;
   // $C5AC (SM) in draw_road
@@ -676,8 +666,6 @@ struct chqstate {
   u8        dr_right_table_hi_1;
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
-  // $C6AD (SM) in draw_road
-  void    (*dr_fill_fn)(chqstate_t *state, int Ccounter, int DEbackbuf, int L, int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
   // $C6B2 (SM) in draw_road
   u8        dr_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road

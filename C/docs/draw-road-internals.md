@@ -1,10 +1,33 @@
-# `draw_road` — Call Chain and Internals
+# `draw_road` — Internals
 
-This document traces the call chain starting from `draw_road` ($C470). For the broader per-frame pipeline (height table, curve table, object pass) see `road-drawing.md`.
+This document traces the road render starting from `draw_road` ($C452). For the broader per-frame pipeline (height table, curve table, object pass) see `road-drawing.md`.
+
+## Structure (C port)
+
+The Z80 `draw_road` routine ($C452–$C8BD) is one routine built from
+self-modified `JP` loops. The C port is a single `draw_road` function that
+mirrors it: the sections named below (`dr_read_lanes`, `dr_dispatch`,
+`dr_fill`, `dr_fill_left_stripe`, …) are **labelled blocks inside that one
+function**, kept in Z80 address order, not separate functions. Read the
+headings below as labels.
+
+- The **outer segment loop** ($C4AD…$C797) is a `for (;;)`: each iteration
+  renders one road segment, then the height-check either `continue`s to the
+  next segment or `return`s at the horizon.
+- The **inner scanline loop** ($C6AD) and the **height-check** ($C6B0–$C79A)
+  stay as `goto` between labels — the Z80 has two scanline entry points
+  (filled/unfilled) that don't nest into a single structured loop without
+  reordering blocks, so source order is preserved and they remain `goto`.
+- The two Z80 self-modified operands are modelled as local `enum` selectors:
+  `callback_sel` (`CB_FOUR_LANE` | `CB_DISPATCH`, was the $C4B2 `CALL`) and
+  `fill_sel` (`FILL_FILLED` | `FILL_UNFILLED`, was the $C6AD `JP NZ`).
+- `draw_road_lanes_change` ($C2E7), `draw_forked_road` ($C8E3) and
+  `dr_start_backdrop_fill` ($C79A) remain **separate helper functions** called
+  from the loop.
 
 ---
 
-## Entry: `draw_road` ($C470)
+## Entry: `draw_road` ($C452)
 
 Initialises state fields used throughout the entire descent:
 
@@ -14,8 +37,8 @@ Initialises state fields used throughout the entire descent:
 - Decodes the `ROADBUF_LANES_OFFSET` pointer parity into `dr_initial_stripe_state` and `carry_stripe`, which selects the starting kerb stripe phase:
   - `carry_stripe` set → thick lane markings (`dr_stripe_table_offset = $D0`, `dr_edge_graphic_offset = 16`), chequerboard verge fill.
   - `carry_stripe` clear → narrow/no markings (`dr_stripe_table_offset = $00`, `dr_edge_graphic_offset = 48`), blank verge fill.
-- Sets `dr_callback = dr_four_lane_highway` (default, overridden by scene-change).
-- Falls through to `dr_read_lanes`.
+- Sets `callback_sel = CB_FOUR_LANE` (default, overridden by scene-change).
+- Enters the segment `for (;;)` loop at the `dr_read_lanes` section.
 
 ---
 
@@ -27,12 +50,12 @@ The byte is decoded as follows — bit positions refer to the byte _after_ an SL
 
 | Condition | Road type | Next call |
 | --- | --- | --- |
-| `left_offset is 0` | full-width / no left taper | `state->dr_callback` (usually `dr_four_lane_highway`) |
-| bit 6 clear, bit 7 clear | 2-lane normal | `draw_road_lanes_change` |
-| bit 6 clear, bit 7 set | 3-lane normal | `draw_road_lanes_change` |
-| bit 6 set, bit 7 clear | tunnel (or tunnel transition) | `dr_dispatch` |
-| bit 6 set, bit 7 set, bit 5 set | forked road | `forked_road_plotter` |
-| bit 6 set, bit 7 set, bit 5 clear | dirt track | `dr_set_lane_callback` |
+| `left_offset is 0` | full-width / no left taper | `goto` per `callback_sel` (`dr_four_lane_highway` or `dr_dispatch`) |
+| bit 6 clear, bit 7 clear | 2-lane normal | `draw_road_lanes_change` (helper), then `dr_dispatch` |
+| bit 6 clear, bit 7 set | 3-lane normal | `draw_road_lanes_change` (helper), then `dr_dispatch` |
+| bit 6 set, bit 7 clear | tunnel (or tunnel transition) | `goto dr_dispatch` |
+| bit 6 set, bit 7 set, bit 5 set | forked road | `draw_forked_road` (helper), then `return` |
+| bit 6 set, bit 7 set, bit 5 clear | dirt track | `callback_sel = CB_FOUR_LANE`, `goto dr_dispatch` |
 
 For normal roads, `dr_left_table_hi_{1,2}` and `dr_right_table_hi_{1,2}` are set to the `$E8xx`–`$ECxx` xpos table pages, and `dr_neg_lane_count` is set to −2 or −3 (the number of interior lane-dividers to draw).
 
@@ -44,13 +67,13 @@ For tunnels, the fill pattern is forced to `0xFF` and `dr_in_tunnel` is set. Tra
 
 Used when the road has no left-edge taper (`left_offset is 0`).
 
-Sets left/right table high bytes to the widest span (`$E8`/`$EC`) and `dr_neg_lane_count = -4` (four interior lines). Then falls through to `dr_set_lane_callback`.
+Sets left/right table high bytes to the widest span (`$E8`/`$EC`) and `dr_neg_lane_count = -4` (four interior lines). Sets `callback_sel = CB_DISPATCH` and falls into `dr_dispatch`.
 
 ---
 
-## `dr_set_lane_callback` ($C54D)
+## `dr_set_lane_callback` ($C54D) — folded away
 
-Stores the caller-supplied callback in `state->dr_callback` (so that `dr_fill_left_stripe` can recurse back to the correct road-type handler when Ccounter expires). Falls through to `dr_dispatch`.
+The Z80 stored the caller-supplied callback into the $C4B2 `CALL` operand here, then fell through to `dr_dispatch`. In the merged C port that store is the `callback_sel` assignment every caller already makes, so this step is gone: callers set `callback_sel` and `goto dr_dispatch` directly.
 
 ---
 
@@ -58,10 +81,10 @@ Stores the caller-supplied callback in `state->dr_callback` (so that `dr_fill_le
 
 Selects the filled or unfilled rendering path based on `Bfill_pattern`:
 
-- **Filled** (`Bfill_pattern != 0`): sets `dr_fill_fn = dr_advance_filled`, falls through to `dr_advance_filled`.
-- **Unfilled** (`Bfill_pattern is 0`): sets `dr_fill_fn = dr_advance_unfilled`, falls through to `dr_advance_unfilled`.
+- **Filled** (`Bfill_pattern != 0`): sets `fill_sel = FILL_FILLED`, falls into `dr_advance_filled`.
+- **Unfilled** (`Bfill_pattern is 0`): sets `fill_sel = FILL_UNFILLED`, falls into `dr_advance_unfilled`.
 
-The `dr_fill_fn` function pointer is used by `dr_fill_left_stripe` at the top of each recursive call, so the same path is followed for every scanline in this segment.
+`fill_sel` is read at the bottom of `dr_fill_left_stripe`: the inner scanline loop `goto`s back to the matching advance section, so the same path is followed for every scanline in this segment.
 
 ---
 
@@ -116,7 +139,7 @@ Fills the left verge, then overlays road edge markings and lane dashes.
 3. **Interior lane dashes** ($C667) — loops `dr_neg_lane_count` times
    (−4 to −1), advancing through the `$E8xx`–`$ECxx`xpos table pages. For each non-zero entry, builds a pointer into`edge_markings[]`using`((xpos & 7) << 1) + dr_stripe_table_offset` and writes two bytes without masking (plain tarmac surface, no AND step).
 4. **Right outer edge** ($C68A) — mirrors the left edge using `dr_right_table_hi_1` and `dr_right_edge_offset` (= `dr_edge_graphic_offset + 1`, so that the right edge's mask/colour bytes are offset by one slot within the edge marking data).
-5. **Loop / recurse** — decrements `Ccounter`. If still positive, calls `state->dr_fill_fn` to advance the backbuffer and draw the next scanline. Only when `Ccounter` reaches zero does execution fall into the height-check block below.
+5. **Inner scanline loop** ($C6AD) — decrements `Ccounter`. If still positive, `goto`s back to the advance section chosen by `fill_sel` (`dr_advance_filled` / `dr_advance_unfilled`) to draw the next scanline. Only when `Ccounter` reaches zero does execution fall into the height-check block below.
 
 ---
 
@@ -138,12 +161,12 @@ Reads `**IYheightptr` (current) and `**(IYheightptr+1)` (next) from the height t
 | Condition | Label | Action |
 | --- | --- | --- |
 | diff is 0 | `dr_level_road` | Advance `Lrow` by −2; check for tunnel flags; jump to `dr_set_stripes` |
-| diff > 0 (S flag clear) | `dr_increasing` | Set `Ccounter = diff`; if diff < 80: recurse via `dr_read_lanes`; else fall to backdrop |
+| diff > 0 (S flag clear) | `dr_increasing` | Set `Ccounter = diff`; if diff < 80: `continue` the outer loop (re-enter `dr_read_lanes`); else fall to backdrop |
 | diff < 0 (S flag set) | `dr_decreasing` | Check tunnel flags, then `dr_calc_height_delta` |
 
 ### `dr_calc_height_delta` ($C774)
 
-When decreasing: computes the combined delta over the next two height entries. If the combined delta is a small negative (−32..−1), adjusts `Lrow` and loops back to `dr_decreasing`. If the combined delta turns positive or is large, sets `Ccounter = delta` and recurses via `dr_read_lanes` or falls to backdrop.
+When decreasing: computes the combined delta over the next two height entries. If the combined delta is a small negative (−32..−1), adjusts `Lrow` and `goto`s back to `dr_decreasing`. If the combined delta turns positive or is large, sets `Ccounter = delta` and `continue`s the outer loop (re-enters `dr_read_lanes`), or falls to backdrop.
 
 ---
 
@@ -160,33 +183,36 @@ Called when the road has risen to the horizon (large uphill delta or `dr_increas
 
 ## Summary diagram
 
+Single `draw_road` function; every `dr_*` name is a label in Z80 address order.
+`(fall)` = fall through to the next label; `[helper]` = a separate function.
+
 ```
-draw_road
- └─ dr_read_lanes
-     ├─ [left_offset=0] → dr_four_lane_highway → dr_set_lane_callback
-     ├─ [normal 2/3-lane] → draw_road_lanes_change → dr_set_lane_callback
-     ├─ [tunnel]          → dr_dispatch
-     ├─ [fork]            → forked_road_plotter
-     └─ [dirt]            → dr_set_lane_callback
-
-dr_set_lane_callback → dr_dispatch
-
-dr_dispatch
- ├─ [fill_pattern != 0] → dr_dispatch_filled → dr_advance_filled ─┐
- └─ [fill_pattern == 0] → dr_advance_unfilled ─────────────────────┤
-
-dr_advance_filled                                                   │
- ├─ [rollover] → dr_rollover_filled → dr_fill                      │
- └─ [normal]   → dr_fill                                           │
-                  └─ dr_fill_left_stripe ◄─────────────────────────┘
-                      └─ [Ccounter > 0] recurse via dr_fill_fn
-                         [Ccounter = 0] → dr_set_stripes
-                                           └─ dr_level_road / dr_increasing / dr_decreasing
-                                               └─ dr_read_lanes  (next segment)
-                                               └─ dr_start_backdrop_fill  (horizon)
-
-dr_advance_unfilled
- ├─ [rollover] → dr_rollover_unfilled → dr_write_scanline_unfilled
- └─ [normal]   → dr_write_scanline_unfilled
-                  └─ dr_fill_left_stripe  (as above)
+draw_road:
+  <entry setup>   callback_sel = CB_FOUR_LANE
+  for (;;) {                                        outer segment loop ($C4AD..$C797)
+  dr_read_lanes:
+    [left_offset=0]     goto dr_four_lane_highway | dr_dispatch   (per callback_sel)
+    [normal 2/3-lane]   draw_road_lanes_change() [helper]; callback_sel=CB_FOUR_LANE; goto dr_dispatch
+    [tunnel]            Bfill_pattern = tunnel; goto dr_dispatch
+    [fork]              draw_forked_road() [helper]; return
+    [dirt]              callback_sel = CB_FOUR_LANE; goto dr_dispatch
+  dr_four_lane_highway: callback_sel = CB_DISPATCH; (fall)
+  dr_dispatch:          fill_sel = FILL_FILLED ? goto dr_dispatch_filled : (fall)
+  dr_advance_unfilled:  [rollover] goto dr_rollover_unfilled; (fall)
+  dr_write_scanline_unfilled:  goto dr_fill_left_stripe
+  dr_rollover_filled:   goto dr_fill
+  dr_rollover_unfilled: goto dr_write_scanline_unfilled
+  dr_dispatch_filled:   fill_sel = FILL_FILLED; (fall)
+  dr_advance_filled:    [rollover] goto dr_rollover_filled; (fall)
+  dr_fill:              (fall)
+  dr_fill_left_stripe:
+      ... draw one scanline (verges, edges, lane dashes) ...
+      if (--Ccounter > 0) goto dr_advance_filled | dr_advance_unfilled   inner loop ($C6AD, per fill_sel)
+    dr_set_stripes:     ... toggle stripe phase / thin edges; advance IY/IX; height diff ...
+      diff == 0  -> dr_level_road         -> goto dr_set_stripes            (level advance loop)
+      diff  > 0  -> dr_increasing         -> continue (next segment) | (fall) dr_backdrop
+      diff  < 0  -> dr_decreasing         -> dr_calc_height_delta
+                    dr_small_negative     -> goto dr_decreasing (loop) | continue (next segment)
+    dr_backdrop:        dr_start_backdrop_fill() [helper]; return          (horizon)
+  }
 ```
