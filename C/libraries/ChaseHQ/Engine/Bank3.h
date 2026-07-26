@@ -1,5 +1,5 @@
 /**
-* Bank3.h
+ * Bank3.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -24,13 +24,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define BANK3_TITLE_SCREEN    (0xC000)
-#define BANK3_HI_SCORE        (0xC003)
-#define BANK3_SUCCESS_MUSIC   (0xC006)
-#define BANK3_INPUT_SELECTION (0xC009)
-
-u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
-
 /**
  * Allocates and initialises state->bank3.
  * \return 0 on success, -1 on allocation failure.
@@ -41,6 +34,15 @@ int bank3_state_create(chqstate_t *state);
  * Frees state->bank3 and clears the pointer.
  */
 void bank3_state_destroy(chqstate_t *state);
+
+/* ----------------------------------------------------------------------- */
+
+#define BANK3_TITLE_SCREEN    (0xC000)
+#define BANK3_HI_SCORE        (0xC003)
+#define BANK3_SUCCESS_MUSIC   (0xC006)
+#define BANK3_INPUT_SELECTION (0xC009)
+
+u8 bank3_call(chqstate_t *state, int routine);
 
 /* ----------------------------------------------------------------------- */
 

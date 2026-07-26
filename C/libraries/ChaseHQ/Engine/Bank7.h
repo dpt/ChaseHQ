@@ -1,5 +1,5 @@
 /**
-* Bank7.h
+ * Bank7.h
  *
  * This file is part of "Chase H.Q. in C".
  *

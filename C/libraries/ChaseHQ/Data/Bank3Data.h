@@ -131,6 +131,18 @@ extern const u8 title_tune1_data[222];
 
 extern const u8 options_menu_text[366];
 
+/* 128K bank 3: two fixed 1-bit PCM "digitised sample" tables played by
+ * play_sample_row via the drum-sample dispatch in sfx_music_service. Each
+ * byte is one playback row of 8 bits, rotated out with RLC so playback
+ * mutates the table in place -- state keeps a mutable per-game copy, these
+ * are the pristine templates. Same underlying sample content as CommonData.c's
+ * drum1_template/drum2_template and Bank7Data.h's es_drum1/es_drum2 (this
+ * game's PCM drum/noise assets are duplicated, at slightly different
+ * lengths, across every bank that plays them) -- transcribed separately here
+ * because bank 3's copies are shorter than either. */
+extern const u8 sfx_sample_1_template[104]; /* $F8F2, played with D=$68 rows */
+extern const u8 sfx_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK3DATA_H */

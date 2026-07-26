@@ -37,7 +37,7 @@
 /// start_tune ($EB9E) are modelled, along with the phrase-pointer-table
 /// fields read/written by advance_channel_phrase ($F1AE, reached via pattern
 /// command 0x87) -- see that function's prologue for the table format.
-struct title_tune_channel {
+typedef struct title_tune_channel {
   u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
   const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
   const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
@@ -68,7 +68,8 @@ struct title_tune_channel {
   u8         phrase_repeat_count;    // +$21 decrementing repeat count for the phrase currently held in phrase_ptr; 0 means due for a new phrase-table lookup (advance_channel_phrase); reset to 0 by start_tune
   const u8  *phrase_ptr;             // +$22/+$23 pattern-stream cursor for the phrase most recently activated by a repeating (marker==2) phrase-table entry; reused while phrase_repeat_count is still counting down (advance_channel_phrase)
   u8         mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
-};
+}
+title_tune_channel_t;
 
 /// One 9-byte animated-object record used by the 128K bank-3 title screen
 /// ($BB00-$BB4F, 9 records). Populated from a scene table by
@@ -206,6 +207,70 @@ struct chq_bank3_state {
   // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),
   // [5..7] = quit/pause/turbo (keyboard-only).
   u8        control_keys[8];
+
+  // $F836-$FA71 (128K bank 3 only): the digitised drum-sample subsystem
+  // driven by sfx_music_service ($F82F) and armed by
+  // start_tune_and_sfx_table's drum-sample script reader ($F7D6-$F82C).
+  // See sfx_music_service's prologue in Bank3.c for the slot1/slot2/tail
+  // state machine this drives.
+  struct {
+    // $F7F5: sfx_script_advance's own re-entry countdown -- throttles how
+    // often a fresh script opcode byte is read.
+    u8        script_delay;
+
+    // $F7FC: drum-sample script byte-code cursor, advanced by
+    // sfx_script_advance ($F7F4/$F7FE) each time script_delay reaches 0.
+    const u8 *script_ptr;
+
+    // $F837: drum-sample slot 1 busy flag (0 = idle, 1 = armed/busy).
+    u8        slot1_busy;
+
+    // $F842: slot 1 countdown/selector byte -- doubles as the countdown
+    // ticked once per frame while busy, and as the raw selector byte most
+    // recently read from the sample-selector stream.
+    u8        slot1_countdown;
+
+    // $F84E: write-only duplicate of the selector byte copied by
+    // stst_load_sfx_script/sfx_script_advance; never read anywhere in bank 3
+    // (same "purpose not established" status as title_music.pattern_driver_flag).
+    u8        slot1_selector_dup;
+
+    // $F895: drum-sample slot 2 busy/countdown flag, armed alongside
+    // slot1_countdown when a stream entry's bit 7 is set.
+    u8        slot2_busy;
+
+    // $F8A2: 1-bit sample playback active flag, tested by sfx_music_service's
+    // tail to decide whether to resume play_sample_row.
+    u8        sample_active;
+
+    // $F853: current read position in the sample-selector byte stream.
+    const u8 *stream_ptr;
+
+    // $F85E: reload source for stream_ptr, set by stst_load_sfx_script/
+    // sfx_script_advance each time a new drum-sample entry is read from
+    // $FAA4.
+    const u8 *stream_reload_ptr;
+
+    // $F8CE: write-only playback-rate/pitch parameter stashed for the two
+    // fixed sample tables; never read anywhere in bank 3 (see
+    // sfx_music_service's prologue -- same "purpose not established" status
+    // as slot1_selector_dup).
+    u8        sample_pitch_param;
+
+    // $F8F2/$F95A (Bank3Data.h: sfx_sample_1_template/sfx_sample_2_template):
+    // mutable per-game copies -- play_sample_row rotates each byte in place
+    // with RLC as it plays, so these cannot be the read-only template tables
+    // directly (same reasoning as chqstate_t::drum1/drum2).
+    u8        sample1[104];
+    u8        sample2[224];
+
+    // $FA72-$FA74: procedural engine/tyre-noise generator's self-modifying
+    // phase-counter/accumulator state, advanced every call by
+    // procedural_engine_noise ($FA3A).
+    u8        noise_phase;
+    u8        noise_accum;
+    u8        noise_rotate;
+  } sfx;
 };
 
 /* ----------------------------------------------------------------------- */

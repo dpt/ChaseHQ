@@ -21,10 +21,10 @@
  * animated title screen, the title/success music, and the keyboard/joystick
  * control-select and key-redefinition screens reached from it. These
  * routines are paged into $C000-$FFFF and dispatched from mainline code
- * (Main.c) via call_bank_3_128k(), whose entry point and BANK3_* dispatch
+ * (Main.c) via bank3_call(), whose entry point and BANK3_* dispatch
  * constants are declared in Internal.h alongside the handful of low-level
  * helpers (z80addrtoscreen, z80addrtoattrs, setwordat) and the bank-4 title-
- * tune functions (start_tune, ts_music_service) shared with this file.
+ * tune functions (titlescr_start_ay, titlescr_music_service) shared with this file.
  */
 
 #include <assert.h>
@@ -51,9 +51,8 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define BASL_JINGLE_FRAMES (0xB4) /* success-jingle duration; see play_success_music Conv: */
+#define SUCCESS_JINGLE_FRAMES (0xB4) /* success-jingle duration; see play_success_music Conv: */
 
-/* state is always the enclosing function's chqstate_t* parameter. */
 #define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr, 0, 0)
 
@@ -67,19 +66,21 @@ typedef struct glyph_blit_geometry
 {
   int       H;              /* destination screen address high byte (was D) */
   int       L;              /* destination screen address low byte (was E) */
-  const u8 *HLsrc;          /* glyph bitmap pointer (was HL) */
+  const u8 *HL_src;         /* glyph bitmap pointer (was HL) */
   int       B_height_pairs; /* scanline-pairs remaining to draw (was B) */
   int       C_width_select; /* width selector, 1-7 (was C) */
   int       carry_initial;  /* true: Y was within range, nothing to skip (was Carry) */
   u8        A_excess;       /* Y clamp excess; valid only when !carry_initial (was A') */
-} glyph_blit_geometry_t;
+}
+glyph_blit_geometry_t;
 
 /* ----------------------------------------------------------------------- */
-static void title_screen_driver(chqstate_t *state);
-static u8 ts_wait_loop(chqstate_t *state);
-static void ts_coin_inserted(chqstate_t *state);
-static void ts_refresh_name_table(chqstate_t *state);
-static u8   ts_animate_frame(chqstate_t *state);
+
+static void run_title_screen(chqstate_t *state);
+static u8 titlescr_wait_loop(chqstate_t *state);
+static void titlescr_coin_inserted(chqstate_t *state);
+static void titlescr_refresh_name_table(chqstate_t *state);
+static u8   titlescr_animate_frame(chqstate_t *state);
 static u8   object_script_step(chqstate_t *state);
 static void oss_op_velocity(struct title_object *rec);
 static void oss_apply_x_step(struct title_object *rec);
@@ -122,25 +123,20 @@ static void blit_glyph_rows(chqstate_t *state,
                             const u8   *src,
                             int         B_height_pairs,
                             int         row_bytes);
-static void blit_width1(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+typedef void blit_width_fn(chqstate_t *state,
+                           int         H,
+                           int         L,
+                           const u8   *src,
+                           int         B_height_pairs);
+static blit_width_fn blit_width1;
 static void advance_glyph_scanline(int *H, int *L);
-static void blit_width2(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
-static void blit_width3(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
-static void blit_width4(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
-static void blit_width5(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
-static void blit_width6(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
-static void blit_width7(
-    chqstate_t *state, int H, int L, const u8 *src, int B_height_pairs);
+static blit_width_fn blit_width2, blit_width3, blit_width4, blit_width5, blit_width6, blit_width7;
 static void clear_playfield_buffer(chqstate_t *state);
-static void start_tune(chqstate_t *state, u8 A_tune);
-static void ts_music_service(chqstate_t *state);
-static void write_title_ay_registers(chqstate_t *state);
+static void titlescr_start_ay(chqstate_t *state, u8 A_tune);
+static void titlescr_music_service(chqstate_t *state);
+static void titlescr_write_ay_registers(chqstate_t *state);
+static void titlescr_silence_ay(chqstate_t *state);
+static void stop_music_and_silence(chqstate_t *state);
 static u8 acp_read_byte(title_tune_channel_t *IX_channel,
                         const u8            **DE_pattern);
 static const u8 *resolve_phrase_addr(u16 addr);
@@ -153,14 +149,24 @@ static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel);
 static void setup_im2_interrupt_table(chqstate_t *state);
 static void play_success_music(chqstate_t *state);
-static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune);
+static void titlescr_start_tune(chqstate_t *state, u8 A_tune);
+static void titlescr_drum_advance(chqstate_t *state);
 static void sfx_music_service(chqstate_t *state);
 static void frame_interrupt_handler(chqstate_t *state);
+static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param);
+static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param);
+static void play_fixed_sample_start(chqstate_t *state,
+                                    int         A_pitch_param,
+                                    u8         *HL_data,
+                                    int         D_length);
+static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data);
+static void finish_sample_playback(chqstate_t *state);
+static void procedural_engine_noise(chqstate_t *state, int E_pitch_param);
 static u8 options_menu_driver(chqstate_t *state);
 static u8 omd_redraw_and_poll(chqstate_t *state);
 static void run_title_tune(chqstate_t *state);
 static u8 detect_kempston_joystick(chqstate_t *state);
-static void print_string(chqstate_t *state, const u8 *HLstring);
+static void print_string(chqstate_t *state, const u8 *HL_string);
 static const u8 *print_character(chqstate_t *state, const u8 *HL_record);
 static void clear_options_screen(chqstate_t *state);
 static void redefine_keys_screen(chqstate_t *state);
@@ -180,45 +186,43 @@ static u16 advance_key_label_column(u16 DE_screen);
  * animated-object array at $BB00 from the chosen scene's object table, draws
  * the overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and
  * "PRESS GEAR TO PLAY" once controls have been selected), starts tune 0, then
- * falls into the attract-mode wait loop (ts_wait_loop) which animates the
+ * falls into the attract-mode wait loop (titlescr_wait_loop) which animates the
  * scene each frame while polling for coin/fire/keyboard input to start a
  * game. Called from $C000 and $FBC8.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
- * state->title_animation; see the TODO in ts_wait_loop where the "any
+ * state->title_animation; see the TODO in titlescr_wait_loop where the "any
  * key" restart path reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
- * real early-exit path in the Z80. It stays `void`: ts_wait_loop's fire-key
+ * real early-exit path in the Z80. It stays `void`: titlescr_wait_loop's fire-key
  * branch now calls options_menu_driver's omd_redraw_and_poll directly and
  * returns its result, which in the Z80 is itself a `JP $C59E` hand-off back
  * to this function -- so the fire path rejoins this loop exactly like the
- * "any key" and test-mode restarts, and no caller of title_screen_driver
+ * "any key" and test-mode restarts, and no caller of run_title_screen
  * ever needs to see it.
  *
  * Conv: despite the above, this function is *not* guaranteed to loop
- * forever even today -- ts_wait_loop has two genuine RET paths of its own
+ * forever even today -- titlescr_wait_loop has two genuine RET paths of its own
  * (the initial tune-4-and-180-frame-wait tail, and the coin-inserted tail),
  * both of which fall out of this function normally via a plain C `return`.
  * Only the ordinary polling path (no coin, no key) is unbounded.
  *
  * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain
- * jumps -- they do not grow the Z80 stack. Calling title_screen_driver
- * recursively from ts_wait_loop would grow the C stack by one frame per
+ * jumps -- they do not grow the Z80 stack. Calling run_title_screen
+ * recursively from titlescr_wait_loop would grow the C stack by one frame per
  * restart with no bound (every "any key"/test-mode restart during a long
- * attract-mode session), so instead ts_wait_loop returns non-zero to
+ * attract-mode session), so instead titlescr_wait_loop returns non-zero to
  * request a restart and this function loops.
  */
-static void title_screen_driver(chqstate_t *state)
-{return; // TEMP
-
+static void run_title_screen(chqstate_t *state)
+{//return; // TEMP
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
   int       scene_idx;      /* chosen scene table index, 0-4 */
   const u8 *HL_scene_table; /* chosen scene table's object-record base (was HL) */
   int       obj;            /* object-record loop index, 0-8 (was B) */
-  u16       DE_pscript;     /* script pointer, reassembled from 2 Z80-address bytes (was DE) */
 
   for (;;) {
     clear_and_fill_border_attrs(state);
@@ -265,8 +269,7 @@ static void title_screen_driver(chqstate_t *state)
       state->bank3->title_objects[obj].y   = HL_scene_table[1];
       state->bank3->title_objects[obj].row = HL_scene_table[2];
 
-      DE_pscript = wordat(HL_scene_table + 3);
-      state->bank3->title_objects[obj].script = &title_scene_data[DE_pscript - TITLE_SCENE_DATA_BASE];
+      state->bank3->title_objects[obj].script = &title_scene_data[wordat(HL_scene_table + 3) - TITLE_SCENE_DATA_BASE];
 
       HL_scene_table += 5;
     }
@@ -277,12 +280,12 @@ static void title_screen_driver(chqstate_t *state)
      * normal play -- $C6C4 self-loops, animating every frame, until some
      * object's script hits its $D2 end-of-script opcode, which unwinds the
      * whole call chain straight back here (see object_script_step's and
-     * ts_animate_frame's own Conv notes). Modelled as an explicit loop
+     * titlescr_animate_frame's own Conv notes). Modelled as an explicit loop
      * rather than the stack-unwind trick itself: the scene animates for as
      * many frames as that takes, then this loop ends and the scene is left
      * on its final frame while the tune starts and the (non-animating) wait
      * loop below takes over. */
-    while (ts_animate_frame(state))
+    while (titlescr_animate_frame(state))
       if (state->host_quit)
         longjmp(state->host_quit_jmp, 1);
 
@@ -293,14 +296,14 @@ static void title_screen_driver(chqstate_t *state)
     if (state->controls_selected)
       print_character(state, &title_screen_overlay_text[0]);
 
-    start_tune_and_sfx_table(state, 0);
+    titlescr_start_tune(state, 0);
 
     update_whole_playfield(state); /* Conv: added */
 
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
 
-    if (!ts_wait_loop(state)) /* $C61D falls through to $C61E */
+    if (!titlescr_wait_loop(state)) /* $C61D falls through to $C61E */
       return;
   }
 }
@@ -312,11 +315,11 @@ static void title_screen_driver(chqstate_t *state)
  * polls for coin-insert / fire / any-key input to start the game or jump to
  * a fresh title screen. Does NOT animate the scene -- on real hardware this
  * loop body is just `CALL $F82F` with no call to $C6C4; by the time this
- * loop is reached, title_screen_driver's own per-frame loop has already run
+ * loop is reached, run_title_screen's own per-frame loop has already run
  * the scene's animation to completion (an object's script hit its $D2
  * end-of-script opcode) and the scene sits frozen on its final frame for
  * the rest of the attract-mode wait. Re-entered every frame via $C61E;
- * title_screen_driver ($C59E) is re-run (new scene) when a key other than
+ * run_title_screen ($C59E) is re-run (new scene) when a key other than
  * fire is pressed.
  *
  * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame
@@ -346,7 +349,7 @@ static void title_screen_driver(chqstate_t *state)
  * function recursing into title_screen_driver directly (see
  * title_screen_driver's prologue for why).
  */
-static u8 ts_wait_loop(chqstate_t *state)
+static u8 titlescr_wait_loop(chqstate_t *state)
 {
   int B_wait;       /* tune-4 wait countdown, 180 frames (was B) */
   u8  A_fire;       /* ENTER/L/K/J/H half-row, tested for fire (was A) */
@@ -368,20 +371,20 @@ static u8 ts_wait_loop(chqstate_t *state)
     if (!state->bank3->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
        * iteration) before falling through to the coin/name-table refresh
-       * tail at ts_refresh_name_table.
+       * tail at titlescr_refresh_name_table.
        *
        * Conv: $C629 calls $F7DB (stst_load_sfx_script), NOT $F7D6
-       * (start_tune_and_sfx_table's entry point) -- this is a distinct
+       * (titlescr_start_tune's entry point) -- this is a distinct
        * entry point, used only from here, that skips the
        * PUSH AF/CALL $EB9E/POP AF tune-start prologue entirely and jumps
-       * straight into the SFX-script-table setup for tune #4's cue table.
-       * It must NOT call start_tune (that would incorrectly arm
-       * state->title_music.tune_active). The SFX-script-table setup itself
-       * is out of scope -- see sfx_music_service/start_tune_and_sfx_table's
-       * own TODO for the digitised-sample SFX subsystem. */
+       * straight into the drum-script-table setup for tune #4's cue table.
+       * It must NOT call titlescr_start_ay (that would incorrectly arm
+       * state->title_music.tune_active). The drum-script-table setup itself
+       * is out of scope -- see sfx_music_service/titlescr_start_tune's
+       * own TODO for the digitised drum-sample subsystem. */
 
-      /* TODO: CALL stst_load_sfx_script ($F7DB) -- SFX-table setup for
-       * tune #4, out of scope (digitised-sample SFX subsystem). */
+      /* TODO: CALL stst_load_sfx_script ($F7DB) -- drum-script-table setup
+       * for tune #4, out of scope (digitised drum-sample subsystem). */
 
       B_wait = 180;
       do {
@@ -392,11 +395,11 @@ static u8 ts_wait_loop(chqstate_t *state)
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */
 
-      ts_refresh_name_table(state);
-      return 0; /* $C6C3 RET -- returns to title_screen_driver's own caller.
+      titlescr_refresh_name_table(state);
+      return 0; /* $C6C3 RET -- returns to run_title_screen's own caller.
                  * Conv: contrary to the usual framing of this loop as
                  * unbounded, this path is a genuine early exit in the Z80 --
-                 * see the prologue note on title_screen_driver. */
+                 * see the prologue note on run_title_screen. */
     }
 
     /* ts_check_fire ($C638): fire (ENTER) check.
@@ -406,7 +409,7 @@ static u8 ts_wait_loop(chqstate_t *state)
     if (A_fire & 1)
       return omd_redraw_and_poll(state); /* hands off to the options menu;
         * its own $C59E hand-off matches this function's own "restart
-        * title_screen_driver" return contract, so the value passes straight
+        * run_title_screen" return contract, so the value passes straight
         * through. */
 
     /* $C641-$C64C: coin-op mode / coin-slot check. Conv: $8001 is the same
@@ -422,7 +425,7 @@ static u8 ts_wait_loop(chqstate_t *state)
        * coin" for now. */
       A_coin_input = 0;
       if (A_coin_input & 0x10) {
-        ts_coin_inserted(state);
+        titlescr_coin_inserted(state);
         return 0;
       }
     }
@@ -450,9 +453,8 @@ static u8 ts_wait_loop(chqstate_t *state)
       state->wanted_stage_number = 6;
       state->retry_count = 3;
 
-      /* TODO: CALL stop_music_and_silence ($ED0B) -- clears tune_active
-       * and the AY mixer/noise register cache; AY driver internals not
-       * yet ported (see start_tune_and_sfx_table). */
+      stop_music_and_silence(state);
+
       /* TODO: CALL $C00C (check high score) -- not disassembled in this
        * bank, no C equivalent yet. */
 
@@ -469,10 +471,10 @@ static u8 ts_wait_loop(chqstate_t *state)
     RRC(A_anykey);
     /* TODO: seed scene-selector SM operand ($C5A2) with A_anykey -- the
      * whole scene-selection self-modifying byte is out of scope for this
-     * task (see title_screen_driver's $C5A1-$C5C7 stub); when that is
+     * task (see run_title_screen's $C5A1-$C5C7 stub); when that is
      * implemented, this write must land in the same field. */
 
-    /* TODO: CALL stop_music_and_silence ($ED0B) -- see note above. */
+    stop_music_and_silence(state);
 
     return 1; /* $C693 JP $C59E -- ask the caller to restart */
   }
@@ -482,14 +484,14 @@ static u8 ts_wait_loop(chqstate_t *state)
  * $C696: Coin-inserted entry point
  *
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
- * into the shared name-table refresh tail at ts_refresh_name_table.
+ * into the shared name-table refresh tail at titlescr_refresh_name_table.
  *
  * Conv: the $8011 push is a stack marker discarded by the shared tail's
  * `POP AF` ($C6C2) -- it has no other effect and is not modelled.
  */
-static void ts_coin_inserted(chqstate_t *state)
+static void titlescr_coin_inserted(chqstate_t *state)
 {
-  ts_refresh_name_table(state); /* $C696-$C69A fallthrough */
+  titlescr_refresh_name_table(state); /* $C696-$C69A fallthrough */
 }
 
 /**
@@ -502,11 +504,11 @@ static void ts_coin_inserted(chqstate_t *state)
  * Conv: stubbed per scope decision -- nothing in the C port yet models the
  * destination buffer or a $800A-equivalent state field, and this task's
  * State.h changes are handled separately. Reached both directly from
- * ts_wait_loop's ~180-frame tune wait and via ts_coin_inserted; in the Z80
- * both paths end in a RET back to title_screen_driver's own caller, which
+ * titlescr_wait_loop's ~180-frame tune wait and via titlescr_coin_inserted; in the Z80
+ * both paths end in a RET back to run_title_screen's own caller, which
  * this function models simply by returning normally.
  */
-static void ts_refresh_name_table(chqstate_t *state)
+static void titlescr_refresh_name_table(chqstate_t *state)
 {
   /* TODO: copy 3 rows of high-score name/rank data from $C403 into the
    * buffer pointed to by ($800A) -- needs a destination buffer/state field,
@@ -569,13 +571,13 @@ static const u8 shocked_keydef_sequence[8] = {
  * this port are called once per iteration from a caller-owned loop (e.g.
  * drive_attract_demo). Only the EI/HALT frame-pacing point is translated,
  * via the same stamp/sleep idiom used elsewhere. Continuous animation is
- * driven by title_screen_driver calling this function once per iteration
+ * driven by run_title_screen calling this function once per iteration
  * until it returns 0 — see its own call site.
  *
  * Conv: the stack-unwind escape hatch *is* modelled, via the return value.
  * object_script_step returns 1 when an object's script hits its $D2
  * end-of-script opcode, which on real hardware pops straight out of this
- * whole self-loop back to title_screen_driver. When that happens, this
+ * whole self-loop back to run_title_screen. When that happens, this
  * function skips the rest of the frame's work (clear_playfield_buffer,
  * background-object draw, present, sleep) and returns 0 to tell its caller
  * to stop animating and fall through to the (non-animating) attract-mode
@@ -597,10 +599,10 @@ static const u8 shocked_keydef_sequence[8] = {
  * Z80 has no equivalent -- it draws straight into the real display memory
  * -- but the SDL port renders into an off-screen buffer that must be
  * explicitly presented every frame, or the host window only ever shows the
- * single frame drawn by title_screen_driver before this function starts
+ * single frame drawn by run_title_screen before this function starts
  * looping.
  */
-static u8 ts_animate_frame(chqstate_t *state)
+static u8 titlescr_animate_frame(chqstate_t *state)
 {
   int                  obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
   struct title_object *rec; /* current object record (was IX) */
@@ -671,15 +673,15 @@ static u8 ts_animate_frame(chqstate_t *state)
  * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
  * with no PUSH anywhere in this call chain, that pops object_script_step's
  * own return address as data and returns via the frame beneath it, aborting
- * all the way back into ts_animate_frame's *caller* (title_screen_driver's
+ * all the way back into titlescr_animate_frame's *caller* (run_title_screen's
  * own per-frame loop) and skipping the rest of that frame's work
  * (clear_playfield_buffer, background-object draw, stamp/sleep). This is
  * exactly what makes the attract-mode scene animate for a while and then
  * freeze once the tune starts: whichever object's script reaches $D2 first
  * is the one that ends the self-loop. Modelled here with a u8 return (1 =
- * hit $D2, stop processing further objects this frame) that ts_animate_frame
+ * hit $D2, stop processing further objects this frame) that titlescr_animate_frame
  * propagates to its own caller, rather than the raw stack-unwind trick
- * itself -- see ts_animate_frame's prologue.
+ * itself -- see titlescr_animate_frame's prologue.
  *
  * Conv: oss_op_immediate_step's Y-magnitude extraction rotates A right
  * through the carry flag 3 times before masking with AND $03; the carry bit
@@ -1119,13 +1121,13 @@ static void compute_glyph_blit_params(chqstate_t *state,
   if (!g.carry_initial) {
     A_skip_pairs = (u8) (g.A_excess >> 1);
     do {
-      g.HLsrc += g.C_width_select * 2;
+      g.HL_src += g.C_width_select * 2;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
     } while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
   }
 
-  blit_masked_sprite_dispatch(state, g.H, g.L, g.HLsrc, g.B_height_pairs,
+  blit_masked_sprite_dispatch(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                               g.C_width_select);
 }
 
@@ -1209,7 +1211,7 @@ static void compute_glyph_geometry(u8                     B_y,
   glyph = &title_glyph_table[glyph_index];
   out->B_height_pairs = glyph->height_pairs;
   out->C_width_select = glyph->width_bytes;
-  out->HLsrc          = glyph->bitmap;
+  out->HL_src          = glyph->bitmap;
 }
 
 /**
@@ -1281,13 +1283,13 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
       A_skip_pairs = 1; /* $C9A3-$C9A5: guards the wrap quirk noted above */
 
     do {
-      g.HLsrc += E_stride;
+      g.HL_src += E_stride;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
     } while (--A_skip_pairs != 0);
   }
 
-  blit_masked_sprite_dispatch_b(state, g.H, g.L, g.HLsrc, g.B_height_pairs,
+  blit_masked_sprite_dispatch_b(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                                 g.C_width_select);
 }
 
@@ -1561,7 +1563,7 @@ static void blit_width7(
  * of screen third 2 ($4800-$4FFF, all 8 character rows) and the top 5
  * character rows of screen third 3 ($5000-$57FF), leaving third 3's bottom
  * 3 character rows untouched so the fixed overlay text printed once by
- * title_screen_driver (print_character) is not wiped out every frame. Only
+ * run_title_screen (print_character) is not wiped out every frame. Only
  * 28 of each scanline's 32 bytes are cleared (screen columns 2-29), leaving
  * a 2-column margin on each edge. Classic "LD SP,HL; PUSH x N" fast-fill
  * trick (see the project's known translation pitfall of the same name): SP
@@ -1769,7 +1771,7 @@ static const struct {
  * sets the initial speed/divider and counter, and enables the channel.
  * Finally it clears the pattern_driver_flag scratch byte, forces an
  * immediate tempo refresh, and arms the tune-active flag for
- * ts_music_service ($EC71) to pick up on its next call.
+ * titlescr_music_service ($EC71) to pick up on its next call.
  *
  * \param[in]     A_tune Tune number to start; index into the 7-byte-stride
  *                       tune-select table at $F225. (was A)
@@ -1805,13 +1807,13 @@ static const struct {
  * dispatch_pattern_command's pitch_offset_table/envelope_shape_table
  * handling. Before that first select command runs, though, a note event
  * still dereferences both unconditionally (advance_channel_pattern's
- * note-value branch, compute_channel_ay_registers' phase 1/2), so start_tune
+ * note-value branch, compute_channel_ay_registers' phase 1/2), so titlescr_start_ay
  * seeds all 3 channels with default_pitch_offset_seq/default_envelope_shape
  * (below): synthetic single-entry tables, not transcribed Z80 data, that
  * decode to "no pitch offset" / "constant amplitude 15" so playback is
  * audible and stable rather than crashing before the first select command.
  */
-static void start_tune(chqstate_t *state, u8 A_tune)
+static void titlescr_start_ay(chqstate_t *state, u8 A_tune)
 {
   static const u8 default_pitch_offset_seq[] = { SEQ_END_BIT }; /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
   static const u8 default_envelope_shape[]   = { 0x0F, SEQ_END_BIT }; /* Conv: constant amplitude 15, then a halt marker */
@@ -1924,7 +1926,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
  * not) recomputes the AY tone-period/volume register values for all 3
  * channels from their current tracker state (compute_channel_ay_registers)
  * into the register cache at title_ay_regs; finally flushes the full cached
- * register block to the AY chip via write_title_ay_registers.
+ * register block to the AY chip via titlescr_write_ay_registers.
  *
  * Called once per frame by the routine at $F82F.
  *
@@ -1939,7 +1941,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
  * comment at $EC99; the driver always ticks every other frame regardless of
  * the selected tune.
  */
-static void ts_music_service(chqstate_t *state)
+static void titlescr_music_service(chqstate_t *state)
 {
   title_tune_channel_t *IX_channel; /* this channel's tracker record (was IX) */
   u16                   HL_period;  /* tone period returned per channel (was HL) */
@@ -2005,7 +2007,7 @@ static void ts_music_service(chqstate_t *state)
    * active. */
   /* $ECCF-$ECE2: output the cached register block. */
   if (state->bank3->title_music.tune_active)
-    write_title_ay_registers(state);
+    titlescr_write_ay_registers(state);
 }
 
 /**
@@ -2022,26 +2024,83 @@ static void ts_music_service(chqstate_t *state)
  * OUTD in sequence); C issues two separate out() calls per register, as in
  * write_audio_registers_128k.
  */
-static void write_title_ay_registers(chqstate_t *state)
+static void titlescr_write_ay_registers(chqstate_t *state)
 {
-  zxspectrum_t *speccy; /* ZX Spectrum callbacks (Conv: C-only) */
+  zxspectrum_t *speccy; /* ZX Spectrum callbacks (Conv: added) */
   const u8     *values; /* pointer walking title AY soft copies downward (was HL) */
-  u8            regno;  /* AY register index, 11 down to 0 (was A) */
+  int           reg;    /* AY register index, 11 down to 0 (was A) */
 
   speccy = state->speccy;
   values = &state->bank3->title_ay_regs.env_fine;
-  regno  = AY_REG_ENVELOPE_FINE_DURATION;
+  reg  = AY_REG_ENVELOPE_FINE_DURATION;
   do {
-    speccy->out(speccy, port_AY_REGISTER, regno);
+    speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
-  } while ((s8) --regno >= 0);
+  } while (--reg >= 0);
+}
+
+/**
+ * $ECED (bank 3): Silence every AY-3-8912 register
+ *
+ * Writes 0 to registers 13 downto 0, then belt-and-braces re-writes
+ * register 7 (mixer) with 0 a second time. Same select-then-write shape as
+ * titlescr_write_ay_registers.
+ *
+ * Conv: two speccy->out calls per register, as in titlescr_write_ay_registers.
+ */
+static void titlescr_silence_ay(chqstate_t *state)
+{
+  zxspectrum_t *speccy; /* ZX Spectrum callbacks (Conv: added) */
+  int           reg;    /* AY register index, 13 down to 0 (was D) */
+
+  speccy = state->speccy;
+  reg = AY_REG_ENVELOPE_SHAPE;
+  do {
+    speccy->out(speccy, port_AY_REGISTER, reg);
+    speccy->out(speccy, port_AY_DATA, 0);
+  } while (--reg >= 0);
+
+  /* $ECFF-$ED0A: belt-and-braces re-write of register 7 (mixer) = 0. */
+  speccy->out(speccy, port_AY_REGISTER, AY_REG_MIXER);
+  speccy->out(speccy, port_AY_DATA, 0);
+}
+
+/**
+ * $ED0B (bank 3): Stop any playing tune and silence the AY chip
+ *
+ * Clears the tune-active flag, silences every AY register via
+ * titlescr_silence_ay, then clears the title-tune engine's own soft copy of the
+ * per-channel volume registers ($EFB7-$EFB9: title_ay_regs.chan_a_vol/
+ * chan_b_vol/chan_c_vol) so a later titlescr_write_ay_registers flush cannot
+ * resurrect the old volumes.
+ *
+ * Used by run_title_screen's test-mode and "any key" restart paths, and
+ * by options_menu_driver.
+ *
+ * Conv: the skool's own comment at this address describes $EFB7-$EFB9 as
+ * "the per-channel mixer/noise register cache", but those addresses land on
+ * title_ay_regs.chan_a_vol/chan_b_vol/chan_c_vol by the same byte-offset
+ * arithmetic titlescr_write_ay_registers relies on (see that function's
+ * prologue) -- trusting the addresses over the prose, per this project's
+ * established practice for the $FE/$FF opcode discrepancy elsewhere in this
+ * bank.
+ */
+static void stop_music_and_silence(chqstate_t *state)
+{
+  state->bank3->title_music.tune_active = 0;
+
+  titlescr_silence_ay(state);
+
+  state->bank3->title_ay_regs.chan_a_vol = 0;
+  state->bank3->title_ay_regs.chan_b_vol = 0;
+  state->bank3->title_ay_regs.chan_c_vol = 0;
 }
 
 /**
  * $EDD6 (bank 3): Advance one title-tune channel's pattern by one tracker row
  *
  * Part of the 128K animated title screen's music driver. Called once per
- * channel, 3 times per tick, by ts_music_service ($EC71@bank3) once its tempo
+ * channel, 3 times per tick, by titlescr_music_service ($EC71@bank3) once its tempo
  * counter reaches zero. Two responsibilities:
  *
  * 1. $EDD6-$EE48: if this channel's per-row wait countdown has not yet
@@ -2095,7 +2154,7 @@ static void write_title_ay_registers(chqstate_t *state)
  * full derivation.
  *
  * Conv: pattern_ptr/pattern_base/pattern_len (State.h) are only populated for
- * tunes 0 and 1 (see start_tune) -- a channel with pattern_ptr == NULL (tunes
+ * tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr == NULL (tunes
  * 2/3, not extracted) is treated as silent rather than dereferencing NULL.
  * Every read from the pattern stream goes through acp_read_byte, which wraps
  * the cursor back to pattern_base once it runs past pattern_base+pattern_len:
@@ -2166,7 +2225,7 @@ static const u8 *resolve_phrase_addr(u16 addr)
  * Part of the 128K animated title screen's music driver (distinct from the
  * 48K play_music_48k engine, which happens to share this address in a
  * different skool/bank). Called once per channel per frame by
- * ts_music_service ($EC71@bank3) to refresh the AY register cache. Pure
+ * titlescr_music_service ($EC71@bank3) to refresh the AY register cache. Pure
  * calculation: no I/O, no state beyond the channel's
  * own tracker record and the shared mixer-cache byte. Five phases, in order:
  *
@@ -2409,7 +2468,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * brand-new cursor, taken from this channel's own phrase-pointer table.
  *
  * Each channel's raw pattern-data block (pattern_data_ptr, +$03/$04) begins
- * with the 2-byte header word start_tune dereferences to seed pattern_ptr,
+ * with the 2-byte header word titlescr_start_ay dereferences to seed pattern_ptr,
  * immediately followed at offset 2 by the phrase-pointer table proper: a
  * sequence of little-endian words, each either a literal marker (0 or 1) or
  * a Z80 address. phrase_table_offset (+$05/$06) is this channel's current
@@ -2756,32 +2815,32 @@ reset_row_counter:
 /**
  * $F3B6: Page in bank 3 and call a banked routine
  *
- * Patches a CALL instruction at $81C5 with [HLroutine], backs up the 4 KB at
+ * Patches a CALL instruction at $81C5 with [routine], backs up the 4 KB at
  * $B000 to $F000, sets up a temporary stack, pages in bank 3 via page_128k,
  * executes the patched CALL, then pages bank 3 back out, restores SP and
  * refills $B000 from $F000.
  *
- * In C, bank 3 routines are not yet implemented. A switch on [HLroutine]
+ * In C, bank 3 routines are not yet implemented. A switch on [routine]
  * dispatches each Z80 entry-point address constant to its C stub.
  * BANK3_INPUT_SELECTION sets controls_selected and returns 0 to prompt the
  * caller's loop to exit; all other cases return 1.
  *
- * \param[in] HLroutine Z80 address of the bank 3 routine to invoke. (was HL)
+ * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
  * \return 1 on success; 0 to signal an early return in the caller's loop
  * (BANK3_INPUT_SELECTION only).
  *
  * Conv: Z80 uses self-modification and 128K hardware memory paging; C
- * dispatches via switch on the [HLroutine] address constants.
+ * dispatches via switch on the [routine] address constants.
  */
-u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
+u8 bank3_call(chqstate_t *state, int routine)
 {
-  switch (HLroutine) {
+  switch (routine) {
   default:
     assert(0);
     break;
   case BANK3_TITLE_SCREEN:
-    title_screen_driver(state);
+    run_title_screen(state);
     break;
   case BANK3_HI_SCORE:
     break;
@@ -2815,7 +2874,7 @@ static void setup_im2_interrupt_table(chqstate_t *state)
 }
 
 /**
- * $F7C7: Boot entry point — set up interrupts and run the success jingle
+ * $F7C7: Set up interrupts and run the success jingle
  *
  * Calls setup_im2_interrupt_table, starts tune 1, then falls into
  * basl_service_loop ($F7D1), which calls sfx_music_service once per 50Hz
@@ -2824,13 +2883,13 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * reached).
  *
  * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
- * call_bank_3_128k, whose caller (handle_perp_caught_128k, and in turn its
+ * bank3_call, whose caller (handle_perp_caught_128k, and in turn its
  * own caller's phase4 state machine) expects a normal return so scoring and
  * fading can proceed on the same call — an infinite loop here would
  * permanently hang the game thread. Per explicit scope decision, the Z80's
- * unconditional loop is quantised into a bounded run of BASL_JINGLE_FRAMES
+ * unconditional loop is quantised into a bounded run of SUCCESS_JINGLE_FRAMES
  * frames (reusing the same 0xB4/180-frame, ~3.6s heuristic already used for
- * the tune-4 wait in ts_wait_loop) and then returns normally. The frame
+ * the tune-4 wait in titlescr_wait_loop) and then returns normally. The frame
  * count is a guess at the jingle's real duration; TODO: tune by ear once
  * pattern data exists to actually hear it.
  */
@@ -2839,9 +2898,9 @@ static void play_success_music(chqstate_t *state)
   int B_wait; /* jingle frame countdown (was B, unbounded in the Z80) */
 
   setup_im2_interrupt_table(state);
-  start_tune(state, 1);
+  titlescr_start_ay(state, 1);
 
-  B_wait = BASL_JINGLE_FRAMES;
+  B_wait = SUCCESS_JINGLE_FRAMES;
   do {
     state->speccy->stamp(state->speccy);
     sfx_music_service(state);
@@ -2850,51 +2909,172 @@ static void play_success_music(chqstate_t *state)
 }
 
 /**
- * $F7D6: Start a tune and arm its sound-effect trigger table
+ * $F7D6: Start a tune and arm its drum-sample trigger table
  *
- * Plays tune A_tune (via start_tune), looks up a pointer in the table at
- * $FA75 (indexed by A_tune*2) into a per-tune SFX script, and clears the 3
- * SFX "busy" flags at $F837/$F895/$F8A2 before falling into the SFX
- * script-byte-code reader.
+ * Plays tune A_tune (via titlescr_start_ay), looks up a pointer in the table at
+ * $FA75 (indexed by A_tune*2) into a per-tune drum-sample cue script, and
+ * clears the 3 drum-sample "busy" flags at $F837/$F895/$F8A2 before falling
+ * into the script-byte-code reader.
  *
  * \param[in] A_tune Tune number to start (was A).
  *
- * Conv: the digitised-sample SFX subsystem is out of scope (per scope
+ * Conv: the digitised drum-sample subsystem is out of scope (per scope
  * decision — see sfx_music_service). Only the CALL $EB9E is translated; the
- * SFX trigger-table setup ($F7DB-$F82C) is stubbed.
+ * drum-sample trigger-table setup ($F7DB-$F82C) is stubbed.
  */
-static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune)
+static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
 {
-  start_tune(state, A_tune);
+  titlescr_start_ay(state, A_tune);
 
-  /* TODO: SFX trigger-table setup, out of scope — see $F7DB-$F82C */
+  /* TODO: drum-sample trigger-table setup, out of scope — see $F7DB-$F82C */
 }
 
 /**
- * $F82F: Per-frame SFX and music service
+ * $F7F4/$F7FE: Drum-sample cue script byte-code reader
  *
- * Runs the AY title-tune driver (CALL $EC71 -> ts_music_service) once, then
- * clears the "frame occurred" flag at $F8A8. The remainder of the Z80
- * routine ($F836-$F8AC) drives three digitised-sample "busy slot" state
- * machines: SFX slot 1 ($F836-$F894, a selector-byte stream read via a
- * countdown at $F842), SFX slot 2 ($F894-$F8A1, a companion countdown armed
- * by slot 1's bit 7), and a 1-bit sample playback tail ($F8A1-$F8AC) that
- * pulses out sample rows from one of two fixed sample tables ($F8F2/$F95A)
- * or a procedural noise generator ($FA3A). Called once per frame from
- * $C06E, $C16A, $C59E, $F7C7 and $FBC8.
+ * Reads opcode bytes from script_ptr, throttled by script_delay so it only
+ * re-reads a fresh opcode once the previous one's delay/repeat count has
+ * ticked down to 0. $FE ends the script (disables interrupts, stops the
+ * tune); $FF reads a 2-byte absolute jump target and continues from there;
+ * any other byte is a delay/repeat value stored to script_delay, followed by
+ * a raw byte offset into the $FAA4 trigger table -- a 3-byte entry
+ * (selector byte, then a 2-byte pointer) copied into slot1_selector_dup,
+ * slot1_countdown and stream_reload_ptr for sfx_music_service to read.
  *
- * Conv: music-only translation, per scope decision. Only the CALL $EC71 is
- * translated; the frame-flag clear at $F832-$F833 is omitted because nothing
- * in this port ever polls $F8A8 (wait_for_frame_flag is unused outside the
- * SFX subsystem below). The three sample busy-slot state machines are out of
- * scope and left as a TODO — see $F837/$F895/$F8A2.
+ * Called by sfx_music_service ($F82F) when the selector stream yields a
+ * byte of exactly 1.
+ *
+ * TODO: not yet translated -- the $FA75 (per-tune script pointer table) and
+ * $FAA4 (per-drum-ID parameter table) data has not been transcribed from
+ * the skool. sfx_music_service's dispatch is gated on stream_reload_ptr
+ * being non-null, so this stub is never reached yet.
+ */
+static void titlescr_drum_advance(chqstate_t *state)
+{
+  NOT_USED(state);
+}
+
+/**
+ * $F82F: Per-frame drum-sample and music service
+ *
+ * Runs the AY title-tune driver (CALL $EC71 -> titlescr_music_service), then drives
+ * three digitised drum-sample "busy slot" state machines: slot 1
+ * ($F836-$F894, a selector-byte stream read via a countdown at
+ * slot1_countdown), slot 2 ($F894-$F8A1, a companion countdown armed by
+ * slot 1's bit 7), and a 1-bit sample playback tail ($F8A1-$F8AC).
+ *
+ * Slot 1: if idle, arms itself and reloads the stream cursor from
+ * stream_reload_ptr; if already busy, ticks slot1_countdown and only
+ * re-enters the stream-reading loop once it reaches 0. The stream-reading
+ * loop reads a byte from stream_ptr: exactly 1 means "pull in a fresh
+ * trigger-table entry" (titlescr_drum_advance), reload the stream cursor and
+ * retry; anything else is the entry byte to act on this frame. Bit 7 of that
+ * entry byte also arms slot 2; its low 3 bits select one of the two fixed
+ * 1-bit drum samples or the procedural noise generator (dispatch is a tail
+ * call — this function returns immediately once one of those fires, exactly
+ * as the Z80's JP does); its upper bits are the pitch/rate parameter passed
+ * to whichever fixed-sample player is selected. A low-3-bits value of 0
+ * triggers nothing and falls through to slot 2.
+ *
+ * Slot 2: if busy, ticks both slot1_countdown and slot2_busy down together
+ * (companion countdown for whatever slot 1 armed via the bit-7 path).
+ *
+ * Tail: would resume mid-sample playback via play_sample_row if
+ * sample_active were still 1 here (see play_sample_row's own Conv note for
+ * why that never happens in this port).
+ *
+ * Called once per frame from $C06E, $C16A, $C59E, $F7C7 and $FBC8.
+ *
+ * Conv: the frame-flag clear at $F832-$F833 is omitted because nothing in
+ * this port ever polls $F8A8 (wait_for_frame_flag has no C equivalent —
+ * every caller here already represents one already-paced tick, so there is
+ * nothing left to wait for).
  */
 static void sfx_music_service(chqstate_t *state)
 {
-  ts_music_service(state);
+  u8        A;             /* general accumulator, reused for each state check (was A) */
+  const u8 *HLstream;      /* selector-stream cursor (was HL) */
+  u8        Dentry;        /* dispatch entry byte, masked if bit 7 was set (was D) */
+  int       Bselector;     /* low-3-bits selector: which 1-bit-sample engine to trigger (was B) */
+  int       A_pitch_param; /* pitch/rate parameter passed to the fixed-sample players (was A) */
 
-  /* TODO: digitised sample SFX subsystem, out of scope — see
-   * $F837 (slot 1), $F895 (slot 2), $F8A2 (1-bit sample playback active). */
+  titlescr_music_service(state);
+
+  if (!state->bank3->sfx.stream_reload_ptr) {
+    // Conv: titlescr_start_tune's drum-sample trigger-table setup
+    // ($F7DB-$F82C) is still a TODO stub (see its own prologue) and never
+    // arms stream_reload_ptr, so the slot1/slot2/tail state machine below
+    // has no valid script to read yet. Skip it rather than dereference a
+    // null stream cursor; remove this guard once that TODO is completed.
+    return;
+  }
+
+  if (!state->bank3->sfx.slot1_busy) {
+    // idle -> arm slot 1, reload and enter the loop
+    state->bank3->sfx.slot1_busy = 1;
+    goto sfx1_reload_pointer;
+  }
+
+  A = (u8)(state->bank3->sfx.slot1_countdown - 1);
+  if (A != 0) {
+    state->bank3->sfx.slot1_countdown = A;
+    goto sfx2_tick_countdown; // skip slot 1 entirely this frame
+  }
+
+  state->bank3->sfx.slot1_countdown = 0;
+  HLstream = state->bank3->sfx.stream_ptr;
+  goto sfx_read_stream_byte;
+
+sfx1_reload_pointer:
+  HLstream                     = state->bank3->sfx.stream_reload_ptr;
+  state->bank3->sfx.stream_ptr = HLstream;
+
+sfx_read_stream_byte:
+  A = *HLstream - 1;
+  if (A != 0)
+    goto sfx_dispatch_entry;
+  titlescr_drum_advance(state); // pull in a fresh trigger-table entry
+  goto sfx1_reload_pointer;
+
+sfx_dispatch_entry:
+  HLstream++;
+  state->bank3->sfx.stream_ptr = HLstream;
+  A++; // restore the original entry byte (undo the -1 above)
+  if (A & 0x80) {
+    A &= 0x7F;
+    state->bank3->sfx.slot1_countdown = 1;
+    state->bank3->sfx.slot2_busy      = 1;
+  }
+  Dentry = A;
+  A &= 0x07;
+  if (A == 0)
+    goto sfx2_tick_countdown; // nothing to trigger this frame
+
+  Bselector     = A;
+  A_pitch_param = Dentry >> 3;
+  if (--Bselector == 0) {
+    play_fixed_sample_1(state, A_pitch_param);
+    return;
+  }
+  if (--Bselector == 0) {
+    play_fixed_sample_2(state, A_pitch_param);
+    return;
+  }
+  if (--Bselector == 0) {
+    procedural_engine_noise(state, A_pitch_param);
+    return;
+  }
+
+sfx2_tick_countdown:
+  if (state->bank3->sfx.slot2_busy) {
+    state->bank3->sfx.slot1_countdown--;
+    state->bank3->sfx.slot2_busy--;
+  }
+
+  // Conv: would resume mid-sample playback here if sample_active were 1;
+  // unreachable in this port because play_sample_row always finishes the
+  // sample within the same call that armed it (see play_sample_row's own
+  // Conv note) -- sample_active is always 0 by the time this tail runs.
 }
 
 /**
@@ -2902,8 +3082,9 @@ static void sfx_music_service(chqstate_t *state)
  *
  * Z80 IM2 interrupt service routine installed by setup_im2_interrupt_table.
  * Sets the "frame occurred" flag at $F8A8, polled by wait_for_frame_flag, and
- * returns. The actual per-frame music/SFX work happens synchronously from the
- * title-screen main loop (ts_wait_loop / play_success_music), not here.
+ * returns. The actual per-frame music/drum-sample work happens
+ * synchronously from the title-screen main loop (titlescr_wait_loop /
+ * play_success_music), not here.
  *
  * Conv: no equivalent in C — nothing in this port ever waits on the $F8A8
  * flag (the title-screen loops call sfx_music_service directly once per
@@ -2918,6 +3099,221 @@ static void frame_interrupt_handler(chqstate_t *state)
 }
 
 /**
+ * $F8B6: Select fixed sample table 1 and start playback
+ *
+ * Drum-sample dispatch selector 1's entry point (see sfx_music_service's
+ * prologue).
+ * Points play_fixed_sample_start at the 104-byte sample table
+ * state->bank3->sfx.sample1 and falls through to arm playback.
+ *
+ * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch
+ *   byte's upper 5 bits (was A).
+ */
+static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param)
+{
+  play_fixed_sample_start(state,
+                          A_pitch_param,
+                          &state->bank3->sfx.sample1[0],
+                          sizeof(state->bank3->sfx.sample1));
+}
+
+/**
+ * $F8BD: Select fixed sample table 2 and start playback
+ *
+ * Drum-sample dispatch selector 2's entry point (see sfx_music_service's
+ * prologue).
+ * Points play_fixed_sample_start at the 224-byte sample table
+ * state->bank3->sfx.sample2 and falls through to arm playback.
+ *
+ * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch
+ *   byte's upper 5 bits (was A).
+ */
+static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
+{
+  play_fixed_sample_start(state,
+                          A_pitch_param,
+                          &state->bank3->sfx.sample2[0],
+                          sizeof(state->bank3->sfx.sample2));
+}
+
+/**
+ * $F8C2: Arm 1-bit sample playback
+ *
+ * Shared tail for play_fixed_sample_1/play_fixed_sample_2: stashes the
+ * pitch/rate parameter, marks sample playback active, then falls into
+ * play_sample_row to begin pulsing the sample out over the beeper.
+ *
+ * \param[in] A_pitch_param Playback-rate/pitch parameter (was A).
+ * \param[in] HL_data Pointer to the first byte of the sample table to play
+ *   (was HL).
+ * \param[in] D_length Number of sample bytes to play (was D).
+ *
+ * Conv: $F8CE (sample_pitch_param) is written here but never read anywhere
+ * in bank 3 -- same "purpose not established" status as slot1_selector_dup
+ * (see Bank3State.h). Stored anyway for parity with the Z80's self-modified
+ * operand byte.
+ */
+static void play_fixed_sample_start(chqstate_t *state,
+                                    int         A_pitch_param,
+                                    u8         *HL_data,
+                                    int         D_length)
+{
+  state->bank3->sfx.sample_pitch_param = A_pitch_param;
+  state->bank3->sfx.sample_active      = 1;
+  play_sample_row(state, D_length, HL_data); /* was FALLTHROUGH */
+}
+
+/**
+ * $F8CC/$F8CD: Pulse a 1-bit PCM sample out over the beeper
+ *
+ * Bit-bangs port $FE (border/speaker) from bitmap data at HL_data, one row of
+ * 8 bits per sample byte: each bit test (BIT 7,(HL)) selects a full or muted
+ * EAR pulse, then RLC (HL) rotates the next bit into position for the
+ * following iteration -- the byte doubles as its own 8-iteration counter.
+ * After each byte, D_length is decremented; when it reaches 0 the sample is
+ * complete and finish_sample_playback clears sample_active.
+ *
+ * \param[in] D_length Number of sample bytes remaining to output (was D).
+ * \param[in,out] HL_data Pointer to the next sample byte to play; mutated in
+ *   place by the RLC rotation (was HL).
+ *
+ * Conv: the Z80 re-enters this loop at $F8CC (with an EXX banking in a
+ * shadow HL'/D' saved by an earlier early exit) when a genuine 50Hz
+ * interrupt fires mid-sample -- tested at $F8E2 via the $F8A8 "frame
+ * occurred" flag -- so that playback resumes on the next sfx_music_service
+ * call rather than completing in one go. frame_interrupt_handler is a no-op
+ * in this port (see its own Conv note), so $F8A8 never becomes non-zero and
+ * that early-exit branch is unreachable here: every sample plays to
+ * completion within one call, exactly as playdrum_go/es_playdrum_go already
+ * do for the 48K and bank 7 drum samples (Main.c/Bank7.c). No shadow-register
+ * modelling is needed as a result.
+ *
+ * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host
+ * can reconstruct the bit timing -- same accounting as playdrum_go/
+ * es_playdrum_go, whose bit-bang loop is byte-for-byte identical to this one
+ * bar the fixed (not self-modified) 8-iteration count.
+ */
+static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
+{
+  zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
+  int           carry;  /* carry from the RLC rotation, unused after (carry) */
+  int           i;      /* inner loop counter: 8 bits per sample byte (was B) */
+  int           bits;   /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+
+  speccy = state->speccy;
+  for (;;) {
+    i = 8;
+    do {
+      bits = port_MASK_EAR; // speaker bit
+      if ((*HL_data & (1 << 7)) == 0)
+        bits = 0;
+      speccy->out(speccy, port_BORDER_EAR_MIC, bits);
+      RLC(*HL_data); /* rotate sample byte in place */
+      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
+      speccy->logtime(speccy, 63);
+    } while (--i > 0);
+    HL_data++;
+    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
+    speccy->logtime(speccy, 46);
+    if (--D_length == 0) {
+      finish_sample_playback(state);
+      return;
+    }
+  }
+}
+
+/**
+ * $F8EB: Finish sample playback
+ *
+ * Clears the 1-bit sample playback active flag once play_sample_row has
+ * output every byte of the armed sample.
+ *
+ * Conv: the Z80 tail-jumps to wait_for_frame_flag ($F8A7) to busy-wait for
+ * the next interrupt. wait_for_frame_flag has no C equivalent -- like
+ * play_music_48k, this call already represents one already-paced tick (see
+ * sfx_music_service's callers), so there is nothing left to wait for; the
+ * function simply returns.
+ */
+static void finish_sample_playback(chqstate_t *state)
+{
+  state->bank3->sfx.sample_active = 0;
+}
+
+/**
+ * $FA3A: Play a procedural engine/tyre noise burst
+ *
+ * Drum-sample dispatch selector 3's entry point (see sfx_music_service's
+ * prologue).
+ * Generates a noise burst on the beeper by running an LFSR-like update on the
+ * 3-byte noise_phase/noise_accum/noise_rotate state, then toggling the
+ * EAR/MIC outputs whenever bit 4 of the result is set. The outer loop runs
+ * Eduration ticks; each tick iterates an inner loop of 50 noise steps. On
+ * each step the phase/accumulator/rotate bytes are updated, and if bit 4
+ * fires, two timed pulses are written to port_BORDER_EAR_MIC: first high
+ * after ($18 - Eduration) delay iterations, then low after Eduration
+ * iterations. Same update sequence as play_noise (Main.c) and
+ * es_play_noise (Bank7.c), operating on this bank's own 3-byte state
+ * instead of rng_seed.
+ *
+ * \param[in] E_pitch_param Noise duration: outer loop count and pulse timing
+ *   parameter (was A, moved to E at entry).
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay loops as speccy->logtime so the
+ * host can reconstruct the pulse timing -- same accounting as play_noise.
+ *
+ * Conv: the Z80 polls the $F8A8 "frame occurred" flag after each inner-loop
+ * iteration ($FA67-$FA6B) to bail out early on a genuine 50Hz interrupt.
+ * frame_interrupt_handler is a no-op in this port, so $F8A8 never becomes
+ * non-zero and that early-exit branch is unreachable here: both loops always
+ * run to completion within one call, matching play_noise's own Conv note.
+ */
+static void procedural_engine_noise(chqstate_t *state, int E_pitch_param)
+{
+  zxspectrum_t *speccy;     /* game's ZX Spectrum facade (was N/A) */
+  int           carry;      /* carry from RLC/RRC operations on noise state (carry) */
+  int           Eduration;  /* outer loop count and pulse high/low timing parameter (was E) */
+  int           Dinner;     /* inner loop count: 50 noise steps per tick (was D) */
+  int           Bphase;     /* phase byte read after the +3 advance (was B) */
+  u8            A;          /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
+
+  speccy    = state->speccy;
+  carry     = 0;
+  Eduration = E_pitch_param;
+
+  do {
+    Dinner = 50;
+    do {
+      state->bank3->sfx.noise_phase += 3;
+      Bphase = state->bank3->sfx.noise_phase;
+      A      = state->bank3->sfx.noise_accum - 0x8D;
+      state->bank3->sfx.noise_accum = A;
+      A += Bphase;
+      RLC(A);
+      RRC(state->bank3->sfx.noise_rotate);
+      A += state->bank3->sfx.noise_rotate;
+      state->bank3->sfx.noise_rotate = A;
+      /* $FA3D-$FA50: phase/accumulator/rotate advance + AND $10 (127 T-states) */
+      speccy->logtime(speccy, 127);
+      if (A & (1 << 4)) {
+        /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
+        speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - Eduration));
+        speccy->out(speccy, port_BORDER_EAR_MIC,
+                    port_MASK_EAR | port_MASK_MIC);
+        /* $FA5E: LD B,E; DJNZ; XOR A (4 + loop + 4) */
+        speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(Eduration));
+        speccy->out(speccy, port_BORDER_EAR_MIC, 0);
+
+        speccy->logtime(speccy, 16);
+      } else {
+        /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
+        speccy->logtime(speccy, 28);
+      }
+    } while (--Dinner > 0);
+  } while (--Eduration > 0);
+}
+
+/**
  * $FB99: Options-menu driver entry point
  *
  * One-time setup for the control-select menu: arms the IM2 interrupt
@@ -2926,8 +3322,8 @@ static void frame_interrupt_handler(chqstate_t *state)
  *
  * Called once from the cold-boot entry point ($C009, BANK3_INPUT_SELECTION,
  * not yet wired up here). The fire-key exit from the title screen's
- * attract-mode wait loop (ts_wait_loop, $C63E JP C,$FBA2) re-enters at
- * omd_redraw_and_poll directly, skipping this one-time setup -- ts_wait_loop's
+ * attract-mode wait loop (titlescr_wait_loop, $C63E JP C,$FBA2) re-enters at
+ * omd_redraw_and_poll directly, skipping this one-time setup -- titlescr_wait_loop's
  * existing TODO ("fire pressed -> start the game via $FBA2") should call
  * omd_redraw_and_poll(state), not this function.
  *
@@ -2936,12 +3332,12 @@ static void frame_interrupt_handler(chqstate_t *state)
 static u8 options_menu_driver(chqstate_t *state)
 {
   setup_im2_interrupt_table(state);
-  start_tune_and_sfx_table(state, 0);
+  titlescr_start_tune(state, 0);
 
   state->speccy->stamp(state->speccy); /* $FBA0 EI / $FBA1 HALT: sync to the
                                         * next interrupt before entering the
                                         * poll loop (same EI/HALT -> stamp()
-                                        * convention as title_screen_driver). */
+                                        * convention as run_title_screen). */
 
   return omd_redraw_and_poll(state); /* $FBA2: falls straight in */
 }
@@ -2972,7 +3368,7 @@ static u8 options_menu_driver(chqstate_t *state)
  *
  * Conv: $FBAE-$FBB3 (`LD A,$F7` / `IN A,($FE)` / `CPL` / `AND $1F`)
  * collapses to a single inverted, masked port_KEYBOARD_12345 read (same
- * collapse as ts_wait_loop's fire/coin/anykey checks).
+ * collapse as titlescr_wait_loop's fire/coin/anykey checks).
  *
  * Conv: $FBB7-$FBC1 (four `RRA` / `JR C` pairs testing bits 0-3 of the
  * 5-bit mask in turn) collapse to direct bit tests against A_key_mask; key
@@ -3053,22 +3449,21 @@ shared_tail:
     /* debounce: wait for the selection key to be released before proceeding */
   } while (A_key_mask != 0);
 
-  /* TODO: CALL stop_music_and_silence ($ED0B) -- AY driver internals not
-   * yet wired up (see start_tune_and_sfx_table). */
+  stop_music_and_silence(state);
 
   state->controls_selected = 1;
 
   /* $FC10 DI: omitted -- SDL owns interrupt delivery, matching every other
-   * DI/EI site in this file (see ts_wait_loop's prologue). */
+   * DI/EI site in this file (see titlescr_wait_loop's prologue). */
 
-  return 1; /* $FC11 JP $C59E: hand off to title_screen_driver */
+  return 1; /* $FC11 JP $C59E: hand off to run_title_screen */
 }
 
 /**
  * $FBC8: Services sound each frame and keeps the options-menu tune looping
  *
- * Runs one frame of the SFX/music service and, if no tune is currently
- * active, restarts tune 0.
+ * Runs one frame of the drum-sample/music service and, if no tune is
+ * currently active, restarts tune 0.
  *
  */
 static void run_title_tune(chqstate_t *state)
@@ -3077,7 +3472,7 @@ static void run_title_tune(chqstate_t *state)
 
   /* restart the tune if it's finished */
   if (!state->bank3->title_music.tune_active)
-    start_tune_and_sfx_table(state, 0);
+    titlescr_start_tune(state, 0);
 }
 
 /**
@@ -3118,18 +3513,18 @@ static u8 detect_kempston_joystick(chqstate_t *state)
 /**
  * $FD9C: Print one or more back-to-back packed text records
  *
- * Calls print_character to draw the record at HLstring, then repeats for the
+ * Calls print_character to draw the record at HL_string, then repeats for the
  * next record if the byte immediately following the terminator is non-zero.
  * The final zero byte is a pad, not part of any record (e.g. the $FC29
  * block's "$FD96 pad byte").
  *
- * \param[in] HLstring Pointer to the first record (was HL).
+ * \param[in] HL_string Pointer to the first record (was HL).
  */
-static void print_string(chqstate_t *state, const u8 *HLstring)
+static void print_string(chqstate_t *state, const u8 *HL_string)
 {
   for (;;) {
-    HLstring = print_character(state, HLstring);
-    if (*HLstring == 0)
+    HL_string = print_character(state, HL_string);
+    if (*HL_string == 0)
       return;
   }
 }
@@ -3558,97 +3953,102 @@ static u16 advance_key_label_column(u16 DE_screen)
 /* ----------------------------------------------------------------------- */
 
 /**
- * Sets every state->bank3 field to its power-on default.
+ * Allocate and initialise the bank 3 sub-state.
  *
- * Called once when bank 3 is entered, so every field the title-screen music
- * and animation code reads has a defined value even on paths that run
- * before start_tune has had a chance to initialise it properly.
+ * Conv: host lifecycle helper; has no Z80 address. Called once from
+ * chq_create.
  *
- * \param[in,out] state Game state (bank3 must already be allocated).
+ * \return 0 on success, -1 if allocation failed.
  */
-static void bank3_state_initialise(chqstate_t *state)
+int bank3_state_create(chqstate_t *state)
 {
-  int titlechan;
+  int ch;
   int titleobj;
 
+  state->bank3 = calloc(1, sizeof(*state->bank3));
+  if (state->bank3 == NULL)
+    return -1;
+
+  // TODO: Delete all of this zero init and Claude verbiage.
+
   // $EC01/$EC26/$EC4B (128K bank 3): title-tune channel-tracker records.
-  // start_tune ($EB9E) properly initialises these once a tune is selected,
+  // titlescr_start_ay ($EB9E) properly initialises these once a tune is selected,
   // but compute_channel_ay_registers ($EE9E) can in principle run before
   // that, so give every field a defined value here rather than leaving
   // calloc's zero fill as the only guarantee. pattern_ptr/pattern_data_ptr
-  // and the Conv-only pattern_base/pattern_len stay NULL/0 here; start_tune
-  // resolves them for real (tunes 0/1 only -- see start_tune's Translation
+  // and the Conv-only pattern_base/pattern_len stay NULL/0 here; titlescr_start_ay
+  // resolves them for real (tunes 0/1 only -- see titlescr_start_ay's Translation
   // notes). pitch_offset_default/_cur and envelope_shape_default/_ptr are
   // seeded there too with synthetic safe defaults.
-  for (titlechan = 0; titlechan < 3; titlechan++) {
-    state->bank3->title_music.channel[titlechan].status                 = 0;
-    state->bank3->title_music.channel[titlechan].pattern_ptr            = NULL; // set for real by start_tune
-    state->bank3->title_music.channel[titlechan].pattern_data_ptr       = NULL; // set for real by start_tune
-    state->bank3->title_music.channel[titlechan].pattern_base           = NULL; // Conv: set for real by start_tune
-    state->bank3->title_music.channel[titlechan].pattern_len            = 0;    // Conv: set for real by start_tune
-    state->bank3->title_music.channel[titlechan].phrase_table_offset    = 0;
-    state->bank3->title_music.channel[titlechan].slide_accum            = 0;
-    state->bank3->title_music.channel[titlechan].pitch_offset_default   = NULL; // TODO: set once decode_pattern_command's pitch-offset table exists
-    state->bank3->title_music.channel[titlechan].pitch_offset_cur       = NULL; // TODO: as above
-    state->bank3->title_music.channel[titlechan].slide_step             = 0;
-    state->bank3->title_music.channel[titlechan].slide_countdown        = 0;
-    state->bank3->title_music.channel[titlechan].envelope_speed         = 0;
-    state->bank3->title_music.channel[titlechan].row_wait               = 0;
-    state->bank3->title_music.channel[titlechan].row_wait_reload        = 0;
-    state->bank3->title_music.channel[titlechan].note_index             = 0;
-    state->bank3->title_music.channel[titlechan].volume                 = 0;
-    state->bank3->title_music.channel[titlechan].envelope_shape_default = NULL; // TODO: set once decode_pattern_command's envelope-shape table exists
-    state->bank3->title_music.channel[titlechan].envelope_shape_ptr     = NULL; // TODO: as above
-    state->bank3->title_music.channel[titlechan].envelope_amplitude     = 0;
-    state->bank3->title_music.channel[titlechan].envelope_step_counter  = 0;
-    state->bank3->title_music.channel[titlechan].vibrato_depth          = 0;
-    state->bank3->title_music.channel[titlechan].vibrato_increment      = 0;
-    state->bank3->title_music.channel[titlechan].vibrato_phase          = 0;
-    state->bank3->title_music.channel[titlechan].flags                  = 0;
-    state->bank3->title_music.channel[titlechan].slide_update_flag      = 0;
-    state->bank3->title_music.channel[titlechan].mute_pending           = 0;
-    state->bank3->title_music.channel[titlechan].transpose              = 0;
-    state->bank3->title_music.channel[titlechan].phrase_repeat_count    = 0;
-    state->bank3->title_music.channel[titlechan].phrase_ptr             = NULL;
+  for (ch = 0; ch < 3; ch++) {
+    state->bank3->title_music.channel[ch].status                 = 0;
+    state->bank3->title_music.channel[ch].pattern_ptr            = NULL; // set for real by titlescr_start_ay
+    state->bank3->title_music.channel[ch].pattern_data_ptr       = NULL; // set for real by titlescr_start_ay
+    state->bank3->title_music.channel[ch].pattern_base           = NULL; // Conv: set for real by titlescr_start_ay
+    state->bank3->title_music.channel[ch].pattern_len            = 0;    // Conv: set for real by titlescr_start_ay
+    state->bank3->title_music.channel[ch].phrase_table_offset    = 0;
+    state->bank3->title_music.channel[ch].slide_accum            = 0;
+    state->bank3->title_music.channel[ch].pitch_offset_default   = NULL; // TODO: set once decode_pattern_command's pitch-offset table exists
+    state->bank3->title_music.channel[ch].pitch_offset_cur       = NULL; // TODO: as above
+    state->bank3->title_music.channel[ch].slide_step             = 0;
+    state->bank3->title_music.channel[ch].slide_countdown        = 0;
+    state->bank3->title_music.channel[ch].envelope_speed         = 0;
+    state->bank3->title_music.channel[ch].row_wait               = 0;
+    state->bank3->title_music.channel[ch].row_wait_reload        = 0;
+    state->bank3->title_music.channel[ch].note_index             = 0;
+    state->bank3->title_music.channel[ch].volume                 = 0;
+    state->bank3->title_music.channel[ch].envelope_shape_default = NULL; // TODO: set once decode_pattern_command's envelope-shape table exists
+    state->bank3->title_music.channel[ch].envelope_shape_ptr     = NULL; // TODO: as above
+    state->bank3->title_music.channel[ch].envelope_amplitude     = 0;
+    state->bank3->title_music.channel[ch].envelope_step_counter  = 0;
+    state->bank3->title_music.channel[ch].vibrato_depth          = 0;
+    state->bank3->title_music.channel[ch].vibrato_increment      = 0;
+    state->bank3->title_music.channel[ch].vibrato_phase          = 0;
+    state->bank3->title_music.channel[ch].flags                  = 0;
+    state->bank3->title_music.channel[ch].slide_update_flag      = 0;
+    state->bank3->title_music.channel[ch].mute_pending           = 0;
+    state->bank3->title_music.channel[ch].transpose              = 0;
+    state->bank3->title_music.channel[ch].phrase_repeat_count    = 0;
+    state->bank3->title_music.channel[ch].phrase_ptr             = NULL;
     /* mixer_mask is static initial RAM content in the Z80 (not written by
-     * start_tune), confirmed against the skool's DEFB data: channel-tracker
+     * titlescr_start_ay), confirmed against the skool's DEFB data: channel-tracker
      * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */
-    switch (titlechan) {
+    switch (ch) {
     case 0:
-      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_A | AY_MIXER_NO_TONE_A;
+      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_A | AY_MIXER_NO_TONE_A;
       break;
     case 1:
-      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
+      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
       break;
     case 2:
-      state->bank3->title_music.channel[titlechan].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
+      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
       break;
     }
   }
 
-  // $EC70 (128K bank 3): per-tick tempo countdown; start_tune sets this to 1
+  // $EC70 (128K bank 3): per-tick tempo countdown; titlescr_start_ay sets this to 1
   // on tune start, so 0 here is just a harmless pre-tune-start default (the
-  // tune-active flag being clear means ts_music_service never reads it
+  // tune-active flag being clear means titlescr_music_service never reads it
   // before then).
   state->bank3->title_music.tempo_counter = 0x00; // $EC70
 
   // $EC79/$ECC6 (SM, 128K bank 3): scratch bytes are the operands of
-  // "LD A,$00" instructions in ts_music_service, so 0 is the assembled
+  // "LD A,$00" instructions in titlescr_music_service, so 0 is the assembled
   // reset value for both.
   state->bank3->title_music.shared_note_value    = 0x00; // $EC79
   state->bank3->title_music.driver_internal_flag = 0x00; // $ECC6
 
   // $EC9A/$EED1/$EF7A (128K bank 3): further scratch bytes written by
-  // start_tune/advance_channel_pattern; 0 matches start_tune's explicit
+  // titlescr_start_ay/advance_channel_pattern; 0 matches titlescr_start_ay's explicit
   // clear of $EED1 and is the natural power-on state of the other two.
   state->bank3->title_music.tune_tempo          = 0x00; // $EC9A
   state->bank3->title_music.pattern_driver_flag = 0x00; // $EED1
   state->bank3->title_music.pending_mixer_bits  = 0x00; // $EF7A
 
   // $F223/$F224 (128K bank 3): tune-active flag and its companion byte.
-  // start_tune clears both on entry and arms tune_active=1 once a tune's
+  // titlescr_start_ay clears both on entry and arms tune_active=1 once a tune's
   // channel-tracker records are initialised; 0 here matches the power-on
-  // state (no tune active) before start_tune is ever called.
+  // state (no tune active) before titlescr_start_ay is ever called.
   state->bank3->title_music.tune_active           = 0x00; // $F223
   state->bank3->title_music.tune_active_companion = 0x00; // $F224
 
@@ -3667,11 +4067,11 @@ static void bank3_state_initialise(chqstate_t *state)
   state->bank3->title_ay_regs.env_fine     = 0x00;
 
   // $C5A2 (SM): pristine operand value for the "LD A,$00" self-modified by
-  // title_screen_driver; rotates/increments on each restart.
+  // run_title_screen; rotates/increments on each restart.
   state->bank3->title_animation = 0x00;
 
   // $BB00-$BB4F (128K bank 3): title-screen animated-object array, repopulated
-  // from a scene table on every title_screen_driver restart; zeroed here so an
+  // from a scene table on every run_title_screen restart; zeroed here so an
   // object drawn before the first restart (should never happen) is inert.
   for (titleobj = 0; titleobj < 9; titleobj++) {
     state->bank3->title_objects[titleobj].opcode = 0x00;
@@ -3683,23 +4083,27 @@ static void bank3_state_initialise(chqstate_t *state)
     state->bank3->title_objects[titleobj].x      = 0x00;
     state->bank3->title_objects[titleobj].y      = 0x00;
   }
-}
 
-/**
- * Allocate and initialise the bank 3 sub-state.
- *
- * Conv: host lifecycle helper; has no Z80 address. Called once from
- * chq_create.
- *
- * \return 0 on success, -1 if allocation failed.
- */
-int bank3_state_create(chqstate_t *state)
-{
-  state->bank3 = calloc(1, sizeof(*state->bank3));
-  if (state->bank3 == NULL)
-    return -1;
-
-  bank3_state_initialise(state);
+  // $F836-$FA71 (128K bank 3): digitised drum-sample subsystem. All flags
+  // and pointers start idle/NULL -- titlescr_start_tune arms them for
+  // real once a tune's drum-sample script is loaded. $FA72-$FA74 match the
+  // skool's DEFB pristine values (all zero) for the noise generator's
+  // phase/accumulator state.
+  state->bank3->sfx.script_delay        = 0x00; // $F7F5
+  state->bank3->sfx.script_ptr          = NULL;  // $F7FC
+  state->bank3->sfx.slot1_busy          = 0x00;  // $F837
+  state->bank3->sfx.slot1_countdown     = 0x00;  // $F842
+  state->bank3->sfx.slot1_selector_dup  = 0x00;  // $F84E
+  state->bank3->sfx.slot2_busy          = 0x00;  // $F895
+  state->bank3->sfx.sample_active       = 0x00;  // $F8A2
+  state->bank3->sfx.stream_ptr          = NULL;  // $F853
+  state->bank3->sfx.stream_reload_ptr   = NULL;  // $F85E
+  state->bank3->sfx.sample_pitch_param  = 0x00;  // $F8CE
+  memcpy(state->bank3->sfx.sample1, sfx_sample_1_template, sizeof(state->bank3->sfx.sample1));
+  memcpy(state->bank3->sfx.sample2, sfx_sample_2_template, sizeof(state->bank3->sfx.sample2));
+  state->bank3->sfx.noise_phase         = 0x00;  // $FA72
+  state->bank3->sfx.noise_accum         = 0x00;  // $FA73
+  state->bank3->sfx.noise_rotate        = 0x00;  // $FA74
 
   return 0;
 }

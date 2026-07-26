@@ -1664,7 +1664,7 @@ static void bootstrap(chqstate_t *state)
 
     // If in 128K mode, call the 128K/bank 3 high score routine.
     if (state->mode_128k)
-      call_bank_3_128k(state, BANK3_HI_SCORE);
+      bank3_call(state, BANK3_HI_SCORE);
   }
 }
 
@@ -17499,7 +17499,7 @@ void play_speech_128k(chqstate_t *state, int index)
  * flag, resets the turbo SFX countdown to 1 and triggers the success music
  * sequence via bank 3.
  *
- * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into call_bank_3_128k; C
+ * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into bank3_call; C
  * passes BANK3_SUCCESS_MUSIC explicitly. The LD ($8E4A),A at $F3B0 self-modifies
  * overlay_delay; C assigns state->overlay_delay directly. Now that
  * BANK3_SUCCESS_MUSIC blocks for BASL_JINGLE_FRAMES frames of real playback
@@ -17521,7 +17521,7 @@ static void handle_perp_caught_128k(chqstate_t *state)
   state->turbo_sfx_pitch = 1;
   state->overlay_delay   = 1;
 
-  call_bank_3_128k(state, BANK3_SUCCESS_MUSIC); /* was FALLTHROUGH */
+  bank3_call(state, BANK3_SUCCESS_MUSIC); /* was FALLTHROUGH */
 }
 
 /**
@@ -17569,13 +17569,13 @@ static void reset_paging_128k(chqstate_t *state)
  * exits attract mode and starts the game.
  *
  * Conv: Z80 uses JP for looping and bank-3 call dispatch; C uses gotos and
- * call_bank_3_128k which dispatches via switch. The RRA for ENTER detection is
+ * bank3_call which dispatches via switch. The RRA for ENTER detection is
  * replaced by a direct bit-0 mask.
  */
 static void attract_mode_128k(chqstate_t *state)
 {
   int       HL_routine;           /* bank-3 routine address constant to invoke (was HL) */
-  int       A_result;             /* return value from call_bank_3_128k: 0 = early return (was A) */
+  int       A_result;             /* return value from bank3_call: 0 = early return (was A) */
   const u8 *DE_messages;          /* messages pointer: enter_for_options or press_gear (was DE) */
   int       enter_pressed;        /* non-zero when Enter key is held (was carry from RRA) */
   const u8 *HL_messages;          /* copy of DE_messages passed to print_message (was HL) */
@@ -17586,7 +17586,7 @@ static void attract_mode_128k(chqstate_t *state)
 attract_mode_128k_start:
   HL_routine = BANK3_TITLE_SCREEN;
 call_bank_3:
-  A_result = call_bank_3_128k(state, HL_routine);
+  A_result = bank3_call(state, HL_routine);
   if (A_result == 0)
     return;
 
