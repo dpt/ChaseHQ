@@ -31,6 +31,7 @@
 /* Private argument-encoding macros for es_script below; command values
  * (ESCMD_*_VAL) are shared with Bank7.c's run_script switch via
  * Bank7Data.h. */
+// clang-format off
 #define ESCMD_CLEAR_DRAW_FRAME(BMADDR, SCRADDR) ESCMD_CLEAR_DRAW_FRAME_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
 #define ESCMD_DRAW_WORD(BMADDR, SCRADDR)        ESCMD_DRAW_WORD_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
 #define ESCMD_FADE_IN_A                         ESCMD_FADE_IN_A_VAL
@@ -786,3 +787,4 @@ const handshake_frame_t handshake_frames[6] = {
   { 34, &bitmap_handshake_3[0] },
   { 35, &bitmap_handshake_2[0] },
 };
+// clang-format on

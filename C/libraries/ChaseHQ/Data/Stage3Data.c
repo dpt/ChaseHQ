@@ -136,9 +136,9 @@ static const u8 stage3_bitmap_DA39[1479];
 /* ----------------------------------------------------------------------- */
 
 /** $C000: stage3 */
+// clang-format off
 const stage_t stage3 = {
   /* $C000 backdrop */
-  // clang-format off
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     X_XXXXXX, XXXX_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, _XXXXXXX, XXXXX___, ________, ____XXXX, XXXXXXXX,
@@ -165,7 +165,6 @@ const stage_t stage3 = {
     ________, _______X, _X_X_X_X, ________, ________, ______X_, ______X_, ________, ________, ________,
     ________, _______X, XXXXXXXX, ________, ________, ______XX, XXXXXXX_, ________, ________, ________,
   },
-  // clang-format on
   /* $C0F0 perstage */
   &stage3_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
@@ -239,8 +238,6 @@ static const char *stage3_chatter_strings[4] = {
 
 /**
  * $C1E8: stage3_arrest_messages_C1E8
- *
- * clang-format off
  */
 static const u8 stage3_arrest_messages_C1E8[70] = {
   6,  // initial delay
@@ -262,8 +259,6 @@ static const u8 stage3_arrest_messages_C1E8[70] = {
   TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
   DRAWOVERLAY_STOP
 };
-// clang-format on
-
 /** $C22E: stage3_hittable_objects_C22E */
 static const hittable_t stage3_hittable_objects_C22E[2] = {
   { 16, &stage3_lods_D64F[0] },
@@ -1704,8 +1699,6 @@ static const u8 stage3_map_robjs_C7AD[] = {
 
 /**
  * $C82C: stage3_perp_face
- *
- * clang-format off
  */
 static const u8 stage3_perp_face[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -1755,8 +1748,6 @@ static const u8 stage3_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
-// clang-format on
-
 /** $C8E0: stage3_lods_C8E0 */
 static const bitmap_t stage3_lods_C8E0[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage3_bitmap_C95E[0], &stage3_bitmap_C95E[0] },  // [0]
@@ -1789,8 +1780,6 @@ static const bitmap_t stage3_lods_C934[6] = {
 
 /**
  * $C95E: stage3_bitmap_C95E
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_C95E[1171] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
@@ -1941,8 +1930,6 @@ static const u8 stage3_bitmap_C95E[1171] = {
   ______X_, _XXXX_X_, X____X_X, __XXXXXX, _X______, XXXXXXXX, ________, ________,
   XXXXXXXX, XXXXXXXX, ________,
 };
-// clang-format on
-
 /** $CDF1: stage3_lods_CDF1 */
 static const bitmap_t stage3_lods_CDF1[6] = {
   { 2, BITMAPFLAG_MASKED, 5, &stage3_bitmap_CE45[0], &stage3_bitmap_CE45[0] },  // [0]
@@ -1965,8 +1952,6 @@ static const bitmap_t stage3_lods_CE1B[6] = {
 
 /**
  * $CE45: stage3_bitmap_CE45
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_CE45[92] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____, ________, X_____X_, ____XXXX, XXXX____,
@@ -1982,8 +1967,6 @@ static const u8 stage3_bitmap_CE45[92] = {
   XXXX____, ____XXXX, XXXX___X, ____X_X_, __XXXXXX, XX______, XXXX__XX, ____XX__,
   ___XXXXX, _X______, XXXX___X, _____X__,
 };
-// clang-format on
-
 /** $CEA1: stage3_stretchy_CEA1 */
 static const stretchy_t stage3_stretchy_CEA1[4] = {
   { STRETCHY_TYPE_FIXED, &stage3_depthset_CEAB },
@@ -2071,8 +2054,6 @@ static const bitmap_t stage3_lods_CEED[18] = {
 
 /**
  * $CF6B: stage3_bitmap_CF6B
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_CF6B[848] = {
   __X___X_, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X____X__, ___X___X,
@@ -2182,8 +2163,6 @@ static const u8 stage3_bitmap_CF6B[848] = {
   X_______, _______X, _XXXXXXX, XXXXXXX_, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________, ________,
 };
-// clang-format on
-
 /** $D2BB: stage3_stretchy_D2BB */
 static const stretchy_t stage3_stretchy_D2BB[3] = {
   { STRETCHY_TYPE_150PC, &stage3_depthset_D2C2 },
@@ -2317,8 +2296,6 @@ static const bitmap_t stage3_lods_D377[8] = {
 
 /**
  * $D3AF: stage3_bitmap_D3AF
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_D3AF[672] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______, ________, ________, __X__XXX,
@@ -2406,8 +2383,6 @@ static const u8 stage3_bitmap_D3AF[672] = {
   ___XX__X, XXXXXXXX, ___XX__X, _XX__XXX, ___XX__X, __XXX__X, _X___XX_, XXXXXX__,
   ________, ________, ________, ________, ________, ________, ________, ________,
 };
-// clang-format on
-
 /** $D64F: stage3_lods_D64F */
 static const bitmap_t stage3_lods_D64F[6] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_D679[0], &stage3_bitmap_D679[0] },  // [0]
@@ -2420,8 +2395,6 @@ static const bitmap_t stage3_lods_D64F[6] = {
 
 /**
  * $D679: stage3_bitmap_D679
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_D679[70] = {
   ___XX___, _X_XX___, ____XXXX, XXXX____, ___XXXXX, XXXXX___, __XXXXXX, XXXXXX__,
@@ -2434,8 +2407,6 @@ static const u8 stage3_bitmap_D679[70] = {
   XXXXXXXX, XXX__XXX, XXX_X_XX, _X_X__X_, _XXX_XX_, __X_X_X_, __X__X__, __XXXX__,
   _XXXXXX_, _XXX_XX_, _XX__XX_, __X_XX__, __XX_X__, ___XX___,
 };
-// clang-format on
-
 /** $D6BF: stage3_lods_D6BF */
 static const bitmap_t stage3_lods_D6BF[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage3_bitmap_D6E9[0], &stage3_bitmap_D6E9[0] },  // [0]
@@ -2448,8 +2419,6 @@ static const bitmap_t stage3_lods_D6BF[6] = {
 
 /**
  * $D6E9: stage3_bitmap_D6E9
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_D6E9[181] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
@@ -2476,8 +2445,6 @@ static const u8 stage3_bitmap_D6E9[181] = {
   XXXXXXXX, XXXX____, ____X__X, ________, X__XX__X, XXXX____, ____XXXX, ________,
   XXXXXXXX, XXXXXXXX, ________, ____XXXX, XXXX____,
 };
-// clang-format on
-
 /** $D79E: stage3_stretchy_D79E */
 static const stretchy_t stage3_stretchy_D79E[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -2543,8 +2510,6 @@ static const bitmap_t stage3_lods_D7DE[5] = {
 
 /**
  * $D801: stage3_bitmap_D801
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_D801[469] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______, ________, _______X, X____XXX, XX____XX,
@@ -2607,8 +2572,6 @@ static const u8 stage3_bitmap_D801[469] = {
   _X__XX_X, XXXXXXXX, ________, X_______, _X_XXXXX, XXXXXXXX, ________, X_______,
   _XX_X_XX, XXXXXXXX, ________, X_______, _XXXXXXX,
 };
-// clang-format on
-
 /** $D9D6: stage3_stretchy_D9D6 */
 static const stretchy_t stage3_stretchy_D9D6[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -2674,8 +2637,6 @@ static const bitmap_t stage3_lods_DA16[5] = {
 
 /**
  * $DA39: stage3_bitmap_DA39
- *
- * clang-format off
  */
 static const u8 stage3_bitmap_DA39[1479] = {
   ____XXXX, XXX__XXX, XXX_____, ___X____, ___X_XX_, ___X____, ___XXXXX, XXX__XXX,
@@ -2864,8 +2825,6 @@ static const u8 stage3_bitmap_DA39[1479] = {
   ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________,
 };
-// clang-format on
-
 static const struct { u16 z80; const void *ptr; } stage3_map_goto_table[] = {
   { 0x5FF4, &stage3_map_curv_C3F4[0] },
   { 0x6009, &stage3_map_height_C409[0] },
@@ -2892,6 +2851,8 @@ static const struct { u16 z80; const void *ptr; } stage3_map_goto_table[] = {
   { 0x631F, &stage3_map_lobjs_C71F[0] },
   { 0x63AD, &stage3_map_robjs_C7AD[0] },
 };
+
+// clang-format on
 
 const void *stage3_lookup_map_goto(u16 z80)
 {

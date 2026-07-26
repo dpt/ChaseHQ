@@ -186,6 +186,7 @@ static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
 /* ----------------------------------------------------------------------- */
 
 /** $5CF0: stage1 */
+// clang-format off
 const stage_t stage1 = {
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -1602,14 +1603,11 @@ static const u8 stage1_perp_face[FACEBYTES] = {
   X__XX___, _X_X_XXX, XXXXXXXX, __X__X_X,
   XX_XX___, ____X_X_, XXX_X_XX, X_X_X_XX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-
-// clang-format off
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW, attribute_BLACK_OVER_CYAN
-// clang-format on
 };
 
 /* ----------------------------------------------------------------------- */
@@ -3215,6 +3213,8 @@ static const struct { u16 z80; const void *ptr; } stage1_map_goto_table[] = {
   { 0x6294, &stage1_map_loop_leftobjs[0]     },
   { 0x6314, &stage1_map_loop_rightobjs[0]    },
 };
+
+// clang-format on
 
 const void *stage1_lookup_map_goto(u16 z80)
 {

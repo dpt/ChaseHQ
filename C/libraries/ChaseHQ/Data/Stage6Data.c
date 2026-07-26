@@ -60,8 +60,8 @@ static const u8 stage6_bitmap_D64A[181];
  * the perp description and chatter text are placeholder content authored
  * for this port with no originating address.
  */
+// clang-format off
 const stage_t stage6 = {
-  // clang-format off
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     X_XXXXXX, X_X___XX, XX______, X_X_X_X_, X_X_XXX_, X_X_X___, X___XXX_, X_X_X_X_, X_X_X_X_, XXXXXXX_,
@@ -88,8 +88,6 @@ const stage_t stage6 = {
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
   },
-  // clang-format on
-
   &stage6_perp_face[FACEBITMAPBYTES],
   NULL,
   attribute_BRIGHT_BLACK_OVER_GREEN * 0x0101,
@@ -160,8 +158,6 @@ static const char *stage6_chatter_strings[4] = {
 
 /**
  * $C1E6: stage6_arrest_messages
- *
- * clang-format off
  */
 static const u8 stage6_arrest_messages[83] = {
   6,  // initial delay
@@ -176,8 +172,6 @@ static const u8 stage6_arrest_messages[83] = {
   TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
   DRAWOVERLAY_STOP
 };
-// clang-format on
-
 /** $C239: stage6_hittable_objects */
 static const hittable_t stage6_hittable_objects[2] = {
   { 32, &stage6_lods_D620[0] },
@@ -268,8 +262,6 @@ static const u8 rightside[] = {
 
 /**
  * $C82E: stage6_perp_face
- *
- * clang-format off
  */
 static const u8 stage6_perp_face[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -319,8 +311,6 @@ static const u8 stage6_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
-// clang-format on
-
 /** $C8E2: stage6_veh3 */
 static const bitmap_t stage6_veh3[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage6_bitmap_C960[0], &stage6_bitmap_C960[0] },  // [0]
@@ -353,8 +343,6 @@ static const bitmap_t stage6_veh1[6] = {
 
 /**
  * $C960: stage6_bitmap_C960
- *
- * clang-format off
  */
 static const u8 stage6_bitmap_C960[1329] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
@@ -525,8 +513,6 @@ static const u8 stage6_bitmap_C960[1329] = {
   _______X, XXXX____, ____XX_X, _______X, _X_X_XX_, XXXXX___, _____XXX, _____XXX,
   XXXXX___,
 };
-// clang-format on
-
 /** $D620: stage6_lods_D620 */
 static const bitmap_t stage6_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage6_bitmap_D64A[0], &stage6_bitmap_D64A[0] },  // [0]
@@ -539,8 +525,6 @@ static const bitmap_t stage6_lods_D620[6] = {
 
 /**
  * $D64A: stage6_bitmap_D64A
- *
- * clang-format off
  */
 static const u8 stage6_bitmap_D64A[181] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
@@ -577,6 +561,8 @@ static const struct { u16 z80; const void *ptr; } stage6_map_goto_table[] = {
   { 0xC6EE, &leftside[0] },
   { 0xC7A5, &rightside[0] },
 };
+
+// clang-format on
 
 const void *stage6_lookup_map_goto(u16 z80)
 {

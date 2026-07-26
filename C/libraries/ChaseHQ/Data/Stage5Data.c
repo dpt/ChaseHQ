@@ -149,9 +149,9 @@ static const u8 stage5_bitmap_DA32[1479];
 /* ----------------------------------------------------------------------- */
 
 /** $C000: stage5 */
+// clang-format off
 const stage_t stage5 = {
   /* $C000 backdrop */
-  // clang-format off
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     ________, ________, ____X_X_, X_XX_XXX, ___XXX_X, _X______, X_X_X_X_, X_XXXXXX, XXXXXXXX, XXXXXXXX,
@@ -178,7 +178,6 @@ const stage_t stage5 = {
     _____X_X, ____XXX_, ________, ________, ________, ________, _______X, X______X, _X______, _XX_____,
     ________, XXXXX___, ________, ________, ________, ________, ________, ________, __XXXXXX, ________,
   },
-  // clang-format on
   /* $C0F0 perstage */
   &stage5_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
@@ -252,8 +251,6 @@ static const char *stage5_chatter_strings[4] = {
 
 /**
  * $C1E6: stage5_arrest_messages_C1E6
- *
- * clang-format off
  */
 static const u8 stage5_arrest_messages_C1E6[83] = {
   6,  // initial delay
@@ -282,8 +279,6 @@ static const u8 stage5_arrest_messages_C1E6[83] = {
   TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
   DRAWOVERLAY_STOP
 };
-// clang-format on
-
 /** $C239: stage5_hittable_objects_C239 */
 static const hittable_t stage5_hittable_objects_C239[2] = {
   { 32, &stage5_lods_D620[0] },
@@ -1692,8 +1687,6 @@ static const u8 stage5_map_robjs_C7A5[] = {
 
 /**
  * $C82E: stage5_perp_face
- *
- * clang-format off
  */
 static const u8 stage5_perp_face[180] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -1743,8 +1736,6 @@ static const u8 stage5_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
-// clang-format on
-
 /** $C8E2: stage5_lods_C8E2 */
 static const bitmap_t stage5_lods_C8E2[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[0], &stage5_bitmap_C960[0] },  // [0]
@@ -1777,8 +1768,6 @@ static const bitmap_t stage5_lods_C936[6] = {
 
 /**
  * $C960: stage5_bitmap_C960
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_C960[1329] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
@@ -1949,8 +1938,6 @@ static const u8 stage5_bitmap_C960[1329] = {
   _______X, XXXX____, ____XX_X, _______X, _X_X_XX_, XXXXX___, _____XXX, _____XXX,
   XXXXX___,
 };
-// clang-format on
-
 /** $CE91: stage5_stretchy_CE91 */
 static const stretchy_t stage5_stretchy_CE91[5] = {
   { STRETCHY_TYPE_FIXED, &stage5_depthset_CE9E },
@@ -2165,8 +2152,6 @@ static const bitmap_t stage5_lods_CFE7[20] = {
 
 /**
  * $D073: stage5_bitmap_D073
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_D073[537] = {
   XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX, _X_XXXX_, XX_XXXXX, X_XXXXXX, _XXXXXXX,
@@ -2238,8 +2223,6 @@ static const u8 stage5_bitmap_D073[537] = {
   XXXXXX_X, __XXXXXX, _X______, XXXX____, ____XXXX, ________, XXX_X_X_, _XXXXXXX,
   X_______,
 };
-// clang-format on
-
 /** $D28C: stage5_stretchy_D28C */
 static const stretchy_t stage5_stretchy_D28C[3] = {
   { STRETCHY_TYPE_150PC, &stage5_depthset_D293 },
@@ -2373,8 +2356,6 @@ static const bitmap_t stage5_lods_D348[8] = {
 
 /**
  * $D380: stage5_bitmap_D380
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_D380[672] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______, ________, ________, __X__XXX,
@@ -2462,8 +2443,6 @@ static const u8 stage5_bitmap_D380[672] = {
   ___XX__X, XXXXXXXX, ___XX__X, _XX__XXX, ___XX__X, __XXX__X, _X___XX_, XXXXXX__,
   ________, ________, ________, ________, ________, ________, ________, ________,
 };
-// clang-format on
-
 /** $D620: stage5_lods_D620 */
 static const bitmap_t stage5_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [0]
@@ -2476,8 +2455,6 @@ static const bitmap_t stage5_lods_D620[6] = {
 
 /**
  * $D64A: stage5_bitmap_D64A
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_D64A[181] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
@@ -2504,8 +2481,6 @@ static const u8 stage5_bitmap_D64A[181] = {
   XXXXXXXX, XXXX____, ____X__X, ________, X__XX__X, XXXX____, ____XXXX, ________,
   XXXXXXXX, XXXXXXXX, ________, ____XXXX, XXXX____,
 };
-// clang-format on
-
 /** $D6FF: stage5_stretchy_D6FF */
 static const stretchy_t stage5_stretchy_D6FF[5] = {
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D719 },
@@ -2673,8 +2648,6 @@ static const bitmap_t stage5_lods_D7B3[15] = {
 
 /**
  * $D81C: stage5_bitmap_D81C
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_D81C[182] = {
   ________, XXXXXX__, XX______, ____XXXX, XXXXXXXX, XXXXXX__, __XXXX_X, _XXXXXXX,
@@ -2701,8 +2674,6 @@ static const u8 stage5_bitmap_D81C[182] = {
   XXXXX__X, _____XX_, XXXX___X, ____XXX_, XXXX____, ____XXXX, XXXX____, ____XXXX,
   XXXX___X, ____XXX_, XXXXX__X, _____XX_, XXXXX__X, _____XX_,
 };
-// clang-format on
-
 /** $D8D2: stage5_stretchy_D8D2 */
 static const stretchy_t stage5_stretchy_D8D2[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -2770,8 +2741,6 @@ static const bitmap_t stage5_lods_D918[5] = {
 
 /**
  * $D93B: stage5_bitmap_D93B
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_D93B[148] = {
   __XXXXX_, ________, XXX_XXX_, ________, _XXXXX__, _XX___XX, _______X, X_X_X_XX,
@@ -2794,8 +2763,6 @@ static const u8 stage5_bitmap_D93B[148] = {
   XXXXX_XX, _____X__, XX_XXX_X, __X___X_, XXXX____, ____X_XX, __X_____, XX_XXX_X,
   XXXX___X, ____XXX_, XXXXXX__, ______XX,
 };
-// clang-format on
-
 /** $D9CF: stage5_stretchy_D9CF */
 static const stretchy_t stage5_stretchy_D9CF[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -2861,8 +2828,6 @@ static const bitmap_t stage5_lods_DA0F[5] = {
 
 /**
  * $DA32: stage5_bitmap_DA32
- *
- * clang-format off
  */
 static const u8 stage5_bitmap_DA32[1479] = {
   ____XXXX, XXX__XXX, XXX_____, ___X____, ___X_XX_, ___X____, ___XXXXX, XXX__XXX,
@@ -3051,8 +3016,6 @@ static const u8 stage5_bitmap_DA32[1479] = {
   ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ________, ________, ________, ________, ________,
 };
-// clang-format on
-
 static const struct { u16 z80; const void *ptr; } stage5_map_goto_table[] = {
   { 0x6055, &stage5_map_curv_C455[0] },
   { 0x6068, &stage5_map_height_C468[0] },
@@ -3079,6 +3042,8 @@ static const struct { u16 z80; const void *ptr; } stage5_map_goto_table[] = {
   { 0x62EE, &stage5_map_lobjs_C6EE[0] },
   { 0x63A5, &stage5_map_robjs_C7A5[0] },
 };
+
+// clang-format on
 
 const void *stage5_lookup_map_goto(u16 z80)
 {

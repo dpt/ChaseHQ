@@ -32,6 +32,7 @@
  * $CC50 -- copyright/credits text, drawn by title_screen_driver via
  * print_string ($FD9C) before the $CCB7 scene tables.
  */
+// clang-format off
 const u8 title_screen_credits_text[56] = {
   0xC2, // attribute_BRIGHT_RED_OVER_BLACK + single height bit
   TWOBYTES(0x50C3),
@@ -4269,3 +4270,4 @@ const u8 options_menu_text[366] = {
   '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
   0 // terminator / pad byte ($FD96)
 };
+// clang-format on

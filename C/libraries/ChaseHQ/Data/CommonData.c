@@ -31,6 +31,7 @@
 //
 
 /** $76F0: bitmap_turbospin */
+// clang-format off
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
   ________, ________, ___XXXXX, ________,
   ________, _XXXXXXX, ____XXXX, XXX_____,
@@ -5569,3 +5570,4 @@ const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78
 };
+// clang-format on
