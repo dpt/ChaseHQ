@@ -2,6 +2,8 @@
 
 ## P1 — Bugs / broken behaviour
 
+- Win screen - I can press to exit but it just stop the music on the first press.
+- Perp collides with other hazard making them vanish? Seems different.
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
@@ -26,6 +28,7 @@
 
 ## P3 — Incomplete / missing content
 
+- Sort the repo layout out
 - Ensure that funcs are in the original game order (esp. Bank7)
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
@@ -61,6 +64,7 @@
 - Scan for type problems
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)
+- C89 compat
 
 ## P6 — Features / extras
 
@@ -100,4 +104,18 @@
 - Diagram generation for stretchy graphics
 - Emscripten build
 - Pull across the demo version of the game
+
+
+| Lanes & Objs   | Curve | Height | Hazards | Loop |
+| -------------- | ----- | ------ | ------- | ---- |
+| B | : : : |    |    >> |        |         |      |
+|   | : : : | T  |    >> |        |         |      |
+| T | : : : |    |    >  |        |         |      |
+|   | : :  /  T  |    >  |        |         |      |
+| T | : : |      |    >  |        |         |      |
+|   | : : |   T  |    >  |        |         |      |
+| T | : : |      |   |   |        |         |      |
+|   | : : |   T  |   |   |        |         |      |
+| T | : : |      |   |   |        |         |      |
+|   | : : |   T  |   |   |        |         |      |
 
