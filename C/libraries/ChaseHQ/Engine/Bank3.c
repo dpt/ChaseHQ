@@ -357,7 +357,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
   int B_wait;       /* tune-4 wait countdown, 180 frames (was B) */
   u8  A_fire;       /* ENTER/L/K/J/H half-row, tested for fire (was A) */
   u8  A_coin_mode;  /* controls_selected read as a coin-op mode flag (was A) */
-  u8  A_coin_input; /* coin-slot input, read via $800E (was A) */
+  u8  A_coin_input; /* coin-slot input, read via keyscan (was A) */
   u8  A_test_mode;  /* test_mode flag (was A) */
   u8  A_key6;       /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
   u8  A_anykey;     /* 1/2/3/4/5 half-row, tested for any key (was A) */
@@ -420,11 +420,15 @@ static u8 titlescr_wait_loop(chqstate_t *state)
      * inventing a second one. */
     A_coin_mode = state->controls_selected;
     if (A_coin_mode) {
-      /* TODO: CALL $800E (coin-slot input read) -- common-RAM routine, not
-       * disassembled in this bank and no C equivalent yet; treated as "no
-       * coin" for now. */
-      A_coin_input = 0;
-      if (A_coin_input & 0x10) {
+      /* Conv: $800E is not itself code -- skoolkit's control file mis-
+       * classifies $8008-$8013 as an "unused" data block, but $800E-$8010
+       * hold the bytes $C3,$D6,$A0, i.e. a disguised `JP $A0D6` (keyscan).
+       * CALL $800E therefore behaves exactly like `CALL $A0D6`; translate it
+       * as a direct call to the already-ported keyscan(). Bit 4
+       * (USERINPUTFLAG_FIRE) is the coin-insert key, matching the "confirm"
+       * bit used the same way by $800E's other caller, name_entry_input. */
+      A_coin_input = keyscan(state);
+      if (A_coin_input & USERINPUTFLAG_FIRE) {
         titlescr_coin_inserted(state);
         return 0;
       }
