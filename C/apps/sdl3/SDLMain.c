@@ -55,6 +55,11 @@
 #define SPEED_MAX         (1000)
 #define SPEED_STEP          (25)
 
+#define VOLUME_DEFAULT     (100) // percent
+#define VOLUME_MIN            (0)
+#define VOLUME_MAX          (100)
+#define VOLUME_STEP          (10)
+
 // Set to 0 to fall back to the plain SDL_Renderer blit (no shader, any GPU
 // backend, nearest-neighbour scaling); set to 1 for the SDL3 GPU/Metal CRT
 // post-effect pipeline (Metal only). Override with -DCHQ_CRT_SHADER=1.
@@ -67,7 +72,7 @@
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
 #define AY_SAMPLE_RATE   (44100)
-#define AY_VOLUME_PCT        (5) // 0..AY_MASTER_VOLUME_MAX
+#define AY_VOLUME_PCT       (20) // 0..AY_MASTER_VOLUME_MAX
 
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
@@ -90,11 +95,14 @@
 
 // -----------------------------------------------------------------------------
 
-static void chq_update_window_title(SDL_Window *window, int speed)
+static void chq_update_window_title(SDL_Window *window, int speed, int volume,
+                                    int paused)
 {
   char title[64];
 
-  SDL_snprintf(title, sizeof(title), "Chase H.Q. - Speed: %d%%", speed);
+  SDL_snprintf(title, sizeof(title),
+              "Chase H.Q. - Speed: %d%% - Volume: %d%%%s",
+              speed, volume, paused ? " - Paused" : "");
   SDL_SetWindowTitle(window, title);
 }
 
@@ -140,6 +148,7 @@ typedef struct
 
   int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
   int                speed; // game speed, percent, SPEED_MIN..SPEED_MAX
+  int                volume; // output volume, percent, VOLUME_MIN..VOLUME_MAX
 
   struct timeval     stamps[MAXSTAMPS];
   int                nstamps;
@@ -532,7 +541,14 @@ static void chq_audio_callback(void            *opaque,
       left   = (int16_t) (sample & 0xFFFF)         + beeper;
       right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
       if (state->audio_muted)
+      {
         left = right = 0;
+      }
+      else
+      {
+        left  = left  * state->volume / 100;
+        right = right * state->volume / 100;
+      }
       buf[i * 2 + 0] = (int16_t) CLAMP(left,  INT16_MIN, INT16_MAX);
       buf[i * 2 + 1] = (int16_t) CLAMP(right, INT16_MIN, INT16_MAX);
       state->samples_played++;
@@ -602,29 +618,29 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 
   sym = k->key;
 
-  if (sym == SDLK_F1)
+  switch (sym)
   {
+  case SDLK_F1:
     if (k->down && !k->repeat)
+    {
       state->paused = !state->paused;
+      chq_update_window_title(state->window, state->speed, state->volume,
+                              state->paused);
+    }
     return;
-  }
 
-  if (sym == SDLK_F2)
-  {
+  case SDLK_F2:
     if (k->down && !k->repeat)
       state->audio_muted = !state->audio_muted;
     return;
-  }
 
-  if (sym == SDLK_F3)
-  {
+  case SDLK_F3:
     if (k->down && !k->repeat)
       state->show_dirty_overlay = !state->show_dirty_overlay;
     return;
-  }
 
-  if (sym == SDLK_MINUS || sym == SDLK_EQUALS)
-  {
+  case SDLK_MINUS:
+  case SDLK_EQUALS:
     if (k->down && !k->repeat)
     {
       int scale;
@@ -641,10 +657,9 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
       }
     }
     return;
-  }
 
-  if (sym == SDLK_LEFTBRACKET || sym == SDLK_RIGHTBRACKET)
-  {
+  case SDLK_LEFTBRACKET:
+  case SDLK_RIGHTBRACKET:
     if (k->down && !k->repeat)
     {
       int speed;
@@ -653,15 +668,30 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
                    SPEED_MIN, SPEED_MAX);
 
       state->speed = speed;
-      chq_update_window_title(state->window, speed);
+      chq_update_window_title(state->window, speed, state->volume,
+                              state->paused);
       printf("Speed: %d%%\n", speed);
     }
     return;
-  }
+
+  case SDLK_F5:
+  case SDLK_F6:
+    if (k->down && !k->repeat)
+    {
+      int volume;
+
+      volume = CLAMP(state->volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
+                     VOLUME_MIN, VOLUME_MAX);
+
+      state->volume = volume;
+      chq_update_window_title(state->window, state->speed, volume,
+                              state->paused);
+      printf("Volume: %d%%\n", volume);
+    }
+    return;
 
 #if CHQ_CRT_SHADER
-  if (sym == SDLK_TAB)
-  {
+  case SDLK_TAB:
     if (k->down && !k->repeat)
     {
       const chq_crt_param_desc_t *desc;
@@ -672,10 +702,9 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
             *chq_crt_param_field(&state->crt_params, desc));
     }
     return;
-  }
 
-  if (sym == SDLK_PAGEUP || sym == SDLK_PAGEDOWN)
-  {
+  case SDLK_PAGEUP:
+  case SDLK_PAGEDOWN:
     if (k->down)
     {
       const chq_crt_param_desc_t *desc;
@@ -688,10 +717,8 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
       printf("CRT param: %s = %g\n", desc->name, *field);
     }
     return;
-  }
 
-  if (sym == SDLK_R)
-  {
+  case SDLK_R:
     if (k->down && !k->repeat)
     {
       chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
@@ -700,17 +727,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
       printf("CRT params reset to defaults\n");
     }
     return;
-  }
 #endif
 
-  switch (sym)
-  {
-    case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
-    case SDLK_RIGHT: j = zxjoystick_RIGHT;   break;
-    case SDLK_UP:    j = zxjoystick_UP;      break;
-    case SDLK_DOWN:  j = zxjoystick_DOWN;    break;
-    case '.':        j = zxjoystick_FIRE;    break;
-    default:         j = zxjoystick_UNKNOWN; break;
+  case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
+  case SDLK_RIGHT: j = zxjoystick_RIGHT;   break;
+  case SDLK_UP:    j = zxjoystick_UP;      break;
+  case SDLK_DOWN:  j = zxjoystick_DOWN;    break;
+  case '.':        j = zxjoystick_FIRE;    break;
+  default:         j = zxjoystick_UNKNOWN; break;
   }
 
   down = k->down;
@@ -937,6 +961,7 @@ int main(void)
   state.quit      = 0;
   state.scale     = SCALE_DEFAULT;
   state.speed     = SPEED_DEFAULT;
+  state.volume    = VOLUME_DEFAULT;
 #if CHQ_CRT_SHADER
   {
     chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
@@ -974,7 +999,7 @@ int main(void)
 
   state.window = window;
 
-  chq_update_window_title(window, state.speed);
+  chq_update_window_title(window, state.speed, state.volume, state.paused);
 
 #if !CHQ_CRT_SHADER
   state.renderer = SDL_CreateRenderer(window, NULL);
