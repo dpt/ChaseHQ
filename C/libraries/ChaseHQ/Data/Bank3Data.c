@@ -4322,3 +4322,308 @@ const u8 sfx_sample_2_template[224] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xB8, 0x77,
   0x7E, 0xFC, 0xFE, 0x7F, 0xE7, 0x6F, 0xDE, 0x00
 };
+
+/* ----------------------------------------------------------------------- */
+
+/** $FA75-$FB98: drum_cue_script_data -- see stst_load_sfx_script/
+ * ssa_read_opcode prologues (Bank3.c) for the byte-code this drives. */
+const u8 drum_cue_script_data[292] = {
+  // $FA75-$FA7E: per-tune cue-script pointer table, indexed by tune*2
+  // (stst_load_sfx_script). Tunes actually started: 0, 1, 2, 3, 4.
+  TWOBYTES(0xFA7F), /* $FA75: tune 0 cue script */
+  TWOBYTES(0xFA86), /* $FA77: tune 1 cue script */
+  TWOBYTES(0xFA89), /* $FA79: tune 2 cue script */
+  TWOBYTES(0xFA8E), /* $FA7B: tune 3 cue script */
+  TWOBYTES(0xFA9D), /* $FA7D: tune 4 cue script */
+
+  // $FA7F-$FAA3: cue scripts (all 5 tunes' bytecode -- ssa_read_opcode).
+  // Each step is a delay byte + a raw offset into the trigger table below
+  // ($FAA4 + offset); $FF reads a 2-byte jump target; $FE ends the script.
+  0x03, /* $FA7F: delay=3 */
+  0x00, /* $FA80: offset -> entry $FAA4 */
+  0x01, /* $FA81: delay=1 */
+  0x1A, /* $FA82: offset -> entry $FABE */
+  0xFF, /* $FA83: FF jump */
+  TWOBYTES(0xFA7F), /* $FA84: jump target */
+  0x01, /* $FA86: delay=1 */
+  0x33, /* $FA87: offset -> entry $FAD7 */
+  0xFE, /* $FA88: FE end-of-script */
+  0x05, /* $FA89: delay=5 */
+  0x4F, /* $FA8A: offset -> entry $FAF3 */
+  0x01, /* $FA8B: delay=1 */
+  0x61, /* $FA8C: offset -> entry $FB05 */
+  0xFE, /* $FA8D: FE end-of-script */
+  0x04, /* $FA8E: delay=4 */
+  0x73, /* $FA8F: offset -> entry $FB17 */
+  0x04, /* $FA90: delay=4 */
+  0x76, /* $FA91: offset -> entry $FB1A */
+  0x03, /* $FA92: delay=3 */
+  0x88, /* $FA93: offset -> entry $FB2C */
+  0x01, /* $FA94: delay=1 */
+  0x9A, /* $FA95: offset -> entry $FB3E */
+  0x03, /* $FA96: delay=3 */
+  0xAC, /* $FA97: offset -> entry $FB50 */
+  0x01, /* $FA98: delay=1 */
+  0xC3, /* $FA99: offset -> entry $FB67 */
+  0xFF, /* $FA9A: FF jump */
+  TWOBYTES(0xFA96), /* $FA9B: jump target */
+  0x01, /* $FA9D: delay=1 */
+  0xDA, /* $FA9E: offset -> entry $FB7E */
+  0x01, /* $FA9F: delay=1 */
+  0x73, /* $FAA0: offset -> entry $FB17 */
+  0xFF, /* $FAA1: FF jump */
+  TWOBYTES(0xFA9F), /* $FAA2: jump target */
+
+  // $FAA4-$FB98: per-drum-ID trigger table (ssa_read_opcode/
+  // sfx_music_service). Each entry is a selector byte (copied to
+  // slot1_countdown/slot1_selector_dup, purpose otherwise unestablished)
+  // followed by a stream of per-frame dispatch bytes (bit 7 = also arm
+  // slot 2, low 3 bits = engine: 1 = sample1, 2 = sample2, 3 = procedural
+  // noise, 0 = nothing; upper 5 bits = pitch/rate param), terminated by a
+  // literal 1 (sfx_dispatch_entry's reload sentinel).
+  0x08, /* $FAA4: entry selector */
+  0x8B, /* $FAA5: slot2+noise pitch=17 */
+  0x41, /* $FAA6: sample1 pitch=8 */
+  0x1B, /* $FAA7: noise pitch=3 */
+  0x42, /* $FAA8: sample2 pitch=8 */
+  0x8B, /* $FAA9: slot2+noise pitch=17 */
+  0x41, /* $FAAA: sample1 pitch=8 */
+  0x1B, /* $FAAB: noise pitch=3 */
+  0x8B, /* $FAAC: slot2+noise pitch=17 */
+  0x41, /* $FAAD: sample1 pitch=8 */
+  0x42, /* $FAAE: sample2 pitch=8 */
+  0x8B, /* $FAAF: slot2+noise pitch=17 */
+  0x41, /* $FAB0: sample1 pitch=8 */
+  0x1B, /* $FAB1: noise pitch=3 */
+  0x9A, /* $FAB2: slot2+sample2 pitch=19 */
+  0x41, /* $FAB3: sample1 pitch=8 */
+  0x42, /* $FAB4: sample2 pitch=8 */
+  0x1B, /* $FAB5: noise pitch=3 */
+  0x8B, /* $FAB6: slot2+noise pitch=17 */
+  0x41, /* $FAB7: sample1 pitch=8 */
+  0x9A, /* $FAB8: slot2+sample2 pitch=19 */
+  0x41, /* $FAB9: sample1 pitch=8 */
+  0x42, /* $FABA: sample2 pitch=8 */
+  0x8B, /* $FABB: slot2+noise pitch=17 */
+  0x41, /* $FABC: sample1 pitch=8 */
+  0x01, /* $FABD: reload sentinel */
+  0x08, /* $FABE: entry selector */
+  0x8B, /* $FABF: slot2+noise pitch=17 */
+  0x41, /* $FAC0: sample1 pitch=8 */
+  0x1B, /* $FAC1: noise pitch=3 */
+  0x42, /* $FAC2: sample2 pitch=8 */
+  0x8B, /* $FAC3: slot2+noise pitch=17 */
+  0x41, /* $FAC4: sample1 pitch=8 */
+  0x1B, /* $FAC5: noise pitch=3 */
+  0x8B, /* $FAC6: slot2+noise pitch=17 */
+  0x41, /* $FAC7: sample1 pitch=8 */
+  0x42, /* $FAC8: sample2 pitch=8 */
+  0x8B, /* $FAC9: slot2+noise pitch=17 */
+  0x41, /* $FACA: sample1 pitch=8 */
+  0x1B, /* $FACB: noise pitch=3 */
+  0x9A, /* $FACC: slot2+sample2 pitch=19 */
+  0x41, /* $FACD: sample1 pitch=8 */
+  0x42, /* $FACE: sample2 pitch=8 */
+  0x1B, /* $FACF: noise pitch=3 */
+  0x8B, /* $FAD0: slot2+noise pitch=17 */
+  0x41, /* $FAD1: sample1 pitch=8 */
+  0x9A, /* $FAD2: slot2+sample2 pitch=19 */
+  0x42, /* $FAD3: sample2 pitch=8 */
+  0x42, /* $FAD4: sample2 pitch=8 */
+  0x42, /* $FAD5: sample2 pitch=8 */
+  0x01, /* $FAD6: reload sentinel */
+  0x08, /* $FAD7: entry selector */
+  0x0A, /* $FAD8: sample2 pitch=1 */
+  0x12, /* $FAD9: sample2 pitch=2 */
+  0x0A, /* $FADA: sample2 pitch=1 */
+  0x12, /* $FADB: sample2 pitch=2 */
+  0x0A, /* $FADC: sample2 pitch=1 */
+  0x12, /* $FADD: sample2 pitch=2 */
+  0x0A, /* $FADE: sample2 pitch=1 */
+  0x12, /* $FADF: sample2 pitch=2 */
+  0x0A, /* $FAE0: sample2 pitch=1 */
+  0x12, /* $FAE1: sample2 pitch=2 */
+  0x0A, /* $FAE2: sample2 pitch=1 */
+  0x12, /* $FAE3: sample2 pitch=2 */
+  0x0A, /* $FAE4: sample2 pitch=1 */
+  0x12, /* $FAE5: sample2 pitch=2 */
+  0x0A, /* $FAE6: sample2 pitch=1 */
+  0x12, /* $FAE7: sample2 pitch=2 */
+  0x0A, /* $FAE8: sample2 pitch=1 */
+  0x12, /* $FAE9: sample2 pitch=2 */
+  0x0A, /* $FAEA: sample2 pitch=1 */
+  0x12, /* $FAEB: sample2 pitch=2 */
+  0x0A, /* $FAEC: sample2 pitch=1 */
+  0x12, /* $FAED: sample2 pitch=2 */
+  0x0A, /* $FAEE: sample2 pitch=1 */
+  0x12, /* $FAEF: sample2 pitch=2 */
+  0x42, /* $FAF0: sample2 pitch=8 */
+  0x00, /* $FAF1: none pitch=0 */
+  0x01, /* $FAF2: reload sentinel */
+  0x04, /* $FAF3: entry selector */
+  0x29, /* $FAF4: sample1 pitch=5 */
+  0x00, /* $FAF5: none pitch=0 */
+  0x1B, /* $FAF6: noise pitch=3 */
+  0x1B, /* $FAF7: noise pitch=3 */
+  0x29, /* $FAF8: sample1 pitch=5 */
+  0x00, /* $FAF9: none pitch=0 */
+  0x1B, /* $FAFA: noise pitch=3 */
+  0x1B, /* $FAFB: noise pitch=3 */
+  0x29, /* $FAFC: sample1 pitch=5 */
+  0x00, /* $FAFD: none pitch=0 */
+  0x1B, /* $FAFE: noise pitch=3 */
+  0x1B, /* $FAFF: noise pitch=3 */
+  0x29, /* $FB00: sample1 pitch=5 */
+  0x00, /* $FB01: none pitch=0 */
+  0x1B, /* $FB02: noise pitch=3 */
+  0x1B, /* $FB03: noise pitch=3 */
+  0x01, /* $FB04: reload sentinel */
+  0x04, /* $FB05: entry selector */
+  0x29, /* $FB06: sample1 pitch=5 */
+  0x00, /* $FB07: none pitch=0 */
+  0x1B, /* $FB08: noise pitch=3 */
+  0x1B, /* $FB09: noise pitch=3 */
+  0x29, /* $FB0A: sample1 pitch=5 */
+  0x00, /* $FB0B: none pitch=0 */
+  0x0A, /* $FB0C: sample2 pitch=1 */
+  0x0A, /* $FB0D: sample2 pitch=1 */
+  0x29, /* $FB0E: sample1 pitch=5 */
+  0x00, /* $FB0F: none pitch=0 */
+  0x12, /* $FB10: sample2 pitch=2 */
+  0x12, /* $FB11: sample2 pitch=2 */
+  0x29, /* $FB12: sample1 pitch=5 */
+  0x00, /* $FB13: none pitch=0 */
+  0x1A, /* $FB14: sample2 pitch=3 */
+  0x1A, /* $FB15: sample2 pitch=3 */
+  0x01, /* $FB16: reload sentinel */
+  0x60, /* $FB17: entry selector */
+  0x00, /* $FB18: none pitch=0 */
+  0x01, /* $FB19: reload sentinel */
+  0x06, /* $FB1A: entry selector */
+  0x41, /* $FB1B: sample1 pitch=8 */
+  0x1B, /* $FB1C: noise pitch=3 */
+  0x1B, /* $FB1D: noise pitch=3 */
+  0x1B, /* $FB1E: noise pitch=3 */
+  0x00, /* $FB1F: none pitch=0 */
+  0x1B, /* $FB20: noise pitch=3 */
+  0x1B, /* $FB21: noise pitch=3 */
+  0x1B, /* $FB22: noise pitch=3 */
+  0x41, /* $FB23: sample1 pitch=8 */
+  0x1B, /* $FB24: noise pitch=3 */
+  0x41, /* $FB25: sample1 pitch=8 */
+  0x1B, /* $FB26: noise pitch=3 */
+  0x00, /* $FB27: none pitch=0 */
+  0x41, /* $FB28: sample1 pitch=8 */
+  0x1B, /* $FB29: noise pitch=3 */
+  0x1B, /* $FB2A: noise pitch=3 */
+  0x01, /* $FB2B: reload sentinel */
+  0x06, /* $FB2C: entry selector */
+  0x41, /* $FB2D: sample1 pitch=8 */
+  0x1B, /* $FB2E: noise pitch=3 */
+  0x1B, /* $FB2F: noise pitch=3 */
+  0x1B, /* $FB30: noise pitch=3 */
+  0x42, /* $FB31: sample2 pitch=8 */
+  0x42, /* $FB32: sample2 pitch=8 */
+  0x1B, /* $FB33: noise pitch=3 */
+  0x1B, /* $FB34: noise pitch=3 */
+  0x41, /* $FB35: sample1 pitch=8 */
+  0x1B, /* $FB36: noise pitch=3 */
+  0x41, /* $FB37: sample1 pitch=8 */
+  0x1B, /* $FB38: noise pitch=3 */
+  0x42, /* $FB39: sample2 pitch=8 */
+  0x41, /* $FB3A: sample1 pitch=8 */
+  0x1B, /* $FB3B: noise pitch=3 */
+  0x42, /* $FB3C: sample2 pitch=8 */
+  0x01, /* $FB3D: reload sentinel */
+  0x06, /* $FB3E: entry selector */
+  0x41, /* $FB3F: sample1 pitch=8 */
+  0x1B, /* $FB40: noise pitch=3 */
+  0x1B, /* $FB41: noise pitch=3 */
+  0x1B, /* $FB42: noise pitch=3 */
+  0x42, /* $FB43: sample2 pitch=8 */
+  0x42, /* $FB44: sample2 pitch=8 */
+  0x1B, /* $FB45: noise pitch=3 */
+  0x1B, /* $FB46: noise pitch=3 */
+  0x41, /* $FB47: sample1 pitch=8 */
+  0x1B, /* $FB48: noise pitch=3 */
+  0x1B, /* $FB49: noise pitch=3 */
+  0x42, /* $FB4A: sample2 pitch=8 */
+  0x42, /* $FB4B: sample2 pitch=8 */
+  0x1B, /* $FB4C: noise pitch=3 */
+  0x42, /* $FB4D: sample2 pitch=8 */
+  0x42, /* $FB4E: sample2 pitch=8 */
+  0x01, /* $FB4F: reload sentinel */
+  0x06, /* $FB50: entry selector */
+  0x41, /* $FB51: sample1 pitch=8 */
+  0x1B, /* $FB52: noise pitch=3 */
+  0x92, /* $FB53: slot2+sample2 pitch=18 */
+  0x1B, /* $FB54: noise pitch=3 */
+  0x1B, /* $FB55: noise pitch=3 */
+  0x42, /* $FB56: sample2 pitch=8 */
+  0x42, /* $FB57: sample2 pitch=8 */
+  0x9A, /* $FB58: slot2+sample2 pitch=19 */
+  0x1B, /* $FB59: noise pitch=3 */
+  0x92, /* $FB5A: slot2+sample2 pitch=18 */
+  0x1B, /* $FB5B: noise pitch=3 */
+  0x41, /* $FB5C: sample1 pitch=8 */
+  0x92, /* $FB5D: slot2+sample2 pitch=18 */
+  0x1B, /* $FB5E: noise pitch=3 */
+  0x41, /* $FB5F: sample1 pitch=8 */
+  0x9A, /* $FB60: slot2+sample2 pitch=19 */
+  0x1B, /* $FB61: noise pitch=3 */
+  0x42, /* $FB62: sample2 pitch=8 */
+  0x41, /* $FB63: sample1 pitch=8 */
+  0x1B, /* $FB64: noise pitch=3 */
+  0x42, /* $FB65: sample2 pitch=8 */
+  0x01, /* $FB66: reload sentinel */
+  0x06, /* $FB67: entry selector */
+  0x41, /* $FB68: sample1 pitch=8 */
+  0x1B, /* $FB69: noise pitch=3 */
+  0x92, /* $FB6A: slot2+sample2 pitch=18 */
+  0x1B, /* $FB6B: noise pitch=3 */
+  0x1B, /* $FB6C: noise pitch=3 */
+  0x42, /* $FB6D: sample2 pitch=8 */
+  0x42, /* $FB6E: sample2 pitch=8 */
+  0x9A, /* $FB6F: slot2+sample2 pitch=19 */
+  0x1B, /* $FB70: noise pitch=3 */
+  0x92, /* $FB71: slot2+sample2 pitch=18 */
+  0x1B, /* $FB72: noise pitch=3 */
+  0x41, /* $FB73: sample1 pitch=8 */
+  0x92, /* $FB74: slot2+sample2 pitch=18 */
+  0x1B, /* $FB75: noise pitch=3 */
+  0x41, /* $FB76: sample1 pitch=8 */
+  0x9A, /* $FB77: slot2+sample2 pitch=19 */
+  0x42, /* $FB78: sample2 pitch=8 */
+  0x42, /* $FB79: sample2 pitch=8 */
+  0x41, /* $FB7A: sample1 pitch=8 */
+  0x42, /* $FB7B: sample2 pitch=8 */
+  0x42, /* $FB7C: sample2 pitch=8 */
+  0x01, /* $FB7D: reload sentinel */
+  0x08, /* $FB7E: entry selector */
+  0x9B, /* $FB7F: slot2+noise pitch=19 */
+  0x41, /* $FB80: sample1 pitch=8 */
+  0x1B, /* $FB81: noise pitch=3 */
+  0x9B, /* $FB82: slot2+noise pitch=19 */
+  0x42, /* $FB83: sample2 pitch=8 */
+  0x9B, /* $FB84: slot2+noise pitch=19 */
+  0x41, /* $FB85: sample1 pitch=8 */
+  0x1B, /* $FB86: noise pitch=3 */
+  0x9B, /* $FB87: slot2+noise pitch=19 */
+  0x41, /* $FB88: sample1 pitch=8 */
+  0x42, /* $FB89: sample2 pitch=8 */
+  0x42, /* $FB8A: sample2 pitch=8 */
+  0x1B, /* $FB8B: noise pitch=3 */
+  0x1B, /* $FB8C: noise pitch=3 */
+  0x1A, /* $FB8D: sample2 pitch=3 */
+  0x1B, /* $FB8E: noise pitch=3 */
+  0x1B, /* $FB8F: noise pitch=3 */
+  0x43, /* $FB90: noise pitch=8 */
+  0x3B, /* $FB91: noise pitch=7 */
+  0x33, /* $FB92: noise pitch=6 */
+  0x2B, /* $FB93: noise pitch=5 */
+  0x23, /* $FB94: noise pitch=4 */
+  0x1B, /* $FB95: noise pitch=3 */
+  0x13, /* $FB96: noise pitch=2 */
+  0x0B, /* $FB97: noise pitch=1 */
+  0x01, /* $FB98: reload sentinel */
+};

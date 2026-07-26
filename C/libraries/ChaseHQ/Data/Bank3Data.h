@@ -143,6 +143,17 @@ extern const u8 options_menu_text[366];
 extern const u8 sfx_sample_1_template[104]; /* $F8F2, played with D=$68 rows */
 extern const u8 sfx_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
 
+/* 128K bank 3: drum-sample cue-script/trigger-table data, $FA75-$FB98,
+ * transcribed byte-exact from bank3.bin. Covers the per-tune cue-script
+ * pointer table ($FA75-$FA7E), the 5 tunes' cue-script byte-code
+ * ($FA7F-$FAA3), and the per-drum-ID trigger table ($FAA4-$FB98) --
+ * see stst_load_sfx_script/ssa_read_opcode in Bank3.c for how this is
+ * walked, and resolve_drum_script_addr for how raw Z80 addresses within it
+ * are resolved to C pointers. */
+extern const u8 drum_cue_script_data[292];
+
+#define DRUM_CUE_SCRIPT_DATA_BASE (0xFA75)
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK3DATA_H */
