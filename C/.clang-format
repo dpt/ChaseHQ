@@ -8,8 +8,8 @@ TabWidth: 2
 UseTab: Never
 ColumnLimit: 80
 
-# K&R braces: function-definition braces on a new line, control-flow on the same line
-BreakBeforeBraces: Linux
+# Broken braces: every brace (function, control-flow, struct, etc.) on its own line
+BreakBeforeBraces: Allman
 
 # switch case labels align with the switch, not indented
 IndentCaseLabels: false
