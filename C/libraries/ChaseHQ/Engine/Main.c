@@ -7779,6 +7779,7 @@ store_crash_spin:
   // -- RIGHT SIDE OBJECT HIT CHECKING --
   HLbufptr = ROADBUF_FWD2PTR(ROADBUF_RIGHTOBJS_OFFSET);
   Adash = ROADBUF_PTR2IDX(HLbufptr); // was EX AF,AF' -- seems to be unused
+  NOT_USED(Adash);
   A = ROADBUF_FWD2IDX(0);
   RL(A);
   raw_byte1 = *HLbufptr; /* Read a right side object data byte */
@@ -9106,6 +9107,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   // AND Atop  set flags here
   Abot = screen_pos & 0xFF;
   C = 0; // can't see what's using this
+  NOT_USED(C);
   if (Atop >= 0) {
     if (Atop != 0)
       return;
@@ -9624,7 +9626,7 @@ static u8 check_collision(chqstate_t *state,
   L_horz_pos  = hazard->horz_pos;
   H_horz_clip = hazard->horz_clip;
 
-  if (hazard->horz_clip) /* hazard clipped off-screen; no collision */
+  if (H_horz_clip) /* hazard clipped off-screen; no collision */
     return default_retval;
 
   A_flags    = (u8) (hazard->hazard_flags + 1); /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
@@ -15861,6 +15863,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     A_height = *IY_height++; // points into horizontal_e6b0
 
 #if 1
+    NOT_USED(carry); /* only read in the #else reference implementation below */
     HLdash_multiplied = (A_height >> 2) * BCdash;
 #else
     // multiplier

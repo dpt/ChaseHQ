@@ -53,33 +53,6 @@
 #include <assert.h>
 
 /* ----------------------------------------------------------------------- */
-#define ESCMD_CLEAR_DRAW_FRAME_VAL    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
-#define ESCMD_DRAW_WORD_VAL           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
-#define ESCMD_FADE_IN_A_VAL           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
-#define ESCMD_FADE_IN_B_VAL           (4) /* -> $E472 es_handler_glyph_fade_b via rs_exit, reload 16 */
-#define ESCMD_HANDSHAKE_VAL           (5) /* -> $E3B7 es_handler_handshake via rs_exit, reload 16 */
-#define ESCMD_FADE_IN_C_VAL           (6) /* -> $E46D es_handler_glyph_fade_c via rs_exit, reload 32 */
-#define ESCMD_IDLE_VAL                (7) /* -> rs_exit, handler = no-op, reload = script byte */
-#define ESCMD_RESET_HANDSHAKE_VAL     (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
-#define ESCMD_HANDSHAKE_AGAIN_VAL     (9) /* -> rs_exit, handler = handshake, reload = script byte */
-#define ESCMD_DRAW_TEXT_NO_CLEAR_VAL (10) /* -> $E2F5 render_text_common, runs immediately, no backbuffer clear */
-#define ESCMD_DRAW_TEXT_VAL          (11) /* -> $E2F0 es_handler_render_text, runs immediately, clears backbuffer first */
-#define ESCMD_CHATTER_VAL            (12) /* -> $E2B2, runs immediately */
-#define ESCMD_DRAW_SCORE_VAL         (13) /* -> $E256, runs immediately */
-
-#define ESCMD_CLEAR_DRAW_FRAME(BMADDR, SCRADDR) ESCMD_CLEAR_DRAW_FRAME_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
-#define ESCMD_DRAW_WORD(BMADDR, SCRADDR)        ESCMD_DRAW_WORD_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
-#define ESCMD_FADE_IN_A                         ESCMD_FADE_IN_A_VAL
-#define ESCMD_FADE_IN_B                         ESCMD_FADE_IN_B_VAL
-#define ESCMD_HANDSHAKE                         ESCMD_HANDSHAKE_VAL
-#define ESCMD_FADE_IN_C                         ESCMD_FADE_IN_C_VAL
-#define ESCMD_IDLE(D)                           ESCMD_IDLE_VAL, (D)
-#define ESCMD_RESET_HANDSHAKE(D)                ESCMD_RESET_HANDSHAKE_VAL, (D)
-#define ESCMD_HANDSHAKE_AGAIN(D)                ESCMD_HANDSHAKE_AGAIN_VAL, (D)
-#define ESCMD_DRAW_TEXT_NO_CLEAR(ATTR, SCRADDR) ESCMD_DRAW_TEXT_NO_CLEAR_VAL, (ATTR), TWOBYTES(SCRADDR)
-#define ESCMD_DRAW_TEXT(ATTR, SCRADDR)          ESCMD_DRAW_TEXT_VAL, (ATTR), TWOBYTES(SCRADDR)
-#define ESCMD_CHATTER(ADDR)                     ESCMD_CHATTER_VAL, TWOBYTES(ADDR)
-#define ESCMD_DRAW_SCORE                        ESCMD_DRAW_SCORE_VAL
 
 #define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
@@ -88,110 +61,8 @@
 #define ENDSHOT_WIDTH  (13 * 8) /* pixel width of an end-screen bitmap */
 #define ENDSHOT_HEIGHT (64)     /* pixel height of an end-screen bitmap */
 
-/**
- * $E0FE-$E209: End-screen script bytecode.
- *
- * Verbatim transcription of the skool's es_script block (268 bytes):
- * command/argument bytes interleaved with bitmap addresses (as raw
- * little-endian DEFW pairs) and embedded high-bit-terminated ASCII text
- * ("CONGRATULATIONS!", "ALL  CLEAR", "(C) 1989 OCEAN SOFTWARE", "(C) 1988
- * TAITO CORPORATION", "THE  END", "FINAL  SCORE"). Every byte has now been
- * decoded against run_script's command dispatch below -- see the inline
- * comments through the tail of the array.
- *
- * Conv: this master copy is const. show_end_screen copies it into
- * state->bank7->es_script at entry; es_handler_draw_score patches the
- * "GBP________ PTS" placeholder text in-place (offset 0xFD, matching $5DFB
- * relocated) in that per-instance copy, not here, exactly as the original
- * self-modifies its own es_script at that address but without concurrent
- * game instances trampling each other's score text.
- */
-static const u8 es_script[] = {
-  ESCMD_CHATTER(0x5C6E), /* -> chatterblk_nancy_congratulates */
-  ESCMD_IDLE(0xC0),
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(72, 96)), // bitmap_endshot_1, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xA0),
-  ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6489, XYTOSCREEN(72, 96)), // bitmap_endshot_2, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xA0),
-  ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6831, XYTOSCREEN(72, 96)), // bitmap_endshot_3, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xA0),
-  ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6BD9, XYTOSCREEN(72, 96)), // bitmap_endshot_4, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xA0),
-  ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(16, 64)), // bitmap_endshot_1, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6489, XYTOSCREEN(136, 64)), // bitmap_endshot_2, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6831, XYTOSCREEN(16, 128)), // bitmap_endshot_3, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6BD9, XYTOSCREEN(136, 128)), // bitmap_endshot_4, screen dst
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x50),
-  ESCMD_RESET_HANDSHAKE(0xC0),
-  ESCMD_HANDSHAKE_AGAIN(0xB0),
-  ESCMD_HANDSHAKE,
-  ESCMD_HANDSHAKE_AGAIN(0xB0),
-  ESCMD_FADE_IN_B,
-  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(64, 80)), /* clear */
-  'C', 'O', 'N', 'G', 'R', 'A', 'T', 'U', 'L', 'A', 'T', 'I', 'O', 'N', 'S', '!' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x08),
-  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(88, 112)),
-  'A', 'L', 'L', ' ', ' ', 'C', 'L', 'E', 'A', 'R' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x08),
-  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(72, 144)),
-  '5', ',', '0', '0', '0', ',', '0', '0', '0', ' ', ' ', 'P', 'T', 'S', '.' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xC0),
-  ESCMD_FADE_IN_C,
-  ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(32, 96)), /* clear */
-  '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
-  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(24, 144)),
-  '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xF0),
-  ESCMD_FADE_IN_C,
-  ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 112)), /* clear */
-  'T', 'H', 'E', ' ', ' ', 'E', 'N', 'D' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0xF0),
-  ESCMD_IDLE(0x60),
-  ESCMD_FADE_IN_C,
-  ESCMD_IDLE(0x60),
-  ESCMD_DRAW_TEXT(attribute_BRIGHT_CYAN_OVER_BLACK, XYTOSCREEN(80, 104)), /* clear */
-  'F', 'I', 'N', 'A', 'L', ' ', ' ', 'S', 'C', 'O', 'R', 'E' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_IDLE(0x1E),
-  ESCMD_DRAW_SCORE, /* tallies bonus, patches offset 0xFD below with score ASCII */
-  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 136)), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
-  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | EOS,
-  ESCMD_FADE_IN_A,
-  ESCMD_CHATTER(0x5C78), /* -> chatterblk_press_gear */
-  ESCMD_IDLE(0x00),
-  0x0E /* unrecognised command: run_script's default case resets HL here (see
-        * ES_SCRIPT_RESET_OFFSET below) rather than stopping */
-};
-
-/* Conv: skool $E251 "LD HL,$5E04 / JR $E20D" -- on an unrecognised command
- * byte the Z80 resets HL to the CHATTER(0x5C78) command three bytes back
- * and re-enters the loop rather than returning, which is what makes
- * "PRESS GEAR TO CONTINUE" blink forever instead of a one-shot draw. */
-#define ES_SCRIPT_RESET_OFFSET (sizeof(es_script) - 6)
-
 /* ----------------------------------------------------------------------- */
+
 static void es_clear(chqstate_t *state);
 static u16 next_screen_row(u16 addr);
 static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr);
@@ -210,7 +81,7 @@ static const u8 * z80addrtochatterblk(u16 addr);
 static void es_chatter(chqstate_t *state);
 static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *state), u8 reload);
 static int ascii_to_glyph_id(int character);
-static void plot_char(chqstate_t *state, u8          A_char, u8          Drow, u8         *Ecol, u8          Hattr, u8         *Lattr, u8          A_attr);
+static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol, u8 Hattr, u8 *Lattr, u8 A_attr);
 static void render_text_common(chqstate_t *state, const u8 **script);
 static void es_handler_render_text(chqstate_t *state, const u8 **script);
 static void run_script(chqstate_t *state);
@@ -800,15 +671,15 @@ static void plot_char(chqstate_t *state,
                       u8         *Lattr,
                       u8          A_attr)
 {
-  int       character; /* character code, offset by ' ' (was A) */
-  int       glyphid;   /* glyph index into font[] (was C during the ladder) */
-  const u8 *HLfont;    /* current font row pointer, walked forward (was HL) */
-  u8        Ecur;      /* this character's draw column (was E, Set S) */
+  int       character;     /* character code, offset by ' ' (was A) */
+  int       glyphid;       /* glyph index into font[] (was C during the ladder) */
+  const u8 *HLfont;        /* current font row pointer, walked forward (was HL) */
+  u8        Ecur;          /* this character's draw column (was E, Set S) */
   u16       starting_addr; /* glyph's first screen byte, saved for the dirty-box call (Conv: added) */
-  u8        Dcur;      /* current screen row byte during the blit (was D) */
-  int       i;         /* pass loop index (Conv: no Z80 register) */
-  int       data;      /* font byte read for the current scanline pair (was A) */
-  u8        Lcur;      /* this character's attribute column (was L) */
+  u8        Dcur;          /* current screen row byte during the blit (was D) */
+  int       i;             /* pass loop index (Conv: no Z80 register) */
+  int       data;          /* font byte read for the current scanline pair (was A) */
+  u8        Lcur;          /* this character's attribute column (was L) */
 
   character = A_char - ' ';
   if (character == 0) {
@@ -1473,6 +1344,7 @@ pd_end_of_sample:
 }
 
 /* ----------------------------------------------------------------------- */
+
 int bank7_state_create(chqstate_t *state)
 {
   state->bank7 = calloc(1, sizeof(*state->bank7));

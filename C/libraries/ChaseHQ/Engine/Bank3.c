@@ -170,7 +170,9 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index);
 static u16 advance_key_label_column(u16 DE_screen);
+
 /* ----------------------------------------------------------------------- */
+
 /**
  * $C59E: Title-screen driver
  *

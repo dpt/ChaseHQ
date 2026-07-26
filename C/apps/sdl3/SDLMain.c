@@ -319,7 +319,8 @@ static int chq_key_handler(uint16_t port, void *opaque)
 
 static void chq_border_handler(int colour, void *opaque)
 {
-  chq_sdl_state_t *state = opaque;
+  NOT_USED(colour);
+  NOT_USED(opaque);
 
   // TODO: Set border colour.
 }

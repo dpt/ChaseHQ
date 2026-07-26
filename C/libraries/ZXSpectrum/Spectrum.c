@@ -91,15 +91,6 @@ static void zxbox_maximise(zxbox_t *b)
   b->y1 = INT_MAX;
 }
 
-/* Return true if box is largest possible. */
-static int zxbox_is_maximised(const zxbox_t *b)
-{
-  return b->x0 == INT_MIN &&
-         b->y0 == INT_MIN &&
-         b->x1 == INT_MAX &&
-         b->y1 == INT_MAX;
-}
-
 /* Return true if box can hold (width,height) at (0,0). */
 static int zxbox_exceeds(const zxbox_t *b, int width, int height)
 {
