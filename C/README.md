@@ -2,6 +2,10 @@
 
 Reimplementation by David Thomas, 2023-2026
 
+<p align="center">
+  <img src="./static-images/move-we-must.png" alt="Recreated Chase H.Q."/>
+</p>
+
 This directory holds mostly hand-written, human-readable C reimplementation of the ZX Spectrum _Chase H.Q._ game engine. It's not a decompiler dump - it's intended to be read and learned from. Every function is translated from the [SkoolKit disassembly](../Speccy/README.md), with the original Z80 addresses kept in the comments so the two can be read side by side, compared (... debugged).
 
 See the [sister project README](../Speccy/README.md) for the disassembly this is derived from.
