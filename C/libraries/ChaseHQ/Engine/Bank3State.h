@@ -256,10 +256,20 @@ struct chq_bank3_state {
     // $FAA4.
     const u8 *stream_reload_ptr;
 
-    // $F8CE: write-only playback-rate/pitch parameter stashed for the two
-    // fixed sample tables; never read anywhere in bank 3 (see
-    // sfx_music_service's prologue -- purpose not established).
+    // $F8CE: self-modified operand of the "LD B,$08" at $F8CD
+    // (play_sample_row) -- play_fixed_sample_start patches it with the
+    // dispatch byte's pitch/rate parameter, and play_sample_row reloads its
+    // row-bit-count from it every row. The real per-row iteration count, not
+    // a dead write.
     u8        sample_pitch_param;
+
+    // $F8CC (shadow HL'/D', banked by EXX): mid-sample resume position and
+    // row count, saved by play_sample_row when it yields back to
+    // titlescr_music after a real interrupt period's worth of bit-banging,
+    // and read back by titlescr_music's tail to continue the sample on the
+    // next call. Only meaningful while sample_active is 1.
+    u8       *sample_resume_ptr;
+    u8        sample_resume_rows;
 
     // $F8F2/$F95A (Bank3Data.h: drum_sample_1_template/drum_sample_2_template):
     // mutable per-game copies -- play_sample_row rotates each byte in place

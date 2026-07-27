@@ -3199,16 +3199,19 @@ static void titlescr_drum_advance(chqstate_t *state)
  * Slot 2: if busy, ticks both slot1_countdown and slot2_busy down together
  * (companion countdown for whatever slot 1 armed via the bit-7 path).
  *
- * Tail: would resume mid-sample playback via play_sample_row if
- * sample_active were still 1 here (see play_sample_row's own Conv note for
- * why that never happens in this port).
+ * Tail: resumes mid-sample playback via play_sample_row when sample_active is
+ * still 1 here -- a sample long enough to have yielded mid-playback on a
+ * previous call (see play_sample_row's own Conv note) -- continuing from
+ * sample_resume_ptr/sample_resume_rows rather than completing in one go.
  *
  * Called once per frame from $C06E, $C16A, $C59E, $F7C7 and $FBC8.
  *
  * Conv: the frame-flag clear at $F832-$F833 is omitted because nothing in
- * this port ever polls $F8A8 (wait_for_frame_flag has no C equivalent —
- * every caller here already represents one already-paced tick, so there is
- * nothing left to wait for).
+ * this port polls the literal $F8A8 field (wait_for_frame_flag has no C
+ * equivalent — every caller here already represents one already-paced tick,
+ * so there is nothing left to wait for). play_sample_row's own mid-sample
+ * yield check uses a local per-call T-state budget instead of $F8A8, which
+ * needs no explicit clear -- see its Conv note.
  */
 static void titlescr_music(chqstate_t *state)
 {
@@ -3289,10 +3292,10 @@ sfx2_tick_countdown:
     state->bank3->drums.slot2_busy--;
   }
 
-  // Conv: would resume mid-sample playback here if sample_active were 1;
-  // unreachable in this port because play_sample_row always finishes the
-  // sample within the same call that armed it (see play_sample_row's own
-  // Conv note) -- sample_active is always 0 by the time this tail runs.
+  if (state->bank3->drums.sample_active)
+    play_sample_row(state,
+                    state->bank3->drums.sample_resume_rows,
+                    state->bank3->drums.sample_resume_ptr);
 }
 
 /**
@@ -3366,9 +3369,10 @@ static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
  *   (was HL).
  * \param[in] D_length Number of sample bytes to play (was D).
  *
- * Conv: $F8CE (sample_pitch_param) is written here but never read anywhere
- * in bank 3 -- purpose not established (see Bank3State.h). Stored anyway for
- * parity with the Z80's self-modified operand byte.
+ * Conv: $F8CE (sample_pitch_param) is the self-modified operand of the "LD
+ * B,$08" at $F8CD -- play_sample_row reloads its row-bit-count from this
+ * field every row, so it is the real playback-rate control, not a dead
+ * write (see play_sample_row's own Conv note).
  */
 static void play_fixed_sample_start(chqstate_t *state,
                                     int         A_pitch_param,
@@ -3379,6 +3383,14 @@ static void play_fixed_sample_start(chqstate_t *state,
   state->bank3->drums.sample_active      = 1;
   play_sample_row(state, D_length, HL_data); /* was FALLTHROUGH */
 }
+
+/* One real ZX Spectrum 128K interrupt period in T-states (3546900 Hz CPU
+ * clock / 50.021 Hz frame rate) -- the budget play_sample_row's mid-sample
+ * yield check compares itself against, standing in for the real hardware's
+ * $F8A8 frame flag (see play_sample_row's own Conv note). Not to be confused
+ * with TITLE_MUSIC_TSTATES, which paces titlescr_wait_loop's outer call
+ * cadence and is left alone. */
+#define SAMPLE_ROW_FRAME_TSTATES (70908)
 
 /**
  * $F8CC/$F8CD: Pulse a 1-bit PCM sample out over the beeper
@@ -3398,28 +3410,45 @@ static void play_fixed_sample_start(chqstate_t *state,
  * shadow HL'/D' saved by an earlier early exit) when a genuine 50Hz
  * interrupt fires mid-sample -- tested at $F8E2 via the $F8A8 "frame
  * occurred" flag -- so that playback resumes on the next titlescr_music
- * call rather than completing in one go. frame_interrupt_handler is a no-op
- * in this port (see its own Conv note), so $F8A8 never becomes non-zero and
- * that early-exit branch is unreachable here: every sample plays to
- * completion within one call, exactly as playdrum_go/es_playdrum_go already
- * do for the 48K and bank 7 drum samples (Main.c/Bank7.c). No shadow-register
- * modelling is needed as a result.
+ * call rather than completing in one go. This matters here: sample2 (224
+ * bytes) at its usual pitch takes around 143000 T-states to bit-bang, well
+ * over one real 70908 T-state interrupt period, so on real hardware it
+ * genuinely spans several frames. The C port has no background interrupt to
+ * set $F8A8 asynchronously, so SAMPLE_ROW_FRAME_TSTATES below stands in for
+ * it: once this call has spent one frame's worth of bit-bang time, it yields
+ * exactly as $F8E2's check would, saving position in
+ * sample_resume_ptr/sample_resume_rows (the shadow HL'/D' equivalent) for
+ * titlescr_music's tail to resume next call. Playing every sample to
+ * completion in a single call instead (as playdrum_go/es_playdrum_go still
+ * do for the 48K and bank 7 drum samples) starves the rest of titlescr_music
+ * -- the AY tick, and the drum dispatch stream itself -- of the frames a long
+ * sample should genuinely take, which is audible as increasingly late drum
+ * hits ("lazy drummer").
  *
  * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host
  * can reconstruct the bit timing -- same accounting as playdrum_go/
  * es_playdrum_go, whose bit-bang loop is byte-for-byte identical to this one
- * bar the fixed (not self-modified) 8-iteration count.
+ * bar the row-bit-count: theirs is a fixed 8 iterations, this one reloads B
+ * from sample_pitch_param ($F8CE, self-modified by play_fixed_sample_start)
+ * every row, since $F8CD's own "LD B,$08" operand is that same byte -- the
+ * dispatch byte's pitch/rate parameter is this loop's actual iteration
+ * count, not a spectator value.
  */
 static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
 {
-  zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
-  int           carry;  /* carry from the RLC rotation, unused after (carry) */
-  int           i;      /* inner loop counter: 8 bits per sample byte (was B) */
-  int           bits;   /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+  zxspectrum_t *speccy;      /* game's ZX Spectrum facade (was N/A) */
+  int           carry;       /* carry from the RLC rotation, unused after (carry) */
+  int           frame_tstates; /* bit-bang T-states spent so far this call (was N/A) */
+  int           i;           /* inner loop counter: row-bit-count from sample_pitch_param (was B) */
+  int           bits;        /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
 
-  speccy = state->speccy;
+  speccy        = state->speccy;
+  frame_tstates = 0;
   for (;;) {
-    i = 8;
+    /* Conv: DJNZ with B = 0 loops 256 times */
+    i = state->bank3->drums.sample_pitch_param
+          ? state->bank3->drums.sample_pitch_param
+          : 256;
     do {
       bits = port_MASK_EAR; // speaker bit
       if ((*HL_data & (1 << 7)) == 0)
@@ -3428,12 +3457,22 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
       RLC(*HL_data); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
       speccy->logtime(speccy, 63);
+      frame_tstates += 63;
     } while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);
+    frame_tstates += 46;
     if (--D_length == 0) {
       finish_sample_playback(state);
+      return;
+    }
+    if (frame_tstates >= SAMPLE_ROW_FRAME_TSTATES) {
+      /* Conv: $F8E2's flag check -- one real interrupt period's worth of
+       * bit-banging has passed, so yield back to titlescr_music exactly as
+       * the Z80 does, saving position for the next call to resume from. */
+      state->bank3->drums.sample_resume_ptr  = HL_data;
+      state->bank3->drums.sample_resume_rows = (u8) D_length;
       return;
     }
   }
