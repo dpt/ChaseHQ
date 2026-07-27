@@ -434,9 +434,9 @@ typedef struct stage {
 /* ----------------------------------------------------------------------- */
 
 #ifdef CHQ_ENABLE_TEST_STAGE
-const stage_t *stages[7]; /* [0..4]=game stages, [5]=stage 6 test level, [6]=end-sequence reload */
+extern const stage_t *stages[7]; /* [0..4]=game stages, [5]=stage 6 test level, [6]=end-sequence reload */
 #else
-const stage_t *stages[6]; /* [0..4]=game stages, [5]=end-sequence reload */
+extern const stage_t *stages[6]; /* [0..4]=game stages, [5]=end-sequence reload */
 #endif
 
 /* ----------------------------------------------------------------------- */
