@@ -171,6 +171,12 @@
 > $4000 ; - Stripy tunnel fills
 > $4000 ;
 @ $4000 org
+@ $4000 bank=1,ChaseHQ-128K-bank-1.skool
+@ $4000 bank=3,ChaseHQ-128K-bank-3.skool
+@ $4000 bank=4,ChaseHQ-128K-bank-4.skool
+@ $4000 bank=6,ChaseHQ-128K-bank-6.skool
+@ $4000 bank=7,ChaseHQ-128K-bank-7.skool
+@ $4000 bank=0
 @ $4000 set-warnings=1
 @ $4000 start
 @ $4000 writer=:ChaseHQ.ChaseHQAsmWriter

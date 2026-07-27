@@ -24,9 +24,33 @@ SKOOLBANK4=$(GAME)-bank-4.skool
 SKOOLBANK6=$(GAME)-bank-6.skool
 SKOOLBANK7=$(GAME)-bank-7.skool
 
+SKOOLBANKS=$(SKOOLBANK1) $(SKOOLBANK3) $(SKOOLBANK4) $(SKOOLBANK6) $(SKOOLBANK7)
+
 REF=$(GAME).ref
 TAP=$(BUILD)/$(GAME).tap
 Z80=$(BUILD)/$(GAME).z80
+
+# The main skool file's @bank directives pull in the bank skool files, so
+# skool2bin --banks emits a 128K image (banks 0-7, 16K each) rather than a 48K
+# one. Everything below is about turning that into something bootable.
+#
+# ENTRY is entry_128k ($E816), which the game's own tape loader jumps to once
+# all the banks are in place. It expects interrupts disabled, so the snapshot
+# sets iff=0.
+#
+# A tape can't do that: bin2tap's RAM bank loader finishes with EI before it
+# jumps. So we poke a "DI; JP entry_128k" stub into the stage 1 spare space at
+# $7636 (dead once the banks are loaded) and start the tape there instead.
+#
+# The tape omits $4000-$5FFF (BEGIN): that's the loading screen (re-added with
+# -S), the game's tape loader and the head of the stage 1 payload, all of which
+# are dead by the time the game runs, and BASIC needs somewhere to live while
+# the bank loader is running. CLEAR leaves $5FB4-$5FFF for that loader.
+ENTRY=59414
+STUB=30262
+STUBPOKES=-P 30262,243 -P 30263,195 -P 30264,22 -P 30265,232
+CLEAR=24500
+BEGIN=24576
 
 GENERATED_CTL=$(BUILD)/$(CTL)
 GENERATED_CTLBANK1=$(BUILD)/$(CTLBANK1)
@@ -90,14 +114,14 @@ $(ASM): $(SKOOL)
 .PHONY: z80
 z80: $(Z80)
 
-$(Z80): $(SKOOL)
-	skool2bin.py $< - | bin2sna.py --org 16384 --stack 23550 --start 23372 - $@
+$(Z80): $(SKOOL) $(SKOOLBANKS)
+	skool2bin.py --banks $< - | bin2sna.py --page 0 --stack 23550 --start $(ENTRY) --state iff=0 $(STUBPOKES) - $@
 
 .PHONY: tap
 tap: $(TAP)
 
-$(TAP): $(SKOOL)
-	skool2bin.py $< - | bin2tap.py --org 16384 --stack 23550 --start 23372 - $@
+$(TAP): $(Z80) $(PRISTINEZ80)
+	bin2tap.py --7ffd 0 --clear $(CLEAR) --begin $(BEGIN) --start $(STUB) -S $(PRISTINEZ80) $< $@
 
 .PHONY: ctl
 ctl: $(GENERATED_CTL)

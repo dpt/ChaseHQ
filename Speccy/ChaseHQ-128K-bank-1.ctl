@@ -1895,13 +1895,13 @@ W $E13E,2,2 [$E191] Perp description pointer
 W $E140,2,2 [$E1B4] Perp description pointer
 B $E142,1,1 Escape: Jump
 W $E143,2,2 Address of next message (always $98BD)
-T $E145,9,8:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
+T $E145,8,8 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
 B $E14D,32,1,8*3,7
-T $E16D,9,8:n1 "EMERGENCY HERE. CARLOS, THE NEW YORK"
+T $E16D,8,8 "EMERGENCY HERE. CARLOS, THE NEW YORK"
 B $E175,28,1,7,8*2,4
-T $E191,5,4:n1 "ARMED ROBBER, HAS BEEN SPOTTED IN A"
+T $E191,4,4 "ARMED ROBBER, HAS BEEN SPOTTED IN A"
 B $E195,31,1,7,8*2,7
-T $E1B4,2,1:n1 "YELLOW SPORTS CAR ON THE FREEWAY... OVER."
+T $E1B4,1,1 "YELLOW SPORTS CAR ON THE FREEWAY... OVER."
 B $E1B5,40,1,8*4,7
 b $E1DD [Stage 2] Arrest messages
 B $E1DD,1,1 ?frame delay until first message
@@ -1910,14 +1910,14 @@ B $E1DF,1,1 Flags
 B $E1E0,1,1 Attribute
 W $E1E1,2,2 Back buffer address
 W $E1E3,2,2 Attribute address
-T $E1E5,9,8:n1 "OK! YOU ARE UNDER ARREST ON"
+T $E1E5,8,8 "OK! YOU ARE UNDER ARREST ON"
 B $E1ED,19,1,7,8,3
 B $E200,1,1 ?frame delay until next message
 B $E201,1,1 Flags
 B $E202,1,1 Attribute
 W $E203,2,2 Back buffer address
 W $E205,2,2 Attribute address
-T $E207,7,6:n1 "SUSPICION OF ARMED ROBBERY."
+T $E207,6,6 "SUSPICION OF ARMED ROBBERY."
 B $E20D,21,1,7,8,5
 B $E222,1,1 ?frame delay until next message
 B $E223,1,1 Stop
