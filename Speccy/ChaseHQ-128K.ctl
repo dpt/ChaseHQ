@@ -283,7 +283,7 @@ W $5BC7,6,2,4 (Headerless) Load sampled speech at $C000 ($4000 bytes)
 M $5BCD,4 Set bank 0
 W $5BCD,2,2
 B $5BCF,2,2
-W $5BD1,4,2 Start game at entrypt_128k
+W $5BD1,4,2 Start game at entry_128k
 @ $5BD5 label=loader_scratch
 B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
 u $5BD7 Padding bytes
@@ -3685,7 +3685,7 @@ C $8E6F,2 Load attribute byte into #REGa
 C $8E71,4 Load back buffer address into #REGde
 C $8E75,4 Load attribute address into #REGbc
 N $8E79 #REGhl now points at the string.
-C $8E79,3 Call alt draw_string_generic entry point
+C $8E79,3 Call alt draw_string_screen entry point
 C $8E7C,1 Restore #REGbc
 C $8E7D,1 Return
 c $8E7E Setup overlay messages
@@ -4170,7 +4170,7 @@ N $9293 This entry point is used by the routine at #R$916C.
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $929A label=*draw_object_left_helicopter_entrypt
+@ $929A label=*draw_object_left_width_entrypt
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
@@ -4222,11 +4222,11 @@ C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $9309 label=*draw_object_right_helicopter_entrypt
+@ $9309 label=*draw_object_right_width_entrypt
 C $9309,3 Return if A >= 247
 C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
-@ $930E label=*draw_object_930e_entrypt
+@ $930E label=*draw_object_perspective_entrypt
 C $930E,4 A = (A & $FC) >> 2
 C $9312,3 Self modify 'LD A,x' at $9395 to load A
 C $9315,1 A >>= 1
@@ -4314,7 +4314,7 @@ C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <self modified> inverted flag
 C $93C2,1 Set flags
 C $93C6,1 A--
-C $93D3,3 Exit via draw_part_entry3 if carry
+C $93D3,3 Exit via draw_part_plot_masked_sprite if carry
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
@@ -4433,7 +4433,7 @@ C $94F7,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $94FA,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94FE,3 Move result to #REGbc
 C $9501,2 Add it to #REGix to complete the jump target
-@ $9503 label=ps_odd_entry
+@ $9503 label=plot_sprite_odd_entrypt
 C $9503,4 Save #REGsp to restore on exit (self modify)
 C $9507,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $950A,1 Bank
@@ -5538,7 +5538,7 @@ C $9F9F,1 C' = A
 C $9FA0,1 Bank
 C $9FA1,2 goto draw_string_core
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
-@ $9FA3 label=*draw_string_generic
+@ $9FA3 label=*draw_string_screen
 C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
 @ $9FA6 label=*draw_string_core
 C $9FA6,8 Load a byte and isolate the text part
@@ -6923,13 +6923,13 @@ C $AA23,1 A = C
 C $AA24,2 C = $00 [not self modified]
 C $AA26,3 Jump to #R$AA33 if negative
 C $AA29,1 Return if non-zero
-C $AA2A,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
+C $AA2A,5 Exit via draw_object_right_width_entrypt if A >= 128
 C $AA2F,1 Add pixel width
-C $AA30,3 Exit via draw_object_left_helicopter_entrypt
+C $AA30,3 Exit via draw_object_left_width_entrypt
 @ $AA33 label=dss_aa33
 C $AA33,1 Add pixel width
 C $AA34,1 Return if no carry
-C $AA35,3 Exit via draw_object_left_helicopter_entrypt
+C $AA35,3 Exit via draw_object_left_width_entrypt
 c $AA38 Draw the helicopter
 D $AA38 #R$AB89 (in drive_helicopter) self modifies #R$8FA4 to call this.
 R $AA38 I:B Counter
@@ -6991,13 +6991,13 @@ C $AAB0,1 Set flags
 C $AAB1,1 A = E
 C $AAB2,2 C = 0
 C $AAB7,1 Return if non-zero
-C $AAB8,5 Jump to draw_object_right_helicopter_entrypt if A >= 128
+C $AAB8,5 Jump to draw_object_right_width_entrypt if A >= 128
 C $AABD,1 A += B
-C $AABE,3 Exit via draw_object_left_helicopter_entrypt
+C $AABE,3 Exit via draw_object_left_width_entrypt
 @ $AAC1 label=dhl_aac1
 C $AAC1,1 A += B
 C $AAC2,1 Return if no carry
-C $AAC3,3 Exit via draw_object_left_helicopter_entrypt
+C $AAC3,3 Exit via draw_object_left_width_entrypt
 c $AAC6 Move the helicopter
 D $AAC6 Used by the routine at #R$8401.
 @ $AAC6 label=move_helicopter
@@ -7373,7 +7373,7 @@ C $ADF0,1 A = C
 C $ADF1,4 Jump if A < 23  -- still visible?
 N $ADF5 Wipe the hazard
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
-@ $ADF9 label=ah_exit
+@ $ADF9 label=no_op
 C $ADF9,1 Return (used as just a RET elsewhere)
 @ $ADFA label=ah_adfa
 C $ADFA,3 IX[1] = A  -- buffer offset/distance
@@ -7528,10 +7528,10 @@ C $AF2C,3 Jump
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
 @ $AF32 label=dhs_draw_left_1
-C $AF32,3 Call draw_object_left_helicopter_entrypt
+C $AF32,3 Call draw_object_left_width_entrypt
 C $AF35,3 Jump over next CALL
 @ $AF38 label=dhs_draw_right_1
-C $AF38,3 Call draw_object_right_helicopter_entrypt
+C $AF38,3 Call draw_object_right_width_entrypt
 @ $AF3B label=dhs_draw_done_1
 C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
@@ -7558,10 +7558,10 @@ C $AF69,3 Jump
 C $AF6C,1 A = E
 C $AF6D,2 -- checking result of test at #R$AF56?
 @ $AF6F label=dhs_draw_left_2
-C $AF6F,3 Call draw_object_left_helicopter_entrypt
+C $AF6F,3 Call draw_object_left_width_entrypt
 C $AF72,3 Jump
 @ $AF75 label=dhs_draw_right_2
-C $AF75,3 Call draw_object_right_helicopter_entrypt
+C $AF75,3 Call draw_object_right_width_entrypt
 @ $AF78 label=dhs_done_draw_object
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
 C $AF7B,3 Self modify 'LD A,x' @ #R$B023
@@ -7659,15 +7659,15 @@ C $B02E,3 Jump to #R$B03D if negative
 C $B031,1 Return if non-zero
 C $B032,1 A += C
 C $B033,1 Return if carry
-C $B034,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
+C $B034,5 Exit via draw_object_right_width_entrypt if A >= 128
 @ $B039 label=dhs_exit_1
 C $B039,1 Add pixel width
-C $B03A,3 Exit via draw_object_left_helicopter_entrypt
+C $B03A,3 Exit via draw_object_left_width_entrypt
 @ $B03D label=dhs_exit_2
 C $B03D,1 A += C
 C $B03E,2 Jump if carry
 C $B040,1 Add pixel width
-C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
+C $B041,3 Exit via draw_object_left_width_entrypt if carry
 C $B044,1 Otherwise return
 b $B045 Hero car's jump table
 D $B045 This is a table of 10 values used when the hero car jumps. The first byte of each entry is used to change the pitch of the car, where level/up/down = 0/3/6 (by self modifying #R$B5AF). The second byte of the entry is a delta used to make the car move vertically (by self modifying #R$B5AA). Used by #R$B968.
@@ -8561,7 +8561,7 @@ R $B6D6 I:E' Byte width ?
 @ $B6D6 label=draw_part
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=*draw_part_entry2
+@ $B6DD label=*draw_part_entrypt2
 C $B6DD,7 Divide #REGe by 8
 C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
@@ -8575,7 +8575,7 @@ C $B6FB,1 Preserve carry flag (flip flag)
 C $B6FC,1 HL += BC
 C $B6FD,1 Restore carry flag (flip flag)
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=*draw_part_entry3
+@ $B701 label=*draw_part_plot_masked_sprite
 C $B701,4 Point #REGix at pms_jumptable
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
@@ -8640,7 +8640,7 @@ D $B76C Used by the routine at #R$92E1.
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
-@ $B770 label=*plot_masked_sprite_flipped_entry2
+@ $B770 label=*plot_masked_sprite_flipped_entrypt2
 C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
 C $B779,3 Subtract #REGa from 8
@@ -12551,11 +12551,11 @@ c $E810 Called once the memory map has been setup
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
 C $E813,3 Jump to common
-@ $E816 label=*entrypt_128k
+@ $E816 label=*entry_128k
 C $E816,3 Call clear_playfield_attrs
 C $E819,2 Set 128K flag to one (128K mode)
 C $E81B,2 5 relocations to do in 128K mode
-@ $E81D label=*entrypt_common
+@ $E81D label=*entry_common
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
 C $E823,1 Preserve the count in #REGb

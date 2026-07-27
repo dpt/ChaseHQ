@@ -1713,7 +1713,7 @@ b $DAE9 [Stage 5] Unidentified data (gap before end screen)
 B $DAE9,1303,8*162,7
 c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
 @ $E000 label=show_end_screen
-C $E000,3 Call es_e499_clear
+C $E000,3 Call es_clear
 C $E003,3 source $F7EF
 C $E006,3 in (backbuffer?)
 C $E009,3 768 bytes
@@ -1794,14 +1794,14 @@ C $E20A,3 Load script pointer
 C $E20D,1 Load a command? byte
 C $E20E,1 Advance script program counter
 C $E20F,4 If command == 1 goto es_clear_then_draw_frame
-C $E213,4 If command == 2 goto es_handler_draw_word
+C $E213,4 If command == 2 goto es_draw_frame_common
 C $E217,3 -> es_attribute_fade_in
 C $E21A,2 16
-C $E21C,4 If command == 3 goto $E2CD/rs_exit
+C $E21C,4 If command == 3 goto $E2CD/es_set_dispatch
 C $E220,3 -> es_attribute_fade_out
-C $E223,4 If command == 4 goto $E2CD/rs_exit
+C $E223,4 If command == 4 goto $E2CD/es_set_dispatch
 C $E227,3 -> es_handler_handshake
-C $E22A,4 If command == 5 goto $E2CD/rs_exit
+C $E22A,4 If command == 5 goto $E2CD/es_set_dispatch
 C $E22E,2 32
 C $E230,3 -> es_handler_glyph_fade_c
 C $E233,4 If command == 6 goto ...
@@ -1814,14 +1814,14 @@ C $E24B,3 If command == 12 goto ...
 C $E24E,3 If command == 13 goto $E256
 C $E254,2 Loop
 @ $E256 label=es_handler_draw_score
-@ $E2CD label=rs_exit
+@ $E2CD label=es_set_dispatch
 C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
 c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
 N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
 @ $E2D9 label=es_clear_then_draw_frame
 C $E2DA,3 Call $E49C (buffer zeroing thing)
-@ $E2DE label=es_handler_draw_word
+@ $E2DE label=es_draw_frame_common
 @ $E328 label=e328
 N $E381 This entry point is used by the routine at #R$E3A5.
 b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
@@ -1852,8 +1852,8 @@ C $E43A,2 Testing BRIGHT bit?
 @ $E452 label=e452
 c $E46D Routine at E46D
 @ $E46D label=es_handler_glyph_fade_c
-@ $E472 label=es_attribute_fade_out
-@ $E499 label=es_e499_clear
+@ $E472 label=es_handler_glyph_fade_b
+@ $E499 label=es_clear
 C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
