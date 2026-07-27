@@ -8,7 +8,7 @@
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
 > $4000 ; of the extra memory banks.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2026.
+> $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2025.
 > $4000 ; Sources live at <https://github.com/dpt/ChaseHQ>.
 > $4000 ;
 > $4000 ;
@@ -253,7 +253,7 @@ C $5B7C,1 Exit via entrypoint just read
 N $5B7D Loader commands for 48K mode.
 @ $5B7D label=loader_commands_48K
 W $5B7D,6,2,4 Load stage 1 at $5C00 ($1AF0 bytes)
-W $5B83,4,2 Start game at entrypt_48k
+W $5B83,4,2 Start game at entry_48k
 N $5B87 Loader commands for 128K mode.
 @ $5B87 label=loader_commands_128K
 W $5B87,6,2,4 Load stage 1 at $5C00 ($1AF0 bytes)
@@ -2192,7 +2192,7 @@ B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 0 for first attempt, 1 if second, 2 if final. [Used for bonuses only?]
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
-u $8008 Unused
+u $8008 Unused, except for $800E-$8010: those three bytes ($C3,$D6,$A0) decode as `JP $A0D6` (keyscan) -- a disguised instruction hiding inside this "unused" data block. CALL $800E is therefore equivalent to CALL $A0D6; see bank 3's $C647 and $C1D7 for its two callers.
 B $8008,8,8 Can't see any consistent use of these.
 B $8010,4,4
 c $8014 Load a stage
@@ -2206,7 +2206,7 @@ C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 @ $8025 label=ls_loop
-C $8025,3 Call clear_playfield_set_attrs
+C $8025,3 Call set_playfield_attrs
 C $8028,3 Call clear_playfield_attrs
 C $802B,2 Reverse transition
 C $802D,3 Call setup_transition
@@ -2232,7 +2232,7 @@ C $8059,3 Call tape_load_to_5c00
 C $805C,2 Jump to ls_8025 if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
-C $8061,3 Call clear_playfield_set_attrs
+C $8061,3 Call set_playfield_attrs
 C $8064,3 Call clear_playfield_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
 C $806C,3 Call ls_8098
@@ -2266,7 +2266,7 @@ C $809C,1 why dec here?
 C $809D,3 Call print_message
 C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
-C $80A5,3 Call draw_screen
+C $80A5,3 Call send_playfield
 C $80A8,1 restore message pointer
 C $80A9,1 restore counter
 @ $80AA refs=:$F2FA
@@ -2447,7 +2447,7 @@ C $825E,4 Reset credits/copyright message blinker to show credits
 C $8262,6 Set speed to 400
 C $8268,3 Call keyscan
 C $826B,3 Return if fire was pressed
-C $826E,3 Call cpu_driver
+C $826E,3 Call drive_attract_demo
 N $8271 This entry point is used by the routine at #R$F220.
 C $8271,3 #REGhl -> attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
 C $8274,2 Number of messages?
@@ -2469,7 +2469,7 @@ C $8295,2 Skip next LD HL based on blink above
 C $8297,3 #REGhl -> copyright_messages
 C $829A,3 Call setup_overlay_messages
 C $829D,3 Call transition
-C $82A0,3 Call draw_screen
+C $82A0,3 Call send_playfield
 C $82A3,3 Loop
 @ $82A6 label=attract_messages
 B $82A6,1,1 Flags (double height)
@@ -2532,7 +2532,7 @@ N $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
 C $83B5,3 No-op when in 48K mode
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
-@ $83B8 label=play_engine_or_siren_sfx_hook
+@ $83B8 label=play_regular_sfx_hook
 C $83B8,3 Call play_engine_sfx_48k when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
@@ -2619,38 +2619,38 @@ C $8453,3 Call handle_perp_caught
 C $8456,3 Call move_hero_car
 C $8459,3 Call spawn_cars
 C $845C,3 Call cycle_counters
-C $845F,3 Call play_engine_or_siren_sfx_hook
+C $845F,3 Call play_regular_sfx_hook
 C $8462,3 Call build_height_table
 C $8465,3 Call scroll_horizon
-C $8468,3 Call play_engine_or_siren_sfx_hook
+C $8468,3 Call play_regular_sfx_hook
 C $846B,3 Call layout_road
-C $846E,3 Call play_engine_or_siren_sfx_hook
+C $846E,3 Call play_regular_sfx_hook
 C $8471,3 Call draw_road
-C $8474,3 Call play_engine_or_siren_sfx_hook
+C $8474,3 Call play_regular_sfx_hook
 C $8477,3 Call layout_objects
 C $847A,3 Call prepare_tunnel
 C $847D,3 Call spawn_hazards
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
-C $8486,3 Call play_engine_or_siren_sfx_hook
+C $8486,3 Call play_regular_sfx_hook
 C $8489,3 Call advance_hazards
 C $848C,3 Call layout_dirt_and_stones
-C $848F,3 Call play_engine_or_siren_sfx_hook
+C $848F,3 Call play_regular_sfx_hook
 C $8492,3 Call move_helicopter
 C $8495,3 Call check_scenery_collisions
-C $8498,3 Call play_engine_or_siren_sfx_hook
+C $8498,3 Call play_regular_sfx_hook
 C $849B,3 Call draw_scene_objects
-C $849E,3 Call play_engine_or_siren_sfx_hook
+C $849E,3 Call play_regular_sfx_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
 C $84AA,3 Call calc_overtake_bonus
-C $84AD,3 Call play_engine_or_siren_sfx_hook
+C $84AD,3 Call play_regular_sfx_hook
 C $84B0,3 Call drive_chatter
 C $84B3,3 Call draw_smash_bar
 C $84B6,3 Call transition
-C $84B9,3 Call play_engine_or_siren_sfx_hook
-C $84BC,3 Call draw_screen
+C $84B9,3 Call play_regular_sfx_hook
+C $84BC,3 Call send_playfield
 C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
 C $84C5,3 If not, goto not_test_mode
@@ -2701,7 +2701,7 @@ C $8524,3 Call setup_transition
 C $8527,3 Loop to ml_loop
 c $852A CPU driver for attract mode
 D $852A This runs the game loop while driving the car.
-@ $852A label=cpu_driver
+@ $852A label=drive_attract_demo
 C $852A,3 Get road position
 N $852D If we're on the left, go right.
 C $852D,7 Subtract centre-left edge. Carry flag will be set if we're on the right hand side of it
@@ -2746,24 +2746,24 @@ C $858F,3 Call set_up_stage
 C $8592,2 Reverse transition
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
-C $859A,3 Call clear_playfield_set_attrs
+C $859A,3 Call set_playfield_attrs
 C $859D,4 Reset the counter in #R$85E4 that reveals the perp's car
 C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
 C $85A5,3 Call start_chatter (priority $FF)
-@ $85A8 label=rps_loop
+@ $85A8 label=run_pregame_screen_loop
 C $85A8,3 Call draw_pregame
 C $85AB,3 Call drive_chatter
 C $85AE,3 Call reveal_perp_car
 C $85B1,3 Call animate_meters
 C $85B4,3 Call transition
-C $85B7,3 Call draw_screen
-C $85BA,6 Loop to rps_loop while transition_control is non-zero
+C $85B7,3 Call send_playfield
+C $85BA,6 Loop to run_pregame_screen_loop while transition_control is non-zero
 N $85C0 transition_control is now zero.
 C $85C0,5 Return if chatter_state is idle (zero)
 C $85C5,4 Jump to rps_start_game if chatter_state is stopping (>= 3)
 C $85C9,3 Call keyscan
-C $85CC,4 Loop to rps_loop unless fire was hit
+C $85CC,4 Loop to run_pregame_screen_loop unless fire was hit
 N $85D0 Fire was hit.
 C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise (will RET for us)
@@ -2771,10 +2771,10 @@ C $85D3,3 Exit via play_start_noise (will RET for us)
 C $85D6,2 Forward transition
 N $85D8 We can only arrive here if no carry... so why the conditional CALL?
 C $85D8,3 If no carry (A was >= 3) call setup_transition
-C $85DB,2 Loop to rps_loop
+C $85DB,2 Loop to run_pregame_screen_loop
 N $85DD Since nothing can arrive here this can only be dead code.
 @ $85DD label=rps_dead_code
-C $85DD,6 Loop to rps_loop if transition_control is non-zero
+C $85DD,6 Loop to run_pregame_screen_loop if transition_control is non-zero
 C $85E3,1 Return
 c $85E4 Reveals the perp's car on the pre-game screen
 D $85E4 Used by the routine at #R$858C.
@@ -2993,7 +2993,7 @@ C $878D,3 Call draw_scene_objects
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
-C $8799,3 Call draw_screen
+C $8799,3 Call send_playfield
 C $879C,6 Loop to es_loop unless the tunnel has appeared
 N $87A2 Tunnel has appeared.
 C $87A2,3 reading from tunnel code [15 when tunnel is small, 6 when fills screen]
@@ -3049,11 +3049,11 @@ C $884B,4 Clear allow_spawning
 N $884F Set up screen.
 C $884F,2 Reverse transition
 C $8851,3 Call setup_transition
-C $8854,3 Call clear_playfield_set_attrs
+C $8854,3 Call set_playfield_attrs
 C $8857,6 Point #REGhl at left light's attributes
 C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
 N $8860 Clear the lights' BRIGHT bit.
-@ $8860 label=sus_reset_lights
+@ $8860 label=set_up_stage_reset_lights
 C $8860,2 4 rows
 C $8862,2 5 columns
 C $8864,2 Clear BRIGHT bit
@@ -3081,7 +3081,7 @@ C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
 C $88A1,5 Call start_chatter (priority 2)
 C $88A6,3 Exit via setup_engine_sfx_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
-@ $88A9 label=cui_quit_key
+@ $88A9 label=check_user_input_quit_key
 C $88A9,5 If quit_state != 0 then return (quit in progress)
 C $88AE,3 Call drive_chatter_stop
 C $88B1,3 Call fill_attributes
@@ -3123,7 +3123,7 @@ C $8910,3 Effect 7 (tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
 @ $8916 label=drs_skip_effect_no7
 C $8916,3 Call play_engine_sfx_hook
-C $8919,3 Call play_engine_or_siren_sfx_hook  -- plays engine in 48K, siren in 128K
+C $8919,3 Call play_regular_sfx_hook  -- plays engine in 48K, siren in 128K
 C $891C,3 Call write_audio_registers_hook  -- nop in 48K
 C $891F,5 If sfx_index == 0 return
 C $8924,3 #REGe = sfx_index * 4 -- stride of table
@@ -3405,7 +3405,7 @@ C $8B99,2 Otherwise decrease by 5
 C $8B9B,2 new pos = old pos + delta
 @ $8B9D label=hpc_assign_perp_pos
 C $8B9D,4 Set the perp car's horizontal position (as byte)
-N $8BA1 Now move the hero car. This section is similar to code in cpu_driver.
+N $8BA1 Now move the hero car. This section is similar to code in drive_attract_demo.
 C $8BA1,3 Get road position
 N $8BA4 If we're on the left, go right.
 C $8BA4,7 Subtract centre-left edge. Carry flag will be set if we're on the right hand side of it
@@ -3601,7 +3601,7 @@ C $8DD4,1 Next byte of anim
 C $8DD5,2 Loop
 C $8DD7,1 Return
 N $8DD8 Fade odd/even UDG rows of the screen with a single byte.
-@ $8DD8 label=t_fade_chunk
+@ $8DD8 label=transition_fade_chunk
 C $8DD8,2 8 rows
 @ $8DDA label=t_fade_row_loop
 C $8DDA,2 6 iterations (of 5 ops each in the loop below) = 30 bytes written (~ a scanline)
@@ -3840,7 +3840,7 @@ C $8F8F,4 IX = $EAB0
 C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
 @ $8F96 label=dee_second_loop
 C $8F96,4 Preserve IX, HL, BC
-C $8F9A,7 Call draw_arrow_fire_smoke if n_hazards is set
+C $8F9A,7 Call draw_hazard_sprites if n_hazards is set
 C $8FA1,3 Call draw_dirt_and_stones
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
@@ -4788,7 +4788,7 @@ C $9971,4 Decrement noise_counter in-place
 C $9975,1 Load noise_counter
 C $9976,3 Jump to draw_noise_effect if it was non-zero
 C $9979,3 New chatter_state is 0 (idle)
-C $997C,3 Call ne_plot_attrs to clear to black
+C $997C,3 Call clear_face_attributes to clear to black
 N $997F This is the flashing cursor.
 @ $997F label=drive_chatter_idle
 C $997F,2 Plot a space character
@@ -4928,7 +4928,7 @@ C $9A83,15 Usual row movement magic here
 C $9A92,4 Loop while rows remain
 C $9A96,2 #REGa = attribute $47 => BRIGHT + white over black
 N $9A98 This entry point is used by the routine at #R$9965.
-@ $9A98 label=ne_plot_attrs
+@ $9A98 label=clear_face_attributes
 C $9A98,3 Screen attribute position (22,1)
 C $9A9B,2 5 rows
 C $9A9D,3 32 - 3 = row skip
@@ -4973,11 +4973,11 @@ D $9AEC Used by the routines at #R$9965 and #R$9A55.
 R $9AEC I:A 0xFF (meaning ?) or value (meaning ?)
 R $9AEC I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_cursor_off
-C $9AEF,2 Jump to pmf_go
+C $9AEF,2 Jump to plot_mini_font_char
 N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55.
 @ $9AF1 label=plot_mini_font_cursor_on
 C $9AF1,3 values to self modify with
-@ $9AF4 label=pmf_go
+@ $9AF4 label=plot_mini_font_char
 C $9AF4,1 Preserve A
 C $9AF5,8 self modify LD C and OR 7 later
 C $9AFD,1 Restore A
@@ -5079,7 +5079,7 @@ C $9C2C,2 Index of "Your time's up" speech sample
 C $9C2E,3 Exit via play_speech_hook
 @ $9C31 label=tick_check_credits
 C $9C31,5 Return if transition_control is non-zero
-C $9C36,8 Exit via cui_quit_key if no credits remain
+C $9C36,8 Exit via check_user_input_quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
 @ $9C41 ssub=LD (credit_n + 7),A
 C $9C3F,5 Turn it into ASCII and poke it into the "CREDIT x" string
@@ -5875,7 +5875,7 @@ B $A22E,1,1 Set to 1 when the perp has been sighted. Enables flashing lights and
 @ $A22F label=hand_flag
 B $A22F,1,1 Set to 1 by start_chase. This starts the anim where the cherry light is put on the roof. Set to 2 by fully_smashed. This shows the "stop" hand.
 @ $A230 label=perp_caught_phase
-B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Inhibits car spawning.
+B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by send_playfield. Inhibits car spawning.
 @ $A231 label=transition_control
 B $A231,1,1 Transition/fade control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
 @ $A232 label=smash_level
@@ -6966,17 +6966,17 @@ C $AA75,1 A = *DE
 C $AA76,2 A += <self modified> -- Self modified by #R$AA5F (above)
 C $AA78,1 DE++
 C $AA79,4 Preserve IY, HL, BC
-C $AA7D,3 Call dhl_aa94
+C $AA7D,3 Call draw_helicoper_part
 C $AA80,4 Restore IY, HL, BC
 C $AA84,2 Loop loop_aa71 while #REGb > 0
 C $AA86,3 DE = wordat(HL); HL++
 C $AA89,1 A = 0  [can't see a reason for this]
 C $AA8A,2 Preserve IY
 C $AA8C,2 A = <self modified> -- Self modified by #R$AA57 (above)
-C $AA8E,3 Call dhl_aa94
+C $AA8E,3 Call draw_helicoper_part
 C $AA91,2 Restore IY
 C $AA93,1 Return
-@ $AA94 label=dhl_aa94
+@ $AA94 label=draw_helicoper_part
 C $AA94,3 BC = <self modified> -- Self modified by #R$AB00, #R$AB2F + others
 C $AA97,2 A = -A
 C $AA99,3 Self modify 'LD D,x' @ #R$933D to load A
@@ -7488,7 +7488,7 @@ C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
 c $AECF This entry point is used by the routine at #R$8F5F.
 D $AECF Used by the routine at #R$8F5F.
-@ $AECF label=draw_arrow_fire_smoke
+@ $AECF label=draw_hazard_sprites
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
 C $AED3,2 Return if A != *HL
@@ -7577,7 +7577,7 @@ C $AF95,1 Load x offset
 C $AF96,1 Advance
 C $AF97,1 Load y offset
 C $AF98,3 Address of floating_arrow_here_defn (incl. "HERE!")
-C $AF9B,3 Call dhs_draw_lod
+C $AF9B,3 Call dhs_draw_bitmap
 @ $AF9E label=dhs_smash_level
 C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
@@ -7647,7 +7647,7 @@ N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
 @ $B01B label=dhs_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
 N $B01C B,C = x,y offset/position? HL -> graphic definition
-@ $B01C label=dhs_draw_lod
+@ $B01C label=dhs_draw_bitmap
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
 C $B023,3 A = <self modified by #R$AF7B> + B
@@ -8263,7 +8263,7 @@ C $B4A9,10 A = (flip_car * 7) + 13
 @ $B4B3 label=ahc_b4b3
 C $B4B3,1 A += C  -- C is as $B493
 C $B4B4,1 Preserve A
-C $B4B5,3 Call draw_cherry_b699
+C $B4B5,3 Call draw_crash_unflipped
 C $B4B8,1 Restore A
 C $B4B9,1 C = A
 C $B4BA,3 Read from 'LD C' @ #R$B476 (above) to load A
@@ -8271,7 +8271,7 @@ C $B4BD,4 Jump to #R$B4C6 if A >= 4
 N $B4C1 A < 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
-C $B4C3,3 Exit via draw_cherry_b699
+C $B4C3,3 Exit via draw_crash_unflipped
 @ $B4C6 label=ahc_enable_cherry_light
 C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
@@ -8520,7 +8520,7 @@ C $B694,1 C = A
 C $B695,3 A' += C
 @ $B698 label=dcl_b698
 N $B699 This entry point is used by the routine at #R$B318.
-@ $B699 label=draw_cherry_b699
+@ $B699 label=draw_crash_unflipped
 C $B699,5 BC' = 0   -- not self modified
 E $B67C FALL THROUGH
 c $B69E This entry point is used by the routine at #R$B318.
@@ -8985,7 +8985,7 @@ C $BA09,2 Loop while #REGb
 N $BA0B No forked road found.
 N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
 @ $BA0B label=lr_no_fork
-C $BA0B,3 Call build_curve_table_non_forked
+C $BA0B,3 Call build_curve_table
 C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
@@ -9091,7 +9091,7 @@ C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
 @ $BAE6 label=lr_left_fork_taken
-C $BAE6,3 Call build_curve_table_non_forked
+C $BAE6,3 Call build_curve_table
 C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
 C $BAED,1 Stack it
@@ -9106,7 +9106,7 @@ C $BAFB,3 Get road position
 C $BAFE,1 Stack it
 C $BAFF,2 DE must be a road position delta?
 C $BB01,3 Set road position
-C $BB04,3 Call build_curve_table_non_forked
+C $BB04,3 Call build_curve_table
 @ $BB07 label=lr_bb07
 C $BB07,1 Unstack road position
 C $BB08,3 Set road position
@@ -9248,7 +9248,7 @@ c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
 D $BC3E Copies 240 x ? pixels from the back buffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
 R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
 R $BC3E #R$F220.
-@ $BC3E label=draw_screen
+@ $BC3E label=send_playfield
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
 C $BC42,3 Point #REGhl' at back buffer + 1 byte.
 C $BC45,4 Self modify #REGsp restore instruction
@@ -9333,7 +9333,7 @@ C $BDC0,1 Return
 c $BDC1 Clears the playfield then sets its attributes
 D $BDC1 The playfield is the lower two thirds of the screen - where the action happens.
 R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
-@ $BDC1 label=clear_playfield_set_attrs
+@ $BDC1 label=set_playfield_attrs
 C $BDC1,3 Call clear_playfield
 C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
@@ -10255,7 +10255,7 @@ C $C515,1 B = A  (fill pattern)
 C $C516,3 Jump
 N $C519 If bit 7 was set then it's a dirt track or forked road.
 @ $C519 label=dr_dirt_track
-C $C519,2 Jump to forked_road_plotter if former bit 5 (not 6
+C $C519,2 Jump to draw_forked_road if former bit 5 (not 6
 N $C51B If bit 5 was set then it's a forked road.
 C $C51B,3 because shifted) of lanes byte is set}
 N $C51E If bit 5 was clear then it's a dirt track section.
@@ -10739,7 +10739,7 @@ C $C8DF,3 Loop while rows remain
 C $C8E2,1 Return
 c $C8E3 Forked road plotting
 D $C8E3 Used by the routine at #R$C452.
-@ $C8E3 label=forked_road_plotter
+@ $C8E3 label=draw_forked_road
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
 C $C8E4,3 Read 'LD A,x' @ #R$C6D8
@@ -11131,7 +11131,7 @@ C $CBCE,3 Load two table high-bytes: $EE, $EC
 C $CBD1,3 Load $ED $44 => Opcode of NEG instruction for #R$CC21
 C $CBD4,2 Jump forward
 N $CBD6 This entry point is used by the routine at #R$B9F4.
-@ $CBD6 label=build_curve_table_non_forked
+@ $CBD6 label=build_curve_table
 C $CBD6,3 Load two table high-bytes: $ED, $E9
 C $CBD9,3 Load opcodes of two NOP instructions for #R$CC21
 @ $CBDC label=build_curve_table_self_modify
@@ -11422,7 +11422,7 @@ D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
 R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
 R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
 R $CDD6 O:A Result                              e.g. $03, $02, $01, $02, $FE
-@ $CDD6 label=multiply
+@ $CDD6 label=scale_curvature_or_height
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
 C $CDD9,1 Initialise total to zero
@@ -12547,7 +12547,7 @@ N $E760 affects horizontal too = lower moves the road LEFT earlier bytes affect 
 @ $E760 label=persp_x_delta_left
 B $E760,176,22
 c $E810 Called once the memory map has been setup
-@ $E810 label=entrypt_48k
+@ $E810 label=entry_48k
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
 C $E813,3 Jump to common
@@ -12587,14 +12587,14 @@ W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B
 @ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
 C $E876,3 Replaces 48K start_siren_hook
 @ $E879 ssub=JP play_siren_sfx_128k - hooks_128k + all_hooks
-C $E879,3 Replaces 48K play_engine_or_siren_sfx_hook
+C $E879,3 Replaces 48K play_regular_sfx_hook
 @ $E87C ssub=JP silence_audio_128k - hooks_128k + all_hooks
 C $E87C,3 Replaces 48K silence_audio_hook
 @ $E87F ssub=JP write_audio_registers_128k - hooks_128k + all_hooks
 C $E87F,3 Replaces 48K write_audio_registers_hook
 @ $E882 ssub=JP setup_turbo_sfx_128k - hooks_128k + all_hooks
 C $E882,3 Replaces 48K setup_engine_sfx_hook
-@ $E885 ssub=JP play_turbo_sfx_128k - hooks_128k + all_hooks
+@ $E885 ssub=JP play_engine_or_turbo_sfx_128k - hooks_128k + all_hooks
 C $E885,3 Replaces 48K play_engine_sfx_hook
 @ $E888 ssub=JP play_speech_128k - hooks_128k + all_hooks
 C $E888,3 Replaces 48K play_speech_hook
@@ -12978,7 +12978,7 @@ c $ED4D Keyscan
 D $ED4D Used by the routine at #R$ED6D.
 R $ED4D O:D Key half-row number in bits 0..2, key in bits 3+ [or is it inverted?] or $FF if no keys pressed
 R $ED4D O:F Z clear if keys are pressed, Z set otherwise
-@ $ED4D label=keyscan_all
+@ $ED4D label=redefine_keyscan
 C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
 C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
 N $ED53 Start loop.
@@ -13009,7 +13009,7 @@ R $ED6D I:DE ...
 C $ED6D,2 Preserve #REGde, #REGbc
 @ $ED6F label=dak_loop1
 C $ED6F,3 Call play_music_48k
-C $ED72,3 Call keyscan_all
+C $ED72,3 Call redefine_keyscan
 C $ED75,2 ?Loop until a key ISN'T pressed
 C $ED77,3 ?No keys were pressed
 C $ED7A,1 D--
@@ -13105,7 +13105,7 @@ C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
 C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
 C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
 C $EE68,3 Load address of music patterns
-C $EE6B,3 Jump to np_start_at_hl
+C $EE6B,3 Jump to next_pattern_at_addr
 c $EE6E Setup the next music pattern
 D $EE6E Used by the routine at #R$EE9E.
 N $EE6E Keep playing current pattern until this counter becomes zero.
@@ -13117,7 +13117,7 @@ C $EE74,1 Return if non-zero
 @ $EE75 label=np_next
 C $EE75,3 Load address of current pattern. Self modified by #R$EE83.
 N $EE78 This entry point is used by the routine at #R$EE5E.
-@ $EE78 label=np_start_at_hl
+@ $EE78 label=next_pattern_at_addr
 C $EE78,2 Read new repetition count
 C $EE7A,4 Jump to #R$EE98 if it's $FF (end of patterns)
 C $EE7E,3 Self modify #R$EE6E above with new repetition count
@@ -13134,7 +13134,7 @@ C $EE94,3 Self modify #R$EEC9 (addr of second music data byte in pattern)
 C $EE97,1 Return
 @ $EE98 label=np_restart
 C $EE98,4 HL = wordat(HL); HL++
-C $EE9C,2 Jump to np_start_at_hl
+C $EE9C,2 Jump to next_pattern_at_addr
 c $EE9E Play menu music (48K mode only)
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=play_music_48k
@@ -13195,7 +13195,7 @@ C $EF09,4 Self modify 'LD A' @ #R$EF00 above
 @ $EF0D label=pm_start_drums
 C $EF0D,2 Load <drum is playing flag>  -- Self modified by #R$EF33
 C $EF0F,1 Decrement
-C $EF10,3 Jump to pd_bank_go if zero  -- resuming?
+C $EF10,3 Jump to playdrum_bank_go if zero  -- resuming?
 N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 @ $EF13 label=pm_wait_for_interrupt
 C $EF13,5 Loop while waiting for this <interrupt flag> to be set
@@ -13214,21 +13214,21 @@ R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in prac
 @ $EF22 label=playdrum_2
 C $EF22,3 Load address of drum 2 data
 C $EF25,2 108 sample bytes
-C $EF27,2 Jump to pd_start
+C $EF27,2 Jump to playdrum_start
 N $EF29 This entry point is used by the routine at #R$EE9E.
 @ $EF29 label=playdrum_1
 C $EF29,3 Load address of drum 1 data
 C $EF2C,2 252 sample bytes
 N $EF2E This modifies the number of bits of each sample byte that is output.
-@ $EF2E label=pd_start
+@ $EF2E label=playdrum_start
 C $EF2E,3 Self modify 'LD B' @ #R$EF39 <speed value> to be #REGa as passed in
 C $EF31,5 Self modify 'LD A' @ #R$EF0D <drum is playing flag> to be 1
-C $EF36,2 Jump to pd_go
+C $EF36,2 Jump to playdrum_go
 N $EF38 This entry point is used by the routine at #R$EE9E.
-@ $EF38 label=pd_bank_go
+@ $EF38 label=playdrum_bank_go
 C $EF38,1 Bank
 N $EF39 Output a byte.
-@ $EF39 label=pd_go
+@ $EF39 label=playdrum_go
 C $EF39,2 <speed value> iterations -- Self modified by #R$EF2E (sampled: 8, 3, 1)
 @ $EF3B label=pd_loop
 C $EF3B,2 Set speaker flag
@@ -13244,7 +13244,7 @@ C $EF4B,1 Decrement sample bytes remaining
 C $EF4C,2 Jump to pd_end_of_sample if no bytes remain
 C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- <interrupt flag>
 C $EF51,1 Set flags
-C $EF52,3 Loop to pd_go if clear
+C $EF52,3 Loop to playdrum_go if clear
 C $EF55,1 Otherwise unbank
 C $EF56,1 Return
 @ $EF57 label=pd_end_of_sample
@@ -13257,7 +13257,7 @@ B $F05A,108,8*13,4 Drum 2 sample/data
 c $F0C6 White noise generator
 D $F0C6 Used by the routine at #R$EE9E.
 R $F0C6 I:A Duration (3 or 9 in practice)
-@ $F0C6 label=noise
+@ $F0C6 label=play_noise
 C $F0C6,1 Set #REGe to duration counter
 @ $F0C7 label=n_outer_loop
 C $F0C7,2 Set #REGd to inner counter 50
@@ -13449,7 +13449,7 @@ C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
 c $F2FA Play turbo sound effect
 D $F2FA Lives at $80EE when relocated.
-@ $F2FA label=play_turbo_sfx_128k
+@ $F2FA label=play_engine_or_turbo_sfx_128k
 C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_noise_pitch is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
@@ -13614,7 +13614,7 @@ C $F426,3 Call set_up_stage
 C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
 @ $F434 label=am1_loop
-C $F434,3 Call cpu_driver
+C $F434,3 Call drive_attract_demo
 C $F437,3 Load controls_selected
 C $F43A,1 Set flags
 C $F43B,3 -> enter_for_options_messages
@@ -13645,7 +13645,7 @@ C $F482,3 -- must be messages ptr below ($8208+263 means ?)
 C $F485,3 Call setup_overlay_messages
 @ $F488 label=f488_128k
 C $F488,3 Call transition
-C $F48B,3 Call draw_screen
+C $F48B,3 Call send_playfield
 C $F48E,3 Loop to attract_mode_128k_loop
 b $F491 Credits / Score messages show in attract mode
 @ $F491 label=press_gear_messages

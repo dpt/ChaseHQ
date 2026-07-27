@@ -1712,7 +1712,7 @@ B $DAD9,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 b $DAE9 [Stage 5] Unidentified data (gap before end screen)
 B $DAE9,1303,8*162,7
 c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
-@ $E000 label=end_screen
+@ $E000 label=show_end_screen
 C $E000,3 Call es_e499_clear
 C $E003,3 source $F7EF
 C $E006,3 in (backbuffer?)
@@ -1749,7 +1749,7 @@ C $E062,2 Loop
 C $E065,4 Set interrupt vector table base to $8000
 C $E069,3 Call drive_chatter_stop
 b $E06C Data block at E06C
-N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by routine_e42e ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
+N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
 @ $E06C label=data_e06c
 B $E06C,2,1 Trigger flags (see note above)
 N $E06E Still unidentified (3 bytes, values $01,$3F,$96) -- confirmed dead end: grepped for literal $5C6E/$5C6F/$5C70 operands across the full static bank-7 disassembly and the entire trace-end-screen.log execution capture, zero hits either way. Not reached by any direct-addressed instruction in the code disassembled so far; either accessed only via computed/indexed addressing not yet spotted, read by common-RAM code outside bank 7, or genuinely unused padding
@@ -1793,17 +1793,17 @@ C $E20A,3 Load script pointer
 @ $E20D label=rs_loop
 C $E20D,1 Load a command? byte
 C $E20E,1 Advance script program counter
-C $E20F,4 If command == 1 goto es_handler_draw_frame
+C $E20F,4 If command == 1 goto es_clear_then_draw_frame
 C $E213,4 If command == 2 goto es_handler_draw_word
-C $E217,3 -> routine_e42e
+C $E217,3 -> es_attribute_fade_in
 C $E21A,2 16
 C $E21C,4 If command == 3 goto $E2CD/rs_exit
-C $E220,3 -> routine_e472
+C $E220,3 -> es_attribute_fade_out
 C $E223,4 If command == 4 goto $E2CD/rs_exit
-C $E227,3 -> routine_e3b7
+C $E227,3 -> es_handler_handshake
 C $E22A,4 If command == 5 goto $E2CD/rs_exit
 C $E22E,2 32
-C $E230,3 -> routine_e46d
+C $E230,3 -> es_handler_glyph_fade_c
 C $E233,4 If command == 6 goto ...
 C $E237,4 If command == 7 goto ...
 C $E23B,4 If command == 8 goto ...
@@ -1813,13 +1813,13 @@ C $E247,4 If command == 11 goto ...
 C $E24B,3 If command == 12 goto ...
 C $E24E,3 If command == 13 goto $E256
 C $E254,2 Loop
-@ $E256 label=e256
+@ $E256 label=es_handler_draw_score
 @ $E2CD label=rs_exit
 C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
 c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
 N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
-@ $E2D9 label=es_handler_draw_frame
+@ $E2D9 label=es_clear_then_draw_frame
 C $E2DA,3 Call $E49C (buffer zeroing thing)
 @ $E2DE label=es_handler_draw_word
 @ $E328 label=e328
@@ -1840,9 +1840,9 @@ W $E3B2,2,2 34, handshake_3
 B $E3B4,1,1
 W $E3B5,2,2 35, handshake_2
 c $E3B7 Routine at E3B7
-@ $E3B7 label=routine_e3b7
+@ $E3B7 label=es_handler_handshake
 c $E42E Glyph-plot routine (draws a character/digit into the (backbuffer/screen?); called via the interpreter's self-modified $E030 dispatch)
-@ $E42E label=routine_e42e
+@ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
 C $E433,1 Return when bit set
@@ -1851,8 +1851,8 @@ C $E437,3 Backbuffer
 C $E43A,2 Testing BRIGHT bit?
 @ $E452 label=e452
 c $E46D Routine at E46D
-@ $E46D label=routine_e46d
-@ $E472 label=routine_e472
+@ $E46D label=es_handler_glyph_fade_c
+@ $E472 label=es_attribute_fade_out
 @ $E499 label=es_e499_clear
 C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
@@ -2053,11 +2053,11 @@ R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in prac
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
 C $F8BC,2 94 sample bytes
-C $F8BE,2 Jump to b7pd_start
+C $F8BE,2 Jump to es_playdrum_go
 @ $F8C0 label=b7_playdrum_Y
 C $F8C0,3 Load address of drum Y data
 C $F8C3,2 160 sample bytes
-@ $F8C5 label=b7pd_start
+@ $F8C5 label=es_playdrum_go
 C $F8C5,3 Self modify 'LD B' @ R$???? <speed value> to be #REGa as passed in
 C $F8C8,5 Self modify 'LD A' @ R$???? <drum is playing flag> to be 1
 C $F8CD,2 Jump to b7pd_go

@@ -369,7 +369,7 @@ B $C57F,31,8*3,7
 c $C59E Title-screen driver: picks a scene, sets up the objects and drives the attract-mode wait loop
 D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and "PRESS GEAR TO PLAY" once controls have been selected -- #R$8001@main), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
 R $C59E Used by the routines at #R$C000 and #R$FBC8.
-@ $C59E label=title_screen_driver
+@ $C59E label=run_title_screen
 C $C59E,3 Clear the screen bitmap and attribute buffers
 C $C5A1,2 A = 0 (self-modified below to persist a running value between calls -- acts as a pseudo-random/rotating scene selector)
 C $C5A9,3 Self-modify the operand at $C5A2 (the value loaded next call) with the rotated/incremented value
@@ -386,7 +386,7 @@ C $C612,3 ...also draw the "PRESS GEAR TO PLAY" text block (#R$CC88)
 C $C619,3 (not traced -- likely sound-related)
 C $C61D,1 Sync to the next interrupt before the wait loop
 N $C61E Attract-mode wait loop: animates the current scene once per interrupt and polls for coin-insert / fire / any-key input to start the game or jump to a fresh title screen. Re-entered every frame via #R$C61E; #R$C59E is re-run (new scene) when a key other than fire is pressed.
-@ $C61E label=ts_wait_loop
+@ $C61E label=titlescr_wait_loop
 C $C61E,3 Per-frame service call (not traced -- likely sound or sprite bookkeeping)
 C $C621,3 If a flag is already set, skip straight to the
 C $C624,1 fire-button check (demo/attract cycle already
@@ -414,16 +414,16 @@ C $C688,3 No key pressed -> keep waiting
 C $C68B,1 A key was pressed: seed the scene selector with
 C $C68C,3 the key-scan bits, then restart the title screen
 C $C68F,1 with a new scene
-@ $C696 label=ts_coin_inserted
+@ $C696 label=titlescr_credit_inserted
 C $C696,3 Push $8011 as an extra "credit awarded" flag/value
 C $C699,1 for the shared tail below
-@ $C69A label=ts_refresh_name_table
+@ $C69A label=titlescr_refresh_name_table
 C $C69A,1 Entry point also reached directly after the ~180- frame attract-tune wait (#R$C61E), without the $8011 flag push above
 C $C69C,3 (not traced -- likely a sound/ROM-switch helper)
 C $C69F,35 Copy the 3 preset high-score name/rank rows from $C403 into the work buffer pointed to by ($800A), 3 times (A = 3), each copy split into 15+7+6 bytes with 2-byte gaps skipped between segments
 C $C6C2,1 Discard the flag/counter pushed by the caller
-N $C6C4 Per-frame animation driver: waits for the next interrupt, draws the 6 "foreground" objects (records 0-5 of the $BB00 array) via #R$C8C5, steps the object animation scripts (#R$C705), clears the playfield bitmap (#R$CC04), then draws the 3 "background" objects (records 6-8) via the alternate blitter #R$C94F. Loops forever in the ordinary case, but #R$C705 (via #R$C746's $D2 "end of script" handling, `POP HL : RET` with no matching PUSH) will pop this loop's own return address as data and RET again beneath it, unwinding straight out of this self-loop back to #R$C6C4's *caller* (#R$C605's own continuation) the moment any object's script reaches $D2 -- see #R$C746. This is the normal exit: whichever scene object's script ends first stops the whole per-frame animation and hands control back to title_screen_driver, which is what starts the tune and enters the (non-animating) attract-mode wait loop. #R$C93C / #R$C9D3-style RET-via-restored-SP inside the blitters is a separate, unrelated mechanism (aborting one partially off-screen glyph draw, not this loop). Uses EXX around each #R$C8C5/#R$C94F call: the object record's script pointer (B/C) and screen-position byte (L) are loaded into the shadow registers so the blitter can use HL/DE/BC freely without disturbing the loop's own IX/DE/B state in the main set.
-@ $C6C4 label=ts_animate_frame
+N $C6C4 Per-frame animation driver: waits for the next interrupt, draws the 6 "foreground" objects (records 0-5 of the $BB00 array) via #R$C8C5, steps the object animation scripts (#R$C705), clears the playfield bitmap (#R$CC04), then draws the 3 "background" objects (records 6-8) via the alternate blitter #R$C94F. Loops forever in the ordinary case, but #R$C705 (via #R$C746's $D2 "end of script" handling, `POP HL : RET` with no matching PUSH) will pop this loop's own return address as data and RET again beneath it, unwinding straight out of this self-loop back to #R$C6C4's *caller* (#R$C605's own continuation) the moment any object's script reaches $D2 -- see #R$C746. This is the normal exit: whichever scene object's script ends first stops the whole per-frame animation and hands control back to run_title_screen, which is what starts the tune and enters the (non-animating) attract-mode wait loop. #R$C93C / #R$C9D3-style RET-via-restored-SP inside the blitters is a separate, unrelated mechanism (aborting one partially off-screen glyph draw, not this loop). Uses EXX around each #R$C8C5/#R$C94F call: the object record's script pointer (B/C) and screen-position byte (L) are loaded into the shadow registers so the blitter can use HL/DE/BC freely without disturbing the loop's own IX/DE/B state in the main set.
+@ $C6C4 label=titlescr_animate_frame
 C $C6C7,2 6 foreground objects
 C $C6C9,3 Object record stride (9 bytes)
 @ $C6D0 label=ts_draw_fg_objects
@@ -516,7 +516,7 @@ C $C86B,2 (0-3, doubled via SLA) and a sign bit chooses the
 C $C86D,2 direction for X (bits 0-2) and Y (bits 4-6, tested
 C $C86F,2 via BIT 5) independently
 N $C890 Clear the screen bitmap ($4000-$57FF) and attribute area ($5800-$59FF) to zero. This entry point is used by the routine at #R$C06E.
-@ $C890 label=clear_screen_bitmap_and_attrs
+@ $C890 label=clear_playfield_and_attrs
 C $C890,3 Clear attributes $5900-$5AFF (i.e. from the bottom
 C $C893,3 up), then... (Conv note for later C port: this
 C $C896,1 range actually only needs $5800-$59FF -- treat as
@@ -1283,11 +1283,11 @@ C $F7D4,2 Loop
 c $F7D6 Starts tune A and sets up its sound-effect trigger table
 D $F7D6 Plays tune A (via #R$EB9E), looks up a pointer in the table at $FA75 (indexed by A*2) into a per-tune SFX script, and clears the 3 SFX "busy" flags at $F837/$F895/$F8A2. Falls into the script reader below, whose byte-code and interaction with #R$F82F's SFX dispatch is documented at #R$F7F4.
 R $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and #R$FBC8.
-@ $F7D6 label=start_tune_and_sfx_table
+@ $F7D6 label=titlescr_start_tune
 N $F7DB This entry point is used by the routine at #R$C59E.
 @ $F7DB label=load_drum_script
 N $F7F4 SFX script byte-code reader: reads opcode bytes from the script pointer at $F7FC, with $FE meaning "jump to a new script pointer read from the following 2 bytes" ($F823) and $FF meaning "end of script, disable interrupts and stop the tune" (#R$ED0B via $F829). Any other byte is a delay/repeat value (stored to $F7F5 and used to throttle #R$F7F4's own re-entry -- it decrements $F7F5 and returns early via RET NZ until it counts down to 0). The *following* script byte is a raw byte offset (not a scaled index) into the table at $FAA4: each entry there is 3 bytes -- a selector byte (copied to both $F84E and $F842, read back by #R$F82F) followed by a 2-byte pointer (stored to $F85E, the reload source for #R$F82F's sample-selector-stream pointer at $F853). This entry point is used by the routine at #R$F82F.
-@ $F7F4 label=sfx_script_advance
+@ $F7F4 label=titlescr_drum_advance
 @ $F7FE label=load_drum_op
 c $F82F Per-frame SFX/music service: drives the AY driver and the three sample players
 D $F82F Runs the AY music driver (#R$EC71), then dispatches the current sound effect's parameter byte (set up by #R$F7DB/#R$F7FE) to one of three 1-bit "digitised sample" bit-bang players: two fixed 8-row sample tables (#R$F8F2, #R$F95A, played via the shared loop at $F8CD which pulses port $FE from bitmap data clocked out with RLC (HL)/DJNZ) or the procedural routine at #R$FA3A. $F8AD (installed as the IM2 handler by #R$F7AA) just sets a "frame occurred" flag ($F8A8) consumed here and re-enables interrupts.
@@ -1299,7 +1299,7 @@ R $F82F stream-reading loop at #R$F855. If already armed, $F842 (a
 R $F82F countdown, also the selector byte copied by #R$F7FE) is decremented;
 R $F82F only when it reaches 1 does #R$F84D re-enter the stream-reading loop
 R $F82F -- otherwise slot 1 is skipped this frame and control falls to slot 2.
-N $F82F Stream-reading loop (#R$F855): reads a byte from the selector stream; a byte of exactly 1 calls #R$F7F4 (sfx_script_advance's own re-entry, throttled by its own $F7F5 countdown) to pull in a fresh selector byte and restarts the loop with the reload pointer. Any other byte is the entry to act on this frame: bit 7 marks it as also arming slot 2 ($F842 and $895 both set to 1, banked via AF' so it doesn't disturb the byte being decoded); the low 3 bits (1/2/3) select which of the three 1-bit-sample engines to trigger this frame (#R$F8B6 = sample table #R$F8F2, #R$F8BD = sample table #R$F95A, or #R$FA3A the procedural generator), with the byte's upper 5 bits stashed via $F8CE as a playback-rate/pitch parameter for the two fixed samples. A low-3-bits value of 0 triggers nothing and falls through to slot 2. Slot 2 ($F894-$F8A1): if $F895 is set, decrements both $F842 and $F895 (companion countdowns for whatever slot 1 armed via the bit-7 path above); purpose of the parallel countdown not established further. Tail ($F8A1-$F8A6): if $F8A2 (sample-playback-active) is exactly 1, falls into #R$F8CC/#R$F8CD to pulse out the next row of whichever fixed sample was armed above; otherwise returns without playing anything this frame. Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7 and #R$FBC8.
+N $F82F Stream-reading loop (#R$F855): reads a byte from the selector stream; a byte of exactly 1 calls #R$F7F4 (titlescr_drum_advance's own re-entry, throttled by its own $F7F5 countdown) to pull in a fresh selector byte and restarts the loop with the reload pointer. Any other byte is the entry to act on this frame: bit 7 marks it as also arming slot 2 ($F842 and $895 both set to 1, banked via AF' so it doesn't disturb the byte being decoded); the low 3 bits (1/2/3) select which of the three 1-bit-sample engines to trigger this frame (#R$F8B6 = sample table #R$F8F2, #R$F8BD = sample table #R$F95A, or #R$FA3A the procedural generator), with the byte's upper 5 bits stashed via $F8CE as a playback-rate/pitch parameter for the two fixed samples. A low-3-bits value of 0 triggers nothing and falls through to slot 2. Slot 2 ($F894-$F8A1): if $F895 is set, decrements both $F842 and $F895 (companion countdowns for whatever slot 1 armed via the bit-7 path above); purpose of the parallel countdown not established further. Tail ($F8A1-$F8A6): if $F8A2 (sample-playback-active) is exactly 1, falls into #R$F8CC/#R$F8CD to pulse out the next row of whichever fixed sample was armed above; otherwise returns without playing anything this frame. Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7 and #R$FBC8.
 @ $F82F label=titlescr_music
 C $F82F,3 Run the AY music driver for this frame
 C $F832,1 Clear the "frame occurred" flag consumed by
@@ -1410,7 +1410,7 @@ C $FBC3,3 Key "5" (default): "DEFINE KEYS" screen
 c $FBC8 Services sound each frame and keeps the options-menu tune looping
 D $FBC8 Runs one frame of the SFX/music service (#R$F82F) and, if no tune is currently active, restarts tune 0.
 R $FBC8 Used by the routines at #R$FB99, #R$FC14, #R$FEA9 and #R$FF2C.
-@ $FBC8 label=service_sound_and_loop_tune0
+@ $FBC8 label=run_title_tune
 N $FBD4 This entry point is used by the routine at #R$FB99.
 N $FBD9 This entry point is used by the routine at #R$FB99.
 N $FBE4 This entry point is used by the routine at #R$FB99.
