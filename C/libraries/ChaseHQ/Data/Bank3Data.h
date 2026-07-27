@@ -154,6 +154,39 @@ extern const u8 drum_cue_script_data[292];
 
 #define DRUM_CUE_SCRIPT_DATA_BASE (0xFA75)
 
+/* 128K bank 3: one row of the high-score table, $C408-$C42A stride (the
+ * fields that actually move when a row is shifted -- see
+ * insert_high_score_entry in Bank3.c). The 5-char rank suffix ("1ST  " etc)
+ * is fixed to its screen position, never shifts, and is stored separately in
+ * high_score_rank_suffixes below rather than per-row. */
+typedef struct high_score_row {
+  u8 score[8];      /* $C408: ASCII score digits, most significant first */
+  u8 stage_code[3]; /* $C414: e.g. " 1 ", "ALL" */
+  u8 retry_digit;   /* $C41C: ASCII '1'-'3' (or higher in test-mode data) */
+  u8 name[3];        /* $C41F: 3-character initials */
+} high_score_row_t;
+
+#define HIGH_SCORE_TABLE_ROWS (10)
+
+/* 128K bank 3: preset high-score table rows, $C408-$C552 (33-byte stride in
+ * the original; only the fields that move are transcribed here -- see
+ * high_score_row_t above). Row 0 = 1st place .. row 9 = 10th place. Row 0's
+ * initials "JOB" are John O'Brien, this game's programmer. */
+extern const high_score_row_t high_score_table_template[HIGH_SCORE_TABLE_ROWS];
+
+/* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
+ * each high-score row (fixed to screen position, never shifted -- see
+ * high_score_row_t's own comment). Not consumed yet: the high-score screen's
+ * rendering is not translated (see insert_high_score_entry's Conv note in
+ * Bank3.c); kept here for when it is. */
+extern const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5];
+
+/* 128K bank 3: $C567-$C57E, the 6-entry stage-code table read by
+ * insert_high_score_entry ($C09F), indexed by wanted_stage_number-1 (state
+ * fields are 1-6; the Z80 table is addressed from a base 3 bytes before its
+ * first real entry so that a raw 1-based multiply lands correctly). */
+extern const u8 high_score_stage_codes[6][3];
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK3DATA_H */

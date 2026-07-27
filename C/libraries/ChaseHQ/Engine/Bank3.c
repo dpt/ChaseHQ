@@ -148,6 +148,8 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
 static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel);
 static void setup_im2_interrupt_table(chqstate_t *state);
+static void check_high_score(chqstate_t *state);
+static void insert_high_score_entry(chqstate_t *state, int row);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 A_tune);
 static void stst_load_sfx_script(chqstate_t *state, u8 A_tune);
@@ -181,6 +183,124 @@ static void read_new_key_definition(chqstate_t *state,
 static u16 advance_key_label_column(u16 DE_screen);
 
 /* ----------------------------------------------------------------------- */
+
+/**
+ * $C00C: Format the score and check the high-score table
+ *
+ * Formats the 8-digit BCD score_bcd into an ASCII digit string with leading
+ * zeros blanked to spaces, then scans the 10-row high-score table (best
+ * first) for the highest-ranked row the new score beats or ties. Falls
+ * through into insert_high_score_entry on a hit.
+ *
+ * Conv: the Z80 builds the digit string via a nibble-swap loop driven by a
+ * banked "significant digit seen" flag in C (tested via RLC C's carry-out);
+ * modelled directly as a bool-like u8 so the tens/units digit blocks (which
+ * are byte-for-byte identical in the Z80 bar which nibble they mask)
+ * collapse into one loop over both nibbles of each BCD byte.
+ *
+ * Conv: the 10-row scan is a lexicographic ASCII compare -- identical in
+ * effect to memcmp, since a space ($20) sorts below any digit ($30-$39), so
+ * a blanked leading zero correctly compares as "less than" a real digit of
+ * a longer number. Modelled directly as memcmp rather than the Z80's
+ * digit-by-digit CP/JR ladder.
+ */
+static void check_high_score(chqstate_t *state)
+{
+  u8  B_bcd_count;  /* BCD bytes left to convert, 4 down to 1 (was B) */
+  u8  DE_bcd_index; /* index into score_bcd, 3 (MSB) down to 0 (was DE) */
+  u8 *HL_digit;     /* destination cursor in high_score_digits (was HL) */
+  u8  C_seen;       /* "significant (non-zero) digit already seen" flag (was C) */
+  u8  A_bcd;        /* current BCD byte (was A) */
+  int nibble;       /* 0 = tens nibble, 1 = units nibble (Conv: rolled, no Z80 equivalent) */
+  u8  A_digit;      /* extracted BCD digit, 0-9 (was A) */
+  int row;          /* high-score table row under test, 0 = 1st place (Conv: rolled, no Z80 equivalent) */
+
+  C_seen       = 0;
+  HL_digit     = state->bank3->high_score_digits;
+  DE_bcd_index = 3;
+
+  for (B_bcd_count = 4; B_bcd_count > 0; B_bcd_count--) {
+    A_bcd = state->score_bcd[DE_bcd_index];
+
+    for (nibble = 0; nibble < 2; nibble++) {
+      A_digit = (u8) (nibble == 0 ? (A_bcd >> 4) : (A_bcd & 0x0F));
+
+      if (A_digit == 0 && !C_seen) {
+        *HL_digit++ = ' '; /* suppressed leading zero */
+      } else {
+        C_seen      = 1;
+        *HL_digit++ = (u8) (A_digit + '0');
+      }
+    }
+
+    DE_bcd_index--;
+  }
+
+  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
+    if (memcmp(state->bank3->high_score_digits,
+               state->bank3->high_score_table[row].score, 8) >= 0) {
+      insert_high_score_entry(state, row);
+      return;
+    }
+  }
+}
+
+/**
+ * $C06E: Shift and write a new high-score table entry
+ *
+ * Reached from check_high_score when the new score beats or ties the row at
+ * [row]. Shifts every row from [row] down to (but not including) the last
+ * row down by one place -- discarding the old bottom row -- then writes the
+ * new score digits, stage code and retry-attempt number into [row], leaving
+ * a placeholder ". . ." name.
+ *
+ * \param[in] row Table row to insert at: 0 = 1st place .. 9 = 10th place
+ * (was the row counter C, banked via EX AF,AF' across the shift).
+ *
+ * Conv: the Z80 shifts rows via LDDR over raw 33-byte-stride row bytes,
+ * carefully skipping the 7 static "next row's rank suffix" bytes tucked
+ * into each row's unused tail (see the data block's own comment at $C400 in
+ * the skool). Modelled here as a plain struct-array shift over
+ * high_score_row_t, which holds only the fields that actually move -- the
+ * rank-suffix strings ("1ST ".."10TH") are fixed to their screen position,
+ * never move, and are not stored per-row at all (see
+ * high_score_rank_suffixes in Bank3Data.c).
+ *
+ * Conv: $C0EC onward -- the screen clear/setup, the flashing highlight, and
+ * the joystick-driven letter-selection loop that lets the player type their
+ * initials -- is not translated. The name-entry font bitmap table pointer
+ * ($800C) and the destination buffer for titlescr_refresh_name_table's own
+ * copy ($800A) are never written anywhere in the disassembled banks, so
+ * there is currently nothing to render against (same scope cut as
+ * titlescr_refresh_name_table's own Conv note, further up this file). The
+ * row is left holding the ". . ." placeholder name written below.
+ */
+static void insert_high_score_entry(chqstate_t *state, int row)
+{
+  int                shift_row;   /* row being overwritten by the one above it, 9 down to row+1 (Conv: rolled, no Z80 equivalent) */
+  high_score_row_t  *entry;       /* the row being written (was DE, after $C08B POP DE) */
+  u8                 A_stage_idx; /* wanted_stage_number - 1: index into high_score_stage_codes (was A/C) */
+
+  for (shift_row = HIGH_SCORE_TABLE_ROWS - 1; shift_row > row; shift_row--)
+    state->bank3->high_score_table[shift_row] = state->bank3->high_score_table[shift_row - 1];
+
+  entry = &state->bank3->high_score_table[row];
+
+  memcpy(entry->score, state->bank3->high_score_digits, 8);
+
+  A_stage_idx = (u8) (state->wanted_stage_number - 1);
+  memcpy(entry->stage_code, high_score_stage_codes[A_stage_idx], 3);
+
+  entry->retry_digit = (u8) (state->retry_count + '1');
+
+  entry->name[0] = '.';
+  entry->name[1] = '.';
+  entry->name[2] = '.'; /* Conv: the Z80's third placeholder byte ($AE) is a
+                          * full stop with bit 7 set (the flash-attribute
+                          * variant); modelled here as a plain '.' since the
+                          * flashing cursor itself is not yet translated --
+                          * see this function's own Conv note above. */
+}
 
 /**
  * $C59E: Title-screen driver
@@ -456,8 +576,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
       stop_music_and_silence(state);
 
-      /* TODO: CALL $C00C (check high score) -- not disassembled in this
-       * bank, no C equivalent yet. */
+      check_high_score(state);
 
       return 1; /* $C67E JP $C59E -- ask the caller to restart */
     }
@@ -2841,6 +2960,7 @@ u8 bank3_call(chqstate_t *state, int routine)
     run_title_screen(state);
     break;
   case BANK3_HI_SCORE:
+    check_high_score(state);
     break;
   case BANK3_SUCCESS_MUSIC:
     play_success_music(state);
@@ -4197,6 +4317,9 @@ int bank3_state_create(chqstate_t *state)
   state->bank3->sfx.noise_phase         = 0x00;  // $FA72
   state->bank3->sfx.noise_accum         = 0x00;  // $FA73
   state->bank3->sfx.noise_rotate        = 0x00;  // $FA74
+
+  memcpy(state->bank3->high_score_table, high_score_table_template,
+         sizeof(state->bank3->high_score_table));
 
   return 0;
 }

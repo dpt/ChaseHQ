@@ -4627,3 +4627,25 @@ const u8 drum_cue_script_data[292] = {
   0x0B, /* $FB97: noise pitch=1 */
   0x01, /* $FB98: reload sentinel */
 };
+
+const high_score_row_t high_score_table_template[HIGH_SCORE_TABLE_ROWS] = {
+  { "10000000", "ALL", '2', "JOB" }, /* $C408: row 0 (1st place) */
+  { " 9888700", " 5 ", '2', "BIL" }, /* $C429: row 1 (2nd place) */
+  { " 8900000", " 4 ", '1', "JON" }, /* $C44A: row 2 (3rd place) */
+  { " 5789000", " 4 ", '2', "JAM" }, /* $C46B: row 3 (4th place) */
+  { " 3500000", " 2 ", '1', "ROB" }, /* $C48C: row 4 (5th place) */
+  { " 2456000", " 2 ", '1', "J.B" }, /* $C4AD: row 5 (6th place) */
+  { "  956700", " 1 ", '1', "M.L" }, /* $C4CE: row 6 (7th place) */
+  { "  340500", " 1 ", '1', "STE" }, /* $C4EF: row 7 (8th place) */
+  { "  235050", " 1 ", '1', "PIX" }, /* $C510: row 8 (9th place) */
+  { "  123000", " 1 ", '1', "IES" }, /* $C531: row 9 (10th place) */
+};
+
+const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
+  "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",
+  "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
+};
+
+const u8 high_score_stage_codes[6][3] = {
+  " 1 ", " 2 ", " 3 ", " 4 ", " 5 ", "ALL",
+};

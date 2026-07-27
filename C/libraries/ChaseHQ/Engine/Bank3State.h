@@ -27,6 +27,8 @@
 
 #include "C99/Types.h"
 
+#include "ChaseHQ/Data/Bank3Data.h"
+
 #include "State.h"
 
 /* ----------------------------------------------------------------------- */
@@ -271,6 +273,17 @@ struct chq_bank3_state {
     u8        noise_accum;
     u8        noise_rotate;
   } sfx;
+
+  // $C55F (128K bank 3): formatted ASCII score-digit buffer, written by
+  // check_high_score from score_bcd and read back by insert_high_score_entry
+  // when writing a new row.
+  u8 high_score_digits[8];
+
+  // $C408-$C552 (128K bank 3): the mutable per-game high-score table, one
+  // entry per rank (index 0 = 1st place .. index 9 = 10th place). Seeded
+  // from high_score_table_template (Bank3Data.h) by bank3_state_create and
+  // updated in place by insert_high_score_entry.
+  high_score_row_t high_score_table[HIGH_SCORE_TABLE_ROWS];
 };
 
 /* ----------------------------------------------------------------------- */
