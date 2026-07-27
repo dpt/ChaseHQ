@@ -194,8 +194,8 @@ static u16 advance_key_label_column(u16 DE_screen);
  * game. Called from $C000 and $FBC8.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
- * state->title_animation; see the TODO in titlescr_wait_loop where the "any
- * key" restart path reseeds it.
+ * state->bank3->title_animation; see titlescr_wait_loop where the "any key"
+ * restart path reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
  * real early-exit path in the Z80. It stays `void`: titlescr_wait_loop's fire-key
@@ -470,10 +470,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
       continue; /* Conv: no balancing sleep() needed -- see prologue */
 
     RRC(A_anykey);
-    /* TODO: seed scene-selector SM operand ($C5A2) with A_anykey -- the
-     * whole scene-selection self-modifying byte is out of scope for this
-     * task (see run_title_screen's $C5A1-$C5C7 stub); when that is
-     * implemented, this write must land in the same field. */
+    state->bank3->title_animation = A_anykey; /* $C5A2 (SM) */
 
     stop_music_and_silence(state);
 
