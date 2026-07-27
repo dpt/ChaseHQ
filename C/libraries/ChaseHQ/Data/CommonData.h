@@ -295,6 +295,17 @@ extern const u8 forked_road_exit_rightobjs[4];
 extern const u8 forked_road_exit_leftobjs[4];
 extern const u8 forked_road_exit_curvature[5];
 extern const u8 forked_road_exit_height[5];
+
+/* Z80 addresses of the shared map sections above, as referenced by the map
+ * GOTO commands in CommonData.c and resolved by z80addrtocommonmap (Main.c).
+ * Two sections are also entered one byte in, hence the "+ 1" call sites. */
+#define PERP_ESCAPE_CURVATURE_ADDR (0xE2AA)
+#define PERP_ESCAPE_HEIGHT_ADDR    (0xE2AF)
+#define FORK_HAZARDS_ADDR          (0xE2B8)
+#define FORK_LEFTRIGHTOBJS_ADDR    (0xE2C0)
+#define FORKED_ROAD_CURVATURE_ADDR (0xE2C6)
+#define FORKED_ROAD_HEIGHT_ADDR    (0xE2CC)
+#define FORKED_ROAD_LANES_ADDR     (0xE2D1)
 extern const u8 forked_road_exit_left_lanes[12];
 extern const u8 forked_road_exit_right_lanes[12];
 

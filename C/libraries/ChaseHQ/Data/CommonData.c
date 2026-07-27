@@ -4349,19 +4349,19 @@ const u8 perp_escape_hazards[6 + 5] = {
   MAP_CMD_STOP_BARRIERS,
   /* Conv: original would fall through to perp_escape_curvature, must make it explicit here */
   MAP_HAZARD_WAIT(255),
-  MAP_CMD_GOTO(0xE2AA) // loop
+  MAP_CMD_GOTO(PERP_ESCAPE_CURVATURE_ADDR) // loop
 };
 
 /** $E2AA: perp_escape_curvature */
 const u8 perp_escape_curvature[5] = {
   MAP_CURVE_STRAIGHT(15),
-  MAP_CMD_GOTO(0xE2AA) // loop
+  MAP_CMD_GOTO(PERP_ESCAPE_CURVATURE_ADDR) // loop
 };
 
 /** $E2AF: perp_escape_height */
 const u8 perp_escape_height[5] = {
   MAP_HEIGHT_LEVEL(15),
-  MAP_CMD_GOTO(0xE2AF) // loop
+  MAP_CMD_GOTO(PERP_ESCAPE_HEIGHT_ADDR) // loop
 };
 
 /** $E2B4: perp_escape_lanes */
@@ -4375,27 +4375,27 @@ const u8 fork_hazards[8] = {
   MAP_HAZARD_WAIT(12),
   MAP_CMD_ARROW_OFF,
   MAP_HAZARD_WAIT(255),
-  MAP_CMD_GOTO(0xE2B8) // loop
+  MAP_CMD_GOTO(FORK_HAZARDS_ADDR) // loop
 };
 
 /** $E2C0: fork_leftrightobjs */
 const u8 fork_leftrightobjs[6] = {
   MAP_OBJ_S1_NONE(1),
   MAP_OBJ_S1_SHORT_POLE(15),
-  MAP_CMD_GOTO(0xE2C1) // loop (skipping)
+  MAP_CMD_GOTO(FORK_LEFTRIGHTOBJS_ADDR + 1) // loop (skipping)
 };
 
 /** $E2C6: forked_road_curvature */
 const u8 forked_road_curvature[6] = {
   MAP_CURVE_STRAIGHT(1),
   MAP_CURVE_LEFT_HARD(15),
-  MAP_CMD_GOTO(0xE2C7) // loop (skipping)
+  MAP_CMD_GOTO(FORKED_ROAD_CURVATURE_ADDR + 1) // loop (skipping)
 };
 
 /** $E2CC: forked_road_height */
 const u8 forked_road_height[5] = {
   MAP_CURVE_LEFT_HARD(15),
-  MAP_CMD_GOTO(0xE2CC) // loop
+  MAP_CMD_GOTO(FORKED_ROAD_HEIGHT_ADDR) // loop
 };
 
 /** $E2D1: forked_road_lanes */

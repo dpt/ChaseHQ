@@ -83,6 +83,16 @@ extern const u8 es_drum_sample_1_template[160];
 #define ESCMD_CHATTER_VAL            (12) /* -> $E2B2, runs immediately */
 #define ESCMD_DRAW_SCORE_VAL         (13) /* -> $E256, runs immediately */
 
+/* Z80 addresses that the end-screen script encodes as literal pointer words.
+ * Bank7Data.c emits them; Bank7.c's z80addrtoendshot/z80addrtochatterblk
+ * lookups turn them back into the C arrays above. */
+#define BITMAP_ENDSHOT_1_ADDR               (0x60E1)
+#define BITMAP_ENDSHOT_2_ADDR               (0x6489)
+#define BITMAP_ENDSHOT_3_ADDR               (0x6831)
+#define BITMAP_ENDSHOT_4_ADDR               (0x6BD9)
+#define CHATTERBLK_NANCY_CONGRATULATES_ADDR (0x5C6E)
+#define CHATTERBLK_PRESS_GEAR_ADDR          (0x5C78)
+
 /* $E0FE-$E209: End-screen script bytecode (268 bytes). See its definition in
  * Bank7Data.c for the full format description. */
 extern const u8 es_script[268];

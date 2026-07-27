@@ -111,6 +111,12 @@ typedef struct tune {
  * title_tune1_data below by start_tune and advance_channel_phrase. */
 extern const tune_t tunes[4];
 
+/* Z80 base addresses of the two transcribed pattern-data regions. The tunes
+ * table above stores raw addresses in this range; resolve_phrase_addr
+ * (Bank3.c) subtracts these to index the arrays below. */
+#define TITLE_TUNE0_DATA_ADDR (0xF241)
+#define TITLE_TUNE1_DATA_ADDR (0xF601)
+
 /* 128K bank 3: title-tune engine raw pattern-data region for tune 0 (title
  * screen), transcribed byte-exact from bank3.bin, $F241-$F600 (the byte
  * immediately preceding tune 1's own region). Each channel's block within

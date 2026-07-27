@@ -65,34 +65,34 @@
  * game instances trampling each other's score text.
  */
 const u8 es_script[268] = {
-  ESCMD_CHATTER(0x5C6E), /* -> chatterblk_nancy_congratulates */
+  ESCMD_CHATTER(CHATTERBLK_NANCY_CONGRATULATES_ADDR),
   ESCMD_IDLE(0xC0),
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(72, 96)), // bitmap_endshot_1, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_1_ADDR, XYTOSCREEN(72, 96)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6489, XYTOSCREEN(72, 96)), // bitmap_endshot_2, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_2_ADDR, XYTOSCREEN(72, 96)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6831, XYTOSCREEN(72, 96)), // bitmap_endshot_3, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_3_ADDR, XYTOSCREEN(72, 96)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x6BD9, XYTOSCREEN(72, 96)), // bitmap_endshot_4, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_4_ADDR, XYTOSCREEN(72, 96)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0xA0),
   ESCMD_FADE_IN_B,
-  ESCMD_CLEAR_DRAW_FRAME(0x60E1, XYTOSCREEN(16, 64)), // bitmap_endshot_1, screen dst
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_1_ADDR, XYTOSCREEN(16, 64)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6489, XYTOSCREEN(136, 64)), // bitmap_endshot_2, screen dst
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_2_ADDR, XYTOSCREEN(136, 64)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6831, XYTOSCREEN(16, 128)), // bitmap_endshot_3, screen dst
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_3_ADDR, XYTOSCREEN(16, 128)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
-  ESCMD_DRAW_WORD(0x6BD9, XYTOSCREEN(136, 128)), // bitmap_endshot_4, screen dst
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_4_ADDR, XYTOSCREEN(136, 128)), // screen dst
   ESCMD_FADE_IN_A,
   ESCMD_IDLE(0x50),
   ESCMD_RESET_HANDSHAKE(0xC0),
@@ -137,7 +137,7 @@ const u8 es_script[268] = {
   ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 136)), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | EOS,
   ESCMD_FADE_IN_A,
-  ESCMD_CHATTER(0x5C78), /* -> chatterblk_press_gear */
+  ESCMD_CHATTER(CHATTERBLK_PRESS_GEAR_ADDR),
   ESCMD_IDLE(0x00),
   0x0E /* unrecognised command: run_script's default case resets HL here (see
         * ES_SCRIPT_RESET_OFFSET in Bank7Data.h) rather than stopping */

@@ -16,6 +16,27 @@
 
 #include "Stage4Data.h"
 
+/* Z80 addresses of the map sections, as referenced by the map
+ * GOTO/SPLIT commands and stage4_lookup_map_goto(). */
+#define STAGE4_MAP_CURV_E442_ADDR    (0x6042)
+#define STAGE4_MAP_HEIGHT_E45A_ADDR  (0x605A)
+#define STAGE4_MAP_LANES_E46C_ADDR   (0x606C)
+#define STAGE4_MAP_HAZARDS_E480_ADDR (0x6080)
+#define STAGE4_MAP_LOBJS_E48B_ADDR   (0x608B)
+#define STAGE4_MAP_ROBJS_E4B4_ADDR   (0x60B4)
+#define STAGE4_MAP_CURV_E4C4_ADDR    (0x60C4)
+#define STAGE4_MAP_HEIGHT_E4DA_ADDR  (0x60DA)
+#define STAGE4_MAP_LANES_E4EC_ADDR   (0x60EC)
+#define STAGE4_MAP_HAZARDS_E500_ADDR (0x6100)
+#define STAGE4_MAP_LOBJS_E50B_ADDR   (0x610B)
+#define STAGE4_MAP_ROBJS_E54D_ADDR   (0x614D)
+#define STAGE4_MAP_CURV_E577_ADDR    (0x6177)
+#define STAGE4_MAP_HEIGHT_E59A_ADDR  (0x619A)
+#define STAGE4_MAP_LANES_E5D3_ADDR   (0x61D3)
+#define STAGE4_MAP_HAZARDS_E5FB_ADDR (0x61FB)
+#define STAGE4_MAP_LOBJS_E624_ADDR   (0x6224)
+#define STAGE4_MAP_ROBJS_E6B7_ADDR   (0x62B7)
+
 /* ----------------------------------------------------------------------- */
 
 /* Stage 4 object type macros */
@@ -323,7 +344,7 @@ static const u8 stage4_map_curv_E29C[] = {
   MAP_CURVE_RIGHT(1),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(4),
-  MAP_CMD_SPLIT(0x6042, 0x60C4)
+  MAP_CMD_SPLIT(STAGE4_MAP_CURV_E442_ADDR, STAGE4_MAP_CURV_E4C4_ADDR)
 };
 
 /** $E2C4: stage4_map_height_E2C4 */
@@ -386,14 +407,14 @@ static const u8 stage4_map_height_E2C4[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(3),
-  MAP_CMD_SPLIT(0x605A, 0x60DA)
+  MAP_CMD_SPLIT(STAGE4_MAP_HEIGHT_E45A_ADDR, STAGE4_MAP_HEIGHT_E4DA_ADDR)
 };
 
 /** $E304: stage4_map_lanes_E304 */
 static const u8 stage4_map_lanes_E304[] = {
   MAP_LANES_4(254),
   MAP_LANES_4(146),
-  MAP_CMD_SPLIT(0x606C, 0x60EC)
+  MAP_CMD_SPLIT(STAGE4_MAP_LANES_E46C_ADDR, STAGE4_MAP_LANES_E4EC_ADDR)
 };
 
 /** $E30E: stage4_map_hazards_E30E */
@@ -421,7 +442,7 @@ static const u8 stage4_map_hazards_E30E[] = {
   MAP_HAZARD_WAIT(6),
   MAP_CMD_ARROW_R,
   MAP_HAZARD_WAIT(1),
-  MAP_CMD_SPLIT(0x6080, 0x6100)
+  MAP_CMD_SPLIT(STAGE4_MAP_HAZARDS_E480_ADDR, STAGE4_MAP_HAZARDS_E500_ADDR)
 };
 
 /** $E336: stage4_map_lobjs_E336 */
@@ -572,7 +593,7 @@ static const u8 stage4_map_lobjs_E336[] = {
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_PILE_OF_ROCKS(1),
   MAP_OBJ_S4_NONE(7),
-  MAP_CMD_SPLIT(0x608B, 0x610B)
+  MAP_CMD_SPLIT(STAGE4_MAP_LOBJS_E48B_ADDR, STAGE4_MAP_LOBJS_E50B_ADDR)
 };
 
 /** $E3CE: stage4_map_robjs_E3CE */
@@ -687,7 +708,7 @@ static const u8 stage4_map_robjs_E3CE[] = {
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_PILE_OF_ROCKS(1),
   MAP_OBJ_S4_NONE(3),
-  MAP_CMD_SPLIT(0x60B4, 0x614D)
+  MAP_CMD_SPLIT(STAGE4_MAP_ROBJS_E4B4_ADDR, STAGE4_MAP_ROBJS_E54D_ADDR)
 };
 
 /** $E442: stage4_map_curv_E442 */
@@ -712,7 +733,7 @@ static const u8 stage4_map_curv_E442[] = {
   MAP_CURVE_RIGHT_VERY_HARD(8),
   MAP_CURVE_RIGHT_HARD(7),
   MAP_CURVE_STRAIGHT(11),
-  MAP_CMD_GOTO(0x6177)
+  MAP_CMD_GOTO(STAGE4_MAP_CURV_E577_ADDR)
 };
 
 /** $E45A: stage4_map_height_E45A */
@@ -731,7 +752,7 @@ static const u8 stage4_map_height_E45A[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(9),
-  MAP_CMD_GOTO(0x619A)
+  MAP_CMD_GOTO(STAGE4_MAP_HEIGHT_E59A_ADDR)
 };
 
 /** $E46C: stage4_map_lanes_E46C */
@@ -744,7 +765,7 @@ static const u8 stage4_map_lanes_E46C[] = {
   MAP_LANES_3L(18),
   MAP_LANES_3LTO4(2),
   MAP_LANES_4(68),
-  MAP_CMD_GOTO(0x61D3)
+  MAP_CMD_GOTO(STAGE4_MAP_LANES_E5D3_ADDR)
 };
 
 /** $E480: stage4_map_hazards_E480 */
@@ -754,7 +775,7 @@ static const u8 stage4_map_hazards_E480[] = {
   MAP_HAZARD_WAIT(2),
   MAP_CMD_START_CARS,
   MAP_HAZARD_WAIT(90),
-  MAP_CMD_GOTO(0x61FB)
+  MAP_CMD_GOTO(STAGE4_MAP_HAZARDS_E5FB_ADDR)
 };
 
 /** $E48B: stage4_map_lobjs_E48B */
@@ -796,7 +817,7 @@ static const u8 stage4_map_lobjs_E48B[] = {
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_PILE_OF_ROCKS(1),
   MAP_OBJ_S4_NONE(1),
-  MAP_CMD_GOTO(0x6224)
+  MAP_CMD_GOTO(STAGE4_MAP_LOBJS_E624_ADDR)
 };
 
 /** $E4B4: stage4_map_robjs_E4B4 */
@@ -813,7 +834,7 @@ static const u8 stage4_map_robjs_E4B4[] = {
   MAP_OBJ_S4_NONE(15),
   MAP_OBJ_S4_NONE(15),
   MAP_OBJ_S4_NONE(14),
-  MAP_CMD_GOTO(0x62B7)
+  MAP_CMD_GOTO(STAGE4_MAP_ROBJS_E6B7_ADDR)
 };
 
 /** $E4C4: stage4_map_curv_E4C4 */
@@ -836,7 +857,7 @@ static const u8 stage4_map_curv_E4C4[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(3),
-  MAP_CMD_GOTO(0x6177)
+  MAP_CMD_GOTO(STAGE4_MAP_CURV_E577_ADDR)
 };
 
 /** $E4DA: stage4_map_height_E4DA */
@@ -855,7 +876,7 @@ static const u8 stage4_map_height_E4DA[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(7),
-  MAP_CMD_GOTO(0x619A)
+  MAP_CMD_GOTO(STAGE4_MAP_HEIGHT_E59A_ADDR)
 };
 
 /** $E4EC: stage4_map_lanes_E4EC */
@@ -868,7 +889,7 @@ static const u8 stage4_map_lanes_E4EC[] = {
   MAP_LANES_3L(10),
   MAP_LANES_3LTO4(2),
   MAP_LANES_4(26),
-  MAP_CMD_GOTO(0x61D3)
+  MAP_CMD_GOTO(STAGE4_MAP_LANES_E5D3_ADDR)
 };
 
 /** $E500: stage4_map_hazards_E500 */
@@ -878,7 +899,7 @@ static const u8 stage4_map_hazards_E500[] = {
   MAP_HAZARD_WAIT(36),
   MAP_ESC, (15),
   MAP_HAZARD_WAIT(55),
-  MAP_CMD_GOTO(0x61FB)
+  MAP_CMD_GOTO(STAGE4_MAP_HAZARDS_E5FB_ADDR)
 };
 
 /** $E50B: stage4_map_lobjs_E50B */
@@ -945,7 +966,7 @@ static const u8 stage4_map_lobjs_E50B[] = {
   MAP_OBJ_S4_STREET_LAMP(1),
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_STREET_LAMP(1),
-  MAP_CMD_GOTO(0x6224)
+  MAP_CMD_GOTO(STAGE4_MAP_LOBJS_E624_ADDR)
 };
 
 /** $E54D: stage4_map_robjs_E54D */
@@ -988,7 +1009,7 @@ static const u8 stage4_map_robjs_E54D[] = {
   MAP_OBJ_S4_STREET_LAMP(1),
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_STREET_LAMP(1),
-  MAP_CMD_GOTO(0x62B7)
+  MAP_CMD_GOTO(STAGE4_MAP_ROBJS_E6B7_ADDR)
 };
 
 /** $E577: stage4_map_curv_E577 */
@@ -1024,7 +1045,7 @@ static const u8 stage4_map_curv_E577[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(11),
-  MAP_CMD_GOTO(0x6177)
+  MAP_CMD_GOTO(STAGE4_MAP_CURV_E577_ADDR)
 };
 
 /** $E59A: stage4_map_height_E59A */
@@ -1082,7 +1103,7 @@ static const u8 stage4_map_height_E59A[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(6),
-  MAP_CMD_GOTO(0x619A)
+  MAP_CMD_GOTO(STAGE4_MAP_HEIGHT_E59A_ADDR)
 };
 
 /** $E5D3: stage4_map_lanes_E5D3 */
@@ -1105,7 +1126,7 @@ static const u8 stage4_map_lanes_E5D3[] = {
   MAP_LANES_2RTO3R(2),
   MAP_LANES_3RTO4(2),
   MAP_LANES_4(14),
-  MAP_CMD_GOTO(0x61D3)
+  MAP_CMD_GOTO(STAGE4_MAP_LANES_E5D3_ADDR)
 };
 
 /** $E5FB: stage4_map_hazards_E5FB */
@@ -1135,7 +1156,7 @@ static const u8 stage4_map_hazards_E5FB[] = {
   MAP_HAZARD_WAIT(2),
   MAP_CMD_STOP_BARRIERS,
   MAP_HAZARD_WAIT(12),
-  MAP_CMD_GOTO(0x61FB)
+  MAP_CMD_GOTO(STAGE4_MAP_HAZARDS_E5FB_ADDR)
 };
 
 /** $E624: stage4_map_lobjs_E624 */
@@ -1283,7 +1304,7 @@ static const u8 stage4_map_lobjs_E624[] = {
   MAP_OBJ_S4_NEAR_COLUMN(1),
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_NEAR_COLUMN(1),
-  MAP_CMD_GOTO(0x6224)
+  MAP_CMD_GOTO(STAGE4_MAP_LOBJS_E624_ADDR)
 };
 
 /** $E6B7: stage4_map_robjs_E6B7 */
@@ -1419,7 +1440,7 @@ static const u8 stage4_map_robjs_E6B7[] = {
   MAP_OBJ_S4_NEAR_COLUMN(1),
   MAP_OBJ_S4_NONE(1),
   MAP_OBJ_S4_NEAR_COLUMN(1),
-  MAP_CMD_GOTO(0x62B7)
+  MAP_CMD_GOTO(STAGE4_MAP_ROBJS_E6B7_ADDR)
 };
 
 /**
@@ -2579,24 +2600,24 @@ static const u8 stage4_bitmap_F871[1935] = {
   ________, ________, ________, ________, ________, ________, ________,
 };
 static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
-  { 0x6042, &stage4_map_curv_E442[0] },
-  { 0x605A, &stage4_map_height_E45A[0] },
-  { 0x606C, &stage4_map_lanes_E46C[0] },
-  { 0x6080, &stage4_map_hazards_E480[0] },
-  { 0x608B, &stage4_map_lobjs_E48B[0] },
-  { 0x60B4, &stage4_map_robjs_E4B4[0] },
-  { 0x60C4, &stage4_map_curv_E4C4[0] },
-  { 0x60DA, &stage4_map_height_E4DA[0] },
-  { 0x60EC, &stage4_map_lanes_E4EC[0] },
-  { 0x6100, &stage4_map_hazards_E500[0] },
-  { 0x610B, &stage4_map_lobjs_E50B[0] },
-  { 0x614D, &stage4_map_robjs_E54D[0] },
-  { 0x6177, &stage4_map_curv_E577[0] },
-  { 0x619A, &stage4_map_height_E59A[0] },
-  { 0x61D3, &stage4_map_lanes_E5D3[0] },
-  { 0x61FB, &stage4_map_hazards_E5FB[0] },
-  { 0x6224, &stage4_map_lobjs_E624[0] },
-  { 0x62B7, &stage4_map_robjs_E6B7[0] },
+  { STAGE4_MAP_CURV_E442_ADDR,    &stage4_map_curv_E442[0]    },
+  { STAGE4_MAP_HEIGHT_E45A_ADDR,  &stage4_map_height_E45A[0]  },
+  { STAGE4_MAP_LANES_E46C_ADDR,   &stage4_map_lanes_E46C[0]   },
+  { STAGE4_MAP_HAZARDS_E480_ADDR, &stage4_map_hazards_E480[0] },
+  { STAGE4_MAP_LOBJS_E48B_ADDR,   &stage4_map_lobjs_E48B[0]   },
+  { STAGE4_MAP_ROBJS_E4B4_ADDR,   &stage4_map_robjs_E4B4[0]   },
+  { STAGE4_MAP_CURV_E4C4_ADDR,    &stage4_map_curv_E4C4[0]    },
+  { STAGE4_MAP_HEIGHT_E4DA_ADDR,  &stage4_map_height_E4DA[0]  },
+  { STAGE4_MAP_LANES_E4EC_ADDR,   &stage4_map_lanes_E4EC[0]   },
+  { STAGE4_MAP_HAZARDS_E500_ADDR, &stage4_map_hazards_E500[0] },
+  { STAGE4_MAP_LOBJS_E50B_ADDR,   &stage4_map_lobjs_E50B[0]   },
+  { STAGE4_MAP_ROBJS_E54D_ADDR,   &stage4_map_robjs_E54D[0]   },
+  { STAGE4_MAP_CURV_E577_ADDR,    &stage4_map_curv_E577[0]    },
+  { STAGE4_MAP_HEIGHT_E59A_ADDR,  &stage4_map_height_E59A[0]  },
+  { STAGE4_MAP_LANES_E5D3_ADDR,   &stage4_map_lanes_E5D3[0]   },
+  { STAGE4_MAP_HAZARDS_E5FB_ADDR, &stage4_map_hazards_E5FB[0] },
+  { STAGE4_MAP_LOBJS_E624_ADDR,   &stage4_map_lobjs_E624[0]   },
+  { STAGE4_MAP_ROBJS_E6B7_ADDR,   &stage4_map_robjs_E6B7[0]   },
 };
 
 // clang-format on

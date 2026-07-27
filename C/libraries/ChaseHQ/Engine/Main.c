@@ -717,15 +717,15 @@ static const void *lookup_map_goto(int current_stage_number, int z80)
   };
 
   switch (z80) {
-  case 0xE2AA: return &perp_escape_curvature[0];
-  case 0xE2AF: return &perp_escape_height[0];
-  case 0xE2B8: return &fork_hazards[0];
-  case 0xE2C0: return &fork_leftrightobjs[0];
-  case 0xE2C1: return &fork_leftrightobjs[1];
-  case 0xE2C6: return &forked_road_curvature[0];
-  case 0xE2C7: return &forked_road_curvature[1];
-  case 0xE2CC: return &forked_road_height[0];
-  case 0xE2D1: return &forked_road_lanes[0];
+  case PERP_ESCAPE_CURVATURE_ADDR:     return &perp_escape_curvature[0];
+  case PERP_ESCAPE_HEIGHT_ADDR:        return &perp_escape_height[0];
+  case FORK_HAZARDS_ADDR:              return &fork_hazards[0];
+  case FORK_LEFTRIGHTOBJS_ADDR:        return &fork_leftrightobjs[0];
+  case FORK_LEFTRIGHTOBJS_ADDR + 1:    return &fork_leftrightobjs[1];
+  case FORKED_ROAD_CURVATURE_ADDR:     return &forked_road_curvature[0];
+  case FORKED_ROAD_CURVATURE_ADDR + 1: return &forked_road_curvature[1];
+  case FORKED_ROAD_HEIGHT_ADDR:        return &forked_road_height[0];
+  case FORKED_ROAD_LANES_ADDR:         return &forked_road_lanes[0];
   default:
     assert(current_stage_number >= 1 &&
            current_stage_number <= (int)NELEMS(stage_lookup_fns));
@@ -2207,7 +2207,8 @@ dp_repeat_or_plot_tile:
       backbuf = OFFSETTOBACKBUF(bufoffset);
       srctile -= 8; /* was POP */
     } while (--tile_count > 0);
-    cmdaddr = 0xF000 + bufoffset; /* was EX DE,HL ; #REGde = Back buffer ptr */
+    /* was EX DE,HL ; #REGde = Back buffer ptr */
+    cmdaddr = BACKBUFFER_START_ADDRESS + bufoffset;
     goto dp_get_command;
   } // !CMD_STOP
 
@@ -6165,7 +6166,7 @@ static void clear_face_attributes(chqstate_t *state, int attr)
   int iterations; /* row countdown, 5 rows (was B) */
 
   // Screen attribute (22,1) (Conv: address -> offset)
-  addr       = ADDRTOATTRS(0x5836);
+  addr       = ADDRTOATTRS(FACE_ATTRS_ADDR);
   iterations = FACEATTRHEIGHT; // 5 rows
   do {
     // Conv: Screen write now goes via state.
@@ -6173,7 +6174,7 @@ static void clear_face_attributes(chqstate_t *state, int attr)
     addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
 
-  update_attrs(state, 0x5836, 4 * 8, 5 * 8); /* Conv: added */
+  update_attrs(state, FACE_ATTRS_ADDR, 4 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
@@ -6252,7 +6253,7 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
     screen += 0x1C;
   }
 
-  update_attrs(state, 0x5836, 4 * 8, 5 * 8); /* Conv: added */
+  update_attrs(state, FACE_ATTRS_ADDR, 4 * 8, 5 * 8); /* Conv: added */
 }
 
 /**
@@ -11605,8 +11606,8 @@ static void draw_part_entrypt2(chqstate_t *state,
   DEbackbuf = (Ex & 0xF8) >> 3; // x pixel pos to field CCCCC
   Ay = Dy; // we make a temp copy but then bank - odd
   // EX AF,AF' - bank to use A as temp, or to preserve something like carry?
-  DEbackbuf |= ((Dy & 0x0F) << 8) |
-               0xF000; // y pixel pos (bottom nibble) to field LLLL
+  // y pixel pos (bottom nibble) to field LLLL
+  DEbackbuf |= ((Dy & 0x0F) << 8) | BACKBUFFER_START_ADDRESS;
   // EX AF,AF'
   DEbackbuf |= (Ay & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
   /* removed PUSH DEbackbuf */
@@ -14477,7 +14478,8 @@ static void draw_road(chqstate_t *state)
      * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
      * ($FFE0) so all pointer arithmetic (here and in downstream callers,
      * including dr_fill_left_stripe's secondary dr_read_lanes) stays valid. */
-    if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
+    if (DEbackbuf < BACKBUFFER_START_ADDRESS ||
+        DEbackbuf > BACKBUFFER_END_ADDRESS)
       DEbackbuf = 0xFFE0;
     state->dr_backbuf_1 = (u16)DEbackbuf;
     Bneg_lane_count = -1;
@@ -14606,7 +14608,8 @@ static void draw_road(chqstate_t *state)
      * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
      * ($FFE0) so all pointer arithmetic (here and in downstream callers,
      * including dr_fill_left_stripe's secondary dr_read_lanes) stays valid. */
-    if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
+    if (DEbackbuf < BACKBUFFER_START_ADDRESS ||
+        DEbackbuf > BACKBUFFER_END_ADDRESS)
       DEbackbuf = 0xFFE0;
 
     state->dr_backbuf_2 = DEbackbuf;
@@ -14750,7 +14753,9 @@ static void draw_road(chqstate_t *state)
 
       /* Build address of road edge marking graphic. */
       Hdash_markingsptr_lo = ((Axpos & 7) << 2) + state->dr_edge_graphic_offset;
-      HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
+      HLdash_markingsptr =
+        &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) -
+                       ROAD_MARKINGS_PAGE_ADDR];
       assert(HLdash_markingsptr >= &edge_markings[0]);
       assert(HLdash_markingsptr + 2 < &edge_markings[256]);
 
@@ -14784,7 +14789,9 @@ static void draw_road(chqstate_t *state)
 
       /* Build address of road lane marking graphic. */
       Hdash_markingsptr_lo = ((A_xpos & 7) << 1) + state->dr_stripe_table_offset;
-      HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
+      HLdash_markingsptr =
+        &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) -
+                       ROAD_MARKINGS_PAGE_ADDR];
       assert(HLdash_markingsptr >= &edge_markings[0]);
       assert(HLdash_markingsptr + 1 < &edge_markings[256]);
       Edash = ((A_xpos >> 3) & 31) + Bdash;
@@ -14811,7 +14818,9 @@ static void draw_road(chqstate_t *state)
 
       /* Build address of road edge marking graphic. */
       Hdash_markingsptr_lo = ((A_xpos & 7) << 2) + state->dr_right_edge_offset;
-      HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
+      HLdash_markingsptr =
+        &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) -
+                       ROAD_MARKINGS_PAGE_ADDR];
       assert(HLdash_markingsptr >= &edge_markings[0]);
       assert(HLdash_markingsptr + 2 < &edge_markings[256]);
       Edash = ((A_xpos >> 3) & 31) + Bdash;

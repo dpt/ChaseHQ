@@ -112,6 +112,10 @@
 #define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
 #define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
 
+#define FACE_ATTRS_ADDR              (0x5836) /* screen attribute address (22,1) of the face */
+
+#define ROAD_MARKINGS_PAGE_ADDR      (0xE400) /* base of the $E4xx road graphics page */
+
 /* ----------------------------------------------------------------------- */
 
 /* Backbuffer layout constants */

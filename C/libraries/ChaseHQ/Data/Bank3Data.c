@@ -26,6 +26,10 @@
 
 #include "Bank3Data.h"
 
+/* Z80 address of the scene 4 object script shared by objects 0, 3, 4, 5 and 8
+ * -- referenced from their object records within title_scene_data itself. */
+#define SCENE4_SCRIPT_SHARED_ADDR (0xD199)
+
 /* ----------------------------------------------------------------------- */
 
 /**
@@ -493,15 +497,15 @@ const u8 title_scene_data[1467] = {
   OSS_OP_VELOCITY(6, 3, 3), // $D168: [obj1,obj2,obj3,obj4,obj5,obj6,obj7,obj8]
 
   // $D16C: scene 4 -- 9 object records (x, y, row, script ptr)
-  0x18, 0x8F, 0x00, TWOBYTES(0xD199), // obj0
+  0x18, 0x8F, 0x00, TWOBYTES(SCENE4_SCRIPT_SHARED_ADDR), // obj0
   0x30, 0x8F, 0x04, TWOBYTES(0xD241), // obj1
   0x48, 0x8F, 0x08, TWOBYTES(0xD1AE), // obj2
-  0x60, 0x8F, 0x0C, TWOBYTES(0xD199), // obj3
-  0x78, 0x8F, 0x10, TWOBYTES(0xD199), // obj4
-  0x94, 0x8F, 0x04, TWOBYTES(0xD199), // obj5
+  0x60, 0x8F, 0x0C, TWOBYTES(SCENE4_SCRIPT_SHARED_ADDR), // obj3
+  0x78, 0x8F, 0x10, TWOBYTES(SCENE4_SCRIPT_SHARED_ADDR), // obj4
+  0x94, 0x8F, 0x04, TWOBYTES(SCENE4_SCRIPT_SHARED_ADDR), // obj5
   0x56, 0x7B, 0x18, TWOBYTES(0xD1FF), // obj6
   0x56, 0x7A, 0x18, TWOBYTES(0xD220), // obj7
-  0xBA, 0x8F, 0x14, TWOBYTES(0xD199), // obj8
+  0xBA, 0x8F, 0x14, TWOBYTES(SCENE4_SCRIPT_SHARED_ADDR), // obj8
 
   // $D199-$D271: scene 4 object script byte-code
   OSS_OP_VELOCITY(0, -6, 15), // $D199: [obj0,obj3,obj4,obj5,obj8]
@@ -2882,8 +2886,8 @@ const u16 note_periods[96] = {
  * start_tune's Translation notes.
  */
 const tune_t tunes[4] = {
-  { 2, { 0xF241, 0xF25A, 0xF265 } },
-  { 4, { 0xF601, 0xF605, 0xF609 } },
+  { 2, { TITLE_TUNE0_DATA_ADDR, 0xF25A, 0xF265 } },
+  { 4, { TITLE_TUNE1_DATA_ADDR, 0xF605, 0xF609 } },
   { 2, { 0xF666, 0xF66A, 0xF66E } },
   { 3, { 0xF6F4, 0xF6F8, 0xF6FE } }
 };

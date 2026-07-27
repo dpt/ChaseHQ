@@ -379,9 +379,13 @@ static void es_handler_draw_score(chqstate_t *state)
 static const u8 *z80addrtochatterblk(u16 addr)
 {
   switch (addr) {
-  case 0x5C6E: return &chatterblk_nancy_congratulates[0];
-  case 0x5C78: return &chatterblk_press_gear[0];
-  default:     assert(0); return NULL;
+  case CHATTERBLK_NANCY_CONGRATULATES_ADDR:
+    return &chatterblk_nancy_congratulates[0];
+  case CHATTERBLK_PRESS_GEAR_ADDR:
+    return &chatterblk_press_gear[0];
+  default:
+    assert(0);
+    return NULL;
   }
 }
 
@@ -841,7 +845,7 @@ static void es_attribute_fade_in(chqstate_t *state)
     return;
 
   HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  DE_back = ADDRTOBACKBUF(0xF000);
+  DE_back = ADDRTOBACKBUF(BACKBUFFER_START_ADDRESS);
 
   for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++) {
     if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
@@ -1052,11 +1056,11 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 static const u8 *z80addrtoendshot(u16 addr)
 {
   switch (addr) {
-  case 0x60E1: return &bitmap_endshot_1[0];
-  case 0x6489: return &bitmap_endshot_2[0];
-  case 0x6831: return &bitmap_endshot_3[0];
-  case 0x6BD9: return &bitmap_endshot_4[0];
-  default:     assert(0); return NULL;
+  case BITMAP_ENDSHOT_1_ADDR: return &bitmap_endshot_1[0];
+  case BITMAP_ENDSHOT_2_ADDR: return &bitmap_endshot_2[0];
+  case BITMAP_ENDSHOT_3_ADDR: return &bitmap_endshot_3[0];
+  case BITMAP_ENDSHOT_4_ADDR: return &bitmap_endshot_4[0];
+  default:                    assert(0); return NULL;
   }
 }
 

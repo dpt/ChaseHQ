@@ -14,6 +14,15 @@
 
 #include "Stage6Data.h"
 
+/* Z80 addresses of the map sections, as referenced by the map
+ * GOTO/SPLIT commands and stage6_lookup_map_goto(). */
+#define CURVATURE_ADDR (0xC65C)
+#define HEIGHT_ADDR    (0xC684)
+#define LANES_ADDR     (0xC6BB)
+#define HAZARDS_ADDR   (0xC6D1)
+#define LEFTSIDE_ADDR  (0xC6EE)
+#define RIGHTSIDE_ADDR (0xC7A5)
+
 /* ----------------------------------------------------------------------- */
 
 /* Stage 6 object type macros */
@@ -206,7 +215,7 @@ static const u8 curvature[] = {
   MAP_CURVE_RIGHT(15),
   MAP_CURVE_RIGHT(15),
   MAP_CURVE_RIGHT(15),
-  MAP_CMD_GOTO(0xC65C)
+  MAP_CMD_GOTO(CURVATURE_ADDR)
 };
 
 /** $C684: height */
@@ -215,7 +224,7 @@ static const u8 height[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_DOWN7(15),
   MAP_HEIGHT_LEVEL(15),
-  MAP_CMD_GOTO(0xC684)
+  MAP_CMD_GOTO(HEIGHT_ADDR)
 };
 
 /** $C6BB: lanes */
@@ -236,7 +245,7 @@ static const u8 lanes[] = {
 
   MAP_LANES_2RTO3R(2),
 
-  MAP_CMD_GOTO(0xC6BB)
+  MAP_CMD_GOTO(LANES_ADDR)
 };
 
 /** $C6D1: hazards */
@@ -245,19 +254,19 @@ static const u8 hazards[] = {
   MAP_CMD_START_TWO_BARRIERS,
   MAP_HAZARD_WAIT(2),
   MAP_CMD_STOP_BARRIERS,
-  MAP_CMD_GOTO(0xC6D1)
+  MAP_CMD_GOTO(HAZARDS_ADDR)
 };
 
 /** $C6EE: leftside */
 static const u8 leftside[] = {
   MAP_OBJ_S6_NONE(15),
-  MAP_CMD_GOTO(0xC6EE)
+  MAP_CMD_GOTO(LEFTSIDE_ADDR)
 };
 
 /** $C7A5: rightside */
 static const u8 rightside[] = {
   MAP_OBJ_S6_NONE(15),
-  MAP_CMD_GOTO(0xC7A5)
+  MAP_CMD_GOTO(RIGHTSIDE_ADDR)
 };
 
 /**
@@ -554,12 +563,12 @@ static const u8 stage6_bitmap_D64A[181] = {
 
 
 static const struct { u16 z80; const void *ptr; } stage6_map_goto_table[] = {
-  { 0xC65C, &curvature[0] },
-  { 0xC684, &height[0] },
-  { 0xC6BB, &lanes[0] },
-  { 0xC6D1, &hazards[0] },
-  { 0xC6EE, &leftside[0] },
-  { 0xC7A5, &rightside[0] },
+  { CURVATURE_ADDR, &curvature[0] },
+  { HEIGHT_ADDR,    &height[0]    },
+  { LANES_ADDR,     &lanes[0]     },
+  { HAZARDS_ADDR,   &hazards[0]   },
+  { LEFTSIDE_ADDR,  &leftside[0]  },
+  { RIGHTSIDE_ADDR, &rightside[0] },
 };
 
 // clang-format on

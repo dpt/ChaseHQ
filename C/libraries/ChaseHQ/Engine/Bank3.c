@@ -2773,10 +2773,12 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  */
 static const u8 *resolve_phrase_addr(u16 addr)
 {
-  if (addr >= 0xF241 && addr < 0xF241 + NELEMS(title_tune0_data))
-    return &title_tune0_data[addr - 0xF241];
-  if (addr >= 0xF601 && addr < 0xF601 + NELEMS(title_tune1_data))
-    return &title_tune1_data[addr - 0xF601];
+  if (addr >= TITLE_TUNE0_DATA_ADDR &&
+      addr < TITLE_TUNE0_DATA_ADDR + NELEMS(title_tune0_data))
+    return &title_tune0_data[addr - TITLE_TUNE0_DATA_ADDR];
+  if (addr >= TITLE_TUNE1_DATA_ADDR &&
+      addr < TITLE_TUNE1_DATA_ADDR + NELEMS(title_tune1_data))
+    return &title_tune1_data[addr - TITLE_TUNE1_DATA_ADDR];
   assert(0); /* address outside both tunes' transcribed raw data */
   return NULL;
 }
