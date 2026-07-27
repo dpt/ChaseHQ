@@ -142,6 +142,14 @@ endif()
 # ---- Stage data generation --------------------------------------------------
 # Regenerate committed .c files from their skool sources.
 # Usage: cmake --build <dir> --target convert_stages
+#
+# WARNING: destructive, and not part of any build. convert_stage.py emits a
+# skeleton that does NOT compile: MAP_LANES_* transition macros are undefined,
+# lookup_map_goto's signature conflicts with its forward declaration, and the
+# obj_t/overhead_span_t/helicopter tables come back as raw bytes and NULL
+# TODOs. The committed Stage{2-5}Data.c files hold that manual completion, so
+# running this discards it. Scaffold a new stage with it; edit an existing one
+# by hand. See docs/convert-stage.md.
 
 set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../Speccy/scripts/convert_stage.py)
 set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/../Speccy)
@@ -160,7 +168,7 @@ add_custom_target(convert_stages
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-7.skool 5\
  --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE\
  > ${DATA_DIR}/Stage5Data.c"
-  COMMENT "Regenerating stage 2-5 data from bank skool files"
+  COMMENT "Regenerating stage 2-5 data from bank skool files - WARNING: overwrites the committed files with skeletons that do not compile; see docs/convert-stage.md"
   VERBATIM)
 
 # ---- Formatting -------------------------------------------------------------

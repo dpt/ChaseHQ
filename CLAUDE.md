@@ -15,6 +15,12 @@ skeleton. See `C/docs/convert-stage.md` for full usage, options and what
 requires manual completion afterwards. The `convert_stages` CMake target in
 `C/CMakeLists.txt` drives it for stages 2-5.
 
+**Do not run `convert_stages` to "refresh" stage data.** The script's output is
+a skeleton that does not compile, and the committed `Stage{2-5}Data.c` files
+contain hand-completion the script cannot reproduce. The target overwrites them
+and discards that work. It is for scaffolding a new stage only; edit existing
+stage data by hand.
+
 ### Disassembly (Speccy/ directory)
 ```bash
 make pristine    # Create pristine snapshot

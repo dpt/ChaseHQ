@@ -4,6 +4,12 @@ convert_stage.py
 
 Converts a Chase H.Q. skool file to a C stage data skeleton.
 
+The output is a skeleton and does NOT compile as generated - see "What
+requires manual completion" in C/docs/convert-stage.md. The committed
+Stage{2-5}Data.c files contain that manual work, so redirecting this over one
+of them discards it. Use this to scaffold a new stage, not to regenerate an
+existing one.
+
 Usage:
   python3 convert_stage.py <skool_file> <stage_num> [options] > StageNData.c
 

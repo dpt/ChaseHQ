@@ -1,6 +1,14 @@
 # convert_stage.py
 
-`convert_stage.py` (project root) converts a Chase H.Q. skool file to a C stage data skeleton for one stage. It is the starting point for every stage data file beyond stage 1 (which is hand-crafted).
+`convert_stage.py` (`Speccy/scripts/`) converts a Chase H.Q. skool file to a C stage data skeleton for one stage. It is the starting point for every stage data file beyond stage 1 (which is hand-crafted).
+
+> **The output is a skeleton, not a build product.** It does not compile as
+> generated, and the committed `Stage{2-5}Data.c` files contain hand-work that
+> the script cannot reproduce — decoded `obj_t`/`overhead_span_t` tables,
+> resolved helicopter pointers, `MAP_LANES_*` transition macros. Regenerating
+> over a committed file discards all of it. Use this to scaffold a *new* stage;
+> to change an existing one, edit the committed `.c` by hand. See
+> [What requires manual completion](#what-requires-manual-completion).
 
 ## Usage
 
@@ -17,7 +25,11 @@ python3 convert_stage.py <skool_file> <stage_num> [options] > StageNData.c
 | 4     | `ChaseHQ-128K-bank-6.skool` |
 | 5     | `ChaseHQ-128K-bank-7.skool` |
 
-The CMake `convert_stages` target (`cmake --build <dir> --target convert_stages`) runs all four invocations automatically.
+The CMake `convert_stages` target (`cmake --build <dir> --target convert_stages`) runs all four invocations automatically. It **overwrites the committed
+`Stage{2-5}Data.c` files with skeletons that do not compile** — it is a
+scaffolding tool kept for reference, not part of the normal build. Commit or
+stash your work before running it, and `git checkout` the `Data/` directory
+afterwards unless you intend to redo the manual completion by hand.
 
 ### Options
 
@@ -64,11 +76,19 @@ python3 convert_stage.py ChaseHQ-128K-bank-7.skool 5 \
 
 ## What requires manual completion
 
-The following items cannot be decoded automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders:
+The following items cannot be decoded automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders. Until they are done by hand the file
+does not compile:
 
 - `obj_t` and `hittable_t` graphic definition arrays (typed structs)
+- `overhead_span_t` tables, emitted as raw `stageN_bitmap_XXXX` byte arrays
 - `stretchy_t` / `depthset_t` tables when pointer targets are unresolvable
 - Handler pointers not in `HANDLER_ADDRESS_MAP`
+- Helicopter data pointers, left `NULL` with a TODO
+- `MAP_LANES_*` lane-transition macros, which the script emits as bare calls
+  with no matching definition (`implicit declaration of function
+  'MAP_LANES_3TO4R'`)
+- The `stageN_lookup_map_goto()` signature, which conflicts with its forward
+  declaration as generated
 
 ## LOD auto-detection
 
