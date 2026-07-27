@@ -143,8 +143,8 @@ endif()
 # Regenerate committed .c files from their skool sources.
 # Usage: cmake --build <dir> --target convert_stages
 
-set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../convert_stage.py)
-set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/..)
+set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../Speccy/scripts/convert_stage.py)
+set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/../Speccy)
 set(DATA_DIR       ${CMAKE_SOURCE_DIR}/libraries/ChaseHQ/Data)
 
 add_custom_target(convert_stages
