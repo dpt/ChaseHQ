@@ -808,6 +808,9 @@ static u8 titlescr_animate_frame(chqstate_t *state)
  * carry-independent and equals `(byte >> 3) & 0x03`. Translated directly as
  * a shift rather than modelling the rotate/carry chain.
  *
+ * \return 1 if the script hit $D2 ("end of script") and processing of
+ * further objects this frame must stop, 0 otherwise.
+ *
  * Conv: the "JP $C70E" at the end of oss_save_cursor (re-dispatching a
  * freshly fetched mode through the active chain in the same call) is a
  * genuine back-edge, not sequential code -- modelled here as the `continue`
@@ -2215,69 +2218,32 @@ static void stop_music_and_silence(chqstate_t *state)
 }
 
 /**
- * $EDD6 (bank 3): Advance one title-tune channel's pattern by one tracker row
+ * Read one byte from a channel's pattern stream, advancing the cursor
  *
- * Part of the 128K animated title screen's music driver. Called once per
- * channel, 3 times per tick, by titlescr_ay_music ($EC71@bank3) once its tempo
- * counter reaches zero. Two responsibilities:
+ * Called throughout advance_channel_pattern (its own $EDE4
+ * acp_read_pattern_byte step, and again for each multi-byte command's
+ * operand bytes) to fetch the next byte and move DE_pattern past it.
  *
- * 1. $EDD6-$EE48: if this channel's per-row wait countdown has not yet
- *    reached zero, only channel_slide_upkeep runs: nudges note_index by one
- *    semitone per frame while a portamento/slide effect (status bit 3) is
- *    active, direction taken from status bit 7.
- * 2. $EDDB-$EE95: otherwise, clears status and re-enters the pattern byte
- *    stream (pattern_ptr), reading and processing bytes one at a time until
- *    a note value (bit 7 clear) is found. Command/effect bytes (bit 7 set)
- *    are range-tested against a cascade of thresholds ($B0, $B8, $D0, $E0):
- *    below $B0 they dispatch through a dedicated per-byte handler (mixer
- *    bits, slide target, envelope params, vibrato mode, status bits, mute,
- *    row-duration reset); $B0-$B7 sets the tune tempo; $B8-$CF selects a
- *    pitch-offset sequence; $D0-$DF selects an envelope shape; $E0-$FF sets
- *    the per-row wait reload value. Every branch either loops back to read
- *    the next byte, or (a note value, or two of the fixed-length handlers)
- *    falls into acp_reset_row_counter: reload the wait countdown, store the
- *    advanced pattern pointer, and normalise a pending one-shot mute request.
- *
- * \param[in,out] IX_channel Pointer to this channel's tracker record. (was IX)
- * \param[in,out] DE_pattern Pointer to the channel's pattern-stream read
- *   cursor; advanced past the byte read, wrapping to pattern_base if it runs
- *   past the extracted tune array. (was DE)
+ * \param[in]     IX_channel Pointer to this channel's tracker record. (was IX)
+ * \param[in,out] DE_pattern Pattern-stream read cursor; advanced past the
+ *   byte read. (was DE)
  *
  * \return The byte at the cursor position before advancing. (was A)
  *
- * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
- * $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
- * 1-byte displacement per command byte (0x80-0xAF) rather than a full
- * address -- the same space-saving trick used by $EE59's pitch-offset table.
- * The skool could not resolve this statically ("no entry-point markers");
- * the mapping below was recovered by reading bank3.bin directly and
- * evaluating the displacement arithmetic for every byte value 0x80-0xAF.
- * Only 17 of the 48 possible values resolve to one of the named handlers'
- * entry points -- these become the `switch` cases below (0xA8 lands exactly
- * on acp_reset_row_counter's entry point, $EE22, even though it isn't one of
- * the primary pcmd_* handlers; 0x87 lands on the orphaned "JP $F1AE" at
- * $ED33, handled below via advance_channel_phrase). Two further values are
- * reachable but do not target a handler entry point: 0x85 lands
- * mid-instruction inside pcmd_set_status_bits_3_7 (skipping its first SET 7,
- * executing only SET 3), and 0x8E lands on a bare "POP HL; JP $ED0B" that
- * would pop the real return address off the stack and jump into
- * stop_music_and_silence -- almost certainly a crash, so this byte is
- * assumed never to appear as an executed command (bytes with this value seen
- * in the real pattern data all sit at stream positions consistent with an
- * end-of-data marker, not a command dispatch). The remaining values
- * (0x92-0xA7, 0xA9-0xAF) land on arbitrary bytes inside the handler block
- * and are equally assumed unused. All of these fall into the `default` case
- * below, which -- unlike the Z80 -- treats them as a no-op rather than
- * replicating undefined/crashing behaviour. See Translation notes for the
- * full derivation.
- *
  * Conv: pattern_ptr/pattern_base/pattern_len (State.h) are only populated for
- * tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr == NULL (tunes
- * 2/3, not extracted) is treated as silent rather than dereferencing NULL.
- * Every read from the pattern stream goes through acp_read_byte, which wraps
- * the cursor back to pattern_base once it runs past pattern_base+pattern_len:
- * the extracted arrays only cover a finite prefix of the real Z80 data, whose
- * true loop point was not transcribed.
+ * tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr == NULL
+ * (tunes 2/3, not extracted) is treated as silent rather than dereferencing
+ * NULL. The wrap check below is against the whole extracted tune array, not
+ * this channel's own initial pattern_base/pattern_len prefix --
+ * advance_channel_phrase's PCMD_ADVANCE_PHRASE can legitimately re-point
+ * DE_pattern far outside that channel's own header block, into a region
+ * physically owned by another channel's data within the same tune (see the
+ * tune0ch1 header at $F26B jumping to $F4E1). Bounding against pattern_len
+ * there mistook every such jump for running off the end of the transcribed
+ * data and reset the cursor back to pattern_base on the very next byte,
+ * permanently stuck replaying the 3-byte header (including
+ * PCMD_RESET_ROW_COUNTER_CLEAR_ENV, which zeroes volume) -- the channel
+ * never spoke again.
  */
 static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
 {
@@ -2310,31 +2276,242 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
 #define PHRASE_TABLE_REPEATING_ENTRY  2 /* 1-byte repeat count + 2-byte pointer follow */
 
 /**
- * Resolve a phrase-table or pattern-header address to a data pointer
+ * $EDD6: Advance one channel's pattern by one tracker row
  *
- * Converts a raw Z80 address, as found in the title-tune phrase-pointer
- * table or in a 2-byte pattern-data header, into a C pointer into the
- * transcribed title_tune0_data / title_tune1_data arrays.
+ * Decrements the per-row wait counter; while it is still counting down,
+ * only the portamento/slide upkeep runs (nudging note_index by one
+ * semitone). Once it reaches zero, reads and decodes the next byte(s) from
+ * the pattern stream: a note value resets pitch/envelope pointers and
+ * volume; a command/effect byte is dispatched via decode_pattern_command.
  *
- * \param[in] addr Raw Z80 address, as stored little-endian in the table or
- *                  header. (was DE/HL)
+ * Shared end-of-sequence marker bit applies to the pitch-offset and
+ * envelope-shape sequence tables (e.g. title_pitch_offset_seq_* and
+ * title_envelope_shape_* tables).
  *
- * \return Pointer into the matching transcribed array. (was DE/HL)
+ * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
  *
- * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
- * phrase_ptr are C pointers into title_tune0_data/title_tune1_data,
- * not simulated Z80 memory, so an address read out of the pattern stream
- * must be translated via range/offset arithmetic against those two arrays
- * rather than dereferenced directly.
+ * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
+ * $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
+ * 1-byte displacement per command byte (0x80-0xAF) rather than a full
+ * address -- the same space-saving trick used by $EE59's pitch-offset table.
+ * The skool could not resolve this statically ("no entry-point markers");
+ * the mapping below was recovered by reading bank3.bin directly and
+ * evaluating the displacement arithmetic for every byte value 0x80-0xAF.
+ * Only 17 of the 48 possible values resolve to one of the named handlers'
+ * entry points -- these become the `switch` cases below (0xA8 lands exactly
+ * on acp_reset_row_counter's entry point, $EE22, even though it isn't one of
+ * the primary pcmd_* handlers; 0x87 lands on the orphaned "JP $F1AE" at
+ * $ED33, handled below via advance_channel_phrase). Two further values are
+ * reachable but do not target a handler entry point: 0x85 lands
+ * mid-instruction inside pcmd_set_status_bits_3_7 (skipping its first SET 7,
+ * executing only SET 3), and 0x8E lands on a bare "POP HL; JP $ED0B" that
+ * would pop the real return address off the stack and jump into
+ * stop_music_and_silence -- almost certainly a crash, so this byte is
+ * assumed never to appear as an executed command (bytes with this value seen
+ * in the real pattern data all sit at stream positions consistent with an
+ * end-of-data marker, not a command dispatch). The remaining values
+ * (0x92-0xA7, 0xA9-0xAF) land on arbitrary bytes inside the handler block
+ * and are equally assumed unused. All of these fall into the `default` case
+ * below, which -- unlike the Z80 -- treats them as a no-op rather than
+ * replicating undefined/crashing behaviour. See Translation notes for the
+ * full derivation.
  */
-static const u8 *resolve_phrase_addr(u16 addr)
+static void advance_channel_pattern(chqstate_t           *state,
+                                    title_tune_channel_t *IX_channel)
 {
-  if (addr >= 0xF241 && addr < 0xF241 + NELEMS(title_tune0_data))
-    return &title_tune0_data[addr - 0xF241];
-  if (addr >= 0xF601 && addr < 0xF601 + NELEMS(title_tune1_data))
-    return &title_tune1_data[addr - 0xF601];
-  assert(0); /* address outside both tunes' transcribed raw data */
-  return NULL;
+  u8        A_status;   /* status byte tested by channel_slide_upkeep (was A, IX+$00) */
+  const u8 *DE_pattern; /* pattern-command byte stream cursor (was DE, IX+$01/$02) */
+  u8        A_byte;     /* raw byte just read from the pattern stream (was A) */
+  u8        A_note;     /* raw note value + transpose, before storing to note_index (was A) */
+  const u8 *HL_ptr;     /* scratch pointer, reused for the pitch-offset then envelope-shape reset (was HL) */
+  u8        A_env_byte; /* envelope shape byte read at note time (was A) */
+  u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
+  u8        A_operand;  /* second operand byte of a 2-operand pattern command (was A) */
+
+  if (IX_channel->pattern_ptr == NULL)
+    return; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
+
+  /* $EDD6-$EDD9: per-row wait countdown. */
+  if (--IX_channel->row_wait != 0) {
+    /* $EE38 channel_slide_upkeep: nudge the note by one semitone per frame
+     * while a portamento/slide effect is active. */
+    A_status = IX_channel->status;
+    if (!(A_status & CHSTATUS_SLIDE_UPKEEP))
+      return;
+
+    if (A_status & CHSTATUS_SLIDE_UPKEEP_UP) // Conv: RLA + JR NC collapsed to a direct bit-7 test
+      IX_channel->note_index++;
+    else
+      IX_channel->note_index--;
+    return;
+  }
+
+  /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
+   * bytes. */
+  IX_channel->status = 0;
+  DE_pattern = IX_channel->pattern_ptr;
+
+  for (;;) {
+    /* $EDE4 acp_read_pattern_byte. */
+    A_byte = acp_read_byte(IX_channel, &DE_pattern);
+
+    if (!(A_byte & 0x80)) {
+      /* $EDEA-$EE1E: note value. */
+      A_note = (u8) (A_byte + IX_channel->transpose);
+      IX_channel->note_index = A_note;
+
+      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
+        state->bank3->title_music.shared_note_value = A_note; /* $EC79 (SM) */
+
+      HL_ptr = IX_channel->pitch_offset_default;    /* +$09/$0A */
+      IX_channel->pitch_offset_cur = HL_ptr;        /* +$0B/$0C: reset to loop start */
+
+      HL_ptr = IX_channel->envelope_shape_default;  /* +$14/$15 */
+      IX_channel->envelope_shape_ptr = HL_ptr;      /* +$16/$17: reset envelope pointer */
+
+      A_env_byte = *HL_ptr;
+      IX_channel->envelope_amplitude = A_env_byte;  /* +$18 */
+      IX_channel->volume             = A_env_byte;  /* +$13 */
+
+      IX_channel->envelope_step_counter = IX_channel->envelope_speed; /* +$19 = +$0F */
+
+      IX_channel->status |= CHSTATUS_ENVELOPE_ACTIVE;
+
+      break; /* fall into reset_row_counter below */
+    }
+
+    /* $EE49 decode_pattern_command: command/effect byte. */
+    if (A_byte < PCMD_TEMPO_BASE) {
+      /* $EE96 dispatch_pattern_command -- see the Conv note above the
+       * prologue for how this mapping was derived. */
+      switch (A_byte) {
+      case PCMD_RESET_ROW_COUNTER_CLEAR_ENV:
+        IX_channel->volume = 0;
+        IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
+        goto reset_row_counter;
+
+      case PCMD_VIBRATO_OFF:
+        IX_channel->flags = 0;
+        continue;
+
+      case PCMD_VIBRATO_ON:
+        IX_channel->flags = CHFLAGS_VIBRATO_ENABLE;
+        continue;
+
+      case PCMD_VIBRATO_ON_MODE2:
+        IX_channel->flags = CHFLAGS_VIBRATO_ON_MODE2;
+        continue;
+
+      case PCMD_SET_SLIDE_TARGET:
+        IX_channel->slide_step      = (s8) acp_read_byte(IX_channel, &DE_pattern); /* operand 1 */
+        IX_channel->slide_accum     = 0;
+        IX_channel->status         |= CHSTATUS_SLIDE_ACTIVE;
+        IX_channel->slide_countdown = acp_read_byte(IX_channel, &DE_pattern);      /* operand 2 */
+        continue;
+
+      case PCMD_SET_STATUS_BITS_3_7:
+        IX_channel->status |= CHSTATUS_SLIDE_UPKEEP_ON;
+        continue;
+
+      case PCMD_ADVANCE_PHRASE: /* see advance_channel_phrase's own prologue */
+        advance_channel_phrase(IX_channel, &DE_pattern);
+        continue;
+
+      case PCMD_SET_ENVELOPE_PARAMS:
+        IX_channel->vibrato_increment = acp_read_byte(IX_channel, &DE_pattern); /* operand 1 -> +$1B */
+        A_operand = acp_read_byte(IX_channel, &DE_pattern);                     /* operand 2, stored twice */
+        IX_channel->vibrato_depth = A_operand; /* +$1A */
+        IX_channel->vibrato_phase = A_operand; /* +$1C */
+        continue;
+
+      case PCMD_SET_DRIVER_FLAG:
+        state->bank3->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
+        continue;
+
+      case PCMD_SET_MIXER_BITS_HIGH3:
+        A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
+        A_mix ^= state->bank3->title_music.pending_mixer_bits;
+        A_mix &= IX_channel->mixer_mask;
+        A_mix ^= state->bank3->title_music.pending_mixer_bits;
+        state->bank3->title_music.pending_mixer_bits = A_mix;
+        IX_channel->slide_update_flag = 0;
+        continue;
+
+      case PCMD_SET_MIXER_BITS_LOW3:
+        A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_TONE_MASK);
+        A_mix ^= state->bank3->title_music.pending_mixer_bits;
+        A_mix &= IX_channel->mixer_mask;
+        A_mix ^= state->bank3->title_music.pending_mixer_bits;
+        state->bank3->title_music.pending_mixer_bits = A_mix;
+        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
+        continue;
+
+      case PCMD_CLEAR_MIXER_BITS:
+        state->bank3->title_music.pending_mixer_bits =
+          (u8) (~IX_channel->mixer_mask & state->bank3->title_music.pending_mixer_bits);
+        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
+        continue;
+
+      case PCMD_SET_STATUS_BIT1:
+        IX_channel->status |= CHSTATUS_BIT1;
+        continue;
+
+      case PCMD_RESET_ROW_COUNTER:
+        IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
+        goto reset_row_counter;
+
+      case PCMD_MUTE_CHANNEL:
+        IX_channel->mute_pending = CHMUTE_PENDING;
+        continue;
+
+      case PCMD_UNMUTE_CHANNEL:
+        IX_channel->mute_pending = 0;
+        continue;
+
+      case PCMD_RESET_ROW_COUNTER_ALT:
+        goto reset_row_counter;
+
+      default:
+        /* 0x85, 0x8E and the rest of 0x92-0xAF: not a real handler entry
+         * point -- see the Conv note above the prologue. Conv: treat as a
+         * no-op. */
+        continue;
+      }
+    } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
+      /* $EE6F: set the tune tempo/speed byte. */
+      state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
+      continue;
+    } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE) {
+      /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
+       * entries). Sets both the "current" and "default" pointers immediately
+       * (unlike the envelope-shape select below, which only sets the
+       * default). */
+      HL_ptr = pitch_offset_table[A_byte - PCMD_PITCH_OFFSET_BASE].base;
+      IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
+      IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
+      continue;
+    } else if (A_byte < PCMD_ROW_WAIT_BASE) {
+      /* $EE7E-$EE93: select an envelope shape via the $F123 pointer table (16
+       * entries). Sets envelope_shape_default and envelope_speed;
+       * envelope_shape_ptr is only reset from the default at the next note
+       * event (see the note-value branch above). */
+      IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
+      IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
+      continue;
+    } else {
+      /* $EE77: set the per-row wait reload value. */
+      IX_channel->row_wait_reload = (u8) (A_byte - PCMD_ROW_WAIT_BASE + 1); /* +$11 */
+      continue;
+    }
+  }
+
+reset_row_counter:
+  /* $EE22 acp_reset_row_counter. */
+  IX_channel->row_wait    = IX_channel->row_wait_reload; /* +$10 = +$11 */
+  IX_channel->pattern_ptr = DE_pattern;                  /* +$01/+$02 */
+
+  if (IX_channel->mute_pending)
+    IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
 }
 
 /**
@@ -2577,6 +2754,34 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
 }
 
 /**
+ * Resolve a phrase-table or pattern-header address to a data pointer
+ *
+ * Converts a raw Z80 address, as found in the title-tune phrase-pointer
+ * table or in a 2-byte pattern-data header, into a C pointer into the
+ * transcribed title_tune0_data / title_tune1_data arrays.
+ *
+ * \param[in] addr Raw Z80 address, as stored little-endian in the table or
+ *                  header. (was DE/HL)
+ *
+ * \return Pointer into the matching transcribed array. (was DE/HL)
+ *
+ * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
+ * phrase_ptr are C pointers into title_tune0_data/title_tune1_data,
+ * not simulated Z80 memory, so an address read out of the pattern stream
+ * must be translated via range/offset arithmetic against those two arrays
+ * rather than dereferenced directly.
+ */
+static const u8 *resolve_phrase_addr(u16 addr)
+{
+  if (addr >= 0xF241 && addr < 0xF241 + NELEMS(title_tune0_data))
+    return &title_tune0_data[addr - 0xF241];
+  if (addr >= 0xF601 && addr < 0xF601 + NELEMS(title_tune1_data))
+    return &title_tune1_data[addr - 0xF601];
+  assert(0); /* address outside both tunes' transcribed raw data */
+  return NULL;
+}
+
+/**
  * $F1AE (bank 3): Walk a channel's phrase-pointer table for command 0x87
  *
  * Reached via advance_channel_pattern's computed dispatch for pattern
@@ -2715,219 +2920,6 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
 finalize:
   /* $F1E8-$F1EB: persist the table cursor for next time. */
   IX_channel->phrase_table_offset = BC_table_offset;
-}
-
-/**
- * $EDD6: Advance one channel's pattern by one tracker row
- *
- * Decrements the per-row wait counter; while it is still counting down,
- * only the portamento/slide upkeep runs (nudging note_index by one
- * semitone). Once it reaches zero, reads and decodes the next byte(s) from
- * the pattern stream: a note value resets pitch/envelope pointers and
- * volume; a command/effect byte is dispatched via decode_pattern_command.
- *
- * Shared end-of-sequence marker bit applies to the pitch-offset and
- * envelope-shape sequence tables (e.g. title_pitch_offset_seq_* and
- * title_envelope_shape_* tables).
- *
- * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
- */
-static void advance_channel_pattern(chqstate_t           *state,
-                                    title_tune_channel_t *IX_channel)
-{
-  u8        A_status;   /* status byte tested by channel_slide_upkeep (was A, IX+$00) */
-  const u8 *DE_pattern; /* pattern-command byte stream cursor (was DE, IX+$01/$02) */
-  u8        A_byte;     /* raw byte just read from the pattern stream (was A) */
-  u8        A_note;     /* raw note value + transpose, before storing to note_index (was A) */
-  const u8 *HL_ptr;     /* scratch pointer, reused for the pitch-offset then envelope-shape reset (was HL) */
-  u8        A_env_byte; /* envelope shape byte read at note time (was A) */
-  u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
-  u8        A_operand;  /* second operand byte of a 2-operand pattern command (was A) */
-
-  if (IX_channel->pattern_ptr == NULL)
-    return; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
-
-  /* $EDD6-$EDD9: per-row wait countdown. */
-  if (--IX_channel->row_wait != 0) {
-    /* $EE38 channel_slide_upkeep: nudge the note by one semitone per frame
-     * while a portamento/slide effect is active. */
-    A_status = IX_channel->status;
-    if (!(A_status & CHSTATUS_SLIDE_UPKEEP))
-      return;
-
-    if (A_status & CHSTATUS_SLIDE_UPKEEP_UP) // Conv: RLA + JR NC collapsed to a direct bit-7 test
-      IX_channel->note_index++;
-    else
-      IX_channel->note_index--;
-    return;
-  }
-
-  /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
-   * bytes. */
-  IX_channel->status = 0;
-  DE_pattern = IX_channel->pattern_ptr;
-
-  for (;;) {
-    /* $EDE4 acp_read_pattern_byte. */
-    A_byte = acp_read_byte(IX_channel, &DE_pattern);
-
-    if (!(A_byte & 0x80)) {
-      /* $EDEA-$EE1E: note value. */
-      A_note = (u8) (A_byte + IX_channel->transpose);
-      IX_channel->note_index = A_note;
-
-      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
-        state->bank3->title_music.shared_note_value = A_note; /* $EC79 (SM) */
-
-      HL_ptr = IX_channel->pitch_offset_default;    /* +$09/$0A */
-      IX_channel->pitch_offset_cur = HL_ptr;        /* +$0B/$0C: reset to loop start */
-
-      HL_ptr = IX_channel->envelope_shape_default;  /* +$14/$15 */
-      IX_channel->envelope_shape_ptr = HL_ptr;      /* +$16/$17: reset envelope pointer */
-
-      A_env_byte = *HL_ptr;
-      IX_channel->envelope_amplitude = A_env_byte;  /* +$18 */
-      IX_channel->volume             = A_env_byte;  /* +$13 */
-
-      IX_channel->envelope_step_counter = IX_channel->envelope_speed; /* +$19 = +$0F */
-
-      IX_channel->status |= CHSTATUS_ENVELOPE_ACTIVE;
-
-      break; /* fall into reset_row_counter below */
-    }
-
-    /* $EE49 decode_pattern_command: command/effect byte. */
-    if (A_byte < PCMD_TEMPO_BASE) {
-      /* $EE96 dispatch_pattern_command -- see the Conv note above the
-       * prologue for how this mapping was derived. */
-      switch (A_byte) {
-      case PCMD_RESET_ROW_COUNTER_CLEAR_ENV:
-        IX_channel->volume = 0;
-        IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
-        goto reset_row_counter;
-
-      case PCMD_VIBRATO_OFF:
-        IX_channel->flags = 0;
-        continue;
-
-      case PCMD_VIBRATO_ON:
-        IX_channel->flags = CHFLAGS_VIBRATO_ENABLE;
-        continue;
-
-      case PCMD_VIBRATO_ON_MODE2:
-        IX_channel->flags = CHFLAGS_VIBRATO_ON_MODE2;
-        continue;
-
-      case PCMD_SET_SLIDE_TARGET:
-        IX_channel->slide_step      = (s8) acp_read_byte(IX_channel, &DE_pattern); /* operand 1 */
-        IX_channel->slide_accum     = 0;
-        IX_channel->status         |= CHSTATUS_SLIDE_ACTIVE;
-        IX_channel->slide_countdown = acp_read_byte(IX_channel, &DE_pattern);      /* operand 2 */
-        continue;
-
-      case PCMD_SET_STATUS_BITS_3_7:
-        IX_channel->status |= CHSTATUS_SLIDE_UPKEEP_ON;
-        continue;
-
-      case PCMD_ADVANCE_PHRASE: /* see advance_channel_phrase's own prologue */
-        advance_channel_phrase(IX_channel, &DE_pattern);
-        continue;
-
-      case PCMD_SET_ENVELOPE_PARAMS:
-        IX_channel->vibrato_increment = acp_read_byte(IX_channel, &DE_pattern); /* operand 1 -> +$1B */
-        A_operand = acp_read_byte(IX_channel, &DE_pattern);                     /* operand 2, stored twice */
-        IX_channel->vibrato_depth = A_operand; /* +$1A */
-        IX_channel->vibrato_phase = A_operand; /* +$1C */
-        continue;
-
-      case PCMD_SET_DRIVER_FLAG:
-        state->bank3->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
-        continue;
-
-      case PCMD_SET_MIXER_BITS_HIGH3:
-        A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
-        A_mix ^= state->bank3->title_music.pending_mixer_bits;
-        A_mix &= IX_channel->mixer_mask;
-        A_mix ^= state->bank3->title_music.pending_mixer_bits;
-        state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = 0;
-        continue;
-
-      case PCMD_SET_MIXER_BITS_LOW3:
-        A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_TONE_MASK);
-        A_mix ^= state->bank3->title_music.pending_mixer_bits;
-        A_mix &= IX_channel->mixer_mask;
-        A_mix ^= state->bank3->title_music.pending_mixer_bits;
-        state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
-        continue;
-
-      case PCMD_CLEAR_MIXER_BITS:
-        state->bank3->title_music.pending_mixer_bits =
-          (u8) (~IX_channel->mixer_mask & state->bank3->title_music.pending_mixer_bits);
-        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
-        continue;
-
-      case PCMD_SET_STATUS_BIT1:
-        IX_channel->status |= CHSTATUS_BIT1;
-        continue;
-
-      case PCMD_RESET_ROW_COUNTER:
-        IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
-        goto reset_row_counter;
-
-      case PCMD_MUTE_CHANNEL:
-        IX_channel->mute_pending = CHMUTE_PENDING;
-        continue;
-
-      case PCMD_UNMUTE_CHANNEL:
-        IX_channel->mute_pending = 0;
-        continue;
-
-      case PCMD_RESET_ROW_COUNTER_ALT:
-        goto reset_row_counter;
-
-      default:
-        /* 0x85, 0x8E and the rest of 0x92-0xAF: not a real handler entry
-         * point -- see the Conv note above the prologue. Conv: treat as a
-         * no-op. */
-        continue;
-      }
-    } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
-      /* $EE6F: set the tune tempo/speed byte. */
-      state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
-      continue;
-    } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE) {
-      /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
-       * entries). Sets both the "current" and "default" pointers immediately
-       * (unlike the envelope-shape select below, which only sets the
-       * default). */
-      HL_ptr = pitch_offset_table[A_byte - PCMD_PITCH_OFFSET_BASE].base;
-      IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
-      IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
-      continue;
-    } else if (A_byte < PCMD_ROW_WAIT_BASE) {
-      /* $EE7E-$EE93: select an envelope shape via the $F123 pointer table (16
-       * entries). Sets envelope_shape_default and envelope_speed;
-       * envelope_shape_ptr is only reset from the default at the next note
-       * event (see the note-value branch above). */
-      IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
-      IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
-      continue;
-    } else {
-      /* $EE77: set the per-row wait reload value. */
-      IX_channel->row_wait_reload = (u8) (A_byte - PCMD_ROW_WAIT_BASE + 1); /* +$11 */
-      continue;
-    }
-  }
-
-reset_row_counter:
-  /* $EE22 acp_reset_row_counter. */
-  IX_channel->row_wait    = IX_channel->row_wait_reload; /* +$10 = +$11 */
-  IX_channel->pattern_ptr = DE_pattern;                  /* +$01/+$02 */
-
-  if (IX_channel->mute_pending)
-    IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
 }
 
 /**
@@ -3094,6 +3086,28 @@ static void load_drum_script(chqstate_t *state, u8 A_tune)
 }
 
 /**
+ * $F7F4: Drum-sample cue script re-entry, throttled by script_delay
+ *
+ * Decrements script_delay and returns early until it reaches 0, then
+ * re-enters the script-byte-code reader (load_drum_op) at script_ptr to
+ * read the next entry.
+ *
+ * Called by titlescr_music ($F82F) when the selector stream yields a
+ * byte of exactly 1.
+ */
+static void titlescr_drum_advance(chqstate_t *state)
+{
+  u8 A_delay; /* script_delay, decremented (was A) */
+
+  A_delay = (u8) (state->bank3->drums.script_delay - 1);
+  state->bank3->drums.script_delay = A_delay;
+  if (A_delay != 0)
+    return;
+
+  load_drum_op(state, state->bank3->drums.script_ptr);
+}
+
+/**
  * $F7FE: Drum-sample cue script byte-code reader
  *
  * Reads opcode bytes starting at HL. $FE ends the script (stops the tune
@@ -3150,28 +3164,6 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
     state->bank3->drums.stream_reload_ptr  = entry + 1;
     return;
   }
-}
-
-/**
- * $F7F4: Drum-sample cue script re-entry, throttled by script_delay
- *
- * Decrements script_delay and returns early until it reaches 0, then
- * re-enters the script-byte-code reader (load_drum_op) at script_ptr to
- * read the next entry.
- *
- * Called by titlescr_music ($F82F) when the selector stream yields a
- * byte of exactly 1.
- */
-static void titlescr_drum_advance(chqstate_t *state)
-{
-  u8 A_delay; /* script_delay, decremented (was A) */
-
-  A_delay = (u8) (state->bank3->drums.script_delay - 1);
-  state->bank3->drums.script_delay = A_delay;
-  if (A_delay != 0)
-    return;
-
-  load_drum_op(state, state->bank3->drums.script_ptr);
 }
 
 /**

@@ -29,8 +29,7 @@
 /* ----------------------------------------------------------------------- */
 
 /**
- * Copy read-only game tables into state and set original-game default
- * variables.
+ * Copy read-only game tables into state and set original-game defaults.
  *
  * Conv: host lifecycle helper; has no single Z80 address (individual field
  * defaults are marked with the Z80 address they correspond to inline

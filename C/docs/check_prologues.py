@@ -17,6 +17,10 @@ import glob
 import re
 import sys
 
+C_KEYWORDS = {
+  "for", "while", "if", "switch", "return", "sizeof", "do", "else",
+}
+
 TITLE_RE = re.compile(r"^\$[0-9A-Fa-f]+.*:\s*\S.*$")
 PLAIN_TITLE_RE = re.compile(r"^\S.*$")  # C-only helper with no Z80 address
 PARAM_RE = re.compile(r"^\\param\[(in|out|in,out)\]\s+(\S+)\s+\S.*$")
@@ -110,6 +114,10 @@ def parse_signature(code_after_comment):
 
   name_match = re.search(r"([A-Za-z_]\w*)\s*$", header)
   if not name_match:
+    return None
+  if name_match.group(1) in C_KEYWORDS:
+    # A control-flow statement (e.g. "for (;;) {") immediately after a
+    # documentary comment on an internal label, not a function signature.
     return None
   return_type = header[: name_match.start()].strip()
   params = split_params(params_str)

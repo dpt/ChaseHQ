@@ -10057,6 +10057,23 @@ dhs_call_handler:
 }
 
 /**
+ * $ADF9: No-op stub used as a null hazard handler
+ *
+ * The Z80 draws hazards through a table of function pointers. When a slot needs
+ * no behaviour, the table entry points to the lone RET at $ADF9. In C this is a
+ * genuinely empty function; the compiler emits no code.
+ *
+ * Conv: The Z80 RET is shared as a call target; in C we give it its own body.
+ *
+ * \param[in] hazard Hazard entry (unused).
+ */
+void no_op(chqstate_t *state, hazard_t *hazard)
+{
+  NOT_USED(state);
+  NOT_USED(hazard);
+}
+
+/**
  * $AECF: draw_hazard_sprites
  *
  * Per-hazard render callback invoked for each depth-sorted draw-list entry
@@ -10394,23 +10411,6 @@ dhs_exit_1:
       draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap,
                                           IYheight); /* tail call */
   }
-}
-
-/**
- * $ADF9: No-op stub used as a null hazard handler
- *
- * The Z80 draws hazards through a table of function pointers. When a slot needs
- * no behaviour, the table entry points to the lone RET at $ADF9. In C this is a
- * genuinely empty function; the compiler emits no code.
- *
- * Conv: The Z80 RET is shared as a call target; in C we give it its own body.
- *
- * \param[in] hazard Hazard entry (unused).
- */
-void no_op(chqstate_t *state, hazard_t *hazard)
-{
-  NOT_USED(state);
-  NOT_USED(hazard);
 }
 
 /**
