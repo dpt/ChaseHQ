@@ -25,37 +25,25 @@ endif()
 set(INCLUDE_DIRS include libraries)
 
 set(SOURCE_FILES
-        apps/sdl3/SDLMain.c
         apps/sdl3/CRTShader.c
         apps/sdl3/CRTShader.h
+        apps/sdl3/SDLMain.c
+        include/ChaseHQ/ChaseHQ.h
         include/ZXSpectrum/Kempston.h
         include/ZXSpectrum/Keyboard.h
         include/ZXSpectrum/Macros.h
         include/ZXSpectrum/Pixels.h
-        include/ZXSpectrum/slopay-chip.h
         include/ZXSpectrum/Spectrum.h
         include/ZXSpectrum/Z80.h
-        include/ChaseHQ/ChaseHQ.h
-        libraries/ZXSpectrum/Kempston.c
-        libraries/ZXSpectrum/Keyboard.c
-        libraries/ZXSpectrum/Screen.c
-        libraries/ZXSpectrum/Screen.h
-        libraries/ZXSpectrum/slopay-chip.c
-        libraries/ZXSpectrum/Spectrum.c
-        libraries/ZXSpectrum/Z80.c
-        libraries/ChaseHQ/Engine/Bank3.c
-        libraries/ChaseHQ/Engine/Bank7.c
-        libraries/ChaseHQ/Engine/Main.c
-        libraries/ChaseHQ/Engine/Create.c
-        libraries/ChaseHQ/Engine/Internal.h
-        libraries/ChaseHQ/Engine/State.h
-        libraries/ChaseHQ/Engine/Tests.h
+        include/ZXSpectrum/slopay-chip.h
+        libraries/ChaseHQ/Data/Bank3Data.c
+        libraries/ChaseHQ/Data/Bank3Data.h
+        libraries/ChaseHQ/Data/Bank7Data.c
+        libraries/ChaseHQ/Data/Bank7Data.h
         libraries/ChaseHQ/Data/CommonData.c
         libraries/ChaseHQ/Data/CommonData.h
         libraries/ChaseHQ/Data/SoundSamples.c
         libraries/ChaseHQ/Data/SoundSamples.h
-        libraries/ChaseHQ/Data/Stages.c
-        libraries/ChaseHQ/Data/Stages.h
         libraries/ChaseHQ/Data/Stage1Data.c
         libraries/ChaseHQ/Data/Stage1Data.h
         libraries/ChaseHQ/Data/Stage2Data.c
@@ -66,14 +54,26 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/Stage4Data.h
         libraries/ChaseHQ/Data/Stage5Data.c
         libraries/ChaseHQ/Data/Stage5Data.h
-        libraries/ChaseHQ/Data/Bank3Data.c
-        libraries/ChaseHQ/Data/Bank3Data.h
-        libraries/ChaseHQ/Data/Bank7Data.c
-        libraries/ChaseHQ/Data/Bank7Data.h
-        libraries/ChaseHQ/Engine/Types.h
+        libraries/ChaseHQ/Data/Stages.c
+        libraries/ChaseHQ/Data/Stages.h
+        libraries/ChaseHQ/Engine/Bank3.c
         libraries/ChaseHQ/Engine/Bank3.h
         libraries/ChaseHQ/Engine/Bank3State.h
-        libraries/ChaseHQ/Engine/Bank7.h)
+        libraries/ChaseHQ/Engine/Bank7.c
+        libraries/ChaseHQ/Engine/Bank7.h
+        libraries/ChaseHQ/Engine/Create.c
+        libraries/ChaseHQ/Engine/Internal.h
+        libraries/ChaseHQ/Engine/Main.c
+        libraries/ChaseHQ/Engine/State.h
+        libraries/ChaseHQ/Engine/Tests.h
+        libraries/ChaseHQ/Engine/Types.h
+        libraries/ZXSpectrum/Kempston.c
+        libraries/ZXSpectrum/Keyboard.c
+        libraries/ZXSpectrum/Screen.c
+        libraries/ZXSpectrum/Screen.h
+        libraries/ZXSpectrum/Spectrum.c
+        libraries/ZXSpectrum/Z80.c
+        libraries/ZXSpectrum/slopay-chip.c)
 
 if(SDL3_FOUND)
   add_executable(ChaseHQ ${SOURCE_FILES})
