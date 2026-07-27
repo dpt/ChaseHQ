@@ -25,7 +25,7 @@ provide a Z80 address instead, locate the C function that covers it.
 
 ### Step 1 — Read the C function
 
-Find and read the function in `C/ChaseHQ/Main.c`. Record:
+Find and read the function in `C/libraries/ChaseHQ/Engine/Main.c`. Record:
 
 - Every local variable declaration, its type (`u8`, `s8`, `int`, `u16*`, …),
   and its `/* was X */` register comment
@@ -116,8 +116,8 @@ The fix is a dedicated name per logical value (e.g. `A_height_diff` vs
 **3. SM field initialisation**
 
 For every `state->X` field accessed by this function that is annotated `(SM)`
-in `ChaseHQ-State.h`: verify it is explicitly initialised in `chq_initialise`
-in `C/ChaseHQ/ChaseHQ-Create.c`.
+in `State.h`: verify it is explicitly initialised in `chq_initialise`
+in `C/libraries/ChaseHQ/Engine/Create.c`.
 
 Zero from `calloc` is not always the correct default. Flag any SM field that
 is read before it could have been written by normal game flow, and is not
@@ -220,6 +220,6 @@ message can carry the detail.
 Read these before auditing if they are not already in context:
 
 - `CLAUDE.md` — variable naming rules, EXX banking convention, SM field policy
-- `C/translation-pitfalls.md` — full catalogue of past bugs with commit hashes
-- `C/ChaseHQ/ChaseHQ-State.h` — `(SM)` field annotations
-- `C/ChaseHQ/ChaseHQ-Create.c` — `chq_initialise` initialisation list
+- `C/docs/translation-pitfalls.md` — full catalogue of past bugs with commit hashes
+- `C/libraries/ChaseHQ/Engine/State.h` — `(SM)` field annotations
+- `C/libraries/ChaseHQ/Engine/Create.c` — `chq_initialise` initialisation list

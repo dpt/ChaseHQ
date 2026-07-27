@@ -3,7 +3,7 @@
 ## Context
 
 The road-lane system encodes lane-count sections and transitions as a
-bit-packed byte (`MAP_LANES_*_VAL` in `C/ChaseHQ/Stages.h`). The two existing
+bit-packed byte (`MAP_LANES_*_VAL` in `C/libraries/ChaseHQ/Data/Stages.h`). The two existing
 3-lane→2-lane narrowing transitions (`3LTO2M`, `3RTO2R`) both drop the
 **leftmost** lane while holding the **right** edge fixed. There is no mirror
 shape that drops the **rightmost** lane while holding the **left** edge

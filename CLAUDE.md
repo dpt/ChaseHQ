@@ -8,13 +8,14 @@ This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by Oc
 
 ## Building
 
-### Stage data converter (root directory)
+### Stage data converter
 
-`convert_stage.py` turns a bank skool file into a C stage data skeleton.
-See `C/docs/convert-stage.md` for full usage, options and what requires
-manual completion afterwards.
+`Speccy/scripts/convert_stage.py` turns a bank skool file into a C stage data
+skeleton. See `C/docs/convert-stage.md` for full usage, options and what
+requires manual completion afterwards. The `convert_stages` CMake target in
+`C/CMakeLists.txt` drives it for stages 2-5.
 
-### Disassembly (root directory)
+### Disassembly (Speccy/ directory)
 ```bash
 make pristine    # Create pristine snapshot
 make skool       # Generate skool file from control file + snapshot
@@ -26,7 +27,9 @@ make commit      # Commit changes back to control file
 ```
 
 ### C implementation (C/ directory)
-CMake is the canonical build system. The `Makefile` references outdated source names and is legacy.
+CMake is the canonical build system. SDL3 is required for the `ChaseHQ` app
+target; configuring without it still builds `ChaseHQ_Tests` and
+`StretchyRenderer`.
 
 ```bash
 # From C/
@@ -57,12 +60,12 @@ Tests live in `C/Tests/` (`UnitTest.c`, `RenderStretchyObject.c`). They are buil
 - `C/include/<Module>/`: public headers (the interface other modules or the app consume) — `C99/Types.h`, `ZXSpectrum/*.h` (all but `Screen.h`), `ChaseHQ/ChaseHQ.h`
 - `C/libraries/<Module>/`: sources and internal-only headers
   - `libraries/ZXSpectrum/`: ZX facade implementation, plus `Screen.h` (internal)
-  - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Bank3.h`, `Bank3State.h`, `Create.c`, `State.h`, `Internal.h`, `Tests.h`, `Types.h`)
-  - `libraries/ChaseHQ/Data/`: read-only stage/sound/title/bank-3 tables (`Stages.*`, `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `TitleScreenData.*`, `Bank3Data.*`)
-- `C/SDLMain.c` and `C/Tests/`: the app entry point and test driver, not modules themselves
+  - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Bank3.h`, `Bank3State.h`, `Bank7.c`, `Bank7.h`, `Create.c`, `State.h`, `Internal.h`, `Tests.h`, `Types.h`)
+  - `libraries/ChaseHQ/Data/`: read-only stage/sound/bank-3/bank-7 tables (`Stages.*`, `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `Bank3Data.*`, `Bank7Data.*`)
+- `C/apps/sdl3/` and `C/Tests/`: the app entry point and test driver, not modules themselves
 
 ### Entry point and lifecycle
-`C/SDLMain.c` owns the SDL window and a dedicated game thread. The runtime lifecycle is:
+`C/apps/sdl3/SDLMain.c` owns the SDL window and a dedicated game thread. The runtime lifecycle is:
 
 ```
 chq_create → chq_setup (blocks via longjmp until quit signal) → chq_stop → chq_destroy
@@ -71,19 +74,19 @@ chq_create → chq_setup (blocks via longjmp until quit signal) → chq_stop →
 `chq_setup()` calls `bootstrap()` which runs the internal game loop via `longjmp` until a quit signal arrives. `chq_main()` is declared in the public API but not wired into the runtime path — it exists for future modular use.
 
 ### Layers
-- **Host** (`C/SDLMain.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
+- **Host** (`C/apps/sdl3/SDLMain.c`): SDL3 window, event loop, `zxconfig_t` callbacks wired to game
 - **ZX emulation facade** (`C/libraries/ZXSpectrum/Spectrum.*`): exposes `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL directly
 - **Game** (`C/libraries/ChaseHQ/Engine/Main.c`): translation-oriented, heavily commented with Z80 addresses (~1194 `$`-prefixed lines); ~17 TODO/stub markers concentrated in SFX and title-screen code
 - **State** (`C/libraries/ChaseHQ/Engine/State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
 - **Stage data** (`C/libraries/ChaseHQ/Data/Stages.h`, `Stage{1-6}Data.*`, `CommonData.*`): read-only game tables consumed by game logic
 
 ### Data flow
-- **Rendering**: game mutates `state->speccy->screen` → ZX facade tracks dirty regions → `draw_handler` in `Main.c` calls `zxspectrum_claim_screen` → SDL texture update
-- **Input**: SDL keys → `zxkeyset_t`/`zxkempston_t` → `key_handler` → Spectrum IN ports (`port_KEYBOARD_*`, `port_KEMPSTON_JOYSTICK`)
+- **Rendering**: game mutates `state->speccy->screen` → ZX facade tracks dirty regions → `chq_draw_handler` in `SDLMain.c` calls `zxspectrum_claim_screen` → SDL texture update
+- **Input**: SDL keys → `zxkeyset_t`/`zxkempston_t` → `chq_key_handler` → Spectrum IN ports (`port_KEYBOARD_*`, `port_KEMPSTON_JOYSTICK`)
 - **Audio/border**: audio hooks (`play_regular_sfx_hook`, `play_engine_sfx_hook`, `play_speech_hook`) are functional with sample-accurate playback. Border colour handling is a TODO.
 
 ### Stage status
-Six per-stage data structs exist (`stage1`–`stage6`), each with its own `.c`/`.h` pair in `C/libraries/ChaseHQ/Data/`. `Stages.c` maps them into the `stages[]` array: index 1 = `stage1`, 2 = `stage2`, 3 = `stage3`, 4 = `stage4`, 5 = `stage5`, 6 = `stage6`, 7 = end-sequence reload (falls back to `stage5`). Per-stage road layouts, objects, and sprites are present for all six stages.
+Six per-stage data structs exist (`stage1`–`stage6`), each with its own `.c`/`.h` pair in `C/libraries/ChaseHQ/Data/`. `Stages.c` maps them into the `stages[]` array: index 1 = `stage1`, 2 = `stage2`, 3 = `stage3`, 4 = `stage4`, 5 = `stage5`, 6 = `stage6`, 7 = end-sequence reload (falls back to `stage5`). Per-stage road layouts, objects, and sprites are present for all six stages. `stage6` is a port-added test level: it is compiled in and mapped only when the `CHQ_ENABLE_TEST_STAGE` CMake option is ON (default OFF).
 
 ## Coding Conventions
 
@@ -175,7 +178,7 @@ greppable: `grep "\[Conv: HQ\]" ChaseHQ/Engine/Main.c`.
 
 ## Verifying translations
 
-When a C translation looks wrong or a variable appears uninitialised, consult the skool file (`ChaseHQ.skool` or the bank files). The skool is the authoritative disassembly. Pay particular attention to:
+When a C translation looks wrong or a variable appears uninitialised, consult the skool file (`Speccy/ChaseHQ-128K.skool` or the `Speccy/ChaseHQ-128K-bank-{1,3,4,6,7}.skool` bank files). The skool is the authoritative disassembly. Pay particular attention to:
 
 - Which register holds what value at each Z80 address — registers are reused and a "was B" comment tells you the register name, not which logical value it held at that moment.
 - `EX AF,AF'` / `EXX` banking: a value banked before a branch may arrive at a label with a different register than you expect. Be especially careful when a shadow register is used as a shuttle (e.g. `EX AF,AF'` passes a value through A' so that the main A can hold something else on the other side of a block). The two sides of the exchange hold logically different values even though both are named `A`.

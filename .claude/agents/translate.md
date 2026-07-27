@@ -164,7 +164,7 @@ BC = BCdash;
   `/* CALL fn ($XXXX) — TODO */` stub.
 
 **I/O ports (`IN`, `OUT`)** — never write raw port reads/writes; map to
-`state->speccy` calls using the port constants from `C/ZXSpectrum/Spectrum.h`:
+`state->speccy` calls using the port constants from `C/include/ZXSpectrum/Spectrum.h`:
 
 | Z80 instruction               | C translation                                                    |
 | ----------------------------- | ---------------------------------------------------------------- |
@@ -228,16 +228,16 @@ restructured for clarity, two-instruction sequence collapsed to one), add:
 
 #### SM field stubs
 
-If any `SM` fields are referenced and do not yet exist in `ChaseHQ-State.h`,
+If any `SM` fields are referenced and do not yet exist in `State.h`,
 emit a block at the end of the translation (inside a comment) listing the fields
 that must be added:
 
 ```c
 /*
- * TODO — add to chqstate_t (ChaseHQ-State.h):
+ * TODO — add to chqstate_t (Engine/State.h):
  *   u8 sm_field_name;   // SM $XXXX reset value: 0xYY
  *
- * TODO — add to chq_initialise (ChaseHQ-Create.c):
+ * TODO — add to chq_initialise (Engine/Create.c):
  *   state->sm_field_name = 0xYY;
  */
 ```
@@ -264,10 +264,10 @@ the code.
 Read these before translating if not already in context:
 
 - `CLAUDE.md` — variable naming rules, EXX banking convention, SM field policy
-- `C/translation-pitfalls.md` — pitfall catalogue with commit hashes
-- `C/ChaseHQ/ChaseHQ-State.h` — existing `(SM)` fields and `chqstate_t` layout
-- `C/ChaseHQ/ChaseHQ-Create.c` — `chq_initialise` initialisation list
-- `C/C99/Types.h` — `u8`, `s8`, `u16`, `s16` typedefs
+- `C/docs/translation-pitfalls.md` — pitfall catalogue with commit hashes
+- `C/libraries/ChaseHQ/Engine/State.h` — existing `(SM)` fields and `chqstate_t` layout
+- `C/libraries/ChaseHQ/Engine/Create.c` — `chq_initialise` initialisation list
+- `C/include/C99/Types.h` — `u8`, `s8`, `u16`, `s16` typedefs
 
 ## Quality bar
 

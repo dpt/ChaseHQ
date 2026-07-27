@@ -67,7 +67,7 @@ make ctl
 This makes it easy to pull your changes back into the main control file by doing:
 
 ``` sh
-cp build/ChaseHQ.ctl ChaseHQ.ctl
+cp build/ChaseHQ-128K.ctl ChaseHQ-128K.ctl
 ```
 
 Or you can diff the two to be more selective in your staging. `make commit` does the same job for the whole set of control files.
