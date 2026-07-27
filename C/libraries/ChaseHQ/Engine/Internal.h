@@ -64,6 +64,13 @@
 #define SUCCESS_MUSIC_TSTATES   (100000) // TODO: Calibrate
 #define END_SCREEN_TSTATES       (60000) // TODO: Calibrate
 
+/* $EF13 pm_wait_for_interrupt: play_music_48k ends by spinning until the next
+ * 50Hz maskable interrupt, so one call is one frame however much of it was
+ * spent bit-banging a drum sample. The C port has no interrupt to spin on, so
+ * the wait becomes a stamp/sleep pair across the whole function. 48K frame
+ * length; the callers are 48K-mode menu loops. */
+#define MUSIC_TICK_48K_TSTATES   (69888)
+
 /* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
  * summed from the skool T-state counts. Covers the three OUT (C),A triplets
  * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole

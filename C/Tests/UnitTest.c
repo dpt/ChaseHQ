@@ -57,9 +57,13 @@ static void fake_stamp(zxspectrum_t *s)
   NOT_USED(s);
 }
 
+/* Counts fake_sleep calls so tests can check a routine paces itself. */
+static int g_sleep_count;
+
 static int fake_sleep(zxspectrum_t *s, int ticks)
 {
   NOT_USED(s); NOT_USED(ticks);
+  g_sleep_count++;
   return 0;
 }
 
@@ -970,6 +974,33 @@ static void test_run_title_tune_starts_and_keeps_playing(void)
   printf("PASS  run_title_tune: all 4 tunes start and keep playing\n");
 }
 
+/*
+ * play_music_48k must sleep exactly once per call, on every path through the
+ * driver. Its callers (redefine_keys_48k, define_a_key) poll the keyboard in
+ * loops that never sleep themselves, so an unpaced tick spins the game thread
+ * flat out -- the "48K music seizes up" symptom. Also acts as a termination
+ * check: the pattern-fetch loop must never spin forever on a given tick.
+ */
+static void test_play_music_48k_paces_every_tick(void)
+{
+  chqstate_t *state;
+  int         tick;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  chq_test_reset_music(state);
+
+  g_sleep_count = 0;
+  for (tick = 0; tick < 500; tick++)
+    chq_test_play_music_48k(state);
+  assert(g_sleep_count == 500);
+
+  chq_destroy(state);
+
+  printf("PASS  play_music_48k: every tick sleeps exactly once\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -993,6 +1024,7 @@ int main(void)
   test_advance_hazards_insert_shift_preserves_records();
   test_show_end_screen_runs_script();
   test_run_title_tune_starts_and_keeps_playing();
+  test_play_music_48k_paces_every_tick();
 
   printf("\nAll tests passed.\n");
   return 0;

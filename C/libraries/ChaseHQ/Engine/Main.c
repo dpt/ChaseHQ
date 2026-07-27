@@ -16891,9 +16891,18 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
  * next pattern. Bytes with bit 6 set carry a one-tick extra delay flag. The
  * lower three bits select the instrument: 0 = silence, 1 = playdrum_2, 2 =
  * playdrum_1, 3 = noise. After dispatch, handles the extra-delay tick and
- * optionally continues drum playback; this represents one already-paced
- * tick, so there is no interrupt left to wait for at the end.
+ * optionally continues drum playback.
  *
+ * Conv: the Z80 ends every path at $EF13 pm_wait_for_interrupt, spinning
+ * until the 50Hz interrupt fires, which is what paces one call to one frame.
+ * The C port has no interrupt to spin on, so the whole function is bracketed
+ * by a stamp/sleep of MUSIC_TICK_48K_TSTATES instead. Without it a tick that
+ * plays no drum costs nothing, and the callers -- which poll the keyboard
+ * around play_music_48k and never sleep themselves -- spin the game thread
+ * flat out with no audio and no frames.
+ *
+ * Conv: a tick that does play a drum has already logged the sample's output
+ * time via playdrum_go, so the sleep below only covers the remainder, if any.
  */
 static void play_music_48k(chqstate_t *state)
 {
@@ -16903,6 +16912,8 @@ static void play_music_48k(chqstate_t *state)
   int       D;            /* copy of adjusted pattern byte; upper bits = pitch param, lower = instrument (was D) */
   int       B_instrument; /* instrument index: lower three bits of D (was B) */
   int       Aparam;       /* pitch/parameter value: upper five bits of D, passed to instrument handler (was A) */
+
+  state->speccy->stamp(state->speccy);
 
   if (state->music.started == 0) {
     state->music.started = 1;
@@ -16933,7 +16944,9 @@ pm_reset_pattern:
 
     //pm_continue_pattern:
     state->music.data_ptr = ++HL;
-    if (++A > NOTE_XDELAY_FLAG) {
+    /* Conv: $EED7 BIT 7,A tests the bit, so the byte $80 itself qualifies;
+     * "> NOTE_XDELAY_FLAG" excluded it. */
+    if (++A & NOTE_XDELAY_FLAG) {
       // A byte of the form 0b1aaaaiii (1 is delay bit)
       A &= ~NOTE_XDELAY_FLAG;
       // EX AF,AF' bank
@@ -16948,9 +16961,9 @@ pm_reset_pattern:
       Aparam = D >> 3; // general parameter
       // TODO: the call-return setup needs analysing here
       switch (B_instrument) {
-      case NOTE_DRUM2_VAL: playdrum_2(state, Aparam); return;
-      case NOTE_DRUM1_VAL: playdrum_1(state, Aparam); return;
-      case NOTE_NOISE_VAL: play_noise(state, Aparam); return;
+      case NOTE_DRUM2_VAL: playdrum_2(state, Aparam); goto pm_wait_for_interrupt;
+      case NOTE_DRUM1_VAL: playdrum_1(state, Aparam); goto pm_wait_for_interrupt;
+      case NOTE_NOISE_VAL: play_noise(state, Aparam); goto pm_wait_for_interrupt;
       }
     }
   }
@@ -16965,10 +16978,10 @@ pm_reset_pattern:
      * with position and length still banked in HL'/D'. Conv: unreachable in
      * C — playdrum_go sees no mid-sample interrupts, always plays to
      * completion and clears drum_active before returning. */
-  } else {
-    /* Conv: was pm_wait_for_interrupt(state) — this function already
-     * represents one paced tick, so there is nothing left to wait for. */
   }
+
+pm_wait_for_interrupt: /* $EF13 */
+  state->speccy->sleep(state->speccy, MUSIC_TICK_48K_TSTATES);
 }
 
 /**
@@ -17877,6 +17890,26 @@ void chq_test_draw_road_lanes_change(chqstate_t *state,
   local_IY = &state->height_table[height_offset];
   draw_road_lanes_change(state, 0 /* fill_pattern */, 0 /* horizon */, 0x0100 /* DEbackbuf */,
                          0xEC /* H_left_hand_table_hi */, 0xFF /* Lrow */, &local_IX, &local_IY);
+}
+
+/**
+ * Test hook: reset the 48K music driver to the start of the pattern list.
+ *
+ * Wraps reset_music ($EE5E).
+ */
+void chq_test_reset_music(chqstate_t *state)
+{
+  reset_music(state);
+}
+
+/**
+ * Test hook: run one tick of the 48K music driver.
+ *
+ * Wraps play_music_48k ($EE9E).
+ */
+void chq_test_play_music_48k(chqstate_t *state)
+{
+  play_music_48k(state);
 }
 
 #endif /* CHQ_TESTS */

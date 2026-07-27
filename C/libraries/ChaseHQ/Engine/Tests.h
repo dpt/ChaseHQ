@@ -87,6 +87,14 @@ void draw_stretchy_object_right(chqstate_t *state, int Bdepth,
  *  entry-time call ($C61B). */
 void chq_test_start_title_tune(chqstate_t *state, u8 A_tune);
 
+/** Reset the 48K music driver to the start of the pattern list
+ *  (reset_music). */
+void chq_test_reset_music(chqstate_t *state);
+
+/** Run one tick of the 48K music driver (play_music_48k). Every tick must
+ *  end in exactly one sleep -- that is what paces the driver's callers. */
+void chq_test_play_music_48k(chqstate_t *state);
+
 /** Run one frame of bank 3's title-music service (run_title_tune):
  *  services the drum/music tick and restarts tune 0 once it finishes. */
 void chq_test_run_title_tune(chqstate_t *state);
