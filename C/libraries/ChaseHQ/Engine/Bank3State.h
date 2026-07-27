@@ -266,9 +266,9 @@ struct chq_bank3_state {
     u8        sample1[104];
     u8        sample2[224];
 
-    // $FA72-$FA74: procedural engine/tyre-noise generator's self-modifying
+    // $FA72-$FA74: drum noise burst generator's self-modifying
     // phase-counter/accumulator state, advanced every call by
-    // procedural_engine_noise ($FA3A).
+    // play_drum_noise_burst ($FA3A).
     u8        noise_phase;
     u8        noise_accum;
     u8        noise_rotate;

@@ -152,9 +152,9 @@ static void check_high_score(chqstate_t *state);
 static void insert_high_score_entry(chqstate_t *state, int row);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 A_tune);
-static void stst_load_sfx_script(chqstate_t *state, u8 A_tune);
+static void load_drum_script(chqstate_t *state, u8 A_tune);
 static const u8 *resolve_drum_script_addr(u16 addr);
-static void ssa_read_opcode(chqstate_t *state, const u8 *HL);
+static void load_drum_op(chqstate_t *state, const u8 *HL);
 static void titlescr_drum_advance(chqstate_t *state);
 static void sfx_music_service(chqstate_t *state);
 static void frame_interrupt_handler(chqstate_t *state);
@@ -166,7 +166,7 @@ static void play_fixed_sample_start(chqstate_t *state,
                                     int         D_length);
 static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data);
 static void finish_sample_playback(chqstate_t *state);
-static void procedural_engine_noise(chqstate_t *state, int E_pitch_param);
+static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param);
 static u8 options_menu_driver(chqstate_t *state);
 static u8 omd_redraw_and_poll(chqstate_t *state);
 static void run_title_tune(chqstate_t *state);
@@ -496,7 +496,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
        * iteration) before falling through to the credit/name-table refresh
        * tail at titlescr_refresh_name_table.
        *
-       * Conv: $C629 calls $F7DB (stst_load_sfx_script), NOT $F7D6
+       * Conv: $C629 calls $F7DB (load_drum_script), NOT $F7D6
        * (titlescr_start_tune's entry point) -- this is a distinct
        * entry point, used only from here, that skips the
        * PUSH AF/CALL $EB9E/POP AF tune-start prologue entirely and jumps
@@ -504,7 +504,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
        * It must NOT call titlescr_start_ay (that would incorrectly arm
        * state->title_music.tune_active). */
 
-      stst_load_sfx_script(state, 4);
+      load_drum_script(state, 4);
 
       B_wait = 180;
       do {
@@ -578,7 +578,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
       check_high_score(state);
 
-      return 1; /* $C67E JP $C59E -- ask the caller to restart */
+      return 1; /* ask the caller to restart */
     }
 
     /* $C681-$C693: "any key" (1/2/3/4/5 row) check -- restarts the title
@@ -593,7 +593,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
     stop_music_and_silence(state);
 
-    return 1; /* $C693 JP $C59E -- ask the caller to restart */
+    return 1; /* ask the caller to restart */
   }
 }
 
@@ -3031,7 +3031,7 @@ static void play_success_music(chqstate_t *state)
  * $F7D6: Start a tune and arm its drum-sample trigger table
  *
  * Plays tune A_tune (via titlescr_start_ay), then falls into
- * stst_load_sfx_script to look up and arm that tune's drum-sample cue
+ * load_drum_script to look up and arm that tune's drum-sample cue
  * script.
  *
  * \param[in] A_tune Tune number to start (was A).
@@ -3039,36 +3039,7 @@ static void play_success_music(chqstate_t *state)
 static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
 {
   titlescr_start_ay(state, A_tune);
-  stst_load_sfx_script(state, A_tune);
-}
-
-/**
- * $F7DB: Look up and arm a tune's drum-sample cue script
- *
- * Looks up a pointer in the table at $FA75 (indexed by A_tune*2) to a
- * per-tune drum-sample cue script, clears the 3 drum-sample "busy" flags at
- * $F837/$F895/$F8A2, then falls into ssa_read_opcode to read that script's
- * first entry.
- *
- * \param[in] A_tune Tune number whose cue script to arm (was A).
- *
- * Conv: this entry point is also called directly (bypassing
- * titlescr_start_tune/titlescr_start_ay) by titlescr_wait_loop's tune-4
- * cue-table setup, matching the Z80's own $C629 CALL $F7DB.
- */
-static void stst_load_sfx_script(chqstate_t *state, u8 A_tune)
-{
-  u16 HLtable; /* $FA75 + tune*2 -- this tune's table entry (was HL) */
-
-  HLtable = 0xFA75 + (u16) (A_tune << 1);
-
-  state->bank3->sfx.sample_active = 0;
-  state->bank3->sfx.slot2_busy    = 0;
-  state->bank3->sfx.slot1_busy    = 0;
-
-  ssa_read_opcode(state,
-                  resolve_drum_script_addr(
-                    wordat(resolve_drum_script_addr(HLtable))));
+  load_drum_script(state, A_tune);
 }
 
 /**
@@ -3095,6 +3066,33 @@ static const u8 *resolve_drum_script_addr(u16 addr)
 }
 
 /**
+ * $F7DB: Look up and arm a tune's drum-sample cue script
+ *
+ * Looks up a pointer in the table at $FA75 (indexed by A_tune*2) to a
+ * per-tune drum-sample cue script, clears the 3 drum-sample "busy" flags at
+ * $F837/$F895/$F8A2, then falls into load_drum_op to read that script's
+ * first entry.
+ *
+ * \param[in] A_tune Tune number whose cue script to arm (was A).
+ *
+ * Conv: this entry point is also called directly (bypassing
+ * titlescr_start_tune/titlescr_start_ay) by titlescr_wait_loop's tune-4
+ * cue-table setup, matching the Z80's own $C629 CALL $F7DB.
+ */
+static void load_drum_script(chqstate_t *state, u8 A_tune)
+{
+  u16 HLtable; /* $FA75 + tune*2 -- this tune's table entry (was HL) */
+
+  HLtable = 0xFA75 + (u16) (A_tune << 1);
+
+  state->bank3->sfx.sample_active = 0;
+  state->bank3->sfx.slot2_busy    = 0;
+  state->bank3->sfx.slot1_busy    = 0;
+
+  load_drum_op(state, resolve_drum_script_addr(wordat(resolve_drum_script_addr(HLtable)))); /* was FALLTHROUGH */
+}
+
+/**
  * $F7FE: Drum-sample cue script byte-code reader
  *
  * Reads opcode bytes starting at HL. $FE ends the script (stops the tune
@@ -3115,13 +3113,13 @@ static const u8 *resolve_drum_script_addr(u16 addr)
  * Conv: $F829's `POP HL / POP HL / DI` is omitted -- those unwind Z80
  * call-stack frames left by the CALL chain that reached this reader
  * (sfx_music_service -> titlescr_drum_advance -> here, or
- * stst_load_sfx_script -> here); this function is an ordinary C call/return,
+ * load_drum_script -> here); this function is an ordinary C call/return,
  * not entered via pushed return addresses that need discarding, and DI has
  * no host equivalent (see setup_im2_interrupt_table's own Conv note).
  */
-static void ssa_read_opcode(chqstate_t *state, const u8 *HL)
+static void load_drum_op(chqstate_t *state, const u8 *HL)
 {
-  u8        A;       /* opcode byte read from the script (was A) */
+  u8        A;        /* opcode byte read from the script (was A) */
   u8        C_offset; /* raw byte offset into the $FAA4 trigger table (was C) */
   const u8 *entry;    /* trigger-table entry: selector + dispatch stream (was HL) */
 
@@ -3141,8 +3139,7 @@ static void ssa_read_opcode(chqstate_t *state, const u8 *HL)
 
     state->bank3->sfx.script_delay = A;
 
-    C_offset = *HL;
-    HL++;
+    C_offset = *HL++;
     state->bank3->sfx.script_ptr = HL;
 
     entry = resolve_drum_script_addr(0xFAA4 + C_offset);
@@ -3158,7 +3155,7 @@ static void ssa_read_opcode(chqstate_t *state, const u8 *HL)
  * $F7F4: Drum-sample cue script re-entry, throttled by script_delay
  *
  * Decrements script_delay and returns early until it reaches 0, then
- * re-enters the script-byte-code reader (ssa_read_opcode) at script_ptr to
+ * re-enters the script-byte-code reader (load_drum_op) at script_ptr to
  * read the next entry.
  *
  * Called by sfx_music_service ($F82F) when the selector stream yields a
@@ -3173,7 +3170,7 @@ static void titlescr_drum_advance(chqstate_t *state)
   if (A_delay != 0)
     return;
 
-  ssa_read_opcode(state, state->bank3->sfx.script_ptr);
+  load_drum_op(state, state->bank3->sfx.script_ptr);
 }
 
 /**
@@ -3274,7 +3271,7 @@ sfx_dispatch_entry:
     return;
   }
   if (--Bselector == 0) {
-    procedural_engine_noise(state, A_pitch_param);
+    play_drum_noise_burst(state, A_pitch_param);
     return;
   }
 
@@ -3453,7 +3450,7 @@ static void finish_sample_playback(chqstate_t *state)
 }
 
 /**
- * $FA3A: Play a procedural engine/tyre noise burst
+ * $FA3A: Play a drum noise burst
  *
  * Drum-sample dispatch selector 3's entry point (see sfx_music_service's
  * prologue).
@@ -3481,14 +3478,14 @@ static void finish_sample_playback(chqstate_t *state)
  * non-zero and that early-exit branch is unreachable here: both loops always
  * run to completion within one call, matching play_noise's own Conv note.
  */
-static void procedural_engine_noise(chqstate_t *state, int E_pitch_param)
+static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
 {
-  zxspectrum_t *speccy;     /* game's ZX Spectrum facade (was N/A) */
-  int           carry;      /* carry from RLC/RRC operations on noise state (carry) */
-  int           Eduration;  /* outer loop count and pulse high/low timing parameter (was E) */
-  int           Dinner;     /* inner loop count: 50 noise steps per tick (was D) */
-  int           Bphase;     /* phase byte read after the +3 advance (was B) */
-  u8            A;          /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
+  zxspectrum_t *speccy;    /* game's ZX Spectrum facade (was N/A) */
+  int           carry;     /* carry from RLC/RRC operations on noise state (carry) */
+  int           Eduration; /* outer loop count and pulse high/low timing parameter (was E) */
+  int           Dinner;    /* inner loop count: 50 noise steps per tick (was D) */
+  int           Bphase;    /* phase byte read after the +3 advance (was B) */
+  u8            A;         /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
 
   speccy    = state->speccy;
   carry     = 0;
