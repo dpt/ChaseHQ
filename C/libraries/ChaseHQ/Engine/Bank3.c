@@ -52,7 +52,10 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define SUCCESS_JINGLE_FRAMES (0xB4) /* success-jingle duration; see play_success_music Conv: */
+/* 180 frames, ~3.6s at 50Hz. This is the Z80's own $C627-$C637 tune-4 wait
+ * count in titlescr_wait_loop; play_success_music borrows it as a heuristic
+ * bound for a loop the Z80 never exits (see its Conv: note). */
+#define ATTRACT_TUNE_WAIT_FRAMES (0xB4)
 
 #define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr, 0, 0)
@@ -62,6 +65,12 @@
 /**
  * Destination address and glyph-table lookup result shared by
  * compute_glyph_blit_params and compute_glyph_blit_params_b ($C8C5, $C94F).
+ *
+ * The address bytes are named H/L but their comments say "(was D)"/"(was E)".
+ * That is not a typo: compute_glyph_geometry builds the address in DE, and the
+ * Z80 hands it over to the blit dispatcher in HL. The field name is the
+ * register the value occupies at the point it is consumed; the "(was X)"
+ * comment is the register it was computed in.
  */
 typedef struct glyph_blit_geometry
 {
@@ -340,11 +349,11 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  * request a restart and this function loops.
  */
 static void run_title_screen(chqstate_t *state)
-{//return; // TEMP
+{
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
-  int       scene_idx;      /* chosen scene table index, 0-4 */
+  int       scene_idx;      /* chosen scene table index, 0-4 (Conv: rolled, no Z80 equivalent) */
   const u8 *HL_scene_table; /* chosen scene table's object-record base (was HL) */
   int       obj;            /* object-record loop index, 0-8 (was B) */
 
@@ -507,7 +516,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
       load_drum_script(state, 4);
 
-      B_wait = 180;
+      B_wait = ATTRACT_TUNE_WAIT_FRAMES;
       do {
         state->speccy->stamp(state->speccy);
         titlescr_music(state);
@@ -744,7 +753,7 @@ static u8 titlescr_animate_frame(chqstate_t *state)
 
   update_whole_playfield(state); /* Conv: added */
 
-  state->speccy->sleep(state->speccy, 220167*57/100); // hacking
+  state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
 
   return 1;
 }
@@ -826,7 +835,7 @@ static u8 object_script_step(chqstate_t *state)
   u8                   A_byte;    /* fetched script byte (was A) */
   s8                   A_x_delta; /* immediate-step X delta (was A) */
   s8                   A_y_delta; /* immediate-step Y delta (was A) */
-  int                  recognized; /* true if rec->opcode is $C9-$CF (was Z
+  int                  recognised; /* true if rec->opcode is $C9-$CF (was Z
                                      * flag out of the $C72E DEC-chain) */
 
   for (obj = 0; obj < 9; obj++) {
@@ -917,7 +926,7 @@ static u8 object_script_step(chqstate_t *state)
       }
 
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
-      recognized = 1;
+      recognised = 1;
       switch (rec->opcode) {
       case OSS_OP_VELOCITY_VAL:  oss_op_velocity(rec);  break;
       case OSS_OP_DECEL_X_VAL:   oss_op_decel_x(rec);   break;
@@ -935,11 +944,11 @@ static u8 object_script_step(chqstate_t *state)
          * never decremented and it can never go idle again. A genuine
          * original-game quirk, faithfully reproduced -- not a bug in
          * this port. */
-        recognized = 0;
+        recognised = 0;
         break;
       }
 
-      if (recognized)
+      if (recognised)
         /* $C731-$C737 oss_countdown: tick the wait counter; go idle (so the
          * next frame re-fetches) once it reaches 0. */
         if (--rec->wait == 0)
@@ -1234,7 +1243,7 @@ static void compute_glyph_blit_params(chqstate_t *state,
                                       u8          C_x,
                                       u8          L_row)
 {
-  glyph_blit_geometry_t g;
+  glyph_blit_geometry_t g;            /* destination address and glyph lookup, filled below (was D/E/HL/B/C/Carry/A') */
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
 
   compute_glyph_geometry(B_y, C_x, L_row, &g);
@@ -1282,13 +1291,13 @@ static void compute_glyph_geometry(u8                     B_y,
                                    glyph_blit_geometry_t *out)
 {
   u8                   B_clamped;     /* Y, clamped to a maximum of $6F (was B) */
+  u8                   B_screen_rows; /* $AF - B_clamped, reused as the mask-merge operand (was B) */
   u8                   A;             /* working accumulator (was A) */
   int                  carry;         /* Z80 carry flag, used by the RR/RLC macros */
-  u8                   B_screen_rows; /* $AF - B_clamped, reused as the mask-merge operand (was B) */
   u8                   D;             /* destination screen address high byte (was D) */
   u8                   E;             /* destination screen address low byte (was E) */
   int                  glyph_index;   /* index into title_glyph_table (was BC, table offset / 4) */
-  const title_glyph_t *glyph;
+  const title_glyph_t *glyph;         /* looked-up glyph-table entry (was the HL read chain at $C8F5) */
 
   if (B_y < 0x70) {
     B_clamped           = B_y;
@@ -1387,7 +1396,7 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
                                         u8          C_x,
                                         u8          L_row)
 {
-  glyph_blit_geometry_t g;
+  glyph_blit_geometry_t g;            /* destination address and glyph lookup, filled below (was D/E/HL/B/C/Carry/A') */
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
   u8                    E_stride;     /* per-row-pair source advance, bytes (was E) */
 
@@ -1496,9 +1505,9 @@ static void blit_glyph_rows(chqstate_t *state,
                             int         row_bytes)
 {
   u8 *dst;  /* current scanline's destination byte(s) (was HL) */
-  int row;  /* 0 or 1: which scanline of the current row-pair */
-  int i;    /* byte offset within the current scanline */
-  int addr; /* destination Z80 screen address for this scanline */
+  int row;  /* 0 or 1: which scanline of the current row-pair (Conv: rolled, no Z80 equivalent) */
+  int i;    /* byte offset within the current scanline (Conv: rolled, no Z80 equivalent) */
+  int addr; /* destination Z80 screen address for this scanline (Conv: added, for the bounds check below) */
 
   do {
     for (row = 0; row < 2; row++) {
@@ -2325,8 +2334,8 @@ static void advance_channel_pattern(chqstate_t           *state,
   u8        A_note;     /* raw note value + transpose, before storing to note_index (was A) */
   const u8 *HL_ptr;     /* scratch pointer, reused for the pitch-offset then envelope-shape reset (was HL) */
   u8        A_env_byte; /* envelope shape byte read at note time (was A) */
-  u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
   u8        A_operand;  /* second operand byte of a 2-operand pattern command (was A) */
+  u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
 
   if (IX_channel->pattern_ptr == NULL)
     return; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
@@ -2590,10 +2599,10 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   u8         A_vib_phase;       /* vibrato triangle-wave phase counter (was A, IX+$1C) */
   s16        DEvib_offset;      /* signed, scaled vibrato pitch offset (was DE) */
   u16        A_shift_test;      /* shift-loop overflow accumulator (was A, tested via carry) */
+  u8         A_status_new;      /* status with bit 0 toggled; stored back and re-tested in phase 5 (was A) */
   u8         B_slide_countdown; /* portamento reload countdown (was B, IX+$0E) */
   s8         C_slide_step;      /* signed per-tick portamento step (was C, IX+$0D) */
   u16        HL_slide_accum;    /* accumulated portamento/slide value (was HL, IX+$07/$08) */
-  u8         A_status_new;      /* status with bit 0 toggled; stored back and re-tested in phase 5 (was A) */
   u8         A_mixer_test;      /* ~status & 3; nonzero except every 4th call (was A) */
   u8         A_shared;          /* shared driver byte, XORed and forwarded (was A, $EC79) */
   u8         A_mixer_val;       /* value merged into the shared mixer cache (was A) */
@@ -3001,9 +3010,10 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * own caller's phase4 state machine) expects a normal return so scoring and
  * fading can proceed on the same call — an infinite loop here would
  * permanently hang the game thread. Per explicit scope decision, the Z80's
- * unconditional loop is quantised into a bounded run of SUCCESS_JINGLE_FRAMES
- * frames (reusing the same 0xB4/180-frame, ~3.6s heuristic already used for
- * the tune-4 wait in titlescr_wait_loop) and then returns normally. The frame
+ * unconditional loop is quantised into a bounded run of
+ * ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count the
+ * Z80 uses for the tune-4 wait in titlescr_wait_loop) and then returns
+ * normally. The frame
  * count is a guess at the jingle's real duration; TODO: tune by ear once
  * pattern data exists to actually hear it.
  */
@@ -3014,7 +3024,7 @@ static void play_success_music(chqstate_t *state)
   setup_im2_interrupt_table(state);
   titlescr_start_tune(state, 1);
 
-  B_wait = SUCCESS_JINGLE_FRAMES;
+  B_wait = ATTRACT_TUNE_WAIT_FRAMES;
   do {
     state->speccy->stamp(state->speccy);
     titlescr_music(state);
@@ -3206,6 +3216,16 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
  * so there is nothing left to wait for). play_sample_row's own mid-sample
  * yield check uses a local per-call T-state budget instead of $F8A8, which
  * needs no explicit clear -- see its Conv note.
+ *
+ * Conv: this function uses goto/labels rather than nested structured loops.
+ * The four labels are genuine Z80 jump targets, each reached from more than
+ * one site: sfx1_reload_pointer ($F85D) from the idle-arm path ($F83F) and
+ * from the stream loop's own back-edge; drum_read_stream_byte ($F855) by
+ * fallthrough from $F85D and from $F863; drum_dispatch_entry ($F866) from
+ * $F857; and sfx2_tick_countdown ($F894) from three places -- the countdown
+ * skip ($F84A), the nothing-to-trigger exit ($F87E) and fallthrough. A
+ * structured rewrite would have to duplicate the tick-countdown tail at each
+ * of those three exits, or introduce flag variables the Z80 does not have.
  */
 static void titlescr_music(chqstate_t *state)
 {
@@ -3431,10 +3451,10 @@ static void play_fixed_sample_start(chqstate_t *state,
 static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
 {
   zxspectrum_t *speccy;      /* game's ZX Spectrum facade (was N/A) */
-  int           carry;       /* carry from the RLC rotation, unused after (carry) */
   int           frame_tstates; /* bit-bang T-states spent so far this call (was N/A) */
   int           i;           /* inner loop counter: row-bit-count from sample_pitch_param (was B) */
   int           bits;        /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+  int           carry;       /* carry from the RLC rotation, unused after (carry) */
 
   speccy        = state->speccy;
   frame_tstates = 0;
@@ -3739,9 +3759,9 @@ static void run_title_tune(chqstate_t *state)
  */
 static u8 detect_kempston_joystick(chqstate_t *state)
 {
-  int B_count;    /* sample loop countdown, 20 iterations (was B) */
-  u8  C_baseline; /* first Kempston sample (was C) */
   u8  A_sample;   /* current Kempston sample (was A) */
+  u8  C_baseline; /* first Kempston sample (was C) */
+  int B_count;    /* sample loop countdown, 20 iterations (was B) */
 
   A_sample   = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
   C_baseline = A_sample;
@@ -3824,12 +3844,12 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   u8         L_attr;       /* attribute address low byte; advances one per column (was L) */
   const u8  *HLshape;      /* metric/shape-byte stream cursor (was HL) */
   u8         A_metric;     /* current column's metric byte, bits 0-6 (was A) */
-  u8         A_terminator; /* bit 7 of the metric byte: terminates the outer loop (was flags) */
   u8         A_diff;       /* metric - $20; classification input (was A) */
   u8         C_class;      /* width-class index (was C) */
   const u8  *HLfont;       /* pointer to this glyph's 7-byte font[] entry (was HL) */
   u8        *DEscreen;     /* pixel destination for this glyph (was DE) */
   int        row;          /* row loop counter; no Z80 equivalent (Conv: rolled) */
+  u8         A_terminator; /* bit 7 of the metric byte: terminates the outer loop (was flags) */
 
   C_byte0     = *HL_record;
   C_colour    = C_byte0 & 0x7F;
@@ -4055,13 +4075,13 @@ static void redefine_keys_screen(chqstate_t *state)
  */
 static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
 {
-  int carry;          /* carry from SRL/RLC operations (carry) */
   u8  D_key_code;     /* sentinel 0xFF at entry; row-found flag/result (was D) */
   int E_row_value;    /* row's contribution to the packed code, decremented per row (was E) */
   u8  B_port_hi;      /* high byte of keyboard IN port; rotated through all eight rows (was B) */
   u8  A_pressed_mask; /* active key bits for the current row: inverted, masked to 5 bits (was A) */
   u8  H_bits;         /* copy of A_pressed_mask, shifted right to find the set bit (was H) */
   u8  A_code;         /* row/bit code accumulator, decremented by 8 per shift (was A) */
+  int carry;          /* carry from SRL/RLC operations (carry) */
 
   D_key_code  = 0xFF; /* $FF0C LD DE,$FF2F: D half */
   E_row_value = 0x2F; /* $FF0C LD DE,$FF2F: E half */

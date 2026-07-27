@@ -59,6 +59,10 @@
 #define PREGAME_TSTATES         (288192)
 #define ESCAPE_SCENE_TSTATES    (283239)
 #define TITLE_MUSIC_TSTATES     (100000) // TODO: Calibrate
+/* Paces titlescr_animate_frame's object-animation loop. Hand-tuned by eye
+ * against the original rather than derived from a frame length, hence the
+ * odd 57% scaling of the base figure. TODO: Calibrate properly. */
+#define TITLE_ANIM_TSTATES      (220167 * 57 / 100)
 #define KEMPSTON_MUSIC_TSTATES  (100000) // TODO: Calibrate
 #define OMD_MUSIC_TSTATES       (100000) // TODO: Calibrate
 #define SUCCESS_MUSIC_TSTATES   (100000) // TODO: Calibrate
