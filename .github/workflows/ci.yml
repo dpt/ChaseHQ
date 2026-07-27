@@ -1,10 +1,21 @@
 on:
   push:
     branches: develop
+    paths:
+      - 'Speccy/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: develop
+    paths:
+      - 'Speccy/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Speccy
     strategy:
       fail-fast: false
     steps:

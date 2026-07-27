@@ -1,0 +1,35 @@
+on:
+  push:
+    branches: develop
+    paths:
+      - 'C/**'
+      - '.github/workflows/c.yml'
+  pull_request:
+    branches: develop
+    paths:
+      - 'C/**'
+      - '.github/workflows/c.yml'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: C
+    steps:
+    - uses: actions/checkout@v4
+
+    # ponytail: CMakeLists requires cmake >= 4.1; ubuntu-latest ships 3.x.
+    - name: Install CMake
+      run: pip install 'cmake>=4.1'
+
+    - name: Configure
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+
+    # ponytail: ChaseHQ_Tests links no SDL3, so no SDL install needed here.
+    # Add the full ChaseHQ target once SDL3 is packaged on the runner.
+    - name: Build tests
+      run: cmake --build build --target ChaseHQ_Tests
+
+    - name: Run tests
+      run: ./build/ChaseHQ_Tests
