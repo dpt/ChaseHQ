@@ -14,7 +14,13 @@ add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
 
-find_package(SDL3 REQUIRED)
+# ponytail: SDL3 is only needed by the ChaseHQ app target. Configuring
+# without it still gets you ChaseHQ_Tests and StretchyRenderer, which is all
+# CI builds.
+find_package(SDL3 QUIET)
+if(NOT SDL3_FOUND)
+  message(STATUS "SDL3 not found - skipping the ChaseHQ app target")
+endif()
 
 set(INCLUDE_DIRS include libraries)
 
@@ -69,17 +75,19 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Engine/Bank3State.h
         libraries/ChaseHQ/Engine/Bank7.h)
 
-add_executable(ChaseHQ ${SOURCE_FILES})
-target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
-target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
-if(CHQ_ENABLE_TEST_STAGE)
-  target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
-  target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
-endif()
-target_link_libraries(ChaseHQ SDL3::SDL3)
-if(APPLE)
-  target_link_libraries(ChaseHQ "-framework CoreFoundation")
-  target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
+if(SDL3_FOUND)
+  add_executable(ChaseHQ ${SOURCE_FILES})
+  target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
+  target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
+  if(CHQ_ENABLE_TEST_STAGE)
+    target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
+  endif()
+  target_link_libraries(ChaseHQ SDL3::SDL3)
+  if(APPLE)
+    target_link_libraries(ChaseHQ "-framework CoreFoundation")
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
+  endif()
 endif()
 
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
