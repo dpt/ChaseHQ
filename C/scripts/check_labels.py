@@ -12,6 +12,7 @@ Check-only by default; --fix rewrites the stale label= values in place. It
 touches the @label lines only -- prose mentions of the old name elsewhere in
 the control file still need reviewing by hand.
 """
+
 import os
 import re
 import sys
