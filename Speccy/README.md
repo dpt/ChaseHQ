@@ -22,74 +22,78 @@ Only the 128K (`ChaseHQ-128K.ctl`) version is under active disassembly. There is
 
 ## How To Disassemble
 
-- Install SkoolKit:
+1. Install SkoolKit:
 
-``` sh
-pip3 install skoolkit
-```
+   ``` sh
+   pip3 install skoolkit
+   ```
 
-- Download and convert the game into a .z80 format snapshot:
+2. Download the game and convert it into a .z80 snapshot:
 
-``` sh
-make pristine
-```
+   ``` sh
+   make pristine
+   ```
 
-You'll see:
+   You'll see:
 
-```
-Downloading https://worldofspectrum.net/pub/sinclair/games/c/ChaseH.Q..tzx.zip
-Extracting Chase HQ - Side 1.tzx
-Program: CHASE HQ
-Fast loading data block: 23755,3870
-Data (514 bytes)
-Data (6914 bytes)
-Data (19074 bytes)
-Data (16130 bytes)
-Data (4 bytes)
-Data (6898 bytes)
-Tape finished
-Simulation stopped (PC at start address): PC=23372
-Writing chase-hq.z80
-```
+   ```
+   Downloading https://worldofspectrum.net/pub/sinclair/games/c/ChaseH.Q..tzx.zip
+   Extracting Chase HQ - Side 1.tzx
+   Program: CHASE HQ
+   Fast loading data block: 23755,3870
+   Data (514 bytes)
+   Data (6914 bytes)
+   Data (19074 bytes)
+   Data (16130 bytes)
+   Data (4 bytes)
+   Data (6898 bytes)
+   Tape finished
+   Simulation stopped (PC at start address): PC=23372
+   Writing chase-hq.z80
+   ```
 
-Build a skool file like so:
+3. Build a skool file:
 
-``` sh
-make skool
-```
+   ``` sh
+   make skool
+   ```
 
-A skool file is a high-level assembly listing from which we can generate regular assembly listings, or HTML cross-referenced disassemblies. Generated files are put in a directory called 'build' by default. You can edit the skool file and turn it back into another control file like so:
+   A skool file is a high-level assembly listing. From it, SkoolKit can generate a regular assembly listing or an HTML cross-referenced disassembly. Generated files go into a `build` directory by default.
+
+4. Build an assembly listing:
+
+   ``` sh
+   make asm
+   ```
+
+   I usually keep the control, skool and assembly files open together, so I can check the effect of each change:
+   ![Using MacVim to edit the sources](./static-images/editing-in-macvim.png)
+
+5. Build a TAP or Z80 file, for loading into emulators or real Spectrums:
+
+   ``` sh
+   make tap  # or: make z80
+   ```
+
+`make usage` lists every target.
+
+### Editing the control file
+
+The control file drives everything else, so most of the real work is editing it and regenerating the skool file to check the result. The more detailed the control file gets, the better the explanation of the game.
+
+You can edit the skool file directly and turn it back into a control file:
 
 ``` sh
 make ctl
 ```
 
-This makes it easy to pull your changes back into the main control file by doing:
+Then pull your changes back into the main control file:
 
 ``` sh
 cp build/ChaseHQ-128K.ctl ChaseHQ-128K.ctl
 ```
 
-Or you can diff the two to be more selective in your staging. `make commit` does the same job for the whole set of control files.
-
-The more detailed the control file gets the better our explanation of the game is!
-
-Build an assembly listing like so:
-
-``` sh
-make asm
-```
-
-I usually edit with the control, skool and assembly files all open so I can check the impact of my changes:
-![Using MacVim to edit the sources](./static-images/editing-in-macvim.png)
-
-Build a tap or z80 file for loading into emulators or real Spectrums like so:
-
-``` sh
-make tap  # or z80
-```
-
-`make usage` lists every target.
+Or diff the two files to be more selective about what you keep. `make commit` does the same job for the whole set of control files at once.
 
 ## How do we determine how the game works?
 
@@ -110,28 +114,28 @@ See https://youtu.be/ZcoFi4T4tsU for a short video of me running the game in Spe
 
 ## POKEs
 
-If you're not interested in the workings of the game but just playing it then a nice byproduct is POKEs to make the game easier, harder, or just different:
+If you are not interested in how the game works and just want to play it, here are some POKEs to make the game easier, harder or just different:
 
-* Infinite Credits  
+- Infinite Credits  
 `POKE 39998,166`
 
-* Infinite Time  
+- Infinite Time  
 `POKE 39937,0`
 
-* 1 Hit To Capture  
+- 1 Hit To Capture  
 `POKE 46351,62`
 
-* Infinite Turbos  
+- Infinite Turbos  
 `POKE 45221,0`
 
-* Affect Car Spawn Rate  
+- Affect Car Spawn Rate  
 `POKE 23834,`&lt;spawn rate&gt;  -- `20` is the default for Stage 1. `10` would spawn twice as often.  
 
-* Set Level Colour  
+- Set Level Colour  
 `POKE 23796,`&lt;attribute byte&gt;  -- `112` is black on yellow, as for Stage 1. `96` would give black on green.  
 `POKE 23797,`&lt;attribute byte&gt;
 
-* Increase Maximum Speed
+- Increase Maximum Speed
 The word at 45461 sets the non-boosted maximum speed. The default internal value is 360 (which gives a max speed readout of 294). So you could try 450:
 
 `POKE 45461,194`
@@ -144,5 +148,5 @@ To restore the default of 360:
 
 (Turbo speed is 695).
 
-* Wider Roads (although they lean leftwards...)
+- Wider Roads (although they lean leftwards...)
 `POKE 52382,169`  -- `217` is the default. `237` would give thin roads.

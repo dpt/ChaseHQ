@@ -6,7 +6,7 @@ Reimplementation by David Thomas, 2023-2026
   <img src="./static-images/move-we-must.png" alt="Recreated Chase H.Q."/>
 </p>
 
-This directory holds mostly hand-written, human-readable C reimplementation of the ZX Spectrum _Chase H.Q._ game engine. It's not a decompiler dump - it's intended to be read and learned from. Every function is translated from the [SkoolKit disassembly](../Speccy/README.md), with the original Z80 addresses kept in the comments so the two can be read side by side, compared (... debugged).
+This directory holds a mostly hand-written, human-readable C reimplementation of the ZX Spectrum _Chase H.Q._ game engine. It's not a decompiler dump - it's intended to be read and learned from. Every function is translated from the [SkoolKit disassembly](../Speccy/README.md), with the original Z80 addresses kept in the comments so the two can be read side by side, compared (... debugged).
 
 See the [sister project README](../Speccy/README.md) for the disassembly this is derived from.
 
@@ -52,7 +52,7 @@ cmake --build cmake-build-debug --target format
 
 ## How the translation is written
 
-The C is a model of a Z80 program, written to be read. Locals are named after the register that held the value (`A_prev_height`, `HLbackdrop`, `DEscr` – I've not been very consistent -- sorry), declared at the top of scope in order of first use, each with a `/* intent (was X) */` comment. `EXX` and `EX AF,AF'` banking is modelled explicitly because that gets _very_ confusing quickly. Deliberate departures from a literal translation are marked `// Conv:`.
+The C is a model of a Z80 program, written to be read. Locals are named after the register that held the value (`A_prev_height`, `HLbackdrop`, `DEscr` - naming is not always consistent), declared at the top of scope in order of first use, each with a `/* intent (was X) */` comment. `EXX` and `EX AF,AF'` banking is modelled explicitly, because that gets confusing quickly otherwise. Deliberate departures from a literal translation are marked `// Conv:`.
 
 `docs/translation-principles.md` and `docs/translation-pitfalls.md` cover this in detail, and `docs/function_comment_template_example.c` is a worked example of what a finished function might look like.
 

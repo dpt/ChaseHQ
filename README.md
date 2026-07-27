@@ -16,7 +16,7 @@ The current disassembly output is [available here](https://dpt.github.io/ChaseHQ
 
 ## [`C/`](C/README.md) — the rebuild
 
-A mostly hand-written, human-readable C reimplementation of the game engine, translated function by function from the disassembly and keeping the original game's Z80 addresses in the comments. It builds with CMake and runs on SDL3 and plays through all five stages.
+A mostly hand-written, human-readable C reimplementation of the game engine, translated function by function from the disassembly and keeping the original game's Z80 addresses in the comments. It builds with CMake, links against SDL3 and plays through all five stages.
 
 The two feed each other: the disassembly explains the game, the C port proves the explanation is right. They get out of sync sometimes.
 
