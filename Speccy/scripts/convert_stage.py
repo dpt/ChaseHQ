@@ -1937,7 +1937,11 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             all_lines.append("")
             goto_map.update(gm)
             nm = array_name(stage, sec.stype, sec.start_addr)
-            fwd_decls.append(f"static const u8 {nm}[];")
+            # The macros re-encode the section's bytes one-for-one, so the C
+            # array length is the section's byte span. Size the declaration:
+            # C90 forbids a tentative definition with internal linkage and an
+            # incomplete type.
+            fwd_decls.append(f"static const u8 {nm}[{len(sec.bytes_flat)}];")
 
         elif sec.stype == "backdrop":
             fwd_decls.append("// backdrop declared inline in stage struct")

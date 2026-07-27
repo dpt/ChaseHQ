@@ -32,12 +32,12 @@ static const hittable_t stage6_hittable_objects[2];
 static const obj_t stage6_right_hand_objects[7];
 static const obj_t stage6_left_hand_objects[7];
 
-static const u8 curvature[];
-static const u8 height[];
-static const u8 lanes[];
-static const u8 hazards[];
-static const u8 leftside[];
-static const u8 rightside[];
+static const u8 curvature[20];
+static const u8 height[8];
+static const u8 lanes[24];
+static const u8 hazards[10];
+static const u8 leftside[5];
+static const u8 rightside[5];
 
 static const u8 stage6_perp_face[180];
 static const bitmap_t stage6_veh3[6];
