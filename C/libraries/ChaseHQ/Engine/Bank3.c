@@ -78,7 +78,7 @@ glyph_blit_geometry_t;
 
 static void run_title_screen(chqstate_t *state);
 static u8 titlescr_wait_loop(chqstate_t *state);
-static void titlescr_coin_inserted(chqstate_t *state);
+static void titlescr_credit_inserted(chqstate_t *state);
 static void titlescr_refresh_name_table(chqstate_t *state);
 static u8   titlescr_animate_frame(chqstate_t *state);
 static u8   object_script_step(chqstate_t *state);
@@ -190,7 +190,7 @@ static u16 advance_key_label_column(u16 DE_screen);
  * the overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and
  * "PRESS GEAR TO PLAY" once controls have been selected), starts tune 0, then
  * falls into the attract-mode wait loop (titlescr_wait_loop) which animates the
- * scene each frame while polling for coin/fire/keyboard input to start a
+ * scene each frame while polling for credit/fire/keyboard input to start a
  * game. Called from $C000 and $FBC8.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
@@ -207,9 +207,9 @@ static u16 advance_key_label_column(u16 DE_screen);
  *
  * Conv: despite the above, this function is *not* guaranteed to loop
  * forever even today -- titlescr_wait_loop has two genuine RET paths of its own
- * (the initial tune-4-and-180-frame-wait tail, and the coin-inserted tail),
+ * (the initial tune-4-and-180-frame-wait tail, and the credit-inserted tail),
  * both of which fall out of this function normally via a plain C `return`.
- * Only the ordinary polling path (no coin, no key) is unbounded.
+ * Only the ordinary polling path (no credit, no key) is unbounded.
  *
  * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain
  * jumps -- they do not grow the Z80 stack. Calling run_title_screen
@@ -315,7 +315,7 @@ static void run_title_screen(chqstate_t *state)
  * $C61E: Title-screen attract-mode wait loop
  *
  * Services sound (sfx_music_service, the per-frame sound/music tick) and
- * polls for coin-insert / fire / any-key input to start the game or jump to
+ * polls for credit-insert / fire / any-key input to start the game or jump to
  * a fresh title screen. Does NOT animate the scene -- on real hardware this
  * loop body is just `CALL $F82F` with no call to $C6C4; by the time this
  * loop is reached, run_title_screen's own per-frame loop has already run
@@ -345,7 +345,7 @@ static void run_title_screen(chqstate_t *state)
  * skool's prose.
  *
  * \return 0 if this call ended via a genuine Z80 RET (the tune-4-wait tail
- * or the coin-inserted tail) -- the caller should stop, matching the real
+ * or the credit-inserted tail) -- the caller should stop, matching the real
  * control flow back to title_screen_driver's own caller. Non-zero if the
  * Z80 would have done `JP $C59E` to restart the title screen -- the caller
  * should re-run its own setup and call this again, rather than this
@@ -356,8 +356,8 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 {
   int B_wait;       /* tune-4 wait countdown, 180 frames (was B) */
   u8  A_fire;       /* ENTER/L/K/J/H half-row, tested for fire (was A) */
-  u8  A_coin_mode;  /* controls_selected read as a coin-op mode flag (was A) */
-  u8  A_coin_input; /* coin-slot input, read via keyscan (was A) */
+  u8  A_credit_mode;  /* controls_selected read as a credit mode flag (was A) */
+  u8  A_credit_input; /* credit-slot input, read via keyscan (was A) */
   u8  A_test_mode;  /* test_mode flag (was A) */
   u8  A_key6;       /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
   u8  A_anykey;     /* 1/2/3/4/5 half-row, tested for any key (was A) */
@@ -373,7 +373,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
     if (!state->bank3->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
-       * iteration) before falling through to the coin/name-table refresh
+       * iteration) before falling through to the credit/name-table refresh
        * tail at titlescr_refresh_name_table.
        *
        * Conv: $C629 calls $F7DB (stst_load_sfx_script), NOT $F7D6
@@ -412,24 +412,21 @@ static u8 titlescr_wait_loop(chqstate_t *state)
         * run_title_screen" return contract, so the value passes straight
         * through. */
 
-    /* $C641-$C64C: coin-op mode / coin-slot check. Conv: $8001 is the same
+    /* $C641-$C64C: credit mode / credit-slot check. Conv: $8001 is the same
      * address as state->controls_selected; the skool's prose calls it a
-     * "coin-op mode" flag here, which may be genuine double duty (arcade
-     * coin-op configuration doubling as "controls selected") or just loose
+     * "credit mode" flag here, which may be genuine double duty (arcade
+     * credit configuration doubling as "controls selected") or just loose
      * wording -- either way this reuses the existing field rather than
      * inventing a second one. */
-    A_coin_mode = state->controls_selected;
-    if (A_coin_mode) {
-      /* Conv: $800E is not itself code -- skoolkit's control file mis-
-       * classifies $8008-$8013 as an "unused" data block, but $800E-$8010
-       * hold the bytes $C3,$D6,$A0, i.e. a disguised `JP $A0D6` (keyscan).
-       * CALL $800E therefore behaves exactly like `CALL $A0D6`; translate it
-       * as a direct call to the already-ported keyscan(). Bit 4
-       * (USERINPUTFLAG_FIRE) is the coin-insert key, matching the "confirm"
-       * bit used the same way by $800E's other caller, name_entry_input. */
-      A_coin_input = keyscan(state);
-      if (A_coin_input & USERINPUTFLAG_FIRE) {
-        titlescr_coin_inserted(state);
+    A_credit_mode = state->controls_selected;
+    if (A_credit_mode) {
+      /* Conv: $800E is CALL $A0D6 (keyscan) in disguise -- see the skool's
+       * $8008 entry. Bit 4 (USERINPUTFLAG_FIRE) is the credit-insert key,
+       * matching the "confirm" bit used the same way by $800E's other
+       * caller, name_entry_input. */
+      A_credit_input = keyscan(state);
+      if (A_credit_input & USERINPUTFLAG_FIRE) {
+        titlescr_credit_inserted(state);
         return 0;
       }
     }
@@ -485,7 +482,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 }
 
 /**
- * $C696: Coin-inserted entry point
+ * $C696: Credit-inserted entry point
  *
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
  * into the shared name-table refresh tail at titlescr_refresh_name_table.
@@ -493,7 +490,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
  * Conv: the $8011 push is a stack marker discarded by the shared tail's
  * `POP AF` ($C6C2) -- it has no other effect and is not modelled.
  */
-static void titlescr_coin_inserted(chqstate_t *state)
+static void titlescr_credit_inserted(chqstate_t *state)
 {
   titlescr_refresh_name_table(state); /* $C696-$C69A fallthrough */
 }
@@ -508,7 +505,7 @@ static void titlescr_coin_inserted(chqstate_t *state)
  * Conv: stubbed per scope decision -- nothing in the C port yet models the
  * destination buffer or a $800A-equivalent state field, and this task's
  * State.h changes are handled separately. Reached both directly from
- * titlescr_wait_loop's ~180-frame tune wait and via titlescr_coin_inserted; in the Z80
+ * titlescr_wait_loop's ~180-frame tune wait and via titlescr_credit_inserted; in the Z80
  * both paths end in a RET back to run_title_screen's own caller, which
  * this function models simply by returning normally.
  */
@@ -3467,7 +3464,7 @@ static u8 options_menu_driver(chqstate_t *state)
  *
  * Conv: $FBAE-$FBB3 (`LD A,$F7` / `IN A,($FE)` / `CPL` / `AND $1F`)
  * collapses to a single inverted, masked port_KEYBOARD_12345 read (same
- * collapse as titlescr_wait_loop's fire/coin/anykey checks).
+ * collapse as titlescr_wait_loop's fire/credit/anykey checks).
  *
  * Conv: $FBB7-$FBC1 (four `RRA` / `JR C` pairs testing bits 0-3 of the
  * 5-bit mask in turn) collapse to direct bit tests against A_key_mask; key
