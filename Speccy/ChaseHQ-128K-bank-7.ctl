@@ -1724,11 +1724,11 @@ C $E017,1 $A16F C is zero
 C $E019,2 $A170
 C $E01C,2 $A171
 C $E01E,3 Call bank7_setup_interrupts
-C $E021,3 Call play_turbo_sfx_128k
+C $E021,3 Call reset_music (relocated copy of bank7_reset_music, #R$F7EF, copied here by the LDIR above)
 C $E024,1 Enable interrupts
 C $E025,1 Wait for an interrupt
 @ $E026 label=es_loop
-C $E026,3 Call (two bytes earlier than) play_speech_128k
+C $E026,3 Call play_music_48k (relocated copy of b7_play_music_48k, #R$F82F)
 C $E029,4 Decrement $A170
 C $E02D,3 Call run_script
 C $E030,3 Call <self modified>
