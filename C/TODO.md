@@ -4,7 +4,6 @@
 
 - Perp collides with other hazard making them vanish? Seems different.
 - Perp car in wrong place when caught? Original bug?
-- FIXED: 48k music routine seizes up — `play_music_48k` dropped `$EF13` pm_wait_for_interrupt, so a tick that played no drum cost no time and its caller loops (`redefine_keys_48k`, `define_a_key`), which never sleep themselves, spun the game thread flat out. Now stamp/sleep `MUSIC_TICK_48K_TSTATES` across the whole function. Needs audible confirmation; `MUSIC_TICK_48K_TSTATES` is an uncalibrated 48K frame.
 - Title screen
   - title screen doesn't stop and yield to attract mode
   - music still not right (e.g. playing things twice or more over before stopping)
