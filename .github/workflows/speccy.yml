@@ -3,12 +3,12 @@ on:
     branches: develop
     paths:
       - 'Speccy/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/speccy.yml'
   pull_request:
     branches: develop
     paths:
       - 'Speccy/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/speccy.yml'
 
 jobs:
   test:
