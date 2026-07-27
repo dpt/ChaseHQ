@@ -232,9 +232,12 @@ struct chq_bank3_state {
     // recently read from the sample-selector stream.
     u8        slot1_countdown;
 
-    // $F84E: write-only duplicate of the selector byte copied by
-    // stst_load_sfx_script/sfx_script_advance; never read anywhere in bank 3
-    // (same "purpose not established" status as title_music.pattern_driver_flag).
+    // $F84E: self-modified operand of the "LD A,$00" at sfx1_reenter_stream
+    // ($F84D) -- load_drum_op/titlescr_drum_advance patch it to the current
+    // trigger-table entry's selector byte, and titlescr_music reloads
+    // slot1_countdown from it every time the stream re-enters after a
+    // countdown expiry. Despite the name, it IS read (indirectly, via the
+    // self-modified instruction) -- it is the per-entry pacing delay.
     u8        slot1_selector_dup;
 
     // $F895: drum-sample slot 2 busy/countdown flag, armed alongside
@@ -255,11 +258,10 @@ struct chq_bank3_state {
 
     // $F8CE: write-only playback-rate/pitch parameter stashed for the two
     // fixed sample tables; never read anywhere in bank 3 (see
-    // sfx_music_service's prologue -- same "purpose not established" status
-    // as slot1_selector_dup).
+    // sfx_music_service's prologue -- purpose not established).
     u8        sample_pitch_param;
 
-    // $F8F2/$F95A (Bank3Data.h: sfx_sample_1_template/sfx_sample_2_template):
+    // $F8F2/$F95A (Bank3Data.h: drum_sample_1_template/drum_sample_2_template):
     // mutable per-game copies -- play_sample_row rotates each byte in place
     // with RLC as it plays, so these cannot be the read-only template tables
     // directly (same reasoning as chqstate_t::drum1/drum2).
@@ -272,7 +274,7 @@ struct chq_bank3_state {
     u8        noise_phase;
     u8        noise_accum;
     u8        noise_rotate;
-  } sfx;
+  } drums;
 
   // $C55F (128K bank 3): formatted ASCII score-digit buffer, written by
   // check_high_score from score_bcd and read back by insert_high_score_entry

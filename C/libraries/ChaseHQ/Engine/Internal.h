@@ -77,13 +77,13 @@
  * just the beeper delay. */
 #define SCORE_TALLY_TSTATES      (38000) // TODO: Calibrate
 
-/* 48K beeper sfx timing. The Z80 pitches its bit-banged speaker output with
+/* 48K beeper drums timing. The Z80 pitches its bit-banged speaker output with
  * busy-wait delay loops; the C translations do no busy-waiting and instead
  * advance the speccy's virtual T-state clock via speccy->logtime so the host
  * can reconstruct the pulse spacing. Costs are summed from the skool
  * listings and exclude the OUT ($FE) itself (11 T-states, accounted
  * centrally in zx_out). */
-/* TODO: Calibrate these against the original beeper sfx. */
+/* TODO: Calibrate these against the original beeper drums. */
 #define DJNZ_LOOP_TSTATES(b)  (((b) - 1) * 13 + 8)  /* DJNZ-to-self, b >= 1 iterations */
 #define DECJR_LOOP_TSTATES(n) (((n) - 1) * 16 + 11) /* DEC r; JR NZ,-3 self-loop, n >= 1 iterations */
 #define RNG_TSTATES                (143) /* CALL $961B (17) + rng body (126) */

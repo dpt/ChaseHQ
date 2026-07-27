@@ -1,11 +1,13 @@
 /**
- * TestDrawRoad.c
+ * UnitTest.c
  *
- * Unit tests for draw_road and its supporting pipeline:
- *   build_height_table → layout_road → draw_road
+ * Unit tests for the C port's game logic: the road-drawing pipeline
+ * (build_height_table → layout_road → draw_road), stage/scene setup, fork
+ * and hazard handling, the perp-caught and end-screen sequences, and the
+ * bank 3 title-music service.
  *
  * The test binary is built with -DCHQ_TESTS, which exposes thin wrappers
- * around the static functions in Main.c via Tests.h.
+ * around the static functions in Main.c and Bank3.c via Tests.h.
  *
  * Running:
  *   cmake --build cmake-build-debug --target ChaseHQ_Tests
@@ -21,6 +23,7 @@
 #include <string.h>
 
 #include "ChaseHQ/ChaseHQ.h"
+#include "ChaseHQ/Engine/Bank3State.h"
 #include "ChaseHQ/Engine/Bank7.h"
 #include "ChaseHQ/Engine/Internal.h"
 #include "ChaseHQ/Engine/State.h"
@@ -925,6 +928,48 @@ static void test_show_end_screen_runs_script(void)
          "host_quit escape\n");
 }
 
+/*
+ * run_title_tune ($FBC8): services one frame of the title-screen music/drum
+ * subsystem, restarting the current tune whenever it finds no tune active.
+ * Mirrors run_title_screen's own entry-time call to titlescr_start_tune
+ * ($C61B) for each of the 4 tunes the tune-select table (tunes[],
+ * Bank3Data.c) defines, then drives a few seconds' worth of frames and
+ * checks the tune stays active throughout -- proof the music/drum service
+ * loop runs without crashing or stalling for every tune, not just the one
+ * the title screen happens to start.
+ *
+ * Tunes 0 and 1 (title tune, success jingle) have real pattern data
+ * extracted (see titlescr_start_ay's own Conv note) and so must arm channel
+ * 0's pattern reader; tunes 2 and 3 are deliberately not extracted and play
+ * silently (pattern_ptr stays NULL by design), so only tune_active is
+ * checked for those.
+ */
+static void test_run_title_tune_starts_and_keeps_playing(void)
+{
+  chqstate_t *state;
+  u8          tune;
+  int         frame;
+
+  for (tune = 0; tune < 4; tune++) {
+    state = chq_create(&g_speccy);
+    assert(state != NULL);
+
+    chq_test_start_title_tune(state, tune);
+    assert(state->bank3->title_music.tune_active);
+    if (tune < 2)
+      assert(state->bank3->title_music.channel[0].pattern_ptr != NULL);
+
+    for (frame = 0; frame < 150; frame++) {
+      chq_test_run_title_tune(state);
+      assert(state->bank3->title_music.tune_active);
+    }
+
+    chq_destroy(state);
+  }
+
+  printf("PASS  run_title_tune: all 4 tunes start and keep playing\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -947,6 +992,7 @@ int main(void)
   test_perp_caught_progression();
   test_advance_hazards_insert_shift_preserves_records();
   test_show_end_screen_runs_script();
+  test_run_title_tune_starts_and_keeps_playing();
 
   printf("\nAll tests passed.\n");
   return 0;

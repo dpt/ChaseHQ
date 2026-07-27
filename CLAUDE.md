@@ -49,7 +49,7 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Tests live in `C/Tests/` (`TestDrawRoad.c`, `RenderStretchyObject.c`). They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ/Engine/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/libraries/ChaseHQ/Engine/Tests.h`. When adding a new test hook, add the wrapper to `Main.c` and declare it in `Tests.h`.
+Tests live in `C/Tests/` (`UnitTest.c`, `RenderStretchyObject.c`). They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ/Engine/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/libraries/ChaseHQ/Engine/Tests.h`. When adding a new test hook, add the wrapper to `Main.c` and declare it in `Tests.h`.
 
 ## C Implementation Architecture
 

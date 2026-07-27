@@ -85,7 +85,7 @@ endif()
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
 
 set(TEST_SOURCE_FILES
-        Tests/TestDrawRoad.c
+        Tests/UnitTest.c
         libraries/ZXSpectrum/Kempston.c
         libraries/ZXSpectrum/Keyboard.c
         libraries/ZXSpectrum/Screen.c
@@ -120,7 +120,7 @@ endif()
 # ---- Stretchy object renderer (visual debug tool, no SDL2 dependency) ------
 
 set(STRETCHY_SOURCE_FILES ${TEST_SOURCE_FILES})
-list(REMOVE_ITEM STRETCHY_SOURCE_FILES Tests/TestDrawRoad.c)
+list(REMOVE_ITEM STRETCHY_SOURCE_FILES Tests/UnitTest.c)
 list(APPEND STRETCHY_SOURCE_FILES Tests/RenderStretchyObject.c)
 
 add_executable(StretchyRenderer ${STRETCHY_SOURCE_FILES})

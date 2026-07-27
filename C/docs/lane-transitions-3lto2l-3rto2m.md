@@ -200,7 +200,7 @@ draw_road_lanes_change(state, 0, 0, 0x0100,
 Verified safe for the existing test: `4TO3L` still gets internally
 overridden to `0xEC`, so this changes nothing for it.
 
-## 5. New tests — `C/Tests/TestDrawRoad.c`
+## 5. New tests — `C/Tests/UnitTest.c`
 
 Add two tests immediately after `test_drlc_writes_xpos_entries` (line 446),
 following its exact structure (snapshot the rail table expected to change,

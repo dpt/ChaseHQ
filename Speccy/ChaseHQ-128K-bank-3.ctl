@@ -1269,20 +1269,26 @@ c $F7AA Sets up the classic ZX Spectrum IM2 "257-byte table" interrupt vector tr
 D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
 R $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.
 @ $F7AA label=setup_im2_interrupt_table
-c $F7C7 Boot entry point: sets up interrupts and starts tune 1
+c $F7C7 Set up interrupts and run the success jingle
 D $F7C7 Loops forever calling the SFX/music per-frame service (#R$F82F) once per 50Hz interrupt (synchronised via HALT).
 R $F7C7 Used by the routine at #R$C000.
-@ $F7C7 label=boot_and_run_sound_loop
-@ $F7D1 label=basl_service_loop
+@ $F7C7 label=play_success_music
+C $F7C7,3 Set up interrupts
+C $F7CA,5 Start tune 1
+C $F7CF,1 Enable interrupts
+C $F7D0,1 Wait
+@ $F7D1 label=psm_loop
+C $F7D1,3 Call titlescr_music
+C $F7D4,2 Loop
 c $F7D6 Starts tune A and sets up its sound-effect trigger table
 D $F7D6 Plays tune A (via #R$EB9E), looks up a pointer in the table at $FA75 (indexed by A*2) into a per-tune SFX script, and clears the 3 SFX "busy" flags at $F837/$F895/$F8A2. Falls into the script reader below, whose byte-code and interaction with #R$F82F's SFX dispatch is documented at #R$F7F4.
 R $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and #R$FBC8.
 @ $F7D6 label=start_tune_and_sfx_table
 N $F7DB This entry point is used by the routine at #R$C59E.
-@ $F7DB label=stst_load_sfx_script
+@ $F7DB label=load_drum_script
 N $F7F4 SFX script byte-code reader: reads opcode bytes from the script pointer at $F7FC, with $FE meaning "jump to a new script pointer read from the following 2 bytes" ($F823) and $FF meaning "end of script, disable interrupts and stop the tune" (#R$ED0B via $F829). Any other byte is a delay/repeat value (stored to $F7F5 and used to throttle #R$F7F4's own re-entry -- it decrements $F7F5 and returns early via RET NZ until it counts down to 0). The *following* script byte is a raw byte offset (not a scaled index) into the table at $FAA4: each entry there is 3 bytes -- a selector byte (copied to both $F84E and $F842, read back by #R$F82F) followed by a 2-byte pointer (stored to $F85E, the reload source for #R$F82F's sample-selector-stream pointer at $F853). This entry point is used by the routine at #R$F82F.
 @ $F7F4 label=sfx_script_advance
-@ $F7FE label=ssa_read_opcode
+@ $F7FE label=load_drum_op
 c $F82F Per-frame SFX/music service: drives the AY driver and the three sample players
 D $F82F Runs the AY music driver (#R$EC71), then dispatches the current sound effect's parameter byte (set up by #R$F7DB/#R$F7FE) to one of three 1-bit "digitised sample" bit-bang players: two fixed 8-row sample tables (#R$F8F2, #R$F95A, played via the shared loop at $F8CD which pulses port $FE from bitmap data clocked out with RLC (HL)/DJNZ) or the procedural routine at #R$FA3A. $F8AD (installed as the IM2 handler by #R$F7AA) just sets a "frame occurred" flag ($F8A8) consumed here and re-enables interrupts.
 D $F82F All the "LD A,$00" / "LD HL,$0000" instructions below are self-modified: the operand byte(s) immediately following each opcode double as a persistent state variable, written directly (not via the instruction) by this routine and by #R$F7D6/$F7DB/$F7FE. Three such state bytes are the SFX "busy" flags named at #R$F7D6: $F837 (SFX slot 1), $F895 (SFX slot 2), $F8A2 (1-bit sample playback active).
@@ -1294,7 +1300,7 @@ R $F82F countdown, also the selector byte copied by #R$F7FE) is decremented;
 R $F82F only when it reaches 1 does #R$F84D re-enter the stream-reading loop
 R $F82F -- otherwise slot 1 is skipped this frame and control falls to slot 2.
 N $F82F Stream-reading loop (#R$F855): reads a byte from the selector stream; a byte of exactly 1 calls #R$F7F4 (sfx_script_advance's own re-entry, throttled by its own $F7F5 countdown) to pull in a fresh selector byte and restarts the loop with the reload pointer. Any other byte is the entry to act on this frame: bit 7 marks it as also arming slot 2 ($F842 and $895 both set to 1, banked via AF' so it doesn't disturb the byte being decoded); the low 3 bits (1/2/3) select which of the three 1-bit-sample engines to trigger this frame (#R$F8B6 = sample table #R$F8F2, #R$F8BD = sample table #R$F95A, or #R$FA3A the procedural generator), with the byte's upper 5 bits stashed via $F8CE as a playback-rate/pitch parameter for the two fixed samples. A low-3-bits value of 0 triggers nothing and falls through to slot 2. Slot 2 ($F894-$F8A1): if $F895 is set, decrements both $F842 and $F895 (companion countdowns for whatever slot 1 armed via the bit-7 path above); purpose of the parallel countdown not established further. Tail ($F8A1-$F8A6): if $F8A2 (sample-playback-active) is exactly 1, falls into #R$F8CC/#R$F8CD to pulse out the next row of whichever fixed sample was armed above; otherwise returns without playing anything this frame. Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7 and #R$FBC8.
-@ $F82F label=sfx_music_service
+@ $F82F label=titlescr_music
 C $F82F,3 Run the AY music driver for this frame
 C $F832,1 Clear the "frame occurred" flag consumed by
 C $F833,3 #R$F8A7
@@ -1363,7 +1369,7 @@ c $FA3A Procedural engine/tyre-noise generator (variable duty-cycle square wave)
 D $FA3A Repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive the wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state -- this is how the beeper engine-note pitch varies with speed/RPM. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
 D $FA3A A (-> E) is the pitch/rate parameter from #R$F82F (the dispatch byte's upper 5 bits). Two nested loops: outer E times (#R$FA6C/$FA6D), inner D = 50 times each (#R$FA64/$FA65); each inner iteration advances the 3-byte self-modified state at $FA72-$FA74 (a phase counter, a wrapping accumulator subtracting a fixed constant, and a rotating byte mixed back into the accumulator) and tests bit 4 of the result to decide whether to emit a click this iteration -- a bit-4 test on a steadily-advancing counter behaves like a variable duty-cycle gate, the source of the engine/tyre buzz. When a click fires, the ON delay is $18-E cycles and the OFF delay is E cycles (#R$FA58/#R$FA5F): a larger E (higher dispatch parameter) shortens the ON wait but lengthens the OFF wait, lowering the effective pitch -- consistent with this parameter tracking engine RPM/speed. After each inner-loop pass, the frame flag ($F8A8, set by #R$F8AD) is checked; note that the "AND A" immediately before "RET C" always clears the carry flag, so that RET C can never actually fire -- an apparent dead check preserved as found in the original code, not a translation artifact. Once the outer loop completes, control falls into #R$F8A7 to wait for the next frame.
 R $FA3A Used by the routine at #R$F82F.
-@ $FA3A label=procedural_engine_noise
+@ $FA3A label=play_drum_noise_burst
 C $FA3A,1 E = pitch/rate parameter; outer loop counter
 C $FA3B,2 D = 50; inner loop counter
 @ $FA3D label=pen_inner_loop

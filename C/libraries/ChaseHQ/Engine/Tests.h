@@ -82,6 +82,15 @@ void draw_stretchy_object_right(chqstate_t *state, int Bdepth,
                                 const void *DEarg, const s16 *IXxpos,
                                 const u8 *IYheight);
 
+/** Start bank 3 title tune A_tune (titlescr_start_tune) -- must be called
+ *  once before chq_test_run_title_tune, matching run_title_screen's own
+ *  entry-time call ($C61B). */
+void chq_test_start_title_tune(chqstate_t *state, u8 A_tune);
+
+/** Run one frame of bank 3's title-music service (run_title_tune):
+ *  services the drum/music tick and restarts tune 0 once it finishes. */
+void chq_test_run_title_tune(chqstate_t *state);
+
 #endif /* CHQ_TESTS */
 
 #endif /* CHASEHQ_TESTS_H */

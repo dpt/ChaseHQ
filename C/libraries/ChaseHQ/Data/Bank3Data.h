@@ -140,8 +140,8 @@ extern const u8 options_menu_text[366];
  * game's PCM drum/noise assets are duplicated, at slightly different
  * lengths, across every bank that plays them) -- transcribed separately here
  * because bank 3's copies are shorter than either. */
-extern const u8 sfx_sample_1_template[104]; /* $F8F2, played with D=$68 rows */
-extern const u8 sfx_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
+extern const u8 drum_sample_1_template[104]; /* $F8F2, played with D=$68 rows */
+extern const u8 drum_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
 
 /* 128K bank 3: drum-sample cue-script/trigger-table data, $FA75-$FB98,
  * transcribed byte-exact from bank3.bin. Covers the per-tune cue-script
