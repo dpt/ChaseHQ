@@ -20,7 +20,7 @@
 
 #include "Stages.h"
 
-const stage_t stage4;
+extern const stage_t stage4;
 const void *stage4_lookup_map_goto(u16 z80);
 
 #endif /* CHASEHQ_STAGE4DATA_H */

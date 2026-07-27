@@ -33,7 +33,7 @@
 #define SAMPLE_START    (5) /* Start noise            - $F48A..$FF65 - 2780 bytes */
 #define SAMPLE__LIMIT   (6) /* one past last valid index */
 
-const u8 sound_samples[16384];
+extern const u8 sound_samples[16384];
 
 #endif /* CHASEHQ_SOUNDSAMPLES_H */
 
