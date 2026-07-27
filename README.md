@@ -26,6 +26,7 @@ The two feed each other: the disassembly explains the game, the C port proves th
 - Spectrum Computing forums thread: https://spectrumcomputing.co.uk/forums/viewtopic.php?p=113633
 - Original artist Will Harbison's video about the game: https://www.youtube.com/watch?v=1pT6KOJFgMg
 - Play the original Chase H.Q. online: http://torinak.com/qaop#!chasehq
+- Lou's Pseudo 3D Page: https://www.extentofthejam.com/pseudo/index.html
 
 ## Related
 
