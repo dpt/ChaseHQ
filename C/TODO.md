@@ -2,20 +2,15 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Win screen - I can press to exit but it just stop the music on the first press.
 - Perp collides with other hazard making them vanish? Seems different.
 - Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 - Title screen
-  - `title_screen_driver` re-enabled (was `return; // TEMP` at `Bank3.c:2492`) — builds and runs 2+ min without crash; bugs below still need visual/audio verification
-  - music still not right (e.g. playing things twice or more over before stopping)
-  - FIXED: music plays while animating — `object_script_step`'s `$D2` end-of-script opcode now actually stops the per-frame animation loop (was swallowed as a per-object `return`); scene now freezes once tune starts, matching original
-  - animations don't stop in some cases
-  - animations don't work if screen clearing is enabled (`clear_playfield_buffer` still stubbed with `return;` at `Bank3.c:1782`)
   - title screen doesn't stop and yield to attract mode
+  - music still not right (e.g. playing things twice or more over before stopping)
+  - animations don't work if screen clearing is enabled (`clear_playfield_buffer` still stubbed with `return;` at `Bank3.c:1782`)
 - End screen
   - interrupt mechanism wasn't ported so is the timing a bit off?
-- Volume control for frontend
 
 ## P2 — Game feel / calibration / timing
 

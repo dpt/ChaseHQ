@@ -155,7 +155,10 @@ void show_end_screen(chqstate_t *state)
 
     if (state->bank7->es_input_mask == 0) {
       /* First fire press: skip ahead to the congratulations script. */
-      state->bank7->es_input_mask = 1;
+      state->bank7->es_input_mask  = 1;
+      state->bank7->es_frame_count = 1; /* $E04F: run the script next frame */
+      state->bank7->es_script_ptr =
+        &state->bank7->es_script[ES_SCRIPT_CONGRATS_OFFSET]; /* $E052 */
       drive_chatter_stop(state);
       while (keyscan(state) & USERINPUTFLAG_FIRE)
         ;

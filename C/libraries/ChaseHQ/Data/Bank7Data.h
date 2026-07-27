@@ -93,6 +93,11 @@ extern const u8 es_script[268];
  * "PRESS GEAR TO CONTINUE" blink forever instead of a one-shot draw. */
 #define ES_SCRIPT_RESET_OFFSET (sizeof(es_script) - 6)
 
+/* Conv: skool $E052 "LD HL,$5DE3 / LD ($A16D),HL" -- the first fire press
+ * jumps the script program counter to the congratulations sequence at
+ * $E1E3, which is 0xE5 bytes into the script block based at $E0FE. */
+#define ES_SCRIPT_CONGRATS_OFFSET (0xE1E3 - 0xE0FE)
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK7DATA_H */
