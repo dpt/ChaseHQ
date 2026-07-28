@@ -1,3 +1,13 @@
+// - Format to 80 columns wide.
+// - C++ comments are used for "not finalised" commentary.
+// - C-style comments are intended to be good/final/approved commentary.
+// - Put a prologue before functions.
+// - Write a short (< 80 col) summary.
+// - Write a paragraph of explanation below that.
+// - Use Doxygen style param/return in the prologue.
+// - Omit the 'state' parameter since it's used everywhere.
+// - Try to align parameters horizontally.
+
 /**
  * $8E6C: Print a message on screen
  *

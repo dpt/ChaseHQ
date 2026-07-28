@@ -22,21 +22,13 @@
 
 ## P3 — Incomplete / missing content
 
-- Sort the repo layout out
 - Ensure that funcs are in the original game order (esp. Bank7)
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
-- `Stage3Data.c` / `Stage5Data.c`: decode `addrof_helicopter_stuff_1`/`addrof_helicopter_stuff_2`, currently NULL raw data
-- Border colour not implemented, always black (`SDLMain.c:305`, `SDLMain.c:789`)
 - `Bank3.c` SFX subsystem gaps (out of scope stubs, need wiring):
-  - SFX trigger-table setup (`$F7DB`-`$F82C`) and `stst_load_sfx_script` call
-  - digitised-sample SFX subsystem (`$F837`/`$F895`/`$F8A2`)
-  - `stop_music_and_silence` (`$ED0B`) calls not wired (3 sites)
-  - coin-slot input read (`$800E`) not wired
   - high-score check (`$C00C`), not disassembled
   - high-score name/rank copy from `$C403`
   - active-control-config header write at (`$8008`)
-  - scene-selector SM operand seed with `A_anykey`
   - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
 
 ## P4 — Polish / visual correctness
@@ -54,7 +46,6 @@
 - Big reformat pass once happy with code
 - Sort macros
 - Update summaries of major functions to docs/
-- Hoist out all interesting Z80 addresses to constants
 - Scan for type problems
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it)
@@ -102,14 +93,14 @@
 
 | Lanes & Objs   | Curve | Height | Hazards | Loop |
 | -------------- | ----- | ------ | ------- | ---- |
-| B | : : : |    |    >> |        |         |      |
-|   | : : : | T  |    >> |        |         |      |
-| T | : : : |    |    >  |        |         |      |
-|   | : :  /  T  |    >  |        |         |      |
-| T | : : |      |    >  |        |         |      |
-|   | : : |   T  |    >  |        |         |      |
-| T | : : |      |   |   |        |         |      |
-|   | : : |   T  |   |   |        |         |      |
-| T | : : |      |   |   |        |         |      |
-|   | : : |   T  |   |   |        |         |      |
+| B : . . . :    |   >>  |   :    |         |  AA  |
+|   : . . . : T  |   >>  |   :    |    B    |      |
+| B : . . . :    |   >   |   :    |         |      |
+|   : . .  /  T  |   >   |   :    |         |      |
+| B : . . :      |   >   |   vv   |         |      |
+|   : . . :   T  |   >   |   v    |         |      |
+|   : . . :      |   :   |   :    |         | *AA* |
+|   : . . :   T  |   :   |   ^^   |         |      |
+| T : . . :      |   :   |   ^    |         |      |
+|   : . . :   T  |   :   |   :    |         |      |
 
