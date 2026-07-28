@@ -673,6 +673,13 @@ static const u8 control_key_names[80] = {
   'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
 };
 
+/* $FFF7-$FFFE: pristine contents of the live scan-key-code buffer, i.e. the
+ * keyboard scheme's default key assignments. Layout matches control_keys[]:
+ * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
+static const u8 default_control_keys[8] = {
+  0x08, 0x26, 0x1F, 0x11, 0x19, 0x25, 0x22, 0x20
+};
+
 /* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
  * checked by redefine_keys_screen against the 8 keys just chosen. Byte-for-
  * byte identical to the 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
@@ -3700,11 +3707,16 @@ install_joystick_keys:
   A_flag = 0;
 
 shared_tail:
-  /* TODO: install the active-control-config header at ($8008): write
-   * A_flag, then copy control_keys[5..7] (quit/pause/turbo) followed by
-   * control_keys[0..4] (gear/accelerate/brake/left/right) into a 9-byte
-   * destination -- $FBE5-$FBF8. Needs a real design once the gameplay
-   * input reader that consumes this is ported; not modelled yet. */
+  /* $FBE5-$FBF8: install the chosen scheme into the 9-byte control-config
+   * block at ($8008). Conv: that block is $A0CC in the main binary --
+   * state->kempston_flag followed by state->keydefs[] -- so the Z80's two
+   * LDIRs into ($8008) become two copies into those fields. The key codes
+   * need no translation: scan_keyboard_matrix packs them as key<<3|halfrow,
+   * exactly what keyscan_inner unpacks. */
+  state->kempston_flag = A_flag;
+
+  memcpy(&state->keydefs[KEYDEF_QUIT], &state->bank3->control_keys[5], 3);
+  memcpy(&state->keydefs[KEYDEF_GEAR], &state->bank3->control_keys[0], 5);
 
   clear_options_screen(state);
 
@@ -3849,6 +3861,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   const u8  *HL_font;      /* pointer to this glyph's 7-byte font[] entry (was HL) */
   u8        *DE_screen;    /* pixel destination for this glyph (was DE) */
   int        row;          /* row loop counter; no Z80 equivalent (Conv: rolled) */
+  int        glyph_addr;   /* Z80 screen address of this glyph's top-left pixel; kept for the dirty-region update (Conv: added) */
+  int        glyph_height; /* this glyph's height in scanlines (Conv: added) */
   u8         A_terminator; /* bit 7 of the metric byte: terminates the outer loop (was flags) */
 
   C_byte0     = *HL_record;
@@ -3894,7 +3908,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       HL_font = &font[C_class * 7];
 
       /* $FE0D-$FE11: shared destination snapshot for both branches below. */
-      DE_screen = ADDRTOSCREEN((D_screen << 8) | E_screen);
+      glyph_addr = (D_screen << 8) | E_screen;
+      DE_screen  = ADDRTOSCREEN(glyph_addr);
       E_screen++;
 
       if (!A_style_bit) {
@@ -3926,6 +3941,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour | ATTR_BRIGHT;
         *ADDRTOATTRS((H_attr << 8) | (u8) (L_attr + 0x20)) = C_colour & ~ATTR_BRIGHT;
         L_attr++;
+
+        glyph_height = 16; /* two character rows (Conv: added) */
       } else {
         /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
         for (row = 0; row < 7; row++) { /* Conv: rolled */
@@ -3935,7 +3952,14 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
 
         *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour;
         L_attr++;
+
+        glyph_height = 7; /* seven scanlines, one character row (Conv: added) */
       }
+
+      /* Conv: added -- mark this glyph's cell dirty so the host redraws it.
+       * Both blits above write a column 8 pixels wide starting at
+       * glyph_addr; the attribute writes fall inside the same box. */
+      update_screen(state, glyph_addr, 8, glyph_height);
     }
 
     A_terminator = *HL_shape & 0x80;
@@ -4022,7 +4046,9 @@ static void redefine_keys_screen(chqstate_t *state)
 
     do {
       do {
+        state->speccy->stamp(state->speccy);
         run_title_tune(state);
+        state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
         A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
       } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for keys "1"-"5" to be released */
@@ -4033,9 +4059,11 @@ static void redefine_keys_screen(chqstate_t *state)
     } while (--B_remaining != 0);
 
     B_wait = 0x14;
-    do
+    do {
+      state->speccy->stamp(state->speccy);
       run_title_tune(state);
-    while (--B_wait != 0);
+      state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
+    } while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
       if (state->bank3->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
@@ -4049,7 +4077,9 @@ static void redefine_keys_screen(chqstate_t *state)
     update_whole_playfield(state); /* Conv: added */
 
     do {
+      state->speccy->stamp(state->speccy);
       run_title_tune(state);
+      state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
       A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
     } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
@@ -4154,7 +4184,9 @@ static void read_new_key_definition(chqstate_t *state,
 
 rescan:
   for (;;) {
+    state->speccy->stamp(state->speccy);
     run_title_tune(state);
+    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
     if (ambiguous)
@@ -4377,6 +4409,12 @@ int bank3_state_create(chqstate_t *state)
 
   memcpy(state->bank3->high_score_table, high_score_table_template,
          sizeof(state->bank3->high_score_table));
+
+  // $FFF7-$FFFE (128K bank 3): pristine scan-key codes for the keyboard
+  // scheme. Option "4" copies no key list, so these are what gets installed
+  // unless the player redefines the keys first.
+  memcpy(state->bank3->control_keys, default_control_keys,
+         sizeof(state->bank3->control_keys));
 
   return 0;
 }
