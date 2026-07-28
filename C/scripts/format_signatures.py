@@ -9,8 +9,21 @@ through clang-format with the project's .clang-format, then the result is
 spliced back into the file. Everything else (prologues, bodies, macros,
 typedefs) is left untouched.
 
+The script only ever *adds* line breaks. A signature the author stacked one
+parameter per line stays stacked even when it would now fit on one line, per
+"Try to align parameters horizontally" in
+docs/function_comment_template_example.c -- the worked example there is a
+69-column signature deliberately split across three lines. clang-format,
+judging the snippet in isolation, would join it; that is a layout choice the
+author already made and this script must not undo. Nor may it re-pack a
+stacked signature into clang-format's
+AllowAllParametersOfDeclarationOnNextLine form, which is the same loss of
+alignment by a different route.
+
 Usage: python3 format_signatures.py [--fix] [file.c ...]
 Default: all *.c in libraries/ChaseHQ/Engine/, check-only unless --fix given.
+Running it over docs/function_comment_template_example.c must report no
+changes: the template is the specification this script is measured against.
 """
 
 import glob
@@ -97,6 +110,8 @@ def process_file(filename, fix):
     for start, end, is_definition in find_signatures(text):
         original = text[start:end]
         formatted = reformat_signature(original, is_definition)
+        if formatted.count("\n") < original.count("\n"):
+            continue  # would unstack a deliberate layout -- see module docstring
         if formatted != original:
             lineno = text.count("\n", 0, start) + 1
             edits.append((start, end, formatted, lineno))

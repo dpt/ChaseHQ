@@ -1033,13 +1033,19 @@ static void draw_char(chqstate_t *state,
                       u8        **new_screen,
                       u8        **new_attrs);
 
-static u8 keyscan_keydefs(chqstate_t *state, u8 E_stopbit, const u8 *HL_keydefs);
+static u8 keyscan_keydefs(chqstate_t *state,
+                          u8          E_stopbit,
+                          const u8   *HL_keydefs);
 static int keyscan_inner(const chqstate_t *state, int A_input);
 
 static void check_scenery_collisions(chqstate_t *state);
-static void csc_hit_scenery(chqstate_t *state, int A_flip_flag, int Adash_speed);
+static void csc_hit_scenery(chqstate_t *state,
+                            int         A_flip_flag,
+                            int         Adash_speed);
 
-static void scenery_hit(chqstate_t *state, int A_flip_flag, int Adash_threshold);
+static void scenery_hit(chqstate_t *state,
+                        int         A_flip_flag,
+                        int         Adash_threshold);
 
 static void check_fork_scenery_collisions(chqstate_t *state,
                                           int         DEdash,
@@ -1125,7 +1131,9 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
                                            int              E_x,
                                            const carpart_t *HL_part);
 
-static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag);
+static void draw_smoke(chqstate_t *state,
+                       int         A_anim_frame,
+                       int         Adash_flip_flag);
 
 static void draw_cherry_light(chqstate_t *state,
                               int         A_frame_index,
@@ -1234,8 +1242,12 @@ static void draw_forked_road(chqstate_t *state,
                              const u8   *IX_lanes,
                              const u8   *IY_height);
 
-static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row);
-static void backdrop_fill_dispatch(chqstate_t *state, int DE_backbuf, int L_row);
+static void dr_start_backdrop_fill(chqstate_t *state,
+                                   int         DE_backbuf,
+                                   int         L_row);
+static void backdrop_fill_dispatch(chqstate_t *state,
+                                   int         DE_backbuf,
+                                   int         L_row);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
@@ -16705,7 +16717,10 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
  *   (was DE)
  * \return Updated screen address after the drawn key name.
  */
-static int define_a_key(chqstate_t *state, int B_index, int C_index, int DE_screen)
+static int define_a_key(chqstate_t *state,
+                        int         B_index,
+                        int         C_index,
+                        int         DE_screen)
 {
   int       carry;         /* carry from SRL in redefine_keyscan (not used directly here) (carry) */
   u8        D_keydef;      /* keydef byte returned by redefine_keyscan: kkkkkrrr (was D) */

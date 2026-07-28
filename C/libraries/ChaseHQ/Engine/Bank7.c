@@ -66,7 +66,7 @@
 static void es_clear(chqstate_t *state);
 static u16 next_screen_row(u16 addr);
 static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr);
-static const u8 * z80addrtoendshot(u16 addr);
+static const u8 *z80addrtoendshot(u16 addr);
 static void es_draw_frame_common(chqstate_t *state, const u8 **script);
 static void es_clear_then_draw_frame(chqstate_t *state, const u8 **script);
 static void es_attribute_fade_in(chqstate_t *state);
@@ -77,11 +77,19 @@ static void es_handler_handshake(chqstate_t *state);
 static void es_handler_handshake_advance(chqstate_t *state);
 static void es_handler_idle(chqstate_t *state);
 static void es_handler_draw_score(chqstate_t *state);
-static const u8 * z80addrtochatterblk(u16 addr);
+static const u8 *z80addrtochatterblk(u16 addr);
 static void es_chatter(chqstate_t *state);
-static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *state), u8 reload);
+static void es_set_dispatch(chqstate_t *state,
+                            void (*handler)(chqstate_t *state),
+                            u8 reload);
 static int ascii_to_glyph_id(int character);
-static void plot_char(chqstate_t *state, u8 A_char, u8 D_row, u8 *E_col, u8 H_attr, u8 *L_attr, u8 A_attr);
+static void plot_char(chqstate_t *state,
+                      u8          A_char,
+                      u8          D_row,
+                      u8         *E_col,
+                      u8          H_attr,
+                      u8         *L_attr,
+                      u8          A_attr);
 static void render_text_common(chqstate_t *state, const u8 **script);
 static void es_handler_render_text(chqstate_t *state, const u8 **script);
 static void run_script(chqstate_t *state);
