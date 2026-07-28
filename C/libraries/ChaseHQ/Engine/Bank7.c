@@ -81,18 +81,18 @@ static const u8 * z80addrtochatterblk(u16 addr);
 static void es_chatter(chqstate_t *state);
 static void es_set_dispatch(chqstate_t *state, void (*handler)(chqstate_t *state), u8 reload);
 static int ascii_to_glyph_id(int character);
-static void plot_char(chqstate_t *state, u8 A_char, u8 Drow, u8 *Ecol, u8 Hattr, u8 *Lattr, u8 A_attr);
+static void plot_char(chqstate_t *state, u8 A_char, u8 D_row, u8 *E_col, u8 H_attr, u8 *L_attr, u8 A_attr);
 static void render_text_common(chqstate_t *state, const u8 **script);
 static void es_handler_render_text(chqstate_t *state, const u8 **script);
 static void run_script(chqstate_t *state);
 static void es_setup_interrupts(chqstate_t *state);
-static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr);
+static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr);
 static void es_advance_pattern(chqstate_t *state);
 static void es_reset_music(chqstate_t *state);
-static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
-static void es_playdrum_2(chqstate_t *state, int Aspeed);
-static void es_playdrum_1(chqstate_t *state, int Aspeed);
-static void es_play_noise(chqstate_t *state, int Aparam);
+static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data);
+static void es_playdrum_2(chqstate_t *state, int A_speed);
+static void es_playdrum_1(chqstate_t *state, int A_speed);
+static void es_play_noise(chqstate_t *state, int A_param);
 static void es_play_music_48k(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
@@ -115,7 +115,7 @@ static void es_play_music_48k(chqstate_t *state);
  */
 void show_end_screen(chqstate_t *state)
 {
-  u8  Ainput;      /* keyscan result, tested for the fire bit (was A) */
+  u8  A_input;     /* keyscan result, tested for the fire bit (was A) */
   int outer_count; /* per-keyscan frame divider, reloads to 5/6 (was A171) */
 
   es_clear(state);
@@ -149,8 +149,8 @@ void show_end_screen(chqstate_t *state)
     outer_count = 5;
 
     drive_chatter(state);
-    Ainput = keyscan(state);
-    if (!(Ainput & USERINPUTFLAG_FIRE))
+    A_input = keyscan(state);
+    if (!(A_input & USERINPUTFLAG_FIRE))
       continue;
 
     if (state->bank7->es_input_mask == 0) {
@@ -623,10 +623,10 @@ static void render_text_common(chqstate_t *state, const u8 **script)
  * EXX pairs): the script read cursor (HL throughout the character loop --
  * modelled as the caller's script pointer, untouched by plot_char), the
  * persistent column cursor (screen-dest E and attr-addr L, both threaded
- * here as [in,out] Ecol/Lattr), and this character's own draw position
+ * here as [in,out] E_col/L_attr), and this character's own draw position
  * (screen-dest E's PRE-increment value, borrowed via a PUSH/EXX/POP
- * shuffle at $E35B-$E35F -- modelled here as the local Ecur, read from
- * *Ecol before it is advanced). Everything else the EXX dance shuffles
+ * shuffle at $E35B-$E35F -- modelled here as the local E_cur, read from
+ * *E_col before it is advanced). Everything else the EXX dance shuffles
  * (Set S's stale/arbitrary BC and DE, pushed and popped purely to balance
  * the stack) carries no live data and is correctly omitted.
  *
@@ -650,91 +650,91 @@ static void render_text_common(chqstate_t *state, const u8 **script)
  * script-supplied text position in es_script, but not guaranteed in
  * general.
  *
- * Conv: the attribute-row address computed from Drow (Hattr, range
+ * Conv: the attribute-row address computed from D_row (H_attr, range
  * $EF-$F2) is resolved via ADDRTOSCREEN, not ADDRTOATTRS, matching the
  * established precedent in draw_endshot's attribute-row loop above -- this
  * bank-7 memory range is not standard $5800-$5AFF attribute space.
  *
  * \param[in]     A_char Script character byte, EOS bit already masked off
  *                       by the caller (was A).
- * \param[in]     Drow   Screen destination row byte; constant for the
+ * \param[in]     D_row   Screen destination row byte; constant for the
  *                       whole render_text call (was D, Set M).
- * \param[in,out] Ecol   Screen destination column byte; the persistent
+ * \param[in,out] E_col   Screen destination column byte; the persistent
  *                       cursor, advanced by one per character (was E,
  *                       Set M).
- * \param[in]     Hattr  Attribute-row address high byte; constant for the
+ * \param[in]     H_attr  Attribute-row address high byte; constant for the
  *                       whole call (was H, Set M).
- * \param[in,out] Lattr  Attribute address column byte; the persistent
- *                       cursor, mirrors *Ecol (was L, Set M).
+ * \param[in,out] L_attr  Attribute address column byte; the persistent
+ *                       cursor, mirrors *E_col (was L, Set M).
  * \param[in]     A_attr Attribute/colour byte read once from the script
  *                       at $E2F5 and held constant for the whole call
  *                       (was C, Set M) -- see the Conv note above.
  */
 static void plot_char(chqstate_t *state,
                       u8          A_char,
-                      u8          Drow,
-                      u8         *Ecol,
-                      u8          Hattr,
-                      u8         *Lattr,
+                      u8          D_row,
+                      u8         *E_col,
+                      u8          H_attr,
+                      u8         *L_attr,
                       u8          A_attr)
 {
   int       character;     /* character code, offset by ' ' (was A) */
   int       glyphid;       /* glyph index into font[] (was C during the ladder) */
-  const u8 *HLfont;        /* current font row pointer, walked forward (was HL) */
-  u8        Ecur;          /* this character's draw column (was E, Set S) */
+  const u8 *HL_font;       /* current font row pointer, walked forward (was HL) */
+  u8        E_cur;         /* this character's draw column (was E, Set S) */
   u16       starting_addr; /* glyph's first screen byte, saved for the dirty-box call (Conv: added) */
-  u8        Dcur;          /* current screen row byte during the blit (was D) */
+  u8        D_cur;         /* current screen row byte during the blit (was D) */
   int       i;             /* pass loop index (Conv: no Z80 register) */
   int       data;          /* font byte read for the current scanline pair (was A) */
-  u8        Lcur;          /* this character's attribute column (was L) */
+  u8        L_cur;         /* this character's attribute column (was L) */
 
   character = A_char - ' ';
   if (character == 0) {
     // Space: $E323-$E327.
-    (*Ecol)++;
-    (*Lattr)++;
+    (*E_col)++;
+    (*L_attr)++;
     return;
   }
 
   glyphid = ascii_to_glyph_id(character);
-  HLfont  = &font[glyphid * 7];
+  HL_font  = &font[glyphid * 7];
 
-  Ecur = *Ecol;
-  starting_addr = (u16) (((u16) Drow << 8) | Ecur);
-  (*Ecol)++; // $E35D: persistent cursor advances for the NEXT character now.
+  E_cur = *E_col;
+  starting_addr = (u16) (((u16) D_row << 8) | E_cur);
+  (*E_col)++; // $E35D: persistent cursor advances for the NEXT character now.
 
   // Pass 1 ($E360-$E378): font bytes 0-3, double height.
-  Dcur = Drow;
+  D_cur = D_row;
   for (i = 0; i < 4; i++) {
-    data = *HLfont++;
-    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
-    Dcur++;
-    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
+    data = *HL_font++;
+    *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
+    D_cur++;
+    *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
     if (i != 3)
-      Dcur++;
+      D_cur++;
   }
 
   // $E37A-$E381: mid-glyph row-wrap -- see Conv note in the prologue.
-  Ecur = (u8) (Ecur + 0x20);
-  Dcur = (u8) (Dcur - 7);
+  E_cur = (u8) (E_cur + 0x20);
+  D_cur = (u8) (D_cur - 7);
 
   // Pass 2 ($E382-$E398): font bytes 4-6, double height, then a blank row.
   for (i = 0; i < 3; i++) {
-    data = *HLfont++;
-    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
-    Dcur++;
-    *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = (u8) data;
-    Dcur++;
+    data = *HL_font++;
+    *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
+    D_cur++;
+    *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
+    D_cur++;
   }
-  *ADDRTOSCREEN(((u16) Dcur << 8) | Ecur) = 0;
+  *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = 0;
 
   update_screen(state, starting_addr, 8, 16); /* Conv: added */
 
   // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
-  Lcur = *Lattr;
-  *ADDRTOBACKBUF(((u16) Hattr << 8) | Lcur)               = A_attr;
-  *ADDRTOBACKBUF(((u16) Hattr << 8) | (u8) (Lcur + 0x20)) = A_attr;
-  *Lattr = (u8) (Lcur + 1);
+  L_cur = *L_attr;
+  *ADDRTOBACKBUF(((u16) H_attr << 8) | L_cur)               = A_attr;
+  *ADDRTOBACKBUF(((u16) H_attr << 8) | (u8) (L_cur + 0x20)) = A_attr;
+  *L_attr = (u8) (L_cur + 1);
 }
 
 /**
@@ -973,18 +973,18 @@ static void es_clear(chqstate_t *state)
  */
 static u16 next_screen_row(u16 addr)
 {
-  u8 Dhi; /* screen address high byte after +1 scanline (was D via A) */
-  u8 Elo; /* screen address low byte after +32 column step (was E via A) */
+  u8 D_hi; /* screen address high byte after +1 scanline (was D via A) */
+  u8 E_lo; /* screen address low byte after +32 column step (was E via A) */
 
-  Dhi = (u8) ((addr >> 8) + 1);
-  if ((Dhi & 0x07) != 0)
-    return (u16) ((Dhi << 8) | (addr & 0xFF));
+  D_hi = (u8) ((addr >> 8) + 1);
+  if ((D_hi & 0x07) != 0)
+    return (u16) ((D_hi << 8) | (addr & 0xFF));
 
-  Elo = (u8) ((addr & 0xFF) + 0x20);
-  if (Elo < 0x20) /* carry out of E: stay in the next screen third */
-    return (u16) ((Dhi << 8) | Elo);
+  E_lo = (u8) ((addr & 0xFF) + 0x20);
+  if (E_lo < 0x20) /* carry out of E: stay in the next screen third */
+    return (u16) ((D_hi << 8) | E_lo);
   else
-    return (u16) (((Dhi - 0x08) << 8) | Elo);
+    return (u16) (((D_hi - 0x08) << 8) | E_lo);
 }
 
 /**
@@ -1009,7 +1009,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 {
   int row;            /* bitmap row counter, 64 down to 1 (was B) */
   u16 DE_screen_addr; /* current screen row address (was DE) */
-  u8  Dattr;          /* attribute row address high byte (was D after RRCA x3) */
+  u8  D_attr;         /* attribute row address high byte (was D after RRCA x3) */
   u16 attraddr;       /* current attribute row address (was DE in the attr loop) */
   int attrrow;        /* attribute row counter, 8 down to 1 (was A) */
 
@@ -1024,9 +1024,9 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
   /* Conv: skool POPs DE here, restoring the original destination pushed at
    * function entry -- NOT the row loop's final DE_screen_addr. Must use the
    * screen_addr parameter, which the loop above never mutates. */
-  Dattr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
-  Dattr    = (u8) ((((Dattr >> 3) | (Dattr << 5)) & 0x03) + 0xEF);
-  attraddr = (u16) ((Dattr << 8) | (screen_addr & 0xFF));
+  D_attr    = (u8) (screen_addr >> 8); /* original D, pre-rotate */
+  D_attr    = (u8) ((((D_attr >> 3) | (D_attr << 5)) & 0x03) + 0xEF);
+  attraddr = (u16) ((D_attr << 8) | (screen_addr & 0xFF));
 
   for (attrrow = 8; attrrow != 0; attrrow--) {
     memcpy(ADDRTOBACKBUF(attraddr), image, 13);
@@ -1113,30 +1113,30 @@ static void es_advance_pattern(chqstate_t *state)
  * es_music_patterns/es_music_data tables and es_music state instead of the
  * shared in-game music engine's.
  *
- * \param[in]     HLpataddr Pattern-list read pointer (was HL).
+ * \param[in]     HL_pataddr Pattern-list read pointer (was HL).
  */
-static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
+static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
 {
-  int       An_repeats; /* pattern repeat count just read, or 0xFF end marker (was A) */
-  int       Coffset;    /* offset into es_music_data for this pattern's notes (was C) */
-  const u8 *HLdata;     /* es_music_data read pointer, walked past the note-delay byte (was HL) */
+  int       A_n_repeats; /* pattern repeat count just read, or 0xFF end marker (was A) */
+  int       C_offset;    /* offset into es_music_data for this pattern's notes (was C) */
+  const u8 *HL_data;     /* es_music_data read pointer, walked past the note-delay byte (was HL) */
 
   for (;;) {
-    An_repeats = *HLpataddr++;
-    if (An_repeats != 0xFF) {
+    A_n_repeats = *HL_pataddr++;
+    if (A_n_repeats != 0xFF) {
       // Not end of pattern(s)
-      state->bank7->es_music.pattern_repeats = (u8) An_repeats;
-      Coffset = *HLpataddr++;
-      state->bank7->es_music.pattern_addr = HLpataddr;
+      state->bank7->es_music.pattern_repeats = (u8) A_n_repeats;
+      C_offset = *HL_pataddr++;
+      state->bank7->es_music.pattern_addr = HL_pataddr;
 
       // Calculate address of music data
-      HLdata = &es_music_data[Coffset];
-      state->bank7->es_music.note_delay_reload = state->bank7->es_music.note_delay = *HLdata++;
-      state->bank7->es_music.pattern_start_ptr = HLdata;
+      HL_data = &es_music_data[C_offset];
+      state->bank7->es_music.note_delay_reload = state->bank7->es_music.note_delay = *HL_data++;
+      state->bank7->es_music.pattern_start_ptr = HL_data;
       return;
     } else {
       // Restart
-      HLpataddr = &es_music_patterns[wordat(HLpataddr) - 0xF53C];
+      HL_pataddr = &es_music_patterns[wordat(HL_pataddr) - 0xF53C];
     }
   }
 }
@@ -1171,12 +1171,12 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
  */
 static void es_play_music_48k(chqstate_t *state)
 {
-  int       Adelay;      /* note_delay-1; tests whether the current note's delay has expired (was A) */
-  const u8 *HLdata;      /* pattern byte-stream read pointer (was HL) */
-  int       An_note;     /* raw music byte minus 1; zero marks the end-of-pattern sentinel (was A) */
-  int       Dnote;       /* adjusted music byte: delay bit consumed, upper bits = param, lower 3 = instrument (was D) */
-  int       Binstrument; /* instrument index: lower 3 bits of Dnote (was B) */
-  int       Aparam;      /* pitch/parameter value passed to the instrument handler (was A) */
+  int       A_delay;      /* note_delay-1; tests whether the current note's delay has expired (was A) */
+  const u8 *HL_data;      /* pattern byte-stream read pointer (was HL) */
+  int       A_n_note;     /* raw music byte minus 1; zero marks the end-of-pattern sentinel (was A) */
+  int       D_note;       /* adjusted music byte: delay bit consumed, upper bits = param, lower 3 = instrument (was D) */
+  int       B_instrument; /* instrument index: lower 3 bits of D_note (was B) */
+  int       A_param;      /* pitch/parameter value passed to the instrument handler (was A) */
 
   if (state->bank7->es_input_mask != 0)
     return; // Conv: wait-for-interrupt loop is a no-op here (see prologue)
@@ -1186,41 +1186,41 @@ static void es_play_music_48k(chqstate_t *state)
     goto pm_reset_pattern;
   }
 
-  Adelay = state->bank7->es_music.note_delay - 1;
-  if (Adelay) {
-    state->bank7->es_music.note_delay = Adelay;
+  A_delay = state->bank7->es_music.note_delay - 1;
+  if (A_delay) {
+    state->bank7->es_music.note_delay = A_delay;
   } else {
     state->bank7->es_music.note_delay = state->bank7->es_music.note_delay_reload;
-    HLdata = state->bank7->es_music.data_ptr;
+    HL_data = state->bank7->es_music.data_ptr;
 
     for (;;) {
-      An_note = *HLdata - 1;
-      if (An_note)
+      A_n_note = *HL_data - 1;
+      if (A_n_note)
         break;
 
       es_advance_pattern(state);
 
 pm_reset_pattern:
-      HLdata = state->bank7->es_music.pattern_start_ptr;
-      state->bank7->es_music.data_ptr = HLdata;
+      HL_data = state->bank7->es_music.pattern_start_ptr;
+      state->bank7->es_music.data_ptr = HL_data;
     }
 
-    state->bank7->es_music.data_ptr = ++HLdata;
-    if (++An_note > NOTE_XDELAY_FLAG) {
+    state->bank7->es_music.data_ptr = ++HL_data;
+    if (++A_n_note > NOTE_XDELAY_FLAG) {
       // A byte of the form 0b1aaaaiii (1 is the delay flag bit)
-      An_note &= ~NOTE_XDELAY_FLAG;
+      A_n_note &= ~NOTE_XDELAY_FLAG;
       state->bank7->es_music.note_delay = 1;
       state->bank7->es_music.extra_delay = 1;
     }
 
-    Dnote       = An_note;
-    Binstrument = Dnote & NOTE_INST_MASK;
-    if (Binstrument) {
-      Aparam = Dnote >> 3;
-      switch (Binstrument) {
-      case NOTE_DRUM2_VAL: es_playdrum_2(state, Aparam); return;
-      case NOTE_DRUM1_VAL: es_playdrum_1(state, Aparam); return;
-      case NOTE_NOISE_VAL: es_play_noise(state, Aparam); return;
+    D_note       = A_n_note;
+    B_instrument = D_note & NOTE_INST_MASK;
+    if (B_instrument) {
+      A_param = D_note >> 3;
+      switch (B_instrument) {
+      case NOTE_DRUM2_VAL: es_playdrum_2(state, A_param); return;
+      case NOTE_DRUM1_VAL: es_playdrum_1(state, A_param); return;
+      case NOTE_NOISE_VAL: es_play_noise(state, A_param); return;
       }
     }
   }
@@ -1242,12 +1242,12 @@ pm_reset_pattern:
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_2/playdrum_start.
  *
- * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ * \param[in]     A_speed Playback speed: inner loop count per sample byte
  *   (was A).
  */
-static void es_playdrum_2(chqstate_t *state, int Aspeed)
+static void es_playdrum_2(chqstate_t *state, int A_speed)
 {
-  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_speed  = A_speed;
   state->bank7->es_music.drum_active = 1;
   es_playdrum_go(state, sizeof(state->bank7->es_drum2), &state->bank7->es_drum2[0]);
 }
@@ -1259,12 +1259,12 @@ static void es_playdrum_2(chqstate_t *state, int Aspeed)
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_1/playdrum_start.
  *
- * \param[in]     Aspeed Playback speed: inner loop count per sample byte
+ * \param[in]     A_speed Playback speed: inner loop count per sample byte
  *   (was A).
  */
-static void es_playdrum_1(chqstate_t *state, int Aspeed)
+static void es_playdrum_1(chqstate_t *state, int A_speed)
 {
-  state->bank7->es_music.drum_speed  = Aspeed;
+  state->bank7->es_music.drum_speed  = A_speed;
   state->bank7->es_music.drum_active = 1;
   es_playdrum_go(state, sizeof(state->bank7->es_drum1), &state->bank7->es_drum1[0]);
 }
@@ -1278,12 +1278,12 @@ static void es_playdrum_1(chqstate_t *state, int Aspeed)
  * routine, operating on the same fixed-address state->rng_seed -- so
  * rather than duplicate it, this calls the shared implementation directly.
  *
- * \param[in]     Aparam Noise duration: outer loop count and pulse timing
+ * \param[in]     A_param Noise duration: outer loop count and pulse timing
  *   (was A).
  */
-static void es_play_noise(chqstate_t *state, int Aparam)
+static void es_play_noise(chqstate_t *state, int A_param)
 {
-  play_noise(state, Aparam); /* tail call */
+  play_noise(state, A_param); /* tail call */
 }
 
 /**
@@ -1297,12 +1297,12 @@ static void es_play_noise(chqstate_t *state, int Aparam)
  * writes bit 7 of the current sample byte to the EAR bit of
  * port_BORDER_EAR_MIC, then rotates the sample byte left in-place (RLC) so
  * successive iterations output successive bits -- 1-bit PCM at drum_speed
- * bits per byte. When all [Dlength] bytes have been output, drum_active is
+ * bits per byte. When all [D_length] bytes have been output, drum_active is
  * cleared. Identical in structure to Main.c's playdrum_go, operating on
  * bank 7's own es_music state and es_drum2/es_drum1 buffers.
  *
- * \param[in]     Dlength Number of sample bytes remaining to output (was D).
- * \param[in]     HLdata  Pointer to the next sample byte in
+ * \param[in]     D_length Number of sample bytes remaining to output (was D).
+ * \param[in]     HL_data  Pointer to the next sample byte in
  *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
  *
  * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
@@ -1317,7 +1317,7 @@ static void es_play_noise(chqstate_t *state, int Aparam)
  * Conv: C has no mid-sample interrupts, so the early-return resume path never
  * triggers and the sample always plays to completion in one call.
  */
-static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
+static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data)
 {
   zxspectrum_t *speccy; /* game's ZX Spectrum facade (was N/A) */
   int           carry;  /* carry flag used by RLC (carry) */
@@ -1330,17 +1330,17 @@ static void es_playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
     i = state->bank7->es_music.drum_speed;
     do {
       bits = port_MASK_EAR; // speaker bit
-      if ((*HLdata & (1 << 7)) == 0)
+      if ((*HL_data & (1 << 7)) == 0)
         bits = 0;
       speccy->out(speccy, port_BORDER_EAR_MIC, bits);
-      RLC(*HLdata); /* rotate sample byte in place */
+      RLC(*HL_data); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
       speccy->logtime(speccy, 63);
     } while (--i > 0);
-    HLdata++;
+    HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);
-    if (--Dlength == 0)
+    if (--D_length == 0)
       goto pd_end_of_sample;
   }
   // EXX unbank

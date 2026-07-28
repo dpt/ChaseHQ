@@ -32,8 +32,8 @@
  * Z80 this value survives in the shadow HL' register across the repeat
  * loop's CALLs; the C translation must pass it back explicitly instead. */
 typedef u8 *(plot_sprite_cb_t)(chqstate_t *state,
-                               int         IXjump_offset,
-                               u8         *HLbackbuf_addr,
+                               int         IX_jump_offset,
+                               u8         *HL_backbuf_addr,
                                int         Bdash_height,
                                int         DEdash_bitmap_stride,
                                const u8   *HLdash_bitmap_data);
@@ -457,7 +457,7 @@ struct chqstate {
   // $A261
   u8        horizon_scroll_sub;
   // Models the Z80 AF' shadow register as banked by move_hero_car's EX AF,AF'
-  // at $B296 (holding BCcount_scaled) and read back by scroll_horizon's EX
+  // at $B296 (holding BC_count_scaled) and read back by scroll_horizon's EX
   // AF,AF' at $B854. Not a memory address; only written when move_hero_car
   // actually reaches $B296 (current_curvature != 0 and ticks elapsed).
   u8        curvature_scroll_shadow;

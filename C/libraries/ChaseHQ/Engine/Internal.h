@@ -355,19 +355,19 @@ void ptad_led_digits(chqstate_t *state,
                      u8         *stored,
                      u8         *screen);
 void  sfx_bipbow(chqstate_t *state, int param1, int param2);
-void  play_noise(chqstate_t *state, int Aparam);
+void  play_noise(chqstate_t *state, int A_param);
 
 /* ----------------------------------------------------------------------- */
 
 typedef void obj_handler_t(chqstate_t *state,
-                           int         Biterations,
+                           int         B_iterations,
                            const void *arg,
-                           const s16  *IXxpos,
-                           const u8   *IYheight);
+                           const s16  *IX_xpos,
+                           const u8   *IY_height);
 
 typedef struct hazard hazard_t;
 
-typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IXhazard);
+typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX_hazard);
 
 typedef u8 chatterpriority_t;
 

@@ -831,7 +831,7 @@ static u8 object_script_step(chqstate_t *state)
 {
   int                  obj;       /* object-loop index, 0-8 (was B, DJNZ counter) */
   struct title_object *rec;       /* current object record (was IX) */
-  const u8            *HLscript;  /* script byte-code cursor while fetching (was HL) */
+  const u8            *HL_script;  /* script byte-code cursor while fetching (was HL) */
   u8                   A_byte;    /* fetched script byte (was A) */
   s8                   A_x_delta; /* immediate-step X delta (was A) */
   s8                   A_y_delta; /* immediate-step Y delta (was A) */
@@ -844,10 +844,10 @@ static u8 object_script_step(chqstate_t *state)
     for (;;) { /* models the "JP $C70E" re-entry after fetching a new opcode */
       if (rec->opcode == 0) {
         /* $C740-$C743 oss_fetch_opcode: idle -- fetch from the script. */
-        HLscript = rec->script;
+        HL_script = rec->script;
 
         for (;;) { /* $C746 oss_fetch_opcode_cont: fetch/instant-op loop */
-          A_byte = *HLscript++;
+          A_byte = *HL_script++;
 
           if ((s8) A_byte >= 0) {
             /* $C868-$C88D oss_op_immediate_step: immediate 2-axis step. */
@@ -870,13 +870,13 @@ static u8 object_script_step(chqstate_t *state)
 
           switch (A_byte) {
           case OSS_OP_SET_ROW_VAL:
-            rec->row = *HLscript++;
+            rec->row = *HL_script++;
             continue;
 
           case OSS_OP_VELOCITY_VAL:
-            rec->x_step = (s8) *HLscript++;
-            rec->y_step = (s8) *HLscript++;
-            rec->wait   = *HLscript++;
+            rec->x_step = (s8) *HL_script++;
+            rec->y_step = (s8) *HL_script++;
+            rec->wait   = *HL_script++;
             break;                          /* -> save cursor below */
 
           case OSS_OP_DECEL_X_VAL:
@@ -884,9 +884,9 @@ static u8 object_script_step(chqstate_t *state)
             /* $C7DC-$C7E8: note the y_step slot is read first here -- it
              * seeds the deceleration-curve counter, not a real Y step; see
              * oss_op_decel_x/oss_op_decel_y. */
-            rec->y_step = (s8) *HLscript++;
-            rec->wait   = *HLscript++;
-            rec->x_step = (s8) *HLscript++;
+            rec->y_step = (s8) *HL_script++;
+            rec->wait   = *HL_script++;
+            rec->x_step = (s8) *HL_script++;
             break;
 
           case OSS_OP_ACCEL_X_A_VAL:
@@ -894,18 +894,18 @@ static u8 object_script_step(chqstate_t *state)
           case OSS_OP_ACCEL_X_B_VAL:
             /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
              * counter here, not a real X step; see oss_op_accel_x_*. */
-            rec->x_step = (s8) *HLscript++;
-            rec->wait   = *HLscript++;
-            rec->y_step = (s8) *HLscript++;
+            rec->x_step = (s8) *HL_script++;
+            rec->wait   = *HL_script++;
+            rec->y_step = (s8) *HL_script++;
             break;
 
           case OSS_OP_WAIT_VAL:
-            rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
+            rec->wait = *HL_script++; /* $C785-$C787 (oss_read_wait_operand) */
             break;
 
           case OSS_OP_JUMP_POSITION_VAL:
-            rec->x = *HLscript++;
-            rec->y = *HLscript++;
+            rec->x = *HL_script++;
+            rec->y = *HL_script++;
             continue;
 
           case OSS_OP_END_SCRIPT_VAL: /* see this function's own Conv note */
@@ -917,7 +917,7 @@ static u8 object_script_step(chqstate_t *state)
           }
 
           /* $C772-$C778 oss_save_cursor: persist the advanced cursor. */
-          rec->script = HLscript;
+          rec->script = HL_script;
           break; /* leave the fetch loop; the outer `continue` below
                   * re-dispatches this object immediately ("JP $C70E") */
         }
@@ -2597,7 +2597,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   u16        DE_period;         /* running tone period (was DE) */
   u8         B_vib_range;       /* doubled vibrato depth; clamp bound for the phase counter (was B, IX+$1A after SLA) */
   u8         A_vib_phase;       /* vibrato triangle-wave phase counter (was A, IX+$1C) */
-  s16        DEvib_offset;      /* signed, scaled vibrato pitch offset (was DE) */
+  s16        DE_vib_offset;     /* signed, scaled vibrato pitch offset (was DE) */
   u16        A_shift_test;      /* shift-loop overflow accumulator (was A, tested via carry) */
   u8         A_status_new;      /* status with bit 0 toggled; stored back and re-tested in phase 5 (was A) */
   u8         B_slide_countdown; /* portamento reload countdown (was B, IX+$0E) */
@@ -2691,17 +2691,17 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     }
 
     // Conv: EX DE,HL ($EF32/$EF4A) folded -- add the scaled offset directly.
-    DEvib_offset = (s8) (A_vib_phase - (B_vib_range >> 1)); // centre phase; (s8)->(s16) sign-extends
+    DE_vib_offset = (s8) (A_vib_phase - (B_vib_range >> 1)); // centre phase; (s8)->(s16) sign-extends
 
     A_shift_test = (u16) A_note_lookup + 0xA0;
     if (A_shift_test <= 0xFF) {
       do {
-        DEvib_offset <<= 1;
+        DE_vib_offset <<= 1;
         A_shift_test = (A_shift_test & 0xFF) + 0x18;
       } while (A_shift_test <= 0xFF);
     }
 
-    DE_period += DEvib_offset;
+    DE_period += DE_vib_offset;
   }
 
   /* $EF4B-$EF76: phase 4, portamento/slide. */
@@ -3086,15 +3086,15 @@ static const u8 *resolve_drum_script_addr(u16 addr)
  */
 static void load_drum_script(chqstate_t *state, u8 A_tune)
 {
-  u16 HLtable; /* $FA75 + tune*2 -- this tune's table entry (was HL) */
+  u16 HL_table; /* $FA75 + tune*2 -- this tune's table entry (was HL) */
 
-  HLtable = 0xFA75 + (u16) (A_tune << 1);
+  HL_table = 0xFA75 + (u16) (A_tune << 1);
 
   state->bank3->drums.sample_active = 0;
   state->bank3->drums.slot2_busy    = 0;
   state->bank3->drums.slot1_busy    = 0;
 
-  load_drum_op(state, resolve_drum_script_addr(wordat(resolve_drum_script_addr(HLtable)))); /* was FALLTHROUGH */
+  load_drum_op(state, resolve_drum_script_addr(wordat(resolve_drum_script_addr(HL_table)))); /* was FALLTHROUGH */
 }
 
 /**
@@ -3230,9 +3230,9 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
 static void titlescr_music(chqstate_t *state)
 {
   u8        A;             /* general accumulator, reused for each state check (was A) */
-  const u8 *HLstream;      /* selector-stream cursor (was HL) */
-  u8        Dentry;        /* dispatch entry byte, masked if bit 7 was set (was D) */
-  int       Bselector;     /* low-3-bits selector: which 1-bit-sample engine to trigger (was B) */
+  const u8 *HL_stream;     /* selector-stream cursor (was HL) */
+  u8        D_entry;       /* dispatch entry byte, masked if bit 7 was set (was D) */
+  int       B_selector;    /* low-3-bits selector: which 1-bit-sample engine to trigger (was B) */
   int       A_pitch_param; /* pitch/rate parameter passed to the fixed-sample players (was A) */
 
   titlescr_ay_music(state);
@@ -3257,45 +3257,45 @@ static void titlescr_music(chqstate_t *state)
   // stall for ~255 frames instead of the ~selector-byte-frame gap the real
   // trigger-table pacing intends.
   state->bank3->drums.slot1_countdown = state->bank3->drums.slot1_selector_dup;
-  HLstream = state->bank3->drums.stream_ptr;
+  HL_stream = state->bank3->drums.stream_ptr;
   goto drum_read_stream_byte;
 
 sfx1_reload_pointer:
-  HLstream                     = state->bank3->drums.stream_reload_ptr;
-  state->bank3->drums.stream_ptr = HLstream;
+  HL_stream                     = state->bank3->drums.stream_reload_ptr;
+  state->bank3->drums.stream_ptr = HL_stream;
 
 drum_read_stream_byte:
-  A = *HLstream - 1;
+  A = *HL_stream - 1;
   if (A != 0)
     goto drum_dispatch_entry;
   titlescr_drum_advance(state); // pull in a fresh trigger-table entry
   goto sfx1_reload_pointer;
 
 drum_dispatch_entry:
-  HLstream++;
-  state->bank3->drums.stream_ptr = HLstream;
+  HL_stream++;
+  state->bank3->drums.stream_ptr = HL_stream;
   A++; // restore the original entry byte (undo the -1 above)
   if (A & 0x80) {
     A &= 0x7F;
     state->bank3->drums.slot1_countdown = 1;
     state->bank3->drums.slot2_busy      = 1;
   }
-  Dentry = A;
+  D_entry = A;
   A &= 0x07;
   if (A == 0)
     goto sfx2_tick_countdown; // nothing to trigger this frame
 
-  Bselector     = A;
-  A_pitch_param = Dentry >> 3;
-  if (--Bselector == 0) {
+  B_selector     = A;
+  A_pitch_param = D_entry >> 3;
+  if (--B_selector == 0) {
     play_fixed_sample_1(state, A_pitch_param);
     return;
   }
-  if (--Bselector == 0) {
+  if (--B_selector == 0) {
     play_fixed_sample_2(state, A_pitch_param);
     return;
   }
-  if (--Bselector == 0) {
+  if (--B_selector == 0) {
     play_drum_noise_burst(state, A_pitch_param);
     return;
   }
@@ -3517,10 +3517,10 @@ static void finish_sample_playback(chqstate_t *state)
  * Generates a noise burst on the beeper by running an LFSR-like update on the
  * 3-byte noise_phase/noise_accum/noise_rotate state, then toggling the
  * EAR/MIC outputs whenever bit 4 of the result is set. The outer loop runs
- * Eduration ticks; each tick iterates an inner loop of 50 noise steps. On
+ * E_duration ticks; each tick iterates an inner loop of 50 noise steps. On
  * each step the phase/accumulator/rotate bytes are updated, and if bit 4
  * fires, two timed pulses are written to port_BORDER_EAR_MIC: first high
- * after ($18 - Eduration) delay iterations, then low after Eduration
+ * after ($18 - E_duration) delay iterations, then low after E_duration
  * iterations. Same update sequence as play_noise (Main.c) and
  * es_play_noise (Bank7.c), operating on this bank's own 3-byte state
  * instead of rng_seed.
@@ -3540,25 +3540,25 @@ static void finish_sample_playback(chqstate_t *state)
  */
 static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
 {
-  zxspectrum_t *speccy;    /* game's ZX Spectrum facade (was N/A) */
-  int           carry;     /* carry from RLC/RRC operations on noise state (carry) */
-  int           Eduration; /* outer loop count and pulse high/low timing parameter (was E) */
-  int           Dinner;    /* inner loop count: 50 noise steps per tick (was D) */
-  int           Bphase;    /* phase byte read after the +3 advance (was B) */
-  u8            A;         /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
+  zxspectrum_t *speccy;     /* game's ZX Spectrum facade (was N/A) */
+  int           carry;      /* carry from RLC/RRC operations on noise state (carry) */
+  int           E_duration; /* outer loop count and pulse high/low timing parameter (was E) */
+  int           D_inner;    /* inner loop count: 50 noise steps per tick (was D) */
+  int           B_phase;    /* phase byte read after the +3 advance (was B) */
+  u8            A;          /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
 
   speccy    = state->speccy;
   carry     = 0;
-  Eduration = E_pitch_param;
+  E_duration = E_pitch_param;
 
   do {
-    Dinner = 50;
+    D_inner = 50;
     do {
       state->bank3->drums.noise_phase += 3;
-      Bphase = state->bank3->drums.noise_phase;
+      B_phase = state->bank3->drums.noise_phase;
       A      = state->bank3->drums.noise_accum - 0x8D;
       state->bank3->drums.noise_accum = A;
-      A += Bphase;
+      A += B_phase;
       RLC(A);
       RRC(state->bank3->drums.noise_rotate);
       A += state->bank3->drums.noise_rotate;
@@ -3567,11 +3567,11 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
       speccy->logtime(speccy, 127);
       if (A & (1 << 4)) {
         /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
-        speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - Eduration));
+        speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC,
                     port_MASK_EAR | port_MASK_MIC);
         /* $FA5E: LD B,E; DJNZ; XOR A (4 + loop + 4) */
-        speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(Eduration));
+        speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
         speccy->logtime(speccy, 16);
@@ -3579,8 +3579,8 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
         /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
       }
-    } while (--Dinner > 0);
-  } while (--Eduration > 0);
+    } while (--D_inner > 0);
+  } while (--E_duration > 0);
 }
 
 /**
@@ -3826,7 +3826,7 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * identical font -- but this function has no cross-call persisted state to
  * carry via EXX, so the shadow-register dance the Z80 uses to snapshot the
  * per-character screen pointer ($FE0D-$FE11: EXX/PUSH DE/INC E/EXX/POP DE,
- * "pop scr addr as-was") collapses to a plain local: compute DEscreen from
+ * "pop scr addr as-was") collapses to a plain local: compute DE_screen from
  * the *current* E_screen, then increment E_screen for the next character.
  * Similarly, $FDBA EXX/$FDBB EX (SP),HL (banking the metric/shape stream
  * pointer while the attribute address sits in shadow HL') has no observable
@@ -3842,12 +3842,12 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   u8         D_screen;     /* pixel screen address high byte; constant across the whole call (was D) */
   u8         H_attr;       /* attribute address high byte: $58 + third (was H) */
   u8         L_attr;       /* attribute address low byte; advances one per column (was L) */
-  const u8  *HLshape;      /* metric/shape-byte stream cursor (was HL) */
+  const u8  *HL_shape;     /* metric/shape-byte stream cursor (was HL) */
   u8         A_metric;     /* current column's metric byte, bits 0-6 (was A) */
   u8         A_diff;       /* metric - $20; classification input (was A) */
   u8         C_class;      /* width-class index (was C) */
-  const u8  *HLfont;       /* pointer to this glyph's 7-byte font[] entry (was HL) */
-  u8        *DEscreen;     /* pixel destination for this glyph (was DE) */
+  const u8  *HL_font;      /* pointer to this glyph's 7-byte font[] entry (was HL) */
+  u8        *DE_screen;    /* pixel destination for this glyph (was DE) */
   int        row;          /* row loop counter; no Z80 equivalent (Conv: rolled) */
   u8         A_terminator; /* bit 7 of the metric byte: terminates the outer loop (was flags) */
 
@@ -3862,10 +3862,10 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03));
   L_attr = E_screen;
 
-  HLshape = HL_record; /* // EXX / EX (SP),HL - bank ($FDBA-$FDBB) */
+  HL_shape = HL_record; /* // EXX / EX (SP),HL - bank ($FDBA-$FDBB) */
 
   do {
-    A_metric = *HLshape & 0x7F;
+    A_metric = *HL_shape & 0x7F;
 
     if (A_metric == 0x20) {
       /* $FDD1-$FDD9: space */
@@ -3891,37 +3891,37 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         C_class = 4;
       }
 
-      HLfont = &font[C_class * 7];
+      HL_font = &font[C_class * 7];
 
       /* $FE0D-$FE11: shared destination snapshot for both branches below. */
-      DEscreen = ADDRTOSCREEN((D_screen << 8) | E_screen);
+      DE_screen = ADDRTOSCREEN((D_screen << 8) | E_screen);
       E_screen++;
 
       if (!A_style_bit) {
         /* $FE16-$FE4E: double-height, 7 font bytes -> 15 rows */
         for (row = 0; row < 4; row++) { /* Conv: rolled */
-          *DEscreen = *HLfont;
-          DEscreen += 256;
-          *DEscreen = *HLfont++;
-          DEscreen += 256;
+          *DE_screen = *HL_font;
+          DE_screen += 256;
+          *DE_screen = *HL_font++;
+          DE_screen += 256;
         }
         /* $FE30-$FE37: crosses 8-scanline group boundary. Conv: the literal
          * Z80 does E += 0x1F, D -= 7 on the *register* DE (D0+7, E0+1 at
          * this point), landing on (D0, E0+32). The rolled loop above instead
-         * advances DEscreen by 256 twice per font byte, so it is already 255
+         * advances DE_screen by 256 twice per font byte, so it is already 255
          * bytes further along (D0+8, E0) than the literal register state.
          * -2016 is the byte delta that lands this pointer on the same
          * (D0, E0+32) target; 0xF820 (65536-2016) is only equivalent to that
          * under 16-bit modular register arithmetic, not real pointer
-         * arithmetic, so it must not be added directly to DEscreen. */
-        DEscreen -= 2016;
+         * arithmetic, so it must not be added directly to DE_screen. */
+        DE_screen -= 2016;
         for (row = 0; row < 3; row++) { /* Conv: rolled */
-          *DEscreen = *HLfont;
-          DEscreen += 256;
-          *DEscreen = *HLfont++;
-          DEscreen += 256;
+          *DE_screen = *HL_font;
+          DE_screen += 256;
+          *DE_screen = *HL_font++;
+          DE_screen += 256;
         }
-        *DEscreen = 0; /* $FE4D-$FE4E: final row always blank */
+        *DE_screen = 0; /* $FE4D-$FE4E: final row always blank */
 
         *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour | ATTR_BRIGHT;
         *ADDRTOATTRS((H_attr << 8) | (u8) (L_attr + 0x20)) = C_colour & ~ATTR_BRIGHT;
@@ -3929,8 +3929,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       } else {
         /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
         for (row = 0; row < 7; row++) { /* Conv: rolled */
-          *DEscreen = *HLfont++;
-          DEscreen += 256;
+          *DE_screen = *HL_font++;
+          DE_screen += 256;
         }
 
         *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour;
@@ -3938,11 +3938,11 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       }
     }
 
-    A_terminator = *HLshape & 0x80;
-    HLshape++;
+    A_terminator = *HL_shape & 0x80;
+    HL_shape++;
   } while (!A_terminator);
 
-  return HLshape;
+  return HL_shape;
 }
 
 /**
