@@ -66,6 +66,7 @@ static const char *const chq_crt_fragment_msl =
   "  float saturation;\n"
   "  float scanlineIntensity;\n"
   "  float vignetteStrength;\n"
+  "  float chromaBleed;\n"
   "};\n"
   "fragment float4 fs_main(VSOut in [[stage_in]],\n"
   "                         texture2d<float> tex [[texture(0)]],\n"
@@ -81,9 +82,22 @@ static const char *const chq_crt_fragment_msl =
   "                smoothstep(float2(0.0), float2(0.005), 1.0 - uv);\n"
   "  float edgeMask = edge.x * edge.y;\n"
   "  float2 uvc = clamp(uv, 0.0, 1.0);\n"
-  "  float4 c = tex.sample(samp, uvc) * edgeMask;\n"
-  // sampleBloom: threshold-gated centre + 4-tap cross sample.
   "  float2 texel = float2(1.0 / 256.0, 1.0 / 192.0);\n"
+  "  float4 c = tex.sample(samp, uvc);\n"
+  // PAL colour bleed: chroma was broadcast at a fraction of the luma
+  // bandwidth, so colour smears horizontally while edges stay sharp. Four
+  // taps to the left with decaying weights - the decoder lags the signal, so
+  // the smear trails to the right. Luma is taken from the centre tap only.
+  "  float3 W = float3(0.299, 0.587, 0.114);\n"
+  "  float3 bleed = c.rgb * 0.4;\n"
+  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, 1.0)).rgb * 0.3;\n"
+  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 2.0, 0.0), 0.0, 1.0)).rgb * 0.2;\n"
+  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 3.0, 0.0), 0.0, 1.0)).rgb * 0.1;\n"
+  "  float ylum = dot(c.rgb, W);\n"
+  "  float3 chroma = mix(c.rgb - ylum, bleed - dot(bleed, W), p.chromaBleed);\n"
+  "  c.rgb = ylum + chroma;\n"
+  "  c *= edgeMask;\n"
+  // sampleBloom: threshold-gated centre + 4-tap cross sample.
   "  float3 bloom = float3(0.0);\n"
   "  float3 bc = c.rgb;\n"
   "  float3 bn = tex.sample(samp, clamp(uvc + float2(0.0, texel.y), 0.0, 1.0)).rgb;\n"

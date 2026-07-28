@@ -49,12 +49,13 @@ typedef struct
   float saturation;         // 1.0 = full colour, 0.0 = greyscale
   float scanline_intensity; // base scanline darkening amount
   float vignette_strength;  // corner darkening strength
+  float chroma_bleed;       // PAL horizontal colour smear, 0.0 = off
 }
 chq_CRT_params_t;
 
 // Defaults re-tuned by eye against this game's screen; see CRTShader.c.
 #define CHQ_CRT_PARAMS_DEFAULT \
-  { 0.025f, 0.5f, 0.025f, 1.1f, 1.1f, 1.0f, 0.75f, 0.3f }
+  { 0.025f, 0.5f, 0.025f, 1.1f, 1.1f, 1.0f, 0.75f, 0.3f, 0.6f }
 
 /**
  * Creates the GPU device, texture, sampler and shader pipeline. Must be
