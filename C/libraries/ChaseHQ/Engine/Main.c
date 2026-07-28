@@ -12396,7 +12396,7 @@ lr_no_car_spawning:
                 ((state->session.spawn_accumulator & 1) << 3); // $BAD7
   Aiterations -= 0x10; // sets top nibble to $F
   // Conv: Z80 $BADB LD E,A; LD D,$FF forms signed DE = 0xFF00|A ∈ {−16..−1}
-  HLforkdistance += (s16)(0xFF00 | (u8)Aiterations);
+  HLforkdistance += (s16)(0xFF00 | Aiterations);
 lr_badf:
   // PUSH HLforkdistance
   if (state->fork_taken - 1 != 0) {
@@ -14981,7 +14981,7 @@ static void draw_road(chqstate_t *state)
 
   dr_increasing:
     Ccounter = Aheight_diff;
-    if ((u8)Aheight_diff < 0x50)
+    if (Aheight_diff < 0x50)
       continue; /* outer segment loop: process next segment ($C797) */
 
   dr_backdrop:
@@ -15031,20 +15031,20 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
   /* $C79B-$C7A3: in-tunnel or tunnel-visible check */
   if ((state->dr_in_tunnel | state->dt_tunnel_visible) == 0) {
     C = D & 0x0F;
-    B = (int)(u8)(~((u8)((u8)(E >> 1) + (u8)C)) + 0x80);
+    B = (u8)(~((u8)((u8)(E >> 1) + (u8)C)) + 0x80);
 
     C = 24;
-    A = (int)((state->session.horizon_level >> 8) & 0xFF);
+    A = (state->session.horizon_level >> 8) & 0xFF;
     if ((s8)(u8)A < 0)
       goto dr_blank_sky_fill;
     if (A != 0)
       goto dr_c7ca;
 
     /* $C7B5-$C7C9: compute sky rows from L vs B */
-    L_horz = (int)(state->session.horizon_level & 0xFF);
+    L_horz = state->session.horizon_level & 0xFF;
     if ((u8)L_horz >= (u8)B)
       goto dr_c7ca;
-    A = (int)(u8)((u8)L_horz - (u8)B) + C;
+    A = (u8)((u8)L_horz - (u8)B) + C;
     carry = (A > 0xFF);
     A = (u8)A;
     if (!carry || A == 0)
@@ -15054,18 +15054,18 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
 dr_c7ca:
     A = C;
     state->dr_sky_rows = (u8)A;
-    A = (int)(u8)A + (int)(u8)B;
+    A = (u8)A + (u8)B;
     if ((s8)(u8)A >= 0) goto dr_c7db;
     /* $C7D2-$C7DA: negative sum — clamp sky rows */
     A = (u8)((u8)A - 127);
-    A = (u8)(-(int)(s8)(u8)A);
-    A = (u8)((int)(u8)A + C);
+    A = (u8)(-(s8)(u8)A);
+    A = (u8)((u8)A + C);
     state->dr_sky_rows = (u8)A;
     C = A;
 
 dr_c7db:
 
-    BC_backdrop_offset = (24 - (int)(u8)C) * 10;
+    BC_backdrop_offset = (24 - (u8)C) * 10;
     Ascroll = state->dr_horizon_x_scroll;
     carry = Ascroll & 1; // low bit becomes choice between original and shifted version
     Ascroll >>= 1; // halve the actual shift
@@ -15073,14 +15073,14 @@ dr_c7db:
      * pre-shifted backdrop ($5B00); carry set selects the regular
      * backdrop ($5C00). */
     HLbackdrop = carry ? &state->stage->backdrop[BC_backdrop_offset] : &state->pre_shifted_backdrop[BC_backdrop_offset];
-    Ajump = (u8)(18 - (int)(u8)Ascroll * 2);
+    Ajump = (u8)(18 - (u8)Ascroll * 2);
     state->dr_backdrop_copy_jump = (u8)Ajump;
     assert(Ajump + 18 <= 36);
     memcpy(&state->dr_backdrop_copy_instrs[0], &backdrop_copy_instrs_template[Ajump], 18);
 
     /* HLbackdrop already points to the correct row, so A_col starts at 0
      * and advances by 10 per scanline (each backdrop row = 10 bytes). */
-    Bloop = (int)state->dr_sky_rows;
+    Bloop = state->dr_sky_rows;
     A_col = 0;
     goto dr_c824; // jumps into loop
 
