@@ -579,7 +579,8 @@ static int chq_game_thread(void *opaque)
   return 0;
 }
 
-// CRT shader tuning knobs, cycled with TAB and adjusted with PAGEUP/PAGEDOWN
+// CRT shader tuning knobs, cycled with TAB (Shift-TAB steps backwards) and
+// adjusted with PAGEUP/PAGEDOWN
 // (see chq_sdl_key_pressed). offset indexes into chq_CRT_params_t so one
 // table drives all the controls instead of one keybinding per field.
 typedef struct
@@ -820,8 +821,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
       if (k->down && !k->repeat)
       {
         const chq_crt_param_desc_t *desc;
+        int                         step;
 
-        state->crt_param_index = (state->crt_param_index + 1) % CHQ_CRT_PARAM_COUNT;
+        // Shift-TAB steps backwards. Adding COUNT keeps the modulus
+        // operand positive, since C's % on a negative left operand would
+        // give -1 rather than the last index.
+        step = (k->mod & SDL_KMOD_SHIFT) ? CHQ_CRT_PARAM_COUNT - 1 : 1;
+
+        state->crt_param_index = (state->crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
         desc = &chq_crt_param_descs[state->crt_param_index];
         printf("CRT param: %s = %g\n", desc->name,
               *chq_crt_param_field(&state->crt_params, desc));
