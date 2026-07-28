@@ -55,6 +55,7 @@
 
 - 128K menu: music, animation, high score, etc.
 - game finish screen
+- CRT shader enhancements
 
 ## P7 — Investigation / meta
 

@@ -60,9 +60,16 @@
 #define VOLUME_MAX          (100)
 #define VOLUME_STEP          (10)
 
-// Set to 0 to fall back to the plain SDL_Renderer blit (no shader, any GPU
-// backend, nearest-neighbour scaling); set to 1 for the SDL3 GPU/Metal CRT
-// post-effect pipeline (Metal only). Override with -DCHQ_CRT_SHADER=1.
+// Whether the CRT post-effect starts switched on. Both display backends are
+// always built: the plain SDL_Renderer blit (any GPU backend,
+// nearest-neighbour scaling) and the SDL3 GPU/Metal CRT post-effect pipeline
+// (Metal only). F4 switches between them at runtime, so this only chooses
+// which one comes up first. Override with -DCHQ_CRT_SHADER=1.
+//
+// They cannot both be live at once -- SDL_CreateRenderer and
+// SDL_ClaimWindowForGPUDevice each want the window's swapchain -- so
+// switching tears one down and builds the other. If the CRT backend will not
+// start (no Metal), chq_set_crt_enabled falls back to the plain renderer.
 #ifndef CHQ_CRT_SHADER
 #define CHQ_CRT_SHADER       (0)
 #endif
@@ -202,14 +209,17 @@ typedef struct
   int                show_dirty_overlay; // bool; toggled with F3, off by default
 
   SDL_Window              *window;
-#if CHQ_CRT_SHADER
+
+  // Display backend. Exactly one of these is live at a time, selected by
+  // crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
+  // renderer/texture when not. The other's handles are NULL.
+  int                      crt_enabled; // bool; toggled with F4
   chq_CRT_shader_t         crt;
   chq_CRT_params_t         crt_params;
   int                      crt_param_index; // which crt_params field +/- adjusts
-#else
   SDL_Renderer            *renderer;
   SDL_Texture             *texture;
-#endif
+
   SDL_Thread              *game_thread;
   SDL_AudioStream         *audio_stream;
 }
@@ -569,8 +579,6 @@ static int chq_game_thread(void *opaque)
   return 0;
 }
 
-#if CHQ_CRT_SHADER
-
 // CRT shader tuning knobs, cycled with TAB and adjusted with PAGEUP/PAGEDOWN
 // (see chq_sdl_key_pressed). offset indexes into chq_CRT_params_t so one
 // table drives all the controls instead of one keybinding per field.
@@ -605,7 +613,112 @@ static float *chq_crt_param_field(chq_CRT_params_t          *params,
   return (float *) ((char *) params + desc->offset);
 }
 
-#endif // CHQ_CRT_SHADER
+/* ----------------------------------------------------------------------- */
+
+// Display backend setup. Only one backend may hold the window at a time, so
+// each of these tears its own down completely before the other is built.
+
+static void chq_renderer_destroy(chq_sdl_state_t *state)
+{
+  if (state->texture != NULL)
+  {
+    SDL_DestroyTexture(state->texture);
+    state->texture = NULL;
+  }
+  if (state->renderer != NULL)
+  {
+    SDL_DestroyRenderer(state->renderer);
+    state->renderer = NULL;
+  }
+}
+
+static int chq_renderer_create(chq_sdl_state_t *state)
+{
+  // Every failure below tears down what it got so far, so the caller can
+  // read "renderer == NULL" as "no plain renderer" without having to know
+  // how far this got.
+  state->renderer = SDL_CreateRenderer(state->window, NULL);
+  if (state->renderer == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
+    return 0;
+  }
+
+  SDL_SetRenderVSync(state->renderer, 1);
+
+  // The screen buffer is always converted with R in the lowest memory byte
+  // (zxconfig.bgr_pixels below), because that is what the CRT backend's
+  // R8G8B8A8 GPU texture requires and the backend can change at any time.
+  // SDL_PIXELFORMAT_ABGR8888 is the same order for this texture; SDL
+  // converts on upload if the renderer would rather have something else.
+  state->texture = SDL_CreateTexture(state->renderer,
+                                     SDL_PIXELFORMAT_ABGR8888,
+                                     SDL_TEXTUREACCESS_STREAMING,
+                                     GAMEWIDTH, GAMEHEIGHT);
+  if (state->texture == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
+    chq_renderer_destroy(state);
+    return 0;
+  }
+
+  if (!SDL_SetTextureBlendMode(state->texture, SDL_BLENDMODE_NONE))
+  {
+    fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
+    chq_renderer_destroy(state);
+    return 0;
+  }
+
+  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
+  // is scaled up; SDL3's default is linear, which blurs them.
+  SDL_SetTextureScaleMode(state->texture, SDL_SCALEMODE_NEAREST);
+
+  return 1;
+}
+
+// Switches the display backend. Returns 1 if the requested backend is now
+// live, 0 if it could not be created and the other one was restored instead
+// (the CRT backend needs Metal, so this is the normal result elsewhere).
+static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
+{
+  if (enable == state->crt_enabled &&
+      (state->crt_enabled || state->renderer != NULL))
+    return 1; // already in the requested state
+
+  if (enable)
+  {
+    chq_renderer_destroy(state);
+
+    if (chq_CRT_shader_create(&state->crt, state->window,
+                              GAMEWIDTH, GAMEHEIGHT))
+    {
+      state->crt_enabled = 1;
+      return 1;
+    }
+
+    // chq_CRT_shader_create zeroes the struct before it starts, so a NULL
+    // device means it failed on the very first step and there is nothing to
+    // release; anything later leaves a device that must be given back before
+    // the plain renderer can claim the window.
+    if (state->crt.gpu != NULL)
+      chq_CRT_shader_destroy(&state->crt, state->window);
+    memset(&state->crt, 0, sizeof(state->crt));
+
+    fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
+  }
+  else if (state->crt_enabled)
+  {
+    chq_CRT_shader_destroy(&state->crt, state->window);
+    memset(&state->crt, 0, sizeof(state->crt));
+  }
+
+  state->crt_enabled = 0;
+
+  if (!chq_renderer_create(state))
+    return 0; // neither backend is up; the caller has to give up
+
+  return !enable; // the plain renderer is only a success if it was asked for
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -637,6 +750,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_F3:
     if (k->down && !k->repeat)
       state->show_dirty_overlay = !state->show_dirty_overlay;
+    return;
+
+  case SDLK_F4:
+    if (k->down && !k->repeat)
+    {
+      chq_set_crt_enabled(state, !state->crt_enabled);
+      printf("CRT shader: %s\n", state->crt_enabled ? "on" : "off");
+    }
     return;
 
   case SDLK_MINUS:
@@ -690,44 +811,59 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     }
     return;
 
-#if CHQ_CRT_SHADER
+  // The shader tuning keys only belong to the shader. With the plain
+  // renderer up they fall through to the game like any other key.
   case SDLK_TAB:
-    if (k->down && !k->repeat)
+    if (state->crt_enabled)
     {
-      const chq_crt_param_desc_t *desc;
+      if (k->down && !k->repeat)
+      {
+        const chq_crt_param_desc_t *desc;
 
-      state->crt_param_index = (state->crt_param_index + 1) % CHQ_CRT_PARAM_COUNT;
-      desc = &chq_crt_param_descs[state->crt_param_index];
-      printf("CRT param: %s = %g\n", desc->name,
-            *chq_crt_param_field(&state->crt_params, desc));
+        state->crt_param_index = (state->crt_param_index + 1) % CHQ_CRT_PARAM_COUNT;
+        desc = &chq_crt_param_descs[state->crt_param_index];
+        printf("CRT param: %s = %g\n", desc->name,
+              *chq_crt_param_field(&state->crt_params, desc));
+      }
+      return;
     }
-    return;
+    j = zxjoystick_UNKNOWN;
+    break;
 
   case SDLK_PAGEUP:
   case SDLK_PAGEDOWN:
-    if (k->down)
+    if (state->crt_enabled)
     {
-      const chq_crt_param_desc_t *desc;
-      float                      *field;
+      if (k->down)
+      {
+        const chq_crt_param_desc_t *desc;
+        float                      *field;
 
-      desc  = &chq_crt_param_descs[state->crt_param_index];
-      field = chq_crt_param_field(&state->crt_params, desc);
-      *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
-                     desc->min, desc->max);
-      printf("CRT param: %s = %g\n", desc->name, *field);
+        desc  = &chq_crt_param_descs[state->crt_param_index];
+        field = chq_crt_param_field(&state->crt_params, desc);
+        *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
+                       desc->min, desc->max);
+        printf("CRT param: %s = %g\n", desc->name, *field);
+      }
+      return;
     }
-    return;
+    j = zxjoystick_UNKNOWN;
+    break;
 
   case SDLK_R:
-    if (k->down && !k->repeat)
+    if (state->crt_enabled)
     {
-      chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
+      if (k->down && !k->repeat)
+      {
+        chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
 
-      state->crt_params = defaults;
-      printf("CRT params reset to defaults\n");
+        state->crt_params = defaults;
+        printf("CRT params reset to defaults\n");
+      }
+      return;
     }
-    return;
-#endif
+    j = zxjoystick_UNKNOWN;
+    break;
 
   case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
   case SDLK_RIGHT: j = zxjoystick_RIGHT;   break;
@@ -755,11 +891,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   }
 }
 
-#if !CHQ_CRT_SHADER
 // Outlines the screen regions chq_draw_handler reported dirty since the last
 // frame, so refreshed areas are visible over the rendered texture. Rects are
 // in game pixel space (256x192, bottom-left origin); (x, y) is the top-left
 // of the game view within the window, already scaled.
+//
+// Called every frame whichever backend is up, because it also drains the
+// list the game thread keeps filling. Only the plain renderer can draw it;
+// under the CRT shader it just empties the list and returns.
 #define DIRTYOVERLAY_THICKNESS (8) // outline thickness in window pixels
 
 // Draws 'rect' as a filled-in outline DIRTYOVERLAY_THICKNESS pixels thick by
@@ -800,7 +939,7 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
   state->dirty_full_screen = 0;
   SDL_UnlockMutex(state->dirty_mutex);
 
-  if (!state->show_dirty_overlay)
+  if (!state->show_dirty_overlay || state->renderer == NULL)
     return;
 
   if (count > 0 || full_screen)
@@ -836,7 +975,6 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
     chq_render_thick_rect(state->renderer, &rect);
   }
 }
-#endif
 
 // type: em_arg_callback_func
 static void chq_sdl_main_loop(void *opaque)
@@ -900,13 +1038,16 @@ static void chq_sdl_main_loop(void *opaque)
     //   run_main(state->game);
     // }
 
-#if CHQ_CRT_SHADER
-    chq_CRT_shader_render(&state->crt, state->window, state->zx,
-                         x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
-                         &state->crt_params);
-#else
-    /* Update the texture from the game's converted screen buffer. */
+    if (state->crt_enabled)
     {
+      chq_CRT_shader_render(&state->crt, state->window, state->zx,
+                           x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
+                           &state->crt_params);
+      chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
+    }
+    else
+    {
+      /* Update the texture from the game's converted screen buffer. */
       uint32_t  *pixels;
       SDL_FRect  dstrect;
 
@@ -931,7 +1072,6 @@ static void chq_sdl_main_loop(void *opaque)
       chq_draw_dirty_overlay(state, x, y);
       SDL_RenderPresent(state->renderer);
     }
-#endif
   }
 }
 
@@ -940,13 +1080,6 @@ int main(void)
   chq_sdl_state_t         state;
   zxconfig_t              zxconfig;
   SDL_Window             *window;
-#if !CHQ_CRT_SHADER
-  SDL_PropertiesID        renderer_props;
-  const SDL_PixelFormat  *texture_formats;
-  SDL_PixelFormat         native_fmt;
-  Uint32                  Rmask, Gmask, Bmask, Amask;
-  int                     bpp;
-#endif
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
@@ -962,14 +1095,12 @@ int main(void)
   state.scale     = SCALE_DEFAULT;
   state.speed     = SPEED_DEFAULT;
   state.volume    = VOLUME_DEFAULT;
-#if CHQ_CRT_SHADER
   {
     chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
 
     state.crt_params = defaults;
   }
   state.crt_param_index = 0;
-#endif
   // state.menu      = 1;
 
 #ifdef __APPLE__
@@ -1001,30 +1132,18 @@ int main(void)
 
   chq_update_window_title(window, state.speed, state.volume, state.paused);
 
-#if !CHQ_CRT_SHADER
-  state.renderer = SDL_CreateRenderer(window, NULL);
-  if (state.renderer == NULL)
-  {
-    fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
-    goto failure;
-  }
-
-  SDL_SetRenderVSync(state.renderer, 1);
-
-  renderer_props  = SDL_GetRendererProperties(state.renderer);
-  texture_formats = SDL_GetPointerProperty(renderer_props,
-                                           SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
-                                           NULL);
-  native_fmt = (texture_formats != NULL) ? texture_formats[0]
-                                          : SDL_PIXELFORMAT_RGBA8888;
-  SDL_GetMasksForPixelFormat(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-#endif
-
   // The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
   // lowest memory byte), which is what Screen.c's palette_abgr table packs
   // when bgr_pixels is true - despite the name, "bgr_pixels" selects which
   // palette table to use, not which byte order it produces. See the
   // 0x00RRGGBB/0x00BBGGRR comments in Screen.c.
+  //
+  // Conv: this is fixed rather than matched to the renderer's preferred
+  // format, as it was when the backend was chosen at compile time. The
+  // backend can now change at any keypress but the conversion palette is
+  // picked once, so both backends have to agree; the CRT one cannot bend, so
+  // the plain renderer takes an ABGR8888 texture to suit (see
+  // chq_renderer_create).
   zxconfig.width    = GAMEWIDTH / 8;
   zxconfig.height   = GAMEHEIGHT / 8;
   zxconfig.opaque   = &state;
@@ -1035,11 +1154,7 @@ int main(void)
   zxconfig.border   = &chq_border_handler;
   zxconfig.speaker  = &chq_speaker_handler;
   zxconfig.ay_out   = &chq_ay_out_handler;
-#if CHQ_CRT_SHADER
-  zxconfig.bgr_pixels = true;
-#else
-  zxconfig.bgr_pixels = (Rmask < Bmask); /* R in lower byte = BGR format */
-#endif
+  zxconfig.bgr_pixels = true; /* R in lower byte */
 
   state.zx = zxspectrum_create(&zxconfig);
   if (state.zx == NULL)
@@ -1092,30 +1207,14 @@ int main(void)
     SDL_ResumeAudioStreamDevice(state.audio_stream);
   }
 
-#if CHQ_CRT_SHADER
-  if (!chq_CRT_shader_create(&state.crt, window, GAMEWIDTH, GAMEHEIGHT))
+  // Bring up the starting backend. A CRT request that cannot be met falls
+  // back to the plain renderer rather than failing to start; only losing
+  // both is fatal.
+  chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
+  if (!state.crt_enabled && state.renderer == NULL)
     goto failure;
-#else
-  state.texture = SDL_CreateTexture(state.renderer,
-                                    native_fmt,
-                                    SDL_TEXTUREACCESS_STREAMING,
-                                    GAMEWIDTH, GAMEHEIGHT);
-  if (state.texture == NULL)
-  {
-    fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
-    goto failure;
-  }
 
-  if (!SDL_SetTextureBlendMode(state.texture, SDL_BLENDMODE_NONE))
-  {
-    fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
-    goto failure;
-  }
-
-  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
-  // is scaled up; SDL3's default is linear, which blurs them.
-  SDL_SetTextureScaleMode(state.texture, SDL_SCALEMODE_NEAREST);
-#endif
+  printf("CRT shader: %s (F4 toggles)\n", state.crt_enabled ? "on" : "off");
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
@@ -1144,12 +1243,10 @@ int main(void)
   SDL_DestroyMutex(state.audio_queue_mutex);
   SDL_DestroyMutex(state.dirty_mutex);
 
-#if CHQ_CRT_SHADER
-  chq_CRT_shader_destroy(&state.crt, window);
-#else
-  SDL_DestroyTexture(state.texture);
-  SDL_DestroyRenderer(state.renderer);
-#endif
+  if (state.crt_enabled)
+    chq_CRT_shader_destroy(&state.crt, window);
+  else
+    chq_renderer_destroy(&state);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
