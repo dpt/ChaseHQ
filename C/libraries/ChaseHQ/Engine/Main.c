@@ -11133,7 +11133,7 @@ static void draw_debris(chqstate_t *state)
   u8        Dy;                /* y screen position for this debris piece (was D) */
   u8        Ex;                /* x screen position for this debris piece (was E) */
   const u8 *HLbitmap;          /* pointer into bitmap_debris at the chosen frame offset (was HL) */
-  u8        Bheight;           /* sprite height: 6 rows (was B) */
+  int       Bheight;           /* sprite height: 6 rows (was B) */
   u8        Cwidth_bytes;      /* sprite width in bytes: 1 (was C) */
   int       BCdash;            /* shadow BC banked at EXX: 0 for no extra offset (was BC) */
   u8        Edash_width_bytes; /* shadow E banked at EXX: 1 byte wide (was E) */
@@ -11210,7 +11210,7 @@ static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble)
   const carpart_t *HLcarpart;            /* pointer into hero_car_parts[Acar_direction] (was HL) */
   u8               Ey;                   /* adjusted y after subtracting car_y and part y offset (was E) */
   u16              DEbackbuf_addr;       /* back-buffer plot address derived from Ey (was DE) */
-  u8               Bdash_height;         /* sprite row count from carpart (was B') */
+  int              Bdash_height;         /* sprite row count from carpart (was B') */
   const u8        *HLbitmap_data;        /* pointer to car body bitmap data (was HL') */
   u8               Awidth_bytes;         /* sprite byte width: 5 (was A) */
   u16              DEbitmap_stride;      /* bitmap row stride: 5 (was DE') */
@@ -11321,7 +11321,7 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
 {
   int       Ay;                   /* copy of Dy: base y before part offset subtraction (was A) */
   u8        Dnew_y;               /* Ay minus the part's y offset (was D) */
-  u8        Bheight;              /* row count from the carpart entry (was B) */
+  int       Bheight;              /* row count from the carpart entry (was B) */
   const u8 *HLbitmap;             /* pointer to bitmap data from the carpart entry (was HL) */
   int       Bdash_flip_flag;      /* flip_car banked for EXX; passed to draw_part (was B') */
   u8        Edash_bitmap_stride;  /* bitmap stride = Cwidth_bytes, banked at EXX (was E') */
@@ -11372,7 +11372,7 @@ static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag)
 {
   const carsmokeframe_t *HLframe;           /* pointer to the chosen smoke animation frame (was HL) */
   u8                     Cwidth;            /* sprite byte width from the frame (was C) */
-  u8                     Bheight;           /* sprite row count from the frame (was B) */
+  int                    Bheight;           /* sprite row count from the frame (was B) */
   u8                     Dflipped_x;        /* horizontal position used when flipped (was D) */
   u8                     Eunflipped_x;      /* horizontal position used when unflipped (was E) */
   const u8              *HLbitmap;          /* pointer to sprite pixel data from the frame (was HL) */
@@ -11903,7 +11903,7 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
   int       jump_offset;              /* fall-through index: (8 − Awidth_bytes) × 6 (was IX) */
   u16       DEdash_bitmap_stride;     /* stride then negated; unsigned to allow 16-bit negation (was DE) */
   const u8 *HLdash_bitmap_data_final; /* pointer to the last bitmap row (was HL') */
-  u8        Bheight;                  /* copy of Bdash_height passed to plot_masked_sprite (was B) */
+  int       Bheight;                  /* copy of Bdash_height passed to plot_masked_sprite (was B) */
 
   // Conv: Setting SP restore removed
   jump_offset = (8 - Awidth_bytes) * 6; // jump table index * entry size
@@ -13383,7 +13383,7 @@ rm_restart_hazards_read: // $BFF3
 static void prepare_tunnel(chqstate_t *state)
 {
   int   Atunnel_visible; /* dt_tunnel_visible: 0 until tunnel appears (was A at $C0E1) */
-  u8    Ain_tunnel;      /* dr_in_tunnel value; doubles as loop counter (was A at $C0E5) */
+  int   Ain_tunnel;      /* dr_in_tunnel value; doubles as loop counter (was A at $C0E5) */
   s16  *HLmain;          /* pointer into xpos_road_centre, main-register stream (was HL) */
   int   BCmain;          /* previous entry from main stream; updated each iteration (was BC) */
   s16  *HLdash;          /* pointer into xpos_road_centre, shadow-register stream (was HL') */
@@ -15191,8 +15191,8 @@ static void pre_shift_backdrop(chqstate_t *state)
   u8       *preshifted; /* pointer to pre_shifted_backdrop[]: copy and rotate target (was DE) */
   const u8 *endptr;     /* pointer to the last byte of the current row: RRD seed (was DE) */
   u8       *bmptr;      /* pointer walking preshifted[] during the RRD rotation (was HL) */
-  u8        row;        /* row counter: BACKDROP_HEIGHT down to 1 (was C) */
-  u8        col;        /* column counter: BACKDROP_WIDTH down to 1 (was B) */
+  int       row;        /* row counter: BACKDROP_HEIGHT down to 1 (was C) */
+  int       col;        /* column counter: BACKDROP_WIDTH down to 1 (was B) */
   u8        pix;        /* carry nibble between RRD calls: initial value from endptr (was A) */
 
   // Copy whole source bitmap to destination
@@ -17297,7 +17297,7 @@ static void write_audio_registers_128k(chqstate_t *state)
 {
   zxspectrum_t *speccy; /* ZX Spectrum callbacks (Conv: C-only) */
   const u8     *values; /* pointer walking AY soft copies downward (was HL) */
-  u8            regno;  /* AY register index, 11 down to 0 (was A) */
+  int           regno;  /* AY register index, 11 down to 0 (was A) */
 
   speccy  = state->speccy;
   values  = &state->ay_regs.env_fine;
@@ -17305,7 +17305,7 @@ static void write_audio_registers_128k(chqstate_t *state)
   do {
     speccy->out(speccy, port_AY_REGISTER, regno);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
-  } while ((s8) --regno >= 0);
+  } while (--regno >= 0);
 }
 
 /**

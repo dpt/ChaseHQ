@@ -216,7 +216,7 @@ static u16 advance_key_label_column(u16 DE_screen);
  */
 static void check_high_score(chqstate_t *state)
 {
-  u8  B_bcd_count;  /* BCD bytes left to convert, 4 down to 1 (was B) */
+  int B_bcd_count;  /* BCD bytes left to convert, 4 down to 1 (was B) */
   u8  DE_bcd_index; /* index into score_bcd, 3 (MSB) down to 0 (was DE) */
   u8 *HL_digit;     /* destination cursor in high_score_digits (was HL) */
   u8  C_seen;       /* "significant (non-zero) digit already seen" flag (was C) */
@@ -3999,11 +3999,11 @@ static void clear_options_screen(chqstate_t *state)
 static void redefine_keys_screen(chqstate_t *state)
 {
   u16 DE_screen;       /* current label print position (was DE) */
-  u8  B_remaining;     /* controls remaining, counts down from 8 (was B) */
+  int B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
   u8  A_key_mask;      /* keys "1".."5" pressed bitmask (was A) */
-  u8  B_wait;          /* ~20-frame post-capture wait counter (was B) */
-  u8  B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
+  int B_wait;          /* ~20-frame post-capture wait counter (was B) */
+  int B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
 
   for (;;) {
     clear_options_screen(state);
@@ -4145,9 +4145,9 @@ static void read_new_key_definition(chqstate_t *state,
   u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
   u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
   u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
-  u8  B_dup_count; /* duplicate-check count: C_control_index-1 already-
+  int B_dup_count; /* duplicate-check count: C_control_index-1 already-
                     * assigned slots (was B) */
-  u8  dup_i;       /* duplicate-check loop index (was HL-$FFF7) */
+  int dup_i;       /* duplicate-check loop index (was HL-$FFF7) */
   int index_bytes; /* byte offset into control_key_names[] (was HL-$FF95) */
   u8  char0;       /* first character of the looked-up key name (was A) */
   u8  char1;       /* second character, with the EOS bit set (was A) */
@@ -4167,7 +4167,7 @@ rescan:
   }
   A_key_code = D_key_code;
 
-  B_dup_count = (u8) (C_control_index - 1);
+  B_dup_count = C_control_index - 1;
   for (dup_i = 0; dup_i < B_dup_count; dup_i++)
     if (A_key_code == state->bank3->control_keys[dup_i])
       goto rescan; /* $FF45 JR Z,$FF2E: duplicate -- rescan */
