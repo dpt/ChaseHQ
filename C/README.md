@@ -40,6 +40,50 @@ Formatting (clang-format, K&R, 2-space indent, 80 columns):
 cmake --build cmake-build-debug --target format
 ```
 
+## Controls
+
+Driving uses the original game's default key definitions, which the in-game redefine option can change:
+
+| Key | Action |
+| --- | --- |
+| `O` / `P` | Steer left / right |
+| `Q` / `A` | Accelerate / brake |
+| `M` | Change gear |
+| `SPACE` | Turbo boost |
+| `0` | Quit the current game |
+
+A Kempston joystick is emulated on the arrow keys, with `.` as fire.
+
+The host adds its own keys, which never reach the game:
+
+| Key | Action |
+| --- | --- |
+| `F1` | Pause |
+| `F2` | Mute audio |
+| `F3` | Show the dirty-rectangle overlay |
+| `F4` | Toggle the CRT shader |
+| `F5` / `F6` | Volume down / up |
+| `-` / `=` | Window scale down / up |
+| `[` / `]` | Emulation speed down / up |
+
+Test mode is always on (`test_mode` in `Create.c`), so while a level is running `1` restarts it, `2` loads the next one and `3` jumps to the end screen.
+
+## CRT shader
+
+`F4` swaps the plain SDL blit for a CRT post-effect: barrel distortion, threshold bloom, brightness/contrast/saturation, luminance-adaptive scanlines, a vignette and a PAL colour bleed. The bleed models PAL's narrow chroma bandwidth — luma is taken from the centre tap only while chroma is averaged over four leftward taps, so colour smears rightwards and edges stay sharp.
+
+It is written in Metal Shading Language and compiled at runtime by SDL's GPU API, so it is macOS-only for now; elsewhere `F4` reports the shader as unavailable and keeps the plain renderer. Running SPIR-V and DXIL variants would fix that.
+
+With the shader up, its parameters can be tuned live:
+
+| Key | Action |
+| --- | --- |
+| `TAB` | Select the next parameter (`Shift-TAB` for the previous) |
+| `PAGEUP` / `PAGEDOWN` | Increase / decrease the selected parameter |
+| `R` | Reset every parameter to its default |
+
+The selected parameter and its value are printed to the terminal on each change. Nothing is saved between runs — settings that are worth keeping go into `CHQ_CRT_PARAMS_DEFAULT` in `apps/sdl3/CRTShader.h`.
+
 ## Layout
 
 - `include/<Module>/` — public headers (`C99/Types.h`, `ZXSpectrum/*.h`, `ChaseHQ/ChaseHQ.h`)
