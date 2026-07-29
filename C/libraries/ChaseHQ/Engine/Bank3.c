@@ -4416,6 +4416,15 @@ int bank3_state_create(chqstate_t *state)
   memcpy(state->bank3->control_keys, default_control_keys,
          sizeof(state->bank3->control_keys));
 
+  // Conv: seed the live keydefs from the same table, in the layout
+  // omd_redraw_and_poll installs ($FBE5-$FBF8). The Z80 needs no equivalent:
+  // its $A0CD table is assembled with the Sinclair-joystick codes and is
+  // always overwritten by the options menu before play. Ours can be reached
+  // with the menu skipped while BANK3_INPUT_SELECTION is stubbed, and zeroed
+  // keydefs put every action on one key.
+  memcpy(&state->keydefs[KEYDEF_QUIT], &default_control_keys[5], 3);
+  memcpy(&state->keydefs[KEYDEF_GEAR], &default_control_keys[0], 5);
+
   return 0;
 }
 

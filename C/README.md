@@ -46,11 +46,12 @@ Driving uses the original game's default key definitions, which the in-game rede
 
 | Key | Action |
 | --- | --- |
-| `O` / `P` | Steer left / right |
-| `Q` / `A` | Accelerate / brake |
-| `M` | Change gear |
+| `K` / `L` | Steer left / right |
+| `A` / `Z` | Accelerate / brake |
+| `N` | Change gear |
 | `SPACE` | Turbo boost |
-| `0` | Quit the current game |
+| `P` | Pause the current game |
+| `Q` | Quit the current game |
 
 A Kempston joystick is emulated on the arrow keys, with `.` as fire.
 

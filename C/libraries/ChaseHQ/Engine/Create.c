@@ -172,16 +172,10 @@ static void chq_initialise(chqstate_t *state)
   state->music.data_ptr          = &music_data[1];
   state->music.pattern_start_ptr = &music_data[1];     // $F112
 
-  // Temp until the 128K input code is ported.
+  // Conv: keydefs[] is installed by the options menu ($FBE5). chq_bank3_create
+  // seeds it with the same pristine defaults the Z80 holds at $FFF7, so the
+  // stubbed BANK3_INPUT_SELECTION path still gets the original key layout.
   state->kempston_flag = 0;
-  state->keydefs[KEYDEF_QUIT      ] = KEYDEF(4,3); // 0
-  state->keydefs[KEYDEF_PAUSE     ] = KEYDEF(4,4); // 1
-  state->keydefs[KEYDEF_BOOST     ] = KEYDEF(4,0); // SPACE
-  state->keydefs[KEYDEF_GEAR      ] = KEYDEF(2,0); // M
-  state->keydefs[KEYDEF_ACCELERATE] = KEYDEF(4,5); // Q
-  state->keydefs[KEYDEF_BRAKE     ] = KEYDEF(4,6); // A
-  state->keydefs[KEYDEF_LEFT      ] = KEYDEF(3,2); // O
-  state->keydefs[KEYDEF_RIGHT     ] = KEYDEF(4,2); // P
 }
 
 /* ----------------------------------------------------------------------- */
