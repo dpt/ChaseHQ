@@ -9595,6 +9595,8 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
   int       speed;      /* hero car speed at time of impact; 280 when hit_timer is negative (was DE, BC) */
   int       index;      /* speed-derived index into wobble_params_by_speed, two bytes per entry (Conv: added) */
   const u8 *ptable;     /* pointer into wobble_params_by_speed for the current speed bracket (was HL) */
+  int       DE_decay;   /* per-frame speed decay: D holds speed>>9, E holds (speed>>5)&$0F (was DE) */
+  int       borrow;     /* carry out of the final SRL E, consumed by SBC HL,DE (carry) */
 
   A_hazard_flags = IX_hazard->hazard_flags;
   if (A_hazard_flags == 0) {
@@ -9639,7 +9641,15 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
   else
     IX_hazard->hit_wobble = 0;
   IX_hazard->hazard_lane_OR_perp_dist_hi++;
-  IX_hazard->speed -= IX_hazard->speed / 32;
+
+  // Conv: $ACAC-$ACB8 is not a plain speed/32. SRL D/RR E shifts the pair
+  // right once, then four SRL E shift the low byte alone -- so D retains
+  // speed>>9 and E is masked to (speed>>5)&$0F. The last SRL E leaves bit 4
+  // of speed in carry, which the following SBC HL,DE subtracts as a borrow.
+  DE_decay = (((IX_hazard->speed >> 9) & 0xFF) << 8)
+             | ((IX_hazard->speed >> 5) & 0x0F);
+  borrow   = (IX_hazard->speed >> 4) & 1;
+  IX_hazard->speed -= DE_decay + borrow;
   IX_hazard->inverted ^= 1; // toggle inverted
   if (--IX_hazard->current_lane == 0) {
     IX_hazard->speed        = 0;
@@ -9776,7 +9786,7 @@ static u8 check_collision(chqstate_t *state,
     return default_retval;
 
   A_horz_pos += hazard->hittable.width;
-  if (A_horz_pos <= 112)
+  if (A_horz_pos < 112)
     return default_retval;
 
   A_horz_pos -= hazard->hittable.width;
