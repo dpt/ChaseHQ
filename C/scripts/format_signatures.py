@@ -133,8 +133,12 @@ RETURN_TAG = "\\return"
 RETURN_RE = re.compile(r"^\s*\* (\\return)\s+(.*)$")
 CONV_TAG = "Conv:"
 CONV_RE = re.compile(r"^(\s*)\* Conv:\s+(.*)$")
-# One space after the "*", so a hand-indented line ends the paragraph.
-PLAIN_CONTINUATION_RE = re.compile(r"^\s*\* (\S.*?)\s*$")
+# A Conv: paragraph continues on a line indented either one space (not yet
+# reflowed) or by the hanging indent this script writes. Any other indent is
+# the author's own and ends the paragraph.
+CONV_CONTINUATION_RE = re.compile(
+    r"^\s*\*(?: | {%d})(\S.*?)\s*$" % (len("Conv:") + 2)
+)
 BLANK_COMMENT_RE = re.compile(r"^\s*\*\s*$")
 CLOSE_RE = re.compile(r"^\s*\*/\s*$")
 
@@ -144,6 +148,20 @@ NBSP = " "
 # Length-capped so a note that has grown into a sentence -- "(was A after SUB
 # $20; ...)" -- still wraps normally instead of becoming an unbreakable run.
 REGISTER_NOTE_RE = re.compile(r"\((?:was|were) [^)]{1,16}\)")
+
+
+def join_description(parts):
+    """Join a tag's wrapped lines back into one string.
+
+    A line the previous pass broke mid-word -- "off-" then "screen" -- is
+    rejoined without a space; anything else gets the space back."""
+    text = parts[0]
+    for part in parts[1:]:
+        if re.search(r"[A-Za-z0-9]-$", text) and re.match(r"[A-Za-z0-9]", part):
+            text += part
+        else:
+            text += " " + part
+    return text
 
 
 def protect_register_notes(description):
@@ -157,6 +175,11 @@ def render_entry(head, description, prefix, desc_column):
         width=LINE_LIMIT,
         initial_indent=head,
         subsequent_indent=prefix + " " * (desc_column - len(prefix)),
+        # "off-screen" is one word, not two joined by a break opportunity,
+        # and an over-long one -- a C expression, say -- overflows the line
+        # rather than being chopped in half.
+        break_on_hyphens=False,
+        break_long_words=False,
     )
     return [line.replace(NBSP, " ") for line in wrapped or [head.rstrip()]]
 
@@ -210,7 +233,7 @@ def align_return(lines, i, out, prefix, desc_column):
     head = prefix + RETURN_TAG.ljust(desc_column - len(prefix) - 1) + " "
     out.extend(blanks)
     out.extend(
-        render_entry(head, " ".join(description).strip(), prefix, desc_column)
+        render_entry(head, join_description(description).strip(), prefix, desc_column)
     )
     return j
 
@@ -227,14 +250,14 @@ def reflow_conv(lines, i, out, prefix):
     j = i + 1
     text = [m.group(2)]
     while j < len(lines):
-        c = PLAIN_CONTINUATION_RE.match(lines[j])
+        c = CONV_CONTINUATION_RE.match(lines[j])
         if c is None or TAG_RE.match(lines[j]) or CONV_RE.match(lines[j]):
             break
         text.append(c.group(1))
         j += 1
     column = len(prefix) + len(CONV_TAG) + 1
     head = prefix + CONV_TAG + " "
-    out.extend(render_entry(head, " ".join(text).strip(), prefix, column))
+    out.extend(render_entry(head, join_description(text).strip(), prefix, column))
     return j
 
 
@@ -269,7 +292,7 @@ def reformat_prologue(block):
                     break
                 description.append(c.group(1))
                 i += 1
-            entries.append((m.group(2), m.group(3), " ".join(description).strip()))
+            entries.append((m.group(2), m.group(3), join_description(description).strip()))
         rendered, desc_column = render_params(entries, prefix)
         out.extend(rendered)
         i = align_return(lines, i, out, prefix, desc_column)

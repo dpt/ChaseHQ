@@ -203,8 +203,8 @@ static u16 advance_key_label_column(u16 DE_screen);
  * through into insert_high_score_entry on a hit.
  *
  * Conv: the Z80 builds the digit string via a nibble-swap loop driven by a
- *       banked "significant digit seen" flag in C (tested via RLC C's carry-
- *       out); modelled directly as a bool-like u8 so the tens/units digit
+ *       banked "significant digit seen" flag in C (tested via RLC C's
+ *       carry-out); modelled directly as a bool-like u8 so the tens/units digit
  *       blocks (which are byte-for-byte identical in the Z80 bar which nibble
  *       they mask) collapse into one loop over both nibbles of each BCD byte.
  *
@@ -345,9 +345,9 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain jumps
  *       -- they do not grow the Z80 stack. Calling run_title_screen recursively
  *       from titlescr_wait_loop would grow the C stack by one frame per restart
- *       with no bound (every "any key"/test-mode restart during a long attract-
- *       mode session), so instead titlescr_wait_loop returns non-zero to
- *       request a restart and this function loops.
+ *       with no bound (every "any key"/test-mode restart during a long
+ *       attract-mode session), so instead titlescr_wait_loop returns non-zero
+ *       to request a restart and this function loops.
  */
 static void run_title_screen(chqstate_t *state)
 {
@@ -711,8 +711,8 @@ static const u8 shocked_keydef_sequence[8] = {
  *       until it returns 0 — see its own call site.
  *
  * Conv: the stack-unwind escape hatch *is* modelled, via the return value.
- *       object_script_step returns 1 when an object's script hits its $D2 end-
- *       of-script opcode, which on real hardware pops straight out of this
+ *       object_script_step returns 1 when an object's script hits its $D2
+ *       end-of-script opcode, which on real hardware pops straight out of this
  *       whole self-loop back to run_title_screen. When that happens, this
  *       function skips the rest of the frame's work (clear_playfield_buffer,
  *       background-object draw, present, sleep) and returns 0 to tell its
@@ -1232,13 +1232,13 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  *       of the Z80's POP instruction; it has no bearing on control flow --
  *       every path still returns cleanly to this function's caller, exactly
  *       like an ordinary nested C call. clear_playfield_buffer above
- *       established the same conclusion for its own "LD SP,HL; PUSH x N" fast-
- *       fill trick. Accordingly the real-SP save/restore is omitted entirely;
- *       blit_glyph_rows above reads the source with plain sequential `*src++`,
- *       and both dispatchers return normally with no simulated stack juggling.
- *       cgb_delay_tail's fixed delay loop is likewise a hardware frame-timing
- *       pad with no C equivalent (there is no frame deadline to protect) and is
- *       not translated.
+ *       established the same conclusion for its own "LD SP,HL; PUSH x N"
+ *       fast-fill trick. Accordingly the real-SP save/restore is omitted
+ *       entirely; blit_glyph_rows above reads the source with plain sequential
+ *       `*src++`, and both dispatchers return normally with no simulated stack
+ *       juggling. cgb_delay_tail's fixed delay loop is likewise a hardware
+ *       frame-timing pad with no C equivalent (there is no frame deadline to
+ *       protect) and is not translated.
  *
  * Conv: the row-offset skip loop ($C906-$C916) is a post-test loop that
  *       decrements the row-pair count first and only tests the skip count
@@ -1290,8 +1290,8 @@ static void compute_glyph_blit_params(chqstate_t *state,
  * \param[in]  C_x   Object X screen position (was C).
  * \param[in]  L_row Object row/height byte, selects which of 4 glyph variants
  *                   for this animation row (was L).
- * \param[out] out   Filled with the destination address, glyph pointer, row-
- *                   pair count, width selector and Y-clamp state.
+ * \param[out] out   Filled with the destination address, glyph pointer,
+ *                   row-pair count, width selector and Y-clamp state.
  *
  * Conv: the two "RRA/SCF/RRA/RRA" then "XOR B ; AND mask ; XOR B" sequences
  *       that build D and E are translated literally with the RR/RLC macros from
@@ -1571,13 +1571,14 @@ static void blit_width1(
  * \param[in,out] H Screen address high byte.
  * \param[in,out] L Screen address low byte.
  *
- * Conv: factored into a shared helper rather than repeating the 14 near-
- *       identical inline copies in the disassembly -- the same "Conv: extracted
- *       to function" treatment next_scr_row got in Main.c. next_scr_row itself
- *       is static to Main.c and not visible here; clear_playfield_buffer above
- *       already established this file's own precedent of modelling this exact
- *       address math locally rather than sharing it across files, so this
- *       helper follows that precedent instead of exposing next_scr_row.
+ * Conv: factored into a shared helper rather than repeating the 14
+ *       near-identical inline copies in the disassembly -- the same "Conv:
+ *       extracted to function" treatment next_scr_row got in Main.c.
+ *       next_scr_row itself is static to Main.c and not visible here;
+ *       clear_playfield_buffer above already established this file's own
+ *       precedent of modelling this exact address math locally rather than
+ *       sharing it across files, so this helper follows that precedent instead
+ *       of exposing next_scr_row.
  */
 static void advance_glyph_scanline(int *H, int *L)
 {
@@ -1918,8 +1919,8 @@ static const struct {
  * immediate tempo refresh, and arms the tune-active flag for
  * titlescr_ay_music ($EC71) to pick up on its next call.
  *
- * \param[in] A_tune Tune number to start; index into the 7-byte-stride tune-
- *                   select table at $F225. (was A)
+ * \param[in] A_tune Tune number to start; index into the 7-byte-stride
+ *                   tune-select table at $F225. (was A)
  *
  * Conv: $EBA6-$EBAB computes BC = A_tune * 7 via a repeated doubling/add
  *       sequence (the Z80 has no multiply instruction); C uses a direct
@@ -3157,8 +3158,8 @@ static void titlescr_drum_advance(chqstate_t *state)
  *       than given its own function, since it does nothing but load a new HL
  *       and loop back to the top of this same reader (`JR $F7FE`).
  *
- * Conv: $F829's `POP HL / POP HL / DI` is omitted -- those unwind Z80 call-
- *       stack frames left by the CALL chain that reached this reader
+ * Conv: $F829's `POP HL / POP HL / DI` is omitted -- those unwind Z80
+ *       call-stack frames left by the CALL chain that reached this reader
  *       (titlescr_music -> titlescr_drum_advance -> here, or load_drum_script
  *       -> here); this function is an ordinary C call/return, not entered via
  *       pushed return addresses that need discarding, and DI has no host
@@ -3233,8 +3234,8 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
  * Conv: the frame-flag clear at $F832-$F833 is omitted because nothing in this
  *       port polls the literal $F8A8 field (wait_for_frame_flag has no C
  *       equivalent — every caller here already represents one already-paced
- *       tick, so there is nothing left to wait for). play_sample_row's own mid-
- *       sample yield check uses a local per-call T-state budget instead of
+ *       tick, so there is nothing left to wait for). play_sample_row's own
+ *       mid-sample yield check uses a local per-call T-state budget instead of
  *       $F8A8, which needs no explicit clear -- see its Conv note.
  *
  * Conv: this function uses goto/labels rather than nested structured loops. The
@@ -3244,8 +3245,8 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
  *       by fallthrough from $F85D and from $F863; drum_dispatch_entry ($F866)
  *       from $F857; and sfx2_tick_countdown ($F894) from three places -- the
  *       countdown skip ($F84A), the nothing-to-trigger exit ($F87E) and
- *       fallthrough. A structured rewrite would have to duplicate the tick-
- *       countdown tail at each of those three exits, or introduce flag
+ *       fallthrough. A structured rewrite would have to duplicate the
+ *       tick-countdown tail at each of those three exits, or introduce flag
  *       variables the Z80 does not have.
  */
 static void titlescr_music(chqstate_t *state)

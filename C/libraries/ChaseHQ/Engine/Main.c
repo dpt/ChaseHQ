@@ -1397,8 +1397,8 @@ static void setup_engine_sfx_48k(chqstate_t *state)
  * on-phase delay loops to tune the pitch. The Z80 inner loop body is: OUT
  * ($FE),0; B DJNZ loops; OUT ($FE),$18; B DJNZ loops; DEC C; JR NZ.
  *
- * Conv: Z80 uses OUT ($FE) to drive the border/speaker port and idle DJNZ busy-
- *       loops to set the duty cycle. C issues the OUTs via speccy->out and
+ * Conv: Z80 uses OUT ($FE) to drive the border/speaker port and idle DJNZ
+ *       busy-loops to set the duty cycle. C issues the OUTs via speccy->out and
  *       models the busy-loops as speccy->logtime so the host can reconstruct
  *       the pulse timing.
  */
@@ -3610,8 +3610,8 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
  * face is drawn from the end of its bitmap upwards via draw_mugshot. Afterwards
  * falls through to draw_overlay_messages via JR in the Z80.
  *
- * Conv: Z80 loads the perp mugshot address from ($5CF0) — the end of the per-
- *       stage mugshot data; C reads it from
+ * Conv: Z80 loads the perp mugshot address from ($5CF0) — the end of the
+ *       per-stage mugshot data; C reads it from
  *       state->stage->addrof_perp_mugshot_attributes.
  *
  * Conv: Z80 JR $8E42 tail-calls draw_overlay_messages; C calls it directly.
@@ -6261,8 +6261,8 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
  * Entry point with BC=0: both extra bitmap bytes are zero so no cursor block
  * appears beneath the [character].
  *
- * \param[in] x         Column index (0–based); 0xFF means the special off-
- *                      screen cursor position. (was A)
+ * \param[in] x         Column index (0–based); 0xFF means the special
+ *                      off-screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character)
@@ -6277,8 +6277,8 @@ static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character)
  * cursor underline row) and C=$80 sets the MSB of the right glyph byte,
  * producing a visible cursor block beneath the [character].
  *
- * \param[in] x         Column index (0–based); 0xFF means the special off-
- *                      screen cursor position. (was A)
+ * \param[in] x         Column index (0–based); 0xFF means the special
+ *                      off-screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
@@ -6304,9 +6304,9 @@ static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
  * \param[in] extrabm2 Extra bits placed in the right glyph byte (cursor
  *                     underline MSB or 0). (was C, self-modifies $9B61)
  *
- * Conv: Z80 self-modifies three operands ($9B61, $9B64, $9B89) and uses a jump-
- *       table cascade (SRL B; RR C repeated) for the pixel shift; C uses local
- *       variables and a single right-shift of a 16-bit composite word.
+ * Conv: Z80 self-modifies three operands ($9B61, $9B64, $9B89) and uses a
+ *       jump-table cascade (SRL B; RR C repeated) for the pixel shift; C uses
+ *       local variables and a single right-shift of a 16-bit composite word.
  *
  * Conv: Row counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
  */
@@ -9848,8 +9848,8 @@ static void advance_hazards(chqstate_t *state)
  * Conv: Z80 calls the hit handler via JP (HL) ($AEC8–$AECE); C calls the
  *       function pointer directly.
  *
- * Conv: Z80 LDDR at $AEBA shifts the draw list down by bytes; C uses a pointer-
- *       decrement loop over s16 words.
+ * Conv: Z80 LDDR at $AEBA shifts the draw list down by bytes; C uses a
+ *       pointer-decrement loop over s16 words.
  *
  * \param[in,out] IX_hazard Hazard slot to advance and render (was IX).
  * \param[in]     IY_base   Base of the height table at $E300 (was IY).
@@ -15954,8 +15954,8 @@ static void build_curve_table(chqstate_t *state, int forked)
  * \param[in] DE_roadpos       Starting road position for this table (right- or
  *                             left-hand pass). (was DE)
  * \param[in] HL_tableend      One-past-the-end pointer into the destination
- *                             xpos table (state-
- *                             >xpos_road_right/left/fork_right/centre_right).
+ *                             xpos table
+ *                             (state->xpos_road_right/left/fork_right/centre_right).
  *                             (was HL, SM $CC72/$CCA7)
  * \param[in] Bdash_alwayszero Shadow B register value; always 0 at call sites.
  *                             (was B')
@@ -17349,8 +17349,8 @@ static void write_audio_registers_128k(chqstate_t *state)
  *
  * Conv: Z80 computes ~(HL>>1) via RR H / LD A,L / RRA / CPL / LD L,A; C uses
  *       ~(state->speed >> 1) on a u16 directly. The tunnel check is
- *       restructured to an if-else rather than the Z80's load-default-then-
- *       overwrite pattern.
+ *       restructured to an if-else rather than the Z80's
+ *       load-default-then-overwrite pattern.
  */
 static void engine_sfx_from_speed_128k(chqstate_t *state)
 {

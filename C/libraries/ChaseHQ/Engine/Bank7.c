@@ -374,8 +374,8 @@ static void es_handler_draw_score(chqstate_t *state)
  * Conv: as with z80addrtoendshot, es_script only ever encodes one literal value
  *       here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E via
  *       the bank's uniform +0x8400 rule), so a small lookup replaces pointer
- *       arithmetic into relocated bank memory the C port does not model byte-
- *       for-byte.
+ *       arithmetic into relocated bank memory the C port does not model
+ *       byte-for-byte.
  *
  * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
  *                 at $E2B7).
@@ -909,8 +909,8 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
  *
  * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here -- the
  *       original ANDs each byte down to its ink/paper fields before OR-ing them
- *       back together, which drops those bits on every write. Matched bug-for-
- *       bug.
+ *       back together, which drops those bits on every write. Matched
+ *       bug-for-bug.
  *
  * \param[in] flag Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
  */
@@ -1162,8 +1162,8 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
  *       (b7pm_wait_for_interrupt) until the next interrupt sets it -- this is
  *       how the routine paces itself to one call per frame. show_end_screen's
  *       loop already paces each call via state->speccy->sleep, so both the flag
- *       and the wait loop are omitted; this function represents one already-
- *       paced tick, same as Main.c's play_music_48k.
+ *       and the wait loop are omitted; this function represents one
+ *       already-paced tick, same as Main.c's play_music_48k.
  *
  * Conv: the Z80 checks es_input_mask ($A16F) first and, if it is non-zero (the
  *       player has pressed fire once already, skipping ahead to the
