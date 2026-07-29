@@ -10344,7 +10344,7 @@ dafs_done_draw_object:
   /* Conv: Converted to switch */
   switch (state->smash_level) {
   case 0:
-    goto dafs_draw_done_1;
+    break;
   case 1:
     dhs_smoke(state, state->smokes[1], IY_height);
     break;
@@ -10358,6 +10358,12 @@ dafs_done_draw_object:
     dhs_smoke(state, state->smokes[1], IY_height);
     break;
   }
+
+  /* $AFEE: JP $AF3B — every smash_level rejoins the shared loop-continue
+   * block. Falling out of the function here would skip the n_hazards
+   * decrement and the dhs_xpos_table advance, so any hazard sharing the
+   * perp's draw depth would never be drawn. */
+  goto dafs_draw_done_1;
 }
 
 /**
