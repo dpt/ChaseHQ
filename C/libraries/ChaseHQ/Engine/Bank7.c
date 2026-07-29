@@ -114,11 +114,11 @@ static void es_play_music_48k(chqstate_t *state);
  * script, once more to exit), clearing the queued key each time.
  *
  * Conv: the Z80 entry point LDIRs itself from $E000 to $5C00, then LDIRs a
- * second, inner 768-byte block from $F7EF to $F300 and runs from there (see
- * project memory project-endscreen-bank7-double-relocation). Both
- * relocations are pure ZX paging/self-modification artefacts and are
- * discarded here, following the load_stage precedent -- the C functions
- * below are simply called directly.
+ *       second, inner 768-byte block from $F7EF to $F300 and runs from there
+ *       (see project memory project-endscreen-bank7-double-relocation). Both
+ *       relocations are pure ZX paging/self-modification artefacts and are
+ *       discarded here, following the load_stage precedent -- the C functions
+ *       below are simply called directly.
  */
 void show_end_screen(chqstate_t *state)
 {
@@ -311,9 +311,9 @@ rs_exit:
  * (offset 0xFD, $5DFB relocated), so the later draw-text command renders it.
  *
  * Conv: the leading-zero blank/print decision (Z80: RLC C carry chain) is
- * modelled as a sticky "seen a non-blank digit yet" flag: print the digit if
- * it is non-zero or a digit has already been printed, otherwise print a
- * space.
+ *       modelled as a sticky "seen a non-blank digit yet" flag: print the digit
+ *       if it is non-zero or a digit has already been printed, otherwise print
+ *       a space.
  */
 static void es_handler_draw_score(chqstate_t *state)
 {
@@ -371,11 +371,11 @@ static void es_handler_draw_score(chqstate_t *state)
 /**
  * Resolve a script-embedded argument word to its C data array.
  *
- * Conv: as with z80addrtoendshot, es_script only ever encodes one literal
- * value here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E
- * via the bank's uniform +0x8400 rule), so a small lookup replaces pointer
- * arithmetic into relocated bank memory the C port does not model
- * byte-for-byte.
+ * Conv: as with z80addrtoendshot, es_script only ever encodes one literal value
+ *       here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E via
+ *       the bank's uniform +0x8400 rule), so a small lookup replaces pointer
+ *       arithmetic into relocated bank memory the C port does not model byte-
+ *       for-byte.
  *
  * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
  *                 at $E2B7).
@@ -403,19 +403,20 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * pointer. Runs immediately (loops back into run_script rather than
  * returning).
  *
- * Conv: data_e06e (the only live target) is NOT a standard
- * {CHATTERCHR, CHATTERSTR, CHATTERCMD} chatterblk -- see the comment on
- * data_e06e in Bank7Data.h. Byte 2 of that block ($3F = 63) would be
- * consumed as a CHATTERSTR index by pc_chatter_message (Main.c, the
- * "assert(*chatterblk < CHATTERSTR__LIMIT)" guard around line 5871) and
- * fail that bounds check immediately -- CHATTERSTR__LIMIT is 36. In a
- * release build without asserts this reads common_chatter_strings[63] out
- * of its 36-entry array and dereferences whatever garbage pointer turns up,
- * i.e. every single playthrough would crash on reaching the end screen.
- * The original Z80 has the same malformed data, so this path is presumed
- * unreached in practice (the skool marks it "unproven, dead end"); rather
- * than risk that byte-for-byte here, the start_chatter call is skipped
- * whenever the resolved target does not look like a well-formed chatterblk.
+ * Conv: data_e06e (the only live target) is NOT a standard {CHATTERCHR,
+ *       CHATTERSTR, CHATTERCMD} chatterblk -- see the comment on data_e06e in
+ *       Bank7Data.h. Byte 2 of that block ($3F = 63) would be consumed as a
+ *       CHATTERSTR index by pc_chatter_message (Main.c, the "assert(*chatterblk
+ *       < CHATTERSTR__LIMIT)" guard around line 5871) and fail that bounds
+ *       check immediately -- CHATTERSTR__LIMIT is 36. In a release build
+ *       without asserts this reads common_chatter_strings[63] out of its
+ *       36-entry array and dereferences whatever garbage pointer turns up, i.e.
+ *       every single playthrough would crash on reaching the end screen. The
+ *       original Z80 has the same malformed data, so this path is presumed
+ *       unreached in practice (the skool marks it "unproven, dead end"); rather
+ *       than risk that byte-for-byte here, the start_chatter call is skipped
+ *       whenever the resolved target does not look like a well-formed
+ *       chatterblk.
  *
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
  *                      read and advanced past the word consumed.
@@ -623,43 +624,45 @@ static void render_text_common(chqstate_t *state, const u8 **script)
  * Finally stamps the call's colour byte into both glyph-cell attributes and
  * advances the persistent cursor by one column.
  *
- * Conv: register-banking notes, resolved from the original stalled attempt.
- * The Z80 threads three logically distinct values through nested EXX/stack
- * shuffles ($E306, $E307/EX (SP),HL, and plot_char's own $E35B/$E39A-$E3A3
- * EXX pairs): the script read cursor (HL throughout the character loop --
- * modelled as the caller's script pointer, untouched by plot_char), the
- * persistent column cursor (screen-dest E and attr-addr L, both threaded
- * here as [in,out] E_col/L_attr), and this character's own draw position
- * (screen-dest E's PRE-increment value, borrowed via a PUSH/EXX/POP
- * shuffle at $E35B-$E35F -- modelled here as the local E_cur, read from
- * *E_col before it is advanced). Everything else the EXX dance shuffles
- * (Set S's stale/arbitrary BC and DE, pushed and popped purely to balance
- * the stack) carries no live data and is correctly omitted.
+ * Conv: register-banking notes, resolved from the original stalled attempt. The
+ *       Z80 threads three logically distinct values through nested EXX/stack
+ *       shuffles ($E306, $E307/EX (SP),HL, and plot_char's own
+ *       $E35B/$E39A-$E3A3 EXX pairs): the script read cursor (HL throughout the
+ *       character loop -- modelled as the caller's script pointer, untouched by
+ *       plot_char), the persistent column cursor (screen-dest E and attr-addr
+ *       L, both threaded here as [in,out] E_col/L_attr), and this character's
+ *       own draw position (screen-dest E's PRE-increment value, borrowed via a
+ *       PUSH/EXX/POP shuffle at $E35B-$E35F -- modelled here as the local
+ *       E_cur, read from *E_col before it is advanced). Everything else the EXX
+ *       dance shuffles (Set S's stale/arbitrary BC and DE, pushed and popped
+ *       purely to balance the stack) carries no live data and is correctly
+ *       omitted.
  *
  * Conv: A_attr (was C, Set M) is NOT the "row count" the ($E2F5) prologue
- * naming originally suggested. $E399's EXX switches back to the SAME
- * physical register set read at $E2F5 -- the ladder's own use of C
- * ($E328-$E356) is a completely different (Set S) C that plot_char's own
- * LDI calls decrement into irrelevance and never reads back. Confirmed
- * against es_script: the byte read here for "CONGRATULATIONS!" is
- * attribute_BRIGHT_WHITE_OVER_BLACK -- a plausible text colour, not a row
- * count. It survives unclobbered in Set M across the whole render_text call
- * and is written verbatim into both glyph-cell attributes at $E399/$E3A0.
+ *       naming originally suggested. $E399's EXX switches back to the SAME
+ *       physical register set read at $E2F5 -- the ladder's own use of C
+ *       ($E328-$E356) is a completely different (Set S) C that plot_char's own
+ *       LDI calls decrement into irrelevance and never reads back. Confirmed
+ *       against es_script: the byte read here for "CONGRATULATIONS!" is
+ *       attribute_BRIGHT_WHITE_OVER_BLACK -- a plausible text colour, not a row
+ *       count. It survives unclobbered in Set M across the whole render_text
+ *       call and is written verbatim into both glyph-cell attributes at
+ *       $E399/$E3A0.
  *
  * Conv: $E37A-$E37F (E += $1F, then the pending LDI increment folds in a
- * further +1, netting E += $20; D -= 7) is NOT the same computation as
- * next_screen_row() -- it never checks for, or propagates, a carry out of
- * the column byte into the row byte, unlike next_screen_row's explicit
- * "did this cross a screen third" branch. Reproduced literally as two
- * independent 8-bit adds rather than substituting next_screen_row, since
- * the two are only equivalent when no such carry occurs -- true for every
- * script-supplied text position in es_script, but not guaranteed in
- * general.
+ *       further +1, netting E += $20; D -= 7) is NOT the same computation as
+ *       next_screen_row() -- it never checks for, or propagates, a carry out of
+ *       the column byte into the row byte, unlike next_screen_row's explicit
+ *       "did this cross a screen third" branch. Reproduced literally as two
+ *       independent 8-bit adds rather than substituting next_screen_row, since
+ *       the two are only equivalent when no such carry occurs -- true for every
+ *       script-supplied text position in es_script, but not guaranteed in
+ *       general.
  *
- * Conv: the attribute-row address computed from D_row (H_attr, range
- * $EF-$F2) is resolved via ADDRTOSCREEN, not ADDRTOATTRS, matching the
- * established precedent in draw_endshot's attribute-row loop above -- this
- * bank-7 memory range is not standard $5800-$5AFF attribute space.
+ * Conv: the attribute-row address computed from D_row (H_attr, range $EF-$F2)
+ *       is resolved via ADDRTOSCREEN, not ADDRTOATTRS, matching the established
+ *       precedent in draw_endshot's attribute-row loop above -- this bank-7
+ *       memory range is not standard $5800-$5AFF attribute space.
  *
  * \param[in]     A_char Script character byte, EOS bit already masked off by
  *                       the caller (was A).
@@ -828,8 +831,8 @@ static void es_handler_handshake_advance(chqstate_t *state)
  * backbuffer over several frames.
  *
  * Conv: the ink-field increment (`INC C`, $E45D) and paper-field increment
- * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
- * wraparound reproduces this bug-for-bug.
+ *       (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
+ *       wraparound reproduces this bug-for-bug.
  */
 static void es_attribute_fade_in(chqstate_t *state)
 {
@@ -904,10 +907,10 @@ static void es_handler_glyph_fade_b(chqstate_t *state)
  * routine_e472 (GLYPH_B, also called directly by the handshake handler),
  * $5C6D for routine_e46d (GLYPH_C).
  *
- * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here --
- * the original ANDs each byte down to its ink/paper fields before OR-ing
- * them back together, which drops those bits on every write. Matched
- * bug-for-bug.
+ * Conv: unlike es_attribute_fade_in, BRIGHT/FLASH are never tested here -- the
+ *       original ANDs each byte down to its ink/paper fields before OR-ing them
+ *       back together, which drops those bits on every write. Matched bug-for-
+ *       bug.
  *
  * \param[in] flag Flip-flop gate byte to rotate (was HL -> $5C6C/$5C6D).
  */
@@ -999,9 +1002,9 @@ static u16 next_screen_row(u16 addr)
  * character row) and D drops back by 8 unless E itself carried into the next
  * screen third.
  *
- * Conv: operates on the raw 16-bit Z80 screen address (screen_addr) and
- * calls ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer,
- * so the row-wrap arithmetic can mirror the Z80 exactly.
+ * Conv: operates on the raw 16-bit Z80 screen address (screen_addr) and calls
+ *       ADDRTOSCREEN per row, rather than walking a pre-resolved C pointer, so
+ *       the row-wrap arithmetic can mirror the Z80 exactly.
  *
  * \param[in] image       Bitmap+attribute source blob (was HL).
  * \param[in] screen_addr Top-left destination screen address (was DE).
@@ -1046,10 +1049,11 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 /**
  * Resolve a script-embedded end-shot bitmap address to its C data array.
  *
- * Conv: the original walks a real (relocated) Z80 pointer; es_script only
- * ever encodes these four literal addresses (see the ESCMD_CLEAR_DRAW_FRAME_VAL
- * entries above), so a small lookup replaces pointer arithmetic into
- * relocated bank memory the C port does not model byte-for-byte.
+ * Conv: the original walks a real (relocated) Z80 pointer; es_script only ever
+ *       encodes these four literal addresses (see the
+ *       ESCMD_CLEAR_DRAW_FRAME_VAL entries above), so a small lookup replaces
+ *       pointer arithmetic into relocated bank memory the C port does not model
+ *       byte-for-byte.
  *
  * \param[in] addr Raw address word read from the script (was HL).
  * \return         Matching bitmap_endshot_N array.
@@ -1153,19 +1157,19 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
  * flag; the lower three bits of the remaining byte select the instrument
  * (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise).
  *
- * Conv: the Z80 clears an interrupt flag ($F3BC) on entry then, once its
- * own processing is done, busy-waits on that flag in a loop
- * (b7pm_wait_for_interrupt) until the next interrupt sets it -- this is how
- * the routine paces itself to one call per frame. show_end_screen's loop
- * already paces each call via state->speccy->sleep, so both the flag and
- * the wait loop are omitted; this function represents one already-paced
- * tick, same as Main.c's play_music_48k.
+ * Conv: the Z80 clears an interrupt flag ($F3BC) on entry then, once its own
+ *       processing is done, busy-waits on that flag in a loop
+ *       (b7pm_wait_for_interrupt) until the next interrupt sets it -- this is
+ *       how the routine paces itself to one call per frame. show_end_screen's
+ *       loop already paces each call via state->speccy->sleep, so both the flag
+ *       and the wait loop are omitted; this function represents one already-
+ *       paced tick, same as Main.c's play_music_48k.
  *
- * Conv: the Z80 checks es_input_mask ($A16F) first and, if it is non-zero
- * (the player has pressed fire once already, skipping ahead to the
- * congratulations script), jumps straight to the wait-for-interrupt loop --
- * i.e. does no music processing at all that tick. C returns immediately in
- * that case.
+ * Conv: the Z80 checks es_input_mask ($A16F) first and, if it is non-zero (the
+ *       player has pressed fire once already, skipping ahead to the
+ *       congratulations script), jumps straight to the wait-for-interrupt loop
+ *       -- i.e. does no music processing at all that tick. C returns
+ *       immediately in that case.
  */
 static void es_play_music_48k(chqstate_t *state)
 {
@@ -1302,16 +1306,17 @@ static void es_play_noise(chqstate_t *state, int A_param)
  *                     (was HL).
  *
  * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
- * 8 iterations -- the byte doubles as its own iteration counter, no separate
- * bit-index register needed. This rotation mutates the sample data in place
- * (only a full 8-bit rotation restores it), so the drum samples live in bank7
- * state as mutable copies of es_drum_sample_2_template/es_drum_sample_1_template.
+ *       8 iterations -- the byte doubles as its own iteration counter, no
+ *       separate bit-index register needed. This rotation mutates the sample
+ *       data in place (only a full 8-bit rotation restores it), so the drum
+ *       samples live in bank7 state as mutable copies of
+ *       es_drum_sample_2_template/es_drum_sample_1_template.
  *
  * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
- * reconstruct the bit timing.
+ *       reconstruct the bit timing.
  *
  * Conv: C has no mid-sample interrupts, so the early-return resume path never
- * triggers and the sample always plays to completion in one call.
+ *       triggers and the sample always plays to completion in one call.
  */
 static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data)
 {
@@ -1351,9 +1356,9 @@ pd_end_of_sample:
 /**
  * Allocate and initialise the bank 7 sub-state.
  *
- * Conv: host lifecycle helper; has no Z80 address. Called once from
- * chq_create. Sets the fade-gate bytes and drum-sample copies that calloc's
- * zero fill would otherwise leave wrong (see the comments below).
+ * Conv: host lifecycle helper; has no Z80 address. Called once from chq_create.
+ *       Sets the fade-gate bytes and drum-sample copies that calloc's zero fill
+ *       would otherwise leave wrong (see the comments below).
  *
  * \return 0 on success, -1 if allocation failed.
  */
@@ -1384,7 +1389,7 @@ int bank7_state_create(chqstate_t *state)
  * Free the bank 7 sub-state.
  *
  * Conv: host lifecycle helper; has no Z80 address. Called once from
- * chq_destroy.
+ *       chq_destroy.
  */
 void bank7_state_destroy(chqstate_t *state)
 {

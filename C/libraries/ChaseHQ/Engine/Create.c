@@ -32,8 +32,8 @@
  * Copy read-only game tables into state and set original-game defaults.
  *
  * Conv: host lifecycle helper; has no single Z80 address (individual field
- * defaults are marked with the Z80 address they correspond to inline
- * below). Called once from chq_create.
+ *       defaults are marked with the Z80 address they correspond to inline
+ *       below). Called once from chq_create.
  */
 static void chq_initialise(chqstate_t *state)
 {
@@ -183,9 +183,9 @@ static void chq_initialise(chqstate_t *state)
 /**
  * Allocate and initialise a new game state.
  *
- * Conv: host lifecycle entry point; has no Z80 address. Allocates
- * chqstate_t, wires up the ZX facade, runs chq_initialise and creates the
- * bank 3/7 sub-states.
+ * Conv: host lifecycle entry point; has no Z80 address. Allocates chqstate_t,
+ *       wires up the ZX facade, runs chq_initialise and creates the bank 3/7
+ *       sub-states.
  *
  * \param[in] speccy ZX Spectrum facade to attach to the new state.
  * \return           Newly allocated state, or NULL on allocation failure.
@@ -227,8 +227,7 @@ failure:
 /**
  * Free a game state created by chq_create.
  *
- * Conv: host lifecycle entry point; has no Z80 address. Tolerates a NULL
- * state.
+ * Conv: host lifecycle entry point; has no Z80 address. Tolerates a NULL state.
  */
 CHQ_API void chq_destroy(chqstate_t *state)
 {

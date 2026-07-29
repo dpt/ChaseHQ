@@ -29,8 +29,11 @@ block whose description column would land beyond DESC_COLUMN_LIMIT is packed
 with single spaces instead, since aligning it would leave too little width
 for the text. A \return that follows the block shares its description
 column, so the two read as one table; when the block is packed rather than
-aligned the \return is left as it stands. Blank " *" lines immediately
-before a prologue's closing "*/" are dropped.
+aligned the \return is left as it stands. A "Conv:" paragraph in a prologue
+hangs its continuation lines under the text, so the tag stands out from the
+prose that follows it; a line the author indented by hand ends the paragraph
+and is left as it stands. Blank " *" lines immediately before a prologue's
+closing "*/" are dropped.
 
 Usage: python3 format_signatures.py [--fix] [file.c ...]
 Default: all *.c in libraries/ChaseHQ/Engine/, check-only unless --fix given.
@@ -128,6 +131,10 @@ CONTINUATION_RE = re.compile(r"^\s*\*\s+(\S.*?)\s*$")
 TAG_RE = re.compile(r"^\s*\* \\")
 RETURN_TAG = "\\return"
 RETURN_RE = re.compile(r"^\s*\* (\\return)\s+(.*)$")
+CONV_TAG = "Conv:"
+CONV_RE = re.compile(r"^(\s*)\* Conv:\s+(.*)$")
+# One space after the "*", so a hand-indented line ends the paragraph.
+PLAIN_CONTINUATION_RE = re.compile(r"^\s*\* (\S.*?)\s*$")
 BLANK_COMMENT_RE = re.compile(r"^\s*\*\s*$")
 CLOSE_RE = re.compile(r"^\s*\*/\s*$")
 
@@ -208,6 +215,29 @@ def align_return(lines, i, out, prefix, desc_column):
     return j
 
 
+def reflow_conv(lines, i, out, prefix):
+    """Hang a Conv: paragraph's continuation lines under its first word.
+
+    lines[i] opens the paragraph; its lines are appended to out and the new
+    index returned. Text the author indented by hand is left alone -- the
+    extra spaces are deliberate, and re-wrapping would flatten them."""
+    m = CONV_RE.match(lines[i])
+    if m is None:
+        return i
+    j = i + 1
+    text = [m.group(2)]
+    while j < len(lines):
+        c = PLAIN_CONTINUATION_RE.match(lines[j])
+        if c is None or TAG_RE.match(lines[j]) or CONV_RE.match(lines[j]):
+            break
+        text.append(c.group(1))
+        j += 1
+    column = len(prefix) + len(CONV_TAG) + 1
+    head = prefix + CONV_TAG + " "
+    out.extend(render_entry(head, " ".join(text).strip(), prefix, column))
+    return j
+
+
 def reformat_prologue(block):
     """Reflow every \\param run in one /** ... */ comment block."""
     lines = block.split("\n")
@@ -216,6 +246,10 @@ def reformat_prologue(block):
     while i < len(lines):
         m = PARAM_RE.match(lines[i])
         if m is None:
+            conv = CONV_RE.match(lines[i])
+            if conv is not None:
+                i = reflow_conv(lines, i, out, conv.group(1) + "* ")
+                continue
             out.append(lines[i])
             i += 1
             continue

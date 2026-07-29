@@ -203,16 +203,16 @@ static u16 advance_key_label_column(u16 DE_screen);
  * through into insert_high_score_entry on a hit.
  *
  * Conv: the Z80 builds the digit string via a nibble-swap loop driven by a
- * banked "significant digit seen" flag in C (tested via RLC C's carry-out);
- * modelled directly as a bool-like u8 so the tens/units digit blocks (which
- * are byte-for-byte identical in the Z80 bar which nibble they mask)
- * collapse into one loop over both nibbles of each BCD byte.
+ *       banked "significant digit seen" flag in C (tested via RLC C's carry-
+ *       out); modelled directly as a bool-like u8 so the tens/units digit
+ *       blocks (which are byte-for-byte identical in the Z80 bar which nibble
+ *       they mask) collapse into one loop over both nibbles of each BCD byte.
  *
- * Conv: the 10-row scan is a lexicographic ASCII compare -- identical in
- * effect to memcmp, since a space ($20) sorts below any digit ($30-$39), so
- * a blanked leading zero correctly compares as "less than" a real digit of
- * a longer number. Modelled directly as memcmp rather than the Z80's
- * digit-by-digit CP/JR ladder.
+ * Conv: the 10-row scan is a lexicographic ASCII compare -- identical in effect
+ *       to memcmp, since a space ($20) sorts below any digit ($30-$39), so a
+ *       blanked leading zero correctly compares as "less than" a real digit of
+ *       a longer number. Modelled directly as memcmp rather than the Z80's
+ *       digit-by-digit CP/JR ladder.
  */
 static void check_high_score(chqstate_t *state)
 {
@@ -268,22 +268,22 @@ static void check_high_score(chqstate_t *state)
  *                the row counter C, banked via EX AF,AF' across the shift).
  *
  * Conv: the Z80 shifts rows via LDDR over raw 33-byte-stride row bytes,
- * carefully skipping the 7 static "next row's rank suffix" bytes tucked
- * into each row's unused tail (see the data block's own comment at $C400 in
- * the skool). Modelled here as a plain struct-array shift over
- * high_score_row_t, which holds only the fields that actually move -- the
- * rank-suffix strings ("1ST ".."10TH") are fixed to their screen position,
- * never move, and are not stored per-row at all (see
- * high_score_rank_suffixes in Bank3Data.c).
+ *       carefully skipping the 7 static "next row's rank suffix" bytes tucked
+ *       into each row's unused tail (see the data block's own comment at $C400
+ *       in the skool). Modelled here as a plain struct-array shift over
+ *       high_score_row_t, which holds only the fields that actually move -- the
+ *       rank-suffix strings ("1ST ".."10TH") are fixed to their screen
+ *       position, never move, and are not stored per-row at all (see
+ *       high_score_rank_suffixes in Bank3Data.c).
  *
- * Conv: $C0EC onward -- the screen clear/setup, the flashing highlight, and
- * the joystick-driven letter-selection loop that lets the player type their
- * initials -- is not translated. The name-entry font bitmap table pointer
- * ($800C) and the destination buffer for titlescr_refresh_name_table's own
- * copy ($800A) are never written anywhere in the disassembled banks, so
- * there is currently nothing to render against (same scope cut as
- * titlescr_refresh_name_table's own Conv note, further up this file). The
- * row is left holding the ". . ." placeholder name written below.
+ * Conv: $C0EC onward -- the screen clear/setup, the flashing highlight, and the
+ *       joystick-driven letter-selection loop that lets the player type their
+ *       initials -- is not translated. The name-entry font bitmap table pointer
+ *       ($800C) and the destination buffer for titlescr_refresh_name_table's
+ *       own copy ($800A) are never written anywhere in the disassembled banks,
+ *       so there is currently nothing to render against (same scope cut as
+ *       titlescr_refresh_name_table's own Conv note, further up this file). The
+ *       row is left holding the ". . ." placeholder name written below.
  */
 static void insert_high_score_entry(chqstate_t *state, int row)
 {
@@ -324,29 +324,30 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  * game. Called from $C000 and $FBC8.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
- * state->bank3->title_animation; see titlescr_wait_loop where the "any key"
- * restart path reseeds it.
+ *       state->bank3->title_animation; see titlescr_wait_loop where the "any
+ *       key" restart path reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
- * real early-exit path in the Z80. It stays `void`: titlescr_wait_loop's fire-key
- * branch now calls options_menu_driver's omd_redraw_and_poll directly and
- * returns its result, which in the Z80 is itself a `JP $C59E` hand-off back
- * to this function -- so the fire path rejoins this loop exactly like the
- * "any key" and test-mode restarts, and no caller of run_title_screen
- * ever needs to see it.
+ *       real early-exit path in the Z80. It stays `void`: titlescr_wait_loop's
+ *       fire-key branch now calls options_menu_driver's omd_redraw_and_poll
+ *       directly and returns its result, which in the Z80 is itself a `JP
+ *       $C59E` hand-off back to this function -- so the fire path rejoins this
+ *       loop exactly like the "any key" and test-mode restarts, and no caller
+ *       of run_title_screen ever needs to see it.
  *
- * Conv: despite the above, this function is *not* guaranteed to loop
- * forever even today -- titlescr_wait_loop has two genuine RET paths of its own
- * (the initial tune-4-and-180-frame-wait tail, and the credit-inserted tail),
- * both of which fall out of this function normally via a plain C `return`.
- * Only the ordinary polling path (no credit, no key) is unbounded.
+ * Conv: despite the above, this function is *not* guaranteed to loop forever
+ *       even today -- titlescr_wait_loop has two genuine RET paths of its own
+ *       (the initial tune-4-and-180-frame-wait tail, and the credit-inserted
+ *       tail), both of which fall out of this function normally via a plain C
+ *       `return`. Only the ordinary polling path (no credit, no key) is
+ *       unbounded.
  *
- * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain
- * jumps -- they do not grow the Z80 stack. Calling run_title_screen
- * recursively from titlescr_wait_loop would grow the C stack by one frame per
- * restart with no bound (every "any key"/test-mode restart during a long
- * attract-mode session), so instead titlescr_wait_loop returns non-zero to
- * request a restart and this function loops.
+ * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain jumps
+ *       -- they do not grow the Z80 stack. Calling run_title_screen recursively
+ *       from titlescr_wait_loop would grow the C stack by one frame per restart
+ *       with no bound (every "any key"/test-mode restart during a long attract-
+ *       mode session), so instead titlescr_wait_loop returns non-zero to
+ *       request a restart and this function loops.
  */
 static void run_title_screen(chqstate_t *state)
 {
@@ -455,24 +456,24 @@ static void run_title_screen(chqstate_t *state)
  * run_title_screen ($C59E) is re-run (new scene) when a key other than
  * fire is pressed.
  *
- * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame
- * pacing described in the skool ("one $F82F service call per frame") is
- * informal; the real hardware relies on the background IM2 interrupt firing
- * asynchronously while this loop spins. The C port makes the frame boundary
- * explicit with stamp()/sleep() once per iteration (the same TITLE_MUSIC_TSTATES
- * idiom used a few lines below for the tune-4 wait), matching every other
- * per-frame loop in this file (attract_mode_128k, drive_attract_demo,
- * run_pregame_screen_loop).
+ * Conv: the Z80 has no HALT anywhere in this loop body -- the per-frame pacing
+ *       described in the skool ("one $F82F service call per frame") is
+ *       informal; the real hardware relies on the background IM2 interrupt
+ *       firing asynchronously while this loop spins. The C port makes the frame
+ *       boundary explicit with stamp()/sleep() once per iteration (the same
+ *       TITLE_MUSIC_TSTATES idiom used a few lines below for the tune-4 wait),
+ *       matching every other per-frame loop in this file (attract_mode_128k,
+ *       drive_attract_demo, run_pregame_screen_loop).
  *
  * Conv: DI/EI have no C equivalent (SDL owns interrupt delivery, matching
- * setup_im2_interrupt_table) and are omitted throughout.
+ *       setup_im2_interrupt_table) and are omitted throughout.
  *
  * Conv: the skool's inline comments name the wrong keyboard half-row at two
- * sites -- $C638 says "SPACE (fire)" but loads $BF (port_KEYBOARD_ENTERLKJH,
- * the ENTER/L/K/J/H row; bit 0 is ENTER), and $C681 says "ENTER" but loads
- * $F7 (port_KEYBOARD_12345, the 1/2/3/4/5 row). Both are translated here
- * against the actual operand and its Spectrum.h port constant, not the
- * skool's prose.
+ *       sites -- $C638 says "SPACE (fire)" but loads $BF
+ *       (port_KEYBOARD_ENTERLKJH, the ENTER/L/K/J/H row; bit 0 is ENTER), and
+ *       $C681 says "ENTER" but loads $F7 (port_KEYBOARD_12345, the 1/2/3/4/5
+ *       row). Both are translated here against the actual operand and its
+ *       Spectrum.h port constant, not the skool's prose.
  *
  * \return 0 if this call ended via a genuine Z80 RET (the tune-4-wait tail
  * or the credit-inserted tail) -- the caller should stop, matching the real
@@ -613,8 +614,8 @@ static u8 titlescr_wait_loop(chqstate_t *state)
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
  * into the shared name-table refresh tail at titlescr_refresh_name_table.
  *
- * Conv: the $8011 push is a stack marker discarded by the shared tail's
- * `POP AF` ($C6C2) -- it has no other effect and is not modelled.
+ * Conv: the $8011 push is a stack marker discarded by the shared tail's `POP
+ *       AF` ($C6C2) -- it has no other effect and is not modelled.
  */
 static void titlescr_credit_inserted(chqstate_t *state)
 {
@@ -629,11 +630,12 @@ static void titlescr_credit_inserted(chqstate_t *state)
  * with 2-byte gaps skipped between segments.
  *
  * Conv: stubbed per scope decision -- nothing in the C port yet models the
- * destination buffer or a $800A-equivalent state field, and this task's
- * State.h changes are handled separately. Reached both directly from
- * titlescr_wait_loop's ~180-frame tune wait and via titlescr_credit_inserted; in the Z80
- * both paths end in a RET back to run_title_screen's own caller, which
- * this function models simply by returning normally.
+ *       destination buffer or a $800A-equivalent state field, and this task's
+ *       State.h changes are handled separately. Reached both directly from
+ *       titlescr_wait_loop's ~180-frame tune wait and via
+ *       titlescr_credit_inserted; in the Z80 both paths end in a RET back to
+ *       run_title_screen's own caller, which this function models simply by
+ *       returning normally.
  */
 static void titlescr_refresh_name_table(chqstate_t *state)
 {
@@ -701,40 +703,40 @@ static const u8 shocked_keydef_sequence[8] = {
  * stack being abandoned elsewhere when fire is pressed to start the game.
  *
  * Conv: the self-looping structure is not modelled directly; this function
- * draws one frame then returns, matching how other per-frame functions in
- * this port are called once per iteration from a caller-owned loop (e.g.
- * drive_attract_demo). Only the EI/HALT frame-pacing point is translated,
- * via the same stamp/sleep idiom used elsewhere. Continuous animation is
- * driven by run_title_screen calling this function once per iteration
- * until it returns 0 — see its own call site.
+ *       draws one frame then returns, matching how other per-frame functions in
+ *       this port are called once per iteration from a caller-owned loop (e.g.
+ *       drive_attract_demo). Only the EI/HALT frame-pacing point is translated,
+ *       via the same stamp/sleep idiom used elsewhere. Continuous animation is
+ *       driven by run_title_screen calling this function once per iteration
+ *       until it returns 0 — see its own call site.
  *
  * Conv: the stack-unwind escape hatch *is* modelled, via the return value.
- * object_script_step returns 1 when an object's script hits its $D2
- * end-of-script opcode, which on real hardware pops straight out of this
- * whole self-loop back to run_title_screen. When that happens, this
- * function skips the rest of the frame's work (clear_playfield_buffer,
- * background-object draw, present, sleep) and returns 0 to tell its caller
- * to stop animating and fall through to the (non-animating) attract-mode
- * wait loop — matching the "scene animates, then freezes once the tune
- * starts" behaviour of the original game.
+ *       object_script_step returns 1 when an object's script hits its $D2 end-
+ *       of-script opcode, which on real hardware pops straight out of this
+ *       whole self-loop back to run_title_screen. When that happens, this
+ *       function skips the rest of the frame's work (clear_playfield_buffer,
+ *       background-object draw, present, sleep) and returns 0 to tell its
+ *       caller to stop animating and fall through to the (non-animating)
+ *       attract-mode wait loop — matching the "scene animates, then freezes
+ *       once the tune starts" behaviour of the original game.
  *
  * \return 1 if the caller should call this function again next frame, 0 if
  * an object's script ended the self-loop this frame (final frame drawn).
  *
- * Conv: the fg/bg draw loops' EXX pairs ($C6D0/$C6DD, $C6E2, $C6E9/$C6FD)
- * only protect the loop counter (B) and record-stride (DE) from being
- * clobbered by the blitter call -- they do not carry any value between main
- * and shadow sets that survives past the following EXX. This is register
- * protection around a call, not persistent banking, so it needs no shadow
- * variables in C: the loop counter is a plain C `for`, and the blitter is
- * called directly with the fields it needs.
+ * Conv: the fg/bg draw loops' EXX pairs ($C6D0/$C6DD, $C6E2, $C6E9/$C6FD) only
+ *       protect the loop counter (B) and record-stride (DE) from being
+ *       clobbered by the blitter call -- they do not carry any value between
+ *       main and shadow sets that survives past the following EXX. This is
+ *       register protection around a call, not persistent banking, so it needs
+ *       no shadow variables in C: the loop counter is a plain C `for`, and the
+ *       blitter is called directly with the fields it needs.
  *
- * Conv: added a speccy->draw() call after the bg objects are blitted. The
- * Z80 has no equivalent -- it draws straight into the real display memory
- * -- but the SDL port renders into an off-screen buffer that must be
- * explicitly presented every frame, or the host window only ever shows the
- * single frame drawn by run_title_screen before this function starts
- * looping.
+ * Conv: added a speccy->draw() call after the bg objects are blitted. The Z80
+ *       has no equivalent -- it draws straight into the real display memory --
+ *       but the SDL port renders into an off-screen buffer that must be
+ *       explicitly presented every frame, or the host window only ever shows
+ *       the single frame drawn by run_title_screen before this function starts
+ *       looping.
  */
 static u8 titlescr_animate_frame(chqstate_t *state)
 {
@@ -804,35 +806,36 @@ static u8 titlescr_animate_frame(chqstate_t *state)
  * how the decelerate/accelerate modes overload the x_step/y_step fields as
  * curve-lookup counters.
  *
- * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
- * with no PUSH anywhere in this call chain, that pops object_script_step's
- * own return address as data and returns via the frame beneath it, aborting
- * all the way back into titlescr_animate_frame's *caller* (run_title_screen's
- * own per-frame loop) and skipping the rest of that frame's work
- * (clear_playfield_buffer, background-object draw, stamp/sleep). This is
- * exactly what makes the attract-mode scene animate for a while and then
- * freeze once the tune starts: whichever object's script reaches $D2 first
- * is the one that ends the self-loop. Modelled here with a u8 return (1 =
- * hit $D2, stop processing further objects this frame) that titlescr_animate_frame
- * propagates to its own caller, rather than the raw stack-unwind trick
- * itself -- see titlescr_animate_frame's prologue.
+ * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware -- with
+ *       no PUSH anywhere in this call chain, that pops object_script_step's own
+ *       return address as data and returns via the frame beneath it, aborting
+ *       all the way back into titlescr_animate_frame's *caller*
+ *       (run_title_screen's own per-frame loop) and skipping the rest of that
+ *       frame's work (clear_playfield_buffer, background-object draw,
+ *       stamp/sleep). This is exactly what makes the attract-mode scene animate
+ *       for a while and then freeze once the tune starts: whichever object's
+ *       script reaches $D2 first is the one that ends the self-loop. Modelled
+ *       here with a u8 return (1 = hit $D2, stop processing further objects
+ *       this frame) that titlescr_animate_frame propagates to its own caller,
+ *       rather than the raw stack-unwind trick itself -- see
+ *       titlescr_animate_frame's prologue.
  *
- * Conv: oss_op_immediate_step's Y-magnitude extraction rotates A right
- * through the carry flag 3 times before masking with AND $03; the carry bit
- * fed into the first rotation (left over from the preceding ADD A,(IX+$07))
- * lands in a bit position the following AND discards, so the result is
- * carry-independent and equals `(byte >> 3) & 0x03`. Translated directly as
- * a shift rather than modelling the rotate/carry chain.
+ * Conv: oss_op_immediate_step's Y-magnitude extraction rotates A right through
+ *       the carry flag 3 times before masking with AND $03; the carry bit fed
+ *       into the first rotation (left over from the preceding ADD A,(IX+$07))
+ *       lands in a bit position the following AND discards, so the result is
+ *       carry-independent and equals `(byte >> 3) & 0x03`. Translated directly
+ *       as a shift rather than modelling the rotate/carry chain.
  *
  * \return 1 if the script hit $D2 ("end of script") and processing of
  * further objects this frame must stop, 0 otherwise.
  *
- * Conv: the "JP $C70E" at the end of oss_save_cursor (re-dispatching a
- * freshly fetched mode through the active chain in the same call) is a
- * genuine back-edge, not sequential code -- modelled here as the `continue`
- * of the outer per-object loop, distinct from the `continue`s inside the
- * fetch loop that model oss_fetch_opcode_cont's own re-fetch jumps ($C8,
- * $D0). See the project's "verify back-edges" pitfall.
+ * Conv: the "JP $C70E" at the end of oss_save_cursor (re-dispatching a freshly
+ *       fetched mode through the active chain in the same call) is a genuine
+ *       back-edge, not sequential code -- modelled here as the `continue` of
+ *       the outer per-object loop, distinct from the `continue`s inside the
+ *       fetch loop that model oss_fetch_opcode_cont's own re-fetch jumps ($C8,
+ *       $D0). See the project's "verify back-edges" pitfall.
  */
 static u8 object_script_step(chqstate_t *state)
 {
@@ -1044,21 +1047,22 @@ static void oss_op_decel_x(struct title_object *rec)
  * \return          Curve magnitude for this index (was A).
  *
  * Conv: the Z80 shuttles the outer object-loop's B (DJNZ counter) through A
- * around this lookup (LD A,B / LD B,$00 / ... / LD B,A) purely to protect it
- * from being clobbered by the table-relative ADD HL,BC. With no shared
- * register file in C the outer loop counter cannot be affected by this call,
- * so the shuttle has no equivalent and is omitted.
+ *       around this lookup (LD A,B / LD B,$00 / ... / LD B,A) purely to protect
+ *       it from being clobbered by the table-relative ADD HL,BC. With no shared
+ *       register file in C the outer loop counter cannot be affected by this
+ *       call, so the shuttle has no equivalent and is omitted.
  *
- * Conv: the skool's own commentary on this table disagrees with itself --
- * one paragraph calls it a 256-byte table, another documents it as a
- * 36-entry table "indexed by a 0-35 countdown value" (matching the 36 bytes
- * actually transcribed into title_speed_curve). A scripted object whose
- * decel/accel phase runs long enough (or whose curve counter is seeded from
- * a bad upstream value) can drive C_idx past 35; on real hardware that would
- * just read whatever byte follows the table in memory, but this port's table is
- * a 36-byte array, so an unclamped index is a genuine out-of-bounds read
- * (caught by AddressSanitizer). Clamp to the last documented entry rather
- * than fabricate data for the disputed 256-byte range.
+ * Conv: the skool's own commentary on this table disagrees with itself -- one
+ *       paragraph calls it a 256-byte table, another documents it as a 36-entry
+ *       table "indexed by a 0-35 countdown value" (matching the 36 bytes
+ *       actually transcribed into title_speed_curve). A scripted object whose
+ *       decel/accel phase runs long enough (or whose curve counter is seeded
+ *       from a bad upstream value) can drive C_idx past 35; on real hardware
+ *       that would just read whatever byte follows the table in memory, but
+ *       this port's table is a 36-byte array, so an unclamped index is a
+ *       genuine out-of-bounds read (caught by AddressSanitizer). Clamp to the
+ *       last documented entry rather than fabricate data for the disputed
+ *       256-byte range.
  */
 static u8 oss_lookup_speed(u8 C_idx)
 {
@@ -1165,8 +1169,8 @@ static void oss_op_accel_x_c(struct title_object *rec)
  * Same as clear_screen (which this bank overlaps).
  *
  * Conv: the Z80 self-fills via `LD (HL),L` (both ranges start on a $x00
- * boundary, so L is already zero) then LDIR; this collapses to two plain
- * memset calls, per the skool's own Conv note at $C890.
+ *       boundary, so L is already zero) then LDIR; this collapses to two plain
+ *       memset calls, per the skool's own Conv note at $C890.
  */
 static void clear_playfield_and_attrs(chqstate_t *state)
 {
@@ -1222,28 +1226,30 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * \param[in] L_row Object row/height byte (was L).
  *
  * Conv: $C93D onwards, the Z80 saves the real SP, repoints SP at the glyph
- * source so the blit routines can POP bytes from it, then restores the real
- * SP before returning (or via blit_abort_restore_sp on early abort). This
- * whole mechanism is a way of getting fast sequential byte reads out of the
- * Z80's POP instruction; it has no bearing on control flow -- every path
- * still returns cleanly to this function's caller, exactly like an ordinary
- * nested C call. clear_playfield_buffer above established the same
- * conclusion for its own "LD SP,HL; PUSH x N" fast-fill trick. Accordingly
- * the real-SP save/restore is omitted entirely; blit_glyph_rows above reads
- * the source with plain sequential `*src++`, and both dispatchers return
- * normally with no simulated stack juggling. cgb_delay_tail's fixed delay
- * loop is likewise a hardware frame-timing pad with no C equivalent (there
- * is no frame deadline to protect) and is not translated.
+ *       source so the blit routines can POP bytes from it, then restores the
+ *       real SP before returning (or via blit_abort_restore_sp on early abort).
+ *       This whole mechanism is a way of getting fast sequential byte reads out
+ *       of the Z80's POP instruction; it has no bearing on control flow --
+ *       every path still returns cleanly to this function's caller, exactly
+ *       like an ordinary nested C call. clear_playfield_buffer above
+ *       established the same conclusion for its own "LD SP,HL; PUSH x N" fast-
+ *       fill trick. Accordingly the real-SP save/restore is omitted entirely;
+ *       blit_glyph_rows above reads the source with plain sequential `*src++`,
+ *       and both dispatchers return normally with no simulated stack juggling.
+ *       cgb_delay_tail's fixed delay loop is likewise a hardware frame-timing
+ *       pad with no C equivalent (there is no frame deadline to protect) and is
+ *       not translated.
  *
  * Conv: the row-offset skip loop ($C906-$C916) is a post-test loop that
- * decrements the row-pair count first and only tests the skip count
- * afterwards. When the Y clamp excess is exactly 1 (Y = $70 or $71), excess
- * >> 1 is 0, and the u8 skip counter wraps from 0 to 255 on its first
- * decrement, effectively running the skip loop until the row-pair count
- * itself reaches zero -- silently drawing nothing for those two Y values.
- * This is a latent quirk of the original code (compute_glyph_blit_params_b
- * below guards against it explicitly), not a translation bug, and is
- * preserved via A_skip_pairs' u8 wraparound rather than "fixed".
+ *       decrements the row-pair count first and only tests the skip count
+ *       afterwards. When the Y clamp excess is exactly 1 (Y = $70 or $71),
+ *       excess >> 1 is 0, and the u8 skip counter wraps from 0 to 255 on its
+ *       first decrement, effectively running the skip loop until the row-pair
+ *       count itself reaches zero -- silently drawing nothing for those two Y
+ *       values. This is a latent quirk of the original code
+ *       (compute_glyph_blit_params_b below guards against it explicitly), not a
+ *       translation bug, and is preserved via A_skip_pairs' u8 wraparound
+ *       rather than "fixed".
  */
 static void compute_glyph_blit_params(chqstate_t *state,
                                       u8          B_y,
@@ -1288,9 +1294,9 @@ static void compute_glyph_blit_params(chqstate_t *state,
  *                   pair count, width selector and Y-clamp state.
  *
  * Conv: the two "RRA/SCF/RRA/RRA" then "XOR B ; AND mask ; XOR B" sequences
- * that build D and E are translated literally with the RR/RLC macros from
- * Z80.h and the replace-bits-under-a-mask idiom, matching the style already
- * used for the AY register merge in compute_channel_ay_registers.
+ *       that build D and E are translated literally with the RR/RLC macros from
+ *       Z80.h and the replace-bits-under-a-mask idiom, matching the style
+ *       already used for the AY register merge in compute_channel_ay_registers.
  */
 static void compute_glyph_geometry(u8                     B_y,
                                    u8                     C_x,
@@ -1480,29 +1486,31 @@ static void blit_masked_sprite_dispatch_b(chqstate_t *state,
  * \param[in] row_bytes      Bytes to OR into each scanline.
  *
  * Conv: the Z80 draws each row-pair via "LD SP,HL; POP DE", i.e. two source
- * bytes at a time (E first, then D) -- see the project's known "LD SP,HL;
- * POP x N sprite copy" translation pitfall. Since the bytes are written
- * verbatim with no mask table or flip, this collapses to a plain sequential
- * `*src++` per byte, matching the pitfall's documented equivalence. The 7
- * width-specific unrolled routines ($C9D5-$CBC5) share this exact shape
- * (only row_bytes and the reachable dispatch entry differ), so they are
- * modelled as one parameterised helper rather than 7 near-duplicate bodies.
- * Each width routine's own fixed delay loop (e.g. $C9E8-$C9EB, present on
- * widths 1-5 only) exists purely to pad out real hardware frame timing; the
- * C port has no such deadline to protect (see compute_glyph_blit_params'
- * Conv note on $C93C/$C93D), so none of the delay loops are translated.
+ *       bytes at a time (E first, then D) -- see the project's known "LD SP,HL;
+ *       POP x N sprite copy" translation pitfall. Since the bytes are written
+ *       verbatim with no mask table or flip, this collapses to a plain
+ *       sequential `*src++` per byte, matching the pitfall's documented
+ *       equivalence. The 7 width-specific unrolled routines ($C9D5-$CBC5) share
+ *       this exact shape (only row_bytes and the reachable dispatch entry
+ *       differ), so they are modelled as one parameterised helper rather than 7
+ *       near-duplicate bodies. Each width routine's own fixed delay loop (e.g.
+ *       $C9E8-$C9EB, present on widths 1-5 only) exists purely to pad out real
+ *       hardware frame timing; the C port has no such deadline to protect (see
+ *       compute_glyph_blit_params' Conv note on $C93C/$C93D), so none of the
+ *       delay loops are translated.
  *
- * Conv: compute_glyph_blit_params only clamps the *top* of the glyph (see
- * its own Conv note on the $C906-$C916 skip loop); the disassembly has no
- * symmetric clamp for the bottom, so a fast-moving object (e.g. one driven
- * by oss_op_velocity) can walk this loop's (H,L) address below screen third
- * 3 and off the bottom of the physical display. On real hardware that just
- * pokes stray bytes into attribute memory (or further afield) -- harmless
- * enough that nobody noticed. This port's screen is a fixed-size struct, not
- * flat memory, so the equivalent out-of-range write is skipped instead of
- * performed, rather than asserting or corrupting adjacent struct fields; the
- * address/source advance below still runs unconditionally so the timing and
- * any later in-range rows stay correct.
+ * Conv: compute_glyph_blit_params only clamps the *top* of the glyph (see its
+ *       own Conv note on the $C906-$C916 skip loop); the disassembly has no
+ *       symmetric clamp for the bottom, so a fast-moving object (e.g. one
+ *       driven by oss_op_velocity) can walk this loop's (H,L) address below
+ *       screen third 3 and off the bottom of the physical display. On real
+ *       hardware that just pokes stray bytes into attribute memory (or further
+ *       afield) -- harmless enough that nobody noticed. This port's screen is a
+ *       fixed-size struct, not flat memory, so the equivalent out-of-range
+ *       write is skipped instead of performed, rather than asserting or
+ *       corrupting adjacent struct fields; the address/source advance below
+ *       still runs unconditionally so the timing and any later in-range rows
+ *       stay correct.
  */
 static void blit_glyph_rows(chqstate_t *state,
                             int         H,
@@ -1564,12 +1572,12 @@ static void blit_width1(
  * \param[in,out] L Screen address low byte.
  *
  * Conv: factored into a shared helper rather than repeating the 14 near-
- * identical inline copies in the disassembly -- the same "Conv: extracted to
- * function" treatment next_scr_row got in Main.c. next_scr_row itself is
- * static to Main.c and not visible here; clear_playfield_buffer above
- * already established this file's own precedent of modelling this exact
- * address math locally rather than sharing it across files, so this helper
- * follows that precedent instead of exposing next_scr_row.
+ *       identical inline copies in the disassembly -- the same "Conv: extracted
+ *       to function" treatment next_scr_row got in Main.c. next_scr_row itself
+ *       is static to Main.c and not visible here; clear_playfield_buffer above
+ *       already established this file's own precedent of modelling this exact
+ *       address math locally rather than sharing it across files, so this
+ *       helper follows that precedent instead of exposing next_scr_row.
  */
 static void advance_glyph_scanline(int *H, int *L)
 {
@@ -1709,8 +1717,8 @@ static void blit_width7(
  * through the $x00 third boundary via the usual ADD A,$20 / carry pattern.
  *
  * Conv: the PUSH-fill collapses to one memset per scanline; the real stack
- * save/restore at $CC04/$CC4C-$CC4F has no C equivalent (SP is never
- * repurposed as a data pointer here) and is omitted.
+ *       save/restore at $CC04/$CC4C-$CC4F has no C equivalent (SP is never
+ *       repurposed as a data pointer here) and is omitted.
  */
 static void clear_playfield_buffer(chqstate_t *state)
 {
@@ -1914,41 +1922,44 @@ static const struct {
  *                   select table at $F225. (was A)
  *
  * Conv: $EBA6-$EBAB computes BC = A_tune * 7 via a repeated doubling/add
- * sequence (the Z80 has no multiply instruction); C uses a direct multiply.
+ *       sequence (the Z80 has no multiply instruction); C uses a direct
+ *       multiply.
  *
- * Conv: the Z80 counts a channel counter down from 3 to 1 in A while IX
- * walks the 37-byte-stride channel records ($EBBD/$EBF1); C counts
- * channel_index up from 0 to 2 and indexes state->title_music.channel[]
- * directly, which is equivalent and matches how advance_channel_pattern and
- * compute_channel_ay_registers already receive a channel pointer.
+ * Conv: the Z80 counts a channel counter down from 3 to 1 in A while IX walks
+ *       the 37-byte-stride channel records ($EBBD/$EBF1); C counts
+ *       channel_index up from 0 to 2 and indexes state->title_music.channel[]
+ *       directly, which is equivalent and matches how advance_channel_pattern
+ *       and compute_channel_ay_registers already receive a channel pointer.
  *
- * Conv: the pattern-data blocks tunes's pointers reference have
- * been extracted from bank3.bin as C data for tunes 0 and 1 only (the title
- * tune and the perp-caught success jingle -- the only tunes reachable from
- * code paths wired up so far; see title_tune0_data/title_tune1_data
- * in Data/Bank3Data.c). DE_pattern_addr (the raw Z80 pointer read from the
- * table) is resolved to a C pointer into one of those two blobs via
- * resolve_phrase_addr; pattern_ptr is then seeded by following that pointer
- * to the 2-byte envelope-pointer header every pattern begins with, exactly
- * as the Z80 does. pattern_base/pattern_len (State.h, Conv fields with no
- * Z80 counterpart) cover only a fixed prefix of the real tune, not the whole
- * thing, and let advance_channel_pattern wrap back to the start once it runs
- * off the end rather than reading out of bounds; the lengths come from
- * tune_pattern_lens below. Tunes 2 and 3 are not extracted; their channels
- * are left with pattern_ptr/pattern_data_ptr/pattern_base = NULL, which
- * advance_channel_pattern must treat as silent/idle.
+ * Conv: the pattern-data blocks tunes's pointers reference have been extracted
+ *       from bank3.bin as C data for tunes 0 and 1 only (the title tune and the
+ *       perp-caught success jingle -- the only tunes reachable from code paths
+ *       wired up so far; see title_tune0_data/title_tune1_data in
+ *       Data/Bank3Data.c). DE_pattern_addr (the raw Z80 pointer read from the
+ *       table) is resolved to a C pointer into one of those two blobs via
+ *       resolve_phrase_addr; pattern_ptr is then seeded by following that
+ *       pointer to the 2-byte envelope-pointer header every pattern begins
+ *       with, exactly as the Z80 does. pattern_base/pattern_len (State.h, Conv
+ *       fields with no Z80 counterpart) cover only a fixed prefix of the real
+ *       tune, not the whole thing, and let advance_channel_pattern wrap back to
+ *       the start once it runs off the end rather than reading out of bounds;
+ *       the lengths come from tune_pattern_lens below. Tunes 2 and 3 are not
+ *       extracted; their channels are left with
+ *       pattern_ptr/pattern_data_ptr/pattern_base = NULL, which
+ *       advance_channel_pattern must treat as silent/idle.
  *
- * Conv: pitch_offset_default/_cur and envelope_shape_default/_ptr are set
- * for real once a note stream issues the pattern-command bytes $B8-$CF
- * (pitch-offset select) or $D0-$DF (envelope-shape select) -- see
- * dispatch_pattern_command's pitch_offset_table/envelope_shape_table
- * handling. Before that first select command runs, though, a note event
- * still dereferences both unconditionally (advance_channel_pattern's
- * note-value branch, compute_channel_ay_registers' phase 1/2), so titlescr_start_ay
- * seeds all 3 channels with default_pitch_offset_seq/default_envelope_shape
- * (below): synthetic single-entry tables, not transcribed Z80 data, that
- * decode to "no pitch offset" / "constant amplitude 15" so playback is
- * audible and stable rather than crashing before the first select command.
+ * Conv: pitch_offset_default/_cur and envelope_shape_default/_ptr are set for
+ *       real once a note stream issues the pattern-command bytes $B8-$CF
+ *       (pitch-offset select) or $D0-$DF (envelope-shape select) -- see
+ *       dispatch_pattern_command's pitch_offset_table/envelope_shape_table
+ *       handling. Before that first select command runs, though, a note event
+ *       still dereferences both unconditionally (advance_channel_pattern's
+ *       note-value branch, compute_channel_ay_registers' phase 1/2), so
+ *       titlescr_start_ay seeds all 3 channels with
+ *       default_pitch_offset_seq/default_envelope_shape (below): synthetic
+ *       single-entry tables, not transcribed Z80 data, that decode to "no pitch
+ *       offset" / "constant amplitude 15" so playback is audible and stable
+ *       rather than crashing before the first select command.
  */
 static void titlescr_start_ay(chqstate_t *state, u8 A_tune)
 {
@@ -2068,15 +2079,16 @@ static void titlescr_start_ay(chqstate_t *state, u8 A_tune)
  * Called once per frame by the routine at $F82F.
  *
  * Conv: the skool re-tests title_music.tune_active a second time at $ECCA
- * (tms_output_registers) before flushing, since that label is also reached
- * directly by the $EC75 JP Z when no tune is active. Nothing between the two
- * tests can change the flag, so the second check here is equivalent to the
- * first -- both are kept, matching the two-guard structure of the original.
+ *       (tms_output_registers) before flushing, since that label is also
+ *       reached directly by the $EC75 JP Z when no tune is active. Nothing
+ *       between the two tests can change the flag, so the second check here is
+ *       equivalent to the first -- both are kept, matching the two-guard
+ *       structure of the original.
  *
  * Conv: $EC99-$EC9B reloads the tempo counter with a fixed 1, not the tune's
- * own stored tempo/speed byte at title_music.tune_tempo -- see the skool
- * comment at $EC99; the driver always ticks every other frame regardless of
- * the selected tune.
+ *       own stored tempo/speed byte at title_music.tune_tempo -- see the skool
+ *       comment at $EC99; the driver always ticks every other frame regardless
+ *       of the selected tune.
  */
 static void titlescr_ay_music(chqstate_t *state)
 {
@@ -2158,8 +2170,8 @@ static void titlescr_ay_music(chqstate_t *state)
  * title-tune engine's own register cache at $EFAF-$EFBA, not the in-game one.
  *
  * Conv: the Z80 uses the OUTD instruction (LD B,$FF / OUT (C),A / LD B,$BF /
- * OUTD in sequence); C issues two separate out() calls per register, as in
- * write_audio_registers_128k.
+ *       OUTD in sequence); C issues two separate out() calls per register, as
+ *       in write_audio_registers_128k.
  */
 static void titlescr_write_ay_registers(chqstate_t *state)
 {
@@ -2214,13 +2226,13 @@ static void titlescr_silence_ay(chqstate_t *state)
  * Used by run_title_screen's test-mode and "any key" restart paths, and
  * by options_menu_driver.
  *
- * Conv: the skool's own comment at this address describes $EFB7-$EFB9 as
- * "the per-channel mixer/noise register cache", but those addresses land on
- * title_ay_regs.chan_a_vol/chan_b_vol/chan_c_vol by the same byte-offset
- * arithmetic titlescr_write_ay_registers relies on (see that function's
- * prologue) -- trusting the addresses over the prose, per this project's
- * established practice for the $FE/$FF opcode discrepancy elsewhere in this
- * bank.
+ * Conv: the skool's own comment at this address describes $EFB7-$EFB9 as "the
+ *       per-channel mixer/noise register cache", but those addresses land on
+ *       title_ay_regs.chan_a_vol/chan_b_vol/chan_c_vol by the same byte-offset
+ *       arithmetic titlescr_write_ay_registers relies on (see that function's
+ *       prologue) -- trusting the addresses over the prose, per this project's
+ *       established practice for the $FE/$FF opcode discrepancy elsewhere in
+ *       this bank.
  */
 static void stop_music_and_silence(chqstate_t *state)
 {
@@ -2248,19 +2260,19 @@ static void stop_music_and_silence(chqstate_t *state)
  *                           (was A)
  *
  * Conv: pattern_ptr/pattern_base/pattern_len (State.h) are only populated for
- * tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr == NULL
- * (tunes 2/3, not extracted) is treated as silent rather than dereferencing
- * NULL. The wrap check below is against the whole extracted tune array, not
- * this channel's own initial pattern_base/pattern_len prefix --
- * advance_channel_phrase's PCMD_ADVANCE_PHRASE can legitimately re-point
- * DE_pattern far outside that channel's own header block, into a region
- * physically owned by another channel's data within the same tune (see the
- * tune0ch1 header at $F26B jumping to $F4E1). Bounding against pattern_len
- * there mistook every such jump for running off the end of the transcribed
- * data and reset the cursor back to pattern_base on the very next byte,
- * permanently stuck replaying the 3-byte header (including
- * PCMD_RESET_ROW_COUNTER_CLEAR_ENV, which zeroes volume) -- the channel
- * never spoke again.
+ *       tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr ==
+ *       NULL (tunes 2/3, not extracted) is treated as silent rather than
+ *       dereferencing NULL. The wrap check below is against the whole extracted
+ *       tune array, not this channel's own initial pattern_base/pattern_len
+ *       prefix -- advance_channel_phrase's PCMD_ADVANCE_PHRASE can legitimately
+ *       re-point DE_pattern far outside that channel's own header block, into a
+ *       region physically owned by another channel's data within the same tune
+ *       (see the tune0ch1 header at $F26B jumping to $F4E1). Bounding against
+ *       pattern_len there mistook every such jump for running off the end of
+ *       the transcribed data and reset the cursor back to pattern_base on the
+ *       very next byte, permanently stuck replaying the 3-byte header
+ *       (including PCMD_RESET_ROW_COUNTER_CLEAR_ENV, which zeroes volume) --
+ *       the channel never spoke again.
  */
 static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
 {
@@ -2308,30 +2320,31 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
  * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
  *
  * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
- * $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
- * 1-byte displacement per command byte (0x80-0xAF) rather than a full
- * address -- the same space-saving trick used by $EE59's pitch-offset table.
- * The skool could not resolve this statically ("no entry-point markers");
- * the mapping below was recovered by reading bank3.bin directly and
- * evaluating the displacement arithmetic for every byte value 0x80-0xAF.
- * Only 17 of the 48 possible values resolve to one of the named handlers'
- * entry points -- these become the `switch` cases below (0xA8 lands exactly
- * on acp_reset_row_counter's entry point, $EE22, even though it isn't one of
- * the primary pcmd_* handlers; 0x87 lands on the orphaned "JP $F1AE" at
- * $ED33, handled below via advance_channel_phrase). Two further values are
- * reachable but do not target a handler entry point: 0x85 lands
- * mid-instruction inside pcmd_set_status_bits_3_7 (skipping its first SET 7,
- * executing only SET 3), and 0x8E lands on a bare "POP HL; JP $ED0B" that
- * would pop the real return address off the stack and jump into
- * stop_music_and_silence -- almost certainly a crash, so this byte is
- * assumed never to appear as an executed command (bytes with this value seen
- * in the real pattern data all sit at stream positions consistent with an
- * end-of-data marker, not a command dispatch). The remaining values
- * (0x92-0xA7, 0xA9-0xAF) land on arbitrary bytes inside the handler block
- * and are equally assumed unused. All of these fall into the `default` case
- * below, which -- unlike the Z80 -- treats them as a no-op rather than
- * replicating undefined/crashing behaviour. See Translation notes for the
- * full derivation.
+ *       $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
+ *       1-byte displacement per command byte (0x80-0xAF) rather than a full
+ *       address -- the same space-saving trick used by $EE59's pitch-offset
+ *       table. The skool could not resolve this statically ("no entry-point
+ *       markers"); the mapping below was recovered by reading bank3.bin
+ *       directly and evaluating the displacement arithmetic for every byte
+ *       value 0x80-0xAF. Only 17 of the 48 possible values resolve to one of
+ *       the named handlers' entry points -- these become the `switch` cases
+ *       below (0xA8 lands exactly on acp_reset_row_counter's entry point,
+ *       $EE22, even though it isn't one of the primary pcmd_* handlers; 0x87
+ *       lands on the orphaned "JP $F1AE" at $ED33, handled below via
+ *       advance_channel_phrase). Two further values are reachable but do not
+ *       target a handler entry point: 0x85 lands mid-instruction inside
+ *       pcmd_set_status_bits_3_7 (skipping its first SET 7, executing only SET
+ *       3), and 0x8E lands on a bare "POP HL; JP $ED0B" that would pop the real
+ *       return address off the stack and jump into stop_music_and_silence --
+ *       almost certainly a crash, so this byte is assumed never to appear as an
+ *       executed command (bytes with this value seen in the real pattern data
+ *       all sit at stream positions consistent with an end-of-data marker, not
+ *       a command dispatch). The remaining values (0x92-0xA7, 0xA9-0xAF) land
+ *       on arbitrary bytes inside the handler block and are equally assumed
+ *       unused. All of these fall into the `default` case below, which --
+ *       unlike the Z80 -- treats them as a no-op rather than replicating
+ *       undefined/crashing behaviour. See Translation notes for the full
+ *       derivation.
  */
 static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel)
@@ -2578,16 +2591,16 @@ reset_row_counter:
  * \return                  The phase-3/4 tone period. (was HL)
  *
  * Conv: the Z80 pairs of EX DE,HL ($EF32/$EF4A, $EFAA) exist only to route
- * operands through ADD HL,DE / RET's register contract; C adds the values
- * directly and returns via the function's return value instead.
+ *       operands through ADD HL,DE / RET's register contract; C adds the values
+ *       directly and returns via the function's return value instead.
  *
  * Conv: at $EED0-$EED2 the Z80 does `LD A,$00; ADD A,(IX+$12)`, which is a
- * roundabout way of just reading the note index; collapsed to a direct
- * assignment here.
+ *       roundabout way of just reading the note index; collapsed to a direct
+ *       assignment here.
  *
- * Conv: at $EF33-$EF3D the Z80 manually sign-extends the centred vibrato
- * phase into D via the carry flag from the preceding SUB. C's (s8)->(s16)
- * cast performs the same sign extension natively.
+ * Conv: at $EF33-$EF3D the Z80 manually sign-extends the centred vibrato phase
+ *       into D via the carry flag from the preceding SUB. C's (s8)->(s16) cast
+ *       performs the same sign extension natively.
  */
 static u16 compute_channel_ay_registers(chqstate_t           *state,
                                         title_tune_channel_t *IX_channel,
@@ -2783,10 +2796,10 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * \return         Pointer into the matching transcribed array. (was DE/HL)
  *
  * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
- * phrase_ptr are C pointers into title_tune0_data/title_tune1_data,
- * not simulated Z80 memory, so an address read out of the pattern stream
- * must be translated via range/offset arithmetic against those two arrays
- * rather than dereferenced directly.
+ *       phrase_ptr are C pointers into title_tune0_data/title_tune1_data, not
+ *       simulated Z80 memory, so an address read out of the pattern stream must
+ *       be translated via range/offset arithmetic against those two arrays
+ *       rather than dereferenced directly.
  */
 static const u8 *resolve_phrase_addr(u16 addr)
 {
@@ -2840,12 +2853,12 @@ static const u8 *resolve_phrase_addr(u16 addr)
  * \param[in,out] IX_channel Pointer to this channel's tracker record. (was IX)
  * \param[out]    DE_pattern Receives the new pattern-read cursor. (was DE)
  *
- * Conv: raw Z80 addresses read from the table (the header word, and any
- * phrase pointer) are resolved to C pointers via resolve_phrase_addr rather
- * than simulating a flat address space.
+ * Conv: raw Z80 addresses read from the table (the header word, and any phrase
+ *       pointer) are resolved to C pointers via resolve_phrase_addr rather than
+ *       simulating a flat address space.
  *
- * Conv: the Z80 also clears B to 0 at every exit ($F1EA/$F1ED "LD B,$00");
- * this has no C equivalent since BC is not otherwise modelled here.
+ * Conv: the Z80 also clears B to 0 at every exit ($F1EA/$F1ED "LD B,$00"); this
+ *       has no C equivalent since BC is not otherwise modelled here.
  */
 static void advance_channel_phrase(title_tune_channel_t *IX_channel,
                                    const u8            **DE_pattern)
@@ -2960,7 +2973,7 @@ finalize:
  *                    loop (BANK3_INPUT_SELECTION only).
  *
  * Conv: Z80 uses self-modification and 128K hardware memory paging; C
- * dispatches via switch on the [routine] address constants.
+ *       dispatches via switch on the [routine] address constants.
  */
 u8 bank3_call(chqstate_t *state, int routine)
 {
@@ -2992,9 +3005,9 @@ u8 bank3_call(chqstate_t *state, int routine)
  * IM 2. Under mode 2 all interrupts are routed through $F8AD
  * (frame_interrupt_handler).
  *
- * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on
- * its own thread. This function is a no-op in the C port, matching the
- * existing 48K setup_interrupts stub.
+ * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on its
+ *       own thread. This function is a no-op in the C port, matching the
+ *       existing 48K setup_interrupts stub.
  */
 static void setup_im2_interrupt_table(chqstate_t *state)
 {
@@ -3013,16 +3026,16 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * reached).
  *
  * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
- * bank3_call, whose caller (handle_perp_caught_128k, and in turn its
- * own caller's phase4 state machine) expects a normal return so scoring and
- * fading can proceed on the same call — an infinite loop here would
- * permanently hang the game thread. Per explicit scope decision, the Z80's
- * unconditional loop is quantised into a bounded run of
- * ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count the
- * Z80 uses for the tune-4 wait in titlescr_wait_loop) and then returns
- * normally. The frame
- * count is a guess at the jingle's real duration; TODO: tune by ear once
- * pattern data exists to actually hear it.
+ *       bank3_call, whose caller (handle_perp_caught_128k, and in turn its own
+ *       caller's phase4 state machine) expects a normal return so scoring and
+ *       fading can proceed on the same call — an infinite loop here would
+ *       permanently hang the game thread. Per explicit scope decision, the
+ *       Z80's unconditional loop is quantised into a bounded run of
+ *       ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count
+ *       the Z80 uses for the tune-4 wait in titlescr_wait_loop) and then
+ *       returns normally. The frame count is a guess at the jingle's real
+ *       duration; TODO: tune by ear once pattern data exists to actually hear
+ *       it.
  */
 static void play_success_music(chqstate_t *state)
 {
@@ -3066,9 +3079,9 @@ static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
  *
  * \return         Pointer into drum_cue_script_data. (was HL)
  *
- * Conv: not a Z80 routine of its own -- see resolve_phrase_addr's own Conv
- * note for why raw addresses read out of transcribed data must be resolved
- * this way rather than dereferenced directly.
+ * Conv: not a Z80 routine of its own -- see resolve_phrase_addr's own Conv note
+ *       for why raw addresses read out of transcribed data must be resolved
+ *       this way rather than dereferenced directly.
  */
 static const u8 *resolve_drum_script_addr(u16 addr)
 {
@@ -3088,8 +3101,8 @@ static const u8 *resolve_drum_script_addr(u16 addr)
  * \param[in] A_tune Tune number whose cue script to arm (was A).
  *
  * Conv: this entry point is also called directly (bypassing
- * titlescr_start_tune/titlescr_start_ay) by titlescr_wait_loop's tune-4
- * cue-table setup, matching the Z80's own $C629 CALL $F7DB.
+ *       titlescr_start_tune/titlescr_start_ay) by titlescr_wait_loop's tune-4
+ *       cue-table setup, matching the Z80's own $C629 CALL $F7DB.
  */
 static void load_drum_script(chqstate_t *state, u8 A_tune)
 {
@@ -3141,15 +3154,15 @@ static void titlescr_drum_advance(chqstate_t *state)
  * \param[in] HL Cue-script cursor to start reading from (was HL).
  *
  * Conv: $F823's own two-byte read is inlined into the $FF case below rather
- * than given its own function, since it does nothing but load a new HL and
- * loop back to the top of this same reader (`JR $F7FE`).
+ *       than given its own function, since it does nothing but load a new HL
+ *       and loop back to the top of this same reader (`JR $F7FE`).
  *
- * Conv: $F829's `POP HL / POP HL / DI` is omitted -- those unwind Z80
- * call-stack frames left by the CALL chain that reached this reader
- * (titlescr_music -> titlescr_drum_advance -> here, or
- * load_drum_script -> here); this function is an ordinary C call/return,
- * not entered via pushed return addresses that need discarding, and DI has
- * no host equivalent (see setup_im2_interrupt_table's own Conv note).
+ * Conv: $F829's `POP HL / POP HL / DI` is omitted -- those unwind Z80 call-
+ *       stack frames left by the CALL chain that reached this reader
+ *       (titlescr_music -> titlescr_drum_advance -> here, or load_drum_script
+ *       -> here); this function is an ordinary C call/return, not entered via
+ *       pushed return addresses that need discarding, and DI has no host
+ *       equivalent (see setup_im2_interrupt_table's own Conv note).
  */
 static void load_drum_op(chqstate_t *state, const u8 *HL)
 {
@@ -3217,22 +3230,23 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
  *
  * Called once per frame from $C06E, $C16A, $C59E, $F7C7 and $FBC8.
  *
- * Conv: the frame-flag clear at $F832-$F833 is omitted because nothing in
- * this port polls the literal $F8A8 field (wait_for_frame_flag has no C
- * equivalent — every caller here already represents one already-paced tick,
- * so there is nothing left to wait for). play_sample_row's own mid-sample
- * yield check uses a local per-call T-state budget instead of $F8A8, which
- * needs no explicit clear -- see its Conv note.
+ * Conv: the frame-flag clear at $F832-$F833 is omitted because nothing in this
+ *       port polls the literal $F8A8 field (wait_for_frame_flag has no C
+ *       equivalent — every caller here already represents one already-paced
+ *       tick, so there is nothing left to wait for). play_sample_row's own mid-
+ *       sample yield check uses a local per-call T-state budget instead of
+ *       $F8A8, which needs no explicit clear -- see its Conv note.
  *
- * Conv: this function uses goto/labels rather than nested structured loops.
- * The four labels are genuine Z80 jump targets, each reached from more than
- * one site: sfx1_reload_pointer ($F85D) from the idle-arm path ($F83F) and
- * from the stream loop's own back-edge; drum_read_stream_byte ($F855) by
- * fallthrough from $F85D and from $F863; drum_dispatch_entry ($F866) from
- * $F857; and sfx2_tick_countdown ($F894) from three places -- the countdown
- * skip ($F84A), the nothing-to-trigger exit ($F87E) and fallthrough. A
- * structured rewrite would have to duplicate the tick-countdown tail at each
- * of those three exits, or introduce flag variables the Z80 does not have.
+ * Conv: this function uses goto/labels rather than nested structured loops. The
+ *       four labels are genuine Z80 jump targets, each reached from more than
+ *       one site: sfx1_reload_pointer ($F85D) from the idle-arm path ($F83F)
+ *       and from the stream loop's own back-edge; drum_read_stream_byte ($F855)
+ *       by fallthrough from $F85D and from $F863; drum_dispatch_entry ($F866)
+ *       from $F857; and sfx2_tick_countdown ($F894) from three places -- the
+ *       countdown skip ($F84A), the nothing-to-trigger exit ($F87E) and
+ *       fallthrough. A structured rewrite would have to duplicate the tick-
+ *       countdown tail at each of those three exits, or introduce flag
+ *       variables the Z80 does not have.
  */
 static void titlescr_music(chqstate_t *state)
 {
@@ -3328,10 +3342,10 @@ sfx2_tick_countdown:
  * synchronously from the title-screen main loop (titlescr_wait_loop /
  * play_success_music), not here.
  *
- * Conv: no equivalent in C — nothing in this port ever waits on the $F8A8
- * flag (the title-screen loops call titlescr_music directly once per
- * paced iteration instead), so there is no flag to set. Adding one would be
- * dead state, the same way the 48K irq_flag field was.
+ * Conv: no equivalent in C — nothing in this port ever waits on the $F8A8 flag
+ *       (the title-screen loops call titlescr_music directly once per paced
+ *       iteration instead), so there is no flag to set. Adding one would be
+ *       dead state, the same way the 48K irq_flag field was.
  */
 static void frame_interrupt_handler(chqstate_t *state)
 {
@@ -3390,9 +3404,9 @@ static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
  * \param[in] D_length      Number of sample bytes to play (was D).
  *
  * Conv: $F8CE (sample_pitch_param) is the self-modified operand of the "LD
- * B,$08" at $F8CD -- play_sample_row reloads its row-bit-count from this
- * field every row, so it is the real playback-rate control, not a dead
- * write (see play_sample_row's own Conv note).
+ *       B,$08" at $F8CD -- play_sample_row reloads its row-bit-count from this
+ *       field every row, so it is the real playback-rate control, not a dead
+ *       write (see play_sample_row's own Conv note).
  */
 static void play_fixed_sample_start(chqstate_t *state,
                                     int         A_pitch_param,
@@ -3426,33 +3440,33 @@ static void play_fixed_sample_start(chqstate_t *state,
  * \param[in,out] HL_data  Pointer to the next sample byte to play; mutated in
  *                         place by the RLC rotation (was HL).
  *
- * Conv: the Z80 re-enters this loop at $F8CC (with an EXX banking in a
- * shadow HL'/D' saved by an earlier early exit) when a genuine 50Hz
- * interrupt fires mid-sample -- tested at $F8E2 via the $F8A8 "frame
- * occurred" flag -- so that playback resumes on the next titlescr_music
- * call rather than completing in one go. This matters here: sample2 (224
- * bytes) at its usual pitch takes around 143000 T-states to bit-bang, well
- * over one real 70908 T-state interrupt period, so on real hardware it
- * genuinely spans several frames. The C port has no background interrupt to
- * set $F8A8 asynchronously, so SAMPLE_ROW_FRAME_TSTATES below stands in for
- * it: once this call has spent one frame's worth of bit-bang time, it yields
- * exactly as $F8E2's check would, saving position in
- * sample_resume_ptr/sample_resume_rows (the shadow HL'/D' equivalent) for
- * titlescr_music's tail to resume next call. Playing every sample to
- * completion in a single call instead (as playdrum_go/es_playdrum_go still
- * do for the 48K and bank 7 drum samples) starves the rest of titlescr_music
- * -- the AY tick, and the drum dispatch stream itself -- of the frames a long
- * sample should genuinely take, which is audible as increasingly late drum
- * hits ("lazy drummer").
+ * Conv: the Z80 re-enters this loop at $F8CC (with an EXX banking in a shadow
+ *       HL'/D' saved by an earlier early exit) when a genuine 50Hz interrupt
+ *       fires mid-sample -- tested at $F8E2 via the $F8A8 "frame occurred" flag
+ *       -- so that playback resumes on the next titlescr_music call rather than
+ *       completing in one go. This matters here: sample2 (224 bytes) at its
+ *       usual pitch takes around 143000 T-states to bit-bang, well over one
+ *       real 70908 T-state interrupt period, so on real hardware it genuinely
+ *       spans several frames. The C port has no background interrupt to set
+ *       $F8A8 asynchronously, so SAMPLE_ROW_FRAME_TSTATES below stands in for
+ *       it: once this call has spent one frame's worth of bit-bang time, it
+ *       yields exactly as $F8E2's check would, saving position in
+ *       sample_resume_ptr/sample_resume_rows (the shadow HL'/D' equivalent) for
+ *       titlescr_music's tail to resume next call. Playing every sample to
+ *       completion in a single call instead (as playdrum_go/es_playdrum_go
+ *       still do for the 48K and bank 7 drum samples) starves the rest of
+ *       titlescr_music -- the AY tick, and the drum dispatch stream itself --
+ *       of the frames a long sample should genuinely take, which is audible as
+ *       increasingly late drum hits ("lazy drummer").
  *
- * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host
- * can reconstruct the bit timing -- same accounting as playdrum_go/
- * es_playdrum_go, whose bit-bang loop is byte-for-byte identical to this one
- * bar the row-bit-count: theirs is a fixed 8 iterations, this one reloads B
- * from sample_pitch_param ($F8CE, self-modified by play_fixed_sample_start)
- * every row, since $F8CD's own "LD B,$08" operand is that same byte -- the
- * dispatch byte's pitch/rate parameter is this loop's actual iteration
- * count, not a spectator value.
+ * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
+ *       reconstruct the bit timing -- same accounting as playdrum_go/
+ *       es_playdrum_go, whose bit-bang loop is byte-for-byte identical to this
+ *       one bar the row-bit-count: theirs is a fixed 8 iterations, this one
+ *       reloads B from sample_pitch_param ($F8CE, self-modified by
+ *       play_fixed_sample_start) every row, since $F8CD's own "LD B,$08"
+ *       operand is that same byte -- the dispatch byte's pitch/rate parameter
+ *       is this loop's actual iteration count, not a spectator value.
  */
 static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
 {
@@ -3504,11 +3518,11 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
  * Clears the 1-bit sample playback active flag once play_sample_row has
  * output every byte of the armed sample.
  *
- * Conv: the Z80 tail-jumps to wait_for_frame_flag ($F8A7) to busy-wait for
- * the next interrupt. wait_for_frame_flag has no C equivalent -- like
- * play_music_48k, this call already represents one already-paced tick (see
- * titlescr_music's callers), so there is nothing left to wait for; the
- * function simply returns.
+ * Conv: the Z80 tail-jumps to wait_for_frame_flag ($F8A7) to busy-wait for the
+ *       next interrupt. wait_for_frame_flag has no C equivalent -- like
+ *       play_music_48k, this call already represents one already-paced tick
+ *       (see titlescr_music's callers), so there is nothing left to wait for;
+ *       the function simply returns.
  */
 static void finish_sample_playback(chqstate_t *state)
 {
@@ -3534,15 +3548,16 @@ static void finish_sample_playback(chqstate_t *state)
  * \param[in] E_pitch_param Noise duration: outer loop count and pulse timing
  *                          parameter (was A, moved to E at entry).
  *
- * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
- * write via speccy->out and models the delay loops as speccy->logtime so the
- * host can reconstruct the pulse timing -- same accounting as play_noise.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent write
+ *       via speccy->out and models the delay loops as speccy->logtime so the
+ *       host can reconstruct the pulse timing -- same accounting as play_noise.
  *
  * Conv: the Z80 polls the $F8A8 "frame occurred" flag after each inner-loop
- * iteration ($FA67-$FA6B) to bail out early on a genuine 50Hz interrupt.
- * frame_interrupt_handler is a no-op in this port, so $F8A8 never becomes
- * non-zero and that early-exit branch is unreachable here: both loops always
- * run to completion within one call, matching play_noise's own Conv note.
+ *       iteration ($FA67-$FA6B) to bail out early on a genuine 50Hz interrupt.
+ *       frame_interrupt_handler is a no-op in this port, so $F8A8 never becomes
+ *       non-zero and that early-exit branch is unreachable here: both loops
+ *       always run to completion within one call, matching play_noise's own
+ *       Conv note.
  */
 static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
 {
@@ -3636,20 +3651,20 @@ static u8 options_menu_driver(chqstate_t *state)
  * ($FC11) -- the caller should now (re-)run title_screen_driver.
  *
  * Conv: this function uses goto/labels rather than nested structured loops.
- * $FBA2 (full redraw) and $FBAB (poll only, no redraw) are two genuinely
- * distinct restart points reached from different call sites -- the "no
- * key" and "key 5" exits target $FBA2; the Kempston-detector's bail-out
- * targets $FBAB. Modelling both with a single loop would either duplicate
- * the redraw block or redraw when the Z80 does not.
+ *       $FBA2 (full redraw) and $FBAB (poll only, no redraw) are two genuinely
+ *       distinct restart points reached from different call sites -- the "no
+ *       key" and "key 5" exits target $FBA2; the Kempston-detector's bail-out
+ *       targets $FBAB. Modelling both with a single loop would either duplicate
+ *       the redraw block or redraw when the Z80 does not.
  *
- * Conv: $FBAE-$FBB3 (`LD A,$F7` / `IN A,($FE)` / `CPL` / `AND $1F`)
- * collapses to a single inverted, masked port_KEYBOARD_12345 read (same
- * collapse as titlescr_wait_loop's fire/credit/anykey checks).
+ * Conv: $FBAE-$FBB3 (`LD A,$F7` / `IN A,($FE)` / `CPL` / `AND $1F`) collapses
+ *       to a single inverted, masked port_KEYBOARD_12345 read (same collapse as
+ *       titlescr_wait_loop's fire/credit/anykey checks).
  *
- * Conv: $FBB7-$FBC1 (four `RRA` / `JR C` pairs testing bits 0-3 of the
- * 5-bit mask in turn) collapse to direct bit tests against A_key_mask; key
- * "5" is whatever remains after all four bits test false, matching the
- * Z80's unbranched fallthrough default.
+ * Conv: $FBB7-$FBC1 (four `RRA` / `JR C` pairs testing bits 0-3 of the 5-bit
+ *       mask in turn) collapse to direct bit tests against A_key_mask; key "5"
+ *       is whatever remains after all four bits test false, matching the Z80's
+ *       unbranched fallthrough default.
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
@@ -3841,17 +3856,18 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * and takes the attribute address as a parameter. Fix bugs in both.
  *
  * Conv: $FDA4-$FDB9 (header unpack), the classification ladder ($FDDA-$FDFE)
- * and the double/single-height blits ($FE16-$FE7E) all follow menu_draw_char
- * ($EC2C) precedent -- an essentially identical blit for an essentially
- * identical font -- but this function has no cross-call persisted state to
- * carry via EXX, so the shadow-register dance the Z80 uses to snapshot the
- * per-character screen pointer ($FE0D-$FE11: EXX/PUSH DE/INC E/EXX/POP DE,
- * "pop scr addr as-was") collapses to a plain local: compute DE_screen from
- * the *current* E_screen, then increment E_screen for the next character.
- * Similarly, $FDBA EXX/$FDBB EX (SP),HL (banking the metric/shape stream
- * pointer while the attribute address sits in shadow HL') has no observable
- * effect in C beyond naming which quantity is "the shape cursor" from this
- * point on; modelled as a plain assignment, not a literal register swap.
+ *       and the double/single-height blits ($FE16-$FE7E) all follow
+ *       menu_draw_char ($EC2C) precedent -- an essentially identical blit for
+ *       an essentially identical font -- but this function has no cross-call
+ *       persisted state to carry via EXX, so the shadow-register dance the Z80
+ *       uses to snapshot the per-character screen pointer ($FE0D-$FE11:
+ *       EXX/PUSH DE/INC E/EXX/POP DE, "pop scr addr as-was") collapses to a
+ *       plain local: compute DE_screen from the *current* E_screen, then
+ *       increment E_screen for the next character. Similarly, $FDBA EXX/$FDBB
+ *       EX (SP),HL (banking the metric/shape stream pointer while the attribute
+ *       address sits in shadow HL') has no observable effect in C beyond naming
+ *       which quantity is "the shape cursor" from this point on; modelled as a
+ *       plain assignment, not a literal register swap.
  */
 static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
 {
@@ -3985,13 +4001,13 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
  * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
  * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
  *
- * Conv: the Z80 does this as three LDIR chunks (attrs, then bitmap split
- * into two chunks of $082F and $07D0 bytes) with a sound-service call
- * between each pair; the bitmap fill collapses to one memset since nothing
- * observes it mid-way, but all three service calls are kept, in the same
- * order, so the tune advances by the same number of steps as the Z80.
- * Falls through into run_title_tune via a tail jump in the
- * Z80 ($FEA6 JP $FBC8), modelled here as a plain call before returning.
+ * Conv: the Z80 does this as three LDIR chunks (attrs, then bitmap split into
+ *       two chunks of $082F and $07D0 bytes) with a sound-service call between
+ *       each pair; the bitmap fill collapses to one memset since nothing
+ *       observes it mid-way, but all three service calls are kept, in the same
+ *       order, so the tune advances by the same number of steps as the Z80.
+ *       Falls through into run_title_tune via a tail jump in the Z80 ($FEA6 JP
+ *       $FBC8), modelled here as a plain call before returning.
  */
 static void clear_options_screen(chqstate_t *state)
 {
@@ -4018,14 +4034,14 @@ static void clear_options_screen(chqstate_t *state)
  * any mismatch, returns immediately (the ordinary case -- the new mapping
  * is kept).
  *
- * Conv: modelled as an outer for(;;) that only exits via return (mismatch)
- * -- matching the Z80, which has no path back to the caller once the
- * secret code has been entered other than by looping back to $FEA9 itself.
+ * Conv: modelled as an outer for(;;) that only exits via return (mismatch) --
+ *       matching the Z80, which has no path back to the caller once the secret
+ *       code has been entered other than by looping back to $FEA9 itself.
  *
- * Conv: $FEC1/$FED6 (`PUSH HL` / `INC HL`) walk a pointer that is never
- * read back before the next iteration's `PUSH HL` overwrites it -- dead
- * code, as with the identical stray HL increment noted in redefine_keys_48k
- * ($ECF3). Not modelled.
+ * Conv: $FEC1/$FED6 (`PUSH HL` / `INC HL`) walk a pointer that is never read
+ *       back before the next iteration's `PUSH HL` overwrites it -- dead code,
+ *       as with the identical stray HL increment noted in redefine_keys_48k
+ *       ($ECF3). Not modelled.
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
@@ -4266,8 +4282,7 @@ static u16 advance_key_label_column(u16 DE_screen)
 /**
  * Allocate and initialise the bank 3 sub-state.
  *
- * Conv: host lifecycle helper; has no Z80 address. Called once from
- * chq_create.
+ * Conv: host lifecycle helper; has no Z80 address. Called once from chq_create.
  *
  * \return 0 on success, -1 if allocation failed.
  */
@@ -4441,7 +4456,7 @@ int bank3_state_create(chqstate_t *state)
  * Free the bank 3 sub-state.
  *
  * Conv: host lifecycle helper; has no Z80 address. Called once from
- * chq_destroy.
+ *       chq_destroy.
  */
 void bank3_state_destroy(chqstate_t *state)
 {
