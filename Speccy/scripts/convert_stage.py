@@ -2394,7 +2394,9 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             )
     print("};")
     print()
-    print(f"const void *stage{stage}_lookup_map_goto(chqstate_t *state, u16 z80)")
+    # Signature must match the declaration in Stage{N}Data.h, which takes the
+    # address alone; the body never needed a state pointer.
+    print(f"const void *stage{stage}_lookup_map_goto(u16 z80)")
     print("{")
     print("  int lo, hi, mid;")
     print()

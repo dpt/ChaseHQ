@@ -2,12 +2,13 @@
 
 `convert_stage.py` (`Speccy/scripts/`) converts a Chase H.Q. skool file to a C stage data skeleton for one stage. It is the starting point for every stage data file beyond stage 1 (which is hand-crafted).
 
-> **The output is a skeleton, not a build product.** It does not compile as
-> generated, and the committed `Stage{2-5}Data.c` files contain hand-work that
-> the script cannot reproduce — decoded `obj_t`/`overhead_span_t` tables,
-> resolved helicopter pointers, `MAP_LANES_*` transition macros. Regenerating
-> over a committed file discards all of it. Use this to scaffold a *new* stage;
-> to change an existing one, edit the committed `.c` by hand. See
+> **The output is a skeleton, not a build product.** It compiles, but the
+> committed `Stage{2-5}Data.c` files contain hand-work the script cannot
+> reproduce — decoded `overhead_span_t` tables, resolved helicopter pointers,
+> named `STAGE{N}_MAP_*_ADDR` macros, a Doxygen prologue on every table.
+> Regenerating over a committed file discards all of it and reintroduces the
+> `/* TODO */` placeholders. Use this to scaffold a *new* stage; to change an
+> existing one, edit the committed `.c` by hand. See
 > [What requires manual completion](#what-requires-manual-completion).
 
 ## Usage
@@ -76,10 +77,9 @@ python3 convert_stage.py ChaseHQ-128K-bank-7.skool 5 \
 
 ## What requires manual completion
 
-The following items cannot be decoded automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders. Until they are done by hand the file
-does not compile:
+The output compiles as generated, but the following items cannot be decoded
+automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders:
 
-- `obj_t` and `hittable_t` graphic definition arrays (typed structs)
 - `overhead_span_t` tables, emitted as raw `stageN_bitmap_XXXX` byte arrays
 - `stretchy_t` / `depthset_t` tables when pointer targets are unresolvable
 - Handler pointers not in `HANDLER_ADDRESS_MAP`
@@ -88,8 +88,14 @@ does not compile:
   named `STAGE{N}_MAP_*_ADDR` defines; the script emits bare literals
 - `stageN_lod_addrs_XXXX`, a raw table the committed files delete once the
   typed `bitmap_t` LODs supersede it
-- The `stageN_lookup_map_goto()` signature, which conflicts with its forward
-  declaration as generated
+- A Doxygen `/** $XXXX: name */` prologue on each table; the script emits a
+  bare `// $XXXX`
+- Pointers the committed files hand-craft, such as stage 2's
+  `&stage2_left_obj_defs_E25B[-1].arg` — the script emits the array element,
+  which warns on the pointer type
+
+For stages 2-5 that is roughly 90 `_ADDR` macros, 284 prologues, 6
+`overhead_span_t` decodes and 30 TODO placeholders to resolve.
 
 ## Reading a re-controlled skool
 
