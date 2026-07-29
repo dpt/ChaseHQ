@@ -4320,7 +4320,7 @@ C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <self modified> inverted flag
 C $93C2,1 Set flags
 C $93C6,1 A--
-C $93D3,3 Exit via draw_part_plot_masked_sprite if carry
+C $93D3,3 Exit via plot_masked_sprite_by_width if carry
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
@@ -8564,10 +8564,10 @@ R $B6D6 I:B' ?
 R $B6D6 I:C' 0 ?
 R $B6D6 I:D' ?
 R $B6D6 I:E' Byte width ?
-@ $B6D6 label=draw_part
+@ $B6D6 label=draw_masked_sprite_rel_car
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=*draw_part_entrypt2
+@ $B6DD label=*draw_masked_sprite
 C $B6DD,7 Divide #REGe by 8
 C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
@@ -8581,7 +8581,7 @@ C $B6FB,1 Preserve carry flag (flip flag)
 C $B6FC,1 HL += BC
 C $B6FD,1 Restore carry flag (flip flag)
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=*draw_part_plot_masked_sprite
+@ $B701 label=*plot_masked_sprite_by_width
 C $B701,4 Point #REGix at pms_jumptable
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
