@@ -735,6 +735,47 @@ static const void *lookup_map_goto(int current_stage_number, int z80)
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * Log a hazard slot lifecycle event to stderr.
+ *
+ * Conv: debugging aid, not a Z80 routine. Silent unless the environment
+ * variable CHQ_HAZARD_TRACE is set, so it can stay compiled in:
+ *
+ *   CHQ_HAZARD_TRACE=1 ./ChaseHQ 2>hazards.log
+ *
+ * \param[in] state  Game state.
+ * \param[in] hazard Hazard slot the event concerns.
+ * \param[in] event  Short event name, e.g. "retire-overtake".
+ */
+static void hazard_trace(chqstate_t     *state,
+                         const hazard_t *hazard,
+                         const char     *event)
+{
+  static int enabled = -1; /* tri-state: -1 = not yet queried */
+
+  if (enabled < 0)
+    enabled = getenv("CHQ_HAZARD_TRACE") != NULL;
+  if (enabled == 0)
+    return;
+
+  fprintf(stderr,
+          "haz t=%3d slot=%d %-16s dist=%3d frac=%3d speed=%04X flags=%02X "
+          "lane=%d->%d hit=%d horz=%3d\n",
+          state->fast_counter,
+          (int)(hazard - &state->hazards[0]),
+          event,
+          hazard->distance,
+          hazard->dist_frac,
+          hazard->speed,
+          hazard->hazard_flags,
+          hazard->hazard_lane_OR_perp_dist_hi,
+          hazard->current_lane,
+          hazard->hit_timer,
+          hazard->horz_pos_on_road);
+}
+
+/* ----------------------------------------------------------------------- */
+
 typedef void dso_callback_t(chqstate_t     *state,
                             int             B_depth,
                             const bitmap_t *HL_bitmap,
@@ -8705,6 +8746,8 @@ fill_in:
     bitmap_index -= 2; // 6 -> 4
 
   hazard->hittable.bitmaps = state->stage->bitmaps_vehicles[bitmap_index / 2];
+
+  hazard_trace(state, hazard, "spawn-car");
 }
 
 /**
@@ -8837,6 +8880,7 @@ void hazard_handler(chqstate_t *state, hazard_t *IX_hazard)
   if (state->ahc_crashed_flag)
     return; // already crashed
 
+  hazard_trace(state, IX_hazard, "retire-hit");
   IX_hazard->used = HAZARD_UNUSED;
   state->overtake_bonus_bcd = 0;
 
@@ -9539,6 +9583,7 @@ sh_found_free:
   IX_hazard->horz_pos_on_road = B_horz_pos;
   IX_hazard->distance         = C_distance;
   IX_hazard->used             = HAZARD_USED;
+  hazard_trace(state, IX_hazard, "spawn-object");
   return 0;
 }
 
@@ -9930,6 +9975,7 @@ static void advance_hazard(chqstate_t *state,
 
   A_dist = C_dist;
   if (A_dist >= 23) {
+    hazard_trace(state, IX_hazard, "retire-dist>=23");
     IX_hazard->used = HAZARD_UNUSED; /* $ADF5: hazard scrolled past player */
     return;
   }
@@ -9941,12 +9987,16 @@ dhs_adfa:
 
   if (--A_dist == 0) {
     /* At closest visible distance: check if hazard has been overtaken */
-    A_fc_inv = ~(state->fast_counter & 0xE0);
+    /* Conv: CPL is 8-bit. A plain ~ promotes to int and yields a negative
+     * value, which always compares below dist_frac and retires every hazard
+     * at distance 1. Mask back to 8 bits. */
+    A_fc_inv = 0xFF ^ (state->fast_counter & 0xE0);
     if (A_fc_inv < IX_hazard->dist_frac) {
       B_flags = (u8) (IX_hazard->hazard_flags + 1);
       /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
       if (B_flags) {
         /* Car hazard overtaken: retire slot; carry from RL signals bonus */
+        hazard_trace(state, IX_hazard, "retire-overtaken");
         IX_hazard->used = HAZARD_UNUSED;
         RL(B_flags);
         if (carry)
@@ -13352,6 +13402,7 @@ rm_restart_hazards_read: // $BFF3
 
     // hazard_flags != 0xFF: decrement distance
     if (--IX_hazard->distance == 0) {
+      hazard_trace(state, IX_hazard, "retire-run-map");
       IX_hazard->used = 0; // mark unused
       if ((u8)(IX_hazard->hazard_flags + 1) & 0x80) // RLA carry: hazard_flags >= 0x7F
         C_overtake_bonus++;

@@ -217,12 +217,13 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 ---
 
-## 16. u8 wraparound arithmetic — NEG, ADD, SUB, sign extension, and wrap-terminated loops
+## 16. u8 wraparound arithmetic — NEG, CPL, ADD, SUB, sign extension, and wrap-terminated loops
 
 **Root cause:** Z80 8-bit arithmetic always wraps within the accumulator; a C `int` does not, so:
 
 - `NEG` on `int` gives a large negative number instead of the wrapped positive Z80 result (Z80 `NEG` of 254 gives 2; C gives −254).
 - `ADD`/`SUB` overflow does not wrap at 256.
+- `CPL` complements 8 bits; C `~` complements the promoted `int`, so the result is negative (`~0x40` is −65, not `$BF`). Any comparison against a `u8` operand then succeeds unconditionally.
 - The sign-extension idiom `if (val & 0x80) val |= 0xFF00;` only works when `val` is already a negative `int`; for a positive `int` with bit 7 set (e.g. 128) it produces 65408 instead of −128.
 - A loop of the form `INC A; INC A; JP NZ` advances by 2 per iteration and terminates when A *wraps* from 254 to 0. Translating it as `Aiterations += 2; while (--Aiterations > 0)` gives a net step of +1, running roughly double the intended iterations and revisiting each slot.
 
@@ -233,8 +234,9 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 - `build_curve_table_fill` (`bct_endbit_A`) masked `Atotal &= 0xFF` inside the inner loop but not after `Atotal -= Ldash` at the outer boundary, corrupting x-position table values when that subtraction went negative.
 - `layout_road`'s forked-road path started `Aiterations = 0x30` with `+= 2` then `-- Aiterations > 0` (net +1 per iteration); it ran 207 iterations instead of 104, visiting each index twice and letting the second write silently overwrite the first.
 - `draw_helicoper_part`'s `Abot` (models A after `ADD A,B`) was declared `int`; near a screen edge it reached up to 509 instead of wrapping mod 256, sending `draw_object_left_width_entrypt`'s `Awidth_bytes` branch down the wrong path and flipping the sprite to the opposite edge. Fix: declare `u8`. (`6ba1edc`)
+- `advance_hazard`'s overtake gate (`$AE03–$AE0C`, `AND $E0; CPL; CP (IX+$04)`): `A_fc_inv = ~(state->fast_counter & 0xE0)` with `A_fc_inv` declared `int` yielded −225..−1, so `A_fc_inv < IX_hazard->dist_frac` was true for every `u8` `dist_frac`. Every traffic car retired the frame its distance reached 1 instead of passing the player, and the perp's `$AE20` store (`dist_frac = A_fc_inv`) took a truncated negative. Fix: `A_fc_inv = 0xFF ^ (state->fast_counter & 0xE0);`. Found with the `CHQ_HAZARD_TRACE` hazard-lifecycle log, which showed a retire at `t=88`/`frac=32` where the gate value is `$BF` = 191 and no retire was due.
 
-**Fix:** Cast the result of any 8-bit-wrapping op back to `u8` immediately (`(u8)(-A)`, `(u8)(a+b)`, `(u8)(a-b)`); for sign extension, cast the low byte through `(s8)`/`(s16)` rather than OR-ing in `0xFFnn`; mask/cast accumulators back into range after every operation that could push them outside `[0,255]`, including at loop boundaries. For an `INC A;…;JP NZ` loop, drop the `--` from the condition entirely — `u8` wrap to 0 terminates it naturally: `do { … A += n; } while (A != 0);`.
+**Fix:** Cast the result of any 8-bit-wrapping op back to `u8` immediately (`(u8)(-A)`, `(u8)(a+b)`, `(u8)(a-b)`, `0xFF ^ x` or `(u8)~x` for `CPL`); for sign extension, cast the low byte through `(s8)`/`(s16)` rather than OR-ing in `0xFFnn`; mask/cast accumulators back into range after every operation that could push them outside `[0,255]`, including at loop boundaries. For an `INC A;…;JP NZ` loop, drop the `--` from the condition entirely — `u8` wrap to 0 terminates it naturally: `do { … A += n; } while (A != 0);`.
 
 **Commits:** `087c724`, `136e57d`
 
