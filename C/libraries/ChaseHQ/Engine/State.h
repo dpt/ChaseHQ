@@ -140,7 +140,7 @@ struct chqstate {
    * --------------------------------------------------------------------- */
 
   // $5B00
-  u8        pre_shifted_backdrop[BACKDROP_LENGTH]; // occupies 256 bytes in real game?
+  u8        pre_shifted_backdrop[BACKDROP_LENGTH]; // $5B00..$5BFF is reserved for this in the original; only the leading 240 bytes (10x24) are used
 
   // $8000
   u8        test_mode;
@@ -503,7 +503,7 @@ struct chqstate {
   u8       *ddas_particle; // byte ptr into the $ED28 particle table
 
   // $AA5A (SM) in draw_helicopter
-  u8        dhs_heli_vert_base; // y position?
+  u8        dhs_heli_vert_base; // helicopter y base: swing offset + height, minus the per-distance object position when drawn
   // $AA76 (SM) in draw_helicopter
   u8        dhs_heli_y_offset;
   // $AA8C (SM) in draw_helicopter
@@ -532,7 +532,7 @@ struct chqstate {
   s16      *dhs_xpos_table; // points to table e900 for example
 
   // $AFFB (SM) in dhs_aecf
-  u8        smoke_bitmap_index; // (smoke) speed factor?
+  u8        smoke_bitmap_index; // level-of-detail index 0..5 derived from the hazard's draw-list depth; picks the arrow, smoke and fire sprite sizes
 
   // $B023 (SM) in ...
   u8        dhs_col_pos;
@@ -567,7 +567,7 @@ struct chqstate {
   // $B476 (SM) in animate_hero_car
   u8        ahc_hand_step;
   // $B478 (SM) in animate_hero_car
-  u8        ahc_hand_delay; // hand animation frame?
+  u8        ahc_hand_delay; // frames left on the current hand animation step; reloads to 2 (3 on step 2) as ahc_hand_step advances
 
   // $B4F0 (SM) in smash
   u8        smash_cycling_counter;

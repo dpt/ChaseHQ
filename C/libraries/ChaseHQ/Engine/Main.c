@@ -1922,7 +1922,7 @@ static void run_pregame_screen(chqstate_t *state)
   state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
   setup_transition(state, TRANSITIONSTRIDE_REVERSE);
   set_playfield_attrs(state);
-  // Reset the counter in #R$85E4 that reveals the perp's car
+  // Reset the counter in $85E4 that reveals the perp's car
   state->pregame_car_revealed_height = 0;
   start_chatter(state, 0xFF, state->stage->addrof_perp_description);
 
@@ -2004,8 +2004,8 @@ static void reveal_perp_car(chqstate_t *state)
   int             revealed_height; /* was A */
   const bitmap_t *perp_bitmap;     /* was HL */
   int             width_bytes;     /* was DE */
-  int             height;          /* was B (banked?) */
-  const u8       *bitmap;          /* was HL (banked?) */
+  int             height;          /* rows to draw: min(revealed_height, lod.height) (was B) */
+  const u8       *bitmap;          /* address of the bitmap data read from the LOD (was HL) */
 
   if (state->wanted_stage_number == 5)
     return; // perp car is hidden on stage 5
@@ -2134,7 +2134,7 @@ static void draw_pregame(chqstate_t *state)
   int       iterations; /* 8: row counter for one tile; 4: message loop counter (was B) */
   u16       bufoffset;  /* BACKBUF offset after tile draw; encodes column + row field (was BC) */
   int       E;          /* column portion of attribute address: (offset & 0x1F) | row-bit (was E) */
-  u8        rows;       /* row field from bufoffset, shifted left for attribute address (was ?) */
+  u8        rows;       /* row field from bufoffset, shifted left for attribute address; bit 6 falls out as the third-of-screen carry (was A at $86B7) */
   int       bgattr;     /* draw_pregame_background: OR'd into attribute cell if non-zero (was A) */
   const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
   u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
@@ -2218,7 +2218,7 @@ dp_repeat_or_plot_tile:
       backbuf = OFFSETTOBACKBUF(bufoffset);
       srctile -= 8; /* was POP */
     } while (--tile_count > 0);
-    /* was EX DE,HL ; #REGde = Back buffer ptr */
+    /* was EX DE,HL ; DE = Back buffer ptr */
     cmdaddr = BACKBUFFER_START_ADDRESS + bufoffset;
     goto dp_get_command;
   } // !CMD_STOP
@@ -3106,7 +3106,9 @@ store_time_bonus_high:
   if (A == 0)
     goto store_time_bonus_low;
 
-  // Bug fix applied
+  // The $8B3D EX AF,AF' bug is fixed here: B_iterations takes the low digit
+  // directly, so the time-bonus loop runs once per unit as intended. See the
+  // prologue.
   B_iterations = A;
   Adash = A;
   do
@@ -3179,7 +3181,7 @@ move_perp:
 change_perp_pos:
   C = A + B_delta;
 
-assign_perp_pos: // is this in the right place?
+assign_perp_pos: // $8B9D, entered directly from the "already at 35" test
   A = C;
   state->hazards[0].horz_pos_on_road = A;
   HL_roadpos = state->scenedata.road_pos;
@@ -6386,7 +6388,7 @@ static void plot_mini_font_char(
     break;
   }
 
-  sgid = gid + 'A'; // Turn the glyph ID in #REGc into ASCII in #REGa
+  sgid = gid + 'A'; // Turn the glyph ID in C into ASCII in A
 
 pmf_have_ascii:
   fontdata = &minifont[(sgid - 'A') * MFHEIGHT];
@@ -8146,7 +8148,7 @@ set_right_hand:
         goto load_and_store_right;
       }
 
-      // The left hand position of the road in #REGa is 1/2/3 here. Use that to
+      // The left hand position of the road in A is 1/2/3 here. Use that to
       // select table $E8xx/$E9xx/$EAxx.
       // Not sure if I trust structure layout, so using a switch here.
       switch (laneoffset) {
@@ -8299,16 +8301,17 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX_perp)
   if (state->sighted_flag == 0)
     start_chase(state);
 
-  // Reading a hit counter here? It starts at $FC (set at #R$A78A) and is
-  // incremented. This seems like it might speed the perp car up when it's
-  // hit.
-  A_hit_timer =
-    IX_perp->hit_timer; // Read IX_perp[7] e.g. $A18F  -- a hit counter/delay
+  // hit_timer is a post-collision cooldown. hazard_hit leaves it positive
+  // when the hero has just rammed the perp; pb_set_delay then reloads it with
+  // $FC (-4) and it counts up one per frame. While it is negative this
+  // function returns immediately, so the perp holds its last lane and speed
+  // for four frames after a hit.
+  A_hit_timer = IX_perp->hit_timer; // Read IX_perp[7] e.g. $A18F
   if (A_hit_timer == 0)
-    goto pb_hit_timer_clear; // Jump if zero  -- delay finished, perp can be hit again?
+    goto pb_hit_timer_clear; // cooldown over: run the normal frame
   else if (A_hit_timer > 0)
     goto pb_set_delay; // Jump to set delay if positive
-  // Otherwise #REGa is negative.
+  // Otherwise A is negative.
 
   // This line gets hit 4 times when we smash into the perp's car - matching
   // the $FC value it's reset to.
@@ -8320,7 +8323,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX_perp)
 pb_hit_timer_clear:
   // PUSH IY
   C_perp_distance =
-    IX_perp->distance; // Read perp's distance (buffer offset) into #REGc
+    IX_perp->distance; // Read perp's distance (buffer offset) into C
   B_iterations = 5; // iterations
   IY_hazard = &state->hazards[1];
   do {
@@ -8340,12 +8343,14 @@ pb_ensure_vehicle:
       0) // it's not a vehicle, continue to next hazard
     goto pb_find_unused_hazard_continue;
 
-  // Calculate distance between current hazard-car and the perp.
+  // Calculate distance between current hazard-car and the perp. The two arms
+  // form one proximity window: the hazard counts as blocking when it sits
+  // within two distance units behind the perp or three ahead of it.
   A_distancediff = (u8) (IY_hazard->distance - C_perp_distance);
   if (IY_hazard->distance < C_perp_distance) {
     // Otherwise hazard-car is behind perp...
     carry = A_distancediff > (u8) (0xFF - 2); // carry out of ADD A,2
-    A_distancediff += 2;                      // move it two lanes away?
+    A_distancediff += 2;
   } else {
     carry = A_distancediff < 3; // borrow out of SUB A,3
     A_distancediff -= 3;
@@ -8391,8 +8396,10 @@ pb_check_changing_lane_flag:
 pb_update_counter:
   state->pb_lane_change_timer = A_lane_timer;
 
-  // This smells like it's detecting position and turning that into lanes.
-  // The values are like those used by get_spawn_lanes.
+  // Turn the road position into a min/max lane pair by stepping down through
+  // the road-width bands (164, then 70 per band), the same banding
+  // get_spawn_lanes uses. B_min_lane and C_max_lane bound the lane the perp
+  // may pick below.
 
   HL = state->scenedata.road_pos - 164 - carry; // SBC HL,DE ($A6B4) takes carry-in
   B_min_lane = 4; C_max_lane = 4;
@@ -8447,15 +8454,17 @@ pb_check_lane:
   if (A_currlane >= B_min_spawn_lane)
     goto pb_min_lane_set;
 
-  // Otherwise the (perp?) needs to move right to stay on the road.
-  A_currlane += 2; // Move right by two lanes [why two?]
+  // Otherwise the perp needs to move right to stay on the road. The clamp
+  // steps two lanes so the perp lands inside the legal band rather than on
+  // its boundary, where the next random walk could step straight back out.
+  A_currlane += 2;
   IX_perp->current_lane = A_currlane;
 
 pb_min_lane_set:
   if (A_currlane <= C_max_spawn_lane)
     goto pb_reread_current_lane;
 
-  // Otherwise the (perp?) needs to move left to stay on the road.
+  // Otherwise the perp needs to move left to stay on the road.
 
   A_currlane -= 2; // Move left by two lanes
   IX_perp->current_lane = A_currlane;
@@ -8467,9 +8476,11 @@ pb_reread_current_lane:
     IX_perp->current_lane; // Re-read current_lane [not convinced this is required]
   HL_tab = &hazard_pos_speed[A_currlane - 1];
   A_horzpos = IX_perp->horz_pos_on_road;
-  // #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We
-  // seem to be bumping the position by +/-10.
-  changing_lane = 1; // changing lane flag
+  // changing_lane is set here and cleared on every path that snaps horz_pos
+  // to the table value, so it ends up 1 while the perp is still sliding
+  // toward its target column and 0 once it has arrived. The slide is +/-10
+  // per frame.
+  changing_lane = 1;
 
   if (A_horzpos == *HL_tab)
     goto pb_set_lane_from_table_2;
@@ -8510,7 +8521,7 @@ pb_set_horz_pos:
   if (A_delay)
     goto pb_bypass;
 
-  // Countdown+rng stuff again... as at #R$A69B
+  // Countdown+rng stuff again... as at $A69B
 
   // In-place decrementing counter.
   A_counter = state->pb_approach_timer - 1;
@@ -8534,26 +8545,25 @@ pb_bypass:
   if (A_distance >= 13)
     goto pb_a776;
 
-  // Distance to perp is 12 or less.
-  // .
-  // HL += (13 - A_distance) * DE    HL is 230, DE is 30
-  // .
-  // This seems to be using the distance to the perp as a scale by which to adjust
-  // its horizontal position.
+  // Distance to perp is 12 or less. The perp's speed is raised by 30 for each
+  // unit the hero has closed inside 13, so it pulls away hardest just as the
+  // hero draws alongside. IX[13] is speed, not a position.
 
   HL_speed += (13 - A_distance) * DE_speedmult;
 
 pb_a776:
   A_dist_minus_6 = IX_perp->distance - 6;
   if ((s8) A_dist_minus_6 < 0) {
-    // Distance to perp is 5 or less
-    A_dist_minus_6 = (A_dist_minus_6 + 5) * 8; // Bug? we do nothing with #REGa...
+    // Distance to perp is 5 or less. $A77D-$A781 scales the difference up by
+    // 8 and then discards it: nothing reads A before the next store and
+    // ADD HL,DE does not consume flags, so the calculation is dead in the
+    // original. Only the flat +30 below has any effect. Kept for fidelity.
+    A_dist_minus_6 = (A_dist_minus_6 + 5) * 8;
     HL_speed += DE_speedmult;
   }
   IX_perp->speed = HL_speed;
   return;
 
-  // If I meddle with this value the perp seems to race off too fast to catch.
 pb_set_delay:
   IX_perp->hit_timer = -4; // $FC
   carry = A_hit_timer < 3; // carry from CP $03, saved by PUSH AF before the SUB
@@ -9430,7 +9440,7 @@ static void spawn_hazards(chqstate_t *state)
   // Calculate a spawning distance.
   C_distance = 20 - allow_spawning;
 
-  // Point #REGhl at hazards data.
+  // Point HL at hazards data.
   roadbuf = ROADBUF_FWD2PTR(ROADBUF_HAZARDS_OFFSET + C_distance);
 
   // Do we have a hazard?
@@ -11283,7 +11293,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   // EX AF,AF'
   Adash_flip_car = state->flip_car; // reuse later perhaps?
   if (!Adash_flip_car) {
-    // EX AF,AF' -- #REGa is (width in bytes)
+    // EX AF,AF' -- A is (width in bytes)
     plot_sprite(state,
                 A_width_bytes,
                 ADDRTOBACKBUF(HLdash_backbuf_addr),
@@ -16022,11 +16032,11 @@ bct_continue:
   } while (--B_iterations > 0);
   return;
 
-  // #REGa is opcode of instruction (INC DE/DEC DE)
-  // #REGb is max iterations
-  // #REGc is ?
-  // #REGl is ?
-  // #REGde is ?
+  // A is opcode of instruction (INC DE/DEC DE)
+  // B is max iterations
+  // C is ?
+  // L is ?
+  // DE is ?
 bct_endbit_A:
   /* Conv: Z80 $CCF8 LD ($CCFC),A stores the opcode into the self-modifying
    * instruction. A already holds Z80_DEC_DE or Z80_INC_DE (set just before JR C,$CCF8).
@@ -17499,11 +17509,11 @@ void play_speech_128k(chqstate_t *state, int index)
 
       // Write sample as Channel A volume.
 
-      B_port_hi = H_ff; // Load $FF into #REGb to set high byte of port
-      A_regno = D_eight; // Load 8 into #REGa
+      B_port_hi = H_ff; // Load $FF into B to set high byte of port
+      A_regno = D_eight; // Load 8 into A
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_regno); // OUT (C),A -- Write to $FFFD to select register 8: Channel A volume
-      B_port_hi = L_bf; // Load $BF into #REGb
+      B_port_hi = L_bf; // Load $BF into B
       // EX AF,AF' - Unbank sample
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_sample); // OUT (C),A -- Write to $BFFD to write volume register
@@ -17511,11 +17521,11 @@ void play_speech_128k(chqstate_t *state, int index)
 
       // Write sample as Channel B volume.
 
-      A_regno++; // Increment #REGa from 8 to 9
-      B_port_hi = H_ff; // Load $FF into #REGb to set high byte of port
+      A_regno++; // Increment A from 8 to 9
+      B_port_hi = H_ff; // Load $FF into B to set high byte of port
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_regno); // OUT (C),A -- Write to $FFFD to select register 9: Channel B volume
-      B_port_hi = L_bf; // Load $BF into #REGb
+      B_port_hi = L_bf; // Load $BF into B
       // EX AF,AF' - Unbank sample
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_sample); // OUT (C),A -- Write to $BFFD to write volume register
@@ -17523,11 +17533,11 @@ void play_speech_128k(chqstate_t *state, int index)
 
       // Write sample as Channel C volume.
 
-      A_regno++; // Increment #REGa from 9 to 10
-      B_port_hi = H_ff; // Load $FF into #REGb to set high byte of port
+      A_regno++; // Increment A from 9 to 10
+      B_port_hi = H_ff; // Load $FF into B to set high byte of port
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_regno); // OUT (C),A -- Write to $FFFD to select register 10: Channel C volume
-      B_port_hi = L_bf; // Load $BF into #REGb
+      B_port_hi = L_bf; // Load $BF into B
       // EX AF,AF' - Unbank sample
       speccy->out(speccy, (B_port_hi << 8) | C_port_lo,
                   A_sample); // OUT (C),A -- Write to $BFFD to write volume register
