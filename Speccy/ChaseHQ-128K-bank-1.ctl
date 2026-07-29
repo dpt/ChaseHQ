@@ -1846,13 +1846,11 @@ B $E0F5,1,1
 W $E0F6,2,2 [$E224] Address of table of LODs for tumbleweeds, barriers.
 W $E0F8,2,2 [$E226] (points at a handler address)
 W $E0FA,2,2 [$E223] Address of right hand graphics entry/entries (-7 bytes)
-B $E0FC,1,1 [$E238] (points at a handler address)
-B $E0FD,1,1
+W $E0FC,2,2 [$E238] (points at a handler address)
 W $E0FE,2,2 [$E257] (points at a handler address)
 W $E100,2,2 [$E254] Address of left hand graphics entry/entries (-7 bytes)
 W $E102,2,2 [$E269] (points at a handler address)
-B $E104,1,1 [$E139] Address of Nancy's perp description
-B $E105,1,1
+W $E104,2,2 [$E139] Address of Nancy's perp description
 W $E106,2,2 [$E1DD] Address of arrest messages
 W $E108,2,2 [$ED93] Helicopter data 1
 W $E10A,2,2 [$ED9F] Helicopter data 2
@@ -1862,8 +1860,7 @@ B $E10D,1,1
 W $E10E,2,2 [out-of-bounds] Address of LOD of Hazard (stone/dust)
 W $E110,2,2 [$E8FF] Address of LOD of Car A (the perp's car)
 W $E112,2,2 [$E953] Address of LOD of Car B (a Lambo in S1)
-B $E114,1,1 [$E929] Address of LOD of Car C (a truck in S1)
-B $E115,1,1
+W $E114,2,2 [$E929] Address of LOD of Car C (a truck in S1)
 W $E116,2,2 [$E953] Address of LOD of Car D (a Lambo in S1)
 W $E118,2,2 [$E8FF] Address of LOD of Car E (a generic car in S1)
 b $E11A [Stage 2] Per-stage difficulty settings
@@ -1889,20 +1886,15 @@ W $E137,2,2 [$E6EF] Address of loop section, hazards
 b $E139 [Stage 2] Nancy's perp description
 B $E139,1,1 Character identifier (0/1/2/3 = Pilot/Nancy/Raymond/Tony)
 W $E13A,2,2 [$E145] Perp description pointer
-B $E13C,1,1 [$E16D] Perp description pointer
-B $E13D,1,1
+W $E13C,2,2 [$E16D] Perp description pointer
 W $E13E,2,2 [$E191] Perp description pointer
 W $E140,2,2 [$E1B4] Perp description pointer
 B $E142,1,1 Escape: Jump
 W $E143,2,2 Address of next message (always $98BD)
-T $E145,8,8 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
-B $E14D,32,1,8*3,7
-T $E16D,8,8 "EMERGENCY HERE. CARLOS, THE NEW YORK"
-B $E175,28,1,7,8*2,4
-T $E191,4,4 "ARMED ROBBER, HAS BEEN SPOTTED IN A"
-B $E195,31,1,7,8*2,7
-T $E1B4,1,1 "YELLOW SPORTS CAR ON THE FREEWAY... OVER."
-B $E1B5,40,1,8*4,7
+T $E145,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
+T $E16D,36,35:n1 "EMERGENCY HERE. CARLOS, THE NEW YORK"
+T $E191,35,34:n1 "ARMED ROBBER, HAS BEEN SPOTTED IN A"
+T $E1B4,41,40:n1 "YELLOW SPORTS CAR ON THE FREEWAY... OVER."
 b $E1DD [Stage 2] Arrest messages
 B $E1DD,1,1 ?frame delay until first message
 B $E1DE,1,1 ?frame delay until next message
@@ -1910,15 +1902,13 @@ B $E1DF,1,1 Flags
 B $E1E0,1,1 Attribute
 W $E1E1,2,2 Back buffer address
 W $E1E3,2,2 Attribute address
-T $E1E5,8,8 "OK! YOU ARE UNDER ARREST ON"
-B $E1ED,19,1,7,8,3
+T $E1E5,27,26:n1 "OK! YOU ARE UNDER ARREST ON"
 B $E200,1,1 ?frame delay until next message
 B $E201,1,1 Flags
 B $E202,1,1 Attribute
 W $E203,2,2 Back buffer address
 W $E205,2,2 Attribute address
-T $E207,6,6 "SUSPICION OF ARMED ROBBERY."
-B $E20D,21,1,7,8,5
+T $E207,27,26:n1 "SUSPICION OF ARMED ROBBERY."
 B $E222,1,1 ?frame delay until next message
 B $E223,1,1 Stop
 b $E224 [Stage 2] Hittable hazards
@@ -2039,8 +2029,7 @@ B $E2A7,1,1 Curve Straight for 37 units
 B $E2A8,2,2
 B $E2AA,1,1 <Esc> Split
 B $E2AB,1,1
-B $E2AC,1,1 [$E439] Left target
-B $E2AD,1,1
+W $E2AC,2,2 [$E439] Left target
 W $E2AE,2,2 [$E53C] Right target
 b $E2B0 [Stage 2] Map height data
 B $E2B0,1,1 Level Road for 2 units
@@ -2086,8 +2075,7 @@ B $E2DD,3,3
 B $E2E0,1,1 <Esc> Split
 B $E2E1,1,1
 W $E2E2,2,2 [$E44F] Left target
-B $E2E4,1,1 [$E54F] Right target
-B $E2E5,1,1
+W $E2E4,2,2 [$E54F] Right target
 b $E2E6 [Stage 2] Map lanes data
 B $E2E6,1,1 4 Lanes              [||||] {00} for 2 units
 B $E2E7,1,1
@@ -2158,8 +2146,7 @@ B $E328,1,1
 B $E329,1,1 Wait for 1 units
 B $E32A,1,1 <Esc> Split
 B $E32B,1,1
-B $E32C,1,1 [$E488] Left target
-B $E32D,1,1
+W $E32C,2,2 [$E488] Left target
 W $E32E,2,2 [$E57B] Right target
 b $E330 [Stage 2] Map left object data
 B $E330,1,1 Alternating (LEAVES, EMPTY) for 6 units
@@ -2613,8 +2600,7 @@ B $E616,1,1 Curve Straight for 52 units
 B $E617,3,3
 B $E61A,1,1 <Esc> Jump
 B $E61B,1,1
-B $E61C,1,1 [$E674] Target
-B $E61D,1,1
+W $E61C,2,2 [$E674] Target
 b $E61E [Stage 2] Map height data
 B $E61E,1,1 Level Road for 190 units
 B $E61F,12,6,2,4
@@ -2902,8 +2888,7 @@ B $E8FF,1,1 Width (bytes)
 B $E900,1,1 Flags
 B $E901,1,1 Height (pixels)
 W $E902,2,2 [$E97D] Bitmap address
-B $E904,1,1 [$E97D] Pre-shifted bitmap address
-B $E905,1,1
+W $E904,2,2 [$E97D] Pre-shifted bitmap address
 N $E906 LOD
 B $E906,1,1 Width (bytes)
 B $E907,1,1 Flags
@@ -2939,8 +2924,7 @@ N $E929 LOD
 B $E929,1,1 Width (bytes)
 B $E92A,1,1 Flags
 B $E92B,1,1 Height (pixels)
-B $E92C,1,1 [$EADE] Bitmap address
-B $E92D,1,1
+W $E92C,2,2 [$EADE] Bitmap address
 W $E92E,2,2 [$EADE] Pre-shifted bitmap address
 N $E930 LOD
 B $E930,1,1 Width (bytes)
@@ -2953,8 +2937,7 @@ B $E937,1,1 Width (bytes)
 B $E938,1,1 Flags
 B $E939,1,1 Height (pixels)
 W $E93A,2,2 [$EBEA] Bitmap address
-B $E93C,1,1 [$EBEA] Pre-shifted bitmap address
-B $E93D,1,1
+W $E93C,2,2 [$EBEA] Pre-shifted bitmap address
 N $E93E LOD
 B $E93E,1,1 Width (bytes)
 B $E93F,1,1 Flags
@@ -2990,8 +2973,7 @@ N $E961 LOD
 B $E961,1,1 Width (bytes)
 B $E962,1,1 Flags
 B $E963,1,1 Height (pixels)
-B $E964,1,1 [$ED63] Bitmap address
-B $E965,1,1
+W $E964,2,2 [$ED63] Bitmap address
 W $E966,2,2 [$ED63] Pre-shifted bitmap address
 N $E968 LOD
 B $E968,1,1 Width (bytes)
@@ -3004,8 +2986,7 @@ B $E96F,1,1 Width (bytes)
 B $E970,1,1 Flags
 B $E971,1,1 Height (pixels)
 W $E972,2,2 [$EC17] Bitmap address
-B $E974,1,1 [$EC37] Pre-shifted bitmap address
-B $E975,1,1
+W $E974,2,2 [$EC37] Pre-shifted bitmap address
 N $E976 LOD
 B $E976,1,1 Width (bytes)
 B $E977,1,1 Flags
@@ -3075,8 +3056,7 @@ B $EDBF,1,1 Width (bytes)
 B $EDC0,1,1 Flags
 B $EDC1,1,1 Height (pixels)
 W $EDC2,2,2 [$EE91] Bitmap address
-B $EDC4,1,1 [$EE91] Pre-shifted bitmap address
-B $EDC5,1,1
+W $EDC4,2,2 [$EE91] Pre-shifted bitmap address
 B $EDC6,1,1 Pointed to by helicopter data 2
 B $EDC7,1,1
 N $EDC8 LOD
@@ -3091,8 +3071,7 @@ N $EDD1 LOD
 B $EDD1,1,1 Width (bytes)
 B $EDD2,1,1 Flags
 B $EDD3,1,1 Height (pixels)
-B $EDD4,1,1 [$EF16] Bitmap address
-B $EDD5,1,1
+W $EDD4,2,2 [$EF16] Bitmap address
 W $EDD6,2,2 [$EF16] Pre-shifted bitmap address
 B $EDD8,1,1 Pointed to by helicopter data 1
 B $EDD9,1,1
@@ -3227,8 +3206,7 @@ W $F16F,2,2 TBD
 W $F171,2,2 TBD
 N $F173 Stretchy graphic
 B $F173,1,1 ?index
-B $F174,1,1 [$F180] Pointer to stretchy_graphic_part
-B $F175,1,1
+W $F174,2,2 [$F180] Pointer to stretchy_graphic_part
 B $F176,1,1 ?index
 W $F177,2,2 [$F196] Pointer to stretchy_graphic_part
 B $F179,1,1 ?index
@@ -3266,8 +3244,7 @@ W $F1A6,2,2 TBD
 W $F1A8,2,2 TBD
 W $F1AA,2,2 TBD
 N $F1AC Stretchy graphic part
-B $F1AC,1,1 [$F264] LOD ptr
-B $F1AD,1,1
+W $F1AC,2,2 [$F264] LOD ptr
 W $F1AE,2,2 TBD
 W $F1B0,2,2 TBD
 W $F1B2,2,2 TBD
@@ -3307,8 +3284,7 @@ B $F1DF,1,1 Width (bytes)
 B $F1E0,1,1 Flags
 B $F1E1,1,1 Height (pixels)
 W $F1E2,2,2 [$F318] Bitmap address
-B $F1E4,1,1 [$F318] Pre-shifted bitmap address
-B $F1E5,1,1
+W $F1E4,2,2 [$F318] Pre-shifted bitmap address
 N $F1E6 LOD
 B $F1E6,1,1 Width (bytes)
 B $F1E7,1,1 Flags
@@ -3351,8 +3327,7 @@ N $F279 LOD
 B $F279,1,1 Width (bytes)
 B $F27A,1,1 Flags
 B $F27B,1,1 Height (pixels)
-B $F27C,1,1 [$F388] Bitmap address
-B $F27D,1,1
+W $F27C,2,2 [$F388] Bitmap address
 W $F27E,2,2 [$F388] Pre-shifted bitmap address
 N $F280 LOD
 B $F280,1,1 Width (bytes)
@@ -3387,8 +3362,7 @@ W $F516,2,2 [$F597] Pointer to stretchy_graphic_part
 B $F518,1,1 ?index
 W $F519,2,2 [$F597] Pointer to stretchy_graphic_part
 B $F51B,1,1 ?index
-B $F51C,1,1 [$F5AD] Pointer to stretchy_graphic_part
-B $F51D,1,1
+W $F51C,2,2 [$F5AD] Pointer to stretchy_graphic_part
 B $F51E,1,1 ?index
 W $F51F,2,2 [$F5C3] Pointer to stretchy_graphic_part
 B $F521,1,1 ?index
@@ -3400,8 +3374,7 @@ W $F526,2,2 [$F555] Pointer to stretchy_graphic_part
 B $F528,1,1 ?index
 W $F529,2,2 [$F5EF] Pointer to stretchy_graphic_part
 B $F52B,1,1 ?index
-B $F52C,1,1 [$F5EF] Pointer to stretchy_graphic_part
-B $F52D,1,1
+W $F52C,2,2 [$F5EF] Pointer to stretchy_graphic_part
 B $F52E,1,1 ?index
 W $F52F,2,2 [$F605] Pointer to stretchy_graphic_part
 B $F531,1,1 ?index
@@ -3425,8 +3398,7 @@ W $F548,2,2 [$F5D9] Pointer to stretchy_graphic_part
 B $F54A,1,1 Terminator
 N $F54B Stretchy graphic
 B $F54B,1,1 ?index
-B $F54C,1,1 [$F631] Pointer to stretchy_graphic_part
-B $F54D,1,1
+W $F54C,2,2 [$F631] Pointer to stretchy_graphic_part
 B $F54E,1,1 ?index
 W $F54F,2,2 [$F647] Pointer to stretchy_graphic_part
 B $F551,1,1 ?index
@@ -3605,8 +3577,7 @@ N $F681 LOD
 B $F681,1,1 Width (bytes)
 B $F682,1,1 Flags
 B $F683,1,1 Height (pixels)
-B $F684,1,1 [$F7A8] Bitmap address
-B $F685,1,1
+W $F684,2,2 [$F7A8] Bitmap address
 W $F686,2,2 [$F7A8] Pre-shifted bitmap address
 N $F688 LOD
 B $F688,1,1 Width (bytes)
@@ -3619,8 +3590,7 @@ B $F68F,1,1 Width (bytes)
 B $F690,1,1 Flags
 B $F691,1,1 Height (pixels)
 W $F692,2,2 [$F7E8] Bitmap address
-B $F694,1,1 [$F7E8] Pre-shifted bitmap address
-B $F695,1,1
+W $F694,2,2 [$F7E8] Pre-shifted bitmap address
 N $F696 LOD
 B $F696,1,1 Width (bytes)
 B $F697,1,1 Flags
@@ -3655,8 +3625,7 @@ N $F6B9 LOD
 B $F6B9,1,1 Width (bytes)
 B $F6BA,1,1 Flags
 B $F6BB,1,1 Height (pixels)
-B $F6BC,1,1 [$F846] Bitmap address
-B $F6BD,1,1
+W $F6BC,2,2 [$F846] Bitmap address
 W $F6BE,2,2 [$F846] Pre-shifted bitmap address
 N $F6C0 LOD
 B $F6C0,1,1 Width (bytes)
@@ -3669,8 +3638,7 @@ B $F6C7,1,1 Width (bytes)
 B $F6C8,1,1 Flags
 B $F6C9,1,1 Height (pixels)
 W $F6CA,2,2 [$F85C] Bitmap address
-B $F6CC,1,1 [$F85C] Pre-shifted bitmap address
-B $F6CD,1,1
+W $F6CC,2,2 [$F85C] Pre-shifted bitmap address
 N $F6CE LOD
 B $F6CE,1,1 Width (bytes)
 B $F6CF,1,1 Flags
@@ -3705,8 +3673,7 @@ N $F6F1 LOD
 B $F6F1,1,1 Width (bytes)
 B $F6F2,1,1 Flags
 B $F6F3,1,1 Height (pixels)
-B $F6F4,1,1 [$F880] Bitmap address
-B $F6F5,1,1
+W $F6F4,2,2 [$F880] Bitmap address
 W $F6F6,2,2 [$F880] Pre-shifted bitmap address
 N $F6F8 LOD
 B $F6F8,1,1 Width (bytes)
@@ -3719,8 +3686,7 @@ B $F6FF,1,1 Width (bytes)
 B $F700,1,1 Flags
 B $F701,1,1 Height (pixels)
 W $F702,2,2 [$F88A] Bitmap address
-B $F704,1,1 [$F88A] Pre-shifted bitmap address
-B $F705,1,1
+W $F704,2,2 [$F88A] Pre-shifted bitmap address
 N $F706 LOD
 B $F706,1,1 Width (bytes)
 B $F707,1,1 Flags
@@ -3755,8 +3721,7 @@ N $F729 LOD
 B $F729,1,1 Width (bytes)
 B $F72A,1,1 Flags
 B $F72B,1,1 Height (pixels)
-B $F72C,1,1 [$F8A2] Bitmap address
-B $F72D,1,1
+W $F72C,2,2 [$F8A2] Bitmap address
 W $F72E,2,2 [$F8A2] Pre-shifted bitmap address
 N $F730 LOD
 B $F730,1,1 Width (bytes)
@@ -3769,8 +3734,7 @@ B $F737,1,1 Width (bytes)
 B $F738,1,1 Flags
 B $F739,1,1 Height (pixels)
 W $F73A,2,2 [$F8AA] Bitmap address
-B $F73C,1,1 [$F8DE] Pre-shifted bitmap address
-B $F73D,1,1
+W $F73C,2,2 [$F8DE] Pre-shifted bitmap address
 N $F73E LOD
 B $F73E,1,1 Width (bytes)
 B $F73F,1,1 Flags
@@ -3805,8 +3769,7 @@ N $F761 LOD
 B $F761,1,1 Width (bytes)
 B $F762,1,1 Flags
 B $F763,1,1 Height (pixels)
-B $F764,1,1 [$F8D6] Bitmap address
-B $F765,1,1
+W $F764,2,2 [$F8D6] Bitmap address
 W $F766,2,2 [$F90A] Pre-shifted bitmap address
 B $F768,5,5 Bitmap data 5 bytes x 4
 B $F76D,15,8,7
@@ -3826,8 +3789,7 @@ W $F916,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
 B $F918,1,1 ?index
 W $F919,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
 B $F91B,1,1 ?index
-B $F91C,1,1 [$F92C] Pointer to stretchy_graphic_part
-B $F91D,1,1
+W $F91C,2,2 [$F92C] Pointer to stretchy_graphic_part
 B $F91E,1,1 Terminator
 N $F91F Stretchy graphic
 B $F91F,1,1 ?index
@@ -3840,8 +3802,7 @@ B $F928,1,1 ?index
 W $F929,2,2 [$F942] Pointer to stretchy_graphic_part
 B $F92B,1,1 Terminator
 N $F92C Stretchy graphic part
-B $F92C,1,1 [$F958] LOD ptr
-B $F92D,1,1
+W $F92C,2,2 [$F958] LOD ptr
 W $F92E,2,2 TBD
 W $F930,2,2 TBD
 W $F932,2,2 TBD
@@ -3881,8 +3842,7 @@ B $F95F,1,1 Width (bytes)
 B $F960,1,1 Flags
 B $F961,1,1 Height (pixels)
 W $F962,2,2 [$F9A3] Bitmap address
-B $F964,1,1 [$F9A3] Pre-shifted bitmap address
-B $F965,1,1
+W $F964,2,2 [$F9A3] Pre-shifted bitmap address
 N $F966 LOD
 B $F966,1,1 Width (bytes)
 B $F967,1,1 Flags
@@ -3923,8 +3883,7 @@ B $FA0F,1,1 Width (bytes)
 B $FA10,1,1 Flags
 B $FA11,1,1 Height (pixels)
 W $FA12,2,2 [$FA39] Bitmap address
-B $FA14,1,1 [$FA39] Pre-shifted bitmap address
-B $FA15,1,1
+W $FA14,2,2 [$FA39] Pre-shifted bitmap address
 N $FA16 LOD
 B $FA16,1,1 Width (bytes)
 B $FA17,1,1 Flags
