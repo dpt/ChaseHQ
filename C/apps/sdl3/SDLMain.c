@@ -151,6 +151,7 @@ typedef struct
 
   int                quit; // bool
   int                paused; // bool
+  int                mode_128k; // bool; 0 selects the 48K entry point
   // int                  menu; // bool
 
   int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
@@ -574,7 +575,7 @@ static int chq_game_thread(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  chq_setup(state->game, 1 /* 128K mode */);
+  chq_setup(state->game, state->mode_128k);
   state->quit = 1;
   return 0;
 }
@@ -1083,16 +1084,33 @@ static void chq_sdl_main_loop(void *opaque)
   }
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
   chq_sdl_state_t         state;
   zxconfig_t              zxconfig;
   SDL_Window             *window;
+  int                     arg;
+  int                     mode_128k;
+
+  mode_128k = 1;
+
+  for (arg = 1; arg < argc; arg++)
+  {
+    if (strcmp(argv[arg], "--48k") == 0)
+      mode_128k = 0;
+    else if (strcmp(argv[arg], "--128k") == 0)
+      mode_128k = 1;
+    else
+    {
+      fprintf(stderr, "Usage: %s [--48k | --128k]\n", argv[0]);
+      return EXIT_FAILURE;
+    }
+  }
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
 
-  printf("Initialising...\n");
+  printf("Initialising in %s mode...\n", mode_128k ? "128K" : "48K");
 
   memset(&state, 0, sizeof(state));
 
@@ -1100,6 +1118,7 @@ int main(void)
   state.kempston  = 0;
   state.paused    = 0;
   state.quit      = 0;
+  state.mode_128k = mode_128k;
   state.scale     = SCALE_DEFAULT;
   state.speed     = SPEED_DEFAULT;
   state.volume    = VOLUME_DEFAULT;

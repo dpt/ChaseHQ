@@ -95,6 +95,12 @@ void chq_test_reset_music(chqstate_t *state);
  *  end in exactly one sleep -- that is what paces the driver's callers. */
 void chq_test_play_music_48k(chqstate_t *state);
 
+/** Run the 48K "STOP THE TAPE" prompt and controller menu
+ *  (stop_the_tape_48k). Returns once the player has confirmed a scheme, so
+ *  the caller's in() handler must script a key sequence that reaches the
+ *  confirmation. */
+void chq_test_stop_the_tape_48k(chqstate_t *state);
+
 /** Run one frame of bank 3's title-music service (run_title_tune):
  *  services the drum/music tick and restarts tune 0 once it finishes. */
 void chq_test_run_title_tune(chqstate_t *state);

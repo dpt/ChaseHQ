@@ -27,6 +27,7 @@
 #include "ChaseHQ/Engine/Bank7.h"
 #include "ChaseHQ/Engine/Internal.h"
 #include "ChaseHQ/Engine/State.h"
+#include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Data/Stages.h"
 #include "ChaseHQ/Engine/Tests.h"
 #include "ZXSpectrum/Macros.h"
@@ -1001,6 +1002,77 @@ static void test_play_music_48k_paces_every_tick(void)
   printf("PASS  play_music_48k: every tick sleeps exactly once\n");
 }
 
+/*
+ * Phase of the scripted key sequence stt_scripted_in feeds to
+ * stop_the_tape_48k. Each phase satisfies exactly one of the routine's polling
+ * loops, so a mistranslated loop condition or branch polarity leaves the
+ * routine stuck in an earlier phase and the test hangs rather than passing.
+ */
+static int g_stt_phase;
+
+static uint8_t stt_scripted_in(zxspectrum_t *s, uint16_t addr)
+{
+  NOT_USED(s);
+
+  switch (g_stt_phase)
+  {
+  case 0: /* $E90F: a key goes down, ending the "press any key" wait */
+    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 1; return 0xFE; }
+    break;
+
+  case 1: /* $E91A: released again, ending the debounce */
+    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 2; return 0xFF; }
+    break;
+
+  case 2: /* $E92E: "1" chooses SINCLAIR JOYSTICK */
+    if (addr == port_KEYBOARD_12345) { g_stt_phase = 3; return 0xFE; }
+    break;
+
+  case 3: /* $E979: released again, ending the second debounce */
+    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 4; return 0xFF; }
+    break;
+
+  case 4: /* $E984: Y confirms the choice */
+    if (addr == port_KEYBOARD_POIUY) return 0xEF;
+    break;
+  }
+
+  return 0xFF; /* nothing pressed */
+}
+
+/*
+ * Driving stop_the_tape_48k with "1" then Y must install the Sinclair joystick
+ * scheme: kempston_flag clear, keydefs[GEAR..RIGHT] copied from
+ * sinclair_joy_keydefs and keydefs[QUIT..BOOST] left at the temp_keydefs
+ * defaults. This is the only path that populates keydefs[] in 48K mode, so a
+ * broken menu leaves the game unplayable.
+ */
+static void test_stop_the_tape_48k_installs_sinclair_scheme(void)
+{
+  chqstate_t *state;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  /* Prove the assertions below are not just reading the pristine state. */
+  memset(state->keydefs, 0xAA, sizeof(state->keydefs));
+  state->kempston_flag = 0xAA;
+
+  g_stt_phase  = 0;
+  g_speccy.in  = stt_scripted_in;
+  chq_test_stop_the_tape_48k(state);
+  g_speccy.in  = fake_in;
+
+  assert(g_stt_phase == 4); /* every loop was satisfied in order */
+  assert(state->kempston_flag == 0);
+  assert(memcmp(&state->keydefs[KEYDEF_GEAR], sinclair_joy_keydefs, 5) == 0);
+  assert(memcmp(&state->keydefs[KEYDEF_QUIT], &temp_keydefs_template[5], 3) == 0);
+
+  chq_destroy(state);
+
+  printf("PASS  stop_the_tape_48k: \"1\" then Y installs the Sinclair scheme\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -1025,6 +1097,7 @@ int main(void)
   test_show_end_screen_runs_script();
   test_run_title_tune_starts_and_keeps_playing();
   test_play_music_48k_paces_every_tick();
+  test_stop_the_tape_48k_installs_sinclair_scheme();
 
   printf("\nAll tests passed.\n");
   return 0;

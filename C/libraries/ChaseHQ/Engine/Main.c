@@ -16327,18 +16327,124 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
  *
  * Initialises interrupts and music, clears the screen and shows the "STOP THE
  * TAPE / PRESS ANY KEY" message to prompt the user to stop the cassette player.
- * After a key press and release, an input selection menu (Sinclair, Cursor or
- * Kempston joystick, or keyboard) is displayed and the chosen controller is
- * stored in controls_selected.
+ * After a key press and release, an input selection menu is displayed.
+ *
+ * The menu offers five choices. "1. SINCLAIR JOYSTICK" and "2.
+ * CURSOR JOYSTICK" copy a fixed five-key scheme into temp_keydefs; "3. KEMPSTON
+ * JOYSTICK" is accepted only after ten consecutive identical reads of the
+ * joystick port (an unstable reading means no interface is fitted, so the menu
+ * is redrawn); "4. KEYBOARD" keeps whatever temp_keydefs already holds; "5.
+ * DEFINE KEYS" runs redefine_keys_48k and returns to the menu.
+ *
+ * Whichever is chosen, the scheme is installed into kempston_flag and keydefs[]
+ * and the player is warned the choice cannot be changed. Answering N returns to
+ * the menu; Y clears the screen and returns.
  *
  * Only reached in 48K mode; entry_128k does not call this function.
  *
- * Conv: Removed. The C host loads the game directly without tape loading, so
- *       neither the tape prompt nor the controller menu is needed.
+ * Conv: the Z80's own "STOP THE TAPE" prompt is retained even though the C host
+ *       has no tape to stop -- it is the 48K controller menu's first screen and
+ *       the only place 48K players ever choose their controls.
+ *
+ * Conv: $E904 EI / $E905 HALT and $E99B DI are omitted; SDL owns interrupt
+ *       delivery, and play_music_48k already paces each poll to one frame.
  */
 void stop_the_tape_48k(chqstate_t *state)
 {
-  NOT_USED(state);
+  int       A_keys;      /* active-high key bits from the 1-5 half-row (was A) */
+  const u8 *HL_keydefs;  /* fixed joystick scheme to copy into temp_keydefs (was HL) */
+  int       A_kempston;  /* Kempston-present flag destined for kempston_flag (was A) */
+  int       B_stable;    /* Kempston check: identical reads still required (was B) */
+  int       C_joyread;   /* first Kempston reading, compared against the rest (was C) */
+
+  setup_interrupts(state);
+  reset_music(state);
+
+  clear_screen(state);
+  menu_draw_strings(state, &messages_stop_the_tape[0]);
+
+  /* $E90F stt_wait_for_keypress_loop: wait for any key down */
+  do
+    play_music_48k(state);
+  while ((~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F) == 0);
+
+  /* $E91A stt_debounce_loop: wait for it to be released again */
+  do
+    play_music_48k(state);
+  while (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
+
+stt_clear_screen: /* $E925 */
+  clear_screen(state);
+  menu_draw_strings(state, &messages_input_methods[0]);
+
+stt_keyscan_choice: /* $E92E */
+  do {
+    play_music_48k(state);
+    A_keys = ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
+  } while (A_keys == 0);
+
+  if (A_keys & (1 << 0)) { /* $E93A: 1. SINCLAIR JOYSTICK */
+    HL_keydefs = &sinclair_joy_keydefs[0];
+    goto stt_copy_keydefs;
+  }
+  if (A_keys & (1 << 1)) { /* $E93D: 2. CURSOR JOYSTICK */
+    HL_keydefs = &cursor_joy_keydefs[0];
+    goto stt_copy_keydefs;
+  }
+  if (A_keys & (1 << 2)) /* $E940: 3. KEMPSTON JOYSTICK */
+    goto stt_kempston_joystick;
+  if (A_keys & (1 << 3)) /* $E943: 4. KEYBOARD */
+    goto stt_keyboard;
+
+  /* $E946: 5. DEFINE KEYS -- the unbranched fallthrough */
+  redefine_keys_48k(state);
+  goto stt_clear_screen;
+
+stt_copy_keydefs: /* $E953 */
+  memcpy(&state->temp_keydefs[0], HL_keydefs, 5);
+
+stt_keyboard: /* $E95B */
+  A_kempston = 0;
+
+stt_do_define: /* $E95C */
+  state->kempston_flag = A_kempston;
+  memcpy(&state->keydefs[KEYDEF_QUIT], &state->temp_keydefs[5], 3);
+  memcpy(&state->keydefs[KEYDEF_GEAR], &state->temp_keydefs[0], 5);
+
+  /* Warn the player that they cannot return to this screen */
+  clear_screen(state);
+  menu_draw_strings(state, &messages_cannot_be_remodified[0]);
+
+  /* $E979 stt_debounce_loop2: wait for the selection key to be released */
+  do
+    play_music_48k(state);
+  while (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
+
+  /* $E984 stt_confirm: Y accepts, N returns to the menu */
+  for (;;) {
+    play_music_48k(state);
+    if (~state->speccy->in(state->speccy, port_KEYBOARD_POIUY) & (1 << 4))
+      break; /* $E98E: Y */
+    if (~state->speccy->in(state->speccy, port_KEYBOARD_SPACESYMSHFTMNB) & (1 << 3))
+      goto stt_clear_screen; /* $E997: N */
+  }
+
+  /* $E99B stt_done */
+  clear_screen(state);
+  return;
+
+stt_kempston_joystick: /* $E99F */
+  B_stable   = 10;
+  C_joyread  = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
+  do {
+    /* An unstable reading means there is no interface fitted: redraw the menu */
+    if (state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) != C_joyread)
+      goto stt_keyscan_choice;
+    play_music_48k(state);
+  } while (--B_stable > 0);
+
+  A_kempston = 1;
+  goto stt_do_define;
 }
 
 /**
@@ -16355,12 +16461,19 @@ void stop_the_tape_48k(chqstate_t *state)
  *
  * Conv: Z80 loop uses JR and RET Z; C uses a do-while. Behaviour is identical:
  *       the terminator check follows each draw call.
+ *
+ * Conv: menu_draw_char writes straight into the screen memory the Z80 shared
+ *       with the ULA, so it marks nothing dirty. One update_whole_playfield here
+ *       pushes the finished screen to the host; without it the callers' menus
+ *       never appear.
  */
 void menu_draw_strings(chqstate_t *state, const u8 *strings)
 {
   do
     strings = menu_draw_string(state, strings);
   while (*strings != 0);
+
+  update_whole_playfield(state); /* Conv: added */
 }
 
 /**
@@ -16516,11 +16629,16 @@ mdc_have_glyph:
   HL_font = &font[C_glyphid * 7]; // add symbol for glyph height
   // EXX
   // PUSH DEdash
-  // Conv: $EC68–$EC6C EXX/PUSH DE/INC E/EXX/POP DE collapsed; C advances DEdash directly
-  DEdash++;
+  /* Conv: $EC68-$EC6C EXX/PUSH DE/INC E/EXX/POP DE. The PUSH/POP pair keeps
+   * the address as-was for the blit while the INC E advances only the copy the
+   * caller sees next time round, so the glyph is drawn at DEdash and DEdash is
+   * left one column on. Incrementing before taking DE_screen instead put every
+   * glyph one column right of the attribute cell menu_draw_char colours below,
+   * which left the last character of every word black on black. */
+  DE_screen = DEdash;
   // EXX
   // POP DE
-  DE_screen = DEdash;
+  DEdash++;
   if (!Fdash) { // checking banked carry here
     // double height
     for (row = 0; row < 4; row++) { // Conv: rolled
@@ -17951,6 +18069,16 @@ void chq_test_reset_music(chqstate_t *state)
 void chq_test_play_music_48k(chqstate_t *state)
 {
   play_music_48k(state);
+}
+
+/**
+ * Test hook: run the 48K "STOP THE TAPE" prompt and controller menu.
+ *
+ * Wraps stop_the_tape_48k ($E8FE).
+ */
+void chq_test_stop_the_tape_48k(chqstate_t *state)
+{
+  stop_the_tape_48k(state);
 }
 
 #endif /* CHQ_TESTS */

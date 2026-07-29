@@ -5194,6 +5194,23 @@ const u8 shocked_keydefs[8] = {
   KEYDEF(4, 1)  // <ENTER>
 };
 
+/** $EE38: temp_keydefs_template — the assembled contents of the 48K version's
+ * scratch keydef buffer, i.e. the keyboard scheme's default key assignments.
+ * Layout is [0..4] = gear/accelerate/brake/left/right, [5..7] =
+ * quit/pause/turbo. Byte-for-byte identical to the 128K version's
+ * default_control_keys[] ($FFF7, Bank3.c); stop_the_tape_48k copies these into
+ * state->keydefs when the player picks a scheme that does not redefine them. */
+const u8 temp_keydefs_template[8] = {
+  KEYDEF(1, 0), // N      -- gear
+  KEYDEF(4, 6), // A      -- accelerate
+  KEYDEF(3, 7), // Z      -- brake
+  KEYDEF(2, 1), // K      -- left
+  KEYDEF(3, 1), // L      -- right
+  KEYDEF(4, 5), // Q      -- quit
+  KEYDEF(4, 2), // P      -- pause
+  KEYDEF(4, 0)  // SPACE  -- turbo
+};
+
 /* ----------------------------------------------------------------------- */
 
 /** $EF5E: drum1_template */

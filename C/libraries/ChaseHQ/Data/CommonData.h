@@ -341,6 +341,7 @@ extern const u8 key_names[10 * 8];
 extern const u8 sinclair_joy_keydefs[5];
 extern const u8 cursor_joy_keydefs[5];
 extern const u8 shocked_keydefs[8];
+extern const u8 temp_keydefs_template[8];
 
 extern const u8 drum1_template[252];
 extern const u8 drum2_template[108];

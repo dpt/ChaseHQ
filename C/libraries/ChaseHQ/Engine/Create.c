@@ -66,6 +66,8 @@ static void chq_initialise(chqstate_t *state)
     { offsetof(chqstate_t, debris_subtables[3]), &debris_subtable_4_template[0], sizeof(debris_subtable_4_template) },
     // $CE97
     { offsetof(chqstate_t, debris_subtables[4]), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
+    // $EE38
+    { offsetof(chqstate_t, temp_keydefs), &temp_keydefs_template[0], sizeof(temp_keydefs_template) },
     // $EF5E
     { offsetof(chqstate_t, drum1), &drum1_template[0], sizeof(drum1_template) },
     // $F05A
