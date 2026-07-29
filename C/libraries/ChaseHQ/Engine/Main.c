@@ -17698,11 +17698,11 @@ call_bank_3:
  *       longjmp target then runs the 128K entry point (the 48K path is present
  *       but currently unreachable) until chq_stop's longjmp fires.
  */
-CHQ_API void chq_setup(chqstate_t *state)
+CHQ_API void chq_setup(chqstate_t *state, int mode_128k)
 {
   if (setjmp(state->host_quit_jmp) == 0)
   {
-    if (1)
+    if (mode_128k)
       entry_128k(state);
     else
       entry_48k(state);

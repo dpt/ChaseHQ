@@ -51,8 +51,10 @@ CHQ_API void chq_stop(chqstate_t *state);
 
 /**
  * Prepare the game screen.
+ *
+ * \param mode_128k Non-zero to start the game in 128K mode.
  */
-CHQ_API void chq_setup(chqstate_t *state);
+CHQ_API void chq_setup(chqstate_t *state, int mode_128k);
 
 // /**
 //  * Run the game menu.
