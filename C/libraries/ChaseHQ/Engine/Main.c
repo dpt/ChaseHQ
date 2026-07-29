@@ -11116,25 +11116,15 @@ static void smash(chqstate_t *state)
     start_chatter(state, 10, &chatterblk_raymond_one_more_time[0]);
   state->smash_counter = hits;
 
-  level = 0;
-  if (hits != 0) {
-    level++;
-    if (hits >= 4) {
-      level++;
-      if (hits >= 7) {
-        level++;
-        if (hits >= 11) {
-          level++;
-          if (hits >= 14) {
-            level++;
-            if (hits >= 17) {
-              level++;
-            }
-          }
-        }
-      }
-    }
-  }
+  // Conv: the Z80 walks a chain of INC C / CP n / JR C tests ($B525-$B543);
+  // each test becomes one arm here, in the same order.
+  if (hits == 0)      level = 0;
+  else if (hits < 4)  level = 1;
+  else if (hits < 7)  level = 2;
+  else if (hits < 11) level = 3;
+  else if (hits < 14) level = 4;
+  else if (hits < 17) level = 5;
+  else                level = 6;
   state->smash_level = level;
 }
 
