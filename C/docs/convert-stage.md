@@ -84,11 +84,39 @@ does not compile:
 - `stretchy_t` / `depthset_t` tables when pointer targets are unresolvable
 - Handler pointers not in `HANDLER_ADDRESS_MAP`
 - Helicopter data pointers, left `NULL` with a TODO
-- `MAP_LANES_*` lane-transition macros, which the script emits as bare calls
-  with no matching definition (`implicit declaration of function
-  'MAP_LANES_3TO4R'`)
+- The `stageN_map_*` section addresses, which the committed files hoist into
+  named `STAGE{N}_MAP_*_ADDR` defines; the script emits bare literals
+- `stageN_lod_addrs_XXXX`, a raw table the committed files delete once the
+  typed `bitmap_t` LODs supersede it
 - The `stageN_lookup_map_goto()` signature, which conflicts with its forward
   declaration as generated
+
+## Reading a re-controlled skool
+
+Parts of the bank skool files have lost their `T` and `W` control directives,
+so SkoolKit writes text and pointers in pieces:
+
+```
+ $E145 DEFM "THIS IS "     ; the rest of the string follows as DEFBs
+ $E14D DEFB $4E
+ ...
+ $E904 DEFB $7D            ; [$E97D] one DEFW pointer, written as two DEFBs
+ $E905 DEFB $65
+```
+
+The converter rejoins both forms — `parse_defm_map` stitches DEFB continuation
+lines onto a text run until the bit-7 terminator, and `coalesce_split_words`
+turns an annotated DEFB pair back into the `DEFW` record every decoder expects.
+Without the second of those a split pointer does not merely go missing, it
+shifts every later field of the table by a slot; that is how stage 2's LOD
+entries came out paired against the wrong bitmaps and two `obj_t` entries
+vanished. Decoders that walk a fixed-stride table (`emit_obj_array`) step by
+byte offset rather than by record shape for the same reason — a *null* pointer
+carries no `[$XXXX]` annotation for the coalescing pass to recognise.
+
+`C/scripts/check_stage_converter.py` guards this: it runs all four stages and
+asserts every `MAP_*` macro emitted is defined in `Stages.h` and that each
+stage's four chatter lines decode whole and terminated.
 
 ## LOD auto-detection
 

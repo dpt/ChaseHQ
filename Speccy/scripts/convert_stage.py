@@ -84,14 +84,18 @@ LANE_VALS = {
     0x01: "2L",
     0x02: "2M",
     0x03: "2R",
+    # Transition names carry the side of *both* endpoints, so the "from" lane
+    # keeps its L/R too: 0x9E is 3R-to-4, not 3-to-4R. These must match the
+    # MAP_LANES_* macros in C/libraries/ChaseHQ/Data/Stages.h exactly or the
+    # generated file will not compile.
     0xBD: "4TO3L",
     0x8E: "4TO3R",
-    0xAD: "3TO4L",
-    0x9E: "3TO4R",
-    0x06: "3TO2L",
-    0x0F: "3TO2R",
-    0x2D: "2TO3L",
-    0x1F: "2TO3R",
+    0xAD: "3LTO4",
+    0x9E: "3RTO4",
+    0x06: "3LTO2M",
+    0x0F: "3RTO2R",
+    0x2D: "2LTO3L",
+    0x1F: "2RTO3R",
     0x45: "TUNNEL_ENTRY",
     0x59: "TUNNEL_EXIT",
     0xC1: "DIRTTRACK",
@@ -442,7 +446,66 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str], List[bool]]:
             if prefix:  # new labelled section resets pending comment
                 pending_section = ""
 
-    return records, section_comments, fresh_header_flags
+    return coalesce_split_words(records, section_comments, fresh_header_flags)
+
+
+def coalesce_split_words(
+    records: List[SkoolRecord],
+    section_comments: List[str],
+    fresh_header_flags: List[bool],
+) -> Tuple[List[SkoolRecord], List[str], List[bool]]:
+    """Rejoin address operands that SkoolKit emitted as two DEFBs.
+
+    Where the control file has no `W` directive over a pointer, SkoolKit writes
+    it as a pair of DEFBs instead of one DEFW:
+
+        $E904 DEFB $7D    ; [$E97D] Pre-shifted bitmap address
+        $E905 DEFB $65
+
+    Every decoder here expects pointers to arrive as `W` records -- the LOD,
+    obj_t, stretchy and map-command parsers all pair a DEFB against the DEFW
+    that follows it -- so an unrejoined pair does not merely lose that one
+    pointer, it shifts every later field by a slot. In stage 2 that paired the
+    LOD entries against the wrong bitmaps, dropped two obj_t entries and lost
+    the SPLIT terminator off three map sections.
+
+    The `[$XXXX]` annotation is the load-bearing signal: SkoolKit writes it
+    only on an operand it resolved as an address, so ordinary byte tables are
+    never caught by this. The follower must be unannotated and immediately
+    adjacent, which is what distinguishes a split pointer from two neighbouring
+    single-byte address operands.
+    """
+    out: List[SkoolRecord] = []
+    out_comments: List[str] = []
+    out_fresh: List[bool] = []
+    i = 0
+    while i < len(records):
+        rec = records[i]
+        nxt = records[i + 1] if i + 1 < len(records) else None
+        if (
+            rec.rtype == "B"
+            and len(rec.values) == 1
+            and rec.annotations
+            and rec.annotations[0] >= 0
+            and nxt is not None
+            and nxt.rtype == "B"
+            and len(nxt.values) == 1
+            and nxt.addr == rec.addr + 1
+            and not [a for a in nxt.annotations if a >= 0]
+        ):
+            word = (nxt.values[0] << 8) | rec.values[0]
+            out.append(
+                SkoolRecord(rec.addr, "W", [word], rec.comment, [rec.annotations[0]])
+            )
+            out_comments.append(section_comments[i])
+            out_fresh.append(fresh_header_flags[i])
+            i += 2
+            continue
+        out.append(rec)
+        out_comments.append(section_comments[i])
+        out_fresh.append(fresh_header_flags[i])
+        i += 1
+    return out, out_comments, out_fresh
 
 
 def build_addr_map(records: List[SkoolRecord]) -> Dict[int, int]:
@@ -556,26 +619,83 @@ def _parse_defm_raw(rest: str) -> List[int]:
     return result
 
 
+def bytes_to_c_string(bs: List[int]) -> str:
+    """Render a byte run as a C string literal."""
+    out: List[str] = []
+    prev_was_hex_escape = False
+    for b in bs:
+        if 0x20 <= b < 0x7F:
+            ch = chr(b)
+            # A printable hex digit straight after a \xNN escape would be
+            # swallowed into it ("\xC" "A" reads as \xCA), so close the literal
+            # and reopen: adjacent literals concatenate.
+            if prev_was_hex_escape and ch in "0123456789abcdefABCDEF":
+                out.append('" "')
+            if ch in ('"', "\\"):
+                out.append("\\" + ch)
+            else:
+                out.append(ch)
+            prev_was_hex_escape = False
+        else:
+            out.append("\\x%02X" % b)
+            prev_was_hex_escape = True
+    return '"' + "".join(out) + '"'
+
+
+# A string run ends on the byte with bit 7 set; refuse to stitch beyond this
+# many bytes rather than swallow the rest of the bank on a missing terminator.
+_MAX_STRING_RUN = 256
+
+
 def parse_defm_map(path: str) -> Tuple[Dict[int, str], Dict[int, List[int]]]:
-    """Scan a skool file for DEFM lines in a single pass.
+    """Scan a skool file for text runs in a single pass.
 
     Returns (strings, bytemap) where strings maps addr → C string literal
     and bytemap maps addr → raw byte list.  Skool label addresses are
     already absolute so no bank offset is applied.
+
+    A run starts at a DEFM but need not end there: where the control file has
+    no `T` directive over the whole string, SkoolKit splits it into a short
+    DEFM followed by DEFB bytes ($E145 in bank 1 is the worked example --
+    `DEFM "THIS IS "` then eight DEFB lines carrying the rest). Unlabelled
+    DEFB lines that continue on from the previous byte are therefore stitched
+    back on until the terminator byte is seen, so the string comes out whole
+    however the region happens to be controlled.
     """
-    strings: Dict[int, str] = {}
-    bytemap: Dict[int, List[int]] = {}
+    lines: List[Tuple[int, bool, bool, List[int]]] = []  # addr, is_defm, labelled, bytes
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip()
-            m = re.match(r"^[bcw]?\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)", line)
+            m = re.match(r"^([bcw]?)\$([0-9A-Fa-f]+)\s+(DEFM|DEFB)\s+(.*)", line)
+            labelled = bool(m and m.group(1))
             if not m:
-                m = re.match(r"^\s+\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)", line)
-            if m:
-                addr = int(m.group(1), 16)
-                rest = m.group(2)
-                strings[addr] = parse_defm_text(rest)
-                bytemap[addr] = _parse_defm_raw(rest)
+                m = re.match(r"^\s+\$([0-9A-Fa-f]+)\s+(DEFM|DEFB)\s+(.*)", line)
+                if not m:
+                    continue
+                addr, dtype, rest = int(m.group(1), 16), m.group(2), m.group(3)
+            else:
+                addr, dtype, rest = int(m.group(2), 16), m.group(3), m.group(4)
+            lines.append((addr, dtype == "DEFM", labelled, _parse_defm_raw(rest)))
+
+    at = {addr: i for i, (addr, _, _, _) in enumerate(lines)}
+
+    strings: Dict[int, str] = {}
+    bytemap: Dict[int, List[int]] = {}
+    for i, (addr, is_defm, _, bs) in enumerate(lines):
+        if not is_defm:
+            continue
+        run = list(bs)
+        next_addr = addr + len(bs)
+        while run and not (run[-1] & 0x80) and len(run) < _MAX_STRING_RUN:
+            j = at.get(next_addr)
+            # Stop at a new DEFM or a labelled entry: that is the next string,
+            # or the next table, not more of this one.
+            if j is None or lines[j][1] or lines[j][2]:
+                break
+            run.extend(lines[j][3])
+            next_addr += len(lines[j][3])
+        strings[addr] = bytes_to_c_string(run)
+        bytemap[addr] = run
     return strings, bytemap
 
 
@@ -1141,64 +1261,61 @@ def emit_obj_array(
     abs_to_name: Dict[int, str],
     abs_to_depthset_name: Dict[int, str],
 ) -> Tuple[List[str], int]:
-    """Emit an obj_t array from 5-record groups (3 DEFB + 2 DEFW) per entry."""
+    """Emit an obj_t array, one entry per _OBJ_ENTRY_Z80_SIZE bytes.
+
+    Walking by byte stride rather than by record shape matters: a null argument
+    pointer carries no `[$XXXX]` annotation for coalesce_split_words to latch
+    onto, so stage 2's unused object 2 still arrives as `DEFB $00 / DEFB $00`
+    where the others arrive as one DEFW. Matching on the record pattern
+    B,B,B,W,W skipped that entry and then lost sync with the ones after it.
+    """
     nm = array_name(stage, sec.stype, sec.start_addr)
 
-    # Flatten records to a typed field list: (rtype, value, comment, ann)
-    fields: List[Tuple[str, int, str, int]] = []
+    # Flatten records to bytes, keeping each word's comment and annotation on
+    # its low byte so the pointer fields can still be resolved by name.
+    bytes_: List[Tuple[int, str, int]] = []
     for rec in sec.records:
         if rec.rtype == "W":
             for idx, val in enumerate(rec.values):
                 ann = rec.annotations[idx] if idx < len(rec.annotations) else -1
-                fields.append(("W", val, rec.comment if idx == 0 else "", ann))
+                bytes_.append((val & 0xFF, rec.comment if idx == 0 else "", ann))
+                bytes_.append(((val >> 8) & 0xFF, "", -1))
         else:
             for val in rec.values:
-                fields.append(("B", val, "", -1))
+                bytes_.append((val, rec.comment, -1))
 
     entries = []
     i = 0
-    while i + 4 < len(fields):
-        if (
-            fields[i][0] == "B"
-            and fields[i + 1][0] == "B"
-            and fields[i + 2][0] == "B"
-            and fields[i + 3][0] == "W"
-            and fields[i + 4][0] == "W"
-        ):
-            b0 = fields[i][1]
-            b1 = fields[i + 1][1]
-            b2 = fields[i + 2][1]
-            arg_val, arg_cmt, arg_ann = (
-                fields[i + 3][1],
-                fields[i + 3][2],
-                fields[i + 3][3],
-            )
-            hdl_val = fields[i + 4][1]
+    while i + _OBJ_ENTRY_Z80_SIZE <= len(bytes_):
+        b0 = bytes_[i][0]
+        b1 = bytes_[i + 1][0]
+        b2 = bytes_[i + 2][0]
+        arg_cmt, arg_ann = bytes_[i + 3][1], bytes_[i + 3][2]
+        arg_val = bytes_[i + 3][0] | (bytes_[i + 4][0] << 8)
+        hdl_val = bytes_[i + 5][0] | (bytes_[i + 6][0] << 8)
 
-            if arg_val == 0:
-                arg_str = "NULL"
-            else:
-                arg_str = extract_arg_from_comment(arg_cmt)
-                if not arg_str:
-                    if arg_ann >= 0:
-                        ref = resolve_section_ptr(
-                            arg_ann, abs_to_name, abs_to_depthset_name
-                        )
-                        arg_str = ref if ref else f"NULL /* TODO: arg ${arg_ann:04X} */"
-                    else:
-                        arg_str = f"NULL /* TODO: arg ${arg_val:04X} */"
-
-            if hdl_val == 0:
-                hdl_str = "NULL"
-            else:
-                hdl_str = HANDLER_ADDRESS_MAP.get(
-                    hdl_val, f"NULL /* TODO: handler ${hdl_val:04X} */"
-                )
-
-            entries.append((b0, b1, b2, arg_str, hdl_str))
-            i += 5
+        if arg_val == 0:
+            arg_str = "NULL"
         else:
-            i += 1
+            arg_str = extract_arg_from_comment(arg_cmt)
+            if not arg_str:
+                if arg_ann >= 0:
+                    ref = resolve_section_ptr(
+                        arg_ann, abs_to_name, abs_to_depthset_name
+                    )
+                    arg_str = ref if ref else f"NULL /* TODO: arg ${arg_ann:04X} */"
+                else:
+                    arg_str = f"NULL /* TODO: arg ${arg_val:04X} */"
+
+        if hdl_val == 0:
+            hdl_str = "NULL"
+        else:
+            hdl_str = HANDLER_ADDRESS_MAP.get(
+                hdl_val, f"NULL /* TODO: handler ${hdl_val:04X} */"
+            )
+
+        entries.append((b0, b1, b2, arg_str, hdl_str))
+        i += _OBJ_ENTRY_Z80_SIZE
 
     n = len(entries)
     lines = [f"// ${sec.start_addr:04X}", f"static const obj_t {nm}[{n}] = {{"]
@@ -1386,9 +1503,17 @@ def emit_arrest_messages(
             content.append(f"  TWOBYTES(0x{val(recs[i + 3]):04X}),  // backbuf")
             content.append(f"  TWOBYTES(0x{val(recs[i + 4]):04X}),  // attr")
             total += 7  # 3 × DEFB + 2 × DEFW
-            if defm_addr in defm_bytes:
-                emit_text(defm_bytes[defm_addr])
             i += 5
+            if defm_addr in defm_bytes:
+                run = defm_bytes[defm_addr]
+                emit_text(run)
+                # The DEFM line itself never reaches recs, but where the control
+                # file split the string SkoolKit's DEFB continuation lines do.
+                # Step over whatever the text run already covered, or they get
+                # decoded a second time as the section's end markers.
+                text_end = defm_addr + len(run)
+                while i < n and recs[i].addr < text_end:
+                    i += 1
         else:
             # End markers: first byte = TRANSITIONCONTROL, last = DRAWOVERLAY_STOP
             content.append("")
