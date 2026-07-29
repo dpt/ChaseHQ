@@ -17694,9 +17694,13 @@ call_bank_3:
 /**
  * Run the game until a quit signal is received.
  *
+ * \param[in] mode_128k Non-zero to run the 128K entry point, zero for 48K.
+ *
  * Conv: host lifecycle entry point; has no Z80 counterpart. Installs the quit
- *       longjmp target then runs the 128K entry point (the 48K path is present
- *       but currently unreachable) until chq_stop's longjmp fires.
+ *       longjmp target then runs the entry point the host asked for until
+ *       chq_stop's longjmp fires. The Z80 chose between the two by probing for
+ *       a second memory bank in the secondary loader ($5B22); C leaves the
+ *       choice to the host.
  */
 CHQ_API void chq_setup(chqstate_t *state, int mode_128k)
 {
