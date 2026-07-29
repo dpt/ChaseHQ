@@ -150,9 +150,12 @@ COMMON_DEPTHSET_RAW_MAP: Dict[int, str] = {
     0x7EA6: "streetlampmiddle_right",
 }
 
+BITMAP_FLAG_DEFAULT_VAL = 0
+BITMAP_FLAG_MASKED_VAL = 1
+
 BITMAP_FLAGS = {
-    0: "BITMAPFLAG_DEFAULT",
-    1: "BITMAPFLAG_MASKED",
+    BITMAP_FLAG_DEFAULT_VAL: "BITMAPFLAG_DEFAULT",
+    BITMAP_FLAG_MASKED_VAL: "BITMAPFLAG_MASKED",
     2: "BITMAPFLAG_FLIPPED",
     3: "BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED",
 }
@@ -1354,8 +1357,136 @@ def _count_all_lods(data: List[int], n_annotated: int) -> int:
     return n
 
 
+def _lod_entry_count(sec: "Section") -> int:
+    """Number of 7-byte bitmap_t records at the head of a lod_table section."""
+    data = sec.bytes_flat
+    n_ann = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
+    if n_ann == 0:
+        n_ann = len(data) // 7 if len(data) % 7 == 0 else 0
+    return _count_all_lods(data, n_ann)
+
+
+def _lod_local_offset(sec: "Section", bank_offset: int) -> int:
+    """Bank offset the section's own pointers use.
+
+    Where a section's internal pointers use a different base than the global
+    bank_offset (stage 2's data in bank 1 uses +$8400, not +$6400), an
+    annotated DEFW reveals the correct one.
+    """
+    for raw_w, ann_w, _ in sec.words_with_annots:
+        if ann_w >= 0 and raw_w > 0:
+            candidate = ann_w - raw_w
+            if candidate != bank_offset and 0 < candidate < 0x10000:
+                return candidate
+    return bank_offset
+
+
+def lod_sprite_spans(
+    sec: "Section", bank_offset: int
+) -> List[Tuple[int, Optional[int]]]:
+    """Every sprite a LOD table points at, as (z80_addr, byte_size_or_None).
+
+    Both pointers of each entry are reported: the pre-shifted one addresses a
+    second copy of the sprite, usually further down the same run. The size is
+    width * height, doubled when masked because a mask byte is interleaved with
+    each pixel byte. It is None for flag values whose layout is not modelled
+    here, so callers must not assume a size is always known.
+    """
+    data = sec.bytes_flat
+    n_lods = _lod_entry_count(sec)
+    local_offset = _lod_local_offset(sec, bank_offset)
+    wwa = sec.words_with_annots
+
+    spans: List[Tuple[int, Optional[int]]] = []
+    for i in range(n_lods):
+        off = i * 7
+        if off + 6 >= len(data):
+            break
+        width, flags, height = data[off], data[off + 1], data[off + 2]
+        if flags == BITMAP_FLAG_DEFAULT_VAL:
+            size: Optional[int] = width * height
+        elif flags == BITMAP_FLAG_MASKED_VAL:
+            size = width * height * 2
+        else:
+            size = None
+        for half in (0, 1):
+            raw = (data[off + 4 + half * 2] << 8) | data[off + 3 + half * 2]
+            ann = wwa[i * 2 + half][1] if i * 2 + half < len(wwa) else -1
+            spans.append((ann if ann >= 0 else raw + local_offset, size))
+    return spans
+
+
+def split_into_sprites(
+    start: int, end: int, spans: List[Tuple[int, Optional[int]]]
+) -> List[Tuple[int, int]]:
+    """Cut the byte run [start, end) into one block per sprite it holds.
+
+    In the Z80 a graphics run is undivided, but the LOD tables point at
+    individual sprites inside it. Emitting the run as a single array leaves
+    every entry indexing a shared blob -- `&stage2_bitmap_F768[338]` -- which
+    records an offset but says nothing about where one sprite ends and the next
+    begins, and renumbers every later sprite whenever an earlier one is
+    re-measured. Cutting at each address pointed into the run gives one array
+    per sprite, each named for its own Z80 address, so the entries read
+    `&stage2_bitmap_F8AA[0]`.
+
+    A cut is refused when it would fall inside a sprite that a LOD entry
+    declares as reaching past it. Stage 5's entry at $D86C is 1x5 = 5 bytes but
+    the next sprite starts 4 bytes later, so the two overlap in the original
+    data. Indexing a shared blob absorbs that; separate arrays would not, since
+    nothing guarantees how the compiler lays two arrays out. Such neighbours
+    stay merged and resolve as an offset, exactly as before.
+
+    Returns [(z80_addr, size), ...] covering [start, end) with no gaps, or an
+    empty list when the run is empty.
+    """
+    if start >= end:
+        return []
+
+    cuts = {start}
+    for addr, _ in spans:
+        if start < addr < end:
+            cuts.add(addr)
+
+    # Drop cuts that fall strictly inside a sprite's declared extent.
+    for addr, size in spans:
+        if size is None or not (start <= addr < end):
+            continue
+        cuts -= {c for c in cuts if addr < c < addr + size}
+
+    ordered = sorted(cuts)
+    bounds = ordered + [end]
+    return [(addr, bounds[i + 1] - addr) for i, addr in enumerate(ordered)]
+
+
+def lod_bitmap_blocks(
+    sec: "Section", spans: List[Tuple[int, Optional[int]]]
+) -> Tuple[int, List[Tuple[int, int]]]:
+    """Split the bitmap data trailing a LOD table into one block per sprite.
+
+    `spans` must cover every LOD table in the stage, not just this section's:
+    stage 2's $E953 run holds the sprites that the $E8FF and $E929 tables point
+    at, so cutting it on its own table's pointers alone leaves those sprites
+    merged into one 666-byte block.
+
+    Returns (lod_end, blocks) where lod_end is the byte offset at which the
+    descriptor records stop. See split_into_sprites for the cutting rule.
+    """
+    data = sec.bytes_flat
+    lod_end = _lod_entry_count(sec) * 7
+    if lod_end >= len(data):
+        return lod_end, []
+    return lod_end, split_into_sprites(
+        sec.start_addr + lod_end, sec.start_addr + len(data), spans
+    )
+
+
 def emit_lod_table(
-    stage: int, sec: Section, bank_offset: int, bitmap_names: Dict[int, str]
+    stage: int,
+    sec: Section,
+    bank_offset: int,
+    bitmap_names: Dict[int, str],
+    spans: List[Tuple[int, Optional[int]]],
 ) -> Tuple[List[str], int]:
     """
     Decode a LOD table (7-byte bitmap_t records).
@@ -1363,47 +1494,39 @@ def emit_lod_table(
     bitmap data appended to the same section is handled separately.  Any
     additional valid 7-byte groups that immediately follow the annotated
     entries are auto-detected and included (see _count_all_lods).
+
+    The trailing bitmap data is emitted as one array per sprite rather than one
+    blob for the whole run -- see lod_bitmap_blocks.
+
     Returns (C lines, n_lod_entries).
     """
-    # Count LOD entries: each entry's first byte has comment 'Width (bytes)'
-    n_annotated = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
-
     data = sec.bytes_flat
-    if n_annotated == 0:
-        # Fallback: divide by 7 if cleanly possible
-        if len(data) % 7 == 0:
-            n_annotated = len(data) // 7
-        else:
-            return (
-                emit_raw_array(
-                    array_name(stage, "lod_table", sec.start_addr),
-                    data,
-                    7,
-                    sec.start_addr,
-                ),
-                0,
-            )
-
-    n_lods = _count_all_lods(data, n_annotated)
+    n_lods = _lod_entry_count(sec)
+    if n_lods == 0:
+        return (
+            emit_raw_array(
+                array_name(stage, "lod_table", sec.start_addr),
+                data,
+                7,
+                sec.start_addr,
+            ),
+            0,
+        )
 
     # words_with_annots contains only the DEFW records (not DEFB).
     # Each LOD entry has exactly 2 DEFWs (bitmap addr + pre-shifted addr),
     # so LOD entry i uses wwa[i*2] and wwa[i*2+1].
     wwa = sec.words_with_annots
+    local_offset = _lod_local_offset(sec, bank_offset)
 
-    # Derive a local bank_offset from annotated DEFWs in this section.
-    # When a section's internal pointers use a different base than the global
-    # bank_offset (e.g. stage 2 data in bank 1 uses +$8400 not +$6400),
-    # annotated DEFWs reveal the correct per-section offset.
-    local_offset = bank_offset
-    for raw_w, ann_w, _ in wwa:
-        if ann_w >= 0 and raw_w > 0:
-            candidate = ann_w - raw_w
-            if candidate != bank_offset and 0 < candidate < 0x10000:
-                local_offset = candidate
-                break
+    lod_end, blocks = lod_bitmap_blocks(sec, spans)
 
-    lod_end = n_lods * 7
+    # Register the sprite blocks before rendering any entry: resolve_bitmap_ref
+    # picks the nearest base at or below the target, so an unregistered split
+    # would silently resolve as an offset into the block before it.
+    for addr, size in blocks:
+        bitmap_names[addr] = f"stage{stage}_bitmap_{addr:04X}"
+
     name = array_name(stage, "lod_table", sec.start_addr)
     lines = [f"// ${sec.start_addr:04X}"]
     lines.append(f"static const bitmap_t {name}[{n_lods}] = {{")
@@ -1428,14 +1551,19 @@ def emit_lod_table(
         )
     lines.append("};")
 
-    # Emit any remaining data (bitmap bytes that follow the LOD entries)
-    if lod_end < len(data):
-        remainder = data[lod_end:]
-        rem_addr = sec.start_addr + lod_end
-        rem_name = f"stage{stage}_bitmap_{rem_addr:04X}"
+    # One array per sprite in the bitmap data that follows the descriptors.
+    for addr, size in blocks:
+        start = addr - sec.start_addr
         lines.append("")
-        lines.extend(emit_raw_array(rem_name, remainder, 8, rem_addr, use_pixels=True))
-        bitmap_names[rem_addr] = rem_name  # register for cross-references
+        lines.extend(
+            emit_raw_array(
+                bitmap_names[addr],
+                data[start : start + size],
+                8,
+                addr,
+                use_pixels=True,
+            )
+        )
 
     return lines, n_lods
 
@@ -1961,31 +2089,42 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         or (_section_stage(s) == 0 and _region_stage(s.start_addr) == stage)
     ]
 
-    # First pass: collect all bitmap section names so LOD tables can reference them
-    bitmap_names: Dict[int, str] = {}
+    # Every sprite any LOD table points at. A standalone bitmap section is
+    # usually several sprites run together, so these are the addresses to cut it
+    # at; collected across all the stage's LOD tables since a table may point
+    # into a section other than its own.
+    all_spans: List[Tuple[int, Optional[int]]] = []
     for sec in sections:
-        if sec.stype == "bitmap":
-            bname = array_name(stage, "bitmap", sec.start_addr)
-            bitmap_names[sec.start_addr] = bname
+        if sec.stype == "lod_table":
+            all_spans.extend(lod_sprite_spans(sec, bank_offset))
 
-    # Also pre-register the remainder blobs that lod_table sections will emit,
-    # so that earlier LOD tables can resolve offsets into later-defined blobs.
-    # Collect forward declarations for those blobs too.
+    # First pass: name the blocks of every bitmap section so LOD tables can
+    # reference them, splitting each section into its constituent sprites.
+    bitmap_names: Dict[int, str] = {}
+    bitmap_blocks: Dict[int, List[Tuple[int, int]]] = {}
+    for sec in sections:
+        if sec.stype != "bitmap":
+            continue
+        data = sec.bytes_flat
+        blocks = split_into_sprites(
+            sec.start_addr, sec.start_addr + len(data), all_spans
+        ) or [(sec.start_addr, len(data))]
+        bitmap_blocks[sec.start_addr] = blocks
+        for addr, _ in blocks:
+            bitmap_names[addr] = array_name(stage, "bitmap", addr)
+
+    # Also pre-register the sprite blocks that lod_table sections will emit from
+    # their trailing bitmap data, so that earlier LOD tables can resolve
+    # pointers into blocks defined later in the file. Collect forward
+    # declarations for them too.
     lod_remainder_fwd: List[str] = []
     for sec in sections:
         if sec.stype != "lod_table":
             continue
-        data = sec.bytes_flat
-        n_ann = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
-        if n_ann == 0:
-            n_ann = len(data) // 7 if len(data) % 7 == 0 else 0
-        lod_end = _count_all_lods(data, n_ann) * 7
-        if lod_end < len(data):
-            rem_addr = sec.start_addr + lod_end
-            rem_name = f"stage{stage}_bitmap_{rem_addr:04X}"
-            rem_size = len(data) - lod_end
-            bitmap_names[rem_addr] = rem_name
-            lod_remainder_fwd.append(f"static const u8 {rem_name}[{rem_size}];")
+        for addr, size in lod_bitmap_blocks(sec, all_spans)[1]:
+            name = f"stage{stage}_bitmap_{addr:04X}"
+            bitmap_names[addr] = name
+            lod_remainder_fwd.append(f"static const u8 {name}[{size}];")
 
     # ── Header ───────────────────────────────────────────────────────────────
     print(f"/**")
@@ -2086,7 +2225,6 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
 
         elif sec.stype == "bitmap":
             data = sec.bytes_flat
-            nm = array_name(stage, "bitmap", sec.start_addr)
             # Try to parse width×height from comment (e.g. "Bitmap data 5 bytes x 8")
             m = re.search(r"(\d+)\s+bytes?\s+x\s+(\d+)", sec.header_comment, re.I)
             per = (
@@ -2094,15 +2232,23 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
                 if m and "masked" in sec.header_comment.lower()
                 else int(m.group(1)) if m else 8
             )
-            all_lines.extend(
-                emit_raw_array(nm, data, per, sec.start_addr, use_pixels=True)
-            )
-            all_lines.append("")
-            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
+            # One array per sprite the LOD tables point at (see the first pass).
+            for addr, size in bitmap_blocks[sec.start_addr]:
+                nm = bitmap_names[addr]
+                start = addr - sec.start_addr
+                all_lines.extend(
+                    emit_raw_array(
+                        nm, data[start : start + size], per, addr, use_pixels=True
+                    )
+                )
+                all_lines.append("")
+                fwd_decls.append(f"static const u8 {nm}[{size}];")
             bitmap_sections.append((nm, sec.start_addr))
 
         elif sec.stype == "lod_table":
-            lines, n_lods = emit_lod_table(stage, sec, bank_offset, bitmap_names)
+            lines, n_lods = emit_lod_table(
+                stage, sec, bank_offset, bitmap_names, all_spans
+            )
             all_lines.extend(lines)
             all_lines.append("")
             nm = array_name(stage, "lod_table", sec.start_addr)

@@ -130,7 +130,41 @@ The script counts those annotated entries, then extends the count by consuming a
 
 This auto-extension is necessary for stages where the skool only annotates the first few LODs but the table continues with unannotated entries (e.g. stage 5 has 5 annotated entries but 15 in total).
 
-Any bytes that follow the last valid LOD entry are emitted as a separate `stageN_bitmap_XXXX` pixel array, which is then used as the `data`/`shifted` base for the LODs that reference it.
+## One array per sprite
+
+A graphics run is undivided in the Z80, but the LOD tables point at individual
+sprites inside it. Emitting the run as one array leaves every entry indexing a
+shared blob:
+
+```c
+{ 2, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F768[338], &stage2_bitmap_F768[390] },
+```
+
+That records an offset but says nothing about where one sprite ends and the next
+begins, and renumbers every later sprite whenever an earlier one is re-measured.
+`split_into_sprites` cuts each run at every address a LOD entry points at, so
+each sprite becomes its own array named for its own Z80 address:
+
+```c
+{ 2, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F8AA[0], &stage2_bitmap_F8DE[0] },
+```
+
+Pre-shifted pointers are cut on too — they address a second copy of the sprite
+further down the same run. The cut points are gathered from *every* LOD table in
+the stage, not just the one a run happens to trail: stage 2's `$E953` run holds
+the sprites that the `$E8FF` and `$E929` tables point at.
+
+Both the bytes that follow a LOD table and standalone bitmap sections are split
+this way. Across stages 2-5 this takes the number of offset-into-blob references
+from 690 to 2.
+
+**One cut is refused.** Where two sprites overlap in the original data the cut
+between them cannot be made: stage 5's `$D86C` is 1×5 = 5 bytes but the next
+sprite starts 4 bytes later. Indexing one shared blob absorbs that overlap;
+separate arrays would not, since nothing guarantees how the compiler lays two
+arrays out. Such neighbours stay merged and resolve as an offset, which is where
+the remaining 2 references come from. `check_stage_converter.py` asserts no
+sprite overruns the array it points into.
 
 ## Bank offset
 

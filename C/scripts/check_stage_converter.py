@@ -2,9 +2,9 @@
 """Check that convert_stage.py still reads the bank skool files correctly.
 
 The converter's output is a skeleton that needs hand-completion, so it can
-never be diffed against the committed Stage{2-5}Data.c files wholesale. But two
-properties are cheap to assert and are exactly the ones that broke silently
-before:
+never be diffed against the committed Stage{2-5}Data.c files wholesale. But
+three properties are cheap to assert and are exactly the ones that broke
+silently before:
 
 1. Every MAP_* macro the converter emits is defined in Stages.h. The lane
    transition names carry the side of both endpoints (MAP_LANES_3RTO4, not
@@ -18,6 +18,13 @@ before:
    that does not rejoin them loses whole lines of dialogue and mispairs every
    pointer after the split -- which is what put stage 2's LOD entries against
    the wrong bitmaps.
+
+3. No LOD entry's sprite overruns the array it points into. The graphics runs
+   are cut into one array per sprite, and where two sprites overlap in the
+   original data -- stage 5's $D86C is 1x5 = 5 bytes but the next sprite starts
+   4 bytes later -- the cut has to be refused, because nothing guarantees how
+   the compiler lays two separate arrays out. Indexing one shared blob absorbed
+   that; an array per sprite does not.
 
 Usage: python3 check_stage_converter.py
 """
@@ -72,6 +79,39 @@ def generate(stage, tmpdir):
     return out.stdout
 
 
+ARRAY_RE = re.compile(r"static const u8 (stage\d_bitmap_[0-9A-F]{4})\[(\d+)\] = \{")
+# One bitmap_t entry: width, flags, height, then the bitmap and pre-shifted
+# pointers, each an &array[index] into a sprite block.
+ENTRY_RE = re.compile(
+    r"\{ (\d+), BITMAPFLAG_(\w+), (\d+),"
+    r" &(stage\d_bitmap_[0-9A-F]{4})\[(\d+)\],"
+    r" &(stage\d_bitmap_[0-9A-F]{4})\[(\d+)\] \}"
+)
+
+
+def sprite_overruns(text):
+    """Report LOD entries whose sprite reaches past the array it points into."""
+    sizes = {m.group(1): int(m.group(2)) for m in ARRAY_RE.finditer(text)}
+    out = []
+    for m in ENTRY_RE.finditer(text):
+        width, flag, height = int(m.group(1)), m.group(2), int(m.group(3))
+        # A masked sprite interleaves a mask byte with each pixel byte. Other
+        # flag combinations are not modelled, so they are left unchecked rather
+        # than guessed at.
+        if flag == "DEFAULT":
+            need = width * height
+        elif flag == "MASKED":
+            need = width * height * 2
+        else:
+            continue
+        for name, index in ((m.group(4), int(m.group(5))),
+                            (m.group(6), int(m.group(7)))):
+            if name in sizes and index + need > sizes[name]:
+                out.append("%s[%d] + %d bytes (%dx%d %s) overruns [%d]"
+                           % (name, index, need, width, height, flag, sizes[name]))
+    return out
+
+
 def main():
     defined = set(re.findall(r"#define\s+(MAP_[A-Z0-9_]+)\(", open(STAGES_H).read()))
     failures = 0
@@ -86,6 +126,13 @@ def main():
                 failures += 1
                 print("stage %d: %d macro(s) not defined in Stages.h: %s"
                       % (stage, len(missing), ", ".join(missing)))
+
+            overruns = sprite_overruns(text)
+            if overruns:
+                failures += 1
+                print("stage %d: %d sprite(s) overrun their array:" % (stage, len(overruns)))
+                for o in sorted(set(overruns)):
+                    print("      %s" % o)
 
             m = re.search(
                 r"stage%d_chatter_strings\[(\d+)\] = \{\n(.*?)\n\};" % stage,
@@ -111,7 +158,8 @@ def main():
     if failures:
         print("\n%d check(s) failed." % failures)
         return 1
-    print("PASS  convert_stage.py: macros resolve and all chatter lines decode")
+    print("PASS  convert_stage.py: macros resolve, chatter lines decode, "
+          "sprites fit their arrays")
     return 0
 
 
