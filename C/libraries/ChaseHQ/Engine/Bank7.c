@@ -119,7 +119,6 @@ static void es_play_music_48k(chqstate_t *state);
  * relocations are pure ZX paging/self-modification artefacts and are
  * discarded here, following the load_stage precedent -- the C functions
  * below are simply called directly.
- *
  */
 void show_end_screen(chqstate_t *state)
 {
@@ -186,7 +185,6 @@ void show_end_screen(chqstate_t *state)
  * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
  * (es_setup_interrupts onward in the skool), relocated into the copied
  * $F300 buffer.
- *
  */
 static void es_setup_interrupts(chqstate_t *state)
 {
@@ -316,7 +314,6 @@ rs_exit:
  * modelled as a sticky "seen a non-blank digit yet" flag: print the digit if
  * it is non-zero or a digit has already been printed, otherwise print a
  * space.
- *
  */
 static void es_handler_draw_score(chqstate_t *state)
 {
@@ -380,8 +377,8 @@ static void es_handler_draw_score(chqstate_t *state)
  * arithmetic into relocated bank memory the C port does not model
  * byte-for-byte.
  *
- * \param[in] addr Raw address word read from the script (was HL after
- *                 EX DE,HL at $E2B7).
+ * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
+ *                 at $E2B7).
  * \return Matching data block, or NULL if unrecognised.
  */
 static const u8 *z80addrtochatterblk(u16 addr)
@@ -421,7 +418,7 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * whenever the resolved target does not look like a well-formed chatterblk.
  *
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
- *                       read and advanced past the word consumed.
+ *                      read and advanced past the word consumed.
  */
 static void es_chatter(chqstate_t *state)
 {
@@ -449,7 +446,7 @@ static void es_chatter(chqstate_t *state)
  * count down and re-invoke run_script when it reaches zero.
  *
  * \param[in] handler New per-frame handler (was DE).
- * \param[in] reload New $A170 frame-delay reload count (was C).
+ * \param[in] reload  New $A170 frame-delay reload count (was C).
  */
 static void es_set_dispatch(chqstate_t *state,
                             void (*handler)(chqstate_t *state),
@@ -467,8 +464,8 @@ static void es_set_dispatch(chqstate_t *state,
  * that function for the equivalent structure. Reused here (rather than
  * reinvented) because both routines index the same font[41*7] table.
  *
- * \param[in] character ASCII character, already offset by ' ' (was A after
- *                      SUB $20; space and 0 are handled by the caller).
+ * \param[in] character ASCII character, already offset by ' ' (was A after SUB
+ *                      $20; space and 0 are handled by the caller).
  * \return Glyph index into font[] (multiply by 7 for the row pointer).
  */
 static int ascii_to_glyph_id(int character)
@@ -576,8 +573,8 @@ static void es_handler_render_text(chqstate_t *state, const u8 **script)
  * does, then plots each following script character via plot_char until the
  * EOS-terminated (top-bit-set) character has been drawn.
  *
- * \param[in,out] script Script read pointer (was HL); advanced past the
- *                       3-byte header and the whole character run.
+ * \param[in,out] script Script read pointer (was HL); advanced past the 3-byte
+ *                       header and the whole character run.
  */
 static void render_text_common(chqstate_t *state, const u8 **script)
 {
@@ -663,19 +660,18 @@ static void render_text_common(chqstate_t *state, const u8 **script)
  * established precedent in draw_endshot's attribute-row loop above -- this
  * bank-7 memory range is not standard $5800-$5AFF attribute space.
  *
- * \param[in]     A_char Script character byte, EOS bit already masked off
- *                       by the caller (was A).
- * \param[in]     D_row   Screen destination row byte; constant for the
- *                       whole render_text call (was D, Set M).
- * \param[in,out] E_col   Screen destination column byte; the persistent
- *                       cursor, advanced by one per character (was E,
- *                       Set M).
- * \param[in]     H_attr  Attribute-row address high byte; constant for the
- *                       whole call (was H, Set M).
- * \param[in,out] L_attr  Attribute address column byte; the persistent
- *                       cursor, mirrors *E_col (was L, Set M).
- * \param[in]     A_attr Attribute/colour byte read once from the script
- *                       at $E2F5 and held constant for the whole call
+ * \param[in]     A_char Script character byte, EOS bit already masked off by
+ *                       the caller (was A).
+ * \param[in]     D_row  Screen destination row byte; constant for the whole
+ *                       render_text call (was D, Set M).
+ * \param[in,out] E_col  Screen destination column byte; the persistent cursor,
+ *                       advanced by one per character (was E, Set M).
+ * \param[in]     H_attr Attribute-row address high byte; constant for the whole
+ *                       call (was H, Set M).
+ * \param[in,out] L_attr Attribute address column byte; the persistent cursor,
+ *                       mirrors *E_col (was L, Set M).
+ * \param[in]     A_attr Attribute/colour byte read once from the script at
+ *                       $E2F5 and held constant for the whole call
  *                       (was C, Set M) -- see the Conv note above.
  */
 static void plot_char(chqstate_t *state,
@@ -755,7 +751,6 @@ static void plot_char(chqstate_t *state,
  * This is the entry point ESCMD_HANDSHAKE dispatches to; ESCMD_RESET_HANDSHAKE
  * and ESCMD_HANDSHAKE_AGAIN dispatch to es_handler_handshake_advance directly,
  * skipping this fade-b call ($5FBA vs $5FB7 in the relocated dispatch table).
- *
  */
 static void es_handler_handshake(chqstate_t *state)
 {
@@ -777,7 +772,6 @@ static void es_handler_handshake(chqstate_t *state)
  * This is the entry point ESCMD_RESET_HANDSHAKE and ESCMD_HANDSHAKE_AGAIN
  * dispatch to directly ($5FBA in the relocated table), skipping the $5C6C
  * fade-b call that only the plain ESCMD_HANDSHAKE entry point runs.
- *
  */
 static void es_handler_handshake_advance(chqstate_t *state)
 {
@@ -835,7 +829,6 @@ static void es_handler_handshake_advance(chqstate_t *state)
  * Conv: the ink-field increment (`INC C`, $E45D) and paper-field increment
  * (`ADD A,$08`, $E468) are not masked back into their 3-bit fields -- u8
  * wraparound reproduces this bug-for-bug.
- *
  */
 static void es_attribute_fade_in(chqstate_t *state)
 {
@@ -957,7 +950,6 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
  * Zeros the on-screen playfield (attributes and bitmap) plus the first 512
  * bytes of the "backbuffer" area, which alias the attribute portion of the
  * end-screen montage/glyph drawing area ($F000 = &state->backbuffer[0]).
- *
  */
 static void es_clear(chqstate_t *state)
 {
@@ -1079,7 +1071,6 @@ static const u8 *z80addrtoendshot(u16 addr)
  * (drum_active, extra_delay, started) then loads the first pattern in
  * es_music_patterns, exactly as Main.c's reset_music does for the shared
  * in-game engine.
- *
  */
 static void es_reset_music(chqstate_t *state)
 {
@@ -1096,7 +1087,6 @@ static void es_reset_music(chqstate_t *state)
  * once it reaches zero, loads the pattern whose address follows the one
  * just played. Same structure as Main.c's next_pattern, operating on bank
  * 7's own es_music state.
- *
  */
 static void es_advance_pattern(chqstate_t *state)
 {
@@ -1121,7 +1111,7 @@ static void es_advance_pattern(chqstate_t *state)
  * es_music_patterns/es_music_data tables and es_music state instead of the
  * shared in-game music engine's.
  *
- * \param[in]     HL_pataddr Pattern-list read pointer (was HL).
+ * \param[in] HL_pataddr Pattern-list read pointer (was HL).
  */
 static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
 {
@@ -1175,7 +1165,6 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
  * congratulations script), jumps straight to the wait-for-interrupt loop --
  * i.e. does no music processing at all that tick. C returns immediately in
  * that case.
- *
  */
 static void es_play_music_48k(chqstate_t *state)
 {
@@ -1250,8 +1239,7 @@ pm_reset_pattern:
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_2/playdrum_start.
  *
- * \param[in]     A_speed Playback speed: inner loop count per sample byte
- *   (was A).
+ * \param[in] A_speed Playback speed: inner loop count per sample byte (was A).
  */
 static void es_playdrum_2(chqstate_t *state, int A_speed)
 {
@@ -1267,8 +1255,7 @@ static void es_playdrum_2(chqstate_t *state, int A_speed)
  * marks the drum as active, then calls es_playdrum_go to output it.
  * Analogous to Main.c's playdrum_1/playdrum_start.
  *
- * \param[in]     A_speed Playback speed: inner loop count per sample byte
- *   (was A).
+ * \param[in] A_speed Playback speed: inner loop count per sample byte (was A).
  */
 static void es_playdrum_1(chqstate_t *state, int A_speed)
 {
@@ -1286,8 +1273,7 @@ static void es_playdrum_1(chqstate_t *state, int A_speed)
  * routine, operating on the same fixed-address state->rng_seed -- so
  * rather than duplicate it, this calls the shared implementation directly.
  *
- * \param[in]     A_param Noise duration: outer loop count and pulse timing
- *   (was A).
+ * \param[in] A_param Noise duration: outer loop count and pulse timing (was A).
  */
 static void es_play_noise(chqstate_t *state, int A_param)
 {
@@ -1309,9 +1295,10 @@ static void es_play_noise(chqstate_t *state, int A_param)
  * cleared. Identical in structure to Main.c's playdrum_go, operating on
  * bank 7's own es_music state and es_drum2/es_drum1 buffers.
  *
- * \param[in]     D_length Number of sample bytes remaining to output (was D).
- * \param[in]     HL_data  Pointer to the next sample byte in
- *   state->bank7->es_drum2[] or state->bank7->es_drum1[] (was HL).
+ * \param[in] D_length Number of sample bytes remaining to output (was D).
+ * \param[in] HL_data  Pointer to the next sample byte in
+ *                     state->bank7->es_drum2[] or state->bank7->es_drum1[]
+ *                     (was HL).
  *
  * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
  * 8 iterations -- the byte doubles as its own iteration counter, no separate

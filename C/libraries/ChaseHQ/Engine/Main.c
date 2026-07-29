@@ -510,7 +510,7 @@ void update_screen(chqstate_t *state, int screen, int width, int height)
  * covering [width] x [height] pixels from there.
  *
  * \param[in] attrs  Z80 screen attributes address of the region's top-left
- *   attribute cell.
+ *                   attribute cell.
  * \param[in] width  Region width in pixels.
  * \param[in] height Region height in pixels.
  */
@@ -695,9 +695,9 @@ static u16 prev_buf_row(int backbuf)
  * pointer. This is for mapping addresses that I've decided to leave
  * in-place for the time being.
  *
- * \param[in] current_stage_number Stage whose per-stage lookup table to
- *                                  fall back on for addresses not handled
- *                                  by the fork/escape tables below.
+ * \param[in] current_stage_number Stage whose per-stage lookup table to fall
+ *                                 back on for addresses not handled by the
+ *                                 fork/escape tables below.
  * \param[in] z80                  Z80 address to map.
  *
  * \return Pointer to the equivalent C data.
@@ -1511,7 +1511,6 @@ static void attract_mode_48k(chqstate_t *state)
  * hardware, bank 3 is paged in so the jump target contains the 128K audio code.
  * On 48K hardware, the target is a NOP stub at $8A56. C replaces the paged jump
  * with an explicit mode check throughout all eight hooks.
- *
  */
 static void start_siren_hook(chqstate_t *state)
 {
@@ -1525,7 +1524,6 @@ static void start_siren_hook(chqstate_t *state)
  * $83B8: Dispatch engine or siren SFX to the 128K or 48K audio driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern common to all hooks.
- *
  */
 static void play_regular_sfx_hook(chqstate_t *state)
 {
@@ -1539,7 +1537,6 @@ static void play_regular_sfx_hook(chqstate_t *state)
  * $83BB: Silence audio via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
- *
  */
 static void silence_audio_hook(chqstate_t *state)
 {
@@ -1551,7 +1548,6 @@ static void silence_audio_hook(chqstate_t *state)
  * $83BE: Flush audio register writes via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
- *
  */
 static void write_audio_registers_hook(chqstate_t *state)
 {
@@ -1563,7 +1559,6 @@ static void write_audio_registers_hook(chqstate_t *state)
  * $83C1: Configure the engine SFX via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
- *
  */
 static void setup_engine_sfx_hook(chqstate_t *state)
 {
@@ -1575,7 +1570,6 @@ static void setup_engine_sfx_hook(chqstate_t *state)
  * $83C4: Drive engine SFX via the 128K or 48K audio driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
- *
  */
 static void play_engine_sfx_hook(chqstate_t *state)
 {
@@ -1602,7 +1596,6 @@ static void play_speech_hook(chqstate_t *state, int A_sample)
  * $83CA: Dispatch attract mode to the 128K or 48K driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
- *
  */
 static void attract_mode_hook(chqstate_t *state)
 {
@@ -2086,7 +2079,7 @@ set_level2:
  * pregame screen.
  *
  * \param[in] counter Number of green (lit) segments, 0–7. (was A)
- * \param[in] attrs Pointer to the first attribute cell of the bar. (was HL)
+ * \param[in] attrs   Pointer to the first attribute cell of the bar. (was HL)
  *
  * Conv: Z80 computes `7 − [counter]` via CPL+ADD A,8 (two's-complement trick
  * on the low three bits); C uses `7 - counter` directly.
@@ -2119,7 +2112,6 @@ static void am_set_attrs(int counter, u8 *attrs)
  * (horizontal/vertical), set a background attribute colour, set the current
  * write address, or plot one or more 8x1-row tiles from pregame_tiles[]. After
  * the STOP command, prints four overlay message strings via print_message.
- *
  */
 static void draw_pregame(chqstate_t *state)
 {
@@ -2245,7 +2237,6 @@ dp_repeat_or_plot_tile:
  * as the final obstacle.
  *
  * Called from main_loop when escape_scene_requested is set.
- *
  */
 static void escape_scene(chqstate_t *state)
 {
@@ -2463,8 +2454,8 @@ static void set_up_stage(chqstate_t *state, const scenedata_t *scene_data)
  * bytes, masking out the ATTR_BRIGHT bit in each cell to return the lights to
  * their dim state. Called twice by set_up_stage (once for each side light).
  *
- * \param[in,out] attrptr Pointer to the top-left attribute cell of the
- * light block. (was HL)
+ * \param[in,out] attrptr Pointer to the top-left attribute cell of the light
+ *                        block. (was HL)
  */
 static void set_up_stage_reset_lights(u8 *attrptr)
 {
@@ -2551,7 +2542,6 @@ static void check_user_input(chqstate_t *state)
  * Ignores the request if a quit is already in progress. Otherwise stops
  * chatter, fills the attribute file (to blank the screen) and arms the quit
  * state machine so that escape_scene runs on the next transition.
- *
  */
 static void check_user_input_quit_key(chqstate_t *state)
 {
@@ -2572,7 +2562,6 @@ static void check_user_input_quit_key(chqstate_t *state)
  * playfield) to black-on-black. The Z80 primes HL = $5900, writes zero to (HL),
  * then LDIRs 511 bytes from $5900 → $5901, producing a rolling zero fill across
  * $5900–$58FF.
- *
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
@@ -2588,7 +2577,6 @@ static void clear_playfield_attrs(chqstate_t *state)
  * Calls clear_playfield_attrs to zero the 512 attribute bytes, then zeros the
  * 4096 bitmap bytes covering the lower 16 character rows. The Z80 uses an LDIR
  * rolling-zero fill for each block.
- *
  */
 void clear_playfield(chqstate_t *state)
 {
@@ -2608,7 +2596,8 @@ void clear_playfield(chqstate_t *state)
  * first (JR Z to assign), then CP C / RET C to bail when the current effect
  * outranks the request.
  *
- * \param[in] index Sound effect index 1–9, indexing the table at $893C. (was B)
+ * \param[in] index    Sound effect index 1–9, indexing the table at $893C.
+ *                     (was B)
  * \param[in] priority Priority; lower value = higher precedence. (was C)
  */
 static void start_sfx(chqstate_t *state, int index, int priority)
@@ -2738,7 +2727,7 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
  * Used for car landings ([param1]=8) and hazard hits ([param1]=3).
  *
  * \param[in] param1 Delay multiplier between pulses; larger = lower pitch.
- *   (was D)
+ *                   (was D)
  * \param[in] param2 Unused. (was E)
  *
  * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
@@ -2867,7 +2856,7 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
  * off-phase lengthens, creating the falling pitch.
  *
  * \param[in] param1 Initial per-step delay (restored from [param2] each step).
- *   (was D)
+ *                   (was D)
  * \param[in] param2 Per-step delay reset value. (was E)
  *
  * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
@@ -3295,7 +3284,6 @@ static void hpc_set_perp_speed(chqstate_t *state, int speed)
  * stop hand, suppresses player input (only pause and quit are allowed), shows
  * the "OK! PULL OVER CREEP!" overlay and sets the perp to its post-arrest
  * scripted drive speed.
- *
  */
 static void fully_smashed(chqstate_t *state)
 {
@@ -3321,7 +3309,6 @@ static void fully_smashed(chqstate_t *state)
  * mask pointer and the word at $8DB1 holds the per-frame stride. In C these
  * three values are stored in state->transition_nframes, state->transition_mask
  * and state->transition_frame_stride respectively.
- *
  */
 static void transition(chqstate_t *state)
 {
@@ -3379,9 +3366,9 @@ static void transition(chqstate_t *state)
  * twice per chunk by transition — once for the upper stripe and once for the
  * lower stripe 8 rows higher.
  *
- * \param[in] mask Fade mask byte ORed into each pixel. (was E)
+ * \param[in] mask    Fade mask byte ORed into each pixel. (was E)
  * \param[in] backbuf Pointer to the last byte of the first row to process.
- *   (was HL)
+ *                    (was HL)
  */
 static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
 {
@@ -3429,7 +3416,7 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
  * Conv: Points at non-relocated table transitions_e88e rather than $EC00.
  *
  * \param[in] stride Per-frame mask-pointer step: +8 forward, −8 reverse.
- *   (was A)
+ *                   (was A)
  */
 static void setup_transition(chqstate_t *state, int stride)
 {
@@ -3459,7 +3446,6 @@ static void setup_transition(chqstate_t *state, int stride)
  * Z80 does this with a rolling LDIR: DE = HL + 1, BC = 28, LDIR copies byte 0 →
  * bytes 1..28, then HL advances to the start of the next row. After 16 rows,
  * transition_control is set to TRANSITIONCONTROL_STOP.
- *
  */
 static void fill_attributes(chqstate_t *state)
 {
@@ -3497,7 +3483,6 @@ static void fill_attributes(chqstate_t *state)
  * message pointer, B at $8E46 holds the current count and the delay is the
  * operand at $8E4A. In C these are stored in state->overlay_message,
  * state->overlay_count and state->overlay_delay respectively.
- *
  */
 static void draw_overlay_messages(chqstate_t *state)
 {
@@ -3545,7 +3530,7 @@ static void draw_overlay_messages(chqstate_t *state)
  * Conv: Z80 preserves BC with PUSH/POP around the call; C locals survive calls
  * without banking.
  *
- * \param[in] style Rendering style selector. (was A)
+ * \param[in] style    Rendering style selector. (was A)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
  * \return Pointer to the byte following the NUL terminator.
  */
@@ -3577,7 +3562,7 @@ static const u8 *print_message(chqstate_t *state, int style, const u8 *messages)
  * fall-through is literal; in C it is an explicit call.
  *
  * \param[in] message Pointer to the message data block (delay byte, then
- *   records). (was HL)
+ *                    records). (was HL)
  */
 static void setup_overlay_messages(chqstate_t *state, const u8 *message)
 {
@@ -3600,9 +3585,9 @@ static void setup_overlay_messages(chqstate_t *state, const u8 *message)
  * struct fields overlay_delay, overlay_message and overlay_count.
  *
  * \param[in] transition Transition mode to activate (e.g.
- *   TRANSITIONCONTROL_OVERLAY_MESSAGES). (was A)
- * \param[in] message Pointer to the message data block; message[0] is the frame
- *   delay. (was HL)
+ *                       TRANSITIONCONTROL_OVERLAY_MESSAGES). (was A)
+ * \param[in] message    Pointer to the message data block; message[0] is the
+ *                       frame delay. (was HL)
  */
 static void setup_overlay_messages_with_transition(chqstate_t *state,
                                                    int         transition,
@@ -3627,7 +3612,6 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
  * state->stage->addrof_perp_mugshot_attributes.
  *
  * Conv: Z80 JR $8E42 tail-calls draw_overlay_messages; C calls it directly.
- *
  */
 static void draw_mugshots(chqstate_t *state)
 {
@@ -3668,10 +3652,10 @@ static void draw_mugshots(chqstate_t *state)
  *
  * Conv: JP PO branches when BC wraps to zero after LDD; C checks counter == 0.
  *
- * \param[in] BC_attrs Screen attribute address for the face. (was BC)
+ * \param[in] BC_attrs   Screen attribute address for the face. (was BC)
  * \param[in] DE_backbuf Back-buffer address of the last bitmap byte. (was DE)
- * \param[in] HL_mugshot Pointer to the start of the mugshot attribute data;
- * the bitmap immediately precedes it. (was HL)
+ * \param[in] HL_mugshot Pointer to the start of the mugshot attribute data; the
+ *                       bitmap immediately precedes it. (was HL)
  */
 static void draw_mugshot(chqstate_t *state,
                          int         BC_attrs,
@@ -3722,7 +3706,6 @@ static void draw_mugshot(chqstate_t *state,
  *
  * Conv: Z80 computes nsolid as CPL(A*3)+$3F (bit-complement + 63); C uses the
  * equivalent arithmetic expression.
- *
  */
 static void draw_smash_bar(chqstate_t *state)
 {
@@ -3761,7 +3744,7 @@ static void draw_smash_bar(chqstate_t *state)
  * The Z80 uses the DEC H / rollover pattern for prev-scanline movement; C uses
  * prev_buf_row() throughout.
  *
- * \param[in] C_nsegs Number of segments to draw. (was C)
+ * \param[in] C_nsegs    Number of segments to draw. (was C)
  * \param[in] HL_backbuf Back-buffer address at which to start. (was HL)
  * \return Back-buffer address after the last row written.
  */
@@ -3786,7 +3769,7 @@ static u16 draw_smash_bar_segments(chqstate_t *state,
  * the back buffer with prev_buf_row(). Used for both the border rows and the
  * solid fill above the segments.
  *
- * \param[in] B_nrows Number of solid rows to draw. (was B)
+ * \param[in] B_nrows    Number of solid rows to draw. (was B)
  * \param[in] HL_backbuf Back-buffer address at which to start. (was HL)
  * \return Back-buffer address after the last row written.
  */
@@ -3810,7 +3793,6 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state,
  * height_table and clamped_heights by +32 to convert from road-buffer
  * coordinates to screen coordinates, then walks the object table for the
  * current road section drawing each object through its type-specific callback.
- *
  */
 static void draw_scene_objects(chqstate_t *state)
 {
@@ -4011,13 +3993,13 @@ left_hand_stuff:
  * (a row count plus one solid fill byte per row) selected by B_minheight;
  * every row is a single-colour memset spanning the clipped width.
  *
- * \param[in]     B_param Depth scale index; also selects the pair entry (0..9).
- *   (was B)
- * \param[in]     arg Pointer to the stretchy object descriptor array. (was DE)
- * \param[in]     IX_xpos Pointer into xpos_road_centre for this object slot.
- *   (was IX)
- * \param[in]     IY_height Pointer into height_table for this object slot.
- *   (was IY)
+ * \param[in] B_param   Depth scale index; also selects the pair entry (0..9).
+ *                      (was B)
+ * \param[in] arg       Pointer to the stretchy object descriptor array.
+ *                      (was DE)
+ * \param[in] IX_xpos   Pointer into xpos_road_centre for this object slot.
+ *                      (was IX)
+ * \param[in] IY_height Pointer into height_table for this object slot. (was IY)
  */
 void draw_overhead(chqstate_t *state,
                    int         B_param,
@@ -4157,9 +4139,9 @@ do_draw_span:
  * Conv: The Z80 stores the callback address ($9293) via self-modification at
  * $91CE/$9244; C passes it as an explicit function pointer.
  *
- * \param[in] B_depth Depth index of the object. (was B)
- * \param[in] DE_arg Pointer to the stretchy_t data for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] B_depth   Depth index of the object. (was B)
+ * \param[in] DE_arg    Pointer to the stretchy_t data for this object. (was DE)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 void draw_stretchy_object_left(chqstate_t *state,
@@ -4186,9 +4168,9 @@ void draw_stretchy_object_left(chqstate_t *state,
  * Conv: The Z80 stores the callback address ($92FC) via self-modification at
  * $91CE/$9244; C passes it as an explicit function pointer.
  *
- * \param[in] B_depth Depth index of the object. (was B)
- * \param[in] DE_arg Pointer to the stretchy_t data for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] B_depth   Depth index of the object. (was B)
+ * \param[in] DE_arg    Pointer to the stretchy_t data for this object. (was DE)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 void draw_stretchy_object_right(chqstate_t *state,
@@ -4218,15 +4200,13 @@ void draw_stretchy_object_right(chqstate_t *state,
  * are stored as SM fields to share state between this function and its
  * callbacks.
  *
- * \param[in]     B_depth Depth scale index; caps at DEPTHSET_MAX. (was B)
- * \param[in]     DE_stretchy Pointer to the stretchy_t descriptor array.
- *   (was DE)
- * \param[in]     HL_callback Per-entry draw callback stored in SM fields.
- *   (was HL)
- * \param[in]     IX_xpos Pointer into the xpos table for this object slot.
- *   (was IX)
- * \param[in]     IY_height Pointer into height_table for this object slot.
- *   (was IY)
+ * \param[in] B_depth     Depth scale index; caps at DEPTHSET_MAX. (was B)
+ * \param[in] DE_stretchy Pointer to the stretchy_t descriptor array. (was DE)
+ * \param[in] HL_callback Per-entry draw callback stored in SM fields. (was HL)
+ * \param[in] IX_xpos     Pointer into the xpos table for this object slot.
+ *                        (was IX)
+ * \param[in] IY_height   Pointer into height_table for this object slot.
+ *                        (was IY)
  */
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         int               B_depth,
@@ -4395,9 +4375,9 @@ dso_continue:
  * Conv: The Z80 stores the callback address ($9279) in HL then uses PUSH HL /
  * RET to dispatch; C passes it as an explicit function pointer.
  *
- * \param[in] B_depth Depth index of the light (0 = nearest). (was B)
- * \param[in] DE_arg Depth-set pointer for the light object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] B_depth   Depth index of the light (0 = nearest). (was B)
+ * \param[in] DE_arg    Depth-set pointer for the light object. (was DE)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 void draw_tunnel_light_left(chqstate_t *state,
@@ -4420,9 +4400,9 @@ void draw_tunnel_light_left(chqstate_t *state,
  * Conv: The Z80 stores the callback address ($92E2) in HL then uses PUSH HL /
  * RET to dispatch; C passes it as an explicit function pointer.
  *
- * \param[in] B_depth Depth index of the light (0 = nearest). (was B)
- * \param[in] DE_arg Depth-set pointer for the light object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] B_depth   Depth index of the light (0 = nearest). (was B)
+ * \param[in] DE_arg    Depth-set pointer for the light object. (was DE)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 void draw_tunnel_light_right(chqstate_t *state,
@@ -4447,11 +4427,11 @@ void draw_tunnel_light_right(chqstate_t *state,
  * The Z80 dispatches to the callback via PUSH HL / RET; here the callback is
  * passed explicitly.
  *
- * \param[in] B_depth Depth index of the light (0 = nearest). (was B)
+ * \param[in] B_depth     Depth index of the light (0 = nearest). (was B)
  * \param[in] DE_depthset Depth-set table for the light object. (was DE)
  * \param[in] HL_callback Left or right object drawing entry point. (was HL)
- * \param[in] IX_xpos X-position table pointer. (was IX)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] IX_xpos     X-position table pointer. (was IX)
+ * \param[in] IY_height   Height table pointer. (was IY)
  */
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      int                    B_depth,
@@ -4482,10 +4462,10 @@ static void draw_tunnel_light_common(chqstate_t            *state,
  * Conv: The Z80 uses XOR A (A = 0) then falls through to $9279
  * (draw_object_left_entrypt); C calls it directly with col_offset = 0.
  *
- * \param[in] B_depth Depth index of the object. (was B)
+ * \param[in] B_depth     Depth index of the object. (was B)
  * \param[in] DE_depthset Pointer to the depthset_t for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] IX_xpos     X-position table pointer. (was IX)
+ * \param[in] IY_height   Height table pointer. (was IY)
  */
 void draw_object_left(chqstate_t *state,
                       int         B_depth,
@@ -4516,10 +4496,10 @@ void draw_object_left(chqstate_t *state,
  * uses pairs[B_depth-1] to match.
  *
  * \param[in] A_col_offset Column offset added to the object position. (was A)
- * \param[in] B_depth Depth index into the depthset table. (was B)
- * \param[in] DE_depthset Pointer to the depthset for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] B_depth      Depth index into the depthset table. (was B)
+ * \param[in] DE_depthset  Pointer to the depthset for this object. (was DE)
+ * \param[in] IX_xpos      X-position table pointer. (was IX)
+ * \param[in] IY_height    Height table pointer. (was IY)
  */
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      int               A_col_offset,
@@ -4555,10 +4535,10 @@ static void draw_object_left_entrypt(chqstate_t       *state,
  * if the result is negative (object entirely off-screen to the left). Otherwise
  * passes the remaining screen width to draw_object_left_width_entrypt.
  *
- * \param[in] B_depth Depth value from the depthset, subtracted from width.
- *   (was B)
+ * \param[in] B_depth   Depth value from the depthset, subtracted from width.
+ *                      (was B)
  * \param[in] HL_bitmap Source bitmap data. (was HL)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
@@ -4584,10 +4564,10 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
  * draw_object_clipped or draw_object_common_flipped depending on the
  * BITMAPFLAG_FLIPPED bit.
  *
- * \param[in]     A_width_bytes Available pixel width at the left edge. (was A)
- * \param[in]     HL_bitmap Pointer to the bitmap descriptor. (was HL)
- * \param[in]     IY_height Pointer into height_table for this object slot.
- *   (was IY)
+ * \param[in] A_width_bytes Available pixel width at the left edge. (was A)
+ * \param[in] HL_bitmap     Pointer to the bitmap descriptor. (was HL)
+ * \param[in] IY_height     Pointer into height_table for this object slot.
+ *                          (was IY)
  */
 static void draw_object_left_width_entrypt(chqstate_t     *state,
                                            int             A_width_bytes,
@@ -4687,10 +4667,10 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
  * Conv: The Z80 uses XOR A (A = 0) then falls through to $92E2
  * (draw_object_right_entrypt); C calls it directly with col_offset = 0.
  *
- * \param[in] B_depth Depth index of the object. (was B)
+ * \param[in] B_depth     Depth index of the object. (was B)
  * \param[in] DE_depthset Pointer to the depthset_t for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] IX_xpos     X-position table pointer. (was IX)
+ * \param[in] IY_height   Height table pointer. (was IY)
  */
 void draw_object_right(chqstate_t *state,
                        int         B_depth,
@@ -4716,10 +4696,10 @@ void draw_object_right(chqstate_t *state,
  * uses pairs[B_depth-1] to match.
  *
  * \param[in] A_col_offset Column offset added to the object position. (was A)
- * \param[in] B_depth Depth index into the depthset table. (was B)
- * \param[in] DE_depthset Pointer to the depthset for this object. (was DE)
- * \param[in] IX_xpos X-position table pointer. (was IX)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] B_depth      Depth index into the depthset table. (was B)
+ * \param[in] DE_depthset  Pointer to the depthset for this object. (was DE)
+ * \param[in] IX_xpos      X-position table pointer. (was IX)
+ * \param[in] IY_height    Height table pointer. (was IY)
  */
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       int               A_col_offset,
@@ -4760,9 +4740,9 @@ static void draw_object_right_entrypt(chqstate_t       *state,
  * A,B; RET C` (return on u8 carry, i.e. A+B > 255); negative B path ($9303)
  * adds without a carry check. Both paths share `RET Z` at $9308.
  *
- * \param[in] B_depth Signed depth value from the depthset. (was B)
+ * \param[in] B_depth   Signed depth value from the depthset. (was B)
  * \param[in] HL_bitmap Source bitmap data. (was HL)
- * \param[in] IX_xpos X-position table pointer. (was IX)
+ * \param[in] IX_xpos   X-position table pointer. (was IX)
  * \param[in] IY_height Height table pointer. (was IY)
  */
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
@@ -4792,8 +4772,8 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
  * draw_object_perspective_entrypt with a zero padding value.
  *
  * \param[in] A_width_bytes Available screen width for the object. (was A)
- * \param[in] HL_bitmap Source bitmap data. (was HL)
- * \param[in] IY_height Height table pointer. (was IY)
+ * \param[in] HL_bitmap     Source bitmap data. (was HL)
+ * \param[in] IY_height     Height table pointer. (was IY)
  */
 static void draw_object_right_width_entrypt(chqstate_t     *state,
                                             int             A_width_bytes,
@@ -4813,12 +4793,12 @@ static void draw_object_right_width_entrypt(chqstate_t     *state,
  * as MAX(width_bytes, 31 − height). Dispatches to draw_object_clipped or
  * draw_object_common_flipped depending on the BITMAPFLAG_FLIPPED bit.
  *
- * \param[in]     A_width_bytes Clipping pixel width from the xpos table. (was A)
- * \param[in]     C_padding Byte padding between visible and full columns.
- *   (was C)
- * \param[in]     HL_bitmap Pointer to the bitmap descriptor. (was HL)
- * \param[in]     IY_height Pointer into height_table for this object slot.
- *   (was IY)
+ * \param[in] A_width_bytes Clipping pixel width from the xpos table. (was A)
+ * \param[in] C_padding     Byte padding between visible and full columns.
+ *                          (was C)
+ * \param[in] HL_bitmap     Pointer to the bitmap descriptor. (was HL)
+ * \param[in] IY_height     Pointer into height_table for this object slot.
+ *                          (was IY)
  */
 static void draw_object_perspective_entrypt(chqstate_t     *state,
                                             int             A_width_bytes,
@@ -4885,15 +4865,17 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
  * the width and flag values passed through the shadow registers before
  * delegating to draw_object_clipped ($9333).
  *
- * \param[in] B_height Initial height parameter from caller. (was B)
- * \param[in] C_padding Padding bytes between bitmap rows. (was C)
- * \param[in] E_bitmap_stride Full stride of one bitmap row, in bytes. (was E)
- * \param[in] HL_bitmap Pointer to the bitmap descriptor. (was HL)
+ * \param[in] B_height          Initial height parameter from caller. (was B)
+ * \param[in] C_padding         Padding bytes between bitmap rows. (was C)
+ * \param[in] E_bitmap_stride   Full stride of one bitmap row, in bytes. (was E)
+ * \param[in] HL_bitmap         Pointer to the bitmap descriptor. (was HL)
  * \param[in] Adash_width_bytes Draw width of bitmap, in bytes. (was A')
- * \param[in] Fdash_zero Non-zero if the object is NOT flipped. (was Z in F')
- * \param[in] Fdash_carry Non-zero if the bitmap uses a mask. (was carry in F')
- * \param[in] IY_height Pointer to the Y-height table entry for this
- * object slot. (was IY)
+ * \param[in] Fdash_zero        Non-zero if the object is NOT flipped.
+ *                              (was Z in F')
+ * \param[in] Fdash_carry       Non-zero if the bitmap uses a mask.
+ *                              (was carry in F')
+ * \param[in] IY_height         Pointer to the Y-height table entry for this
+ *                              object slot. (was IY)
  */
 static void draw_object_common_flipped(chqstate_t     *state,
                                        int             B_height,
@@ -4937,16 +4919,17 @@ static void draw_object_common_flipped(chqstate_t     *state,
  * to the appropriate sprite-plot routine (masked/unmasked,
  * normal/flipped/inverted, even/odd width).
  *
- * \param[in] zero_flipped Non-zero if the object is NOT flipped. (was Z flag)
+ * \param[in] zero_flipped      Non-zero if the object is NOT flipped.
+ *                              (was Z flag)
  * \param[in] carry_masked_flag Non-zero if the bitmap uses a transparency mask.
- *   (was C flag / carry)
- * \param[in] A_width_bytes Draw width of bitmap, in bytes. (was A)
- * \param[in] B_height Initial height parameter from caller. (was B)
- * \param[in] C_padding Padding bytes between bitmap rows. (was C)
- * \param[in] E_bitmap_stride Full stride of one bitmap row, in bytes. (was E)
- * \param[in] HL_bitmap Pointer to the bitmap descriptor. (was HL)
- * \param[in] IY_height Pointer to the Y-height table entry for this
- * object slot. (was IY)
+ *                              (was C flag / carry)
+ * \param[in] A_width_bytes     Draw width of bitmap, in bytes. (was A)
+ * \param[in] B_height          Initial height parameter from caller. (was B)
+ * \param[in] C_padding         Padding bytes between bitmap rows. (was C)
+ * \param[in] E_bitmap_stride   Full stride of one bitmap row, in bytes. (was E)
+ * \param[in] HL_bitmap         Pointer to the bitmap descriptor. (was HL)
+ * \param[in] IY_height         Pointer to the Y-height table entry for this
+ *                              object slot. (was IY)
  */
 static void draw_object_clipped(chqstate_t     *state,
                                 int             zero_flipped,
@@ -5334,11 +5317,11 @@ unmasked_inverted:
  * Conv: Row advance is via DEC H with a multi-step rollover in the Z80; C
  * delegates to prev_buf_row().
  *
- * \param[in] width_bytes Draw width of bitmap, in bytes. (was A)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] width_bytes   Draw width of bitmap, in bytes. (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 static void plot_sprite(chqstate_t *state,
                         int         width_bytes,
@@ -5395,11 +5378,11 @@ static void plot_sprite(chqstate_t *state,
  * Conv: Row advance uses DEC H with multi-step carry correction in Z80; C
  * delegates to prev_buf_row().
  *
- * \param[in] jump_offset Byte offset into the unrolled POP table. (was IX)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] jump_offset   Byte offset into the unrolled POP table. (was IX)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
  * \return Back-buffer address of the last row drawn.
  */
@@ -5461,12 +5444,12 @@ plot_sprite_even_start:
  *
  * Conv: Row advance uses DEC H with carry correction; C uses prev_buf_row().
  *
- * \param[in] width_bytes Number of byte pairs in the bitmap width (halved).
- *   (was A)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] width_bytes   Number of byte pairs in the bitmap width (halved).
+ *                          (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
  * \return Back-buffer address of the last row drawn.
  */
@@ -5506,11 +5489,11 @@ static u8 *plot_sprite_odd(chqstate_t *state,
  *
  * Conv: Row advance uses DEC H with carry correction; C uses prev_buf_row().
  *
- * \param[in] jump_offset Byte offset into the unrolled POP table. (was IX)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] jump_offset   Byte offset into the unrolled POP table. (was IX)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
  * \return Back-buffer address of the last row drawn.
  */
@@ -5567,12 +5550,12 @@ plot_sprite_odd_start:
  * Conv: Row advance via DEC H with carry correction in Z80; C uses
  * prev_buf_row().
  *
- * \param[in] width_bytes Draw width of bitmap, in bytes. (was A)
- * \param[in] backbuf_addr Back-buffer address of the leftmost byte to draw.
- *   (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] width_bytes   Draw width of bitmap, in bytes. (was A)
+ * \param[in] backbuf_addr  Back-buffer address of the leftmost byte to draw.
+ *                          (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 static void plot_sprite_flipped(chqstate_t *state,
                                 int         width_bytes,
@@ -5627,12 +5610,13 @@ static void plot_sprite_flipped(chqstate_t *state,
  *
  * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
- * \param[in] jump_offset Byte offset into the unrolled flip-POP table. (was IX)
- * \param[in] flip_table 256-entry bit-reversal look-up table. (was DE)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] jump_offset   Byte offset into the unrolled flip-POP table.
+ *                          (was IX)
+ * \param[in] flip_table    256-entry bit-reversal look-up table. (was DE)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         jump_offset,
@@ -5702,12 +5686,12 @@ plot_sprite_flipped_even_start:
  *
  * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
- * \param[in] width_bytes Number of byte pairs (halved width from caller).
- *   (was A)
- * \param[in] backbuf_addr Back-buffer address to draw at. (was HL)
- * \param[in] height Number of rows to draw. (was B')
+ * \param[in] width_bytes   Number of byte pairs (halved width from caller).
+ *                          (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
- * \param[in] bitmap_data Source bitmap data. (was HL')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 static void plot_sprite_flipped_odd(chqstate_t *state,
                                     int         width_bytes,
@@ -5809,7 +5793,7 @@ static u8 rng(chqstate_t *state)
  * request is silently ignored. Otherwise the state machine is primed with the
  * new block pointer and reset to CHATTERSTATE_START.
  *
- * \param[in] priority Priority of this chatter; higher values win. (was A)
+ * \param[in] priority   Priority of this chatter; higher values win. (was A)
  * \param[in] chatterblk Pointer to the chatter data block to play. (was HL)
  */
 void start_chatter(chqstate_t       *state,
@@ -5957,7 +5941,6 @@ exit:
  * Primes the noise-out countdown (noise_counter = 4), switches the FSM to
  * STOPPING, and clears the on-screen message line. The noise effect will count
  * down over the next four frames before entering IDLE.
- *
  */
 void drive_chatter_stop(chqstate_t *state)
 {
@@ -6028,7 +6011,7 @@ static void print_chatter(chqstate_t *state)
  * pc_clear_line to begin displaying from column 0.
  *
  * \param[in] chatterblk Pointer to the current position in the chatter block.
- * (was HL)
+ *                       (was HL)
  *
  * Conv: Z80 stores a 2-byte message address; C stores a 1-byte index into
  * common_chatter_strings[] or stage->chatter_strings[].
@@ -6062,8 +6045,8 @@ static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
  * character is the last one; a delay of 10 frames is set so the player can read
  * it before the display cycles on.
  *
- * \param[in] x Column at which to plot the character. Zero triggers a
- * line clear first. (was A)
+ * \param[in] x Column at which to plot the character. Zero triggers a line
+ *              clear first. (was A)
  */
 static void pc_clear_line(chqstate_t *state, int x)
 {
@@ -6092,7 +6075,7 @@ static void pc_clear_line(chqstate_t *state, int x)
  * Otherwise falls through to draw_noise_effect to render the next static frame.
  *
  * \param[in] counter Current noise counter value, decremented before use.
- *   (was A)
+ *                    (was A)
  */
 static void drive_noise_effect(chqstate_t *state, int counter)
 {
@@ -6199,9 +6182,9 @@ static void clear_face_attributes(chqstate_t *state, int attr)
  * write the matching colour attribute block.
  *
  * \param[in] screen ZX Spectrum screen address to start drawing at (always
- * $4036, i.e. row 8 pixel 6 of the display). (was DE)
- * \param[in] face Pointer to face data: bitmap bytes followed immediately
- * by attribute bytes. (was HL)
+ *                   $4036, i.e. row 8 pixel 6 of the display). (was DE)
+ * \param[in] face   Pointer to face data: bitmap bytes followed immediately by
+ *                   attribute bytes. (was HL)
  */
 static void plot_face(chqstate_t *state, int screen, const u8 *face)
 {
@@ -6235,10 +6218,10 @@ static void plot_face(chqstate_t *state, int screen, const u8 *face)
  * rows $58xx–$5Axx. Copies FACEATTRBYTES (20) attribute bytes in runs of 4,
  * advancing by one attribute row (32 bytes) between runs.
  *
- * \param[in] screen ZX Spectrum screen address saved from the bitmap pass;
- * its high byte encodes the display band. (was stack/POP DE)
- * \param[in] face Pointer to the attribute bytes that follow the bitmap
- * data in the [face] data block. (was HL)
+ * \param[in] screen ZX Spectrum screen address saved from the bitmap pass; its
+ *                   high byte encodes the display band. (was stack/POP DE)
+ * \param[in] face   Pointer to the attribute bytes that follow the bitmap data
+ *                   in the [face] data block. (was HL)
  */
 static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
 {
@@ -6275,8 +6258,8 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
  * Entry point with BC=0: both extra bitmap bytes are zero so no cursor block
  * appears beneath the [character].
  *
- * \param[in] x Column index (0–based); 0xFF means the special
- * off-screen cursor position. (was A)
+ * \param[in] x         Column index (0–based); 0xFF means the special off-
+ *                      screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character)
@@ -6291,8 +6274,8 @@ static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character)
  * cursor underline row) and C=$80 sets the MSB of the right glyph byte,
  * producing a visible cursor block beneath the [character].
  *
- * \param[in] x Column index (0–based); 0xFF means the special
- * off-screen cursor position. (was A)
+ * \param[in] x         Column index (0–based); 0xFF means the special off-
+ *                      screen cursor position. (was A)
  * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
@@ -6310,13 +6293,13 @@ static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
  * the left screen byte to preserve adjacent pixels, and writes two bytes per
  * row for MFHEIGHT (6) rows.
  *
- * \param[in] x Column slot (0-based); 0xFF selects the off-screen
- * cursor slot. (was A)
- * \param[in] ascii ASCII character to draw. (was D)
+ * \param[in] x        Column slot (0-based); 0xFF selects the off-screen cursor
+ *                     slot. (was A)
+ * \param[in] ascii    ASCII character to draw. (was D)
  * \param[in] extrabm1 Extra bits ORed into the left glyph byte (cursor
- * underline pattern or 0). (was B, self-modifies $9B64)
+ *                     underline pattern or 0). (was B, self-modifies $9B64)
  * \param[in] extrabm2 Extra bits placed in the right glyph byte (cursor
- * underline MSB or 0). (was C, self-modifies $9B61)
+ *                     underline MSB or 0). (was C, self-modifies $9B61)
  *
  * Conv: Z80 self-modifies three operands ($9B61, $9B64, $9B89) and uses a
  * jump-table cascade (SRL B; RR C repeated) for the pixel shift; C uses local
@@ -6446,7 +6429,6 @@ pmf_have_ascii:
  * Conv: Z80 LDIR zeros 30 bytes (HL through HL+29); C memset zeroes only the 29
  * bytes HL+1 through HL+29, omitting HL itself. The first byte is part of the
  * chatter area and is overwritten anyway by the next print call.
- *
  */
 static void clear_message_line(chqstate_t *state)
 {
@@ -6630,7 +6612,6 @@ check_restart:
  * continue-mission sequence begins.
  *
  * Conv: Z80 JP $83C7 is a tail call; C uses a normal call.
- *
  */
 static void play_start_noise(chqstate_t *state)
 {
@@ -6737,12 +6718,12 @@ static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md)
  * jump to bonus_exit; C callers use short-circuit && to achieve the same
  * early-exit behaviour.
  *
- * \param[in]     A_digit BCD digit to write; only the low nibble is used.
- *   (was A)
+ * \param[in]     A_digit    BCD digit to write; only the low nibble is used.
+ *                           (was A)
  * \param[in,out] pCzeroflag Flag: $FF while all digits so far are zero, 0 once
- * a non-zero digit is seen. (was C)
- * \param[in,out] pHLoutput Address of the output pointer; decremented before
- * each write. (was HL)
+ *                           a non-zero digit is seen. (was C)
+ * \param[in,out] pHLoutput  Address of the output pointer; decremented before
+ *                           each write. (was HL)
  * \return 0 on success; -1 on non-zero-to-zero transition (stop writing).
  */
 static int bonus_digit(int A_digit, int *pCzeroflag, char **pHLoutput)
@@ -6805,7 +6786,6 @@ void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md)
  * second EXX on return to restore them. C has no register pressure so the
  * banking is omitted — B_iterations and HL_bcd are plain locals that survive the
  * call naturally.
- *
  */
 static void calc_overtake_bonus(chqstate_t *state)
 {
@@ -6867,7 +6847,6 @@ static void calc_overtake_bonus(chqstate_t *state)
  * array.
  *
  * Conv: draw_string_screen passes 0/dummy attrs because style=0 ignores them.
- *
  */
 static void update_scoreboard(chqstate_t *state)
 {
@@ -6969,7 +6948,7 @@ us_gear:
  * in-bounds for the same reason (the block fits within one page).
  *
  * \param[in,out] attrs Pointer to the first attribute byte of the light block.
- *   (was HL)
+ *                      (was HL)
  */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
@@ -7213,12 +7192,13 @@ ptad_turbo_setup:
  * saving time.
  *
  * \param[in]     iterations Number of BCD byte pairs to process. (was B)
- * \param[in]     digits Pointer to the end of the packed-BCD source buffer;
- * walked backwards one byte per pair. (was DE)
- * \param[in,out] stored Pointer to the end of the shadow digit buffer;
- * updated in-place when a digit changes. (was HL)
- * \param[in,out] screen Pointer to the screen column for the first digit;
- * advanced one column per plotted or skipped digit. (was DE')
+ * \param[in]     digits     Pointer to the end of the packed-BCD source buffer;
+ *                           walked backwards one byte per pair. (was DE)
+ * \param[in,out] stored     Pointer to the end of the shadow digit buffer;
+ *                           updated in-place when a digit changes. (was HL)
+ * \param[in,out] screen     Pointer to the screen column for the first digit;
+ *                           advanced one column per plotted or skipped digit.
+ *                           (was DE')
  */
 void ptad_led_digits(chqstate_t *state,
                      int         iterations,
@@ -7273,9 +7253,9 @@ ptad_led_plot_2nd:
  * and -= 256 + 32 (one scanline up and one column right) to advance to the
  * second character row.
  *
- * \param[in]     ord Digit index 0–9. (was A)
+ * \param[in]     ord    Digit index 0–9. (was A)
  * \param[in,out] screen Pointer to the screen byte to draw the digit at.
- *   (was DE')
+ *                       (was DE')
  * \return Pointer to the next digit column (orig_screen + 1).
  *
  * Conv: Z80 uses EXX to bank main registers around LDI; C uses plain locals.
@@ -7310,10 +7290,10 @@ static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
  * attribute row).
  *
  * \param[in] attrval Attribute byte to write at each character cell. (was A)
- * \param[in] attrs Pointer to the first screen attribute to write. (was BC)
+ * \param[in] attrs   Pointer to the first screen attribute to write. (was BC)
  * \param[in] backbuf Pointer to the first back-buffer byte to write. (was DE)
- * \param[in] string NUL-terminated (top-bit-set) string data. (was HL)
- * \param[in] style Draw style selector (e.g. DRAWCHARSTYLE_SINGLE). (was A')
+ * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
+ * \param[in] style   Draw style selector (e.g. DRAWCHARSTYLE_SINGLE). (was A')
  * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_with_style(chqstate_t *state,
@@ -7340,9 +7320,9 @@ static const u8 *draw_string_with_style(chqstate_t *state,
  * Equivalent to draw_string_with_style with style = DRAWCHARSTYLE_SCREEN.
  *
  * \param[in] attrval Attribute byte to write at each character cell. (was A)
- * \param[in] attrs Pointer to the first screen attribute to write. (was BC)
- * \param[in] dst Pointer to the first screen bitmap byte to write. (was DE)
- * \param[in] string NUL-terminated (top-bit-set) string data. (was HL)
+ * \param[in] attrs   Pointer to the first screen attribute to write. (was BC)
+ * \param[in] dst     Pointer to the first screen bitmap byte to write. (was DE)
+ * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
  * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_screen(
@@ -7364,14 +7344,14 @@ static const u8 *draw_string_screen(
  * (top-bit) sentinel, passes it to draw_char, then advances the destination and
  * attribute pointers. Stops after the byte with the EOS bit set.
  *
- * \param[in,out] dst Destination bitmap pointer (screen or back buffer).
- *   (was DE)
- * \param[in]     string NUL-terminated (top-bit-set) string data. (was HL)
- * \param[in]     style Draw style selector. (was A')
- * \param[in]     attrval Attribute byte to write at each cell. (was C')
+ * \param[in,out] dst         Destination bitmap pointer (screen or back
+ *                            buffer). (was DE)
+ * \param[in]     string      NUL-terminated (top-bit-set) string data. (was HL)
+ * \param[in]     style       Draw style selector. (was A')
+ * \param[in]     attrval     Attribute byte to write at each cell. (was C')
  * \param[in]     attrsstride Bytes between successive attribute rows. (was DE')
- * \param[in,out] attrs Pointer to the first screen attribute to write.
- *   (was HL')
+ * \param[in,out] attrs       Pointer to the first screen attribute to write.
+ *                            (was HL')
  * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_core(chqstate_t *state,
@@ -7407,16 +7387,17 @@ static const u8 *draw_string_core(chqstate_t *state,
  * mid-glyph. Writes the attribute byte ([attrval]) to the attribute buffer for
  * single-row styles and to two rows for double-height styles.
  *
- * \param[in]  character ASCII character to draw. (was A)
- * \param[in]  dst Destination: screen or back-buffer pointer. (was DE)
- * \param[in]  style Render style selector (0–5). (was A')
- * \param[in]  attrval Attribute byte to OR into the attribute cells. (was C')
+ * \param[in]  character  ASCII character to draw. (was A)
+ * \param[in]  dst        Destination: screen or back-buffer pointer. (was DE)
+ * \param[in]  style      Render style selector (0–5). (was A')
+ * \param[in]  attrval    Attribute byte to OR into the attribute cells.
+ *                        (was C')
  * \param[in]  attrstride Bytes between successive attribute rows. (was DE')
- * \param[in]  attrs Pointer to the attribute cell for this [character].
- *   (was HL')
+ * \param[in]  attrs      Pointer to the attribute cell for this [character].
+ *                        (was HL')
  * \param[out] new_screen Updated screen pointer after drawing. (was DE on exit)
- * \param[out] new_attrs Updated attribute pointer after drawing. (was HL' on
- *   exit)
+ * \param[out] new_attrs  Updated attribute pointer after drawing.
+ *                        (was HL' on exit)
  *
  * Conv: Z80 uses EX AF,AF' / EXX to bank [style] and attribute registers; C
  * passes all values as explicit parameters.
@@ -7646,8 +7627,9 @@ u8 keyscan(chqstate_t *state)
  * filled). The number of keys scanned equals the number of bits between the
  * stop bit's initial position and bit 8.
  *
- * \param[in] E_stopbit Sentinel: $01 for 8-key scan, $20 for 3-key scan;
- * scanning stops when this bit rotates out of the byte. (was E)
+ * \param[in] E_stopbit  Sentinel: $01 for 8-key scan, $20 for 3-key scan;
+ *                       scanning stops when this bit rotates out of the byte.
+ *                       (was E)
  * \param[in] HL_keydefs Pointer to the keydef byte array. (was HL)
  * \return Packed key state in bits 7..0 (or 7..5 for the 3-key path).
  *
@@ -7932,7 +7914,7 @@ store_crash_spin:
  * post or other roadside object.
  *
  * \param[in] A_flip_flag Flip flag: 0 = right-side hit, 1 = left-side hit.
- * (was A)
+ *                        (was A)
  * \param[in] Adash_speed Impact speed cap passed to scenery_hit. (was A')
  */
 static void csc_hit_scenery(chqstate_t *state, int A_flip_flag, int Adash_speed)
@@ -7950,9 +7932,9 @@ static void csc_hit_scenery(chqstate_t *state, int A_flip_flag, int Adash_speed)
  * flags, flip direction, delay counter, spin speed and speed threshold into the
  * appropriate state fields.
  *
- * \param[in] A_flip_flag Flip flag: 0 = right-side, 1 = left-side. (was A)
- * \param[in] Adash_threshold Speed cap for the crash: the animation starts
- * at min(speed, threshold). (was A')
+ * \param[in] A_flip_flag     Flip flag: 0 = right-side, 1 = left-side. (was A)
+ * \param[in] Adash_threshold Speed cap for the crash: the animation starts at
+ *                            min(speed, threshold). (was A')
  *
  * Conv: Z80 self-modifies operands at $B357 (spin speed) and $B32F (threshold)
  * via LD (addr),HL; C writes directly to state->ahc_crash_spin_speed and
@@ -7999,11 +7981,11 @@ static void scenery_hit(chqstate_t *state, int A_flip_flag, int Adash_threshold)
  * player did NOT take.
  *
  * \param[in] DEdash Road position B value inherited from
- *   check_scenery_collisions;
- * stored directly to ahc_road_pos_b. (was DE')
+ *                   check_scenery_collisions; stored directly to
+ *                   ahc_road_pos_b. (was DE')
  * \param[in] HLdash Road position A value inherited from
- *   check_scenery_collisions;
- * stored directly to ahc_road_pos_a. (was HL')
+ *                   check_scenery_collisions; stored directly to
+ *                   ahc_road_pos_a. (was HL')
  */
 static void check_fork_scenery_collisions(chqstate_t *state,
                                           int         DEdash,
@@ -8223,7 +8205,6 @@ load_and_store_right:
  *
  * The Z80 uses RET Z after the XOR to bail when frame_toggle becomes 0 (i.e. on
  * even frames); slow_anim_counter is advanced only on odd frames.
- *
  */
 static void cycle_counters(chqstate_t *state)
 {
@@ -8623,7 +8604,6 @@ pb_a7be:
  * hazard_template into the free slot, picks a random lane clamped to the road
  * bounds, sets the initial horizontal position and speed from hazard_pos_speed,
  * and assigns a random car bitmap (avoiding the perp lookalike when sighted).
- *
  */
 static void spawn_cars(chqstate_t *state)
 {
@@ -8728,8 +8708,8 @@ fill_in:
  * right-biased: lanes 2–4 $0102 — two-lane road, left-biased: lanes 1–2 $0304 —
  * two-lane road, right-biased: lanes 3–4
  *
- * \param[in] extra Road buffer offset added to the base index when reading
- * the lane byte. (was C)
+ * \param[in] extra Road buffer offset added to the base index when reading the
+ *                  lane byte. (was C)
  * \return Packed min/max lane pair (high byte = min, low byte = max).
  */
 static u16 get_spawn_lanes(chqstate_t *state, int extra)
@@ -8870,7 +8850,6 @@ void hazard_handler(chqstate_t *state, hazard_t *IX_hazard)
  * horizontal position. Both are written to the $ED28 particle table and the
  * three SM flags driving layout_dirt_and_stones and draw_dirt_and_stones are set
  * to 1.
- *
  */
 static void choose_dirt_and_stones(chqstate_t *state)
 {
@@ -8905,7 +8884,6 @@ static void choose_dirt_and_stones(chqstate_t *state)
  * When the pass completes with a zero total (all entries were zero), the three
  * SM flags ldas_enabled, rm_scroll_dirt_particles and ddas_enabled are
  * cleared.
- *
  */
 static void layout_dirt_and_stones(chqstate_t *state)
 {
@@ -9007,8 +8985,8 @@ ldas_do_work:
  * draw_object_left/right_width_entrypt with the computed x-position.
  *
  * \param[in] B_iterations Distance-based counter; clamped to 10 for LOD
- * selection. (was B)
- * \param[in] IY_height Pointer into the height table. (was IY)
+ *                         selection. (was B)
+ * \param[in] IY_height    Pointer into the height table. (was IY)
  */
 static void draw_dirt_and_stones(chqstate_t *state,
                                  int         B_iterations,
@@ -9115,8 +9093,8 @@ ddas_bitmaps:
  * sixth rotor entry drawn separately using the self-modified rotor position.
  *
  * \param[in] B_distance Distance counter; must equal 3 to render. (was B)
- * \param[in] IY_height Pointer into the height table, passed through to
- *            draw_helicoper_part for object plotting. (was IY)
+ * \param[in] IY_height  Pointer into the height table, passed through to
+ *                       draw_helicoper_part for object plotting. (was IY)
  */
 static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
 {
@@ -9189,12 +9167,12 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
  * object entry point depending on which side of the screen the part falls,
  * matching draw_object_common's clipping logic.
  *
- * \param[in] A_col_pos Column offset of this part from the helicopter's
- *   centre (negated and stored to doc_col_pos). (was A)
+ * \param[in] A_col_pos      Column offset of this part from the helicopter's
+ *                           centre (negated and stored to doc_col_pos). (was A)
  * \param[in] DE_innerbitmap Part bitmap block (x-offset + bitmap, or bare
- *   bitmap for the rotor). (was DE)
- * \param[in] IY_height Pointer into the height table, forwarded to the
- *   stretchy-object draw routines. (was IY)
+ *                           bitmap for the rotor). (was DE)
+ * \param[in] IY_height      Pointer into the height table, forwarded to the
+ *                           stretchy-object draw routines. (was IY)
  */
 static void draw_helicoper_part(chqstate_t                *state,
                                 int                        A_col_pos,
@@ -9263,7 +9241,6 @@ static void draw_helicoper_part(chqstate_t                *state,
  * toward mh_heli_centre_y (normally 112, the screen centre; drive_helicopter
  * redirects it to −56 to fly the helicopter off-screen during the exit
  * sequence), clamping when it would overshoot.
- *
  */
 static void move_helicopter(chqstate_t *state)
 {
@@ -9339,7 +9316,6 @@ set_newpos:
  * When the helicopter is enabled, dee_draw_helicopter is set to 1 and the call
  * site at $8FA4 is self-modified to CALL draw_helicopter. When disabled it is
  * patched back to NOPs.
- *
  */
 static void drive_helicopter(chqstate_t *state)
 {
@@ -9422,7 +9398,6 @@ hc_exit:
  * placement: 1: one obstacle at x=50. 2: one obstacle at x=220. 3: two or three
  * obstacles; barriers when inhibit_collision_detection is set, tumbleweeds
  * otherwise.
- *
  */
 static void spawn_hazards(chqstate_t *state)
 {
@@ -9513,10 +9488,10 @@ sh_add_hazards_done:
  * table offset, marking it used. Called by spawn_hazards once per barrier or
  * tumbleweed to be placed.
  *
- * \param[in] B_horz_pos X coordinate for the new hazard. (was B)
- * \param[in] C_distance Distance slot for the new hazard. (was C)
+ * \param[in] B_horz_pos         X coordinate for the new hazard. (was B)
+ * \param[in] C_distance         Distance slot for the new hazard. (was C)
  * \param[in] DE_hittable_offset Offset into the hittable table selecting the
- *   light or heavy variant. (was DE)
+ *                               light or heavy variant. (was DE)
  * \return Non-zero if no free slot was found (Conv: was POP HL, causing
  *   spawn_hazards to return early).
  */
@@ -9685,7 +9660,6 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
  * Conv: Z80 pushes $AD4B (the loop-advance address) before the per-slot checks
  * so that early `RET`s jump directly to the DJNZ tail; C uses `goto
  * chc_continue` for the same effect.
- *
  */
 static void check_hazard_collisions(chqstate_t *state)
 {
@@ -9740,9 +9714,11 @@ chc_continue:
  * has no output parameter.
  *
  * \param[in]     default_retval value returned when no collision (was D).
- * \param[in]     HL Initial HL; unused within the function body, kept for
- * skool traceability of the original register (was [HL]).
- * \param[in,out] hazard Hazard being tested; hit_timer written on hit (was IX).
+ * \param[in]     HL             Initial HL; unused within the function body,
+ *                               kept for skool traceability of the original
+ *                               register (was [HL]).
+ * \param[in,out] hazard         Hazard being tested; hit_timer written on hit
+ *                               (was IX).
  * \return 1 on collision, [default_retval] otherwise (was D).
  */
 static u8 check_collision(chqstate_t *state,
@@ -9818,7 +9794,6 @@ static u8 check_collision(chqstate_t *state,
  * advance_hazard advances the hazard's distance, performs perspective
  * projection, inserts it into the depth-sorted draw list and fires its hit
  * handler. The height table pointer passed to it indexes the $E300 buffer.
- *
  */
 static void advance_hazards(chqstate_t *state)
 {
@@ -9868,7 +9843,7 @@ static void advance_hazards(chqstate_t *state)
  * pointer-decrement loop over s16 words.
  *
  * \param[in,out] IX_hazard Hazard slot to advance and render (was IX).
- * \param[in]     IY_base Base of the height table at $E300 (was IY).
+ * \param[in]     IY_base   Base of the height table at $E300 (was IY).
  */
 static void advance_hazard(chqstate_t *state,
                            hazard_t   *IX_hazard,
@@ -10124,8 +10099,8 @@ void no_op(chqstate_t *state, hazard_t *hazard)
  * switch).
  *
  * \param[in] B_iterations Current draw depth; must match draw-table entry.
- *   (was B)
- * \param[in] IY_height Pointer into the height table. (was IY)
+ *                         (was B)
+ * \param[in] IY_height    Pointer into the height table. (was IY)
  */
 static void draw_hazard_sprites(chqstate_t *state,
                                 int         B_iterations,
@@ -10340,8 +10315,8 @@ dafs_done_draw_object:
  * offsets from [HL_smoke] at stride index*2, subtracts counter from x and calls
  * dhs_draw with the matching smoke_defns frame.
  *
- * \param[in,out] HL_smoke Smoke particle data: [0]=counter, [1+]=x,y pairs.
- *   (was HL)
+ * \param[in,out] HL_smoke  Smoke particle data: [0]=counter, [1+]=x,y pairs.
+ *                          (was HL)
  * \param[in]     IY_height Pointer into the height table. (was IY)
  */
 static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
@@ -10375,12 +10350,12 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
  * byte offset. [DE_offset] is divided by 7 (size of bitmap_t) to produce the
  * array index before forwarding to dhs_draw_bitmap.
  *
- * \param[in] B_x Horizontal offset added to doc_col_pos. (was B)
- * \param[in] C_y Vertical offset applied to horz_pos. (was C)
- * \param[in] DE_offset Byte offset into [HL_bitmaps]; divided by 7 for index.
- *   (was DE)
+ * \param[in] B_x        Horizontal offset added to doc_col_pos. (was B)
+ * \param[in] C_y        Vertical offset applied to horz_pos. (was C)
+ * \param[in] DE_offset  Byte offset into [HL_bitmaps]; divided by 7 for index.
+ *                       (was DE)
  * \param[in] HL_bitmaps Base of the bitmap_t array to index into. (was HL)
- * \param[in] IY_height Pointer into the height table. (was IY)
+ * \param[in] IY_height  Pointer into the height table. (was IY)
  */
 static void dhs_draw(chqstate_t     *state,
                      int             B_x,
@@ -10404,8 +10379,8 @@ static void dhs_draw(chqstate_t     *state,
  * for carry and dispatches to draw_object_left/right based on whether the
  * result is >= 128.
  *
- * \param[in] B_x Horizontal column offset added to dhs_col_pos. (was B)
- * \param[in] C_y Vertical offset added to the SM horz_pos value. (was C)
+ * \param[in] B_x       Horizontal column offset added to dhs_col_pos. (was B)
+ * \param[in] C_y       Vertical offset added to the SM horz_pos value. (was C)
  * \param[in] HL_bitmap Bitmap definition to draw. (was HL)
  * \param[in] IY_height Pointer into the height table. (was IY)
  */
@@ -10465,7 +10440,6 @@ dhs_exit_1:
  * [0, 511]. Accumulates left/right turning forces from user input and caps them
  * against the current speed. Converts curvature scroll ticks to a road_pos
  * delta. Writes turn_speed (0/1/2) and flip_car for the sprite renderer.
- *
  */
 static void move_hero_car(chqstate_t *state)
 {
@@ -10805,7 +10779,6 @@ mhc_set_cornering:
  * ahc_road_pos_a/b bounds. Drives the perp-caught animation phase. Calls
  * draw_debris, ahc_check_hand_flag, draw_hero_car and (when cornering or
  * boosting) draw_smoke.
- *
  */
 static void animate_hero_car(chqstate_t *state)
 {
@@ -10985,7 +10958,6 @@ ahc_assign_road_pos_2:
  * (ahc_hand_delay/ahc_hand_step) through 7 animation frames, enables the cherry
  * light on the final frame, and draws one or two hand sprites per tick via
  * draw_crash_unflipped.
- *
  */
 static void ahc_check_hand_flag(chqstate_t *state)
 {
@@ -11069,7 +11041,6 @@ static void ahc_check_hand_flag(chqstate_t *state)
  * Resets the time limit (15 sixteenths, BCD 60 seconds). Toggles the marquee
  * left light brightness, shows the sighting overlay message, and starts the
  * siren.
- *
  */
 static void start_chase(chqstate_t *state)
 {
@@ -11102,7 +11073,6 @@ static void start_chase(chqstate_t *state)
  * reaches SMASHCOUNTER_MAX the perp is fully smashed via fully_smashed; one
  * below that triggers a "one more time" chatter. Updates smash_level (0..6)
  * from a stepped threshold table of hit counts.
- *
  */
 static void smash(chqstate_t *state)
 {
@@ -11149,7 +11119,6 @@ static void smash(chqstate_t *state)
  * bitmap frame (12 bytes per frame in bitmap_debris); the current
  * dd_frame_offset selects the y/x pair within the sub-table. Each piece is
  * drawn via draw_masked_sprite at 6×1 bytes masked.
- *
  */
 static void draw_debris(chqstate_t *state)
 {
@@ -11227,10 +11196,10 @@ static void draw_debris(chqstate_t *state)
  * or plot_sprite_flipped depending on flip_car. Finishes by drawing the
  * windscreen, wheels and both side panels via draw_hero_car_part.
  *
- * \param[in]     A_turn_speed Turning speed index 0..2: straight/turn/turn-hard.
- *   (was A)
- * \param[in]     B_wobble Vertical wobble offset added to car body index.
- *   (was B)
+ * \param[in] A_turn_speed Turning speed index 0..2: straight/turn/turn-hard.
+ *                         (was A)
+ * \param[in] B_wobble     Vertical wobble offset added to car body index.
+ *                         (was B)
  */
 static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
 {
@@ -11337,11 +11306,12 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
  * 0 when unflipped, [C_width_bytes] − 1 when flipped. Returns a pointer to the
  * next carpart_t entry so callers can chain draws.
  *
- * \param[in]     C_width_bytes Sprite width in bytes; also the bitmap stride.
- *   (was C)
- * \param[in]     D_y Base vertical screen position of the car body. (was D)
- * \param[in]     E_x Horizontal screen position in pixels. (was E)
- * \param[in]     HL_part Pointer to the carpart_t entry to draw. (was HL)
+ * \param[in] C_width_bytes Sprite width in bytes; also the bitmap stride.
+ *                          (was C)
+ * \param[in] D_y           Base vertical screen position of the car body.
+ *                          (was D)
+ * \param[in] E_x           Horizontal screen position in pixels. (was E)
+ * \param[in] HL_part       Pointer to the carpart_t entry to draw. (was HL)
  * \return Pointer to the following carpart_t entry. (was HL)
  */
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
@@ -11395,9 +11365,8 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
  * unflipped_x; when flipped, Cdash is width − 1 and x comes from flipped_x.
  * Draws via draw_masked_sprite_rel_car at y=119, centred at x + 127.
  *
- * \param[in]     A_anim_frame Index into hero_car_turbo_smoke[]. (was A)
- * \param[in]     Adash_flip_flag Non-zero to draw flipped (left exhaust).
- *   (was A')
+ * \param[in] A_anim_frame    Index into hero_car_turbo_smoke[]. (was A)
+ * \param[in] Adash_flip_flag Non-zero to draw flipped (left exhaust). (was A')
  */
 static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
 {
@@ -11460,12 +11429,12 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
  * or twice (flipped) to shift to the turned-light frames. Renders via
  * draw_crash_unflipped.
  *
- * \param[in]     A_frame_index Base frame index into the cherry-light sprite
- *   table. (was A)
- * \param[in]     B_turn_limit Minimum turn_speed that triggers the turn-offset
- *   path. (was B)
- * \param[in]     C_turn_delta Frame delta applied once or twice when turning.
- *   (was C)
+ * \param[in] A_frame_index Base frame index into the cherry-light sprite table.
+ *                          (was A)
+ * \param[in] B_turn_limit  Minimum turn_speed that triggers the turn-offset
+ *                          path. (was B)
+ * \param[in] C_turn_delta  Frame delta applied once or twice when turning.
+ *                          (was C)
  */
 static void draw_cherry_light(chqstate_t *state,
                               int         A_frame_index,
@@ -11498,7 +11467,7 @@ static void draw_cherry_light(chqstate_t *state,
  * Convenience entry point that calls draw_crash with Bdash_flip_flag=0 and
  * Cdash=0, producing an unflipped render with no horizontal start offset.
  *
- * \param[in]     A_frame_index Frame index into car_frames[]. (was A)
+ * \param[in] A_frame_index Frame index into car_frames[]. (was A)
  */
 static void draw_crash_unflipped(chqstate_t *state, int A_frame_index)
 {
@@ -11513,10 +11482,10 @@ static void draw_crash_unflipped(chqstate_t *state, int A_frame_index)
  * the adornment's dimensions and bitmap, adjusts y for jump height and road
  * pitch, then calls draw_masked_sprite_rel_car.
  *
- * \param[in]     A_frame_index Index into car_frames[]. (was A)
- * \param[in]     Bdash_flip_flag Non-zero to draw the frame horizontally
- *   flipped. (was B')
- * \param[in]     Cdash Horizontal start offset within the sprite (was C')
+ * \param[in] A_frame_index   Index into car_frames[]. (was A)
+ * \param[in] Bdash_flip_flag Non-zero to draw the frame horizontally flipped.
+ *                            (was B')
+ * \param[in] Cdash           Horizontal start offset within the sprite (was C')
  */
 static void draw_crash(chqstate_t *state,
                        int         A_frame_index,
@@ -11564,16 +11533,17 @@ static void draw_crash(chqstate_t *state,
  * draw_masked_sprite. car_y encodes the on-screen vertical slot of the car;
  * subtracting it converts an absolute row number to a back-buffer row.
  *
- * \param[in]     height Number of pixel rows to draw. (was B)
- * \param[in]     width Sprite byte width. (was C)
- * \param[in]     y Absolute vertical screen row before car_y adjustment.
- *   (was D)
- * \param[in]     x Horizontal screen position in pixels. (was E)
- * \param[in]     bitmap Source sprite data. (was HL)
- * \param[in]     Bdash_flip_flag Non-zero to draw horizontally flipped.
- *   (was B')
- * \param[in]     Cdash Horizontal start offset within the sprite. (was C')
- * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
+ * \param[in] height              Number of pixel rows to draw. (was B)
+ * \param[in] width               Sprite byte width. (was C)
+ * \param[in] y                   Absolute vertical screen row before car_y
+ *                                adjustment. (was D)
+ * \param[in] x                   Horizontal screen position in pixels. (was E)
+ * \param[in] bitmap              Source sprite data. (was HL)
+ * \param[in] Bdash_flip_flag     Non-zero to draw horizontally flipped.
+ *                                (was B')
+ * \param[in] Cdash               Horizontal start offset within the sprite.
+ *                                (was C')
+ * \param[in] Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_masked_sprite_rel_car(chqstate_t *state,
                                        int         height,
@@ -11607,15 +11577,17 @@ static void draw_masked_sprite_rel_car(chqstate_t *state,
  * plot_masked_sprite_flipped_entrypt2 (when [Bdash_flip_flag] is set) or
  * plot_masked_sprite_by_width (when clear).
  *
- * \param[in]     B_height Number of pixel rows to draw. (was B)
- * \param[in]     C_width_bytes Sprite byte width. (was C)
- * \param[in]     D_y Vertical screen row after car_y adjustment. (was D)
- * \param[in]     E_x Horizontal screen position in pixels. (was E)
- * \param[in]     HL_bitmap_data Source sprite data. (was HL)
- * \param[in]     Bdash_flip_flag Non-zero to draw horizontally flipped.
- *   (was B')
- * \param[in]     Cdash Horizontal start offset within the sprite. (was C')
- * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
+ * \param[in] B_height            Number of pixel rows to draw. (was B)
+ * \param[in] C_width_bytes       Sprite byte width. (was C)
+ * \param[in] D_y                 Vertical screen row after car_y adjustment.
+ *                                (was D)
+ * \param[in] E_x                 Horizontal screen position in pixels. (was E)
+ * \param[in] HL_bitmap_data      Source sprite data. (was HL)
+ * \param[in] Bdash_flip_flag     Non-zero to draw horizontally flipped.
+ *                                (was B')
+ * \param[in] Cdash               Horizontal start offset within the sprite.
+ *                                (was C')
+ * \param[in] Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_masked_sprite(chqstate_t *state,
                                int         B_height,
@@ -11626,39 +11598,39 @@ static void draw_masked_sprite(chqstate_t *state,
                                int         Bdash_flip_flag,
                                int         Cdash,
                                int         Edash_bitmap_stride)
-                               {
-                               int carry_flip_flag; /* LSB of Bdash_flip_flag: 1=flip, 0=normal (was carry) */
-                               u8  A_y;             /* copy of D_y banked across EX AF,AF' (was A) */
-                               u16 DE_backbuf;      /* back-buffer address assembled from x and y fields (was DE) */
-                               u8  E_stride;        /* bitmap stride doubled: C_width_bytes << 1 (was E) */
-                               u16 HLdash_backbuf;  /* copy of DE_backbuf with Cdash added for EXX (was HL') */
-                               u8  A_width_bytes;   /* sprite stride from Edash_bitmap_stride (was A) */
-                               
-                               // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
-                               
-                               DE_backbuf = (E_x & 0xF8) >> 3; // x pixel pos to field CCCCC
-                               A_y = D_y; // we make a temp copy but then bank - odd
-                               // EX AF,AF' - bank to use A as temp, or to preserve something like carry?
-                               // y pixel pos (bottom nibble) to field LLLL
-                               DE_backbuf |= ((D_y & 0x0F) << 8) | BACKBUFFER_START_ADDRESS;
-                               // EX AF,AF'
-                               DE_backbuf |= (A_y & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
-                               /* removed PUSH DE_backbuf */
-                               E_stride = C_width_bytes << 1;
-                               // EXX - Bank
-                               HLdash_backbuf = DE_backbuf; /* was POP HLdash_backbuf */
-                               A_width_bytes = Edash_bitmap_stride;
-                               carry_flip_flag = Bdash_flip_flag & 1; /* was shift (and zeroes the register) */
-                               // EX AF,AF'  -- preserve carry_flip_flag
-                               HLdash_backbuf += Cdash; /* was BCdash - B always zero here */
-                               // EX AF,AF'
-                               if (carry_flip_flag)
-                               plot_masked_sprite_flipped_entrypt2(state,
-                               A_width_bytes,
-                               ADDRTOBACKBUF(HLdash_backbuf),
-                               B_height,
-                               E_stride,
-                               HL_bitmap_data);
+{
+  int carry_flip_flag; /* LSB of Bdash_flip_flag: 1=flip, 0=normal (was carry) */
+  u8  A_y;             /* copy of D_y banked across EX AF,AF' (was A) */
+  u16 DE_backbuf;      /* back-buffer address assembled from x and y fields (was DE) */
+  u8  E_stride;        /* bitmap stride doubled: C_width_bytes << 1 (was E) */
+  u16 HLdash_backbuf;  /* copy of DE_backbuf with Cdash added for EXX (was HL') */
+  u8  A_width_bytes;   /* sprite stride from Edash_bitmap_stride (was A) */
+
+  // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
+
+  DE_backbuf = (E_x & 0xF8) >> 3; // x pixel pos to field CCCCC
+  A_y = D_y; // we make a temp copy but then bank - odd
+  // EX AF,AF' - bank to use A as temp, or to preserve something like carry?
+  // y pixel pos (bottom nibble) to field LLLL
+  DE_backbuf |= ((D_y & 0x0F) << 8) | BACKBUFFER_START_ADDRESS;
+  // EX AF,AF'
+  DE_backbuf |= (A_y & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
+  /* removed PUSH DE_backbuf */
+  E_stride = C_width_bytes << 1;
+  // EXX - Bank
+  HLdash_backbuf = DE_backbuf; /* was POP HLdash_backbuf */
+  A_width_bytes = Edash_bitmap_stride;
+  carry_flip_flag = Bdash_flip_flag & 1; /* was shift (and zeroes the register) */
+  // EX AF,AF'  -- preserve carry_flip_flag
+  HLdash_backbuf += Cdash; /* was BCdash - B always zero here */
+  // EX AF,AF'
+  if (carry_flip_flag)
+    plot_masked_sprite_flipped_entrypt2(state,
+                                        A_width_bytes,
+                                        ADDRTOBACKBUF(HLdash_backbuf),
+                                        B_height,
+                                        E_stride,
+                                        HL_bitmap_data);
   else
     plot_masked_sprite_by_width(state,
                                 A_width_bytes,
@@ -11676,11 +11648,11 @@ static void draw_masked_sprite(chqstate_t *state,
  * selects the fall-through case in the unrolled byte-copy loop so that only
  * [A_width_bytes] bytes are written per row.
  *
- * \param[in]     A_width_bytes Sprite width in bytes, 1..8. (was A)
- * \param[in]     HL_backbuf_addr Back-buffer write address. (was HL')
- * \param[in]     Bdash_height Number of pixel rows to draw. (was B')
- * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
- * \param[in]     HLdash_bitmap_data Source masked sprite data. (was HL')
+ * \param[in] A_width_bytes       Sprite width in bytes, 1..8. (was A)
+ * \param[in] HL_backbuf_addr     Back-buffer write address. (was HL')
+ * \param[in] Bdash_height        Number of pixel rows to draw. (was B')
+ * \param[in] Edash_bitmap_stride Sprite row stride in bytes. (was E')
+ * \param[in] HLdash_bitmap_data  Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_by_width(chqstate_t *state,
                                         int         A_width_bytes,
@@ -11688,19 +11660,19 @@ static void plot_masked_sprite_by_width(chqstate_t *state,
                                         int         Bdash_height,
                                         int         Edash_bitmap_stride,
                                         const u8   *HLdash_bitmap_data)
-                                        {
-                                        int IX_jump_offset; /* fall-through index: (8 − A_width_bytes) × 6 (was IX) */
-                                        
-                                        IX_jump_offset = (8 - A_width_bytes) * 6;
-                                        // B = 15; // Conv: Mask removed
-                                        // EXX
-                                        
-                                        plot_masked_sprite(state,
-                                        IX_jump_offset,
-                                        Bdash_height,
-                                        Edash_bitmap_stride, // Conv: Original clears top byte
-                                        HLdash_bitmap_data,
-                                        HL_backbuf_addr); /* was FALLTHROUGH */
+{
+  int IX_jump_offset; /* fall-through index: (8 − A_width_bytes) × 6 (was IX) */
+
+  IX_jump_offset = (8 - A_width_bytes) * 6;
+  // B = 15; // Conv: Mask removed
+  // EXX
+
+  plot_masked_sprite(state,
+                     IX_jump_offset,
+                     Bdash_height,
+                     Edash_bitmap_stride, // Conv: Original clears top byte
+                     HLdash_bitmap_data,
+                     HL_backbuf_addr); /* was FALLTHROUGH */
 }
 
 /**
@@ -11713,16 +11685,16 @@ static void plot_masked_sprite_by_width(chqstate_t *state,
  * back-buffer pointer is reset to the row-start address plus one (scanline
  * advance). Iterates until [height] rows are drawn.
  *
- * \param[in,out] state Pointer to game state (unused but required by
- *   signature).
- * \param[in]     jump_offset Fall-through start index: (8 − width) × 6.
- *   (was IX)
- * \param[in]     height Number of pixel rows to draw. (was B)
+ * \param[in,out] state         Pointer to game state (unused but required by
+ *                              signature).
+ * \param[in]     jump_offset   Fall-through start index: (8 − width) × 6.
+ *                              (was IX)
+ * \param[in]     height        Number of pixel rows to draw. (was B)
  * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was DE)
- * \param[in]     bitmap_data Source masked sprite data (mask/data byte pairs).
- *   (was HL)
- * \param[in]     backbuf_addr Back-buffer write address for the first row.
- *   (was HL')
+ * \param[in]     bitmap_data   Source masked sprite data (mask/data byte
+ *                              pairs). (was HL)
+ * \param[in]     backbuf_addr  Back-buffer write address for the first row.
+ *                              (was HL')
  *
  * \return Back-buffer address of the last row drawn.
  */
@@ -11797,12 +11769,12 @@ plot_masked_sprite_entry:
  * point begins at the right edge of the sprite, then falls through to
  * plot_masked_sprite_flipped_entrypt2 which draws rightward-to-leftward.
  *
- * \param[in]     width_bytes Sprite width in bytes. (was A)
- * \param[in]     backbuf_addr Back-buffer address of the left edge of the
- *   sprite. (was HL)
- * \param[in]     height Number of pixel rows to draw. (was B')
- * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was E')
- * \param[in]     bitmap_data Source masked sprite data. (was HL')
+ * \param[in] width_bytes   Sprite width in bytes. (was A)
+ * \param[in] backbuf_addr  Back-buffer address of the left edge of the sprite.
+ *                          (was HL)
+ * \param[in] height        Number of pixel rows to draw. (was B')
+ * \param[in] bitmap_stride Source bitmap row stride in bytes. (was E')
+ * \param[in] bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped(chqstate_t *state,
                                        int         width_bytes,
@@ -11831,13 +11803,13 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
  * by [bitmap_stride] and the back buffer returns to the row-start address less
  * one.
  *
- * \param[in,out] state Pointer to game state (flipped[] lookup table).
- * \param[in]     width_bytes Sprite width in bytes, 1..8. (was A)
- * \param[in]     backbuf_addr Back-buffer address one byte past the right edge.
- *   (was HL)
- * \param[in]     height Number of pixel rows to draw. (was B')
+ * \param[in,out] state         Pointer to game state (flipped[] lookup table).
+ * \param[in]     width_bytes   Sprite width in bytes, 1..8. (was A)
+ * \param[in]     backbuf_addr  Back-buffer address one byte past the right
+ *                              edge. (was HL)
+ * \param[in]     height        Number of pixel rows to draw. (was B')
  * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was E')
- * \param[in]     bitmap_data Source masked sprite data. (was HL')
+ * \param[in]     bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
                                                 int         width_bytes,
@@ -11917,14 +11889,14 @@ pmsf_start:
  * producing a vertically inverted render. Observed with BC' = $0704 (7 rows,
  * 4-byte stride) and HL' = bitmap_barrier_4s.
  *
- * \param[in]     A_width_bytes Sprite width in bytes. (was A)
- * \param[in]     HL_backbuf_addr Back-buffer write address for the first
- *   (topmost) row. (was HL)
- * \param[in]     Bdash_height Number of pixel rows to draw. (was B')
- * \param[in]     Edash_bitmap_stride Source bitmap row stride in bytes
- *   (positive). (was E')
- * \param[in]     HLdash_bitmap_data Pointer to the first byte of the source
- *   bitmap. (was HL')
+ * \param[in] A_width_bytes       Sprite width in bytes. (was A)
+ * \param[in] HL_backbuf_addr     Back-buffer write address for the first
+ *                                (topmost) row. (was HL)
+ * \param[in] Bdash_height        Number of pixel rows to draw. (was B')
+ * \param[in] Edash_bitmap_stride Source bitmap row stride in bytes (positive).
+ *                                (was E')
+ * \param[in] HLdash_bitmap_data  Pointer to the first byte of the source
+ *                                bitmap. (was HL')
  */
 static void plot_masked_sprite_inverted(chqstate_t *state,
                                         int         A_width_bytes,
@@ -11969,7 +11941,6 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
  * looks up the per-step threshold, counts how many ticks have elapsed since the
  * last horizon_y_step, accumulates the delta into horizon_y_accum, and adjusts
  * session.horizon_level and horizon_y_step.
- *
  */
 static void scroll_horizon(chqstate_t *state)
 {
@@ -12094,7 +12065,6 @@ static void scroll_horizon(chqstate_t *state)
  * horizon_curve_index, and updates horizon_x_scroll. 6. Horizontal adjust:
  * computes the per-frame steering correction from the old-vs-new curvature
  * difference, then resets curvature counters.
- *
  */
 static void update_road_level(chqstate_t *state)
 {
@@ -12275,7 +12245,6 @@ url_B9C5:
  * per road half, adjusting road_pos temporarily). The fork inner loop runs
  * Bdash_fork_iters iterations (from the height at the fork), with the remaining
  * entries handled by falling through to the non-fork path.
- *
  */
 static void layout_road(chqstate_t *state)
 {
@@ -12507,7 +12476,6 @@ lr_badf:
  *
  * Finally resets all fork and road counters so the engine resumes single-road
  * rendering.
- *
  */
 static void exit_fork(chqstate_t *state)
 {
@@ -12618,7 +12586,6 @@ static void exit_fork(chqstate_t *state)
  *
  * The smash-meter section ($BD93 ds_smash_meter) paints six attribute rows at
  * $5962 with the smash-o-meter colour gradient when a perp is sighted.
- *
  */
 static void send_playfield(chqstate_t *state)
 {
@@ -12799,7 +12766,6 @@ exit:
  * rows of the stage ground colour. Finally stamps both edge columns of every
  * playfield attribute row with black-on-black to hide the road overdraw at the
  * screen borders.
- *
  */
 static void set_playfield_attrs(chqstate_t *state)
 {
@@ -12859,7 +12825,6 @@ static void set_playfield_attrs(chqstate_t *state)
  * accumulation, and a second time if the accumulation overflows. All actual
  * buffer advancing and data-channel decoding are delegated to
  * rm_cycle_buffer_offset.
- *
  */
 static void read_map(chqstate_t *state)
 {
@@ -12912,8 +12877,9 @@ static void read_map(chqstate_t *state)
  * check_hazard_collisions.
  *
  * \param[in] HL_fast_counter Pointer to the fast_counter field; the Z80 used
- * HL+1 (= &road_buffer_offset) to advance the buffer. Conv: unused in C —
- * roadbufptr is advanced directly via ROADBUF_FWD2PTR. (was HL)
+ *                            HL+1 (= &road_buffer_offset) to advance the
+ *                            buffer. Conv: unused in C — roadbufptr is advanced
+ *                            directly via ROADBUF_FWD2PTR. (was HL)
  */
 static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
 {
@@ -13411,7 +13377,6 @@ rm_restart_hazards_read: // $BFF3
  *
  * Sets the draw_tunnel hooks by patching dee_draw_tunnel_1 / dee_draw_tunnel_2
  * with Z80_CALL_NN, and writes dt_far_wall_mode = dr_in_tunnel ^ 1.
- *
  */
 static void prepare_tunnel(chqstate_t *state)
 {
@@ -13513,7 +13478,7 @@ pt_arm_hooks:
  * x-position tables, giving the left and right tunnel wall column positions.
  *
  * \param[in] IY_height Pointer to current row's entry in the height table.
- *   (was IY)
+ *                      (was IY)
  */
 static void draw_tunnel(chqstate_t *state, u8 *IY_height)
 {
@@ -13844,16 +13809,17 @@ static u8 *addr_to_xpos(chqstate_t *state, int H, int L)
  * after writing the tables; the caller sets callback_sel = CB_FOUR_LANE and
  * resumes the dispatch itself.
  *
- * \param[in]     B_fill_pattern Road fill pattern for the current scanline.
- *   (was B)
- * \param[in]     C_horizon Horizon scanline counter. (was C)
- * \param[in]     DE_backbuf Back-buffer row address. (was DE)
+ * \param[in]     B_fill_pattern       Road fill pattern for the current
+ *                                     scanline. (was B)
+ * \param[in]     C_horizon            Horizon scanline counter. (was C)
+ * \param[in]     DE_backbuf           Back-buffer row address. (was DE)
  * \param[in]     H_left_hand_table_hi High byte of left x-position table
- *   ($E8..$EC). (was H)
- * \param[in]     L_row Low byte (row index) within the x-position table page.
- *   (was L)
- * \param[in,out] IX_lanesptr Pointer into road buffer lane data. (was IX)
- * \param[in,out] IY_heightptr Pointer into height table. (was IY)
+ *                                     ($E8..$EC). (was H)
+ * \param[in]     L_row                Low byte (row index) within the
+ *                                     x-position table page. (was L)
+ * \param[in,out] IX_lanesptr          Pointer into road buffer lane data.
+ *                                     (was IX)
+ * \param[in,out] IY_heightptr         Pointer into height table. (was IY)
  */
 static void draw_road_lanes_change(chqstate_t *state,
                                    int         B_fill_pattern,
@@ -14151,7 +14117,6 @@ drlc_steep_step:
  * the stripe phase from the lane-data buffer offset (bit 0 = XOR base, bit 1 =
  * initial stripe state), sets the stripe parameters, then falls through to
  * dr_read_lanes to begin the row-by-row road render.
- *
  */
 static void draw_road(chqstate_t *state)
 {
@@ -14303,14 +14268,14 @@ static void draw_road(chqstate_t *state)
  * draw_road_lanes_change; set with bit 7 clear = tunnel section dispatching to
  * dr_dispatch; set with bit 7 set = dirt track or forked road.
  *
- * \param[in]     B_fill_pattern Road fill pattern for this scanline. (was B)
- * \param[in]     C_counter Horizon scanline counter. (was C)
- * \param[in]     DE_backbuf Back-buffer row address. (was DE)
- * \param[in]     L_row Row index within the x-position table page. (was L)
- * \param[in]     IX_lanesptr Pointer into road_buffer at the current lane byte.
- *   (was IX)
- * \param[in]     IY_heightptr Pointer into height_table at the current row.
- *   (was IY)
+ * \param[in] B_fill_pattern Road fill pattern for this scanline. (was B)
+ * \param[in] C_counter      Horizon scanline counter. (was C)
+ * \param[in] DE_backbuf     Back-buffer row address. (was DE)
+ * \param[in] L_row          Row index within the x-position table page. (was L)
+ * \param[in] IX_lanesptr    Pointer into road_buffer at the current lane byte.
+ *                           (was IX)
+ * \param[in] IY_heightptr   Pointer into height_table at the current row.
+ *                           (was IY)
  */
   for (;;) { /* outer loop: one iteration per road segment ($C4AD..$C797) */
     A_left_offset = *IX_lanesptr & MAP_LANES_LEFT_OFFSET_MASK;
@@ -14416,11 +14381,12 @@ static void draw_road(chqstate_t *state)
    * fill dispatch.
    *
    * \param[in]     B_fill_pattern Road fill pattern for this scanline. (was B)
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in]     C_counter      Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf     Back-buffer row address. (was DE)
+   * \param[in]     L_row          Row index within the x-position table page.
+   *                               (was L)
+   * \param[in,out] IX_lanesptr    Pointer into road_buffer lane data. (was IX)
+   * \param[in,out] IY_heightptr   Pointer into height_table. (was IY)
    */
   dr_four_lane_highway:
     // EXX - BANK (we enter unbanked)
@@ -14444,13 +14410,14 @@ static void draw_road(chqstate_t *state)
    * filled/chequerboard road path), zero sets fill_sel to FILL_UNFILLED and
    * falls through to dr_advance_unfilled (the empty/sky path).
    *
-   * \param[in]     B_fill_pattern Non-zero selects the filled road scanline path.
-   *   (was B)
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in]     B_fill_pattern Non-zero selects the filled road scanline
+   *                               path. (was B)
+   * \param[in]     C_counter      Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf     Back-buffer row address. (was DE)
+   * \param[in]     L_row          Row index within the x-position table page.
+   *                               (was L)
+   * \param[in,out] IX_lanesptr    Pointer into road_buffer lane data. (was IX)
+   * \param[in,out] IY_heightptr   Pointer into height_table. (was IY)
    */
   dr_dispatch:
     // ENTERED UNBANKED
@@ -14470,12 +14437,14 @@ static void draw_road(chqstate_t *state)
    * dr_rollover_unfilled to apply the row-group advance; otherwise falls through
    * to dr_write_scanline_unfilled to write the current row.
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     C_counter          Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_advance_unfilled:
     // ENTERED UNBANKED (but AF is banked)
@@ -14495,12 +14464,14 @@ static void draw_road(chqstate_t *state)
    * calls dr_fill_left_stripe with a zero fill value and zero jump index (15 zero
    * bytes written per scanline).
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     C_counter          Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_write_scanline_unfilled:
     // ENTERED UNBANKED (but AF is banked)
@@ -14536,13 +14507,15 @@ static void draw_road(chqstate_t *state)
    * Spectrum row group has not rolled over, so adds 16 to the high byte to
    * advance by one row group. Falls through to dr_fill.
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address before rollover adjust.
-   *   (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     C_counter          Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address before rollover
+   *                                   adjust. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_rollover_filled:
     LO_ADD(DE_backbuf, -32);
@@ -14556,13 +14529,15 @@ static void draw_road(chqstate_t *state)
    * Identical row-group advance logic to dr_rollover_filled but falls through to
    * dr_write_scanline_unfilled instead of dr_fill.
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address before rollover adjust.
-   *   (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     C_counter          Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address before rollover
+   *                                   adjust. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_rollover_unfilled:
     LO_ADD(DE_backbuf, -32);
@@ -14578,12 +14553,13 @@ static void draw_road(chqstate_t *state)
    * dr_advance_filled with [A_fill_pattern] banked in A'.
    *
    * \param[in]     A_fill_pattern Non-zero fill pattern for the road surface.
-   *   (was A)
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   *                               (was A)
+   * \param[in]     C_counter      Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf     Back-buffer row address. (was DE)
+   * \param[in]     L_row          Row index within the x-position table page.
+   *                               (was L)
+   * \param[in,out] IX_lanesptr    Pointer into road_buffer lane data. (was IX)
+   * \param[in,out] IY_heightptr   Pointer into height_table. (was IY)
    */
   dr_dispatch_filled:
     // ENTERED UNBANKED
@@ -14598,11 +14574,12 @@ static void draw_road(chqstate_t *state)
    * [DE_backbuf]; when the low nibble of the old high byte is zero calls
    * dr_rollover_filled, otherwise falls through to dr_fill.
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
-   * \param[in]     Adash_fill Fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
+   * \param[in]     C_counter    Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf   Back-buffer row address. (was DE)
+   * \param[in]     L_row        Row index within the x-position table page.
+   *                             (was L)
+   * \param[in]     Adash_fill   Fill pattern banked in A'. (was A')
+   * \param[in,out] IX_lanesptr  Pointer into road_buffer lane data. (was IX)
    * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
    */
   dr_advance_filled:
@@ -14624,12 +14601,14 @@ static void draw_road(chqstate_t *state)
    * dr_fill_left_stripe with the assembled parameters to write the right-verge,
    * lane-marking and left-verge bytes to the back buffer.
    *
-   * \param[in]     C_counter Horizon scanline counter. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     C_counter          Horizon scanline counter. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Road fill pattern banked in A'. (was A')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_fill:
     // ENTERED UNBANKED (but AF is banked)
@@ -14737,24 +14716,27 @@ static void draw_road(chqstate_t *state)
    * backdrop/sky fill based on the horizon counter. Recursion models the Z80's JP
    * NZ loop.
    *
-   * \param[in]     SP_output Back-buffer write pointer for this scanline's
-   *   rightmost byte. (was SP)
-   * \param[in]     jump_index Fall-through index into the fill-byte switch (0 =
-   *   max fill). (was IX offset)
-   * \param[in]     B_neg_lane_count Negative lane count: number of interior lanes
-   *   to mark. (was B)
-   * \param[in]     C_counter Horizon scanline counter; loop terminates when it
-   *   reaches 0. (was C)
-   * \param[in]     DE_backbuf Back-buffer row address. (was DE)
-   * \param[in]     L_row Row index within the x-position table page. (was L)
+   * \param[in]     SP_output          Back-buffer write pointer for this
+   *                                   scanline's rightmost byte. (was SP)
+   * \param[in]     jump_index         Fall-through index into the fill-byte
+   *                                   switch (0 = max fill). (was IX offset)
+   * \param[in]     B_neg_lane_count   Negative lane count: number of interior
+   *                                   lanes to mark. (was B)
+   * \param[in]     C_counter          Horizon scanline counter; loop terminates
+   *                                   when it reaches 0. (was C)
+   * \param[in]     DE_backbuf         Back-buffer row address. (was DE)
+   * \param[in]     L_row              Row index within the x-position table
+   *                                   page. (was L)
    * \param[in]     Adash_fill_pattern Road fill pattern banked in A'. (was A')
-   * \param[in]     Cdash_zerofill Zero fill byte for the verge region. (was C')
-   * \param[in]     DEdash_backbuf Banked copy of [DE_backbuf] for x-position
-   *   lookups. (was DE')
-   * \param[in]     Hdash_fill High byte of fill word (same as [Cdash_zerofill]).
-   *   (was H')
-   * \param[in,out] IX_lanesptr Pointer into road_buffer lane data. (was IX)
-   * \param[in,out] IY_heightptr Pointer into height_table. (was IY)
+   * \param[in]     Cdash_zerofill     Zero fill byte for the verge region.
+   *                                   (was C')
+   * \param[in]     DEdash_backbuf     Banked copy of [DE_backbuf] for
+   *                                   x-position lookups. (was DE')
+   * \param[in]     Hdash_fill         High byte of fill word (same as
+   *                                   [Cdash_zerofill]). (was H')
+   * \param[in,out] IX_lanesptr        Pointer into road_buffer lane data.
+   *                                   (was IX)
+   * \param[in,out] IY_heightptr       Pointer into height_table. (was IY)
    */
   dr_fill_left_stripe:
     // BANKED ON ENTRY
@@ -15030,10 +15012,10 @@ static void draw_road(chqstate_t *state)
  * Blits dr_sky_rows of backdrop data to the ZX screen above the road, then
  * fills remaining sky rows with 0x00 (clear sky) or 0xFF (tunnel).
  *
- * \param[in]     DE_backbuf Back-buffer pointer at call site (D=high byte, E=low
- *   byte). (was DE)
- * \param[in]     L_row Unused; kept for a consistent call signature across
- *   draw_road helpers.
+ * \param[in] DE_backbuf Back-buffer pointer at call site (D=high byte, E=low
+ *                       byte). (was DE)
+ * \param[in] L_row      Unused; kept for a consistent call signature across
+ *                       draw_road helpers.
  */
 static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
 {
@@ -15215,7 +15197,6 @@ dr_blank_sky_fill:
  * with the carry passing the low nibble to the next byte). The result is the
  * pre-shifted backdrop variant used when the horizontal scroll offset is in the
  * range that requires a half-byte shift.
- *
  */
 static void pre_shift_backdrop(chqstate_t *state)
 {
@@ -15279,12 +15260,14 @@ static void pre_shift_backdrop(chqstate_t *state)
  * road-marking update ($CA68–$CB2E) is implemented.
  *
  * \param[in]     B_fill_pattern Banked initial B: fill pattern byte (was B).
- * \param[in]     C_counter Banked initial C: horizon scanline counter (was C).
- * \param[in]     DE_backbuf Banked initial DE: back-buffer address (was DE).
- * \param[in]     L_row Banked initial L: row index (was L).
- * \param[in]     IX_lanes Road-buffer lanes pointer (was IX).
- * \param[in,out] IY_height Height table pointer; advanced once per block
- *   (was IY).
+ * \param[in]     C_counter      Banked initial C: horizon scanline counter
+ *                               (was C).
+ * \param[in]     DE_backbuf     Banked initial DE: back-buffer address
+ *                               (was DE).
+ * \param[in]     L_row          Banked initial L: row index (was L).
+ * \param[in]     IX_lanes       Road-buffer lanes pointer (was IX).
+ * \param[in,out] IY_height      Height table pointer; advanced once per block
+ *                               (was IY).
  */
 static void draw_forked_road(chqstate_t *state,
                              int         B_fill_pattern,
@@ -15776,8 +15759,8 @@ dfr_next_scanline_c969:
  * a label inside draw_forked_road. This function handles only the $CBCB JP
  * $C79A path (diff >= 0x50 → start backdrop fill).
  *
- * \param[in]     DE_backbuf Back-buffer pointer at call site (D=high, E=low).
- * \param[in]     L_row Road table row index at call site.
+ * \param[in] DE_backbuf Back-buffer pointer at call site (D=high, E=low).
+ * \param[in] L_row      Road table row index at call site.
  */
 static void backdrop_fill_dispatch(chqstate_t *state, int DE_backbuf, int L_row)
 {
@@ -15798,8 +15781,8 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DE_backbuf, int L_row)
  * persp_x_delta_left offsets to the same curvature_table and starts from
  * road_pos − 295 (the vanishing-point offset for the left edge).
  *
- * \param[in]     forked Non-zero if the road is forked; negates curvature bytes
- * and targets the fork tables instead of the main tables.
+ * \param[in] forked Non-zero if the road is forked; negates curvature bytes and
+ *                   targets the fork tables instead of the main tables.
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
@@ -15959,13 +15942,14 @@ static void build_curve_table(chqstate_t *state, int forked)
  * destination table). Also updates object_positions[] with the per-row
  * height deltas as a side effect.
  *
- * \param[in] DE_roadpos Starting road position for this table (right- or
- *   left-hand pass). (was DE)
- * \param[in] HL_tableend One-past-the-end pointer into the destination xpos
- *   table (state->xpos_road_right/left/fork_right/centre_right). (was HL,
- *   SM $CC72/$CCA7)
- * \param[in] Bdash_alwayszero Shadow B register value; always 0 at call
- *   sites. (was B')
+ * \param[in] DE_roadpos       Starting road position for this table (right- or
+ *                             left-hand pass). (was DE)
+ * \param[in] HL_tableend      One-past-the-end pointer into the destination
+ *                             xpos table (state-
+ *                             >xpos_road_right/left/fork_right/centre_right).
+ *                             (was HL, SM $CC72/$CCA7)
+ * \param[in] Bdash_alwayszero Shadow B register value; always 0 at call sites.
+ *                             (was B')
  */
 static void build_curve_table_fill(chqstate_t *state,
                                    int         DE_roadpos,
@@ -16112,7 +16096,6 @@ bct_endbit_negative:
  * equivalent expression ((A_height & 0x7F) * DE_v) >> 7. Each of the 7 bits of
  * A contributes DE × 2^(bit_position); summing and taking the high byte gives
  * (A & 0x7F) * DE / 128.
- *
  */
 static void build_height_table(chqstate_t *state)
 {
@@ -16271,8 +16254,8 @@ static void entry_128k(chqstate_t *state)
  * table relocations (omitted in the C port), loads stage 1 data, and calls
  * bootstrap to complete initialisation.
  *
- * \param[in]     A_mode_128k Non-zero when running on 128K hardware. (was A)
- * \param[in]     B_nrelocs Number of relocation entries to copy. (was B)
+ * \param[in] A_mode_128k Non-zero when running on 128K hardware. (was A)
+ * \param[in] B_nrelocs   Number of relocation entries to copy. (was B)
  *
  * Conv: The relocation loop copies blocks of the loaded game binary between
  * RAM pages at fixed Z80 addresses ($8014, $83B5, $EA00, $EB00, $EC00). In
@@ -16384,9 +16367,8 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
  * updated pointers after each call.
  *
  * \param[in] HL_string Pointer to packed string record: attribute byte, screen
- *   address
- * lo, screen address hi, then character bytes (bit 7 set on the last character)
- * (was HL).
+ *                      address lo, screen address hi, then character bytes (bit
+ *                      7 set on the last character) (was HL).
  * \return             Pointer to the byte past the terminating character.
  */
 const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
@@ -16464,16 +16446,16 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
  * its attribute address from D/E, where this one draws a single character and
  * takes the attribute address as a parameter. Fix bugs in both.
  *
- * \param[in]  A_char ASCII character to draw (was A).
- * \param[in]  Fdash Non-zero = single height; zero = double height
- *   (was carry/F').
- * \param[in]  Cdash Screen attribute byte (was C').
- * \param[in]  DEdash Screen pixel address; one column is added on entry
- *   (was DE').
- * \param[in]  HLdash Screen attribute address (was HL').
+ * \param[in]  A_char     ASCII character to draw (was A).
+ * \param[in]  Fdash      Non-zero = single height; zero = double height
+ *                        (was carry/F').
+ * \param[in]  Cdash      Screen attribute byte (was C').
+ * \param[in]  DEdash     Screen pixel address; one column is added on entry
+ *                        (was DE').
+ * \param[in]  HLdash     Screen attribute address (was HL').
  * \param[out] DEdash_out Updated screen pixel address after drawing (was DE').
  * \param[out] HLdash_out Updated screen attribute address after drawing
- *   (was HL').
+ *                        (was HL').
  */
 static void menu_draw_char(int  A_char,
                            int  Fdash,
@@ -16587,7 +16569,6 @@ mdc_have_glyph:
  * block, writes zero via LD (HL),L (the low byte is 0 for both addresses), then
  * fills the rest with LDIR. Functionally identical to clear_playfield ($88E2)
  * but called from the 128K startup and menu paths rather than in-game reset.
- *
  */
 static void clear_screen(chqstate_t *state)
 {
@@ -16606,7 +16587,6 @@ static void clear_screen(chqstate_t *state)
  * name is drawn on screen at the current screen address. After all eight keys
  * are defined, the sequence is compared against shocked_keydefs; if they match,
  * test_mode is enabled and a confirmation screen is shown.
- *
  */
 static void redefine_keys_48k(chqstate_t *state)
 {
@@ -16679,9 +16659,8 @@ static void redefine_keys_48k(chqstate_t *state)
  * [D_keydef_out] in the form kkkkkrrr. Returns non-zero if any key is found,
  * zero otherwise.
  *
- * \param[out]    D_keydef_out Receives packed key+row value: bits 7..3 = key
- *   column,
- * bits 2..0 = row. (was D)
+ * \param[out] D_keydef_out Receives packed key+row value: bits 7..3 = key
+ *                          column, bits 2..0 = row. (was D)
  * \return Non-zero if a key is pressed; zero otherwise.
  */
 static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
@@ -16738,12 +16717,12 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
  * screen address to the next row. If [B_index] == 4 (the mid-point of the list)
  * an extra row skip is inserted.
  *
- * \param[in]     B_index Position in the eight-key list (1..8); 4 triggers extra
- *   gap. (was B)
- * \param[in]     C_index 1-based index of the key being defined into
- *   temp_keydefs[]. (was C)
- * \param[in]     DE_screen Z80 screen address at which the key name is drawn.
- *   (was DE)
+ * \param[in] B_index   Position in the eight-key list (1..8); 4 triggers extra
+ *                      gap. (was B)
+ * \param[in] C_index   1-based index of the key being defined into
+ *                      temp_keydefs[]. (was C)
+ * \param[in] DE_screen Z80 screen address at which the key name is drawn.
+ *                      (was DE)
  * \return Updated screen address after the drawn key name.
  */
 static int define_a_key(chqstate_t *state,
@@ -16845,7 +16824,6 @@ static u16 dak_move_down(int DE_screen)
  *
  * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on its
  * own thread. This function is a no-op in the C port.
- *
  */
 static void setup_interrupts(chqstate_t *state)
 {
@@ -16866,7 +16844,6 @@ static void setup_interrupts(chqstate_t *state)
  *
  * Conv: Z80 JP $EE78 is a tail call to np_start_at_hl; C calls
  * next_pattern_at_addr.
- *
  */
 static void reset_music(chqstate_t *state)
 {
@@ -16888,7 +16865,6 @@ static void reset_music(chqstate_t *state)
  *
  * Conv: Z80 falls through via jp-less control flow; C calls
  * next_pattern_at_addr.
- *
  */
 static void next_pattern(chqstate_t *state)
 {
@@ -16906,8 +16882,8 @@ static void next_pattern(chqstate_t *state)
  * looks up the pattern's music data start via its offset byte, and primes
  * the note-delay fields ready for playback.
  *
- * \param[in] HL_pataddr Pointer into music_patterns[] to read the next
- *   pattern header from. (was HL)
+ * \param[in] HL_pataddr Pointer into music_patterns[] to read the next pattern
+ *                       header from. (was HL)
  */
 static void next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
 {
@@ -17043,8 +17019,7 @@ pm_wait_for_interrupt: /* $EF13 */
  * Starts playback of drum sample 2 (108 bytes). Falls through to
  * playdrum_start.
  *
- * \param[in]     A_speed Playback speed: inner loop count per sample byte.
- *   (was A)
+ * \param[in] A_speed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_2(chqstate_t *state, int A_speed)
 {
@@ -17057,8 +17032,7 @@ static void playdrum_2(chqstate_t *state, int A_speed)
  * Starts playback of drum sample 1 (252 bytes). Falls through to
  * playdrum_start.
  *
- * \param[in]     A_speed Playback speed: inner loop count per sample byte.
- *   (was A)
+ * \param[in] A_speed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_1(chqstate_t *state, int A_speed)
 {
@@ -17071,10 +17045,10 @@ static void playdrum_1(chqstate_t *state, int A_speed)
  * Records the drum speed and marks the drum as active, then falls through to
  * playdrum_bank_go to begin sample output.
  *
- * \param[in]     A_speed Inner loop count per sample byte; controls playback
- *   rate. (was A)
- * \param[in]     D_length Total number of sample bytes to output. (was D)
- * \param[in]     HL_data Pointer to the start of the drum sample data. (was HL)
+ * \param[in] A_speed  Inner loop count per sample byte; controls playback rate.
+ *                     (was A)
+ * \param[in] D_length Total number of sample bytes to output. (was D)
+ * \param[in] HL_data  Pointer to the start of the drum sample data. (was HL)
  */
 static void playdrum_start(chqstate_t *state,
                            int         A_speed,
@@ -17093,10 +17067,10 @@ static void playdrum_start(chqstate_t *state,
  * registers before calling playdrum_go. In the Z80, EXX swaps BC/DE/HL with the
  * shadow set; the C port passes the values directly.
  *
- * \param[in]     Ddash_length Sample length in bytes, held in D' after EXX.
- *   (was D')
- * \param[in]     HLdash_data Pointer to sample data, held in HL' after EXX.
- *   (was HL')
+ * \param[in] Ddash_length Sample length in bytes, held in D' after EXX.
+ *                         (was D')
+ * \param[in] HLdash_data  Pointer to sample data, held in HL' after EXX.
+ *                         (was HL')
  *
  * Conv: Z80 EXX banks the arguments into shadow registers; C passes them
  * directly to playdrum_go, which uses the same parameter names.
@@ -17119,9 +17093,9 @@ static void playdrum_bank_go(chqstate_t *state,
  * successive bits — 1-bit PCM at drum_speed bits per byte. When all
  * [D_length] bytes have been output, drum_active is cleared.
  *
- * \param[in]     D_length Number of sample bytes remaining to output. (was D)
- * \param[in]     HL_data Pointer to the next sample byte in state->drum1[] or
- *   state->drum2[]. (was HL)
+ * \param[in] D_length Number of sample bytes remaining to output. (was D)
+ * \param[in] HL_data  Pointer to the next sample byte in state->drum1[] or
+ *                     state->drum2[]. (was HL)
  *
  * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
  * 8 iterations -- the byte doubles as its own iteration counter, no separate
@@ -17178,8 +17152,7 @@ pd_end_of_sample:
  * port_BORDER_EAR_MIC: first high after (24 − E_duration) delay iterations,
  * then low after E_duration iterations.
  *
- * \param[in]     A_param Noise duration: outer loop count and pulse timing
- *   (was A).
+ * \param[in] A_param Noise duration: outer loop count and pulse timing (was A).
  *
  * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
  * write via speccy->out and models the delay loops as speccy->logtime so the
@@ -17395,7 +17368,6 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
  * Seeds both the AY noise pitch and the turbo SFX countdown to $3C (60).
  * play_engine_or_turbo_sfx_128k then decrements these each frame to produce a
  * descending noise burst before handing off to the engine sound.
- *
  */
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
@@ -17449,7 +17421,7 @@ static void play_engine_or_turbo_sfx_128k(chqstate_t *state)
  * sets the output frequency. After all samples are output, reset_paging_128k
  * restores the default memory map.
  *
- * \param[in]     index 1-based speech sample index (1..5). (was A)
+ * \param[in] index 1-based speech sample index (1..5). (was A)
  *
  * Conv: The Z80 uses EX AF,AF'/EXX to bank registers across the inner loops; C
  * passes the values as function parameters and locals instead.
@@ -17927,9 +17899,8 @@ void chq_test_draw_road(chqstate_t *state)
  * placing lane_flags at roadbufptr works because the following bytes are 0
  * (calloc) and therefore straight.
  *
- * \param[in] lane_flags Byte written at roadbufptr before drawing.
- * \param[in] height_offset Offset into state->height_table for the IY
- *   argument.
+ * \param[in] lane_flags    Byte written at roadbufptr before drawing.
+ * \param[in] height_offset Offset into state->height_table for the IY argument.
  */
 void chq_test_draw_road_lanes_change(chqstate_t *state,
                                      u8          lane_flags,

@@ -264,8 +264,8 @@ static void check_high_score(chqstate_t *state)
  * new score digits, stage code and retry-attempt number into [row], leaving
  * a placeholder ". . ." name.
  *
- * \param[in] row Table row to insert at: 0 = 1st place .. 9 = 10th place
- * (was the row counter C, banked via EX AF,AF' across the shift).
+ * \param[in] row Table row to insert at: 0 = 1st place .. 9 = 10th place (was
+ *                the row counter C, banked via EX AF,AF' across the shift).
  *
  * Conv: the Z80 shifts rows via LDDR over raw 33-byte-stride row bytes,
  * carefully skipping the 7 static "next row's rank suffix" bytes tucked
@@ -1217,9 +1217,9 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * nothing is drawn. Otherwise dispatches to the width-specific OR-blit
  * routine.
  *
- * \param[in]     B_y   Object Y screen position (was B).
- * \param[in]     C_x   Object X screen position (was C).
- * \param[in]     L_row Object row/height byte (was L).
+ * \param[in] B_y   Object Y screen position (was B).
+ * \param[in] C_x   Object X screen position (was C).
+ * \param[in] L_row Object row/height byte (was L).
  *
  * Conv: $C93D onwards, the Z80 saves the real SP, repoints SP at the glyph
  * source so the blit routines can POP bytes from it, then restores the real
@@ -1282,10 +1282,10 @@ static void compute_glyph_blit_params(chqstate_t *state,
  *
  * \param[in]  B_y   Object Y screen position (was B).
  * \param[in]  C_x   Object X screen position (was C).
- * \param[in]  L_row Object row/height byte, selects which of 4 glyph
- *                    variants for this animation row (was L).
+ * \param[in]  L_row Object row/height byte, selects which of 4 glyph variants
+ *                   for this animation row (was L).
  * \param[out] out   Filled with the destination address, glyph pointer, row-
- *                    pair count, width selector and Y-clamp state.
+ *                   pair count, width selector and Y-clamp state.
  *
  * Conv: the two "RRA/SCF/RRA/RRA" then "XOR B ; AND mask ; XOR B" sequences
  * that build D and E are translated literally with the RR/RLC macros from
@@ -1359,11 +1359,11 @@ static void compute_glyph_geometry(u8                     B_y,
  * falls through to blit_width6 -- blit_width7 is unreachable from this
  * dispatcher (see its own Conv note).
  *
- * \param[in]     H              Destination screen address high byte.
- * \param[in]     L              Destination screen address low byte.
- * \param[in]     src            Glyph bitmap source pointer.
- * \param[in]     B_height_pairs Number of row-pairs to draw.
- * \param[in]     C_width_select Width selector, 1-7.
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
+ * \param[in] C_width_select Width selector, 1-7.
  */
 static void blit_masked_sprite_dispatch(chqstate_t *state,
                                         int         H,
@@ -1394,9 +1394,9 @@ static void blit_masked_sprite_dispatch(chqstate_t *state,
  * consumption) and explicitly guards the skip count against the u8-wrap
  * quirk noted in compute_glyph_blit_params (forcing a minimum of 1).
  *
- * \param[in]     B_y   Object Y screen position (was B).
- * \param[in]     C_x   Object X screen position (was C).
- * \param[in]     L_row Object row/height byte (was L).
+ * \param[in] B_y   Object Y screen position (was B).
+ * \param[in] C_x   Object X screen position (was C).
+ * \param[in] L_row Object row/height byte (was L).
  */
 static void compute_glyph_blit_params_b(chqstate_t *state,
                                         u8          B_y,
@@ -1437,11 +1437,11 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
  * 1..6 explicitly, so blit_width7 (unreachable from the foreground
  * dispatcher above) is reached here as the default case.
  *
- * \param[in]     H              Destination screen address high byte.
- * \param[in]     L              Destination screen address low byte.
- * \param[in]     src            Glyph bitmap source pointer.
- * \param[in]     B_height_pairs Number of row-pairs to draw.
- * \param[in]     C_width_select Width selector, 1-7.
+ * \param[in] H              Destination screen address high byte.
+ * \param[in] L              Destination screen address low byte.
+ * \param[in] src            Glyph bitmap source pointer.
+ * \param[in] B_height_pairs Number of row-pairs to draw.
+ * \param[in] C_width_select Width selector, 1-7.
  */
 static void blit_masked_sprite_dispatch_b(chqstate_t *state,
                                           int         H,
@@ -1910,8 +1910,8 @@ static const struct {
  * immediate tempo refresh, and arms the tune-active flag for
  * titlescr_ay_music ($EC71) to pick up on its next call.
  *
- * \param[in]     A_tune Tune number to start; index into the 7-byte-stride
- *                       tune-select table at $F225. (was A)
+ * \param[in] A_tune Tune number to start; index into the 7-byte-stride tune-
+ *                   select table at $F225. (was A)
  *
  * Conv: $EBA6-$EBAB computes BC = A_tune * 7 via a repeated doubling/add
  * sequence (the Z80 has no multiply instruction); C uses a direct multiply.
@@ -2241,8 +2241,8 @@ static void stop_music_and_silence(chqstate_t *state)
  * operand bytes) to fetch the next byte and move DE_pattern past it.
  *
  * \param[in]     IX_channel Pointer to this channel's tracker record. (was IX)
- * \param[in,out] DE_pattern Pattern-stream read cursor; advanced past the
- *   byte read. (was DE)
+ * \param[in,out] DE_pattern Pattern-stream read cursor; advanced past the byte
+ *                           read. (was DE)
  *
  * \return The byte at the cursor position before advancing. (was A)
  *
@@ -2571,7 +2571,7 @@ reset_row_counter:
  *    bits in the mixer cache and forces that same self-modified operand to
  *    $41.
  *
- * \param[in]  IX_channel  Pointer to this channel's tracker record. (was IX)
+ * \param[in]  IX_channel   Pointer to this channel's tracker record. (was IX)
  * \param[out] A_volume_out Receives the phase-1/-2 volume (+$13). (was A)
  *
  * \return The phase-3/4 tone period. (was HL)
@@ -2777,7 +2777,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * transcribed title_tune0_data / title_tune1_data arrays.
  *
  * \param[in] addr Raw Z80 address, as stored little-endian in the table or
- *                  header. (was DE/HL)
+ *                 header. (was DE/HL)
  *
  * \return Pointer into the matching transcribed array. (was DE/HL)
  *
@@ -2994,7 +2994,6 @@ u8 bank3_call(chqstate_t *state, int routine)
  * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on
  * its own thread. This function is a no-op in the C port, matching the
  * existing 48K setup_interrupts stub.
- *
  */
 static void setup_im2_interrupt_table(chqstate_t *state)
 {
@@ -3332,7 +3331,6 @@ sfx2_tick_countdown:
  * flag (the title-screen loops call titlescr_music directly once per
  * paced iteration instead), so there is no flag to set. Adding one would be
  * dead state, the same way the 48K irq_flag field was.
- *
  */
 static void frame_interrupt_handler(chqstate_t *state)
 {
@@ -3348,8 +3346,8 @@ static void frame_interrupt_handler(chqstate_t *state)
  * Points play_fixed_sample_start at the 104-byte sample table
  * state->bank3->drums.sample1 and falls through to arm playback.
  *
- * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch
- *   byte's upper 5 bits (was A).
+ * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch byte's
+ *                          upper 5 bits (was A).
  */
 static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param)
 {
@@ -3367,8 +3365,8 @@ static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param)
  * Points play_fixed_sample_start at the 224-byte sample table
  * state->bank3->drums.sample2 and falls through to arm playback.
  *
- * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch
- *   byte's upper 5 bits (was A).
+ * \param[in] A_pitch_param Playback-rate/pitch parameter: the dispatch byte's
+ *                          upper 5 bits (was A).
  */
 static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
 {
@@ -3386,9 +3384,9 @@ static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
  * play_sample_row to begin pulsing the sample out over the beeper.
  *
  * \param[in] A_pitch_param Playback-rate/pitch parameter (was A).
- * \param[in] HL_data Pointer to the first byte of the sample table to play
- *   (was HL).
- * \param[in] D_length Number of sample bytes to play (was D).
+ * \param[in] HL_data       Pointer to the first byte of the sample table to
+ *                          play (was HL).
+ * \param[in] D_length      Number of sample bytes to play (was D).
  *
  * Conv: $F8CE (sample_pitch_param) is the self-modified operand of the "LD
  * B,$08" at $F8CD -- play_sample_row reloads its row-bit-count from this
@@ -3423,9 +3421,9 @@ static void play_fixed_sample_start(chqstate_t *state,
  * After each byte, D_length is decremented; when it reaches 0 the sample is
  * complete and finish_sample_playback clears sample_active.
  *
- * \param[in] D_length Number of sample bytes remaining to output (was D).
- * \param[in,out] HL_data Pointer to the next sample byte to play; mutated in
- *   place by the RLC rotation (was HL).
+ * \param[in]     D_length Number of sample bytes remaining to output (was D).
+ * \param[in,out] HL_data  Pointer to the next sample byte to play; mutated in
+ *                         place by the RLC rotation (was HL).
  *
  * Conv: the Z80 re-enters this loop at $F8CC (with an EXX banking in a
  * shadow HL'/D' saved by an earlier early exit) when a genuine 50Hz
@@ -3533,7 +3531,7 @@ static void finish_sample_playback(chqstate_t *state)
  * instead of rng_seed.
  *
  * \param[in] E_pitch_param Noise duration: outer loop count and pulse timing
- *   parameter (was A, moved to E at entry).
+ *                          parameter (was A, moved to E at entry).
  *
  * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
  * write via speccy->out and models the delay loops as speccy->logtime so the
@@ -3746,7 +3744,6 @@ shared_tail:
  *
  * Runs one frame of the drum-sample/music service and, if no tune is
  * currently active, restarts tune 0.
- *
  */
 static void run_title_tune(chqstate_t *state)
 {
@@ -3829,7 +3826,8 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * BRIGHT set on the upper row) or single-height (7 font bytes, one scanline
  * each), selected by the header's style bit.
  *
- * \param[in] HL_record Pointer to the 3-byte header + character stream (was HL).
+ * \param[in] HL_record Pointer to the 3-byte header + character stream
+ *                      (was HL).
  * \return Pointer to the byte following the record's terminator (was HL).
  *
  * Sister function: menu_draw_char ($EC2C, Main.c). The two are near-clones --
@@ -4103,8 +4101,8 @@ static void redefine_keys_screen(chqstate_t *state)
  * combined with the row number into a single packed code (see
  * read_new_key_definition for how the code is unpacked again).
  *
- * \param[out] D_key_code_out Packed key code: 8*(4-bit) + (7-row). Left at
- * 0xFF if no key was held in any row (was D).
+ * \param[out] D_key_code_out Packed key code: 8*(4-bit) + (7-row). Left at 0xFF
+ *                            if no key was held in any row (was D).
  * \return 1 if more than one row (or more than one bit within a row) was
  * held simultaneously -- an ambiguous scan the caller should reject and
  * retry. 0 otherwise (D_key_code_out is 0xFF for "no key", or a valid
@@ -4166,13 +4164,14 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
  * column (twice, when B_remaining is exactly 4 -- see
  * advance_key_label_column).
  *
- * \param[in,out] DE_screen Screen address to print the key's name at;
- * updated to the next label position on return (was DE).
- * \param[in] B_remaining Controls remaining in the outer 8-control loop,
- * including this one; when exactly 4, an extra column advance is applied
- * (was B).
- * \param[in] C_control_index 1-based index of the control being defined,
- * into state->control_keys[] (was C).
+ * \param[in,out] DE_screen       Screen address to print the key's name at;
+ *                                updated to the next label position on return
+ *                                (was DE).
+ * \param[in]     B_remaining     Controls remaining in the outer 8-control
+ *                                loop, including this one; when exactly 4, an
+ *                                extra column advance is applied (was B).
+ * \param[in]     C_control_index 1-based index of the control being defined,
+ *                                into state->control_keys[] (was C).
  */
 static void read_new_key_definition(chqstate_t *state,
                                     u16        *DE_screen,
