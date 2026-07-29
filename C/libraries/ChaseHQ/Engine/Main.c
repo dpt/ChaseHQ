@@ -16463,9 +16463,9 @@ stt_kempston_joystick: /* $E99F */
  *       the terminator check follows each draw call.
  *
  * Conv: menu_draw_char writes straight into the screen memory the Z80 shared
- *       with the ULA, so it marks nothing dirty. One update_whole_playfield here
- *       pushes the finished screen to the host; without it the callers' menus
- *       never appear.
+ *       with the ULA, so it marks nothing dirty. One update_whole_playfield
+ *       here pushes the finished screen to the host; without it the callers'
+ *       menus never appear.
  */
 void menu_draw_strings(chqstate_t *state, const u8 *strings)
 {
