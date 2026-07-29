@@ -2,8 +2,6 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Perp collides with other hazard making them vanish? Seems different.
-- Perp car in wrong place when caught? Original bug?
 - Title screen
   - title screen doesn't stop and yield to attract mode
   - music still not right (e.g. playing things twice or more over before stopping)
@@ -22,6 +20,7 @@
 
 ## P3 — Incomplete / missing content
 
+- Fix 48K funcs which aren't hooked up.
 - Ensure that funcs are in the original game order (esp. Bank7)
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
@@ -34,7 +33,7 @@
 ## P4 — Polish / visual correctness
 
 - Stretchy test app produces crap output
-- 'TEST' marker not drawn when in test mode
+- 'TEST' marker not drawn when in test mode [CHECK]
 - Fix all warnings pass
 - Write a code formatting script
 
@@ -48,8 +47,8 @@
 - Update summaries of major functions to docs/
 - Scan for type problems
 - Identify missing cases where wraparound is required
-- Remove as much casting as possible (Claude tends to add it)
-- C89 compat
+- Remove as much casting as possible (Claude tends to add it) [part done]
+- C89 compat [part done]
 
 ## P6 — Features / extras
 

@@ -3166,7 +3166,7 @@ score_store_low:
   return 0;
 
 move_perp:
-  A = state->hazards[0].horz_pos;
+  A = state->hazards[0].horz_pos_on_road;
   B_delta = 5;
   if (A == 35) {
     C = A;
@@ -3181,7 +3181,7 @@ change_perp_pos:
 
 assign_perp_pos: // is this in the right place?
   A = C;
-  state->hazards[0].horz_pos = A;
+  state->hazards[0].horz_pos_on_road = A;
   HL_roadpos = state->scenedata.road_pos;
   // Conv: $8BA8 SBC HL,$0105 has carry_in=1 when the perp moved right-to-left
   // ($8B9B ADD A,$FB set carry), making the Z80 test road_pos < 0x0106 in
