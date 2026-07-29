@@ -16502,6 +16502,14 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
  * parameters; the EXX / PUSH / POP sequences are collapsed to direct
  * assignments.
  *
+ * Sister function: print_character ($FDA4, bank 3). The two are near-clones --
+ * the same glyph ladder, the same 4-row/-2016/3-row double-height blit and the
+ * same seven-row single-height blit. They are kept separate because they are
+ * separate routines at separate addresses in separate banks. The differences
+ * are plumbing only: print_character loops over a packed record and derives
+ * its attribute address from D/E, where this one draws a single character and
+ * takes the attribute address as a parameter. Fix bugs in both.
+ *
  * \param[in]  A_char ASCII character to draw (was A).
  * \param[in]  Fdash Non-zero = single height; zero = double height
  *   (was carry/F').

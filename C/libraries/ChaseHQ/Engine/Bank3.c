@@ -3832,6 +3832,14 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * \param[in] HL_record Pointer to the 3-byte header + character stream (was HL).
  * \return Pointer to the byte following the record's terminator (was HL).
  *
+ * Sister function: menu_draw_char ($EC2C, Main.c). The two are near-clones --
+ * the same glyph ladder, the same 4-row/-2016/3-row double-height blit and the
+ * same seven-row single-height blit. They are kept separate because they are
+ * separate routines at separate addresses in separate banks. The differences
+ * are plumbing only: this one loops over a packed record and derives its
+ * attribute address from D/E, where menu_draw_char draws a single character
+ * and takes the attribute address as a parameter. Fix bugs in both.
+ *
  * Conv: $FDA4-$FDB9 (header unpack), the classification ladder ($FDDA-$FDFE)
  * and the double/single-height blits ($FE16-$FE7E) all follow menu_draw_char
  * ($EC2C) precedent -- an essentially identical blit for an essentially
@@ -3889,21 +3897,20 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       A_diff = (u8) (A_metric - 0x20);
 
       /* $FDDA-$FDFE classification ladder */
-      if (A_diff >= 0x21) {
+      if (A_diff >= 0x21)
         C_class = (u8) (A_diff - 18);
-      } else if (A_diff >= 0x10) {
+      else if (A_diff >= 0x10)
         C_class = (u8) (A_diff - 11);
-      } else if (A_diff == 1) {
+      else if (A_diff == 1)
         C_class = 0;
-      } else if (A_diff == 8) {
+      else if (A_diff == 8)
         C_class = 1;
-      } else if (A_diff == 9) {
+      else if (A_diff == 9)
         C_class = 2;
-      } else if (A_diff == 12) {
+      else if (A_diff == 12)
         C_class = 3;
-      } else {
+      else
         C_class = 4;
-      }
 
       HL_font = &font[C_class * 7];
 
