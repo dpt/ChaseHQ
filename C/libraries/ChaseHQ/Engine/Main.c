@@ -191,7 +191,7 @@
  * \param[in] addr  Z80 screen bitmap address.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Screen bitmap pointer.
+ * \return          Screen bitmap pointer.
  */
 u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
 {
@@ -218,7 +218,7 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
  * \param[in] addr  Z80 screen attributes address.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Screen attributes pointer.
+ * \return          Screen attributes pointer.
  */
 u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 {
@@ -243,7 +243,7 @@ u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
  * having wrapped past $10000 (mirrors the Z80's 16-bit address wraparound).
  *
  * \param[in] addr Z80 backbuffer address.
- * \return backbuffer[] pointer.
+ * \return         backbuffer[] pointer.
  */
 u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 {
@@ -275,7 +275,7 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
  * \param[in] ptr   Screen bitmap pointer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Byte offset into the screen bitmap.
+ * \return          Byte offset into the screen bitmap.
  */
 static int z80screentooffset(chqstate_t *state,
                              const u8   *ptr,
@@ -309,7 +309,7 @@ static int z80screentooffset(chqstate_t *state,
  * \param[in] ptr   Backbuffer pointer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Byte offset into the backbuffer.
+ * \return          Byte offset into the backbuffer.
  */
 static int z80backbuftooffset(chqstate_t *state,
                               const u8   *ptr,
@@ -341,7 +341,7 @@ static int z80backbuftooffset(chqstate_t *state,
  * \param[in] ptr   Screen bitmap pointer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Z80 screen bitmap address.
+ * \return          Z80 screen bitmap address.
  */
 static int z80screentoaddr(chqstate_t *state,
                            const u8   *ptr,
@@ -371,7 +371,7 @@ static int z80screentoaddr(chqstate_t *state,
  * \param[in] ptr   Screen attributes pointer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Z80 screen attributes address.
+ * \return          Z80 screen attributes address.
  */
 static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
 {
@@ -398,7 +398,7 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
  * \param[in] ptr   Backbuffer pointer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Z80 backbuffer address.
+ * \return          Z80 backbuffer address.
  */
 static int z80backbuftoaddr(chqstate_t *state,
                             const u8   *ptr,
@@ -430,7 +430,7 @@ static int z80backbuftoaddr(chqstate_t *state,
  * \param[in] off   Byte offset into the screen bitmap.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Screen bitmap pointer.
+ * \return          Screen bitmap pointer.
  */
 static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
 {
@@ -457,7 +457,7 @@ static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
  * \param[in] off   Byte offset into the backbuffer.
  * \param[in] left  Extra bytes the caller needs valid to the left.
  * \param[in] right Extra bytes the caller needs valid to the right.
- * \return Backbuffer pointer.
+ * \return          Backbuffer pointer.
  */
 static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 {
@@ -613,7 +613,7 @@ static void roadbuf_fill(chqstate_t *state, int offset, u8 value, int count)
  * originating address.
  *
  * \param[in] addr Pointer to the low byte of the word.
- * \return The 16-bit word.
+ * \return         The 16-bit word.
  */
 u16 wordat(const u8 *addr)
 {
@@ -700,7 +700,7 @@ static u16 prev_buf_row(int backbuf)
  *                                 fork/escape tables below.
  * \param[in] z80                  Z80 address to map.
  *
- * \return Pointer to the equivalent C data.
+ * \return                         Pointer to the equivalent C data.
  */
 static const void *lookup_map_goto(int current_stage_number, int z80)
 {
@@ -3532,7 +3532,7 @@ static void draw_overlay_messages(chqstate_t *state)
  *
  * \param[in] style    Rendering style selector. (was A)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
- * \return Pointer to the byte following the NUL terminator.
+ * \return             Pointer to the byte following the NUL terminator.
  */
 static const u8 *print_message(chqstate_t *state, int style, const u8 *messages)
 {
@@ -3746,7 +3746,7 @@ static void draw_smash_bar(chqstate_t *state)
  *
  * \param[in] C_nsegs    Number of segments to draw. (was C)
  * \param[in] HL_backbuf Back-buffer address at which to start. (was HL)
- * \return Back-buffer address after the last row written.
+ * \return               Back-buffer address after the last row written.
  */
 static u16 draw_smash_bar_segments(chqstate_t *state,
                                    int         C_nsegs,
@@ -3771,7 +3771,7 @@ static u16 draw_smash_bar_segments(chqstate_t *state,
  *
  * \param[in] B_nrows    Number of solid rows to draw. (was B)
  * \param[in] HL_backbuf Back-buffer address at which to start. (was HL)
- * \return Back-buffer address after the last row written.
+ * \return               Back-buffer address after the last row written.
  */
 static u16 draw_smash_bar_solid_bit(chqstate_t *state,
                                     int         B_nrows,
@@ -5384,7 +5384,7 @@ static void plot_sprite(chqstate_t *state,
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
- * \return Back-buffer address of the last row drawn.
+ * \return                  Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_even(chqstate_t *state,
                             int         jump_offset,
@@ -5451,7 +5451,7 @@ plot_sprite_even_start:
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
- * \return Back-buffer address of the last row drawn.
+ * \return                  Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_odd(chqstate_t *state,
                            int         width_bytes,
@@ -5495,7 +5495,7 @@ static u8 *plot_sprite_odd(chqstate_t *state,
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  *
- * \return Back-buffer address of the last row drawn.
+ * \return                  Back-buffer address of the last row drawn.
  */
 static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
                                    int         jump_offset,
@@ -6724,7 +6724,8 @@ static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md)
  *                           a non-zero digit is seen. (was C)
  * \param[in,out] pHLoutput  Address of the output pointer; decremented before
  *                           each write. (was HL)
- * \return 0 on success; -1 on non-zero-to-zero transition (stop writing).
+ * \return                   0 on success; -1 on non-zero-to-zero transition
+ *                           (stop writing).
  */
 static int bonus_digit(int A_digit, int *pCzeroflag, char **pHLoutput)
 {
@@ -7256,7 +7257,7 @@ ptad_led_plot_2nd:
  * \param[in]     ord    Digit index 0–9. (was A)
  * \param[in,out] screen Pointer to the screen byte to draw the digit at.
  *                       (was DE')
- * \return Pointer to the next digit column (orig_screen + 1).
+ * \return               Pointer to the next digit column (orig_screen + 1).
  *
  * Conv: Z80 uses EXX to bank main registers around LDI; C uses plain locals.
  *
@@ -7294,7 +7295,7 @@ static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
  * \param[in] backbuf Pointer to the first back-buffer byte to write. (was DE)
  * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
  * \param[in] style   Draw style selector (e.g. DRAWCHARSTYLE_SINGLE). (was A')
- * \return Pointer to the byte after the NUL terminator.
+ * \return            Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_with_style(chqstate_t *state,
                                         int         attrval,
@@ -7323,7 +7324,7 @@ static const u8 *draw_string_with_style(chqstate_t *state,
  * \param[in] attrs   Pointer to the first screen attribute to write. (was BC)
  * \param[in] dst     Pointer to the first screen bitmap byte to write. (was DE)
  * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
- * \return Pointer to the byte after the NUL terminator.
+ * \return            Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_screen(
     chqstate_t *state, int attrval, u8 *attrs, u8 *dst, const u8 *string)
@@ -7352,7 +7353,7 @@ static const u8 *draw_string_screen(
  * \param[in]     attrsstride Bytes between successive attribute rows. (was DE')
  * \param[in,out] attrs       Pointer to the first screen attribute to write.
  *                            (was HL')
- * \return Pointer to the byte after the NUL terminator.
+ * \return                    Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *dst,
@@ -7631,7 +7632,8 @@ u8 keyscan(chqstate_t *state)
  *                       scanning stops when this bit rotates out of the byte.
  *                       (was E)
  * \param[in] HL_keydefs Pointer to the keydef byte array. (was HL)
- * \return Packed key state in bits 7..0 (or 7..5 for the 3-key path).
+ * \return               Packed key state in bits 7..0 (or 7..5 for the 3-key
+ *                       path).
  *
  * Conv: Z80 CCF inverts carry after CALL keyscan_inner (active-low result); C
  * uses logical NOT on the return value instead.
@@ -7655,7 +7657,8 @@ static u8 keyscan_keydefs(chqstate_t *state, u8 E_stopbit, const u8 *HL_keydefs)
  * bit 0. Called once per key slot by keyscan_keydefs.
  *
  * \param[in] A_input Packed port/result shift byte. (was A)
- * \return Carry: the tested key's pressed state (active low, as in Z80).
+ * \return            Carry: the tested key's pressed state (active low, as in
+ *                    Z80).
  */
 static int keyscan_inner(const chqstate_t *state, int A_input)
 {
@@ -8710,7 +8713,7 @@ fill_in:
  *
  * \param[in] extra Road buffer offset added to the base index when reading the
  *                  lane byte. (was C)
- * \return Packed min/max lane pair (high byte = min, low byte = max).
+ * \return          Packed min/max lane pair (high byte = min, low byte = max).
  */
 static u16 get_spawn_lanes(chqstate_t *state, int extra)
 {
@@ -9492,8 +9495,8 @@ sh_add_hazards_done:
  * \param[in] C_distance         Distance slot for the new hazard. (was C)
  * \param[in] DE_hittable_offset Offset into the hittable table selecting the
  *                               light or heavy variant. (was DE)
- * \return Non-zero if no free slot was found (Conv: was POP HL, causing
- *   spawn_hazards to return early).
+ * \return                       Non-zero if no free slot was found (Conv: was
+ *                               POP HL, causing spawn_hazards to return early).
  */
 static int sh_find_free(chqstate_t *state,
                         int         B_horz_pos,
@@ -9719,7 +9722,8 @@ chc_continue:
  *                               register (was [HL]).
  * \param[in,out] hazard         Hazard being tested; hit_timer written on hit
  *                               (was IX).
- * \return 1 on collision, [default_retval] otherwise (was D).
+ * \return                       1 on collision, [default_retval] otherwise
+ *                               (was D).
  */
 static u8 check_collision(chqstate_t *state,
                           int         default_retval,
@@ -11312,7 +11316,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
  *                          (was D)
  * \param[in] E_x           Horizontal screen position in pixels. (was E)
  * \param[in] HL_part       Pointer to the carpart_t entry to draw. (was HL)
- * \return Pointer to the following carpart_t entry. (was HL)
+ * \return                  Pointer to the following carpart_t entry. (was HL)
  */
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
                                            int              C_width_bytes,
@@ -11696,7 +11700,7 @@ static void plot_masked_sprite_by_width(chqstate_t *state,
  * \param[in]     backbuf_addr  Back-buffer write address for the first row.
  *                              (was HL')
  *
- * \return Back-buffer address of the last row drawn.
+ * \return                      Back-buffer address of the last row drawn.
  */
 static u8 *plot_masked_sprite(chqstate_t *state,
                               int         jump_offset,
@@ -13765,7 +13769,7 @@ dt_exit:
  *
  * \param[in] hi High byte of the Z80 road-position address.
  *
- * \return Pointer to the start of the matching xpos table.
+ * \return       Pointer to the start of the matching xpos table.
  */
 static s16 *hi_to_xpostab(chqstate_t *state, int hi)
 {
@@ -13788,7 +13792,7 @@ static s16 *hi_to_xpostab(chqstate_t *state, int hi)
  *
  * \param[in] H High byte of the Z80 road-position address ($E8..$ED).
  * \param[in] L Low byte of the Z80 road-position address.
- * \return Pointer into the matching xpos table.
+ * \return      Pointer into the matching xpos table.
  */
 static u8 *addr_to_xpos(chqstate_t *state, int H, int L)
 {
@@ -16187,7 +16191,8 @@ static void build_height_table(chqstate_t *state)
  *
  * \param[in] a Multiplier; only bits 7, 6 and 5 are used. (was A)
  * \param[in] c Multiplicand. (was C)
- * \return Rounded result of (([a] & 0xE0) >> 5) * [c] / 8, as [a] signed byte.
+ * \return      Rounded result of (([a] & 0xE0) >> 5) * [c] / 8, as [a] signed
+ *              byte.
  */
 static int8_t scale_curvature_or_height(int8_t a, int8_t c)
 {
@@ -16369,7 +16374,7 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
  * \param[in] HL_string Pointer to packed string record: attribute byte, screen
  *                      address lo, screen address hi, then character bytes (bit
  *                      7 set on the last character) (was HL).
- * \return             Pointer to the byte past the terminating character.
+ * \return              Pointer to the byte past the terminating character.
  */
 const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
 {
@@ -16661,7 +16666,7 @@ static void redefine_keys_48k(chqstate_t *state)
  *
  * \param[out] D_keydef_out Receives packed key+row value: bits 7..3 = key
  *                          column, bits 2..0 = row. (was D)
- * \return Non-zero if a key is pressed; zero otherwise.
+ * \return                  Non-zero if a key is pressed; zero otherwise.
  */
 static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
 {
@@ -16723,7 +16728,7 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
  *                      temp_keydefs[]. (was C)
  * \param[in] DE_screen Z80 screen address at which the key name is drawn.
  *                      (was DE)
- * \return Updated screen address after the drawn key name.
+ * \return              Updated screen address after the drawn key name.
  */
 static int define_a_key(chqstate_t *state,
                         int         B_index,
@@ -16788,7 +16793,7 @@ dak_loop1:
  * define_a_key to step the screen cursor between key-name slots.
  *
  * \param[in] DE_screen Z80 screen address (D = high byte, E = low byte).
- * \return Screen address of the next character row.
+ * \return              Screen address of the next character row.
  *
  * Conv: fixed -- previously added 8 to D unconditionally on every call; the
  * Z80's `RET NC` at $EDD0 only takes that step when the E+=32 addition

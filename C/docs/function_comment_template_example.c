@@ -19,7 +19,7 @@
  * \param[in] style    Rendering style selector. (was A)
  * \param[in] messages Pointer to the start of the message data block. (was HL)
  *
- * \return Pointer to the byte following the NUL terminator.
+ * \return             Pointer to the byte following the NUL terminator.
  */
 const u8 *print_message(chqstate_t *state,
                         u8          style,

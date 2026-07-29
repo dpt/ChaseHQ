@@ -27,8 +27,10 @@ padded by a single space beyond the widest entry. Descriptions are re-wrapped
 to 80 columns with continuation lines indented to the description column. A
 block whose description column would land beyond DESC_COLUMN_LIMIT is packed
 with single spaces instead, since aligning it would leave too little width
-for the text. Blank " *" lines immediately before a prologue's closing "*/"
-are dropped.
+for the text. A \return that follows the block shares its description
+column, so the two read as one table; when the block is packed rather than
+aligned the \return is left as it stands. Blank " *" lines immediately
+before a prologue's closing "*/" are dropped.
 
 Usage: python3 format_signatures.py [--fix] [file.c ...]
 Default: all *.c in libraries/ChaseHQ/Engine/, check-only unless --fix given.
@@ -124,6 +126,8 @@ PROLOGUE_RE = re.compile(r"/\*\*.*?\*/", re.DOTALL)
 PARAM_RE = re.compile(r"^(\s*)\* (\\param(?:\[[^\]]*\])?)\s+(\S+)\s*(.*)$")
 CONTINUATION_RE = re.compile(r"^\s*\*\s+(\S.*?)\s*$")
 TAG_RE = re.compile(r"^\s*\* \\")
+RETURN_TAG = "\\return"
+RETURN_RE = re.compile(r"^\s*\* (\\return)\s+(.*)$")
 BLANK_COMMENT_RE = re.compile(r"^\s*\*\s*$")
 CLOSE_RE = re.compile(r"^\s*\*/\s*$")
 
@@ -139,11 +143,23 @@ def protect_register_notes(description):
     return REGISTER_NOTE_RE.sub(lambda m: m.group(0).replace(" ", NBSP), description)
 
 
+def render_entry(head, description, prefix, desc_column):
+    """Wrap one tag's description, hanging-indented to desc_column."""
+    wrapped = textwrap.wrap(
+        protect_register_notes(description),
+        width=LINE_LIMIT,
+        initial_indent=head,
+        subsequent_indent=prefix + " " * (desc_column - len(prefix)),
+    )
+    return [line.replace(NBSP, " ") for line in wrapped or [head.rstrip()]]
+
+
 def render_params(entries, prefix):
-    """Lay out one contiguous run of \\param entries as a list of lines.
+    """Lay out one contiguous run of \\param entries.
 
     entries is a list of (tag, name, description) triples; prefix is the
-    " * " that opens each line of the enclosing comment block."""
+    " * " that opens each line of the enclosing comment block. Returns
+    (lines, desc_column) so a following \\return can share the column."""
     lines = []
     tag_width = max(len(tag) for tag, _, _ in entries)
     name_width = max(len(name) for _, name, _ in entries)
@@ -154,14 +170,42 @@ def render_params(entries, prefix):
         desc_column = len(prefix) + 2
     for tag, name, description in entries:
         head = prefix + tag.ljust(tag_width) + " " + name.ljust(name_width) + " "
-        wrapped = textwrap.wrap(
-            protect_register_notes(description),
-            width=LINE_LIMIT,
-            initial_indent=head,
-            subsequent_indent=prefix + " " * (desc_column - len(prefix)),
-        )
-        lines.extend(line.replace(NBSP, " ") for line in wrapped or [head.rstrip()])
-    return lines
+        lines.extend(render_entry(head, description, prefix, desc_column))
+    return lines, desc_column
+
+
+def align_return(lines, i, out, prefix, desc_column):
+    """Lay out a \\return that follows a \\param block at the same column.
+
+    lines[i:] is what remains of the block; matched lines are appended to out
+    and the new index returned. A \\return is left alone when the parameters
+    themselves are packed rather than aligned -- there is no column to share."""
+    if desc_column <= len(prefix) + len(RETURN_TAG) + 1:
+        return i
+    j = i
+    blanks = []
+    while j < len(lines) and BLANK_COMMENT_RE.match(lines[j]):
+        blanks.append(lines[j])
+        j += 1
+    if j >= len(lines):
+        return i
+    m = RETURN_RE.match(lines[j])
+    if m is None:
+        return i
+    description = [m.group(2)]
+    j += 1
+    while j < len(lines) and not TAG_RE.match(lines[j]):
+        c = CONTINUATION_RE.match(lines[j])
+        if c is None:
+            break
+        description.append(c.group(1))
+        j += 1
+    head = prefix + RETURN_TAG.ljust(desc_column - len(prefix) - 1) + " "
+    out.extend(blanks)
+    out.extend(
+        render_entry(head, " ".join(description).strip(), prefix, desc_column)
+    )
+    return j
 
 
 def reformat_prologue(block):
@@ -192,7 +236,9 @@ def reformat_prologue(block):
                 description.append(c.group(1))
                 i += 1
             entries.append((m.group(2), m.group(3), " ".join(description).strip()))
-        out.extend(render_params(entries, prefix))
+        rendered, desc_column = render_params(entries, prefix)
+        out.extend(rendered)
+        i = align_return(lines, i, out, prefix, desc_column)
     # A prologue that trails off into blank " *" lines before its closing
     # "*/" gains nothing from them.
     while len(out) > 1 and CLOSE_RE.match(out[-1]) and BLANK_COMMENT_RE.match(out[-2]):

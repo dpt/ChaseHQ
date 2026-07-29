@@ -188,7 +188,7 @@ static void chq_initialise(chqstate_t *state)
  * bank 3/7 sub-states.
  *
  * \param[in] speccy ZX Spectrum facade to attach to the new state.
- * \return Newly allocated state, or NULL on allocation failure.
+ * \return           Newly allocated state, or NULL on allocation failure.
  */
 CHQ_API chqstate_t *chq_create(zxspectrum_t *speccy)
 {

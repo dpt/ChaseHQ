@@ -379,7 +379,7 @@ static void es_handler_draw_score(chqstate_t *state)
  *
  * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
  *                 at $E2B7).
- * \return Matching data block, or NULL if unrecognised.
+ * \return         Matching data block, or NULL if unrecognised.
  */
 static const u8 *z80addrtochatterblk(u16 addr)
 {
@@ -466,7 +466,8 @@ static void es_set_dispatch(chqstate_t *state,
  *
  * \param[in] character ASCII character, already offset by ' ' (was A after SUB
  *                      $20; space and 0 are handled by the caller).
- * \return Glyph index into font[] (multiply by 7 for the row pointer).
+ * \return              Glyph index into font[] (multiply by 7 for the row
+ *                      pointer).
  */
 static int ascii_to_glyph_id(int character)
 {
@@ -969,7 +970,7 @@ static void es_clear(chqstate_t *state)
  * back by 8 unless E itself carried into the next screen third.
  *
  * \param[in] addr Current screen address (was DE).
- * \return Screen address one row down.
+ * \return         Screen address one row down.
  */
 static u16 next_screen_row(u16 addr)
 {
@@ -1051,7 +1052,7 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
  * relocated bank memory the C port does not model byte-for-byte.
  *
  * \param[in] addr Raw address word read from the script (was HL).
- * \return Matching bitmap_endshot_N array.
+ * \return         Matching bitmap_endshot_N array.
  */
 static const u8 *z80addrtoendshot(u16 addr)
 {

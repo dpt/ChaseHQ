@@ -1041,7 +1041,7 @@ static void oss_op_decel_x(struct title_object *rec)
  *
  * \param[in] C_idx Countdown/curve index (was C).
  *
- * \return Curve magnitude for this index (was A).
+ * \return          Curve magnitude for this index (was A).
  *
  * Conv: the Z80 shuttles the outer object-loop's B (DJNZ counter) through A
  * around this lookup (LD A,B / LD B,$00 / ... / LD B,A) purely to protect it
@@ -2244,7 +2244,8 @@ static void stop_music_and_silence(chqstate_t *state)
  * \param[in,out] DE_pattern Pattern-stream read cursor; advanced past the byte
  *                           read. (was DE)
  *
- * \return The byte at the cursor position before advancing. (was A)
+ * \return                   The byte at the cursor position before advancing.
+ *                           (was A)
  *
  * Conv: pattern_ptr/pattern_base/pattern_len (State.h) are only populated for
  * tunes 0 and 1 (see titlescr_start_ay) -- a channel with pattern_ptr == NULL
@@ -2574,7 +2575,7 @@ reset_row_counter:
  * \param[in]  IX_channel   Pointer to this channel's tracker record. (was IX)
  * \param[out] A_volume_out Receives the phase-1/-2 volume (+$13). (was A)
  *
- * \return The phase-3/4 tone period. (was HL)
+ * \return                  The phase-3/4 tone period. (was HL)
  *
  * Conv: the Z80 pairs of EX DE,HL ($EF32/$EF4A, $EFAA) exist only to route
  * operands through ADD HL,DE / RET's register contract; C adds the values
@@ -2779,7 +2780,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * \param[in] addr Raw Z80 address, as stored little-endian in the table or
  *                 header. (was DE/HL)
  *
- * \return Pointer into the matching transcribed array. (was DE/HL)
+ * \return         Pointer into the matching transcribed array. (was DE/HL)
  *
  * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
  * phrase_ptr are C pointers into title_tune0_data/title_tune1_data,
@@ -2955,8 +2956,8 @@ finalize:
  *
  * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
- * \return 1 on success; 0 to signal an early return in the caller's loop
- * (BANK3_INPUT_SELECTION only).
+ * \return            1 on success; 0 to signal an early return in the caller's
+ *                    loop (BANK3_INPUT_SELECTION only).
  *
  * Conv: Z80 uses self-modification and 128K hardware memory paging; C
  * dispatches via switch on the [routine] address constants.
@@ -3063,7 +3064,7 @@ static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
  *
  * \param[in] addr Raw Z80 address in the $FA75-$FB98 range. (was HL)
  *
- * \return Pointer into drum_cue_script_data. (was HL)
+ * \return         Pointer into drum_cue_script_data. (was HL)
  *
  * Conv: not a Z80 routine of its own -- see resolve_phrase_addr's own Conv
  * note for why raw addresses read out of transcribed data must be resolved
@@ -3828,7 +3829,8 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  *
  * \param[in] HL_record Pointer to the 3-byte header + character stream
  *                      (was HL).
- * \return Pointer to the byte following the record's terminator (was HL).
+ * \return              Pointer to the byte following the record's terminator
+ *                      (was HL).
  *
  * Sister function: menu_draw_char ($EC2C, Main.c). The two are near-clones --
  * the same glyph ladder, the same 4-row/-2016/3-row double-height blit and the
@@ -4103,10 +4105,11 @@ static void redefine_keys_screen(chqstate_t *state)
  *
  * \param[out] D_key_code_out Packed key code: 8*(4-bit) + (7-row). Left at 0xFF
  *                            if no key was held in any row (was D).
- * \return 1 if more than one row (or more than one bit within a row) was
- * held simultaneously -- an ambiguous scan the caller should reject and
- * retry. 0 otherwise (D_key_code_out is 0xFF for "no key", or a valid
- * packed code for exactly one key held).
+ * \return                    1 if more than one row (or more than one bit
+ *                            within a row) was held simultaneously -- an
+ *                            ambiguous scan the caller should reject and retry.
+ *                            0 otherwise (D_key_code_out is 0xFF for "no key",
+ *                            or a valid packed code for exactly one key held).
  */
 static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
 {
@@ -4239,7 +4242,7 @@ rescan:
  * the 48K equivalent.
  *
  * \param[in] DE_screen Z80 screen address (was DE).
- * \return Screen address advanced by one label column.
+ * \return              Screen address advanced by one label column.
  */
 static u16 advance_key_label_column(u16 DE_screen)
 {
