@@ -138,11 +138,21 @@
 #define MAP_ESC                         (0)
 
 // Map commands
+//
+// Commands 3..9 all latch the same value: rm_hazard_byte = cmd - 3 ($C02C).
+// spawn_hazards ($AB9A) reads it back and treats 1/2/3 as one obstacle left,
+// one right, or a pair, drawn with the stage's light hittable object
+// (addrof_hittable_objects[0] — the tumbleweed on the stage 1/3 dirt track).
+// 4/5/6 are the same three placements drawn with the heavy hittable
+// (addrof_hittable_objects[1] — the barrier), which is why the obstacle and
+// barrier commands come in matching triples.
 #define MAP_CMDCODE_GOTO                (0)
 #define MAP_CMDCODE_FORK_END            (1)
 #define MAP_CMDCODE_SPLIT               (2)
 #define MAP_CMDCODE_STOP_BARRIERS       (3)
-#define MAP_CMDCODE_UNKNOWN_HAZARD_6    (6)
+#define MAP_CMDCODE_START_OBSTACLE_L    (4)
+#define MAP_CMDCODE_START_OBSTACLE_R    (5)
+#define MAP_CMDCODE_START_TWO_OBSTACLES (6)
 #define MAP_CMDCODE_START_BARRIERS_L    (7)
 #define MAP_CMDCODE_START_BARRIERS_R    (8)
 #define MAP_CMDCODE_START_TWO_BARRIERS  (9)
@@ -157,7 +167,9 @@
 #define MAP_CMD_FORK_END                MAP_ESC, MAP_CMDCODE_FORK_END
 #define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, MAP_CMDCODE_SPLIT, (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
 #define MAP_CMD_STOP_BARRIERS           MAP_ESC, MAP_CMDCODE_STOP_BARRIERS
-#define MAP_CMD_UNKNOWN_HAZARD_6        MAP_ESC, MAP_CMDCODE_UNKNOWN_HAZARD_6
+#define MAP_CMD_START_OBSTACLE_L        MAP_ESC, MAP_CMDCODE_START_OBSTACLE_L
+#define MAP_CMD_START_OBSTACLE_R        MAP_ESC, MAP_CMDCODE_START_OBSTACLE_R
+#define MAP_CMD_START_TWO_OBSTACLES     MAP_ESC, MAP_CMDCODE_START_TWO_OBSTACLES
 #define MAP_CMD_START_BARRIERS_L        MAP_ESC, MAP_CMDCODE_START_BARRIERS_L
 #define MAP_CMD_START_BARRIERS_R        MAP_ESC, MAP_CMDCODE_START_BARRIERS_R
 #define MAP_CMD_START_TWO_BARRIERS      MAP_ESC, MAP_CMDCODE_START_TWO_BARRIERS

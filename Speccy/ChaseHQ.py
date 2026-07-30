@@ -511,8 +511,10 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
     def map_hazards(self, cwd, base):
         hazardnames = {
-            3: "Stop Spawning Barriers",
-            6: "TBD Start Spawning Barriers?",
+            3: "Stop Spawning Obstacles and Barriers",
+            4: "Start Spawning Obstacle Left",
+            5: "Start Spawning Obstacle Right",
+            6: "Start Spawning Two Obstacles",
             7: "Start Spawning Barriers Left",
             8: "Start Spawning Barriers Right",
             9: "Start Spawning Two Barriers",
@@ -536,7 +538,9 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     def hazards_for_c(self, cwd, base):
         names = {
             3: "STOP_BARRIERS",
-            6: "UNKNOWN_HAZARD_6",
+            4: "START_OBSTACLE_L",
+            5: "START_OBSTACLE_R",
+            6: "START_TWO_OBSTACLES",
             7: "START_BARRIERS_L",
             8: "START_BARRIERS_R",
             9: "START_TWO_BARRIERS",

@@ -226,8 +226,8 @@ without consuming a wait.
 | Token | Emits | Effect |
 |---|---|---|
 | `haz-` | `MAP_CMD_STOP_BARRIERS` (3) | latch 0 — clears the hazard |
-| `haz1` `haz2` | `MAP_ESC, (4)` `MAP_ESC, (5)` | latch 1 / 2 (no named macro) |
-| `haz3` | `MAP_CMD_UNKNOWN_HAZARD_6` (6) | latch 3 |
+| `haz1` `haz2` | `MAP_CMD_START_OBSTACLE_L` / `_R` (4/5) | latch 1 / 2 — one light obstacle |
+| `haz3` | `MAP_CMD_START_TWO_OBSTACLES` (6) | latch 3 — a pair of light obstacles |
 | `bar<` `bar>` `bar<>` | `MAP_CMD_START_BARRIERS_L` / `_R` / `_TWO_BARRIERS` (7/8/9) | latch 4 / 5 / 6 |
 | `arrX` `arr<` `arr>` | `MAP_CMD_ARROW_OFF` / `_L` / `_R` (10/11/12) | `floating_arrow` |
 | `cars+` `cars-` | `MAP_CMD_START_CARS` / `_STOP_CARS` (13/14) | `dont_spawn_cars` |

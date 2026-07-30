@@ -212,9 +212,9 @@ LANE_NAME_ALIASES = {
 
 HAZARD_TOKENS = {
     "haz-": 3,   # latch 0 (MAP_CMD_STOP_BARRIERS)
-    "haz1": 4,   # latch 1 (no named macro)
-    "haz2": 5,   # latch 2 (no named macro)
-    "haz3": 6,   # latch 3 (MAP_CMD_UNKNOWN_HAZARD_6)
+    "haz1": 4,   # latch 1 (MAP_CMD_START_OBSTACLE_L)
+    "haz2": 5,   # latch 2 (MAP_CMD_START_OBSTACLE_R)
+    "haz3": 6,   # latch 3 (MAP_CMD_START_TWO_OBSTACLES)
     "bar<": 7,
     "bar>": 8,
     "bar<>": 9,

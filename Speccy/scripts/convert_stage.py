@@ -108,9 +108,11 @@ HAZARD_CMDS = {
     1: "MAP_CMD_FORK_END",
     2: None,  # SPLIT
     3: "MAP_CMD_STOP_BARRIERS",
-    4: "MAP_ESC, (4)",  # HAZARD1_L (Stage 2+) / START_BARRIERS_L (S1)
-    5: "MAP_ESC, (5)",  # HAZARD1_R
-    6: "MAP_CMD_UNKNOWN_HAZARD_6",
+    # 4/5/6 place the stage's light hittable object (tumbleweed), 7/8/9 the
+    # heavy one (barrier), in the same left/right/pair arrangements.
+    4: "MAP_CMD_START_OBSTACLE_L",
+    5: "MAP_CMD_START_OBSTACLE_R",
+    6: "MAP_CMD_START_TWO_OBSTACLES",
     7: "MAP_CMD_START_BARRIERS_L",
     8: "MAP_CMD_START_BARRIERS_R",
     9: "MAP_CMD_START_TWO_BARRIERS",
