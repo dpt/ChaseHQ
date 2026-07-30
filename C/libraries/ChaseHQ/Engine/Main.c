@@ -10658,13 +10658,23 @@ mhc_check_brake:
   if ((s8) A_inclined < 0) {
     A_pitch = state->dhc_pitch;
     if (A_pitch == 0 || speed == 0) {
-      A_inclined = 0; // don't adjust speed if car's halted?
+      // Level ($B1C2) or stopped ($B1C7): no pitch adjustment. Both exits
+      // reach $B1E4 with A already zero -- from the pitch byte itself, or
+      // from the H OR L that tested the speed -- so the counter resets to 0
+      // and the check runs again next frame, where the adjusting path below
+      // instead sets 3 and skips the following two.
+      A_inclined = 0;
     } else {
       // New speed is non-zero
       BC_pitch_speed_delta = (A_pitch - 5) | 1; // 0/3/6 in Cpitch => -5/-1/1
       DE_oldspeed = speed;
       speed += BC_pitch_speed_delta;
-      if (speed >= 695) // seems high?
+      // $B1D8-$B1DF: unreachable. state->speed is stored through a cap of 511
+      // ($B1EC), the largest speed delta any path above can add is 63 (the
+      // low-gear accelerate term), and the pitch term adds at most 1, so
+      // [speed] cannot exceed 575 here. The skool's "surely always the case?!"
+      // at $B1DF is correct: the branch is never taken. Kept for fidelity.
+      if (speed >= 695)
         speed = DE_oldspeed; // clamp to max
       A_inclined = 3;
     }
@@ -10675,7 +10685,9 @@ mhc_check_brake:
   H_input = C_input; /* was POP HL (get user input) */
   B_right_turn = state->right_turn;
   C_left_turn  = state->left_turn;
-  if (state->mhc_y_offset == 0) { // if not in the air?
+  // $B1FB-$B1FF: mhc_y_offset is the jump counter, non-zero for the whole of a
+  // jump, so steering input is ignored while the car is airborne.
+  if (state->mhc_y_offset == 0) {
     if (H_input & USERINPUTFLAG_RIGHT)
       goto mhc_turning_right;
     if (H_input & USERINPUTFLAG_LEFT)
