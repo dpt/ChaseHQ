@@ -11239,8 +11239,10 @@ static void draw_debris(chqstate_t *state)
 
     HL_bitmap = &bitmap_debris[0][0] + BC_frame_offset;
 
+    // bitmap_debris is [4][2 * 6]: four frames of six rows, each row one mask
+    // byte plus one data byte. So the sprite really is a single byte wide.
     B_height = 6; // rows
-    C_width_bytes = 1; // 1 byte wide masked?
+    C_width_bytes = 1;
     // EXX - bank
     BCdash = 0;
     Edash_width_bytes = 1;
@@ -11334,7 +11336,10 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   HLdash_backbuf_addr =
     DE_backbuf_addr; /* was POP HL_backbuf_addr  -- backbuffer plotaddr */
   // EX AF,AF'
-  Adash_flip_car = state->flip_car; // reuse later perhaps?
+  // $B5E9 EX AF,AF' banks the width (5) so that A is free to hold flip_car for
+  // the test below; both branches swap it back before calling the plotter,
+  // which takes the width in A. Same idiom as $B6E5 in draw_masked_sprite.
+  Adash_flip_car = state->flip_car;
   if (!Adash_flip_car) {
     // EX AF,AF' -- A is (width in bytes)
     plot_sprite(state,
@@ -11412,9 +11417,12 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
   // EXX BANK
   // POP BC -- restore byte width
   Bdash_flip_flag = state->flip_car;
-  Edash_bitmap_stride = C_width_bytes; // width and stride always the same here?
-  Cdash = (Bdash_flip_flag) ? C_width_bytes - 1 :
-          0; // flipped start offset or something?
+  // $B63A LD E,C copies the byte width straight into the stride, so yes: for
+  // hero car parts the two are always equal. $B63B-$B63F then sets C' to the
+  // horizontal start column within the sprite -- 0 normally, or the last
+  // column when flipped, so the flipped blit walks the rows backwards.
+  Edash_bitmap_stride = C_width_bytes;
+  Cdash = (Bdash_flip_flag) ? C_width_bytes - 1 : 0;
   // EXX UNBANK
   draw_masked_sprite_rel_car(state,
                              B_height,
