@@ -26,6 +26,13 @@ silently before:
    the compiler lays two separate arrays out. Indexing one shared blob absorbed
    that; an array per sprite does not.
 
+4. Every sprite array is written in the shape it declares. A masked sprite
+   interleaves a mask byte with each pixel byte, so a 2-wide one is 4 elements
+   across; written at 2 per row each visual row is split over two lines and the
+   array stops reading as a picture. Seven arrays in the hand-written
+   Stage1Data.c were like that, and one of them declared a height its data did
+   not fill.
+
 Usage: python3 check_stage_converter.py
 """
 
@@ -124,6 +131,36 @@ def sprite_overruns(text):
     return out
 
 
+SHAPED_RE = re.compile(
+    r"static const u8 (\w+)\[([0-9]+(?:\s*\*\s*[0-9]+)+)\] = \{\n(.*?)\n\};", re.S
+)
+
+
+def shape_faults(text):
+    """Report sprite arrays not written in the shape they declare.
+
+    A length of 'width * 2 * height' marks a masked sprite, whose mask byte is
+    interleaved with each pixel byte: it is width * 2 elements across. Anything
+    else is width across. A row count or element count that disagrees with the
+    declaration means the array no longer reads as the picture it holds -- or,
+    where the element count is short, that C is quietly zero-filling the rest.
+    """
+    out = []
+    for m in SHAPED_RE.finditer(text):
+        factors = [int(f.strip()) for f in m.group(2).split("*")]
+        per_row = factors[0] * 2 if len(factors) == 3 and factors[1] == 2 else factors[0]
+        rows = [r for r in m.group(3).split("\n") if r.strip()]
+        held = len([t for t in m.group(3).replace("\n", " ").split(",") if t.strip()])
+        if held != declared_size(m.group(2)):
+            out.append("%s[%s] holds %d bytes, declares %d"
+                       % (m.group(1), m.group(2), held, declared_size(m.group(2))))
+        elif len(rows) * per_row != held:
+            out.append("%s[%s] is %d rows of ~%d, expected %d rows of %d"
+                       % (m.group(1), m.group(2), len(rows),
+                          held // max(len(rows), 1), held // per_row, per_row))
+    return out
+
+
 def main():
     defined = set(re.findall(r"#define\s+(MAP_[A-Z0-9_]+)\(", open(STAGES_H).read()))
     failures = 0
@@ -170,20 +207,24 @@ def main():
     # The committed files are laid out the same way, and there the property is
     # load-bearing rather than advisory: they are what the game actually
     # compiles against.
-    for path in sorted(glob.glob(os.path.join(DATA_DIR, "Stage*Data.c"))):
-        overruns = sprite_overruns(open(path).read())
-        if overruns:
+    for path in sorted(glob.glob(os.path.join(DATA_DIR, "*.c"))):
+        text = open(path).read()
+        for label, found in (("overrun their array", sprite_overruns(text)),
+                             ("disagree with their shape", shape_faults(text))):
+            if not found:
+                continue
             failures += 1
-            print("%s: %d sprite(s) overrun their array:"
-                  % (os.path.basename(path), len(overruns)))
-            for o in sorted(set(overruns)):
+            print("%s: %d sprite(s) %s:"
+                  % (os.path.basename(path), len(found), label))
+            for o in sorted(set(found)):
                 print("      %s" % o)
 
     if failures:
         print("\n%d check(s) failed." % failures)
         return 1
     print("PASS  convert_stage.py: macros resolve, chatter lines decode, "
-          "sprites fit their arrays (generated and committed)")
+          "sprites fit their arrays and are written in the shape they declare "
+          "(generated and committed)")
     return 0
 
 
