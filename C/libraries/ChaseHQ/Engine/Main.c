@@ -9131,8 +9131,16 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
   if (state->stage->addrof_helicopter_frames[0] == NULL)
     return;
 
-  diff = state->object_positions[B_distance] -
-         state->object_positions[B_distance - 1]; // Conv: see prologue
+  // Conv: see prologue for the IY+$4E/IY+$4F addressing. $AA42-$AA46 widens
+  // the SUB result into DE as an *unsigned* byte (LD D,$00), so the delta is
+  // truncated to match. object_positions holds a prefix sum stored in u8, so
+  // a wrap between these two slots would make a plain int subtraction go
+  // negative and feed the multiply below an operand the Z80 never sees.
+  // Instrumenting the test suite showed slots 2 and 3 sit early enough in the
+  // sum that they do not wrap in practice (sampled at 41 and 50), so this is
+  // fidelity to the Z80 rather than a fix for observed behaviour.
+  diff = (u8) (state->object_positions[B_distance] -
+               state->object_positions[B_distance - 1]);
   total = 0;
   fast_counter = state->fast_counter & 0xE0;
   B_iterations2 = 8;
@@ -9145,7 +9153,15 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
   } while (--B_iterations2 > 0);
 
   A_total = total >> 8;
-  RR(A_total); // halve?
+  // $AA56 RRA rotates in the carry left by the loop's final ADD HL,HL, i.e.
+  // bit 15 of the product before that last doubling. The loop computes
+  // diff * (fast_counter & $E0), so that value is at most 255 * 7 * 16 =
+  // 28560 and its bit 15 is always clear -- the rotate is therefore always a
+  // plain halve, undoing the extra doubling the 8-iteration loop performs on
+  // a 3-bit multiplier. C reaches the same place from the other direction:
+  // total <<= 1 does not touch [carry], so [carry] still holds the last bit
+  // shifted out of fast_counter, which is likewise always 0 by this point.
+  RR(A_total);
   state->dhs_heli_rotor_pos = A_total;
 
   state->dhs_heli_y_offset =
