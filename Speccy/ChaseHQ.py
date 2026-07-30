@@ -523,6 +523,9 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             12: "Set Floating Arrow to Right",
             13: "Enable Car Spawning",
             14: "Disable Car Spawning",
+            15: "Send Helicopter Away",
+            17: "Helicopter Turns Left",
+            18: "Helicopter Turns Right",
         }
 
         actions = self.common_actions | {
@@ -549,6 +552,9 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             12: "ARROW_R",
             13: "START_CARS",
             14: "STOP_CARS",
+            15: "HELI_LEAVE",
+            17: "HELI_TURN_L",
+            18: "HELI_TURN_R",
         }
 
         actions = self.c_common_actions | {
@@ -564,7 +570,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         objnames = {
             0: "Nothing",
             1: "Tunnel Light",
-            2: "Unknown (2)",
+            2: "Empty Slot",
             3: "Short Pole",
             4: "Tree",
             5: "Bush",
@@ -572,12 +578,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             7: "Telegraph Pole",
             8: "Turn Sign, Pointing Left",
             9: "Turn Sign, Pointing Right",
-            10: "Unknown (10)",
-            11: "Unknown (11)",
-            12: "Unknown (12)",
-            13: "Unknown (13)",
-            14: "Unknown (14)",
-            15: "Unknown (15)",
+            # Stage 1's object table ends at 9; codes 10-15 have no entry.
         }
 
         actions = self.common_actions | {
@@ -593,7 +594,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         names = {
             0: "NONE",
             1: "TUNNEL_LIGHT",
-            2: "UNKNOWN_2",
+            2: "EMPTY_SLOT",
             3: "SHORT_POLE",
             4: "TREE",
             5: "BUSH",
@@ -615,7 +616,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         objnames = {
             0: "Nothing",
             1: "Tunnel Light",
-            2: "Unknown (2)",
+            2: "Empty Slot",
             3: "Short Pole",
             4: "Tree",
             5: "Bush",
@@ -623,12 +624,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             7: "Telegraph Pole",
             8: "Turn Sign, Pointing Left",
             9: "Turn Sign, Pointing Right",
-            10: "Unknown (10)",
-            11: "Unknown (11)",
-            12: "Unknown (12)",
-            13: "Unknown (13)",
-            14: "Unknown (14)",
-            15: "Unknown (15)",
+            # Stage 1's object table ends at 9; codes 10-15 have no entry.
         }
 
         actions = self.common_actions | {

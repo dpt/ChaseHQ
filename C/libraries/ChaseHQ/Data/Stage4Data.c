@@ -41,7 +41,7 @@
 
 /* Stage 4 object type macros */
 #define MAP_OBJ_S4_TUNNEL_LIGHT_VAL  (1)
-#define MAP_OBJ_S4_OBJ2_VAL  (2)
+#define MAP_OBJ_S4_EMPTY_SLOT_VAL  (2)
 #define MAP_OBJ_S4_SHORT_POLE_VAL  (3)
 #define MAP_OBJ_S4_NEAR_COLUMN_VAL  (4)
 #define MAP_OBJ_S4_FAR_COLUMN_VAL  (5)
@@ -49,16 +49,10 @@
 #define MAP_OBJ_S4_STREET_LAMP_VAL  (7)
 #define MAP_OBJ_S4_TURN_SIGN_POINTING_LEFT_VAL  (8)
 #define MAP_OBJ_S4_TURN_SIGN_POINTING_RIGHT_VAL  (9)
-#define MAP_OBJ_S4_OBJ10_VAL  (10)
-#define MAP_OBJ_S4_OBJ11_VAL  (11)
-#define MAP_OBJ_S4_OBJ12_VAL  (12)
-#define MAP_OBJ_S4_OBJ13_VAL  (13)
-#define MAP_OBJ_S4_OBJ14_VAL  (14)
-#define MAP_OBJ_S4_OBJ15_VAL  (15)
 
 #define MAP_OBJ_S4_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S4_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S4_TUNNEL_LIGHT_VAL)
-#define MAP_OBJ_S4_OBJ2(D)   (((D) << 4) | MAP_OBJ_S4_OBJ2_VAL)
+#define MAP_OBJ_S4_EMPTY_SLOT(D)   (((D) << 4) | MAP_OBJ_S4_EMPTY_SLOT_VAL)
 #define MAP_OBJ_S4_SHORT_POLE(D)   (((D) << 4) | MAP_OBJ_S4_SHORT_POLE_VAL)
 #define MAP_OBJ_S4_NEAR_COLUMN(D)   (((D) << 4) | MAP_OBJ_S4_NEAR_COLUMN_VAL)
 #define MAP_OBJ_S4_FAR_COLUMN(D)   (((D) << 4) | MAP_OBJ_S4_FAR_COLUMN_VAL)
@@ -66,12 +60,6 @@
 #define MAP_OBJ_S4_STREET_LAMP(D)   (((D) << 4) | MAP_OBJ_S4_STREET_LAMP_VAL)
 #define MAP_OBJ_S4_TURN_SIGN_POINTING_LEFT(D)   (((D) << 4) | MAP_OBJ_S4_TURN_SIGN_POINTING_LEFT_VAL)
 #define MAP_OBJ_S4_TURN_SIGN_POINTING_RIGHT(D)   (((D) << 4) | MAP_OBJ_S4_TURN_SIGN_POINTING_RIGHT_VAL)
-#define MAP_OBJ_S4_OBJ10(D)   (((D) << 4) | MAP_OBJ_S4_OBJ10_VAL)
-#define MAP_OBJ_S4_OBJ11(D)   (((D) << 4) | MAP_OBJ_S4_OBJ11_VAL)
-#define MAP_OBJ_S4_OBJ12(D)   (((D) << 4) | MAP_OBJ_S4_OBJ12_VAL)
-#define MAP_OBJ_S4_OBJ13(D)   (((D) << 4) | MAP_OBJ_S4_OBJ13_VAL)
-#define MAP_OBJ_S4_OBJ14(D)   (((D) << 4) | MAP_OBJ_S4_OBJ14_VAL)
-#define MAP_OBJ_S4_OBJ15(D)   (((D) << 4) | MAP_OBJ_S4_OBJ15_VAL)
 
 /* ----------------------------------------------------------------------- */
 
@@ -506,7 +494,7 @@ static const u8 stage4_map_hazards_E30E[] = {
   MAP_HAZARD_WAIT(2),
   MAP_CMD_STOP_BARRIERS,
   MAP_HAZARD_WAIT(21),
-  MAP_ESC, (18),
+  MAP_CMD_HELI_TURN_R,
   MAP_HAZARD_WAIT(20),
   MAP_CMD_START_OBSTACLE_R,
   MAP_HAZARD_WAIT(2),
@@ -845,7 +833,7 @@ static const u8 stage4_map_lanes_E46C[] = {
 /** $E480: stage4_map_hazards_E480 */
 static const u8 stage4_map_hazards_E480[] = {
   MAP_HAZARD_WAIT(10),
-  MAP_ESC, (15),
+  MAP_CMD_HELI_LEAVE,
   MAP_HAZARD_WAIT(2),
   MAP_CMD_START_CARS,
   MAP_HAZARD_WAIT(90),
@@ -971,7 +959,7 @@ static const u8 stage4_map_hazards_E500[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_CARS,
   MAP_HAZARD_WAIT(36),
-  MAP_ESC, (15),
+  MAP_CMD_HELI_LEAVE,
   MAP_HAZARD_WAIT(55),
   MAP_CMD_GOTO(STAGE4_MAP_HAZARDS_E5FB_ADDR)
 };

@@ -467,6 +467,47 @@ static void test_drlc_writes_xpos_entries(void)
 }
 
 /*
+ * MAP_LANES_3LTO2L_VAL (0x3D) is original stage 2 data ($E56D), not a spare
+ * bit pattern: it narrows a 3L run to a 2L run. Pin the fact that it reaches
+ * the Bresenham rather than being ignored as a steady state — the docs plan a
+ * new lane transition whose proposed mask, (flags & 0xB0) == 0x30, would
+ * capture this byte and silently change how stage 2 renders.
+ *
+ * Writes land in xpos_road_centre: bit 5 set with bit 7 clear points H at
+ * page $EB (xpos_road_centre_right), and the bit-5 correction at $C408 then
+ * steps the output pointer back one page to $EA.
+ */
+static void test_drlc_3lto2l_runs_bresenham(void)
+{
+  chqstate_t *state;
+  u16 baseline[128];
+  int i;
+  int changed;
+
+  state = make_road_state();
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+
+  memcpy(baseline, state->xpos_road_centre, sizeof(baseline));
+
+  state->fast_counter = 0;
+  chq_test_draw_road_lanes_change(state, MAP_LANES_3LTO2L_VAL, 1);
+
+  changed = 0;
+  for (i = 0; i < 128; i++) {
+    if (state->xpos_road_centre[i] != baseline[i])
+      changed++;
+  }
+  if (changed == 0) {
+    printf("  FAIL: 0x3D wrote no xpos entries — treated as a steady state\n");
+    assert(changed > 0);
+  }
+
+  chq_destroy(state);
+  printf("PASS  draw_road_lanes_change: MAP_LANES_3LTO2L drives the Bresenham\n");
+}
+
+/*
  * Drive the road pipeline frame by frame through the first stage-1 fork and
  * out the other side, mirroring the main loop ordering: read_map (modelled as
  * allow_spawning reset + one rm_cycle_buffer_offset) → build_height_table →
@@ -1119,6 +1160,7 @@ int main(void)
   test_drlc_exits_when_dist_too_far();
   test_drlc_exits_on_straight_track();
   test_drlc_writes_xpos_entries();
+  test_drlc_3lto2l_runs_bresenham();
   test_draw_road_writes_backbuffer();
   test_lane_markings_appear_at_bottom_row();
   test_set_up_stage_lanes_slot_is_3lane();

@@ -94,6 +94,7 @@ LANE_VALS = {
     0x9E: "3RTO4",
     0x06: "3LTO2M",
     0x0F: "3RTO2R",
+    0x3D: "3LTO2L",
     0x2D: "2LTO3L",
     0x1F: "2RTO3R",
     0x45: "TUNNEL_ENTRY",
@@ -121,9 +122,10 @@ HAZARD_CMDS = {
     12: "MAP_CMD_ARROW_R",
     13: "MAP_CMD_START_CARS",
     14: "MAP_CMD_STOP_CARS",
-    15: "MAP_ESC, (15)",  # stop helicopter
-    17: "MAP_ESC, (17)",  # start heli left
-    18: "MAP_ESC, (18)",  # start heli right (Stage4Data.c)
+    # 15..18 set helicopter_control = code - 11; 16 (state 2) is never used.
+    15: "MAP_CMD_HELI_LEAVE",
+    17: "MAP_CMD_HELI_TURN_L",
+    18: "MAP_CMD_HELI_TURN_R",
 }
 
 STRETCHY_TYPE_NAMES: Dict[int, str] = {
@@ -2488,10 +2490,10 @@ def main():
     args = parser.parse_args()
 
     obj_names = [n.strip() for n in args.obj_names.split(",")]
-    # Pad or trim to exactly 16 (max nibble value 0xF = 15)
-    while len(obj_names) < 16:
-        obj_names.append(f"OBJ{len(obj_names)}")
-
+    # No padding to the full nibble range: an object code only means anything
+    # if the stage's obj_defs table has an entry for it, and every stage's
+    # table stops well short of 15. Codes past the end of --obj-names decode
+    # to a "/* obj 0xNN */" comment, which is what a scaffold should show.
     convert(args.skool, args.stage, obj_names)
 
 

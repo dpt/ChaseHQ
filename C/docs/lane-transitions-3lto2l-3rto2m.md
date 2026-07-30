@@ -11,6 +11,36 @@ fixed (`3L→2L`, `3R→2M`), even though the steady-state endpoints for both
 (`3L`, `2L`, `3R`, `2M`) already exist and are fully supported by the
 parametric per-scanline renderer.
 
+> **Correction (supersedes the original premise below).** Half of this was
+> never new content. `0x3D` **is** original game data: stage 2's lanes stream
+> writes it at `$E56D` (bank-1 skool), for 2 units, between a `3L` run of 40
+> and a `2L` run of 38 — exactly a 3L→2L narrowing. It is now named
+> `MAP_LANES_3LTO2L_VAL` in `Stages.h` and written as `MAP_LANES_3LTO2L(2)`
+> in `Stage2Data.c`, where it previously appeared as a bare
+> `/* unknown lanes val=0x3D */ 2, 0x3D`.
+>
+> So the claim that `0x3D` is "a bit pattern the original game never
+> produces" is false, and the argument that led to it — enumerating
+> `(bit7,bit5,bit4)` triples against the *named* constants — was only ever
+> enumerating against the names, not against the data. `0x3E` does survive
+> the same check against the data: no lanes stream in any stage uses it.
+>
+> What remains of this plan:
+>
+> - **`3LTO2L` (`0x3D`)**: not new content. The engine already routes it
+>   through existing branches (bit5 set, bit7 clear → `H = 0xEB`; bit4 set →
+>   the near-boundary path with the animation offset), so stage 2 renders
+>   *something* there today. Open question is whether that something is the
+>   right taper — see the verification note in §2.
+> - **`3RTO2M` (`0x3E`)**: still genuinely invented, still needs the work
+>   below.
+>
+> Anything below that treats `0x3D` as a free slot should be read as applying
+> to `0x3E` alone. In particular the new branch's mask
+> `(L_lane_flags & 0xB0) == 0x30` matches `0x3D` as well as `0x3E`, so
+> implementing it as written would **change how stage 2's existing section
+> renders**. Narrow the test to `0x3E` unless that change is what you want.
+
 This is genuinely new game content with no Z80 counterpart — every other
 line in `draw_road_lanes_change` mirrors a specific disassembled Z80
 instruction. The new code must be clearly marked as invented (not a `Conv:`
@@ -33,28 +63,24 @@ Verified directly against the source (`Main.c:13918-14208`), not just the
 - Enumerating every `(bit7,bit5,bit4)` triple against all 12 existing named
   constants (steady, transition, tunnel, dirt, forked) shows `(0,1,1)` is
   the **only** combination with bit7=0 that is completely unused. This is
-  forced, not a free choice — it's the only available slot.
+  forced, not a free choice — it's the only available slot. *(Wrong for
+  `0x3D`: see the correction above. The original game uses that pattern.)*
 - Bits 2-3 just need to be non-zero to enter the transition code at all;
   use `11` (`0xC`) to match the majority convention.
 
 ```
-MAP_LANES_3LTO2L_VAL = 0x3D  // 0011_1101 (offset=1, matches 2L)
-MAP_LANES_3RTO2M_VAL = 0x3E  // 0011_1110 (offset=2, matches 2M)
+MAP_LANES_3LTO2L_VAL = 0x3D  // 0011_1101 (offset=1, matches 2L) — original data, now named
+MAP_LANES_3RTO2M_VAL = 0x3E  // 0011_1110 (offset=2, matches 2M) — invented
 ```
 
 ## 1. `Stages.h`
 
-Add after `MAP_LANES_3RTO2R_VAL` (line 191), matching existing formatting:
+`MAP_LANES_3LTO2L_VAL` and `MAP_LANES_3LTO2L(D)` are already present — they
+were added when the stage 2 byte was identified. Only the `3RTO2M` pair
+remains to be added:
 
 ```c
-#define MAP_LANES_3LTO2L_VAL            (0x3D) // 0011_1101
 #define MAP_LANES_3RTO2M_VAL            (0x3E) // 0011_1110
-```
-
-Add stream macros after `MAP_LANES_3RTO2R(D)` (~line 238):
-
-```c
-#define MAP_LANES_3LTO2L(D)             (D), (MAP_LANES_3LTO2L_VAL)
 #define MAP_LANES_3RTO2M(D)             (D), (MAP_LANES_3RTO2M_VAL)
 ```
 
@@ -68,6 +94,16 @@ destination (2-lane's own right rail) = `H_left_hand_table_hi + 2`; seed
 source (3-lane's own right rail, one page further out) = destination `+ 1`.
 This is the mirror of the existing `3LTO2M`/`3RTO2R` mechanic, which writes
 into `H` itself (already the moving left edge) seeded from `H - 1`.
+
+**What `0x3D` does today.** Nothing intercepts it, so it takes the general
+path: bits 2-3 non-zero enters the lane-change code, bit 5 set with bit 7
+clear rewrites `H_left_hand_table_hi` to `0xEB` (`xpos_road_centre_right`),
+and bit 4 set selects the near-boundary path (`A_curve_step = 0x20`,
+`C_ref_height = IY[1]`, animation offset applied). That is the same
+treatment `2LTO3L` (`0x2D`) gets bar the bit-4 path, which is what you would
+want of its mirror. Confirm on screen before adding any branch that captures
+`0x3D`: drive stage 2 to the section after the tunnel, where a 3L run of 40
+narrows to a 2L run of 38.
 
 **New branch.** Insert immediately after `(*IY_heightptr)--;` (line 13967),
 *before* the existing `if (L_lane_flags & (1 << 5))` check (line 13970) —

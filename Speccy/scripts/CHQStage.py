@@ -17,7 +17,7 @@ OBJECT_NAMES = [
             # Stage 1
             "EMPTY",
             "TUNNEL_LIGHT",
-            "(object 2 - unused)",
+            "(object 2 - empty table slot)",
             "SHORT_POLE",
             "TREE",
             "BUSH",
@@ -30,7 +30,7 @@ OBJECT_NAMES = [
             # Stage 2
             "EMPTY",
             "TUNNEL_LIGHT",
-            "(object 2 - unused)",
+            "(object 2 - empty table slot)",
             "SHORT_POLE",
             "HUGE_ROCK",
             "PALM_TREE",
@@ -51,7 +51,7 @@ OBJECT_NAMES = [
             # Stage 4
             "EMPTY",
             "TUNNEL_LIGHT",
-            "(object 2 - unused)",
+            "(object 2 - empty table slot)",
             "SHORT_POLE",
             "NEAR_COLUMN",
             "FAR_COLUMN",
@@ -65,7 +65,7 @@ OBJECT_NAMES = [
             "EMPTY",
             "TUNNEL_LIGHT",
             "OVERHEAD_BRIDGE",
-            "(object 3 - unused)",
+            "SHORT_POLE",
             "CACTUS",
             "DOUBLE_STREET_LAMP", # different from Stage 2?
             "HUGE_ROCK",
@@ -577,8 +577,18 @@ def main(args):
             case "difficulty":
                 add("b", addr, "Per-stage difficulty settings")
                 add("B", addr + 0, "How often cars spawn. Lower values spawn cars more often.")
-                add("B", addr + 1, "Smash config parameter TBD")
-                add("B", addr + 2, "Smash config parameter TBD")
+                add(
+                    "B",
+                    addr + 1,
+                    "Base delay between perp lane changes; a random 0-31 is "
+                    "added on top.",
+                )
+                add(
+                    "B",
+                    addr + 2,
+                    "Base delay for the perp's approach timer; a random 0-15 "
+                    "is added on top.",
+                )
 
             case "setup_data":
                 add("w", addr, "Per-stage setup data")
@@ -753,8 +763,9 @@ def main(args):
                             0x0F: r'3-2 Narrowing R       [/||] {0F}',
                             0x1F: r'2-3 Widening R        [\||] {1F}',
                             0x2D: r'2-3 Widening L       [\||]  {2D}', # used in fork exit
+                            0x3D: r'3-2 Narrowing L2     [||/]  {3D}', # Stage 2, $E56D: 3L to 2L
                             0x45: r'Tunnel start                {45}', # tunnels always two lanes?
-                            0x59: r'Tunnel cont/end?            {59}', # TBD
+                            0x59: r'Tunnel exit                 {59}',
                             0x81: r'3 Lanes L            [|||]  {81}',
                             0x82: r'3 Lanes R             [|||] {82}',
                             0x8E: r'4-3 Narrowing R      [/|||] {8E}',
@@ -826,22 +837,24 @@ def main(args):
                 addaddr(addr, "LOD ptr")
                 addjob(lod_table_job("stretchy", 5, wordat(addr + 0)))  # length?
                 addr += 2
-                for i in range(0, 10):  # always ten entries AFAICT
-                    add("W", addr + 0, "TBD")  # perhaps a pair (distance,index)
+                # Ten (depth, offset) pairs, nearest first: the first entry
+                # whose depth the object is within selects a bitmap, and the
+                # offset is a byte offset from the LOD pointer above. Offsets
+                # are multiples of 7, the original sizeof(bitmap_t), so they
+                # index the LOD array. Modelled as depthset_t.pairs in the C
+                # port (Stages.h).
+                for i in range(0, 10):
+                    add("W", addr + 0, "Depth/offset pair")
                     addr += 2
-
-                # second byte in pair is a multiple of 4
-                # minimum of 8, maximum is 88
-                # (88 - 8) = 80 / 4 = 20
-                # but there's 15 entries in the table
 
             case "draw_object_data":
                 add("N", addr, "draw_object_left/right graphic data")
                 addaddr(addr, "LOD ptr")
                 addjob(lod_table_job("non-stretchy", 10, wordat(addr + 0)))
                 addr += 2
-                for i in range(0, 10):  # always ten?
-                    add("W", addr + 0, "TBD")  # ought to be a pair?
+                # Same ten (depth, offset) pairs as stretchy_graphic_part.
+                for i in range(0, 10):
+                    add("W", addr + 0, "Depth/offset pair")
                     addr += 2
 
             case _:

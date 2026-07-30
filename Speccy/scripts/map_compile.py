@@ -153,7 +153,7 @@ LANE_GEOMETRY = {
 # and are chosen by the tunnel entry/exit rule, not written apart.
 TUNNEL_NAME = "TUNNEL_ENTRY"
 
-# (from, to) -> macro suffix. These eight are the only defined pairs.
+# (from, to) -> macro suffix. These nine are the only defined pairs.
 #
 # Transitions are written out in full ("4>3R"), not inferred from the
 # neighbouring steady states. The committed data rules inference out: stage 1's
@@ -167,6 +167,7 @@ TRANSITIONS = {
     ("3R", "4"): "3RTO4",
     ("3L", "2M"): "3LTO2M",
     ("3R", "2R"): "3RTO2R",
+    ("3L", "2L"): "3LTO2L",
     ("2L", "3L"): "2LTO3L",
     ("2R", "3R"): "2RTO3R",
 }
@@ -223,10 +224,11 @@ HAZARD_TOKENS = {
     "arr>": 12,
     "cars+": 13,
     "cars-": 14,
-    "heli1": 15,
-    "heli2": 16,
-    "heli3": 17,
-    "heli4": 18,
+    # helicopter_control state = code - 11
+    "heli1": 15,  # MAP_CMD_HELI_LEAVE
+    "heli2": 16,  # state 2, "departing" — never written by a stage
+    "heli3": 17,  # MAP_CMD_HELI_TURN_L
+    "heli4": 18,  # MAP_CMD_HELI_TURN_R
 }
 
 HAZARD_CODE_TO_TOKEN = {code: tok for tok, code in HAZARD_TOKENS.items()}

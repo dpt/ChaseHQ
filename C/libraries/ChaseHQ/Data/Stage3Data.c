@@ -52,15 +52,6 @@
 #define MAP_OBJ_S3_TOWER_BLOCK_VAL  (4)
 #define MAP_OBJ_S3_SPEED_LIMIT_SIGN_VAL  (5)
 #define MAP_OBJ_S3_TELEGRAPH_POLE_VAL  (6)
-#define MAP_OBJ_S3_OBJ7_VAL  (7)
-#define MAP_OBJ_S3_OBJ8_VAL  (8)
-#define MAP_OBJ_S3_OBJ9_VAL  (9)
-#define MAP_OBJ_S3_OBJ10_VAL  (10)
-#define MAP_OBJ_S3_OBJ11_VAL  (11)
-#define MAP_OBJ_S3_OBJ12_VAL  (12)
-#define MAP_OBJ_S3_OBJ13_VAL  (13)
-#define MAP_OBJ_S3_OBJ14_VAL  (14)
-#define MAP_OBJ_S3_OBJ15_VAL  (15)
 
 #define MAP_OBJ_S3_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S3_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S3_TUNNEL_LIGHT_VAL)
@@ -69,15 +60,6 @@
 #define MAP_OBJ_S3_TOWER_BLOCK(D)   (((D) << 4) | MAP_OBJ_S3_TOWER_BLOCK_VAL)
 #define MAP_OBJ_S3_SPEED_LIMIT_SIGN(D)   (((D) << 4) | MAP_OBJ_S3_SPEED_LIMIT_SIGN_VAL)
 #define MAP_OBJ_S3_TELEGRAPH_POLE(D)   (((D) << 4) | MAP_OBJ_S3_TELEGRAPH_POLE_VAL)
-#define MAP_OBJ_S3_OBJ7(D)   (((D) << 4) | MAP_OBJ_S3_OBJ7_VAL)
-#define MAP_OBJ_S3_OBJ8(D)   (((D) << 4) | MAP_OBJ_S3_OBJ8_VAL)
-#define MAP_OBJ_S3_OBJ9(D)   (((D) << 4) | MAP_OBJ_S3_OBJ9_VAL)
-#define MAP_OBJ_S3_OBJ10(D)   (((D) << 4) | MAP_OBJ_S3_OBJ10_VAL)
-#define MAP_OBJ_S3_OBJ11(D)   (((D) << 4) | MAP_OBJ_S3_OBJ11_VAL)
-#define MAP_OBJ_S3_OBJ12(D)   (((D) << 4) | MAP_OBJ_S3_OBJ12_VAL)
-#define MAP_OBJ_S3_OBJ13(D)   (((D) << 4) | MAP_OBJ_S3_OBJ13_VAL)
-#define MAP_OBJ_S3_OBJ14(D)   (((D) << 4) | MAP_OBJ_S3_OBJ14_VAL)
-#define MAP_OBJ_S3_OBJ15(D)   (((D) << 4) | MAP_OBJ_S3_OBJ15_VAL)
 
 /* ----------------------------------------------------------------------- */
 

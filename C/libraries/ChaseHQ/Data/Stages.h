@@ -161,6 +161,13 @@
 #define MAP_CMDCODE_ARROW_R             (12)
 #define MAP_CMDCODE_START_CARS          (13)
 #define MAP_CMDCODE_STOP_CARS           (14)
+// Codes 15 and up set helicopter_control = code - 11, the state that
+// drive_helicopter ($AB33) dispatches on. Code 16 (state 2, "departing") is
+// never written by a stage, since drive_helicopter reaches that state itself.
+#define MAP_CMDCODE_HELI_LEAVE          (15)
+#define MAP_CMDCODE_HELI_DEPARTING      (16) // unused
+#define MAP_CMDCODE_HELI_TURN_L         (17)
+#define MAP_CMDCODE_HELI_TURN_R         (18)
 
 // Map command sequences
 #define MAP_CMD_GOTO(ADDR)              MAP_ESC, MAP_CMDCODE_GOTO, (ADDR) & 0xFF, (ADDR) >> 8
@@ -178,6 +185,9 @@
 #define MAP_CMD_ARROW_R                 MAP_ESC, MAP_CMDCODE_ARROW_R
 #define MAP_CMD_START_CARS              MAP_ESC, MAP_CMDCODE_START_CARS
 #define MAP_CMD_STOP_CARS               MAP_ESC, MAP_CMDCODE_STOP_CARS
+#define MAP_CMD_HELI_LEAVE              MAP_ESC, MAP_CMDCODE_HELI_LEAVE
+#define MAP_CMD_HELI_TURN_L             MAP_ESC, MAP_CMDCODE_HELI_TURN_L
+#define MAP_CMD_HELI_TURN_R             MAP_ESC, MAP_CMDCODE_HELI_TURN_R
 
 // Map curvatures
 #define MAP_CURVE_STRAIGHT(D)           (((D) << 4) | 0)
@@ -212,6 +222,9 @@
 #define MAP_LANES_3RTO4_VAL             (0x9E) // 1001_1110
 #define MAP_LANES_3LTO2M_VAL            (0x06) // 0000_0110
 #define MAP_LANES_3RTO2R_VAL            (0x0F) // 0000_1111
+// The mirror of 2LTO3L, differing only in bit 4. Used once in the original
+// game, in stage 2 ($E56D), between a 3L run and a 2L run.
+#define MAP_LANES_3LTO2L_VAL            (0x3D) // 0011_1101
 #define MAP_LANES_2LTO3L_VAL            (0x2D) // 0010_1101
 #define MAP_LANES_2RTO3R_VAL            (0x1F) // 0001_1111
 #define MAP_LANES_TUNNEL_VAL            (0x41) // 0100_0001 // engine-derived tunnel body value; used in runtime comparisons
@@ -259,6 +272,7 @@
 #define MAP_LANES_3RTO4(D)              (D), (MAP_LANES_3RTO4_VAL)
 #define MAP_LANES_3LTO2M(D)             (D), (MAP_LANES_3LTO2M_VAL)
 #define MAP_LANES_3RTO2R(D)             (D), (MAP_LANES_3RTO2R_VAL)
+#define MAP_LANES_3LTO2L(D)             (D), (MAP_LANES_3LTO2L_VAL)
 #define MAP_LANES_2LTO3L(D)             (D), (MAP_LANES_2LTO3L_VAL)
 #define MAP_LANES_2RTO3R(D)             (D), (MAP_LANES_2RTO3R_VAL)
 #define MAP_LANES_TUNNEL_ENTRY(D)       (D), (MAP_LANES_TUNNEL_ENTRY_VAL)
@@ -276,7 +290,10 @@
 #define MAP_OBJ_NONE_VAL                (0)
 
 #define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
-#define MAP_OBJ_S1_UNKNOWN_2_VAL        (2) // unused
+// Code 2 selects stage1_{left,right}_hand_graphics_defs[1], which is an
+// all-zero entry with no bitmap and no draw handler. Every stage's object
+// table has the same hole; no map stream uses the code.
+#define MAP_OBJ_S1_EMPTY_SLOT_VAL       (2) // unused
 #define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe/common
 #define MAP_OBJ_S1_TREE_VAL             (4)
 #define MAP_OBJ_S1_BUSH_VAL             (5)
@@ -287,7 +304,7 @@
 
 #define MAP_OBJ_S1_NONE(D)              ((D << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S1_TUNNEL_LIGHT(D)      ((D << 4) | MAP_OBJ_S1_TUNNEL_LIGHT_VAL)
-#define MAP_OBJ_S1_UNKNOWN_2(D)         ((D << 4) | MAP_OBJ_S1_UNKNOWN_2_VAL)
+#define MAP_OBJ_S1_EMPTY_SLOT(D)        ((D << 4) | MAP_OBJ_S1_EMPTY_SLOT_VAL)
 #define MAP_OBJ_S1_SHORT_POLE(D)        ((D << 4) | MAP_OBJ_S1_SHORT_POLE_VAL)
 #define MAP_OBJ_S1_TREE(D)              ((D << 4) | MAP_OBJ_S1_TREE_VAL)
 #define MAP_OBJ_S1_BUSH(D)              ((D << 4) | MAP_OBJ_S1_BUSH_VAL)

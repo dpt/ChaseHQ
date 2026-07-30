@@ -47,37 +47,21 @@
 
 /* Stage 2 object type macros */
 #define MAP_OBJ_S2_TUNNEL_LIGHT_VAL  (1)
-#define MAP_OBJ_S2_OBJ2_VAL  (2)
+#define MAP_OBJ_S2_EMPTY_SLOT_VAL  (2)
 #define MAP_OBJ_S2_SHORT_POLE_VAL  (3)
 #define MAP_OBJ_S2_HUGE_ROCK_VAL  (4)
 #define MAP_OBJ_S2_PALM_TREE_VAL  (5)
 #define MAP_OBJ_S2_LEAVES_VAL  (6)
 #define MAP_OBJ_S2_DOUBLE_LAMP_VAL  (7)
-#define MAP_OBJ_S2_OBJ8_VAL  (8)
-#define MAP_OBJ_S2_OBJ9_VAL  (9)
-#define MAP_OBJ_S2_OBJ10_VAL  (10)
-#define MAP_OBJ_S2_OBJ11_VAL  (11)
-#define MAP_OBJ_S2_OBJ12_VAL  (12)
-#define MAP_OBJ_S2_OBJ13_VAL  (13)
-#define MAP_OBJ_S2_OBJ14_VAL  (14)
-#define MAP_OBJ_S2_OBJ15_VAL  (15)
 
 #define MAP_OBJ_S2_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S2_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S2_TUNNEL_LIGHT_VAL)
-#define MAP_OBJ_S2_OBJ2(D)   (((D) << 4) | MAP_OBJ_S2_OBJ2_VAL)
+#define MAP_OBJ_S2_EMPTY_SLOT(D)   (((D) << 4) | MAP_OBJ_S2_EMPTY_SLOT_VAL)
 #define MAP_OBJ_S2_SHORT_POLE(D)   (((D) << 4) | MAP_OBJ_S2_SHORT_POLE_VAL)
 #define MAP_OBJ_S2_HUGE_ROCK(D)   (((D) << 4) | MAP_OBJ_S2_HUGE_ROCK_VAL)
 #define MAP_OBJ_S2_PALM_TREE(D)   (((D) << 4) | MAP_OBJ_S2_PALM_TREE_VAL)
 #define MAP_OBJ_S2_LEAVES(D)   (((D) << 4) | MAP_OBJ_S2_LEAVES_VAL)
 #define MAP_OBJ_S2_DOUBLE_LAMP(D)   (((D) << 4) | MAP_OBJ_S2_DOUBLE_LAMP_VAL)
-#define MAP_OBJ_S2_OBJ8(D)   (((D) << 4) | MAP_OBJ_S2_OBJ8_VAL)
-#define MAP_OBJ_S2_OBJ9(D)   (((D) << 4) | MAP_OBJ_S2_OBJ9_VAL)
-#define MAP_OBJ_S2_OBJ10(D)   (((D) << 4) | MAP_OBJ_S2_OBJ10_VAL)
-#define MAP_OBJ_S2_OBJ11(D)   (((D) << 4) | MAP_OBJ_S2_OBJ11_VAL)
-#define MAP_OBJ_S2_OBJ12(D)   (((D) << 4) | MAP_OBJ_S2_OBJ12_VAL)
-#define MAP_OBJ_S2_OBJ13(D)   (((D) << 4) | MAP_OBJ_S2_OBJ13_VAL)
-#define MAP_OBJ_S2_OBJ14(D)   (((D) << 4) | MAP_OBJ_S2_OBJ14_VAL)
-#define MAP_OBJ_S2_OBJ15(D)   (((D) << 4) | MAP_OBJ_S2_OBJ15_VAL)
 
 /* ----------------------------------------------------------------------- */
 
@@ -531,7 +515,7 @@ static const u8 stage2_map_hazards_E2FC[] = {
   MAP_HAZARD_WAIT(2),
   MAP_CMD_STOP_BARRIERS,
   MAP_HAZARD_WAIT(8),
-  MAP_ESC, (17),
+  MAP_CMD_HELI_TURN_L,
   MAP_HAZARD_WAIT(19),
   MAP_CMD_START_OBSTACLE_L,
   MAP_HAZARD_WAIT(2),
@@ -902,7 +886,7 @@ static const u8 stage2_map_hazards_E488[] = {
   MAP_HAZARD_WAIT(2),
   MAP_CMD_STOP_BARRIERS,
   MAP_HAZARD_WAIT(50),
-  MAP_ESC, (15),
+  MAP_CMD_HELI_LEAVE,
   MAP_HAZARD_WAIT(1),
   MAP_CMD_STOP_BARRIERS,
   MAP_HAZARD_WAIT(14),
@@ -1106,7 +1090,7 @@ static const u8 stage2_map_lanes_E561[] = {
   MAP_LANES_TUNNEL_ENTRY(44),
   MAP_LANES_TUNNEL_EXIT(2),
   MAP_LANES_3L(40),
-  /* unknown lanes val=0x3D */ 2, 0x3D,
+  MAP_LANES_3LTO2L(2),
   MAP_LANES_2L(38),
   MAP_LANES_2LTO3L(2),
   MAP_LANES_3LTO4(2),
@@ -1117,7 +1101,7 @@ static const u8 stage2_map_lanes_E561[] = {
 /** $E57B: stage2_map_hazards_E57B */
 static const u8 stage2_map_hazards_E57B[] = {
   MAP_HAZARD_WAIT(5),
-  MAP_ESC, (15),
+  MAP_CMD_HELI_LEAVE,
   MAP_HAZARD_WAIT(7),
   MAP_CMD_START_CARS,
   MAP_HAZARD_WAIT(59),
