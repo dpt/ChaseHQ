@@ -10219,9 +10219,13 @@ static void draw_hazard_sprites(chqstate_t *state,
   u8              B_x;                  /* smoke or fire x position read from smoke_offsets (was B) */
   u8              C_y;                  /* smoke or fire y position read from smoke_offsets (was C) */
 
-  // is $E900 pairs of (data-word, hazard-ptr) ?
+  /* Yes: the draw list is a run of two-word records, (distance, hazard). $AED3
+   * CP (HL) compares the distance word's low byte against B, and $AEEB reads
+   * the hazard word after L += 2. The producer above builds the same shape,
+   * whether it appends ($AE9F) or inserts ($AEAB). The list is laid over
+   * xpos_road_centre_left, whose Z80 page is $E900. */
 
-  HL_table = state->dhs_xpos_table; // sampled = $E900
+  HL_table = state->dhs_xpos_table;
   A = B_iterations;
   if (A != (*HL_table & 0xFF)) // Conv: original CP (HL) tests only the low byte
     return;
@@ -10273,7 +10277,10 @@ dafs_draw_right_1:
     draw_object_right_width_entrypt(state, A_horz_pos, HL_bitmap, IY_height);
 
 dafs_draw_done_1:
-    // POP DE (DE_bitmapoffset), BC (B_iterations)   ??
+    /* $AF3B-$AF3C: unwinds the PUSH HL/BC/DE trio at $AEF3. DE is the LOD byte
+     * offset, BC the depth counter; HL, the draw-list pointer, comes back at
+     * $AF45 below. */
+    // POP DE (DE_bitmapoffset), BC (B_iterations)
 
     state->doc_plot_mode = 0;
 
@@ -10756,9 +10763,13 @@ mhc_handle_speed:
       A_current_curvature = (u8)(-A_current_curvature); /* Z80 NEG is u8 */
     }
 
-    // Positive scroll => scroll horizon left. (or negative - it falls through)
-    // unclear if this table is bytes or words
-    // -1 since it's 1-indexed (but now it's words so can this work?)
+    /* Positive scroll => scroll horizon left. (or negative - it falls through)
+     *
+     * horizon_table is 32 bytes, despite the skool rendering it as DEFW. This
+     * site, $B898 and $B9C1 all index it a byte at a time; only $B864 reads two
+     * adjacent bytes as a pair, and even there it takes them high byte first.
+     * $B265 loads horizon_table - 1 before adding the curvature magnitude, so
+     * the index is 1-based and curvature 1 selects entry 0. */
     HL_horizon_table = &horizon_table[A_current_curvature - 1];
     C_horizon_scroll_sub = A_horizon_scroll_sub = state->horizon_scroll_sub;
     // EX AF,AF'
@@ -10790,7 +10801,10 @@ mhc_handle_speed:
     }
   }
 
-  // No curvature - No scroll required?
+  /* $B29A mhc_straight_road: shared continuation, not a straight-road-only
+   * branch. The zero-curvature test at $B25C jumps here, the zero-tick test at
+   * $B274 jumps here, and the scrolling path falls through. BC is still zero on
+   * both jumps, so those two arrive with no scroll to apply. */
   saved_horiz_adj = state->horizontal_adjust;
   HL_horizontal_adjust = state->horizontal_adjust + BC_count_scaled;
   DE_adjust = 0;
