@@ -16777,7 +16777,12 @@ mdc_have_glyph:
       *DE_screen = *HL_font++;
       DE_screen += 256;
     }
-    *DE_screen = 0; // final row always blank?
+    /* $ECA8-$ECA9: the font is seven rows, so a doubled glyph covers scanlines
+     * 0..13 of the two character cells and leaves 14 and 15 spare. This clears
+     * 14; 15 is left alone. Every glyph writes the same fourteen scanlines, so
+     * nothing a previous glyph drew can survive in row 14 -- the write only
+     * matters against whatever was on screen before the text was drawn. */
+    *DE_screen = 0;
     // EXX
     // Conv: $ECAB LD B,L saves only L' (column); C saves full pointer for simplicity
     HLdash_saved = HLdash;
@@ -16898,56 +16903,74 @@ static void redefine_keys_48k(chqstate_t *state)
  * ($FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F). For each row, inverts the five key
  * bits from the IN result. If exactly one bit is set (unique key press), shifts
  * the bit out to identify the key column, then packs the row and column into
- * [D_keydef_out] in the form kkkkkrrr. Returns non-zero if any key is found,
- * zero otherwise.
+ * [D_keydef_out] in the same kkkkkhhh form as the KEYDEF() macro, so the result
+ * can be stored straight into temp_keydefs[] and later fed to keyscan_inner.
  *
- * \param[out] D_keydef_out Receives packed key+row value: bits 7..3 = key
- *                          column, bits 2..0 = row. (was D)
+ * [D_keydef_out] stays $FF when no single key was identified: either no key was
+ * down at all, or two half-rows were active, or two keys in one half-row were.
+ * define_a_key distinguishes those cases from a real keydef by testing for $FF.
+ *
+ * \param[out] D_keydef_out Receives the packed keydef: bits 7..3 = key column
+ *                          (0..4), bits 2..0 = keyboard half-row (0..7); $FF if
+ *                          no single key was identified. (was D)
  * \return                  Non-zero if a key is pressed; zero otherwise.
  */
 static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
 {
   int carry;       /* carry from SRL/RLC operations (carry) */
-  int D_flag;      /* sentinel: 0xFF at entry; incremented to 0 on first active row (was D) */
-  int E_keyandrow; /* packed key+row accumulator; decremented per row (was E) */
+  u8  D_keydef;    /* packed keydef being built; $FF until a half-row goes active (was D) */
+  u8  E_keyandrow; /* packed key+row seed; decremented once per half-row (was E) */
   u8  B_port_hi;   /* high byte of keyboard IN port; shifted through all eight row addresses (was B) */
   int C_port_lo;   /* low byte of keyboard IN port: constant $FE (was C) */
   int A_keys;      /* active key bits from IN: inverted and masked to five bits (was A) */
   u8  H_keys;      /* copy of A_keys; shifted right to find the set bit column (was H) */
-  int A;           /* column offset: decremented by 8 per SRL until the set bit falls out (was A) */
-
-  NOT_USED(D_keydef_out);
+  u8  A_keydef;    /* candidate keydef: E_keyandrow less 8 per SRL until the set bit falls out (was A) */
 
   carry = 0;
 
-  D_flag      = 0xFF;
-  E_keyandrow = 0x2F; // first keydef to try?
+  D_keydef = 0xFF;
+  /* $2F is one step above the highest keydef the scan can produce: key column 5
+   * in bits 7..3, half-row 7 in bits 2..0. The scan starts at half-row 7
+   * because B = $FE selects it, and the SUB $08 below always runs at least
+   * once, so the first key of the first row lands on column 4 -- the highest
+   * column keyscan_inner accepts. */
+  E_keyandrow = 0x2F;
   B_port_hi   = 0xFE;
   C_port_lo   = 0xFE;
 
   do {
     A_keys = ~state->speccy->in(state->speccy, (B_port_hi << 8) | C_port_lo) & 0x1F;
     if (A_keys) {
-      if (++D_flag)
-        return 1; // Keys were pressed
+      /* $ED5A/$ED5B: D is $FF only while no earlier half-row was active, so
+       * this rejects a press spanning two half-rows. */
+      D_keydef++;
+      if (D_keydef)
+        goto rk_pressed;
 
       H_keys = A_keys;
-      A = E_keyandrow;
+      A_keydef = E_keyandrow;
       do {
-        A -= 8;
+        A_keydef -= 8;
         SRL(H_keys);
       } while (!carry); // Conv: fixed -- JR NC loops while carry clear
       if (H_keys)
-        return 1; // Conv: fixed -- RET NZ tests H (bits remaining) after the
-                   // shift, not A (the row/column accumulator)
+        goto rk_pressed; // Conv: fixed -- RET NZ tests H (bits remaining) after
+                         // the shift, not A (the row/column accumulator)
 
-      D_flag = A;
+      D_keydef = A_keydef;
     }
     E_keyandrow--;
     RLC(B_port_hi);
   } while (carry);
 
+  *D_keydef_out = D_keydef;
   return 0; // No keys were pressed
+
+rk_pressed: /* $ED5B, $ED64 */
+  /* Conv: both early RETs leave D as-is; the caller retries while any key is
+   * held, so the partial value is never consumed as a keydef. */
+  *D_keydef_out = D_keydef;
+  return 1;
 }
 
 /**
