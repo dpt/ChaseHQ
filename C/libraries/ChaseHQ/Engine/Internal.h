@@ -26,7 +26,7 @@
 
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
+#define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera ($8262, $F42E) */
 #define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
 #define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
 

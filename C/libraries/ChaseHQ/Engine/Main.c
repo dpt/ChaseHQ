@@ -4644,11 +4644,16 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
                         HL_bitmap,
                         IY_height); /* tail call */
   } else {
-    B_height--; // B's not used - suss
-    A_width_bytes++; // this goes into banked A which we're not passing - also suss
+    B_height--; /* $92D9 */
+    A_width_bytes++; /* $92DA */
     C_padding = 0;
-    Adash = A_width_bytes; Fdash_zero = zero;
-    Fdash_carry = carry; // was EX AF,AF' -- bank A & carry?
+    // $92DD EX AF,AF' -- banks the width *and* the flags. draw_object_common_
+    // flipped swaps both back at $9332 so that $9333's JR NC tests the masked
+    // flag in the banked carry, with the width waiting in A. Conv: modelled as
+    // three explicit arguments rather than a shadow register set.
+    Adash = A_width_bytes;
+    Fdash_zero = zero;
+    Fdash_carry = carry;
     draw_object_common_flipped(state,
                                B_height,
                                C_padding,
@@ -11621,11 +11626,13 @@ static void draw_masked_sprite(chqstate_t *state,
   // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
   DE_backbuf = (E_x & 0xF8) >> 3; // x pixel pos to field CCCCC
-  A_y = D_y; // we make a temp copy but then bank - odd
-  // EX AF,AF' - bank to use A as temp, or to preserve something like carry?
+  A_y = D_y;
+  // $B6E5 EX AF,AF' -- banks the unmasked y, because $B6EB overwrites D with
+  // the masked value and $B6ED still needs the original. Nothing to do with
+  // the flags; the carry-preserving pair is $B6FB/$B6FD below.
   // y pixel pos (bottom nibble) to field LLLL
   DE_backbuf |= ((D_y & 0x0F) << 8) | BACKBUFFER_START_ADDRESS;
-  // EX AF,AF'
+  // $B6EC EX AF,AF' -- unbanks it
   DE_backbuf |= (A_y & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
   /* removed PUSH DE_backbuf */
   E_stride = C_width_bytes << 1;
@@ -14961,7 +14968,9 @@ static void draw_road(chqstate_t *state)
     if ((C_lane_byte & (1 << 7)) != 0)
       goto dr_calc_height_delta; /* loop/jump if not dirt track */
     /* it's a tunnel */
-    // EX AF,AF' - preserve A_height_diff?
+    // $C753 EX AF,AF' -- banks A_height_diff, which the block below clobbers
+    // at $C758, so that $C774 LD C,A gets the original back. Conv: the C code
+    // keeps A_height_diff in its own variable, so no shadow copy is needed.
     B = 0xFF;
     A_tunnel_visible = 1;
     A_in_tunnel = 1;
@@ -14980,7 +14989,7 @@ static void draw_road(chqstate_t *state)
     }
     // $C770
     state->dr_in_tunnel = A_in_tunnel;
-    // EX AF,AF' - restore A_height_diff?
+    // $C773 EX AF,AF' -- unbanks A_height_diff for $C774 below
 
   dr_calc_height_delta:
     C_height_diff = A_height_diff;
