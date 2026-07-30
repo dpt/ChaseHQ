@@ -121,6 +121,7 @@ HAZARD_CMDS = {
     14: "MAP_CMD_STOP_CARS",
     15: "MAP_ESC, (15)",  # stop helicopter
     17: "MAP_ESC, (17)",  # start heli left
+    18: "MAP_ESC, (18)",  # start heli right (Stage4Data.c)
 }
 
 STRETCHY_TYPE_NAMES: Dict[int, str] = {

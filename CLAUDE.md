@@ -21,6 +21,14 @@ contain hand-completion the script cannot reproduce. The target overwrites them
 and discards that work. It is for scaffolding a new stage only; edit existing
 stage data by hand.
 
+### Road map text format
+
+`Speccy/scripts/map_compile.py` compiles a `.map` text table (one row per slice
+of road, the six map streams as columns) to C map arrays, and decompiles
+committed `Stage*Data.c` arrays back to that table. See
+`C/docs/map-text-format.md`; `C/docs/maps/stage1.map` is the worked example.
+It writes a fragment to stdout for hand-pasting and has no CMake target.
+
 ### Disassembly (Speccy/ directory)
 ```bash
 make pristine    # Create pristine snapshot
