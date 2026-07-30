@@ -16,6 +16,7 @@
 - Calibrate `TITLE_MUSIC_TSTATES`, `KEMPSTON_MUSIC_TSTATES`, `OMD_MUSIC_TSTATES`, `SUCCESS_MUSIC_TSTATES`, `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder values
 - Title jingle T-state count is a guess, tune by ear (`Bank3.c:3038`)
 - Need to model RAM bank contention?
+- Held notes when the game is quit - might need more frequent quit-checks.
 
 ## P3 — Incomplete / missing content
 
@@ -50,12 +51,6 @@ delete it.
 
 - Audit "Conv: added" vars
 - Big reformat pass once happy with code
-- Sort macros
-- Update summaries of major functions to docs/
-- Scan for type problems
-- Identify missing cases where wraparound is required
-- Remove as much casting as possible (Claude tends to add it) [part done]
-- C89 compat [part done]
 - Name the numbered `chqstate` SM field groups after what distinguishes them,
   the way `dr_{left,right}_{markings,fill}_page` now are: `dr_backbuf_1/_2`,
   `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each
