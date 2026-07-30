@@ -4990,7 +4990,12 @@ static void draw_object_clipped(chqstate_t     *state,
   // EX AF,AF'  - bank A_width_bytes & carry_masked_flag
   // INC HL  - point HL at height field -- removed
 
-  // Loop until ... <what condition?>
+  /* $933D doc_loop. The single back edge is $938B, taken only by the inverted
+   * re-clip path at the bottom, so this iterates once per band of the object
+   * that has to be discarded: each pass subtracts one bitmap's height from
+   * doc_col_pos and doc_rows_main and tries again from the top. Every other
+   * route out is a break to the plot code ($9350, $9370) or an abandoning RET
+   * once the object has nothing left to show. */
   for (;;) {
     D_col_pos = state->doc_col_pos;
     Adash_y_range = IY_height[0] - IY_height[53];
@@ -5060,7 +5065,12 @@ doc_y_range_is_zero:
     Adash_col_adj = state->doc_col_pos;
     D_height = HL_bitmap->height; // reads bitmap.height again
     Adash_col_adj -= D_height;
-    if ((s8) Adash_col_adj >= 0) // need this cast?
+    /* $937E RET P tests the sign of an 8-bit A, so the cast is load-bearing.
+     * doc_col_pos is s8 and bitmap heights run past 127 on close-up bands, so
+     * the difference can fall below -128; there the Z80's wrapped byte reads
+     * positive while the widened int is still negative, and dropping the cast
+     * would keep clipping an object the original abandons. */
+    if ((s8) Adash_col_adj >= 0)
       return;
     state->doc_col_pos = Adash_col_adj;
 
@@ -14043,7 +14053,11 @@ static void draw_road_lanes_change(chqstate_t *state,
             A_curve_step = 0x20;
             C_ref_height = (*IY_heightptr)[1];
           } else {
-            // {<unused?>}
+            /* Empty: masked_lane_flags == 4 comes only from 3LTO2M ($06) and
+             * TUNNEL_ENTRY ($45), and both have bit 4 clear, so no shipped lane
+             * value reaches here. The same holds for the == 4 test on the
+             * far-boundary path below, making that block unreachable too. Dead
+             * by data rather than by structure, so both are kept. */
             A_curve_step = 0x00;
             C_ref_height = (*IY_heightptr)[2];
           }
@@ -17276,7 +17290,7 @@ static void play_music_48k(chqstate_t *state)
     goto pm_reset_pattern;
   }
 
-  // delay?
+  // Count down to the next note; anything but zero means keep holding this one.
   A_delay = state->music.note_delay - 1;
   if (A_delay) {
     state->music.note_delay = A_delay;
