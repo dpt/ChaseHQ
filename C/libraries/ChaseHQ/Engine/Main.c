@@ -9423,11 +9423,18 @@ hc_exit:
  * The spawning distance is 20 − allow_spawning (18 or 19). If the road-buffer
  * hazard byte at that offset is zero, nothing is spawned.
  *
- * A hazard byte of 4 or more selects the heavier hittable variant (index 3) and
- * subtracts 3 before dispatch. The remaining value controls count and
- * placement: 1: one obstacle at x=50. 2: one obstacle at x=220. 3: two or three
- * obstacles; barriers when inhibit_collision_detection is set, tumbleweeds
- * otherwise.
+ * The byte is the map command minus 3 ($C02C), so it reads as: 0 stop, 1/2/3
+ * tumbleweeds left/right/both, 4/5/6 barriers left/right/both. A value of 4 or
+ * more therefore means "barrier": it selects the heavier hittable variant
+ * (index 3) and subtracts 3, folding the barrier codes onto the same 1/2/3
+ * placement cases as the tumbleweeds.
+ *
+ * The remaining value controls count and placement: 1: one obstacle at x=50.
+ * 2: one obstacle at x=220. 3: a pair, at x=70/180 for tumbleweeds or x=80/160
+ * for barriers — except that barriers become a triple at x=32/86/140 when
+ * inhibit_collision_detection is set. That flag is raised at $875C when the
+ * perp escapes, and it makes check_hazard_collisions ($AD0D) return
+ * immediately, so the triple only ever appears where nothing can be hit.
  */
 static void spawn_hazards(chqstate_t *state)
 {
@@ -9448,24 +9455,28 @@ static void spawn_hazards(chqstate_t *state)
   // Point HL at hazards data.
   roadbuf = ROADBUF_FWD2PTR(ROADBUF_HAZARDS_OFFSET + C_distance);
 
-  // Do we have a hazard?
+  // The hazard byte is the map command minus 3, written by $C02C. So 0 is
+  // MAP_CMD_STOP_BARRIERS (nothing to spawn), 1/2/3 are the tumbleweed
+  // commands left/right/both, and 4/5/6 are the barrier commands left/right/
+  // both. Subtracting 3 from the barrier codes below folds them onto the same
+  // 1/2/3 placement cases, with the hittable offset carrying the difference.
   hazard = *roadbuf;
   if (hazard == 0)
-    return; // no hazard?
+    return;
 
-  DE_hittable_offset = 0; // index 0
+  DE_hittable_offset = 0; // index 0: tumbleweed
   if (hazard >= 4) {
-    DE_hittable_offset = 3; // index 1, times sizeof(hittable)
+    DE_hittable_offset = 3; // index 1, times sizeof(hittable): barrier
     hazard -= 3;
   }
 
   horz_pos = 50; // x coord
   if (--hazard == 0)
-    goto sh_add_hazards_done; // if 1, add one barrier?
+    goto sh_add_hazards_done; /* 1: one obstacle, left */
 
   horz_pos = 220;
   if (--hazard == 0)
-    goto sh_add_hazards_done; // if 2
+    goto sh_add_hazards_done; /* 2: one obstacle, right */
 
   WRAP_ASSIGN(roadbuf, 2, state->roadbuf_start);
   *roadbuf = DE_hittable_offset >> 8; // D is zero
@@ -9477,9 +9488,11 @@ static void spawn_hazards(chqstate_t *state)
   if (hazard != 3)
     goto sh_add_two_tumbleweeds;
 
-  // Use inhibit_collision_detection to choose between two or three barriers?
-  // Seems odd
-
+  // Three barriers rather than two whenever collisions are switched off.
+  // inhibit_collision_detection is set to $FF at $875C, in the sequence run
+  // when the perp escapes, and check_hazard_collisions ($AD0D) returns
+  // immediately while it is set. So the three-barrier arrangement below is
+  // only ever placed when none of the barriers can be driven into.
   hazard = state->inhibit_collision_detection;
   if (hazard == 0)
     goto sh_add_two_barriers;
