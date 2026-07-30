@@ -5,9 +5,11 @@
 - Title screen
   - title screen doesn't stop and yield to attract mode
   - music still not right (e.g. playing things twice or more over before stopping)
-  - animations don't work if screen clearing is enabled (`clear_playfield_buffer` still stubbed with `return;` at `Bank3.c:1782`)
+  - ~~animations don't work if screen clearing is enabled~~ — **done** in
+    `363d910`. `clear_playfield_buffer` (`Bank3.c:1724`) is fully translated
+    and called from `titlescr_animate_frame`; verified against `$CC04-$CC4F`
 - End screen
-  - interrupt mechanism wasn't ported so is the timing a bit off?
+  - the interrupt mechanism wasn't ported so the timing feels a little off
 
 ## P2 — Game feel / calibration / timing
 
@@ -20,12 +22,10 @@
 
 ## P3 — Incomplete / missing content
 
-- Fix 48K funcs which aren't hooked up.
-- Ensure that funcs are in the original game order (esp. Bank7)
+- Ensure that funcs are in the original game order (esp. Bank7) -- one of the scripts covers this
 - Complete decoding of all stage data (via the level converter script)
 - Split the main loop up into menu/main phases
 - `Bank3.c` SFX subsystem gaps (out of scope stubs, need wiring):
-  - high-score check (`$C00C`), not disassembled
   - high-score name/rank copy from `$C403`
   - active-control-config header write at (`$8008`)
   - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
@@ -33,9 +33,7 @@
 ## P4 — Polish / visual correctness
 
 - Stretchy test app produces crap output
-- 'TEST' marker not drawn when in test mode [CHECK]
 - Fix all warnings pass
-- Write a code formatting script
 
 ## P5 — Clarity pass
 
@@ -102,12 +100,6 @@ delete it.
 - Identify missing cases where wraparound is required
 - Remove as much casting as possible (Claude tends to add it) [part done]
 - C89 compat [part done]
-
-## P6 — Features / extras
-
-- 128K menu: music, animation, high score, etc.
-- game finish screen
-- CRT shader enhancements
 
 ## P7 — Investigation / meta
 
