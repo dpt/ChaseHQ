@@ -11327,7 +11327,10 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   HL_carpart = &hero_car_parts[A_car_direction][0];
 
   /* Calculate the screen buffer address. */
-  // PUSH DE -- preserve D_y (anything in E?)
+  /* $B5C4 PUSH DE: only D is wanted. The Z80 has no 8-bit push, so E rides
+   * along, and $B5FE overwrites the restored E with 104 before anything reads
+   * it. */
+  // PUSH DE -- preserve D_y
   E_y = D_y - (state->car_y + HL_carpart->y);
   DE_backbuf_addr = (((E_y & 0x0F) | 0xF0) << 8) | (((E_y & 0x70) << 1) +
                    13); // Conv: merged to one stmt
@@ -11920,12 +11923,17 @@ static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
 
   assert(VALID_BACKBUF_PTR(backbuf_addr));
 
-  // EX DE,HL  -- move backbuffer ptr to DE?
+  /* $B770 EX DE,HL: the back-buffer pointer moves to DE so that HL is free to
+   * be the flip table pointer -- $B784 sets H to $EF and the jump table sets L
+   * from the byte being reversed. */
+  // EX DE,HL  -- move backbuffer ptr to DE
   jump_offset = 8 - width_bytes; // Conv: Multiplication removed
 
   // HL = $EFxx  -- set reversing table addr top byte
   // EXX - Bank
-  // Ddash = 0; // clearing hi byte of DE'? not sure why
+  /* $B787 LD D,$00: the caller passes the row stride in E' alone, so D' must be
+   * cleared before $B795 ADD HL,DE advances the source by one row. */
+  // Ddash = 0;
   goto pmsf_start;
 
   for (;;) {
@@ -14140,7 +14148,12 @@ static void draw_road_lanes_change(chqstate_t *state,
         }
       }
 
-      // Q. Is it a right hand table at this point?
+      /* All four paths above read their pair of x positions from two *adjacent*
+       * table pages, H and H-1; only the order differs. The two bit-4-set paths
+       * take DE from page H then leave HL on H-1; the two bit-4-clear paths take
+       * DE from H-1 then step HL back up to H. So the subtraction below is
+       * always the span between the same two lane boundaries, and the path
+       * decides its sign. */
 
       /* $C3EE-$C405: read second table value, compute clamped displacement */
       HL_pos_delta = ((HL_left_hand_table[0] << 8) + HL_left_hand_table[-1]) - DE_roadpos;
@@ -14903,7 +14916,10 @@ static void draw_road(chqstate_t *state)
       if (*HL)
         continue;
 
-      A_xpos = HL[-1]; // wraparound needed?
+      /* $C66F: DEC L wraps within the page, but it cannot bite here. L_row
+       * starts at $FF and every road row takes it down by two, so it is odd at
+       * every table read and HL[-1] is the low byte of the same entry. */
+      A_xpos = HL[-1];
 
       // EXX - Bank
 
@@ -15279,8 +15295,14 @@ dr_copy_row:
 dr_blank_sky_fill:
   E = (u8)(E + 30);
   DE_fillpattern = state->dr_in_tunnel ? 0xFF : 0x00;
+  /* $C898-$C8AA is prev_buf_row()'s arithmetic with one branch repurposed.
+   * prev_buf_row leaves the $F marker nibble uncompensated when the row
+   * subtraction borrows; here that borrow means the fill has walked off the top
+   * of the back buffer, so it ends the loop instead. That makes it the exit
+   * test, which is why this cannot just call prev_buf_row.
+   * Conv: the Z80 holds this address in HL from $C88B onwards; D and E below
+   * are its high and low halves. */
   for (;;) {
-    // This is prev_buf_row() or a variant of?
     A = D;
     D = (u8)(D - 1);
     if ((A & 0x0F) == 0) {
@@ -15929,11 +15951,20 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   IY_height = &persp_x_scale_right[FAST_COUNTER_PERSP_ROW(state)][0];
 
-  // now need high byte of offset from base of struct, seems to be $E6 or $E7
+  /* $CC00-$CC04: IYh, the high byte of the row address. persp_x_scale_right
+   * sits at $E6B0 with a 22-byte stride, so rows 0..3 are in page $E6 and rows
+   * 4..7 in page $E7. */
   A_scratch = 0xE6 + ((IY_height - &persp_x_scale_right[0][0]) >> 8);
+  /* $CC06: that page number is the multiply's *multiplier*, and only its top
+   * three bits are used -- 111 for both $E6 and $E7. The row therefore has no
+   * influence here; the call reduces to round(7 * C_curvature / 8). */
   A_scratch = scale_curvature_or_height(A_scratch, C_curvature);
-  A_scratch = (128 - A_scratch) & 0xFE; // 0xFE must round to whole word
-  // A expecting $7C to $82 depending on curvature (7C if bending right?)
+  /* $CC09-$CC0D: curvature_to_xpos holds 16-bit entries, so AND $FE forces the
+   * index onto a word boundary. Road-buffer curvature bytes are always one of
+   * {0, ±2, ±4, ±6} (see the curvature stream decode at $BE7D), which puts this
+   * in $7A..$84: $80 dead ahead, below it bending right, above it bending
+   * left. */
+  A_scratch = (128 - A_scratch) & 0xFE;
   A_scratch = (A_scratch - 0x40) / 2; // adjust to index inward_bend_table
   assert(A_scratch >= 0 && A_scratch <= 95);
   IX_lanes = &curvature_to_xpos[A_scratch]; // table is 16-bit
@@ -15971,8 +16002,10 @@ static void build_curve_table(chqstate_t *state, int forked)
     HLdash_multiplied = 0; // Initialise a multiplier result
     BCdash = *IX_lanes - DEdash_roadposacc;
 
-    // reading first byte from table row?
-    A_height = *IY_height++; // points into horizontal_e6b0
+    /* $CC36-$CC39: the scale byte for this depth step. fast_counter picked one
+     * of the eight rows above; IY_height then walks the 22 bytes across it, one
+     * per iteration, so each depth step gets its own perspective weight. */
+    A_height = *IY_height++;
 
 #if 1
     NOT_USED(carry); /* only read in the #else reference implementation below */
