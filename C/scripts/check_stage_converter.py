@@ -29,6 +29,7 @@ silently before:
 Usage: python3 check_stage_converter.py
 """
 
+import glob
 import os
 import re
 import subprocess
@@ -39,9 +40,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SCRIPT = os.path.join(ROOT, "Speccy", "scripts", "convert_stage.py")
 SKOOL = os.path.join(ROOT, "Speccy")
-STAGES_H = os.path.join(
-    ROOT, "C", "libraries", "ChaseHQ", "Data", "Stages.h"
-)
+DATA_DIR = os.path.join(ROOT, "C", "libraries", "ChaseHQ", "Data")
+STAGES_H = os.path.join(DATA_DIR, "Stages.h")
 
 # Stage -> (bank skool basename, --obj-names value). Mirrors the convert_stages
 # target in C/CMakeLists.txt; keep the two in step.
@@ -155,11 +155,23 @@ def main():
                     print('stage %d: chatter line "%s" is unterminated -- '
                           "text run not stitched" % (stage, line[:24]))
 
+    # The committed files are laid out the same way, and there the property is
+    # load-bearing rather than advisory: they are what the game actually
+    # compiles against.
+    for path in sorted(glob.glob(os.path.join(DATA_DIR, "Stage*Data.c"))):
+        overruns = sprite_overruns(open(path).read())
+        if overruns:
+            failures += 1
+            print("%s: %d sprite(s) overrun their array:"
+                  % (os.path.basename(path), len(overruns)))
+            for o in sorted(set(overruns)):
+                print("      %s" % o)
+
     if failures:
         print("\n%d check(s) failed." % failures)
         return 1
     print("PASS  convert_stage.py: macros resolve, chatter lines decode, "
-          "sprites fit their arrays")
+          "sprites fit their arrays (generated and committed)")
     return 0
 
 

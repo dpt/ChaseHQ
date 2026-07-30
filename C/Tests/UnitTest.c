@@ -96,15 +96,14 @@ static void speccy_init(void)
  * Create a game state initialised for stage 1 with a primed road buffer,
  * ready for the drawing pipeline.
  */
-static chqstate_t *make_road_state(void)
+static chqstate_t *make_stage_state(u8 stage)
 {
   chqstate_t *state;
 
   state = chq_create(&g_speccy);
   assert(state != NULL);
 
-  /* Load stage 1. */
-  state->wanted_stage_number  = MINSTAGE;
+  state->wanted_stage_number  = stage;
   state->current_stage_number = 0; /* force load */
   chq_test_load_stage(state);
   assert(state->stage != NULL);
@@ -117,6 +116,11 @@ static chqstate_t *make_road_state(void)
   chq_test_set_up_stage(state);
 
   return state;
+}
+
+static chqstate_t *make_road_state(void)
+{
+  return make_stage_state(MINSTAGE);
 }
 
 /* Return 1 if draw_road wrote to the backbuffer (some bytes became != 0xFF). */
@@ -1073,6 +1077,37 @@ static void test_stop_the_tape_48k_installs_sinclair_scheme(void)
   printf("PASS  stop_the_tape_48k: \"1\" then Y installs the Sinclair scheme\n");
 }
 
+/*
+ * Every stage's sprites are drawn from their own array now rather than from one
+ * offset into a shared blob per graphics run, so a sprite whose height reaches
+ * past its array no longer lands harmlessly in the next sprite's data -- there
+ * is no guarantee how the compiler lays two arrays out. Driving frames for each
+ * stage under the Debug build's AddressSanitizer is what catches that: a read
+ * past the end of any one of the ~370 sprite arrays aborts here.
+ */
+static void test_all_stages_draw_frames(void)
+{
+  chqstate_t *state;
+  u8          stage;
+  int         frame;
+
+  for (stage = MINSTAGE; stage <= 5; stage++) {
+    state = make_stage_state(stage);
+    state->hazards[0].used = HAZARD_USED; /* keep the perp spawned */
+
+    for (frame = 0; frame < 2000; frame++) {
+      state->speed = 0x0180;          /* keep the car moving at speed */
+      state->session.time_bcd = 0x60; /* top up the clock: never expires */
+      chq_test_game_frame(state);
+      assert(chq_test_max_side_object(state) <= 9);
+    }
+
+    chq_destroy(state);
+  }
+
+  printf("PASS  all stages: 2000 frames each draw without an out-of-bounds read\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -1098,6 +1133,7 @@ int main(void)
   test_run_title_tune_starts_and_keeps_playing();
   test_play_music_48k_paces_every_tick();
   test_stop_the_tape_48k_installs_sinclair_scheme();
+  test_all_stages_draw_frames();
 
   printf("\nAll tests passed.\n");
   return 0;
