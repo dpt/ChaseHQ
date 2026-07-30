@@ -132,29 +132,41 @@ def sprite_overruns(text):
 
 
 SHAPED_RE = re.compile(
-    r"static const u8 (\w+)\[([0-9]+(?:\s*\*\s*[0-9]+)+)\] = \{\n(.*?)\n\};", re.S
+    r"static const u8 (\w+)\[([0-9]+(?:\s*\*\s*[0-9]+)*)\] = \{\n(.*?)\n\};", re.S
 )
+# A Pixels.h macro name or a hex literal: one token, one byte.
+BYTE_TOKEN_RE = re.compile(r"(?:[X_]{8}|0[xX][0-9A-Fa-f]{2})$")
 
 
 def shape_faults(text):
     """Report sprite arrays not written in the shape they declare.
 
-    A length of 'width * 2 * height' marks a masked sprite, whose mask byte is
+    Every array is checked for holding exactly the bytes it declares. A short
+    initialiser is zero-filled by C rather than rejected, so it goes unnoticed;
+    an over-long one is only a warning.
+
+    An array whose length is written as a product is checked for its row shape
+    too. 'width * 2 * height' marks a masked sprite, whose mask byte is
     interleaved with each pixel byte: it is width * 2 elements across. Anything
-    else is width across. A row count or element count that disagrees with the
-    declaration means the array no longer reads as the picture it holds -- or,
-    where the element count is short, that C is quietly zero-filling the rest.
+    else is width across. A row count that disagrees means the array no longer
+    reads as the picture it holds.
     """
     out = []
     for m in SHAPED_RE.finditer(text):
+        toks = [t.strip() for t in m.group(3).replace("\n", " ").split(",") if t.strip()]
+        # One token must mean one byte for the count to be meaningful. Map and
+        # arrest-message arrays are built from macros that each expand to
+        # several bytes, so they are not comparable and are skipped.
+        if not all(BYTE_TOKEN_RE.match(t) for t in toks):
+            continue
         factors = [int(f.strip()) for f in m.group(2).split("*")]
         per_row = factors[0] * 2 if len(factors) == 3 and factors[1] == 2 else factors[0]
         rows = [r for r in m.group(3).split("\n") if r.strip()]
-        held = len([t for t in m.group(3).replace("\n", " ").split(",") if t.strip()])
+        held = len(toks)
         if held != declared_size(m.group(2)):
             out.append("%s[%s] holds %d bytes, declares %d"
                        % (m.group(1), m.group(2), held, declared_size(m.group(2))))
-        elif len(rows) * per_row != held:
+        elif len(factors) > 1 and len(rows) * per_row != held:
             out.append("%s[%s] is %d rows of ~%d, expected %d rows of %d"
                        % (m.group(1), m.group(2), len(rows),
                           held // max(len(rows), 1), held // per_row, per_row))
