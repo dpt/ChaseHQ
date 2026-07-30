@@ -16077,7 +16077,9 @@ static void build_curve_table_fill(chqstate_t *state,
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
     // $CCCD
     if ((Ldash & (1 << 7)) != 0) {
-      Ldash = -Ldash & 0xFF; // mask here to fix neg?
+      // $CCD2 NEG is an 8-bit operation on a byte register, so the mask
+      // reproduces it exactly: L becomes the magnitude of the curvature byte.
+      Ldash = -Ldash & 0xFF;
       A = Bdash_iterations;
       A_opcode = Z80_DEC_DE;
       if (A < Ldash) goto bct_endbit_A;
@@ -16101,11 +16103,25 @@ bct_continue:
   } while (--B_iterations > 0);
   return;
 
-  // A is opcode of instruction (INC DE/DEC DE)
-  // B is max iterations
-  // C is ?
-  // L is ?
-  // DE is ?
+  // Register roles on entry, all established at $CCC7-$CCCA:
+  //
+  //   A  opcode of the self-modified instruction, INC DE or DEC DE, i.e. the
+  //      direction the road bends
+  //   B  row span of this road slot: the height-table delta plus 2, the same
+  //      value just written to object_positions. DJNZ counter, so one output
+  //      entry is emitted per screen row the slot covers
+  //   C  the same span value, copied at $CCC8. Here it is the amount added to
+  //      the accumulator each step
+  //   L  magnitude of this slot's curvature byte, negated at $CCD1-$CCD4 when
+  //      the byte was negative. Here it is the threshold the accumulator is
+  //      measured against
+  //   DE running road x position, stepped by the opcode in A and pushed to the
+  //      output table once per row
+  //
+  // C and L swap roles between the two paths. The main loop at $CCE8 adds L
+  // and reduces modulo C, moving DE at most once per row; this path is entered
+  // from $CCD9/$CCE1 when the span is smaller than the curvature, so DE has to
+  // move more than once per row and the roles invert.
 bct_endbit_A:
   /* Conv: Z80 $CCF8 LD ($CCFC),A stores the opcode into the self-modifying
    * instruction. A already holds Z80_DEC_DE or Z80_INC_DE (set just before JR C,$CCF8).
