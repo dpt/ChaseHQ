@@ -526,3 +526,17 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Rule:** Any Z80 `INC r` (single 8-bit register, not a register pair) that feeds a second memory access must be modelled as masked-low-byte arithmetic, not pointer increment — check whether the register is a pair (`INC DE`, carries) or a single register (`INC E`, wraps) before translating.
 
 **Commit:** `275014e`
+
+---
+
+## 35. `XOR A; IN A,($FE)` is an any-key read, not a half-row read
+
+**Root cause:** Keyboard reads select half-rows through the *high* byte of the port address. `LD A,$F7; IN A,($FE)` reads port `$F7FE` — the "1"-"5" row only. `XOR A; IN A,($FE)` reads port `$00FE`, which asserts all eight row-select lines at once and returns the AND of every row: any key on the keyboard. The two differ by one instruction and are often a few bytes apart in the same routine.
+
+**Bug:** All three `XOR A; IN A,($FE)` sites in bank 3 (`$FC00` options-menu exit debounce, `$FECA` redefine-keys pre-capture debounce, `$FF02` test-mode confirmation screen) were translated as `port_KEYBOARD_12345`, copied from the genuine `LD A,$F7` poll at `$FBAE` a few lines above, `Conv:` comment and all. Symptom: the test-mode screen could only be dismissed with keys "1"-"5"; the original accepts any key. The equivalent 48K routines in the main binary (`$ED0B`, `$ED43`) were translated correctly first time — the main skool annotates them `; Read keyboard port $00FE`, whereas the bank-3 skool lines are bare.
+
+**Fix:** `port_BORDER_EAR_MIC` (`$00FE`) for the all-rows read. `zx_in` in `libraries/ZXSpectrum/Spectrum.c` already implements it as the AND of all eight half-row queries.
+
+**Rule:** Read the instruction that loads A, not the `IN` — `IN A,($FE)` alone tells you nothing about which keys are being sampled. When a routine polls both a specific row and "any key", expect them within a few bytes of each other, and do not carry the row constant (or its `Conv:` comment) across when transcribing the second one. An uncommented skool line is not a licence to pattern-match the neighbouring block.
+
+**Commit:** "Fix: Accept any key where the Z80 reads every keyboard half-row"

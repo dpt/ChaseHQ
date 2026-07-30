@@ -3670,7 +3670,8 @@ static u8 options_menu_driver(chqstate_t *state)
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
   u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
-                           * bit3=key"4" (was A) */
+                           * bit3=key"4"; the exit debounce reuses it as an
+                           * any-key mask (was A) */
   const u8 *HL_ctrl_list; /* joystick key-list source, list A or B (was HL) */
   u8        A_flag;       /* input-method flag written to the active-
                            * config header byte: 0 = joystick/keyboard
@@ -3742,7 +3743,8 @@ shared_tail:
     run_title_tune(state);
     state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
-    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
+    /* $FC00 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
+    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
     /* debounce: wait for the selection key to be released before proceeding */
   } while (A_key_mask != 0);
 
@@ -4027,7 +4029,7 @@ static void clear_options_screen(chqstate_t *state)
  * Prints the title/prompt text and the 8 control-name labels (gear,
  * accelerate, brake, left, right, quit, pause, turbo), then captures a
  * fresh keypress for each of the 8 controls in turn via
- * read_new_key_definition, waiting out a keys-"1"-"5" debounce before each
+ * read_new_key_definition, waiting out an any-key debounce before each
  * capture. After all 8 keys are set, waits ~20 frames, then compares the 8
  * keys just chosen against shocked_keydef_sequence (the hidden "SHOCKED" +
  * ENTER cheat code): on a match, enables test mode, shows the confirmation
@@ -4049,7 +4051,7 @@ static void redefine_keys_screen(chqstate_t *state)
   u16 DE_screen;       /* current label print position (was DE) */
   int B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
-  u8  A_key_mask;      /* keys "1".."5" pressed bitmask (was A) */
+  u8  A_key_mask;      /* any-key-pressed bitmask, all half-rows (was A) */
   int B_wait;          /* ~20-frame post-capture wait counter (was B) */
   int B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
 
@@ -4074,8 +4076,9 @@ static void redefine_keys_screen(chqstate_t *state)
         run_title_tune(state);
         state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
-        A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-      } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for keys "1"-"5" to be released */
+        /* $FECA XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
+        A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
+      } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for any key to be released */
 
       read_new_key_definition(state, &DE_screen, B_remaining, C_control_index);
 
@@ -4105,7 +4108,8 @@ static void redefine_keys_screen(chqstate_t *state)
       run_title_tune(state);
       state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
-      A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
+      /* $FF02 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
+      A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
     } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
   }
 }
