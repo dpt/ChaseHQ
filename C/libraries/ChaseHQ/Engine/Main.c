@@ -11048,11 +11048,13 @@ static void ahc_check_hand_flag(chqstate_t *state)
     Cdash = A_hand_flag;
     // EXX UNBANK
 
-    // Avoid the hand animation if turning hard?
+    // The hand is drawn from whichever sprite matches the car's angle.
+    // turn_speed is 0/1/2 for straight/turn/turn hard ($A250, set at $B2FA
+    // from the turning force), so only a hard turn needs the angled pair at
+    // 37/38, chosen by flip_car; everything else uses the straight-on hand.
     if (state->turn_speed != 2)
       draw_crash(state, 36, Bdash_flip_flag, Cdash); /* tail call */
     else
-      // Otherwise turn_speed is 2 (turn hard).
       draw_crash(state, state->flip_car + 37, Bdash_flip_flag, Cdash); /* tail call */
     return;
   }
@@ -11082,8 +11084,12 @@ static void ahc_check_hand_flag(chqstate_t *state)
   if (state->turn_speed != 2)
     A_hand_frame = 6;
   else
+    // $B4A9-$B4B1 computes flip_car * 7 + 13 by RLCA x3 then SUB B.
     A_hand_frame = (state->flip_car * 7) + 13;
 
+  // Same angle-matching as the static hand above, one base per car angle: 6
+  // straight-on, 13 or 20 for the two hard-turn directions. The step index
+  // then selects the frame within that run of seven.
   A_hand_frame += C_hand_flag;
   // PUSH AF
   draw_crash_unflipped(state, A_hand_frame);
@@ -11116,7 +11122,8 @@ static void start_chase(chqstate_t *state)
   state->hand_flag = HANDFLAG_ANIMATING;
   // Enable flashing lights and smash bar
   state->sighted_flag = 1;
-  // This is animation frame related?
+  // Frames to hold each animation step, not a frame index: ahc_check_hand_flag
+  // counts it down and only advances ahc_hand_step when it reaches zero.
   state->ahc_hand_delay = 2;
 
   state->session.subsecond_ticks = SUBSECOND_TICKS_PER_SECOND;
