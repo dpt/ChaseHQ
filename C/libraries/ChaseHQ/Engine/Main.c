@@ -7728,7 +7728,6 @@ static void check_scenery_collisions(chqstate_t *state)
   int          A_speed;           /* speed cap (20) passed to scenery_hit for tunnel wall impact (was A) */
   int          Adash_flip;        /* flip flag for tunnel wall: low bit of road_pos high byte (was A') */
   u8           A;                 /* road buffer forward index used for RL carry test (was A) */
-  int          Adash;             /* road buffer offset banked to shadow A via EX AF,AF' (was A') */
   int          raw_byte1;         /* first road-buffer byte before OR (no Z80 register) */
   int          A_obj;             /* object ID byte OR'd from two consecutive road buffer positions (was A) */
   int          raw_byte2;         /* second road-buffer byte after optional pointer advance (no Z80 register) */
@@ -7858,9 +7857,11 @@ store_crash_spin:
     return;
 
   // -- RIGHT SIDE OBJECT HIT CHECKING --
+  // Conv: $A44F banks the right-side offset in A' purely so $A480 can
+  // recover it and reach the left-side data with a single ADD A,$20. The
+  // left-side pointer below is built from ROADBUF_LEFTOBJS_OFFSET directly,
+  // so no shadow variable is needed.
   HL_bufptr = ROADBUF_FWD2PTR(ROADBUF_RIGHTOBJS_OFFSET);
-  Adash = ROADBUF_PTR2IDX(HL_bufptr); // was EX AF,AF' -- seems to be unused
-  NOT_USED(Adash);
   A = ROADBUF_FWD2IDX(0);
   RL(A);
   raw_byte1 = *HL_bufptr; /* Read a right side object data byte */
@@ -7885,7 +7886,7 @@ store_crash_spin:
     }
   }
 
-  // EX AF,AF'  Unbank road buffer offset or/and bank mystery value in A
+  // $A480 EX AF,AF' -- unbanks the right-side offset banked at $A44F
 
   // -- LEFT SIDE OBJECT HIT CHECKING --
   HL_bufptr = ROADBUF_FWD2PTR(ROADBUF_LEFTOBJS_OFFSET);
@@ -10564,7 +10565,9 @@ static void move_hero_car(chqstate_t *state)
     state->session.idle_timer = 100;
     start_chatter(state, 10, &chatterblk_raymond_get_moving[0]);
   }
-  // DEspeed = HLspeed; // might not need
+  // Conv: $B102-$B103 copies the speed into DE only so $B116-$B117 can
+  // restore HL after `SBC HL,BC` destroys it comparing against the max
+  // speed. The comparisons below leave [speed] alone, so the copy is dropped.
   off_road = state->off_road;
   if (off_road) {
     // Handle off-road (A_off_road can be 1 or 2 here)
@@ -12195,14 +12198,12 @@ static void update_road_level(chqstate_t *state)
   }
 
   state->current_curvature = A_curvature_byte;
-  // E_curvature_byte = A_curvature_byte; // removed presumed unused
+  // Conv: $B995/$B998/$B99D build a 1-or-2 sign code in E and $B9A1 copies
+  // the magnitude into D. Neither is read again before the RET, and the
+  // caller at $C05F reloads DE at $C066, so both are dropped here.
   if (A_curvature_byte) {
-    // E_one_or_two = 1; // removed presumed unused
-    if ((s8) A_curvature_byte < 0) {
-      // E_one_or_two = 2; /* was RL(E) // removed presumed unused */
+    if ((s8) A_curvature_byte < 0)
       A_curvature_byte = -A_curvature_byte;
-    }
-    // D_curvature_byte = A_curvature_byte; // removed presumed unused
     A_curvature_byte <<= 2;
     state->horizon_curve_index = A_curvature_byte;
     B_curv_idx = A_curvature_byte;
