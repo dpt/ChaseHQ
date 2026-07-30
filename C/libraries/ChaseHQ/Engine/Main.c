@@ -7103,9 +7103,13 @@ ptad_turbo_setup:
   } while (--Bdash_iterations > 0);
 
   // Count 10,000s
+  // Conv: $9E97 XOR A and $9E9E AND A exist to clear the carry flag, which
+  // SBC HL,BC takes as a borrow input. Each loop below derives its borrow
+  // from a direct comparison instead, so there is no carry to pre-clear.
+  // $9EA8's XOR A does double duty and is still needed: it also zeroes the
+  // 100s counter, which unlike the other two starts at 0 rather than -1.
   BCdash = 10000;
   Ddash = Edash = -1; // Conv: original inited both at once
-  //A = 0; // clear carry?
   do {
     Ddash++;
     carry = (BCdash > HLdash), HLdash -= BCdash;
@@ -7113,7 +7117,6 @@ ptad_turbo_setup:
   HLdash += BCdash; // correct overshoot
 
   // Count 1,000s
-  //A = 0; // clear carry?
   BCdash = 1000;
   do {
     Edash++;
@@ -9245,7 +9248,11 @@ static void draw_helicoper_part(chqstate_t                *state,
     if (A_top != 0)
       return;
 
-    if (A_bot >= 0x80) { // or -ve?
+    // $AAB8 is CP $80 / JP NC, an unsigned "at or above 128" test, which this
+    // mirrors literally. The sign test in this function is the separate JP M
+    // on D at $AAB4 above; this one selects the right-hand clipping entry
+    // point for a part whose x position starts in the right half.
+    if (A_bot >= 0x80) {
       draw_object_right_width_entrypt(state, A_bot, HL_bitmap,
                                            IY_height); /* tail call */
     } else {
@@ -9650,8 +9657,11 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
     IX_hazard->hazard_lane_OR_perp_dist_hi = ptable[0];
     IX_hazard->current_lane = ptable[1];
 
+    // $AC6D-$AC76: SLA C / RL B doubles the retained impact speed, then
+    // CP $02 on the high byte clamps anything that reaches 512 back to the
+    // perp's base chase speed of 350 ($015E).
     speed *= 2;
-    if ((speed >> 8) >= 2) // checking speed >= 512?
+    if ((speed >> 8) >= 2)
       speed = SPEED_PERP_CHASE;
     IX_hazard->speed = (IX_hazard->speed & 0xFF00) | (speed &
                       0x00FF); // set bottom byte only (weird)
