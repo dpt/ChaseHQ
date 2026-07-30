@@ -1044,7 +1044,12 @@ const stretchy_t stretchy_shortpole[3] = {
 /**
  * $7E0C: shortpole_bottom
  *
- * Why is the first column all zeroes?
+ * The first column of each pair is the depth, which
+ * draw_object_left/right_stretchy_entrypt subtracts from the x-position table
+ * value: a horizontal inset from the road edge. The streetlamp depthsets taper
+ * theirs with distance ($28, $20, $18 ... $0C) because the lamp hangs out on an
+ * arm. A short pole is a plain post standing flush at the edge, so it insets by
+ * nothing at every depth.
  */
 const depthset_t shortpole_bottom = {
   &streetlampbody_bitmaps[0],
@@ -1439,7 +1444,7 @@ const u8 attract_messages[38] = {
 /** $82CC: credits_messages */
 const u8 credits_messages[84] = {
   10, // frame delay
-  8, // vertical gap?
+  8, // frames to hold before the next message is revealed
   DRAWCHARSTYLE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
   TWOBYTES(0xF086),
@@ -4775,7 +4780,8 @@ const u16 outward_bend_table[32] = {
 
 /**
  * $E540 - Converts a curvature to a road X position
- * Approx? v[i] = round(128 * (1 + tan((i − 32) · π/128)))
+ * v[i] = round(128 * (1 + tan((i − 32) · π/128))), which reproduces all 96
+ * entries exactly.
  */
 const u16 curvature_to_xpos[96] = {
   0x0000,
