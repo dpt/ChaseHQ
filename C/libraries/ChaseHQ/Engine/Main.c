@@ -639,9 +639,16 @@ void setwordat(u8 *addr, int value)
 
 /* Move to next screen row (downwards)
  *
- * Conv: Extracted to function.
+ * ZX screen addresses put the pixel row within a character cell in the high
+ * byte's low three bits, so stepping a scanline is +256. When those three bits
+ * wrap the next character row starts, which is +32 on the low byte; if that
+ * addition does not carry we are still in the same screen third, so the high
+ * byte drops back by the 8 scanlines it just climbed.
+ *
+ * Conv: Extracted to function. Bank7.c has its own copy, also called
+ *       next_screen_row, because it cannot see this one.
  */
-static u16 next_scr_row(int screen)
+static u16 next_screen_row(int screen)
 {
   int t;
 
@@ -649,8 +656,8 @@ static u16 next_scr_row(int screen)
   if (((screen >> 8) & 7) == 0) {
     t = (screen & 0xFF) + 32;
     screen = (screen & 0xFF00) | (t & 0xFF);
-    if (t < 0x100) { /* didn't carry */
-      t = (screen >> 8) - 8; /* reduce? */
+    if (t < 0x100) { /* didn't carry: same screen third */
+      t = (screen >> 8) - 8;
       screen = (t << 8) | (screen & 0xFF);
     }
   }
@@ -1069,9 +1076,9 @@ static void draw_dirt_and_stones(chqstate_t *state,
 
 static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height);
 static void draw_helicopter_part(chqstate_t                *state,
-                                int                        A_col_pos,
-                                const heli_bitmap_xonly_t *DE_innerbitmap,
-                                const u8                  *IY_height);
+                                 int                        A_col_pos,
+                                 const heli_bitmap_xonly_t *DE_innerbitmap,
+                                 const u8                  *IY_height);
 
 static void move_helicopter(chqstate_t *state);
 
@@ -6165,7 +6172,7 @@ static void draw_noise_effect(chqstate_t *state, int counter)
       DE_screen++; /* was E++ */
     } while (--B > 0);
     DE_screen = DE_screen_saved; /* was POP - restore row ptr */
-    DE_screen = next_scr_row(DE_screen);
+    DE_screen = next_screen_row(DE_screen);
   } while (--C > 0);
 
   /* the following will call draw() for us */
@@ -6229,7 +6236,7 @@ static void plot_face(chqstate_t *state, int screen, const u8 *face)
     counter -= 4;
     if (counter == 0)
       break;
-    screen = next_scr_row(screen);
+    screen = next_screen_row(screen);
   }
 
   /* the following will call draw() for us */
@@ -6434,7 +6441,7 @@ pmf_have_ascii:
     screen2[0] = (mask & screen2[0]) | bm1;
     screen2[1] = bm2;
     fontdata++;
-    HL_screen = next_scr_row(HL_screen);
+    HL_screen = next_screen_row(HL_screen);
   } while (--row > 0);
 
   update_screen(state, screen, 16, MFHEIGHT); /* Conv: added */
@@ -6467,7 +6474,7 @@ static void clear_message_line(chqstate_t *state)
   A_rows   = MFHEIGHT;
   do {
     memset(ADDRTOSCREEN(HL_screen + 1), ________, 29); /* Conv: replaces LD (HL),B + LDIR */
-    HL_screen = next_scr_row(HL_screen);
+    HL_screen = next_screen_row(HL_screen);
   } while (--A_rows);
 
   update_screen(state, 0x45C2, 29 * 8, MFHEIGHT); /* Conv: added */
@@ -7592,7 +7599,7 @@ dc_screen:
   iterations = 7;
   do {
     *dst = *fontdata++;
-    dst = ADDRTOSCREEN(next_scr_row(SCREENTOADDR(dst)));
+    dst = ADDRTOSCREEN(next_screen_row(SCREENTOADDR(dst)));
   } while (--iterations > 0);
   dst = orig + 1; /* was POP dst */
   update_screen(state, SCREENTOADDR(orig), 8, 7); /* Conv: added */
@@ -7733,10 +7740,10 @@ static int keyscan_inner(const chqstate_t *state, int A_input)
  * buffer, looks up their collision thresholds, and calls csc_hit_scenery if the
  * car's x position falls within the zone.
  *
- * Conv: EXX at entry banks HLdash_road_pos_min/$0048 and DEdash_road_pos_max/ $01D8
- *       into shadow registers as default ahc_road_pos values; a second EXX
- *       inside the tunnel path overwrites them with tunnel-specific values. C
- *       models both banks as named locals that are written to state fields at
+ * Conv: EXX at entry banks HLdash_road_pos_min/$0048 and DEdash_road_pos_max/
+ *       $01D8 into shadow registers as default ahc_road_pos values; a second
+ *       EXX inside the tunnel path overwrites them with tunnel-specific values.
+ *       C models both banks as named locals that are written to state fields at
  *       store_crash_spin.
  */
 static void check_scenery_collisions(chqstate_t *state)
@@ -9241,9 +9248,9 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
  *                           stretchy-object draw routines. (was IY)
  */
 static void draw_helicopter_part(chqstate_t                *state,
-                                int                        A_col_pos,
-                                const heli_bitmap_xonly_t *DE_innerbitmap,
-                                const u8                  *IY_height)
+                                 int                        A_col_pos,
+                                 const heli_bitmap_xonly_t *DE_innerbitmap,
+                                 const u8                  *IY_height)
 {
   int             carry;
   int             BC_helipos; /* was BC */

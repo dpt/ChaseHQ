@@ -64,7 +64,7 @@
 
 /**
  * Destination address and glyph-table lookup result shared by
- * compute_glyph_blit_params and compute_glyph_blit_params_b ($C8C5, $C94F).
+ * compute_glyph_blit_params_fg and compute_glyph_blit_params_bg ($C8C5, $C94F).
  *
  * The address bytes are named H/L but their comments say "(was D)"/"(was E)".
  * That is not a typo: compute_glyph_geometry builds the address in DE, and the
@@ -103,30 +103,30 @@ static void oss_op_accel_x_b(struct title_object *rec);
 static void oss_op_accel_x_c(struct title_object *rec);
 static void clear_playfield_and_attrs(chqstate_t *state);
 static void clear_and_fill_border_attrs(chqstate_t *state);
-static void compute_glyph_blit_params(chqstate_t *state,
-                                      u8          B_y,
-                                      u8          C_x,
-                                      u8          L_row);
+static void compute_glyph_blit_params_fg(chqstate_t *state,
+                                         u8          B_y,
+                                         u8          C_x,
+                                         u8          L_row);
 static void compute_glyph_geometry(u8                     B_y,
                                    u8                     C_x,
                                    u8                     L_row,
                                    glyph_blit_geometry_t *out);
-static void blit_masked_sprite_dispatch(chqstate_t *state,
-                                        int         H,
-                                        int         L,
-                                        const u8   *src,
-                                        int         B_height_pairs,
-                                        int         C_width_select);
-static void compute_glyph_blit_params_b(chqstate_t *state,
-                                        u8          B_y,
-                                        u8          C_x,
-                                        u8          L_row);
-static void blit_masked_sprite_dispatch_b(chqstate_t *state,
-                                          int         H,
-                                          int         L,
-                                          const u8   *src,
-                                          int         B_height_pairs,
-                                          int         C_width_select);
+static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
+                                           int         H,
+                                           int         L,
+                                           const u8   *src,
+                                           int         B_height_pairs,
+                                           int         C_width_select);
+static void compute_glyph_blit_params_bg(chqstate_t *state,
+                                         u8          B_y,
+                                         u8          C_x,
+                                         u8          L_row);
+static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
+                                           int         H,
+                                           int         L,
+                                           const u8   *src,
+                                           int         B_height_pairs,
+                                           int         C_width_select);
 static void blit_glyph_rows(chqstate_t *state,
                             int         H,
                             int         L,
@@ -747,7 +747,7 @@ static u8 titlescr_animate_frame(chqstate_t *state)
 
   for (obj = 0; obj < 6; obj++) { /* $C6C7-$C6E0: 6 foreground objects */
     rec = &state->bank3->title_objects[obj];
-    compute_glyph_blit_params(state, rec->y, rec->x, rec->row);
+    compute_glyph_blit_params_fg(state, rec->y, rec->x, rec->row);
   }
 
   if (object_script_step(state))
@@ -757,7 +757,7 @@ static u8 titlescr_animate_frame(chqstate_t *state)
 
   for (obj = 6; obj < 9; obj++) { /* $C6EA-$C700: 3 background objects */
     rec = &state->bank3->title_objects[obj];
-    compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row);
+    compute_glyph_blit_params_bg(state, rec->y, rec->x, rec->row);
   }
 
   update_whole_playfield(state); /* Conv: added */
@@ -1247,14 +1247,14 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  *       first decrement, effectively running the skip loop until the row-pair
  *       count itself reaches zero -- silently drawing nothing for those two Y
  *       values. This is a latent quirk of the original code
- *       (compute_glyph_blit_params_b below guards against it explicitly), not a
- *       translation bug, and is preserved via A_skip_pairs' u8 wraparound
+ *       (compute_glyph_blit_params_bg below guards against it explicitly), not
+ *       a translation bug, and is preserved via A_skip_pairs' u8 wraparound
  *       rather than "fixed".
  */
-static void compute_glyph_blit_params(chqstate_t *state,
-                                      u8          B_y,
-                                      u8          C_x,
-                                      u8          L_row)
+static void compute_glyph_blit_params_fg(chqstate_t *state,
+                                         u8          B_y,
+                                         u8          C_x,
+                                         u8          L_row)
 {
   glyph_blit_geometry_t g;            /* destination address and glyph lookup, filled below (was D/E/HL/B/C/Carry/A') */
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
@@ -1270,14 +1270,14 @@ static void compute_glyph_blit_params(chqstate_t *state,
     } while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
   }
 
-  blit_masked_sprite_dispatch(state, g.H, g.L, g.HL_src, g.B_height_pairs,
+  blit_masked_sprite_dispatch_fg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                               g.C_width_select);
 }
 
 /**
  * $C8CD-$C902 / $C957-$C98C: Compute glyph destination address and table entry
  *
- * Shared by compute_glyph_blit_params and compute_glyph_blit_params_b, which
+ * Shared by compute_glyph_blit_params_fg and compute_glyph_blit_params_bg, which
  * are otherwise identical apart from the row-offset walk and dispatch table
  * they feed. Clamps the object's Y screen position to a maximum of $6F
  * (rows below that are off the bottom of the drawable window and must be
@@ -1371,12 +1371,12 @@ static void compute_glyph_geometry(u8                     B_y,
  * \param[in] B_height_pairs Number of row-pairs to draw.
  * \param[in] C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch(chqstate_t *state,
-                                        int         H,
-                                        int         L,
-                                        const u8   *src,
-                                        int         B_height_pairs,
-                                        int         C_width_select)
+static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
+                                           int         H,
+                                           int         L,
+                                           const u8   *src,
+                                           int         B_height_pairs,
+                                           int         C_width_select)
 {
   switch (C_width_select) {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
@@ -1391,23 +1391,23 @@ static void blit_masked_sprite_dispatch(chqstate_t *state,
 /**
  * $C94F: Draw a background title-screen object's glyph
  *
- * Structurally identical to compute_glyph_blit_params above (see its Conv
+ * Structurally identical to compute_glyph_blit_params_fg above (see its Conv
  * notes for the SP-as-pointer and frame-timing decisions, which apply here
- * unchanged), but feeds blit_masked_sprite_dispatch_b, and its row-offset
+ * unchanged), but feeds blit_masked_sprite_dispatch_bg, and its row-offset
  * skip loop computes the per-row-pair source stride differently for the
  * "width-6"/"width-7" quirk routines (4 bytes for width 6, 2 bytes for
  * width 7, matching blit_width6/blit_width7's real 2-byte/1-byte-per-row
  * consumption) and explicitly guards the skip count against the u8-wrap
- * quirk noted in compute_glyph_blit_params (forcing a minimum of 1).
+ * quirk noted in compute_glyph_blit_params_fg (forcing a minimum of 1).
  *
  * \param[in] B_y   Object Y screen position (was B).
  * \param[in] C_x   Object X screen position (was C).
  * \param[in] L_row Object row/height byte (was L).
  */
-static void compute_glyph_blit_params_b(chqstate_t *state,
-                                        u8          B_y,
-                                        u8          C_x,
-                                        u8          L_row)
+static void compute_glyph_blit_params_bg(chqstate_t *state,
+                                         u8          B_y,
+                                         u8          C_x,
+                                         u8          L_row)
 {
   glyph_blit_geometry_t g;            /* destination address and glyph lookup, filled below (was D/E/HL/B/C/Carry/A') */
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
@@ -1432,14 +1432,14 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
     } while (--A_skip_pairs != 0);
   }
 
-  blit_masked_sprite_dispatch_b(state, g.H, g.L, g.HL_src, g.B_height_pairs,
+  blit_masked_sprite_dispatch_bg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                                 g.C_width_select);
 }
 
 /**
  * $C9AF: Masked-sprite blit dispatch (background objects)
  *
- * Structurally identical to blit_masked_sprite_dispatch but tests widths
+ * Structurally identical to blit_masked_sprite_dispatch_fg but tests widths
  * 1..6 explicitly, so blit_width7 (unreachable from the foreground
  * dispatcher above) is reached here as the default case.
  *
@@ -1449,12 +1449,12 @@ static void compute_glyph_blit_params_b(chqstate_t *state,
  * \param[in] B_height_pairs Number of row-pairs to draw.
  * \param[in] C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch_b(chqstate_t *state,
-                                          int         H,
-                                          int         L,
-                                          const u8   *src,
-                                          int         B_height_pairs,
-                                          int         C_width_select)
+static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
+                                           int         H,
+                                           int         L,
+                                           const u8   *src,
+                                           int         B_height_pairs,
+                                           int         C_width_select)
 {
   switch (C_width_select) {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
@@ -1496,11 +1496,11 @@ static void blit_masked_sprite_dispatch_b(chqstate_t *state,
  *       near-duplicate bodies. Each width routine's own fixed delay loop (e.g.
  *       $C9E8-$C9EB, present on widths 1-5 only) exists purely to pad out real
  *       hardware frame timing; the C port has no such deadline to protect (see
- *       compute_glyph_blit_params' Conv note on $C93C/$C93D), so none of the
+ *       compute_glyph_blit_params_fg' Conv note on $C93C/$C93D), so none of the
  *       delay loops are translated.
  *
- * Conv: compute_glyph_blit_params only clamps the *top* of the glyph (see its
- *       own Conv note on the $C906-$C916 skip loop); the disassembly has no
+ * Conv: compute_glyph_blit_params_fg only clamps the *top* of the glyph (see
+ *       its own Conv note on the $C906-$C916 skip loop); the disassembly has no
  *       symmetric clamp for the bottom, so a fast-moving object (e.g. one
  *       driven by oss_op_velocity) can walk this loop's (H,L) address below
  *       screen third 3 and off the bottom of the physical display. On real
@@ -1573,12 +1573,12 @@ static void blit_width1(
  *
  * Conv: factored into a shared helper rather than repeating the 14
  *       near-identical inline copies in the disassembly -- the same "Conv:
- *       extracted to function" treatment next_scr_row got in Main.c.
- *       next_scr_row itself is static to Main.c and not visible here;
+ *       extracted to function" treatment next_screen_row got in Main.c.
+ *       next_screen_row itself is static to Main.c and not visible here;
  *       clear_playfield_buffer above already established this file's own
  *       precedent of modelling this exact address math locally rather than
  *       sharing it across files, so this helper follows that precedent instead
- *       of exposing next_scr_row.
+ *       of exposing next_screen_row.
  */
 static void advance_glyph_scanline(int *H, int *L)
 {
@@ -1686,7 +1686,7 @@ static void blit_width6(
  * $CBC5: "Width-7" masked-sprite OR-blit
  *
  * Conv/bug preserved literally: only reachable via
- * blit_masked_sprite_dispatch_b's default case. Byte-for-byte identical in
+ * blit_masked_sprite_dispatch_bg's default case. Byte-for-byte identical in
  * shape to blit_width1 -- draws only 1 byte per scanline despite its
  * position at the end of the width-7 dispatch chain. See blit_width6's note
  * above; the same quirk applies here one width class down.
