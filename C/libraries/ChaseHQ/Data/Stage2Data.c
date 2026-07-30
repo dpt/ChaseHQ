@@ -178,7 +178,7 @@ static const u8 stage2_bitmap_F318[7 * 8];
 static const u8 stage2_bitmap_F350[7 * 8];
 static const u8 stage2_bitmap_F388[8 * 8];
 static const u8 stage2_bitmap_F3C8[3 * 4];
-static const u8 stage2_bitmap_F3D4[21];
+static const u8 stage2_bitmap_F3D4[4 * 4];
 static const u8 stage2_bitmap_F3E9[5 * 6];
 static const u8 stage2_bitmap_F407[6 * 6];
 static const u8 stage2_bitmap_F42B[2 * 4];
@@ -211,7 +211,7 @@ static const u8 stage2_bitmap_F800[4 * 11];
 static const u8 stage2_bitmap_F82C[3 * 4];
 static const u8 stage2_bitmap_F838[2 * 2];
 static const u8 stage2_bitmap_F83C[2 * 5];
-static const u8 stage2_bitmap_F846[14];
+static const u8 stage2_bitmap_F846[3 * 4];
 static const u8 stage2_bitmap_F854[2 * 4];
 static const u8 stage2_bitmap_F85C[2 * 2];
 static const u8 stage2_bitmap_F860[2 * 4];
@@ -249,8 +249,8 @@ static const u8 stage2_bitmap_F9BB[3 * 4];
 static const u8 stage2_bitmap_F9C7[3 * 4];
 static const u8 stage2_bitmap_F9D3[3 * 2 * 3];
 static const u8 stage2_bitmap_F9E5[3 * 2 * 3];
-static const u8 stage2_bitmap_F9F7[12];
-static const u8 stage2_bitmap_FA03[12];
+static const u8 stage2_bitmap_F9F7[2 * 2 * 2 + 4];
+static const u8 stage2_bitmap_FA03[2 * 2 * 2 + 4];
 static const u8 stage2_bitmap_FA39[4 * 17];
 static const u8 stage2_bitmap_FA7D[3 * 13];
 static const u8 stage2_bitmap_FAA4[2 * 9];
@@ -2537,10 +2537,11 @@ static const u8 stage2_bitmap_F3C8[3 * 4] = {
 /**
  * $F3D4: stage2_bitmap_F3D4
  */
-static const u8 stage2_bitmap_F3D4[21] = {
-  X_XXXXXX, XX_XXXXX, _XXXXXXX, XX_XX_XX, X_XXX_XX, XXXXXX_X, XXXXXXXX, X__X_XX_,
-  XXXXXXXX, XXXXXXXX, X_XXXXXX, __XXX___, X_X_XXXX, _XXX__XX, XXXXXX__, _XX_____,
-  ________, ________, ________, ________, ________,
+static const u8 stage2_bitmap_F3D4[4 * 4] = {
+  X_XXXXXX, XX_XXXXX, _XXXXXXX, XX_XX_XX,
+  X_XXX_XX, XXXXXX_X, XXXXXXXX, X__X_XX_,
+  XXXXXXXX, XXXXXXXX, X_XXXXXX, __XXX___,
+  X_X_XXXX, _XXX__XX, XXXXXX__, _XX_____,
 };
 
 /**
@@ -3188,9 +3189,11 @@ static const u8 stage2_bitmap_F83C[2 * 5] = {
 /**
  * $F846: stage2_bitmap_F846
  */
-static const u8 stage2_bitmap_F846[14] = {
-  _____XX_, X__X__X_, X_X___XX, _____X_X, XX__XXXX, _XX__XX_, ______X_, _XXXX_XX,
-  XXXXXX_X, _______X, ___XX_XX, X__X__X_, ________, ________,
+static const u8 stage2_bitmap_F846[3 * 4] = {
+  _____XX_, X__X__X_, X_X___XX,
+  _____X_X, XX__XXXX, _XX__XX_,
+  ______X_, _XXXX_XX, XXXXXX_X,
+  _______X, ___XX_XX, X__X__X_,
 };
 
 /**
@@ -3579,18 +3582,23 @@ static const u8 stage2_bitmap_F9E5[3 * 2 * 3] = {
 /**
  * $F9F7: stage2_bitmap_F9F7
  */
-static const u8 stage2_bitmap_F9F7[12] = {
-  X_XXXX_X, _X____X_, XXX_XXXX, ___X____, ______X_, X_XXXX_X, _____XXX, XXX_X___,
+static const u8 stage2_bitmap_F9F7[2 * 2 * 2 + 4] = {
+  X_XXXX_X, _X____X_, XXX_XXXX, ___X____,
+  ______X_, X_XXXX_X, _____XXX, XXX_X___,
+  // $F9FF: 4 further bytes, not reached by any LOD entry
   ___XXXXX, XXX_____, XX___XXX, __XXX___,
 };
 
 /**
  * $FA03: stage2_bitmap_FA03
  */
-static const u8 stage2_bitmap_FA03[12] = {
-  XXXXX_XX, _____X__, XX_XXX_X, __X___X_, XXXX____, ____X_XX, __X_____, XX_XXX_X,
+static const u8 stage2_bitmap_FA03[2 * 2 * 2 + 4] = {
+  XXXXX_XX, _____X__, XX_XXX_X, __X___X_,
+  XXXX____, ____X_XX, __X_____, XX_XXX_X,
+  // $FA0B: 4 further bytes, not reached by any LOD entry
   XXXX___X, ____XXX_, XXXXXX__, ______XX,
 };
+
 /** $FA0F: stage2_lods_FA0F */
 static const bitmap_t stage2_lods_FA0F[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage2_bitmap_FA39[0], &stage2_bitmap_FA39[0] },  // [0]
@@ -3683,6 +3691,7 @@ static const u8 stage2_bitmap_FAD2[2 * 2 * 7] = {
   XXXX____, ____XXXX, ________, XXXXXXXX,
   XXXXXXXX, ________, ____XXXX, XXXX____,
 };
+
 static const struct { u16 z80; const void *ptr; } stage2_map_goto_table[] = {
   { STAGE2_MAP_CURV_E439_ADDR,    &stage2_map_curv_E439[0]    },
   { STAGE2_MAP_HEIGHT_E44F_ADDR,  &stage2_map_height_E44F[0]  },

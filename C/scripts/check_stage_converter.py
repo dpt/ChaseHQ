@@ -87,18 +87,29 @@ def generate(stage, tmpdir):
 
 
 # A sprite array declares its shape ('6 * 31'), not a byte count, whenever the
-# LOD entry describing it accounts for every byte of the block.
+# LOD entry describing it accounts for every byte of the block. Where the block
+# holds trailing bytes no entry reaches, the shape is followed by '+ N' for them.
+LENGTH = r"[0-9]+(?:\s*\*\s*[0-9]+)*(?:\s*\+\s*[0-9]+)?"
 ARRAY_RE = re.compile(
-    r"static const u8 (stage\d_bitmap_[0-9A-F]{4})\[([0-9]+(?:\s*\*\s*[0-9]+)*)\] = \{"
+    r"static const u8 (stage\d_bitmap_[0-9A-F]{4})\[(" + LENGTH + r")\] = \{"
 )
 
 
 def declared_size(expr):
-    """Byte count a '6 * 2 * 31' style array length declares."""
-    n = 1
-    for factor in expr.split("*"):
-        n *= int(factor.strip())
-    return n
+    """Byte count a '6 * 2 * 31' or '2 * 2 * 2 + 4' array length declares."""
+    total = 0
+    for term in expr.split("+"):
+        n = 1
+        for factor in term.split("*"):
+            n *= int(factor.strip())
+        total += n
+    return total
+
+
+def sprite_extent(expr):
+    """Bytes of `expr` that are the sprite itself, before any '+ N' remainder."""
+    return declared_size(expr.split("+")[0])
+
 # One bitmap_t entry: width, flags, height, then the bitmap and pre-shifted
 # pointers, each an &array[index] into a sprite block.
 ENTRY_RE = re.compile(
@@ -109,8 +120,19 @@ ENTRY_RE = re.compile(
 
 
 def sprite_overruns(text):
-    """Report LOD entries whose sprite reaches past the array it points into."""
-    sizes = {m.group(1): declared_size(m.group(2)) for m in ARRAY_RE.finditer(text)}
+    """Report LOD entries at odds with the array they point into.
+
+    Two ways they can disagree. The sprite may reach past the end of the array,
+    which is a real out-of-bounds read waiting to happen. Or the array may
+    declare a shape -- a length written as a product -- that is not the shape the
+    entry describes, in which case the shape is decoration rather than fact.
+    """
+    sizes, extents = {}, {}
+    for m in ARRAY_RE.finditer(text):
+        sizes[m.group(1)] = declared_size(m.group(2))
+        # Only a length written as a product claims to be a shape.
+        if "*" in m.group(2):
+            extents[m.group(1)] = sprite_extent(m.group(2))
     out = []
     for m in ENTRY_RE.finditer(text):
         width, flag, height = int(m.group(1)), m.group(2), int(m.group(3))
@@ -128,11 +150,15 @@ def sprite_overruns(text):
             if name in sizes and index + need > sizes[name]:
                 out.append("%s[%d] + %d bytes (%dx%d %s) overruns [%d]"
                            % (name, index, need, width, height, flag, sizes[name]))
+            elif index == 0 and extents.get(name, need) != need:
+                out.append("%s declares a %d-byte sprite but its entry is "
+                           "%dx%d %s = %d bytes"
+                           % (name, extents[name], width, height, flag, need))
     return out
 
 
 SHAPED_RE = re.compile(
-    r"static const u8 (\w+)\[([0-9]+(?:\s*\*\s*[0-9]+)*)\] = \{\n(.*?)\n\};", re.S
+    r"static const u8 (\w+)\[(" + LENGTH + r")\] = \{\n(.*?)\n\};", re.S
 )
 # A Pixels.h macro name or a hex literal: one token, one byte.
 BYTE_TOKEN_RE = re.compile(r"(?:[X_]{8}|0[xX][0-9A-Fa-f]{2})$")
@@ -149,7 +175,8 @@ def shape_faults(text):
     too. 'width * 2 * height' marks a masked sprite, whose mask byte is
     interleaved with each pixel byte: it is width * 2 elements across. Anything
     else is width across. A row count that disagrees means the array no longer
-    reads as the picture it holds.
+    reads as the picture it holds. Only the sprite's own rows are counted: a
+    '+ N' remainder is unidentified data whose row width is not known.
     """
     out = []
     for m in SHAPED_RE.finditer(text):
@@ -159,17 +186,21 @@ def shape_faults(text):
         # several bytes, so they are not comparable and are skipped.
         if not all(BYTE_TOKEN_RE.match(t) for t in toks):
             continue
-        factors = [int(f.strip()) for f in m.group(2).split("*")]
+        shape = m.group(2).split("+")[0]
+        factors = [int(f.strip()) for f in shape.split("*")]
         per_row = factors[0] * 2 if len(factors) == 3 and factors[1] == 2 else factors[0]
+        extent = sprite_extent(m.group(2))
         rows = [r for r in m.group(3).split("\n") if r.strip()]
+        sprite_rows = rows[: extent // per_row] if per_row else []
         held = len(toks)
         if held != declared_size(m.group(2)):
             out.append("%s[%s] holds %d bytes, declares %d"
                        % (m.group(1), m.group(2), held, declared_size(m.group(2))))
-        elif len(factors) > 1 and len(rows) * per_row != held:
-            out.append("%s[%s] is %d rows of ~%d, expected %d rows of %d"
-                       % (m.group(1), m.group(2), len(rows),
-                          held // max(len(rows), 1), held // per_row, per_row))
+        elif len(factors) > 1 and sum(
+            len([t for t in r.split(",") if t.strip()]) for r in sprite_rows
+        ) != extent:
+            out.append("%s[%s] does not start with %d rows of %d"
+                       % (m.group(1), m.group(2), extent // per_row, per_row))
     return out
 
 

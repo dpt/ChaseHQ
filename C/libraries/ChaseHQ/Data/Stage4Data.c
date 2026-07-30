@@ -153,7 +153,7 @@ static const u8 stage4_bitmap_EAE0[3 * 15];
 static const u8 stage4_bitmap_EB0D[6 * 29];
 static const u8 stage4_bitmap_EBBB[4 * 19];
 static const u8 stage4_bitmap_EC07[3 * 13];
-static const u8 stage4_bitmap_EC2E[64];
+static const u8 stage4_bitmap_EC2E[2 * 2 * 8 + 32];
 static const u8 stage4_bitmap_F0EA[7 * 10];
 static const u8 stage4_bitmap_F130[5 * 8];
 static const u8 stage4_bitmap_F158[7 * 4];
@@ -222,7 +222,7 @@ static const u8 stage4_bitmap_F911[3 * 30];
 static const u8 stage4_bitmap_F96B[2 * 20];
 static const u8 stage4_bitmap_F993[2 * 2 * 16];
 static const u8 stage4_bitmap_F9D3[2 * 2 * 13];
-static const u8 stage4_bitmap_FA07[233];
+static const u8 stage4_bitmap_FA07[2 * 2 * 13 + 181];
 
 /* ----------------------------------------------------------------------- */
 
@@ -1875,11 +1875,16 @@ static const u8 stage4_bitmap_EC07[3 * 13] = {
 /**
  * $EC2E: stage4_bitmap_EC2E
  */
-static const u8 stage4_bitmap_EC2E[64] = {
-  ________, XXXXXXXX, _____XXX, XXXXX___, ________, XX__XXXX, _____XXX, X__XX___,
-  X_______, _XX_X_X_, ____XXXX, X_XX____, ________, X_XXXX_X, _____XXX, XXX_X___,
-  ________, XXXXXXXX, _____XXX, XXXXX___, ________, X_X_X_X_, _____XXX, X_X_X___,
-  X_______, _X___XXX, ____XXXX, ___X____, XX______, __XXXXXX, ___XXXXX, XXX_____,
+static const u8 stage4_bitmap_EC2E[2 * 2 * 8 + 32] = {
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, XX__XXXX, _____XXX, X__XX___,
+  X_______, _XX_X_X_, ____XXXX, X_XX____,
+  ________, X_XXXX_X, _____XXX, XXX_X___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_X_X_X_, _____XXX, X_X_X___,
+  X_______, _X___XXX, ____XXXX, ___X____,
+  XX______, __XXXXXX, ___XXXXX, XXX_____,
+  // $EC4E: 32 further bytes, not reached by any LOD entry
   XXX_____, ___XXXXX, ________, XXXXXXXX, XXX_____, ___XX__X, ________, XXXX__XX,
   XXXX____, ____XX_X, _______X, _X_X_XX_, XXX_____, ___X_XXX, ________, X_XXXX_X,
   XXX_____, ___XXXXX, ________, XXXXXXXX, XXX_____, ___X_X_X, ________, _X_X_X_X,
@@ -3247,37 +3252,44 @@ static const u8 stage4_bitmap_F9D3[2 * 2 * 13] = {
 /**
  * $FA07: stage4_bitmap_FA07
  */
-static const u8 stage4_bitmap_FA07[233] = {
-  XXXXX___, _____XXX, _____XXX, XXXXX___, XXXX____, ____XXXX, ______XX, XXXXXX__,
-  XXXX____, ____XXXX, ______XX, XXXXXX__, XXXX____, ____XXXX, ______XX, XXXXXX__,
-  XXXX____, ____X___, ______XX, X_X_XX__, XXXX____, ____X__X, ______XX, _____X__,
-  XXXX____, ____X__X, ______XX, ____XX__, XXXX____, ____X__X, ______XX, _____X__,
-  XXXX____, ____X___, ______XX, X___XX__, XXXX____, ____X___, ______XX, XX___X__,
-  XXXX____, ____X___, ______XX, _XX__X__, XXXX____, ____X___, ______XX, _____X__,
-  XXXX____, ____XXXX, ______XX, XXXXXX__, ________, XXXXXXXX, XXXXXXXX, ________,
+static const u8 stage4_bitmap_FA07[2 * 2 * 13 + 181] = {
+  XXXXX___, _____XXX, _____XXX, XXXXX___,
+  XXXX____, ____XXXX, ______XX, XXXXXX__,
+  XXXX____, ____XXXX, ______XX, XXXXXX__,
+  XXXX____, ____XXXX, ______XX, XXXXXX__,
+  XXXX____, ____X___, ______XX, X_X_XX__,
+  XXXX____, ____X__X, ______XX, _____X__,
+  XXXX____, ____X__X, ______XX, ____XX__,
+  XXXX____, ____X__X, ______XX, _____X__,
+  XXXX____, ____X___, ______XX, X___XX__,
+  XXXX____, ____X___, ______XX, XX___X__,
+  XXXX____, ____X___, ______XX, _XX__X__,
+  XXXX____, ____X___, ______XX, _____X__,
+  XXXX____, ____XXXX, ______XX, XXXXXX__,
+  // $FA3B: 181 further bytes, not reached by any LOD entry
   ________, XXXXXXXX, XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
-  ________, X__X_X_X, XXXXXXXX, ________, ________, X__X__XX, XXXXXXXX, ________,
-  ________, X__X___X, XXXXXXXX, ________, ________, X__XX_XX, XXXXXXXX, ________,
-  ________, X___X__X, XXXXXXXX, ________, ________, X______X, XXXXXXXX, ________,
-  ________, XXXXXXXX, XXXXXXXX, ________, XXXX____, ____XXXX, ____XXXX, XXXX____,
+  ________, XXXXXXXX, XXXXXXXX, ________, ________, X__X_X_X, XXXXXXXX, ________,
+  ________, X__X__XX, XXXXXXXX, ________, ________, X__X___X, XXXXXXXX, ________,
+  ________, X__XX_XX, XXXXXXXX, ________, ________, X___X__X, XXXXXXXX, ________,
+  ________, X______X, XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
   XXXX____, ____XXXX, ____XXXX, XXXX____, XXXX____, ____XXXX, ____XXXX, XXXX____,
-  XXXX____, ____X__X, ____XXXX, _X_X____, XXXX____, ____X__X, ____XXXX, __XX____,
-  XXXX____, ____X__X, ____XXXX, ___X____, XXXX____, ____X__X, ____XXXX, X_XX____,
-  XXXX____, ____X___, ____XXXX, X__X____, XXXX____, ____X___, ____XXXX, ___X____,
-  XXXX____, ____XXXX, ____XXXX, XXXX____, __XXX__X, ________, ____X_XX, X_XXXX_X,
-  ________, _____X__, XXX___X_, ________, ________, __XXXXXX, XX______, ________,
-  _X____X_, _X______, ________, _X_XX_XX, _X______, ________, _XXXXXXX, XXX_____,
-  ________, X_____XX, X__X____, ________, X_XXX_XX, XX_X____, ________, _X__XXX_,
-  __X_____, XXXXXXX_, _______X, ______XX, XX_XXX__, XXXXXXX_, _______X, ______XX,
-  _X_X_X__, XXXXXXXX, ________, XX__XXXX, ___X____, XXXXXX__, ______XX, ______XX,
-  XX_XXX__, XXXXXX__, ______X_, ______XX, X___X___, XXXXXXXX, ________, X_______,
-  _XXX_XXX, XXXXXXXX, ________, X_______, _X_X_X_X, XXXXXXXX, ________, XXXX__XX,
-  _____X__, XXXXXXXX, ________, ________, XXXX_XXX, XXXXXXXX, ________, ________,
-  X_X___X_, XXXXXX__, ______XX, ___XXXXX, XXX_____, XXXXXX__, ______XX, ___XXXXX,
-  __X_____, XXXXX___, _____XXX, ____XXXX, _XXX____, XXXXX___, _____X_X, ____XXXX,
-  __XX____, XXXXXXXX, ________, XX_____X, __XXXXX_, XXXXXXXX, ________, XX_____X,
-  __XX__X_, XXXXXXXX, ________, X_______, _XXX_XXX, XXXXXXXX, ________, X_______,
-  _X_X__XX,
+  XXXX____, ____XXXX, ____XXXX, XXXX____, XXXX____, ____X__X, ____XXXX, _X_X____,
+  XXXX____, ____X__X, ____XXXX, __XX____, XXXX____, ____X__X, ____XXXX, ___X____,
+  XXXX____, ____X__X, ____XXXX, X_XX____, XXXX____, ____X___, ____XXXX, X__X____,
+  XXXX____, ____X___, ____XXXX, ___X____, XXXX____, ____XXXX, ____XXXX, XXXX____,
+  __XXX__X, ________, ____X_XX, X_XXXX_X, ________, _____X__, XXX___X_, ________,
+  ________, __XXXXXX, XX______, ________, _X____X_, _X______, ________, _X_XX_XX,
+  _X______, ________, _XXXXXXX, XXX_____, ________, X_____XX, X__X____, ________,
+  X_XXX_XX, XX_X____, ________, _X__XXX_, __X_____, XXXXXXX_, _______X, ______XX,
+  XX_XXX__, XXXXXXX_, _______X, ______XX, _X_X_X__, XXXXXXXX, ________, XX__XXXX,
+  ___X____, XXXXXX__, ______XX, ______XX, XX_XXX__, XXXXXX__, ______X_, ______XX,
+  X___X___, XXXXXXXX, ________, X_______, _XXX_XXX, XXXXXXXX, ________, X_______,
+  _X_X_X_X, XXXXXXXX, ________, XXXX__XX, _____X__, XXXXXXXX, ________, ________,
+  XXXX_XXX, XXXXXXXX, ________, ________, X_X___X_, XXXXXX__, ______XX, ___XXXXX,
+  XXX_____, XXXXXX__, ______XX, ___XXXXX, __X_____, XXXXX___, _____XXX, ____XXXX,
+  _XXX____, XXXXX___, _____X_X, ____XXXX, __XX____, XXXXXXXX, ________, XX_____X,
+  __XXXXX_, XXXXXXXX, ________, XX_____X, __XX__X_, XXXXXXXX, ________, X_______,
+  _XXX_XXX, XXXXXXXX, ________, X_______, _X_X__XX,
 };
 static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
   { STAGE4_MAP_CURV_E442_ADDR,    &stage4_map_curv_E442[0]    },

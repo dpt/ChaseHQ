@@ -193,14 +193,14 @@ static const u8 stage3_bitmap_D283[3 * 4];
 static const u8 stage3_bitmap_D28F[3 * 2];
 static const u8 stage3_bitmap_D295[2 * 8];
 static const u8 stage3_bitmap_D2A5[2 * 3];
-static const u8 stage3_bitmap_D2AB[16];
+static const u8 stage3_bitmap_D2AB[2 * 2];
 static const u8 stage3_bitmap_D3AF[4 * 16];
 static const u8 stage3_bitmap_D3EF[4 * 24];
 static const u8 stage3_bitmap_D44F[24];
 static const u8 stage3_bitmap_D467[4 * 16];
 static const u8 stage3_bitmap_D4A7[4 * 24];
 static const u8 stage3_bitmap_D507[3 * 12];
-static const u8 stage3_bitmap_D52B[57];
+static const u8 stage3_bitmap_D52B[3 * 18];
 static const u8 stage3_bitmap_D564[18];
 static const u8 stage3_bitmap_D576[3 * 12];
 static const u8 stage3_bitmap_D59A[3 * 18];
@@ -213,7 +213,7 @@ static const u8 stage3_bitmap_D62C[1 * 4];
 static const u8 stage3_bitmap_D630[1 * 6];
 static const u8 stage3_bitmap_D636[7];
 static const u8 stage3_bitmap_D63D[1 * 4];
-static const u8 stage3_bitmap_D641[14];
+static const u8 stage3_bitmap_D641[1 * 6];
 static const u8 stage3_bitmap_D679[2 * 16];
 static const u8 stage3_bitmap_D699[2 * 11];
 static const u8 stage3_bitmap_D6AF[1 * 9];
@@ -2667,9 +2667,9 @@ static const u8 stage3_bitmap_D2A5[2 * 3] = {
 /**
  * $D2AB: stage3_bitmap_D2AB
  */
-static const u8 stage3_bitmap_D2AB[16] = {
-  X_______, _______X, _XXXXXXX, XXXXXXX_, ________, ________, ________, ________,
-  ________, ________, ________, ________, ________, ________, ________, ________,
+static const u8 stage3_bitmap_D2AB[2 * 2] = {
+  X_______, _______X,
+  _XXXXXXX, XXXXXXX_,
 };
 /** $D2BB: stage3_stretchy_D2BB */
 static const stretchy_t stage3_stretchy_D2BB[3] = {
@@ -2936,15 +2936,25 @@ static const u8 stage3_bitmap_D507[3 * 12] = {
 /**
  * $D52B: stage3_bitmap_D52B
  */
-static const u8 stage3_bitmap_D52B[57] = {
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______, ________, ___X__XX, X_XX__XX, XXXXXX__,
-  XX_X_XXX, X_X_X__X, X___X__X, XX_X_XXX, X_X_XX__, XXXX__XX, XX_X_XX_, X_X_XXXX,
-  ____XXXX, _X_X_X_X, X_X_XX_X, X__XXXX_, _X_X_X__, X_X_XXXX, ____XXXX, _X_X_XX_,
-  X_X_XX__, XXXX__XX, XX_X_X__, X_X_X__X, XX__X__X, XX_X_X__, X_XX__XX, XXXXXX__,
-  XX_X_X__, X_______, ________, ___X_XX_, X____XXX, XXXXXXXX, XXX_X_XX, _XXXX___,
-  XXXXXXX_, ___X____, ____XXXX, ____XXXX, XXXX___X, ________, XXXX____, XXXX___X,
-  ________, ____XXXX, ___X____, ________, ________, XXXXXXXX, ________, ________,
-  ________,
+static const u8 stage3_bitmap_D52B[3 * 18] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ________, ___X__XX,
+  X_XX__XX, XXXXXX__, XX_X_XXX,
+  X_X_X__X, X___X__X, XX_X_XXX,
+  X_X_XX__, XXXX__XX, XX_X_XX_,
+  X_X_XXXX, ____XXXX, _X_X_X_X,
+  X_X_XX_X, X__XXXX_, _X_X_X__,
+  X_X_XXXX, ____XXXX, _X_X_XX_,
+  X_X_XX__, XXXX__XX, XX_X_X__,
+  X_X_X__X, XX__X__X, XX_X_X__,
+  X_XX__XX, XXXXXX__, XX_X_X__,
+  X_______, ________, ___X_XX_,
+  X____XXX, XXXXXXXX, XXX_X_XX,
+  _XXXX___, XXXXXXX_, ___X____,
+  ____XXXX, ____XXXX, XXXX___X,
+  ________, XXXX____, XXXX___X,
+  ________, ____XXXX, ___X____,
+  ________, ________, XXXXXXXX,
 };
 
 /**
@@ -3112,9 +3122,13 @@ static const u8 stage3_bitmap_D63D[1 * 4] = {
 /**
  * $D641: stage3_bitmap_D641
  */
-static const u8 stage3_bitmap_D641[14] = {
-  ___XX__X, _XX__XXX, ___XX__X, __XXX__X, _X___XX_, XXXXXX__, ________, ________,
-  ________, ________, ________, ________, ________, ________,
+static const u8 stage3_bitmap_D641[1 * 6] = {
+  ___XX__X,
+  _XX__XXX,
+  ___XX__X,
+  __XXX__X,
+  _X___XX_,
+  XXXXXX__,
 };
 /** $D64F: stage3_lods_D64F */
 static const bitmap_t stage3_lods_D64F[6] = {
