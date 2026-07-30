@@ -172,6 +172,31 @@ arrays out. Such neighbours stay merged and resolve as an offset, which is where
 the remaining 2 references come from. `check_stage_converter.py` asserts no
 sprite overruns the array it points into.
 
+## Sprite arrays carry their shape
+
+Once a sprite has its own array the LOD entry describing it gives the array a
+shape, so it is written one row per line and declares that shape rather than a
+byte count:
+
+```c
+static const u8 stage4_bitmap_E870[6 * 30] = {
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  ...
+```
+
+A masked sprite interleaves a mask byte with each pixel byte, so it is twice as
+wide on the page and declares `width * 2 * height` — the same convention the
+hand-written `Stage1Data.c` uses (`stage1_bitmap_tree_top_48x10[6 * 2 * 10]`).
+Forward declarations repeat the expression.
+
+`sprite_layout` falls back to a flat byte count and 8 per row when the shape
+does not account for every byte of the block. That covers the refused cut above
+and the sprites whose stored extent exceeds `width * height` — a 4×4 at stage
+2's `$F3D4` occupies 21 bytes, and the `BITMAPFLAG_FLIPPED` layout that explains
+it is not modelled here. Declaring `4 * 4` for a 21-byte block would be a lie
+about the data, so those stay flat: 334 of 360 arrays are shaped.
+
 ## Bank offset
 
 The script auto-detects a global bank offset (the difference between Z80 absolute addresses stored as `DEFW` and their raw values) from the first annotated pointer in the file. For all stage skool files the global offset is `$6400`.

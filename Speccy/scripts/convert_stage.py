@@ -1012,24 +1012,58 @@ def byte_to_pixel(b: int) -> str:
     return "".join("X" if (b >> (7 - i)) & 1 else "_" for i in range(8))
 
 
+def sprite_layout(
+    addr: int,
+    size: int,
+    shapes: Dict[int, Optional[Tuple[int, int, bool]]],
+    fallback_per_row: int = 8,
+) -> Tuple[str, int]:
+    """How to lay out a sprite block: (length expression, elements per row).
+
+    A sprite is width bytes across by height rows, so the array reads as the
+    picture when it is written width per row and declared '6 * 31' rather than
+    '186'. A masked sprite interleaves a mask byte with each pixel byte, giving
+    'width * 2 * height' and twice as many elements per row.
+
+    Falls back to the flat byte count when the shape is unknown or does not
+    account for every byte of the block -- a block that a refused cut left
+    holding two overlapping sprites is longer than either sprite's own extent,
+    and claiming otherwise would understate the array.
+    """
+    shape = shapes.get(addr)
+    if shape is None:
+        return str(size), fallback_per_row
+    width, height, masked = shape
+    per_row = width * 2 if masked else width
+    if per_row * height != size:
+        return str(size), fallback_per_row
+    return (
+        f"{width} * 2 * {height}" if masked else f"{width} * {height}"
+    ), per_row
+
+
 def emit_raw_array(
     name: str,
     data: List[int],
     per_row: int = 8,
     z80_addr: int = 0,
     use_pixels: bool = False,
+    length_expr: Optional[str] = None,
 ) -> List[str]:
     """Emit a 'static const u8 name[] = { ... };' array.
 
     When use_pixels is True the bytes are written using the Pixels.h macro
     names (e.g. X_X__X_X) instead of hex, and the block is wrapped in
     clang-format off/on so the visual rows are not reformatted.
+
+    length_expr overrides the declared length, so a sprite can carry its shape
+    ('6 * 31') instead of a bare byte count.
     """
     lines = []
     lines.append(f"// ${z80_addr:04X}")
     if use_pixels:
         lines.append("// clang-format off")
-    lines.append(f"static const u8 {name}[{len(data)}] = {{")
+    lines.append(f"static const u8 {name}[{length_expr or len(data)}] = {{")
     for i in range(0, len(data), per_row):
         chunk = data[i : i + per_row]
         if use_pixels:
@@ -1382,7 +1416,9 @@ def _lod_local_offset(sec: "Section", bank_offset: int) -> int:
 
 
 def lod_sprite_spans(
-    sec: "Section", bank_offset: int
+    sec: "Section",
+    bank_offset: int,
+    shapes: Optional[Dict[int, Optional[Tuple[int, int, bool]]]] = None,
 ) -> List[Tuple[int, Optional[int]]]:
     """Every sprite a LOD table points at, as (z80_addr, byte_size_or_None).
 
@@ -1391,6 +1427,11 @@ def lod_sprite_spans(
     width * height, doubled when masked because a mask byte is interleaved with
     each pixel byte. It is None for flag values whose layout is not modelled
     here, so callers must not assume a size is always known.
+
+    When `shapes` is given it collects z80_addr -> (width, height, masked) so
+    the sprite's array can be emitted in its true shape. Two LOD entries that
+    point at one address while disagreeing about its shape poison the entry to
+    None: there is no way to tell which of them describes the layout.
     """
     data = sec.bytes_flat
     n_lods = _lod_entry_count(sec)
@@ -1412,7 +1453,12 @@ def lod_sprite_spans(
         for half in (0, 1):
             raw = (data[off + 4 + half * 2] << 8) | data[off + 3 + half * 2]
             ann = wwa[i * 2 + half][1] if i * 2 + half < len(wwa) else -1
-            spans.append((ann if ann >= 0 else raw + local_offset, size))
+            addr = ann if ann >= 0 else raw + local_offset
+            spans.append((addr, size))
+            if shapes is None or size is None:
+                continue
+            shape = (width, height, flags == BITMAP_FLAG_MASKED_VAL)
+            shapes[addr] = shape if shapes.get(addr, shape) == shape else None
     return spans
 
 
@@ -1487,6 +1533,7 @@ def emit_lod_table(
     bank_offset: int,
     bitmap_names: Dict[int, str],
     spans: List[Tuple[int, Optional[int]]],
+    shapes: Dict[int, Optional[Tuple[int, int, bool]]],
 ) -> Tuple[List[str], int]:
     """
     Decode a LOD table (7-byte bitmap_t records).
@@ -1551,17 +1598,20 @@ def emit_lod_table(
         )
     lines.append("};")
 
-    # One array per sprite in the bitmap data that follows the descriptors.
+    # One array per sprite in the bitmap data that follows the descriptors, each
+    # shaped as the picture it holds.
     for addr, size in blocks:
         start = addr - sec.start_addr
+        length_expr, per_row = sprite_layout(addr, size, shapes)
         lines.append("")
         lines.extend(
             emit_raw_array(
                 bitmap_names[addr],
                 data[start : start + size],
-                8,
+                per_row,
                 addr,
                 use_pixels=True,
+                length_expr=length_expr,
             )
         )
 
@@ -2094,9 +2144,10 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     # at; collected across all the stage's LOD tables since a table may point
     # into a section other than its own.
     all_spans: List[Tuple[int, Optional[int]]] = []
+    sprite_shapes: Dict[int, Optional[Tuple[int, int, bool]]] = {}
     for sec in sections:
         if sec.stype == "lod_table":
-            all_spans.extend(lod_sprite_spans(sec, bank_offset))
+            all_spans.extend(lod_sprite_spans(sec, bank_offset, sprite_shapes))
 
     # First pass: name the blocks of every bitmap section so LOD tables can
     # reference them, splitting each section into its constituent sprites.
@@ -2124,7 +2175,8 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         for addr, size in lod_bitmap_blocks(sec, all_spans)[1]:
             name = f"stage{stage}_bitmap_{addr:04X}"
             bitmap_names[addr] = name
-            lod_remainder_fwd.append(f"static const u8 {name}[{size}];")
+            length_expr, _ = sprite_layout(addr, size, sprite_shapes)
+            lod_remainder_fwd.append(f"static const u8 {name}[{length_expr}];")
 
     # ── Header ───────────────────────────────────────────────────────────────
     print(f"/**")
@@ -2232,22 +2284,30 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
                 if m and "masked" in sec.header_comment.lower()
                 else int(m.group(1)) if m else 8
             )
-            # One array per sprite the LOD tables point at (see the first pass).
+            # One array per sprite the LOD tables point at (see the first pass),
+            # each shaped by the LOD entry that describes it. The section
+            # comment's own width only stands in where no entry does.
             for addr, size in bitmap_blocks[sec.start_addr]:
                 nm = bitmap_names[addr]
                 start = addr - sec.start_addr
+                length_expr, per_row = sprite_layout(addr, size, sprite_shapes, per)
                 all_lines.extend(
                     emit_raw_array(
-                        nm, data[start : start + size], per, addr, use_pixels=True
+                        nm,
+                        data[start : start + size],
+                        per_row,
+                        addr,
+                        use_pixels=True,
+                        length_expr=length_expr,
                     )
                 )
                 all_lines.append("")
-                fwd_decls.append(f"static const u8 {nm}[{size}];")
+                fwd_decls.append(f"static const u8 {nm}[{length_expr}];")
             bitmap_sections.append((nm, sec.start_addr))
 
         elif sec.stype == "lod_table":
             lines, n_lods = emit_lod_table(
-                stage, sec, bank_offset, bitmap_names, all_spans
+                stage, sec, bank_offset, bitmap_names, all_spans, sprite_shapes
             )
             all_lines.extend(lines)
             all_lines.append("")

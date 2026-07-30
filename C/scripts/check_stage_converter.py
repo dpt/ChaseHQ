@@ -79,7 +79,19 @@ def generate(stage, tmpdir):
     return out.stdout
 
 
-ARRAY_RE = re.compile(r"static const u8 (stage\d_bitmap_[0-9A-F]{4})\[(\d+)\] = \{")
+# A sprite array declares its shape ('6 * 31'), not a byte count, whenever the
+# LOD entry describing it accounts for every byte of the block.
+ARRAY_RE = re.compile(
+    r"static const u8 (stage\d_bitmap_[0-9A-F]{4})\[([0-9]+(?:\s*\*\s*[0-9]+)*)\] = \{"
+)
+
+
+def declared_size(expr):
+    """Byte count a '6 * 2 * 31' style array length declares."""
+    n = 1
+    for factor in expr.split("*"):
+        n *= int(factor.strip())
+    return n
 # One bitmap_t entry: width, flags, height, then the bitmap and pre-shifted
 # pointers, each an &array[index] into a sprite block.
 ENTRY_RE = re.compile(
@@ -91,7 +103,7 @@ ENTRY_RE = re.compile(
 
 def sprite_overruns(text):
     """Report LOD entries whose sprite reaches past the array it points into."""
-    sizes = {m.group(1): int(m.group(2)) for m in ARRAY_RE.finditer(text)}
+    sizes = {m.group(1): declared_size(m.group(2)) for m in ARRAY_RE.finditer(text)}
     out = []
     for m in ENTRY_RE.finditer(text):
         width, flag, height = int(m.group(1)), m.group(2), int(m.group(3))
