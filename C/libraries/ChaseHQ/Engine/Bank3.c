@@ -4293,148 +4293,31 @@ static u16 advance_key_label_column(u16 DE_screen)
  */
 int bank3_state_create(chqstate_t *state)
 {
-  int ch;
-  int titleobj;
-
   state->bank3 = calloc(1, sizeof(*state->bank3));
   if (state->bank3 == NULL)
     return -1;
 
-  // TODO: Delete all of this zero init and Claude verbiage.
+  // Conv: calloc has already zeroed the sub-state, so only the fields whose
+  // pristine value is non-zero are written below.
 
-  // $EC01/$EC26/$EC4B (128K bank 3): title-tune channel-tracker records.
-  // titlescr_start_ay ($EB9E) properly initialises these once a tune is selected,
-  // but compute_channel_ay_registers ($EE9E) can in principle run before
-  // that, so give every field a defined value here rather than leaving
-  // calloc's zero fill as the only guarantee. pattern_ptr/pattern_data_ptr
-  // and the Conv-only pattern_base/pattern_len stay NULL/0 here; titlescr_start_ay
-  // resolves them for real (tunes 0/1 only -- see titlescr_start_ay's Translation
-  // notes). pitch_offset_default/_cur and envelope_shape_default/_ptr are
-  // seeded there too with synthetic safe defaults.
-  for (ch = 0; ch < 3; ch++) {
-    state->bank3->title_music.channel[ch].status                 = 0;
-    state->bank3->title_music.channel[ch].pattern_ptr            = NULL; // set for real by titlescr_start_ay
-    state->bank3->title_music.channel[ch].pattern_data_ptr       = NULL; // set for real by titlescr_start_ay
-    state->bank3->title_music.channel[ch].pattern_base           = NULL; // Conv: set for real by titlescr_start_ay
-    state->bank3->title_music.channel[ch].pattern_len            = 0;    // Conv: set for real by titlescr_start_ay
-    state->bank3->title_music.channel[ch].phrase_table_offset    = 0;
-    state->bank3->title_music.channel[ch].slide_accum            = 0;
-    state->bank3->title_music.channel[ch].pitch_offset_default   = NULL; // TODO: set once decode_pattern_command's pitch-offset table exists
-    state->bank3->title_music.channel[ch].pitch_offset_cur       = NULL; // TODO: as above
-    state->bank3->title_music.channel[ch].slide_step             = 0;
-    state->bank3->title_music.channel[ch].slide_countdown        = 0;
-    state->bank3->title_music.channel[ch].envelope_speed         = 0;
-    state->bank3->title_music.channel[ch].row_wait               = 0;
-    state->bank3->title_music.channel[ch].row_wait_reload        = 0;
-    state->bank3->title_music.channel[ch].note_index             = 0;
-    state->bank3->title_music.channel[ch].volume                 = 0;
-    state->bank3->title_music.channel[ch].envelope_shape_default = NULL; // TODO: set once decode_pattern_command's envelope-shape table exists
-    state->bank3->title_music.channel[ch].envelope_shape_ptr     = NULL; // TODO: as above
-    state->bank3->title_music.channel[ch].envelope_amplitude     = 0;
-    state->bank3->title_music.channel[ch].envelope_step_counter  = 0;
-    state->bank3->title_music.channel[ch].vibrato_depth          = 0;
-    state->bank3->title_music.channel[ch].vibrato_increment      = 0;
-    state->bank3->title_music.channel[ch].vibrato_phase          = 0;
-    state->bank3->title_music.channel[ch].flags                  = 0;
-    state->bank3->title_music.channel[ch].slide_update_flag      = 0;
-    state->bank3->title_music.channel[ch].mute_pending           = 0;
-    state->bank3->title_music.channel[ch].transpose              = 0;
-    state->bank3->title_music.channel[ch].phrase_repeat_count    = 0;
-    state->bank3->title_music.channel[ch].phrase_ptr             = NULL;
-    /* mixer_mask is static initial RAM content in the Z80 (not written by
-     * titlescr_start_ay), confirmed against the skool's DEFB data: channel-tracker
-     * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */
-    switch (ch) {
-    case 0:
-      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_A | AY_MIXER_NO_TONE_A;
-      break;
-    case 1:
-      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
-      break;
-    case 2:
-      state->bank3->title_music.channel[ch].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
-      break;
-    }
-  }
-
-  // $EC70 (128K bank 3): per-tick tempo countdown; titlescr_start_ay sets this to 1
-  // on tune start, so 0 here is just a harmless pre-tune-start default (the
-  // tune-active flag being clear means titlescr_ay_music never reads it
-  // before then).
-  state->bank3->title_music.tempo_counter = 0x00; // $EC70
-
-  // $EC79/$ECC6 (SM, 128K bank 3): scratch bytes are the operands of
-  // "LD A,$00" instructions in titlescr_ay_music, so 0 is the assembled
-  // reset value for both.
-  state->bank3->title_music.shared_note_value    = 0x00; // $EC79
-  state->bank3->title_music.driver_internal_flag = 0x00; // $ECC6
-
-  // $EC9A/$EED1/$EF7A (128K bank 3): further scratch bytes written by
-  // titlescr_start_ay/advance_channel_pattern; 0 matches titlescr_start_ay's explicit
-  // clear of $EED1 and is the natural power-on state of the other two.
-  state->bank3->title_music.tune_tempo          = 0x00; // $EC9A
-  state->bank3->title_music.pattern_driver_flag = 0x00; // $EED1
-  state->bank3->title_music.pending_mixer_bits  = 0x00; // $EF7A
-
-  // $F223/$F224 (128K bank 3): tune-active flag and its companion byte.
-  // titlescr_start_ay clears both on entry and arms tune_active=1 once a tune's
-  // channel-tracker records are initialised; 0 here matches the power-on
-  // state (no tune active) before titlescr_start_ay is ever called.
-  state->bank3->title_music.tune_active           = 0x00; // $F223
-  state->bank3->title_music.tune_active_companion = 0x00; // $F224
+  /* mixer_mask is static initial RAM content in the Z80 (not written by
+   * titlescr_start_ay), confirmed against the skool's DEFB data: channel-tracker
+   * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */
+  state->bank3->title_music.channel[0].mixer_mask = AY_MIXER_NO_NOISE_A | AY_MIXER_NO_TONE_A;
+  state->bank3->title_music.channel[1].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
+  state->bank3->title_music.channel[2].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
 
   // $EFAF-$EFBA (128K bank 3): title-tune AY register cache. Matches the
   // skool's DEFB bytes at $EFAF-$EFBA exactly; per the skool comment these
   // are placeholder start-up defaults, overwritten every frame once a tune
   // is playing (mixer = 0x3F disables all tone/noise channels until then).
-  state->bank3->title_ay_regs.chan_a_pitch = 0x0000;
-  state->bank3->title_ay_regs.chan_b_pitch = 0x0000;
-  state->bank3->title_ay_regs.chan_c_pitch = 0x0000;
-  state->bank3->title_ay_regs.noise_pitch  = 0x00;
-  state->bank3->title_ay_regs.mixer        = AY_MIXER_ALL_OFF;
-  state->bank3->title_ay_regs.chan_a_vol   = 0x0F;
-  state->bank3->title_ay_regs.chan_b_vol   = 0x0F;
-  state->bank3->title_ay_regs.chan_c_vol   = 0x0F;
-  state->bank3->title_ay_regs.env_fine     = 0x00;
+  state->bank3->title_ay_regs.mixer      = AY_MIXER_ALL_OFF;
+  state->bank3->title_ay_regs.chan_a_vol = 0x0F;
+  state->bank3->title_ay_regs.chan_b_vol = 0x0F;
+  state->bank3->title_ay_regs.chan_c_vol = 0x0F;
 
-  // $C5A2 (SM): pristine operand value for the "LD A,$00" self-modified by
-  // run_title_screen; rotates/increments on each restart.
-  state->bank3->title_animation = 0x00;
-
-  // $BB00-$BB4F (128K bank 3): title-screen animated-object array, repopulated
-  // from a scene table on every run_title_screen restart; zeroed here so an
-  // object drawn before the first restart (should never happen) is inert.
-  for (titleobj = 0; titleobj < 9; titleobj++) {
-    state->bank3->title_objects[titleobj].opcode = 0x00;
-    state->bank3->title_objects[titleobj].wait   = 0x00;
-    state->bank3->title_objects[titleobj].x_step = 0;
-    state->bank3->title_objects[titleobj].y_step = 0;
-    state->bank3->title_objects[titleobj].script = NULL;
-    state->bank3->title_objects[titleobj].row    = 0x00;
-    state->bank3->title_objects[titleobj].x      = 0x00;
-    state->bank3->title_objects[titleobj].y      = 0x00;
-  }
-
-  // $F836-$FA71 (128K bank 3): digitised drum-sample subsystem. All flags
-  // and pointers start idle/NULL -- titlescr_start_tune arms them for
-  // real once a tune's drum-sample script is loaded. $FA72-$FA74 match the
-  // skool's DEFB pristine values (all zero) for the noise generator's
-  // phase/accumulator state.
-  state->bank3->drums.script_delay        = 0x00; // $F7F5
-  state->bank3->drums.script_ptr          = NULL;  // $F7FC
-  state->bank3->drums.slot1_busy          = 0x00;  // $F837
-  state->bank3->drums.slot1_countdown     = 0x00;  // $F842
-  state->bank3->drums.slot1_selector_dup  = 0x00;  // $F84E
-  state->bank3->drums.slot2_busy          = 0x00;  // $F895
-  state->bank3->drums.sample_active       = 0x00;  // $F8A2
-  state->bank3->drums.stream_ptr          = NULL;  // $F853
-  state->bank3->drums.stream_reload_ptr   = NULL;  // $F85E
-  state->bank3->drums.sample_pitch_param  = 0x00;  // $F8CE
   memcpy(state->bank3->drums.sample1, drum_sample_1_template, sizeof(state->bank3->drums.sample1));
   memcpy(state->bank3->drums.sample2, drum_sample_2_template, sizeof(state->bank3->drums.sample2));
-  state->bank3->drums.noise_phase         = 0x00;  // $FA72
-  state->bank3->drums.noise_accum         = 0x00;  // $FA73
-  state->bank3->drums.noise_rotate        = 0x00;  // $FA74
 
   memcpy(state->bank3->high_score_table, high_score_table_template,
          sizeof(state->bank3->high_score_table));
