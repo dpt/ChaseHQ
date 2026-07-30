@@ -293,7 +293,6 @@
 // Code 2 selects stage1_{left,right}_hand_graphics_defs[1], which is an
 // all-zero entry with no bitmap and no draw handler. Every stage's object
 // table has the same hole; no map stream uses the code.
-#define MAP_OBJ_S1_EMPTY_SLOT_VAL       (2) // unused
 #define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe/common
 #define MAP_OBJ_S1_TREE_VAL             (4)
 #define MAP_OBJ_S1_BUSH_VAL             (5)
@@ -304,7 +303,6 @@
 
 #define MAP_OBJ_S1_NONE(D)              ((D << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S1_TUNNEL_LIGHT(D)      ((D << 4) | MAP_OBJ_S1_TUNNEL_LIGHT_VAL)
-#define MAP_OBJ_S1_EMPTY_SLOT(D)        ((D << 4) | MAP_OBJ_S1_EMPTY_SLOT_VAL)
 #define MAP_OBJ_S1_SHORT_POLE(D)        ((D << 4) | MAP_OBJ_S1_SHORT_POLE_VAL)
 #define MAP_OBJ_S1_TREE(D)              ((D << 4) | MAP_OBJ_S1_TREE_VAL)
 #define MAP_OBJ_S1_BUSH(D)              ((D << 4) | MAP_OBJ_S1_BUSH_VAL)

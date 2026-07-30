@@ -47,7 +47,6 @@
 
 /* Stage 2 object type macros */
 #define MAP_OBJ_S2_TUNNEL_LIGHT_VAL  (1)
-#define MAP_OBJ_S2_EMPTY_SLOT_VAL  (2)
 #define MAP_OBJ_S2_SHORT_POLE_VAL  (3)
 #define MAP_OBJ_S2_HUGE_ROCK_VAL  (4)
 #define MAP_OBJ_S2_PALM_TREE_VAL  (5)
@@ -56,7 +55,6 @@
 
 #define MAP_OBJ_S2_NONE(D)   (((D) << 4) | MAP_OBJ_NONE_VAL)
 #define MAP_OBJ_S2_TUNNEL_LIGHT(D)   (((D) << 4) | MAP_OBJ_S2_TUNNEL_LIGHT_VAL)
-#define MAP_OBJ_S2_EMPTY_SLOT(D)   (((D) << 4) | MAP_OBJ_S2_EMPTY_SLOT_VAL)
 #define MAP_OBJ_S2_SHORT_POLE(D)   (((D) << 4) | MAP_OBJ_S2_SHORT_POLE_VAL)
 #define MAP_OBJ_S2_HUGE_ROCK(D)   (((D) << 4) | MAP_OBJ_S2_HUGE_ROCK_VAL)
 #define MAP_OBJ_S2_PALM_TREE(D)   (((D) << 4) | MAP_OBJ_S2_PALM_TREE_VAL)
