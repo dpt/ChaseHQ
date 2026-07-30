@@ -137,8 +137,8 @@ static void chq_initialise(chqstate_t *state)
   state->rm_scroll_dirt_particles = 0;
 
   // $B395/$B3A3: SM operands (default LD DE operands) in animate_hero_car
-  state->ahc_road_pos_a =  72; /* lower clamp bound */
-  state->ahc_road_pos_b = 472; /* upper clamp bound */
+  state->ahc_road_pos_min =  72; /* lower clamp bound */
+  state->ahc_road_pos_max = 472; /* upper clamp bound */
 
   // $CE33
   state->debris_table[0]  = state->debris_subtables[0];
@@ -155,10 +155,10 @@ static void chq_initialise(chqstate_t *state)
   state->debris_table[11] = state->debris_subtables[0];
 
   // $C534/$C68A: SM operands in dr_four_lane_highway / dr_fill_left_stripe
-  state->dr_left_table_hi_1  = 0xE8; // xpos_road_left page
-  state->dr_left_table_hi_2  = 0xE8;
-  state->dr_right_table_hi_1 = 0xEC; // xpos_road_right page
-  state->dr_right_table_hi_2 = 0xEC;
+  state->dr_left_markings_page  = 0xE8; // xpos_road_left page
+  state->dr_left_fill_page  = 0xE8;
+  state->dr_right_markings_page = 0xEC; // xpos_road_right page
+  state->dr_right_fill_page = 0xEC;
   state->dr_neg_lane_count   = -4;   // four-lane default
 
   // $E300

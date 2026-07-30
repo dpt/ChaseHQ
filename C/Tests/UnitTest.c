@@ -737,12 +737,12 @@ static void test_helicopter_draws(void)
  * unrolled fill loop ($9117-$9151, BRIDGE_DECK_LOOP_WRITES entries) would
  * stop, not run past it. Regression test for the "central part of the
  * object that spans the road fails to stop at the right edge" report: the
- * memset byte count was taken directly from do_span_width_words/2 (the JR
+ * memset byte count was taken directly from overhead_span_width_words/2 (the JR
  * displacement into the loop) instead of BRIDGE_DECK_LOOP_WRITES minus that
  * value, which inverted the clip -- the span grew wider as the deck should
  * have been narrowing towards the edge.
  *
- * All values below (Avertical, do_vert_sub, D, E, do_span_width_words, dest
+ * All values below (Avertical, overhead_vert_sub, D, E, overhead_span_width_words, dest
  * address) are hand-derived from the skool at $90A3-$9169 for this specific
  * fixture; see the comment block beside the assertions.
  */
@@ -789,14 +789,14 @@ static void test_draw_overhead_stops_at_right_edge(void)
   draw_overhead(state, 1 /* Bparam */, &obj, &xpos[2], height);
 
   /* fast_counter=0 (fresh state) -> persp_y_scale row 0, column Bparam=1 ->
-   * Avertical = 0x4A (74). do_vert_sub = (74>>1)+74-0 = 111.
+   * Avertical = 0x4A (74). overhead_vert_sub = (74>>1)+74-0 = 111.
    * Row select A = height[0x35](200) - 111 = 89.
    * D = 1 (xpos[2] high byte negative skips the D chain).
    * E: xpos[1]=100, Cdepth=10 -> A=110 -> E = 110>>3 = 13.
-   * do_span_width_words = ~((13-1)*2)+61 = 36 (mod 256).
+   * overhead_span_width_words = ~((13-1)*2)+61 = 36 (mod 256).
    * Deck loop write count = BRIDGE_DECK_LOOP_WRITES(30) - 36/2 = 12.
    * Dest addr = (((89&0x0F)+0xF0)<<8) | ((89&0x70)*2 + D(1)) = 0xF900|0xA1 = 0xF9A1. */
-  assert(state->do_span_width_words == 36);
+  assert(state->overhead_span_width_words == 36);
 
   expected_off    = 0xF9A1 - BACKBUFFER_START_ADDRESS;
   expected_row    = expected_off / BACKBUFFER_ROWBYTES;

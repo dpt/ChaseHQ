@@ -55,7 +55,7 @@ struct hazard {
   u16               speed;                       // fixed-point approach rate: high byte = whole distance units/frame added to distance counter; low byte = fractional units/frame subtracted from dist_frac (carry advances distance)
   u8                hazard_flags;                // 0x80=spawned vehicle; 0xFF=perp car; 1/2=post-hit damage state; bit 7 = is vehicle
   u8                hit_wobble;                  // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
-  u8                hazard_lane_OR_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
+  u8                lane_or_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
   u8                current_lane;                // target lane (counts down to 0 during lane-change animation)
   u8                inverted;                    // sprite plot mode: 0=normal, 1=inverted
 };
@@ -232,9 +232,9 @@ struct chqstate {
   u8        dee_draw_tunnel_2;
 
   // $90F1 (SM) in draw_overhead
-  u8        do_vert_sub;
+  u8        overhead_vert_sub;
   // $9115 (SM) in draw_overhead
-  u8        do_span_width_words;
+  u8        overhead_span_width_words;
 
   // $9395 (SM) in draw_object_common
   u8        doc_shift_select;
@@ -299,7 +299,7 @@ struct chqstate {
   u8        stage_n[7];
 
   // $9D9B
-  const u8 *SM_address_of_score_digits;
+  const u8 *score_digits_start;
 
   // $9E22 (SM) in plot_turbos_and_scores
   u8        turbo_spin_frame;
@@ -503,43 +503,43 @@ struct chqstate {
   u8       *ddas_particle; // byte ptr into the $ED28 particle table
 
   // $AA5A (SM) in draw_helicopter
-  u8        dhs_heli_vert_base; // helicopter y base: swing offset + height, minus the per-distance object position when drawn
+  u8        dheli_vert_base; // helicopter y base: swing offset + height, minus the per-distance object position when drawn
   // $AA76 (SM) in draw_helicopter
-  u8        dhs_heli_y_offset;
+  u8        dheli_y_offset;
   // $AA8C (SM) in draw_helicopter
-  u8        dhs_heli_rotor_pos;
+  u8        dheli_rotor_pos;
 
-  // $AA94 (SM) in dhl_aa94
-  s16       dhl_helipos;
+  // $AA94 (SM) in move_helicopter; read by draw_helicopter and drive_helicopter
+  s16       helicopter_x;
 
   // $AACB (SM) in move_helicopter
-  u8        mh_height; // height
+  u8        mh_height;
   // $AAD7 (SM) in move_helicopter
-  u8        mh_animframe; // animation counter (0..3)
+  u8        mh_anim_frame; // animation counter (0..3)
   // $AADF (SM) in move_helicopter
-  s8        mh_direction; // direction (-1 or 1)
+  s8        mh_direction; // -1 or 1
   // $AAE8 (SM) in move_helicopter
   u8        mh_offset; // horizontal pos/offset
   // $AAF6 (SM) in move_helicopter
-  u16       mh_prevroadpos; // previous road pos
+  u16       mh_prev_road_pos; // previous road pos
   // $AB06 (SM) in move_helicopter
-  s16       mh_heli_centre_y; // 112 normally; −56 during the exit sequence
+  s16       mh_centre_y; // 112 normally; −56 during the exit sequence
 
   // $AE70 (SM) in advance_hazard
-  u16       dhs_road_left_xpos;
+  u16       ah_road_left_xpos;
 
-  // $AED0 (SM) in draw_hazards
-  s16      *dhs_xpos_table; // points to table e900 for example
+  // $AED0 (SM) in draw_hazard_sprites
+  s16      *dhs_xpos_table; // cursor into the depth-sorted (distance, hazard) draw list built over xpos_road_centre_left ($E900)
 
-  // $AFFB (SM) in dhs_aecf
-  u8        smoke_bitmap_index; // level-of-detail index 0..5 derived from the hazard's draw-list depth; picks the arrow, smoke and fire sprite sizes
+  // $AFFB (SM) in draw_hazard_sprites
+  u8        dhs_lod_index; // level-of-detail index 0..5 derived from the hazard's draw-list depth; picks the arrow, smoke and fire sprite sizes
 
-  // $B023 (SM) in ...
+  // $B023 (SM) in draw_hazard_sprites
   u8        dhs_col_pos;
-  // $B029 (SM) in ...
-  s8        dhs_SM_B029_horz_clip;
-  // $B02C (SM) in ...
-  u8        dhs_SM_B02C_horz_pos;
+  // $B029 (SM) in draw_hazard_sprites
+  s8        dhs_horz_clip;
+  // $B02C (SM) in draw_hazard_sprites
+  u8        dhs_horz_pos;
 
   // $B063 (SM) in move_hero_car
   u8        mhc_y_offset; // jump counter
@@ -547,23 +547,23 @@ struct chqstate {
   const u8 *mhc_jump_data; // jump data table entry
 
   // $B325 (SM) in animate_hero_car
-  u16       ahc_crashed_flag; // crashed flag
+  u16       ahc_crashed_flag; // non-zero while the crash sequence runs
   // $B32E (SM) in animate_hero_car
   u16       ahc_crash_speed_threshold; // set when crashed (a speed)
   // $B356 (SM) in animate_hero_car
-  u16       ahc_crash_spin_speed; // perhaps a speed
+  u16       ahc_crash_spin_speed; // lateral drift added to road_pos each frame during a crash spin; decays by 1/16 per frame
   // $B36E (SM) in animate_hero_car
-  u8        ahc_flip_flag; // flip flag
+  u8        ahc_flip_flag; // 1/2 select the drift direction; bit 0 also drives flip_car
   // $B384 (SM) in animate_hero_car
   u8        ahc_delay; // delay counter, set to 5
   // $B38D (SM) in animate_hero_car
   u8        ahc_crash_flip_count; // (flip flag + 1)
   // $B395 (SM) in animate_hero_car
-  u16       ahc_road_pos_a; // a road position
+  u16       ahc_road_pos_min; // lowest road_pos the car may reach: 72 normally, 209 inside a tunnel
   // $B3A3 (SM) in animate_hero_car
-  u16       ahc_road_pos_b; // another road position
+  u16       ahc_road_pos_max; // highest road_pos the car may reach: 472 normally, 405 inside a tunnel
   // $B3DB (SM) in animate_hero_car
-  u8        ahc_crash_spin; // controls flipping
+  u8        ahc_crash_spin; // non-zero while the car is still spinning; gates the flip animation
   // $B476 (SM) in animate_hero_car
   u8        ahc_hand_step;
   // $B478 (SM) in animate_hero_car
@@ -573,15 +573,15 @@ struct chqstate {
   u8        smash_cycling_counter;
 
   // $B549 (SM) in draw_debris
-  u8        dd_SM_B549_frame_counter; // frame counter, set to 9 by smash
+  u8        dd_frame_counter; // frame counter, set to 9 by smash
   // $B55B (SM) in draw_debris
-  u8      **dd_debris_subtables_start;
+  u8      **dd_subtables_start;
   // $B570 (SM) in draw_debris
-  u16       dd_frame_offset; // (might not need to be a state var)
+  u16       dd_frame_offset;
 
-  // $B5AA (SM) in draw_car
+  // $B5AA (SM) in draw_hero_car
   u8        dhc_jump_y; // height of car in the air - leaving shadow on the ground
-  // $B5AF (SM) in draw_car
+  // $B5AF (SM) in draw_hero_car
   u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB8B (SM) in rm_cycle_buffer_offset
@@ -645,9 +645,9 @@ struct chqstate {
   // $C5AC (SM) in draw_road
   s8        dr_neg_lane_count;
   // $C5B3 (SM) in draw_road
-  u8        dr_left_table_hi_2;
+  u8        dr_left_fill_page;
   // $C5D9 (SM) in draw_road
-  u8        dr_right_table_hi_2;
+  u8        dr_right_fill_page;
   // $C5F9 (SM) in draw_road
   u16       dr_backbuf_2;
   // $C60A (SM) in draw_road
@@ -657,13 +657,13 @@ struct chqstate {
   // $C62C (SM) in draw_road
   u8        dr_left_stripe_width;
   // $C642 (SM) in draw_road
-  u8        dr_left_table_hi_1;
+  u8        dr_left_markings_page;
   // $C651 (SM) in draw_road
   u8        dr_edge_graphic_offset;
   // $C677 (SM) in draw_road
   u8        dr_stripe_table_offset;
   // $C68A (SM) in draw_road
-  u8        dr_right_table_hi_1;
+  u8        dr_right_markings_page;
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
   // $C6B2 (SM) in draw_road
@@ -700,7 +700,11 @@ struct chqstate {
   // $E336
   u8        clamped_heights[ROAD_SLOT_COUNT]; // running-minimum clamp of height_table[1..21]; built by build_height_table
   // $E34B
-  u8        horizon_attr[3]; // horizon attribute scroll state: [0]=initial delta, [1]=current level, [2]=previous level
+  // Horizon attribute scroll state. [0] is the previous rounded Cmin, [1] the
+  // current frame's delta (new − old, a multiple of 8) and [2] the previous
+  // frame's delta, which ds_attributes reads one frame late. build_height_table
+  // writes [0] and [1] each frame; see CLAUDE.md for the full sequence.
+  u8        horizon_attr[3];
   // $E34E - unused pad byte; kept so pointer arithmetic ending at $E34E/$E34F (advance_hazard, draw_tunnel) lands correctly
   u8        horizon_attr_pad;
   // $E34F
