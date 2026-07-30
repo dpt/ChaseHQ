@@ -27,11 +27,10 @@ parametric per-scanline renderer.
 >
 > What remains of this plan:
 >
-> - **`3LTO2L` (`0x3D`)**: not new content. The engine already routes it
->   through existing branches (bit5 set, bit7 clear → `H = 0xEB`; bit4 set →
->   the near-boundary path with the animation offset), so stage 2 renders
->   *something* there today. Open question is whether that something is the
->   right taper — see the verification note in §2.
+> - **`3LTO2L` (`0x3D`)**: not new content, and nothing to implement. The
+>   engine already routes it through existing branches (bit5 set, bit7 clear →
+>   `H = 0xEB`; bit4 set → the near-boundary path with the animation offset),
+>   and the taper it produces has been confirmed correct on screen in stage 2.
 > - **`3RTO2M` (`0x3E`)**: still genuinely invented, still needs the work
 >   below.
 >
@@ -101,9 +100,10 @@ clear rewrites `H_left_hand_table_hi` to `0xEB` (`xpos_road_centre_right`),
 and bit 4 set selects the near-boundary path (`A_curve_step = 0x20`,
 `C_ref_height = IY[1]`, animation offset applied). That is the same
 treatment `2LTO3L` (`0x2D`) gets bar the bit-4 path, which is what you would
-want of its mirror. Confirm on screen before adding any branch that captures
-`0x3D`: drive stage 2 to the section after the tunnel, where a 3L run of 40
-narrows to a 2L run of 38.
+want of its mirror. Confirmed on screen: drive stage 2 to the section after
+the tunnel, where a 3L run of 40 narrows to a 2L run of 38, and the taper
+renders correctly as it stands. Any branch that captures `0x3D` is therefore
+a regression, not a fix.
 
 **New branch.** Insert immediately after `(*IY_heightptr)--;` (line 13967),
 *before* the existing `if (L_lane_flags & (1 << 5))` check (line 13970) —

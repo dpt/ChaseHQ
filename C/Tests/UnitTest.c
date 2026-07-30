@@ -471,7 +471,8 @@ static void test_drlc_writes_xpos_entries(void)
  * bit pattern: it narrows a 3L run to a 2L run. Pin the fact that it reaches
  * the Bresenham rather than being ignored as a steady state — the docs plan a
  * new lane transition whose proposed mask, (flags & 0xB0) == 0x30, would
- * capture this byte and silently change how stage 2 renders.
+ * capture this byte and silently change how stage 2 renders. The taper as it
+ * stands has been confirmed correct on screen, so that would be a regression.
  *
  * Writes land in xpos_road_centre: bit 5 set with bit 7 clear points H at
  * page $EB (xpos_road_centre_right), and the bit-5 correction at $C408 then
