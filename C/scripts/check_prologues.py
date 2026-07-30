@@ -5,7 +5,7 @@ Usage: python3 check_prologues.py [file.c ...]
 Default: all *.c in libraries/ChaseHQ/Engine/
 
 Checks the /** ... */ block only (not variable declarations in the body):
-  - title line "$XXXX: description [Conv: HQ]"
+  - title line "$XXXX: description"
   - blank separator line
   - non-empty description paragraph
   - blank line, then \\param[in|out|in,out] name  ...  for every parameter
