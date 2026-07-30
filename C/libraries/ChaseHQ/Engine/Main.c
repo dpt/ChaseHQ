@@ -2200,7 +2200,12 @@ dp_repeat_or_plot_tile:
         bufoffset = BACKBUFTOOFFSET_M(backbuf);
         // vertical
         if ((bufoffset & 0x0F00) == 0) {
-          bufoffset -= 0x1000; // undoing overflow?
+          /* $86D2-$86D5 SUB $10. Back-buffer addresses are 1111_LLLL_RRRC_CCCC;
+           * the eight INC H's that plotted the tile have just carried LLLL out
+           * of its nibble and destroyed the $F marker. Undo that carry, then
+           * step RRR to the next character row. In the offset domain the carry
+           * shows up as bit 12, so the same correction is -0x1000. */
+          bufoffset -= 0x1000;
           bufoffset = (bufoffset & 0xFF00) | (((bufoffset & 0xFF) + 0x20) &
                                               0xFF); // L += 32
         }
@@ -2275,7 +2280,10 @@ static void escape_scene(chqstate_t *state)
     send_playfield(state);
     state->speccy->sleep(state->speccy, ESCAPE_SCENE_TSTATES);
 
-    // Loop unless the tunnel has appeared - and is right size?
+    /* $879C-$87A7: keep looping until the tunnel is both visible and close.
+     * dt_tunnel_distance counts down as the tunnel nears -- 15 when it is a
+     * distant square, 6 once it fills the screen -- so "< 7" is the moment the
+     * perp car has reached it. */
     if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
       continue;
 
@@ -6350,7 +6358,9 @@ static void plot_mini_font_char(
     A = x * MFWIDTH + 2;
     screen = 0xC0; // low byte of screen addr
   }
-  // A is now a scaled x position?
+  /* A is a pixel x offset within the row: the character index times the
+   * 5-pixel minifont cell, plus a 2-pixel left margin ($9B08-$9B0C). The $FF
+   * case skips that and starts at column $BF with a fixed 5. */
 
   // find rotate/shift by reducing scaled-x (A) until it's less than 8 bits
   do {
@@ -8116,7 +8126,11 @@ static void layout_objects(chqstate_t *state)
     *objpos++ = total;
   } while (--iterations > 0);
 
-  SP = &state->xpos_road_centre_right[0]; // OR should this be ea00[256] ?
+  /* $A588 LD SP,$EB00. The stack descends, and every write below pre-decrements,
+   * so the results land in the $EA00 page -- xpos_road_centre. $EB00 is one past
+   * its end, which is exactly &xpos_road_centre_right[0]; writing it as
+   * &xpos_road_centre[128] would name the same address. */
+  SP = &state->xpos_road_centre_right[0];
   bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
   objpos2 = &state->object_positions[0];
   iterations = ROAD_SLOT_COUNT; // iterations
