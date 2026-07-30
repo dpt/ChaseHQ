@@ -8192,10 +8192,13 @@ load_and_store_right:
       return; // no fork
   }
 
-  // Forking
+  // Forking. $A5EB is reached two ways, with different countdowns: from $A5A4
+  // when the fork is visible and fork_countdown is 0, filling all 21 slots
+  // from the fork tables; or by falling out of the positions loop with a
+  // non-zero fork_countdown, filling only the slots beyond the fork point.
   A = ROAD_SLOT_COUNT - countdown;
   if (A == 0)
-    return; // no fork, or not about to fork?
+    return; /* fork_countdown == 21: fork past the last slot, no tail to fill */
 
   iterations = A;
   do {
@@ -8368,7 +8371,9 @@ pb_check_changing_lane_flag:
   if (A_changing_lane_flag)
     goto pb_check_lane;
 
-  // Otherwise not changing lane?
+  // Not mid lane-change, so a new one may be started -- but only once the perp
+  // is within 7 slots of the player ($A697). Further away than that and $A699
+  // skips straight to pb_check_lane, leaving the delay counter below untouched.
   A_dist_lane_gate = IX_perp->distance;
   if (A_dist_lane_gate >= 7)
     goto pb_check_lane;
@@ -8428,7 +8433,11 @@ pb_random_move_left_or_right:
   A_currlane = C_newlane;
   C_delta = 2; // lane delta
   if (A_currlane != 0) {
-    if (A_currlane < 5) // lane is reasonable?
+    // Lanes are numbered 1..4 (get_spawn_lanes returns that range at $A8A7),
+    // and the step above is +/-1, so the new value is 0..5. The two out-of-
+    // range results are reflected back inside by +/-2: 0 becomes 2, 5
+    // becomes 3.
+    if (A_currlane < 5)
       goto pb_set_current_lane;
 
     // Arrive here if the updated current_lane is >= 5.
