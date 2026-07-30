@@ -12374,11 +12374,16 @@ lr_forked_road:
   if ((*DE_lanedata & 4) !=
       0) // check for forked road (have already checked flags for 0xE1)
     goto lr_badf;
-  // is this forked or unforked or ...?
+  // $BA67 fell through, so the lanes byte's bit 2 is clear: this is the fork
+  // itself, not the approach to it. fork_in_progress is a once-only latch, not
+  // a counter -- $BC29 clears it and $BA71 is the only other writer, so it
+  // holds 0 (the fork decision has not been made) or 1 (it has). The DEC/NEG
+  // pair is how the Z80 spells that latch: 0 decrements to $FF, which negates
+  // to 1; 1 decrements to 0 and takes the branch below instead.
   A_forkinprogress = state->fork_in_progress - 1;
   if (A_forkinprogress == 0)
-    goto lr_check_spawning; // hit fork?
-  state->fork_in_progress = -A_forkinprogress; // why negate, is this a counter?
+    goto lr_check_spawning; /* decision already made for this fork */
+  state->fork_in_progress = -A_forkinprogress; /* i.e. latch to 1 */
   DE_roadpos = state->scenedata.road_pos;
   A_iterations = 1;
   D_side = ((DE_roadpos >> 8) - 1) & 0xFF; /* was DEC D */
@@ -12404,7 +12409,11 @@ lr_forked_road:
   } else {
     // Incorrect fork taken
     state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
-    // Q. Why is a bonus awarded for going the wrong way?
+    // The bonus lands on the wrong-fork branch only: $BA95 jumps the correct
+    // fork straight to the chatter at $BAAA, skipping $BAA4 entirely. So
+    // taking the wrong fork both speeds the perp up and pays 40,000 +
+    // 10,000 * stage. The asymmetry is in the original binary, not a
+    // translation slip, and is preserved here.
     add_bonus(state, 0, state->wanted_stage_number + 4, 0);
     HL_chatterblk = &chatterblk_raymond_wrong_way[0];
   }
@@ -12418,7 +12427,11 @@ lr_check_spawning:
   A_iterations += state->session.spawn_accumulator;
   C_spawn_accum = A_iterations; // new value for $A16D
   A_iterations -= 2;
-  if (A_iterations >= 256 - 2) // carried?
+  // $BABE JR C: taken when the SUB borrowed, i.e. the accumulator was below 2.
+  // A_iterations is u8, so 0 and 1 wrap to 254 and 255 and the test below
+  // catches exactly those two. This is the borrow-via-wrap idiom rather than
+  // the unreliable bit-7 test, and it is safe here because the subtrahend is 2.
+  if (A_iterations >= 256 - 2)
     goto lr_set_var_a16d_from_c;
   C_spawn_accum = A_iterations; // new value for $A16D
   HL_forkdistance += 16;
