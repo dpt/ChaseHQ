@@ -102,8 +102,44 @@ Six per-stage data structs exist (`stage1`–`stage6`), each with its own `.c`/`
 - **`Conv:` comments**: mark where the C version intentionally diverges from a direct Z80 translation; preserve them
 - **Address semantics**: macros like `ADDRTOSCREEN`, `BACKBUFTOOFFSET`, `ROADBUFPTR` are correctness-critical
 - **Data-table headers**: every data table declared in a `Data/*.h` header must be `extern`. Without it the declaration is a tentative definition and each including translation unit emits its own copy; the Debug build's AddressSanitizer then fails to link with hundreds of `multiple definition of __odr_asan.<table>` errors. macOS/clang tolerates the omission, so this only shows up on GCC in CI
+- **Bitmap data**: write graphics bytes as `Pixels.h` pixel-art macros, never hex (see below)
 - **Formatting**: K&R style, 2-space indent, 80 columns, pointer aligned to name (`.clang-format`)
 - **C standard**: Target C89/C90. Avoid C99 constructs: no compound literals `(T){…}`, no VLAs, no in-loop declarations (`for (int i = …)`). Single-line `//` comments and `<stdint.h>` types are accepted as widely-supported extensions.
+
+### Pixel-art bitmap data (`Pixels.h`)
+
+`C/include/ZXSpectrum/Pixels.h` defines 256 macros, one per byte value, named
+after the bit pattern that byte draws: `X` for a set pixel, `_` for a clear one,
+always eight characters wide.
+
+```c
+#define ________   (0)
+#define X___XX__ (140)
+#define XXXXXXXX (255)
+```
+
+Every graphics table in `C/libraries/ChaseHQ/Data/` is written with these macros
+rather than hex, so the sprite is legible in the source. Bytes are laid out one
+row per source line, which makes the shape visible directly:
+
+```c
+  ________, _XXX____, _______X, _X_XXX__,
+  ________, _XXX_XX_, _______X, _X__XX__,
+  X_______, __XX___X, _______X, X___XX__,
+```
+
+Rules:
+
+- New or edited bitmap data uses the macros. Hex bytes in a graphics table are a
+  defect, even when correct — they defeat the point of the convention.
+- Keep one bitmap row per source line. clang-format would reflow it, so each
+  data file opens its tables with a `// clang-format off` marker — keep new
+  tables inside that region.
+- The macros are plain integer constants, so they are equally valid in mask,
+  attribute and non-graphics tables. Only use them where the byte really is a
+  pixel row; elsewhere they mislead.
+- `Speccy/scripts/convert_stage.py` emits these names automatically when it
+  converts a bank skool file (see `C/docs/convert-stage.md`).
 
 ### Variable naming in Z80 translations
 
