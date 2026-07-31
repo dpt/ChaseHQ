@@ -1475,8 +1475,7 @@ static void attract_mode_48k(chqstate_t *state)
   blinker = 0;
   state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     keys = keyscan(state);
     if (keys == USERINPUTFLAG_FIRE)
@@ -1639,8 +1638,7 @@ static void bootstrap(chqstate_t *state)
 
   // Bootstrap is itself a loop
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     /* Build a table of flipped bytes at "$EF00" */
     // It's unclear why this is part of the overall game loop when it's constant.
@@ -1706,8 +1704,7 @@ static void main_loop(chqstate_t *state)
   carry = 0;
 
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     load_stage(state);
 
@@ -1738,8 +1735,7 @@ static void main_loop(chqstate_t *state)
       start_chatter(state, 0xFF, chatterblk_start_stage);
 
     for (;;) {
-      if (state->host_quit)
-        longjmp(state->host_quit_jmp, 1);
+      CHECK_HOST_QUIT(state);
 
       state->speccy->stamp(state->speccy);
       drive_sfx(state);
@@ -1862,8 +1858,7 @@ static void drive_attract_demo(chqstate_t *state)
   int roadpos; /* current lateral road position (was HL) */
   int input;   /* computed user-input flags (was A) */
 
-  if (state->host_quit)
-    longjmp(state->host_quit_jmp, 1);
+  CHECK_HOST_QUIT(state);
 
   roadpos = state->scenedata.road_pos;
   input = USERINPUTFLAG_UP | USERINPUTFLAG_RIGHT;
@@ -1953,8 +1948,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   int rc; /* loop/stop flag: 1 = continue, 0 = done */
   rc = 1;
 
-  if (state->host_quit)
-    longjmp(state->host_quit_jmp, 1);
+  CHECK_HOST_QUIT(state);
 
   state->speccy->stamp(state->speccy);
 
@@ -2263,8 +2257,7 @@ static void escape_scene(chqstate_t *state)
   start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
 
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     // Print "GAME OVER" once the transition has completed.
     if (state->transition_control != TRANSITIONCONTROL_FADE)
@@ -17290,6 +17283,12 @@ static void play_music_48k(chqstate_t *state)
   int       B_instrument; /* instrument index: lower three bits of D (was B) */
   int       A_param;      /* pitch/parameter value: upper five bits of D, passed to instrument handler (was A) */
 
+  /* Conv: every caller is an unbounded 48K menu poll loop (stop_the_tape_48k,
+   * redefine_keys_48k, define_a_key) which paces itself solely by calling
+   * here. The host quit check therefore lives in the shared tick rather than
+   * being repeated at each of those loops. */
+  CHECK_HOST_QUIT(state);
+
   state->speccy->stamp(state->speccy);
 
   if (state->music.started == 0) {
@@ -17983,8 +17982,7 @@ call_bank_3:
   state->attract_mode_128k_countdown = 2; // two runs through
   state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     drive_attract_demo(state);
 

@@ -420,8 +420,7 @@ static void run_title_screen(chqstate_t *state)
      * on its final frame while the tune starts and the (non-animating) wait
      * loop below takes over. */
     while (titlescr_animate_frame(state))
-      if (state->host_quit)
-        longjmp(state->host_quit_jmp, 1);
+      CHECK_HOST_QUIT(state);
 
     /* Show "PRESS ENTER FOR OPTIONS" unconditionally. */
     print_character(state, &title_screen_overlay_text[21]);
@@ -495,8 +494,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
   int carry;        /* required by the RRC macro, unused (carry) */
 
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     state->speccy->stamp(state->speccy);
     titlescr_music(state);
@@ -3047,6 +3045,10 @@ static void play_success_music(chqstate_t *state)
 
   B_wait = ATTRACT_TUNE_WAIT_FRAMES;
   do {
+    /* Conv: ~3.6s of jingle; without this the window stays up that long after
+     * the host asks to quit. */
+    CHECK_HOST_QUIT(state);
+
     state->speccy->stamp(state->speccy);
     titlescr_music(state);
     state->speccy->sleep(state->speccy, SUCCESS_MUSIC_TSTATES);
@@ -3766,6 +3768,13 @@ shared_tail:
  */
 static void run_title_tune(chqstate_t *state)
 {
+  /* Conv: every caller is an unbounded 128K options/redefine poll loop
+   * (omd_redraw_and_poll, redefine_keys_screen, read_new_key_definition,
+   * detect_kempston_joystick) which paces itself solely by calling here. The
+   * host quit check therefore lives in the shared tick rather than being
+   * repeated at each of those loops. */
+  CHECK_HOST_QUIT(state);
+
   titlescr_music(state);
 
   /* restart the tune if it's finished */

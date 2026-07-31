@@ -139,8 +139,7 @@ void show_end_screen(chqstate_t *state)
   outer_count = 6;
 
   for (;;) {
-    if (state->host_quit)
-      longjmp(state->host_quit_jmp, 1);
+    CHECK_HOST_QUIT(state);
 
     state->speccy->stamp(state->speccy);
 
@@ -167,8 +166,16 @@ void show_end_screen(chqstate_t *state)
       state->bank7->es_script_ptr =
         &state->bank7->es_script[ES_SCRIPT_CONGRATS_OFFSET]; /* $E052 */
       drive_chatter_stop(state);
-      while (keyscan(state) & USERINPUTFLAG_FIRE)
-        ;
+      /* Conv: the Z80 spins here on the keyboard alone. The C port must pace
+       * the wait -- an unpaced poll runs the game thread flat out and the host
+       * never gets a frame -- and honour the quit request while the player is
+       * still holding fire. */
+      while (keyscan(state) & USERINPUTFLAG_FIRE) {
+        CHECK_HOST_QUIT(state);
+
+        state->speccy->stamp(state->speccy);
+        state->speccy->sleep(state->speccy, END_SCREEN_TSTATES);
+      }
       continue;
     }
 
@@ -325,6 +332,10 @@ static void es_handler_draw_score(chqstate_t *state)
   u8        A_nibble; /* nibble being converted to ASCII (was A) */
 
   for (tally = 1000; tally != 0; tally--) {
+    /* Conv: the tally runs for ~11s; without this the window stays up for the
+     * remainder of it after the host asks to quit. */
+    CHECK_HOST_QUIT(state);
+
     state->speccy->stamp(state->speccy);
 
     increment_score(state, 0, 0x00, 0x50);
