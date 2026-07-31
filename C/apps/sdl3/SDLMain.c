@@ -608,6 +608,7 @@ static const chq_crt_param_desc_t chq_crt_param_descs[] =
   { "scanline intensity", offsetof(chq_CRT_params_t, scanline_intensity), 0.05f,  0.0f, 1.0f },
   { "vignette strength",  offsetof(chq_CRT_params_t, vignette_strength),  0.05f,  0.0f, 1.0f },
   { "chroma bleed",       offsetof(chq_CRT_params_t, chroma_bleed),       0.05f,  0.0f, 1.0f },
+  { "glitch",             offsetof(chq_CRT_params_t, glitch),            0.05f,  0.0f, 1.0f },
 };
 
 #define CHQ_CRT_PARAM_COUNT \

@@ -47,10 +47,11 @@ static const char *const chq_crt_vertex_msl =
 // change at runtime in this game; the constants have been re-tuned by eye
 // against this game's screen and no longer match the reference's own
 // defaults.
-// The reference's rgbShift channel-separation effect and its time-driven
-// flicker are dropped - rgbShift defaults to 0.0 (a no-op in the source
-// shader too), and flicker needs no game logic to justify the per-frame
-// uniform push it would otherwise require.
+// The reference's rgbShift channel-separation effect is dropped - it
+// defaults to 0.0 (a no-op in the source shader too). Its time-driven
+// flicker is kept, folded into the `glitch` knob along with an occasional
+// single-scanline tear; both are driven by the `time` field the renderer
+// fills in each frame.
 // Must match chq_CRT_params_t in CRTShader.h field-for-field: plain floats,
 // same order, no padding.
 static const char *const chq_crt_fragment_msl =
@@ -67,15 +68,30 @@ static const char *const chq_crt_fragment_msl =
   "  float scanlineIntensity;\n"
   "  float vignetteStrength;\n"
   "  float chromaBleed;\n"
+  "  float glitch;\n"
+  "  float time;\n"
   "};\n"
+  // Cheap hash: fract(sin(x) * large). Good enough for flicker and tear
+  // seeds; no noise texture or per-frame random uniform needed.
+  "static inline float chq_hash(float x) {\n"
+  "  return fract(sin(x * 12.9898) * 43758.5453);\n"
+  "}\n"
   "fragment float4 fs_main(VSOut in [[stage_in]],\n"
-  "                         texture2d<float> tex [[texture(0)]],\n"
-  "                         sampler samp [[sampler(0)]],\n"
-  "                         constant Params& p [[buffer(0)]]) {\n"
+  "                        texture2d<float> tex [[texture(0)]],\n"
+  "                        sampler samp [[sampler(0)]],\n"
+  "                        constant Params& p [[buffer(0)]]) {\n"
   // curveRemapUV: barrel distortion via dot(coord,coord) radial distance.
   "  float2 coord = in.uv * 2.0 - 1.0;\n"
   "  coord *= 1.0 + dot(coord, coord) * p.curvature;\n"
   "  float2 uv = coord * 0.5 + 0.5;\n"
+  // Line tear: seed each source scanline separately, reseed at the Spectrum's
+  // 50Hz frame rate and shift the lines whose seed clears the threshold.
+  // step(0.9) picks roughly one line in ten, and picks a different ten every
+  // frame, so no torn line survives into the next.
+  "  float band = floor(uv.y * float(tex.get_height()));\n"
+  "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
+  "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
+  "          step(0.9, seed);\n"
   // Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
   // which otherwise aliases into a jagged edge along the curvature.
   "  float2 edge = smoothstep(float2(0.0), float2(0.005), uv) *\n"
@@ -112,7 +128,11 @@ static const char *const chq_crt_fragment_msl =
   "  c.rgb += bloom * p.bloomIntensity;\n"
   // brightness / contrast / saturation.
   "  c.rgb = (c.rgb - 0.5) * p.contrast + 0.5;\n"
-  "  c.rgb *= p.brightness;\n"
+  // Mains flicker: brightness wobble reseeded 50 times a second, the rate an
+  // unsynchronised 50Hz display would beat at.
+  "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
+  "                        0.06 * p.glitch;\n"
+  "  c.rgb *= p.brightness * flicker;\n"
   "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
   "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
   // scanlines, intensity adapted to local luminance.
@@ -127,9 +147,9 @@ static const char *const chq_crt_fragment_msl =
   "}\n";
 
 int chq_CRT_shader_create(chq_CRT_shader_t *shader,
-                          SDL_Window        *window,
-                          int                game_width,
-                          int                game_height)
+                          SDL_Window       *window,
+                          int               game_width,
+                          int               game_height)
 {
   SDL_GPUTextureCreateInfo          texture_info;
   SDL_GPUTransferBufferCreateInfo   transfer_info;
@@ -278,6 +298,12 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   SDL_GPUColorTargetInfo      color_target;
   SDL_GPURenderPass           *render_pass;
   SDL_GPUTextureSamplerBinding tex_binding;
+  chq_CRT_params_t             frame_params;
+
+  // Conv: the caller owns the tunable knobs but not the clock, so the time
+  // the flicker and tear run off is filled in here, on a copy.
+  frame_params      = *params;
+  frame_params.time = SDL_GetTicks() * 0.001f;
 
   viewport.x         = (float) x;
   viewport.y         = (float) y;
@@ -331,7 +357,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
     tex_binding.texture = shader->texture;
     tex_binding.sampler = shader->sampler;
     SDL_BindGPUFragmentSamplers(render_pass, 0, &tex_binding, 1);
-    SDL_PushGPUFragmentUniformData(upload_cmdbuf, 0, params, sizeof(*params));
+    SDL_PushGPUFragmentUniformData(upload_cmdbuf, 0, &frame_params,
+                                   sizeof(frame_params));
 
     SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
 

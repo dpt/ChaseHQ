@@ -50,12 +50,14 @@ typedef struct
   float scanline_intensity; // base scanline darkening amount
   float vignette_strength;  // corner darkening strength
   float chroma_bleed;       // PAL horizontal colour smear, 0.0 = off
+  float glitch;             // mains flicker + scanline tear, 0.0 = off
+  float time;               // seconds since start; filled in by the renderer
 }
 chq_CRT_params_t;
 
 // Defaults re-tuned by eye against this game's screen; see CRTShader.c.
 #define CHQ_CRT_PARAMS_DEFAULT \
-  { 0.025f, 0.5f, 0.025f, 1.1f, 1.1f, 1.0f, 0.75f, 0.3f, 0.6f }
+  { 0.025f, 0.5f, 0.025f, 1.1f, 1.1f, 1.0f, 0.75f, 0.3f, 0.6f, 0.0f, 0.0f }
 
 /**
  * Creates the GPU device, texture, sampler and shader pipeline. Must be
