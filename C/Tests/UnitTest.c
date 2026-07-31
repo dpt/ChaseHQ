@@ -1132,8 +1132,15 @@ static void test_all_stages_draw_frames(void)
   chqstate_t *state;
   u8          stage;
   int         frame;
+  u8          last;
 
-  for (stage = MINSTAGE; stage <= 5; stage++) {
+#ifdef CHQ_ENABLE_TEST_STAGE
+  last = 6; /* the port-added test level, only mapped in that build */
+#else
+  last = 5;
+#endif
+
+  for (stage = MINSTAGE; stage <= last; stage++) {
     state = make_stage_state(stage);
     state->hazards[0].used = HAZARD_USED; /* keep the perp spawned */
 
