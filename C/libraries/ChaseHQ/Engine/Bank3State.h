@@ -274,7 +274,7 @@ struct chq_bank3_state {
     // $F8F2/$F95A (Bank3Data.h: drum_sample_1_template/drum_sample_2_template):
     // mutable per-game copies -- play_sample_row rotates each byte in place
     // with RLC as it plays, so these cannot be the read-only template tables
-    // directly (same reasoning as chqstate_t::drum1/drum2).
+    // directly (same reasoning as chqstate_t::music.drum1/music.drum2).
     u8        sample1[104];
     u8        sample2[224];
 

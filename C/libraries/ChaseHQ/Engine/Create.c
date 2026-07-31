@@ -69,9 +69,9 @@ static void chq_initialise(chqstate_t *state)
     // $EE38
     { offsetof(chqstate_t, temp_keydefs), &temp_keydefs_template[0], sizeof(temp_keydefs_template) },
     // $EF5E
-    { offsetof(chqstate_t, drum1), &drum1_template[0], sizeof(drum1_template) },
+    { offsetof(chqstate_t, music.drum1), &drum1_template[0], sizeof(drum1_template) },
     // $F05A
-    { offsetof(chqstate_t, drum2), &drum2_template[0], sizeof(drum2_template) },
+    { offsetof(chqstate_t, music.drum2), &drum2_template[0], sizeof(drum2_template) },
   };
 
   size_t i;
@@ -90,15 +90,15 @@ static void chq_initialise(chqstate_t *state)
   // $8244, $8249, $8251 — engine sfx SM operands as assembled: 3 iterations
   // with zero (= 256 via DJNZ) delay counts until setup_engine_sfx_48k
   // stores real values
-  state->engine_sfx_nloops    = 3;
-  state->engine_sfx_off_cycle = 0;
-  state->engine_sfx_on_cycle  = 0;
+  state->engine_sfx.nloops    = 3;
+  state->engine_sfx.off_cycle = 0;
+  state->engine_sfx.on_cycle  = 0;
 
   // $824B
-  state->attract_mode_128k_blink = 0xF0;
+  state->attract_mode_128k.blink = 0xF0;
 
   // $825D
-  state->attract_mode_128k_countdown = 0;
+  state->attract_mode_128k.countdown = 0;
 
   // $8277
   state->attract_blinker = 0xF0;
@@ -123,22 +123,22 @@ static void chq_initialise(chqstate_t *state)
   state->roadbuf_end   = &state->road_buffer[256]; // $EF00
 
   // $A68F (SM), $A69C (SM), $A73E (SM), $A74A (SM)
-  state->pb_changing_lane     = 0;
-  state->pb_lane_change_timer = 20;
-  state->pb_delay             = 0;
-  state->pb_approach_timer    = 20;
+  state->pb.changing_lane     = 0;
+  state->pb.lane_change_timer = 20;
+  state->pb.delay             = 0;
+  state->pb.approach_timer    = 20;
 
   // $A804
   state->sc_spawn_counter = 20;
 
   // $A97F/$A9DF/$C0BC: dirt-and-stones SM flags, assembled as zero
   state->ldas_enabled = 0;
-  state->ddas_enabled = 0;
-  state->rm_scroll_dirt_particles = 0;
+  state->ddas.enabled = 0;
+  state->rm.scroll_dirt_particles = 0;
 
   // $B395/$B3A3: SM operands (default LD DE operands) in animate_hero_car
-  state->ahc_road_pos_min =  72; /* lower clamp bound */
-  state->ahc_road_pos_max = 472; /* upper clamp bound */
+  state->ahc.road_pos_min =  72; /* lower clamp bound */
+  state->ahc.road_pos_max = 472; /* upper clamp bound */
 
   // $CE33
   state->debris_table[0]  = state->debris_subtables[0];
@@ -155,11 +155,11 @@ static void chq_initialise(chqstate_t *state)
   state->debris_table[11] = state->debris_subtables[0];
 
   // $C534/$C68A: SM operands in dr_four_lane_highway / dr_fill_left_stripe
-  state->dr_left_markings_page  = 0xE8; // xpos_road_left page
-  state->dr_left_fill_page  = 0xE8;
-  state->dr_right_markings_page = 0xEC; // xpos_road_right page
-  state->dr_right_fill_page = 0xEC;
-  state->dr_neg_lane_count   = -4;   // four-lane default
+  state->dr.left_markings_page  = 0xE8; // xpos.left page
+  state->dr.left_fill_page  = 0xE8;
+  state->dr.right_markings_page = 0xEC; // xpos.right page
+  state->dr.right_fill_page = 0xEC;
+  state->dr.neg_lane_count   = -4;   // four-lane default
 
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM

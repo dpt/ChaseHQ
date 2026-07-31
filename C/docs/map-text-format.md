@@ -219,7 +219,7 @@ from the row offsets and split across several waits above 255. A hazard row
 must start on an even road unit.
 
 The engine (`Main.c`, `$BFE7: HAZARDS`) folds commands 3..9 into one latched
-value, `rm_hazard_byte = cmd - 3`, written to the road buffer until the next
+value, `rm.hazard_byte = cmd - 3`, written to the road buffer until the next
 such command. Commands 10 and up are edge-triggered and re-enter the read loop
 without consuming a wait.
 

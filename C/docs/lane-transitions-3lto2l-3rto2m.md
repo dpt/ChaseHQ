@@ -96,7 +96,7 @@ into `H` itself (already the moving left edge) seeded from `H - 1`.
 
 **What `0x3D` does today.** Nothing intercepts it, so it takes the general
 path: bits 2-3 non-zero enters the lane-change code, bit 5 set with bit 7
-clear rewrites `H_left_hand_table_hi` to `0xEB` (`xpos_road_centre_right`),
+clear rewrites `H_left_hand_table_hi` to `0xEB` (`xpos.centre_right`),
 and bit 4 set selects the near-boundary path (`A_curve_step = 0x20`,
 `C_ref_height = IY[1]`, animation offset applied). That is the same
 treatment `2LTO3L` (`0x2D`) gets bar the bit-4 path, which is what you would
@@ -243,12 +243,12 @@ following its exact structure (snapshot the rail table expected to change,
 run the transition, assert at least one entry differs), and register both
 in `main()` next to the existing call (~line 868):
 
-- `test_drlc_writes_xpos_entries_3lto2l` — snapshot `xpos_road_centre`
+- `test_drlc_writes_xpos_entries_3lto2l` — snapshot `xpos.centre`
   (0xEA = destination for offset1+2), call with `MAP_LANES_3LTO2L_VAL`,
-  assert it changes and `xpos_road_left` (0xE8, the fixed edge) does not.
+  assert it changes and `xpos.left` (0xE8, the fixed edge) does not.
 - `test_drlc_writes_xpos_entries_3rto2m` — snapshot
-  `xpos_road_centre_right` (0xEB = destination for offset2+2), call with
-  `MAP_LANES_3RTO2M_VAL`, assert it changes and `xpos_road_centre_left`
+  `xpos.centre_right` (0xEB = destination for offset2+2), call with
+  `MAP_LANES_3RTO2M_VAL`, assert it changes and `xpos.centre_left`
   (0xE9, the fixed edge) does not.
 
 Use `height_offset=1` (matching the existing test's near-tier case).

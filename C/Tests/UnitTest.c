@@ -167,7 +167,7 @@ static void test_build_height_table_writes_table(void)
 }
 
 /*
- * layout_road writes xpos_road_centre (and _left/_right variants) for the
+ * layout_road writes xpos.centre (and _left/_right variants) for the
  * even slots [48..126].  Verify at least some centre slots are non-zero —
  * i.e. layout_road actually ran and wrote the geometry tables.
  *
@@ -185,7 +185,7 @@ static void test_layout_road_populates_tables(void)
   chq_test_layout_road(state);
 
   for (i = 48; i < 128; i += 2)
-    if (state->xpos_road_centre[i] != 0)
+    if (state->xpos.centre[i] != 0)
       nonzero++;
 
   assert(nonzero > 0);
@@ -212,17 +212,17 @@ static void test_draw_road_writes_backbuffer(void)
   chq_test_layout_road(state);
 
   state->on_dirt_track     = 0xFF;
-  state->dt_tunnel_visible = 0xFF;
-  state->dr_in_tunnel      = 0xFF;
-  state->dr_edge_thickness = 0xFF;
+  state->dt.tunnel_visible = 0xFF;
+  state->dr.in_tunnel      = 0xFF;
+  state->dr.edge_thickness = 0xFF;
 
   chq_test_draw_road(state);
 
   /* draw_road resets these flags at entry */
   assert(state->on_dirt_track     == 0);
-  assert(state->dt_tunnel_visible == 0);
-  assert(state->dr_in_tunnel      == 0);
-  /* dr_edge_thickness is updated during rendering; not checked here */
+  assert(state->dt.tunnel_visible == 0);
+  assert(state->dr.in_tunnel      == 0);
+  /* dr.edge_thickness is updated during rendering; not checked here */
 
   assert(backbuf_was_written(state));
 
@@ -236,7 +236,7 @@ static void test_draw_road_writes_backbuffer(void)
  * draw_road_lanes_change: when IYheight is 19 or more entries past the start
  * of height_table (A_dist >= 19) the function must exit immediately without
  * modifying the xpos tables.  The exit path calls dr_four_lane_highway, which
- * sets dr_neg_lane_count to -4.
+ * sets dr.neg_lane_count to -4.
  */
 static void test_drlc_exits_when_dist_too_far(void)
 {
@@ -251,22 +251,22 @@ static void test_drlc_exits_when_dist_too_far(void)
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
 
-  memcpy(snap_left,         state->xpos_road_left,         sizeof(snap_left));
-  memcpy(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left));
-  memcpy(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre));
-  memcpy(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right));
-  memcpy(snap_right,        state->xpos_road_right,        sizeof(snap_right));
+  memcpy(snap_left,         state->xpos.left,         sizeof(snap_left));
+  memcpy(snap_centre_left,  state->xpos.centre_left,  sizeof(snap_centre_left));
+  memcpy(snap_centre,       state->xpos.centre,       sizeof(snap_centre));
+  memcpy(snap_centre_right, state->xpos.centre_right, sizeof(snap_centre_right));
+  memcpy(snap_right,        state->xpos.right,        sizeof(snap_right));
 
   /* MAP_LANES_4TO3L_VAL (0xBD) has non-zero curve bits, so if the dist
    * check were absent this call would proceed into the Bresenham loop.
    * With height_offset=19 the dist-too-far guard fires first. */
   chq_test_draw_road_lanes_change(state, 0xBD /* MAP_LANES_4TO3L_VAL */, 19);
 
-  assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
-  assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
-  assert(memcmp(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre))       == 0);
-  assert(memcmp(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right)) == 0);
-  assert(memcmp(snap_right,        state->xpos_road_right,        sizeof(snap_right))        == 0);
+  assert(memcmp(snap_left,         state->xpos.left,         sizeof(snap_left))         == 0);
+  assert(memcmp(snap_centre_left,  state->xpos.centre_left,  sizeof(snap_centre_left))  == 0);
+  assert(memcmp(snap_centre,       state->xpos.centre,       sizeof(snap_centre))       == 0);
+  assert(memcmp(snap_centre_right, state->xpos.centre_right, sizeof(snap_centre_right)) == 0);
+  assert(memcmp(snap_right,        state->xpos.right,        sizeof(snap_right))        == 0);
 
   chq_destroy(state);
   printf("PASS  draw_road_lanes_change: dist >= 19 exits early, xpos tables unchanged\n");
@@ -276,7 +276,7 @@ static void test_drlc_exits_when_dist_too_far(void)
 /*
  * draw_road_lanes_change: when the lane byte has no curve bits (bits 2-3 both
  * clear) the function identifies a straight section and exits without touching
- * the xpos tables.  The exit path calls dr_four_lane_highway (dr_neg_lane_count
+ * the xpos tables.  The exit path calls dr_four_lane_highway (dr.neg_lane_count
  * becomes -4).
  *
  * 0x02 = MAP_LANES_2M_VAL: a 2-lane middle section, bits 2-3 = 0.
@@ -294,19 +294,19 @@ static void test_drlc_exits_on_straight_track(void)
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
 
-  memcpy(snap_left,         state->xpos_road_left,         sizeof(snap_left));
-  memcpy(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left));
-  memcpy(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre));
-  memcpy(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right));
-  memcpy(snap_right,        state->xpos_road_right,        sizeof(snap_right));
+  memcpy(snap_left,         state->xpos.left,         sizeof(snap_left));
+  memcpy(snap_centre_left,  state->xpos.centre_left,  sizeof(snap_centre_left));
+  memcpy(snap_centre,       state->xpos.centre,       sizeof(snap_centre));
+  memcpy(snap_centre_right, state->xpos.centre_right, sizeof(snap_centre_right));
+  memcpy(snap_right,        state->xpos.right,        sizeof(snap_right));
 
   chq_test_draw_road_lanes_change(state, 0x02 /* MAP_LANES_2M_VAL */, 1);
 
-  assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
-  assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
-  assert(memcmp(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre))       == 0);
-  assert(memcmp(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right)) == 0);
-  assert(memcmp(snap_right,        state->xpos_road_right,        sizeof(snap_right))        == 0);
+  assert(memcmp(snap_left,         state->xpos.left,         sizeof(snap_left))         == 0);
+  assert(memcmp(snap_centre_left,  state->xpos.centre_left,  sizeof(snap_centre_left))  == 0);
+  assert(memcmp(snap_centre,       state->xpos.centre,       sizeof(snap_centre))       == 0);
+  assert(memcmp(snap_centre_right, state->xpos.centre_right, sizeof(snap_centre_right)) == 0);
+  assert(memcmp(snap_right,        state->xpos.right,        sizeof(snap_right))        == 0);
 
   chq_destroy(state);
   printf("PASS  draw_road_lanes_change: straight track (no curve bits) exits early, xpos tables unchanged\n");
@@ -398,9 +398,9 @@ static void test_set_up_stage_lanes_slot_is_3lane(void)
  * Regression: set_up_stage must reset map-reader counters (lanes_counter,
  * curvature_byte, height_byte …) before priming the road buffer.  If they
  * are left over from the previous scene, the 32 priming iterations write
- * the OLD rm_lanes_byte into the buffer instead of reading fresh map data.
+ * the OLD rm.lanes_byte into the buffer instead of reading fresh map data.
  *
- * Concretely: attract mode primes with MAP_LANES_4 (rm_lanes_byte=0x00,
+ * Concretely: attract mode primes with MAP_LANES_4 (rm.lanes_byte=0x00,
  * lanes_counter ≈ 222 remaining).  A subsequent set_up_stage for game
  * stage 1 must still produce MAP_LANES_3L_VAL in the slot, not 0x00.
  */
@@ -447,14 +447,14 @@ static void test_drlc_writes_xpos_entries(void)
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
 
-  memcpy(baseline, state->xpos_road_centre_right, sizeof(baseline));
+  memcpy(baseline, state->xpos.centre_right, sizeof(baseline));
 
   state->fast_counter = 0;
   chq_test_draw_road_lanes_change(state, MAP_LANES_4TO3L_VAL, 1);
 
   changed = 0;
   for (i = 0; i < 128; i++) {
-    if (state->xpos_road_centre_right[i] != baseline[i])
+    if (state->xpos.centre_right[i] != baseline[i])
       changed++;
   }
   if (changed == 0) {
@@ -474,8 +474,8 @@ static void test_drlc_writes_xpos_entries(void)
  * capture this byte and silently change how stage 2 renders. The taper as it
  * stands has been confirmed correct on screen, so that would be a regression.
  *
- * Writes land in xpos_road_centre: bit 5 set with bit 7 clear points H at
- * page $EB (xpos_road_centre_right), and the bit-5 correction at $C408 then
+ * Writes land in xpos.centre: bit 5 set with bit 7 clear points H at
+ * page $EB (xpos.centre_right), and the bit-5 correction at $C408 then
  * steps the output pointer back one page to $EA.
  */
 static void test_drlc_3lto2l_runs_bresenham(void)
@@ -489,14 +489,14 @@ static void test_drlc_3lto2l_runs_bresenham(void)
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
 
-  memcpy(baseline, state->xpos_road_centre, sizeof(baseline));
+  memcpy(baseline, state->xpos.centre, sizeof(baseline));
 
   state->fast_counter = 0;
   chq_test_draw_road_lanes_change(state, MAP_LANES_3LTO2L_VAL, 1);
 
   changed = 0;
   for (i = 0; i < 128; i++) {
-    if (state->xpos_road_centre[i] != baseline[i])
+    if (state->xpos.centre[i] != baseline[i])
       changed++;
   }
   if (changed == 0) {
@@ -710,7 +710,7 @@ static void test_perp_caught_progression(void)
 /*
  * Force the stage-2 helicopter straight into its turn-left approach
  * (helicopter_control = 3, see drive_helicopter's hc_pick_direction) and run
- * whole game frames, checking that dee_draw_helicopter engages and that the
+ * whole game frames, checking that dee.draw_helicopter engages and that the
  * road buffer is not corrupted while draw_helicopter runs. Regression check
  * for pitfall #29: helitable was stepped as an array of heli_bitmap_t
  * (12 bytes) rather than an array of pointers (2 bytes), which walked far
@@ -720,7 +720,7 @@ static void test_helicopter_draws(void)
 {
   chqstate_t *state;   /* game state under test */
   int         frame;   /* frame counter */
-  int         saw_draw; /* set once dee_draw_helicopter goes non-zero */
+  int         saw_draw; /* set once dee.draw_helicopter goes non-zero */
   int         max_obj; /* largest side-object byte this frame */
 
   state = chq_create(&g_speccy);
@@ -742,14 +742,14 @@ static void test_helicopter_draws(void)
     state->session.time_bcd = 0x60;
     chq_test_game_frame(state);
 
-    if (state->dee_draw_helicopter)
+    if (state->dee.draw_helicopter)
       saw_draw = 1;
 
     max_obj = chq_test_max_side_object(state);
     if (max_obj > 9) {
       printf("  FAIL: side object byte %d (> 9) at frame %d "
-             "(dee_draw_helicopter=%u)\n",
-             max_obj, frame, state->dee_draw_helicopter);
+             "(dee.draw_helicopter=%u)\n",
+             max_obj, frame, state->dee.draw_helicopter);
       assert(max_obj <= 9);
     }
 
@@ -770,7 +770,7 @@ static void test_helicopter_draws(void)
 
   assert(saw_draw);
   chq_destroy(state);
-  printf("PASS  helicopter draws: dee_draw_helicopter engages without "
+  printf("PASS  helicopter draws: dee.draw_helicopter engages without "
          "road buffer corruption\n");
 }
 
@@ -779,12 +779,12 @@ static void test_helicopter_draws(void)
  * unrolled fill loop ($9117-$9151, BRIDGE_DECK_LOOP_WRITES entries) would
  * stop, not run past it. Regression test for the "central part of the
  * object that spans the road fails to stop at the right edge" report: the
- * memset byte count was taken directly from overhead_span_width_words/2 (the JR
+ * memset byte count was taken directly from overhead.span_width_words/2 (the JR
  * displacement into the loop) instead of BRIDGE_DECK_LOOP_WRITES minus that
  * value, which inverted the clip -- the span grew wider as the deck should
  * have been narrowing towards the edge.
  *
- * All values below (Avertical, overhead_vert_sub, D, E, overhead_span_width_words, dest
+ * All values below (Avertical, overhead.vert_sub, D, E, overhead.span_width_words, dest
  * address) are hand-derived from the skool at $90A3-$9169 for this specific
  * fixture; see the comment block beside the assertions.
  */
@@ -831,14 +831,14 @@ static void test_draw_overhead_stops_at_right_edge(void)
   draw_overhead(state, 1 /* Bparam */, &obj, &xpos[2], height);
 
   /* fast_counter=0 (fresh state) -> persp_y_scale row 0, column Bparam=1 ->
-   * Avertical = 0x4A (74). overhead_vert_sub = (74>>1)+74-0 = 111.
+   * Avertical = 0x4A (74). overhead.vert_sub = (74>>1)+74-0 = 111.
    * Row select A = height[0x35](200) - 111 = 89.
    * D = 1 (xpos[2] high byte negative skips the D chain).
    * E: xpos[1]=100, Cdepth=10 -> A=110 -> E = 110>>3 = 13.
-   * overhead_span_width_words = ~((13-1)*2)+61 = 36 (mod 256).
+   * overhead.span_width_words = ~((13-1)*2)+61 = 36 (mod 256).
    * Deck loop write count = BRIDGE_DECK_LOOP_WRITES(30) - 36/2 = 12.
    * Dest addr = (((89&0x0F)+0xF0)<<8) | ((89&0x70)*2 + D(1)) = 0xF900|0xA1 = 0xF9A1. */
-  assert(state->overhead_span_width_words == 36);
+  assert(state->overhead.span_width_words == 36);
 
   expected_off    = 0xF9A1 - BACKBUFFER_START_ADDRESS;
   expected_row    = expected_off / BACKBUFFER_ROWBYTES;
@@ -863,7 +863,7 @@ static void test_draw_overhead_stops_at_right_edge(void)
  * advance_hazards: when three hazards are advanced in slot order with
  * strictly increasing distance (5, 10, 15), each later hazard must be
  * inserted *before* the earlier ones already in the depth-sorted draw list
- * (state->xpos_road_centre_left), forcing the dhs_insert shift path with a
+ * (state->xpos.centre_left), forcing the dhs_insert shift path with a
  * growing number of records to move (B=1, then B=2).
  *
  * Regression check for a reversed source/destination copy in the shift
@@ -914,7 +914,7 @@ static void test_advance_hazards_insert_shift_preserves_records(void)
 
   /* Draw list must be sorted with the largest distance first: slot 2 (15),
    * then slot 1 (10), then slot 0 (5) -- none lost, none corrupted. */
-  rec = state->xpos_road_centre_left;
+  rec = state->xpos.centre_left;
   assert((rec[0] & 0xFF) == 15); assert(rec[1] == 2);
   assert((rec[2] & 0xFF) == 10); assert(rec[3] == 1);
   assert((rec[4] & 0xFF) == 5);  assert(rec[5] == 0);

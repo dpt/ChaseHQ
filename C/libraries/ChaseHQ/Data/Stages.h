@@ -139,7 +139,7 @@
 
 // Map commands
 //
-// Commands 3..9 all latch the same value: rm_hazard_byte = cmd - 3 ($C02C).
+// Commands 3..9 all latch the same value: rm.hazard_byte = cmd - 3 ($C02C).
 // spawn_hazards ($AB9A) reads it back and treats 1/2/3 as one obstacle left,
 // one right, or a pair, drawn with the stage's light hittable object
 // (addrof_hittable_objects[0] — the tumbleweed on the stage 1/3 dirt track).
@@ -394,7 +394,7 @@ typedef struct obj {
   // for left-hand objects field1=lo, field2=hi.
   u8             hit_max_or_min;
   u8             hit_min_or_max;
-  u8             impact_speed_cap; // capped with speed → ahc_crash_speed_threshold
+  u8             impact_speed_cap; // capped with speed → ahc.crash_speed_threshold
   const void    *arg;
   obj_handler_t *handler;
 } obj_t;

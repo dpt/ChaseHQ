@@ -69,7 +69,7 @@ typedef struct bitmap {
 
 `height` is what a `FIXED` band uses as its draw height. `flags` controls two independent things: whether the bitmap is masked (drawn with an AND mask so the road shows through the transparent parts) and whether it is flipped for use on the opposite side of the road — a flipped band uses an entirely separate `bitmap_t` array built with mirrored graphics, selected via the band's `depthset_t`, not via the `shifted` field.
 
-`data` and `shifted` solve a different problem: the ZX Spectrum's screen memory is addressed one byte per eight pixels, so a sprite can only be blitted directly at byte-aligned x-positions. To place it at any other pixel column, the game keeps a second copy of the same bitmap pre-shifted by a few pixels, and picks whichever copy lines up with the object's actual screen position. `doc_shift_select`, derived from the object's x-coordinate in `draw_object_perspective_entrypt()` (`$930E`), selects `data` or `shifted` for exactly this reason — narrow bitmaps (where sub-byte error is most visible) tend to have genuinely different `data`/`shifted` arrays, while wider ones often reuse the same pointer for both.
+`data` and `shifted` solve a different problem: the ZX Spectrum's screen memory is addressed one byte per eight pixels, so a sprite can only be blitted directly at byte-aligned x-positions. To place it at any other pixel column, the game keeps a second copy of the same bitmap pre-shifted by a few pixels, and picks whichever copy lines up with the object's actual screen position. `doc.shift_select`, derived from the object's x-coordinate in `draw_object_perspective_entrypt()` (`$930E`), selects `data` or `shifted` for exactly this reason — narrow bitmaps (where sub-byte error is most visible) tend to have genuinely different `data`/`shifted` arrays, while wider ones often reuse the same pointer for both.
 
 ## Drawing pipeline
 
@@ -93,15 +93,15 @@ This is the shared perspective table: eight animation frames (the road's scroll 
 
 ### Stacking bands
 
-Each band tracks a running column total, `C_total`, which is the combined width of all bands drawn so far in this object. That value is negated into `doc_col_pos` to clip the band's left edge against the screen. Because the next band starts exactly where the last one's bitmap ended, the bands stack with no gap between them, forming one continuous composite sprite.
+Each band tracks a running column total, `C_total`, which is the combined width of all bands drawn so far in this object. That value is negated into `doc.col_pos` to clip the band's left edge against the screen. Because the next band starts exactly where the last one's bitmap ended, the bands stack with no gap between them, forming one continuous composite sprite.
 
 ## Callback dispatch
 
 Two function-pointer fields drive the actual pixel copying: `SM_91CD_callback` and `SM_9244_callback`. `FIXED` bands call `SM_91CD_callback`; percentage bands call `SM_9244_callback`. Keeping these behind function pointers means the loop in `draw_stretchy_object_common()` does not need to know how a band is actually rendered — it just calls whichever callback the band's type selects.
 
-- **`SM_91CD_callback`** (fixed bands) leads to `plot_sprite()` or `plot_sprite_flipped()`, which copy bitmap rows from source to back-buffer one row at a time, working backwards through the buffer as they go. Masked bitmaps are combined with an AND mask; which of `data` or `shifted` is read is decided by `doc_shift_select`, based on the object's horizontal sub-byte position.
+- **`SM_91CD_callback`** (fixed bands) leads to `plot_sprite()` or `plot_sprite_flipped()`, which copy bitmap rows from source to back-buffer one row at a time, working backwards through the buffer as they go. Masked bitmaps are combined with an AND mask; which of `data` or `shifted` is read is decided by `doc.shift_select`, based on the object's horizontal sub-byte position.
 
-- **`SM_9244_callback`** (percentage bands, `doc_plot_mode == 2`) does a two-phase draw: it draws fixed-width top and bottom edges of the band first, then repeats the middle row of the bitmap down through the required scaled height, wrapping its source pointer back to the start of the middle bitmap after each pass. This is how a single small bitmap can fill a band whose height changes every frame.
+- **`SM_9244_callback`** (percentage bands, `doc.plot_mode == 2`) does a two-phase draw: it draws fixed-width top and bottom edges of the band first, then repeats the middle row of the bitmap down through the required scaled height, wrapping its source pointer back to the start of the middle bitmap after each pass. This is how a single small bitmap can fill a band whose height changes every frame.
 
 ```
 draw_stretchy_object_left()          [$916C]

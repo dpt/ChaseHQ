@@ -35,7 +35,7 @@ Reads 20 curvature bytes from the road buffer. Accumulates them through `inward_
 
 ### `scroll_horizon`
 
-Advances `dr_horizon_x_scroll` (0–19 cycles) and updates the vertical incline state, so the backdrop tiles at the correct speed.
+Advances `dr.horizon_x_scroll` (0–19 cycles) and updates the vertical incline state, so the backdrop tiles at the correct speed.
 
 ---
 
@@ -50,11 +50,11 @@ Reads the lanes byte for the current slot to determine road configuration (2-lan
 3. Fills those zones using fall-through `switch` statements emulating the Z80 SP-push trick: each case writes one word (2 bytes) and falls into the next, so entering at `case N` writes exactly `15-N` words. This fills the screen right-to-left in one pass without looping.
    - Verge: filled with an alternating `_X_X_X_X` / `________` pattern that toggles per scanline pair to produce road kerb stripes.
    - Road surface: filled with zero (blank tarmac).
-4. Overlays road edge markings and lane dashes by AND-OR masking from small prebuilt bitmaps in the `$E8xx`/`$ECxx` tables. The edge thickness thins with distance via a self-modifying counter (`dr_edge_thickness`, $C6D8).
+4. Overlays road edge markings and lane dashes by AND-OR masking from small prebuilt bitmaps in the `$E8xx`/`$ECxx` tables. The edge thickness thins with distance via a self-modifying counter (`dr.edge_thickness`, $C6D8).
 
 ### At the horizon transition
 
-- Fills the backdrop using either the raw stage bitmap or the nibble-pre-shifted copy (selected by whether `dr_horizon_x_scroll` is odd or even), with a jump-table cutting into a fixed 21-byte copy loop to apply the scroll offset.
+- Fills the backdrop using either the raw stage bitmap or the nibble-pre-shifted copy (selected by whether `dr.horizon_x_scroll` is odd or even), with a jump-table cutting into a fixed 21-byte copy loop to apply the scroll offset.
 - Fills sky rows above the backdrop with zero (or `$FFFF` all-white in a tunnel).
 
 ---

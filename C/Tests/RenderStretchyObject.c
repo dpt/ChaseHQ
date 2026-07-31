@@ -7,7 +7,7 @@
  * running the SDL front-end or the game loop.
  *
  * Reuses the same fake-Spectrum + state setup pattern as TestDrawRoad.c so
- * that height_table / xpos_road_centre are populated with real numbers from
+ * that height_table / xpos.centre are populated with real numbers from
  * a real stage, rather than hand-crafted arrays (see docs/stretchy-objects.md
  * on why IYheight/IXxpos must point into a real chqstate_t).
  *
@@ -83,7 +83,7 @@ static void speccy_init(void)
   g_speccy.screen.height = SCREEN_HEIGHT;
 }
 
-/* Build a state with real, populated height_table / xpos_road_centre for
+/* Build a state with real, populated height_table / xpos.centre for
  * the given stage — no hand-crafted geometry. */
 static chqstate_t *make_state(int stage)
 {
@@ -107,7 +107,7 @@ static chqstate_t *make_state(int stage)
 
 /*
  * Reproduce draw_scene_objects' index arithmetic (Main.c:3819-3880):
- * IXtable_ea00 starts at &xpos_road_centre[88] and is incremented once after
+ * IXtable_ea00 starts at &xpos.centre[88] and is incremented once after
  * the right-hand call and again after the left-hand call, so iteration i's
  * right-hand entry is at 88+2i and its left-hand entry is at 89+2i — not
  * 88+i, whichever side is being rendered.
@@ -119,7 +119,7 @@ static int xpos_index(int row, const char *side)
 
 /* Pick the first row (0..19) satisfying the same "object present" gate
  * draw_scene_objects checks at Main.c:3933 before drawing: the high byte
- * of the s16 xpos_road_centre entry for this row must be zero. Returns -1
+ * of the s16 xpos.centre entry for this row must be zero. Returns -1
  * if none qualify. */
 static int pick_row(const chqstate_t *state, const char *side)
 {
@@ -127,7 +127,7 @@ static int pick_row(const chqstate_t *state, const char *side)
   const u8 *high_byte;
 
   for (row = 0; row <= 19; row++) {
-    high_byte = (const u8 *)&state->xpos_road_centre[xpos_index(row, side)];
+    high_byte = (const u8 *)&state->xpos.centre[xpos_index(row, side)];
     if (high_byte[1] == 0)
       return row;
   }
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
   /* Biterations counts down from 20 (nearest row) to 1 (farthest); row 0 is
    * the first iteration, so Biterations = 20 - row (Main.c:3821-3880). */
   obj->handler(state, 20 - row, obj->arg,
-              &state->xpos_road_centre[xpos_index(row, side)],
+              &state->xpos.centre[xpos_index(row, side)],
               &state->height_table[20 - row]);
 
   {

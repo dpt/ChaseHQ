@@ -46,7 +46,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 **Symptoms and fixes:**
 
-- **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr_neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. (`c8251ba`)
+- **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr.neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. (`c8251ba`)
 - **SM field type truncation:** `ahc_road_pos_b` declared `u8` but the SM instruction at `$B3A3` (`LD DE,$01D8`) is 16-bit; storing 472 truncated to 216. Fix: declare `u16`. Check whether the SM instruction loads a register pair or a single register/byte. (`bc1e1cb`)
 - **`ahc_road_pos_a`/`ahc_road_pos_b` not initialised:** default `LD DE` operands (72, 472) left at 0 by calloc, clamping road_pos incorrectly on frame one. (`bc1e1cb`)
 - **`road_buffer_offset` not reset in `set_up_stage`:** stale pointer into the previous stage's buffer. (`dfdaf8b`)
@@ -95,7 +95,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 **Bugs:**
 
 - `build_curve_table`: IX position was overwritten rather than accumulated, producing curvature indices of 127 into a 96-entry table. Fix: `IXl = (current_offset + 0x40 + curvature_A) & 0xFF`. (`241b3da`)
-- `draw_stretchy_object_common` (`$9237`, `LD A,(HL); DEC HL; DEC HL`): C had `doc_rows_2nd = width_bytes - 2` instead of stepping the pointer. For a 2-byte-wide masked bitmap this gave `doc_rows_2nd = 0`, looping `plot_masked_sprite` past the end of the bitmap array (ASan overflow). Fix: `doc_rows_2nd = *HLptr; HLptr -= 2;`. (`dd973cb`)
+- `draw_stretchy_object_common` (`$9237`, `LD A,(HL); DEC HL; DEC HL`): C had `doc.rows_2nd = width_bytes - 2` instead of stepping the pointer. For a 2-byte-wide masked bitmap this gave `doc.rows_2nd = 0`, looping `plot_masked_sprite` past the end of the bitmap array (ASan overflow). Fix: `doc.rows_2nd = *HLptr; HLptr -= 2;`. (`dd973cb`)
 
 **Rule:** When the Z80 loads a value then adjusts the pointer, model it as `value = *ptr; ptr ±= N;` — never fold the adjustment into the value.
 
@@ -262,7 +262,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 **Bugs:**
 
-- `update_road_level`: `if (Ay_offset) { /* jump setup */ }` where the Z80 was `JR NZ,$B970` (skip setup if `mhc_y_offset != 0`) — the launch code ran only when the car was already airborne. Fix: `if (!Ay_offset) { … }`.
+- `update_road_level`: `if (Ay_offset) { /* jump setup */ }` where the Z80 was `JR NZ,$B970` (skip setup if `mhc.y_offset != 0`) — the launch code ran only when the car was already airborne. Fix: `if (!Ay_offset) { … }`.
 - `scroll_horizon` (`$B8A5–$B8A6`, `AND A; RET Z`): `if (Adiff) return` returned exactly when scrolling was due, making the function a no-op. Fix: `if (!Adiff) return;`.
 - Three-way ladder collapsed to two-way — `layout_road` fork-side choice (`$BA7A–$BA88`): `DEC D; JP M,right; JP NZ,left; <D==1: E<12 test>`. The C handled only the `D==1` case and defaulted everything else to the right fork, but the Z80 takes the *left* fork for `D−1` in 1..0x7F. Every exit of a branch ladder needs its own C arm; do not fold the middle exits into the default. (`f47f822`)
 
@@ -302,7 +302,7 @@ after_second:
 
 Translating this as a loop creates an infinite loop when the first call's row-count is 0.
 
-**Bug:** `draw_object_clipped` (`$9404–$941D`): a `for(;;)` translation never terminated when `doc_rows_2nd == 0` (e.g. a 2-byte-wide bitmap), hanging `draw_scene_objects` on narrow stretchy segments. Fix: two straight-line call sites with an `if` guard over the first.
+**Bug:** `draw_object_clipped` (`$9404–$941D`): a `for(;;)` translation never terminated when `doc.rows_2nd == 0` (e.g. a 2-byte-wide bitmap), hanging `draw_scene_objects` on narrow stretchy segments. Fix: two straight-line call sites with an `if` guard over the first.
 
 **Rule:** `CALL; JP M/P,skip_target; CALL` is two operations with a conditional skip, never a loop. Before writing a `Conv: NOT a loop` comment, grep the skool for every `JP`/`JR`/`DJNZ` targeting the block — one back-edge (e.g. `$9417 JP $9404` in the same function) makes it a genuine loop regardless of how sequential it looks.
 
@@ -427,7 +427,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Bugs (`draw_tunnel`, `$C21F–$C2E1`, commit `e0cf3a9`):**
 
 - `$C221 JR <D>` with `D = 22` (the `dt_max_fill` case) lands at `$C239` — midway into the *second* PUSH chain. The row is one combined 15-push (30-byte) fill from the original SP, and crucially the skipped instructions include `$C233 SUB C` and the second `LD SP,HL`, so the later `$C248 ADD A,C` nets `L += C` instead of restoring L. The C treated `D = 22` as "first fill empty" followed by a normal second fill — drawing little or nothing on exactly the widest rows of the tunnel mouth.
-- The second-phase loop (`$C287`) and far-wall loop (`$C2C1`) look structurally identical to the first loop but contain **no jump table at all**: 15 unconditional `PUSH`es, a full-width fill every row. The C copied the first loop's `dt_fill_start_b` gating into both, drawing partial bands (or nothing when the stored index was 16).
+- The second-phase loop (`$C287`) and far-wall loop (`$C2C1`) look structurally identical to the first loop but contain **no jump table at all**: 15 unconditional `PUSH`es, a full-width fill every row. The C copied the first loop's `dt.fill_start_b` gating into both, drawing partial bands (or nothing when the stored index was 16).
 
 **Rule:** For every value the code can store into a jump-table `JR` operand, compute the landing address by hand and read what actually executes from there — including which set-up instructions between chains get skipped. When several fill loops sit side by side, check each one for the presence or absence of its own jump table rather than assuming they share the first loop's shape.
 

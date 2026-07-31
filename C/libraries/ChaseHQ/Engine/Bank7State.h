@@ -103,7 +103,7 @@ struct chq_bank7_state {
   // (Bank7Data.c), played by es_playdrum_2/es_playdrum_1 (Bank7.c). Mutable
   // because playdrum_go's RLC rotates each sample byte in place during
   // playback, matching the same pattern chqstate_t uses for its own
-  // drum1/drum2 (State.h).
+  // music.drum1/music.drum2 (State.h).
   u8           es_drum2[94];
   u8           es_drum1[160];
 };

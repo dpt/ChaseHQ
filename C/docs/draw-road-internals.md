@@ -31,12 +31,12 @@ headings below as labels.
 
 Initialises state fields used throughout the entire descent:
 
-- `dr_edge_thickness = 3` — controls how many scanline pairs each edge/lane thickness level covers before thinning with distance.
+- `dr.edge_thickness = 3` — controls how many scanline pairs each edge/lane thickness level covers before thinning with distance.
 - `IYheightptr` — points to `height_table[1]`, the first valid height entry.
 - `Ccounter = 96 - height_table[1]` — number of scanlines to draw before the first height-table transition.
-- Decodes the `ROADBUF_LANES_OFFSET` pointer parity into `dr_initial_stripe_state` and `carry_stripe`, which selects the starting kerb stripe phase:
-  - `carry_stripe` set → thick lane markings (`dr_stripe_table_offset = $D0`, `dr_edge_graphic_offset = 16`), chequerboard verge fill.
-  - `carry_stripe` clear → narrow/no markings (`dr_stripe_table_offset = $00`, `dr_edge_graphic_offset = 48`), blank verge fill.
+- Decodes the `ROADBUF_LANES_OFFSET` pointer parity into `dr.initial_stripe_state` and `carry_stripe`, which selects the starting kerb stripe phase:
+  - `carry_stripe` set → thick lane markings (`dr.stripe_table_offset = $D0`, `dr.edge_graphic_offset = 16`), chequerboard verge fill.
+  - `carry_stripe` clear → narrow/no markings (`dr.stripe_table_offset = $00`, `dr.edge_graphic_offset = 48`), blank verge fill.
 - Sets `callback_sel = CB_FOUR_LANE` (default, overridden by scene-change).
 - Enters the segment `for (;;)` loop at the `dr_read_lanes` section.
 
@@ -57,9 +57,9 @@ The byte is decoded as follows — bit positions refer to the byte _after_ an SL
 | bit 6 set, bit 7 set, bit 5 set | forked road | `draw_forked_road` (helper), then `return` |
 | bit 6 set, bit 7 set, bit 5 clear | dirt track | `callback_sel = CB_FOUR_LANE`, `goto dr_dispatch` |
 
-For normal roads, `dr_left_table_hi_{1,2}` and `dr_right_table_hi_{1,2}` are set to the `$E8xx`–`$ECxx` xpos table pages, and `dr_neg_lane_count` is set to −2 or −3 (the number of interior lane-dividers to draw).
+For normal roads, `dr_left_table_hi_{1,2}` and `dr_right_table_hi_{1,2}` are set to the `$E8xx`–`$ECxx` xpos table pages, and `dr.neg_lane_count` is set to −2 or −3 (the number of interior lane-dividers to draw).
 
-For tunnels, the fill pattern is forced to `0xFF` and `dr_in_tunnel` is set. Transition flags (`dt_tunnel_visible`, `dt_tunnel_distance`) are written when the entry or exit row is within the current draw range.
+For tunnels, the fill pattern is forced to `0xFF` and `dr.in_tunnel` is set. Transition flags (`dt.tunnel_visible`, `dt.tunnel_distance`) are written when the entry or exit row is within the current draw range.
 
 ---
 
@@ -67,7 +67,7 @@ For tunnels, the fill pattern is forced to `0xFF` and `dr_in_tunnel` is set. Tra
 
 Used when the road has no left-edge taper (`left_offset is 0`).
 
-Sets left/right table high bytes to the widest span (`$E8`/`$EC`) and `dr_neg_lane_count = -4` (four interior lines). Sets `callback_sel = CB_DISPATCH` and falls into `dr_dispatch`.
+Sets left/right table high bytes to the widest span (`$E8`/`$EC`) and `dr.neg_lane_count = -4` (four interior lines). Sets `callback_sel = CB_DISPATCH` and falls into `dr_dispatch`.
 
 ---
 
@@ -112,9 +112,9 @@ The main per-scanline rendering function for filled (kerb-stripe) scanlines.
 2. Converts each xpos into a stripe width (0–15, in 2-byte units):
    - If xpos byte is non-zero: clamp to 0 (negative = off-screen left) or 15 (positive = off-screen right).
    - If xpos byte is zero: read the previous byte, extract bits [5:3] as a raw width, right-rotate, and clamp at 15.
-3. Computes `dr_road_width` = 15 − right_stripe_width + left_stripe_width (the blank tarmac span between the two verges).
+3. Computes `dr.road_width` = 15 − right_stripe_width + left_stripe_width (the blank tarmac span between the two verges).
 4. Rotates `Adash_fill_pattern` left by 1 (alternating the chequerboard phase each scanline).
-5. Fills right verge: `memset` of `(15 - dr_right_stripe_width) * 2` bytes with the fill pattern.
+5. Fills right verge: `memset` of `(15 - dr.right_stripe_width) * 2` bytes with the fill pattern.
 6. Fills road surface: `memset` of the tarmac span with zero.
 7. Falls through to `dr_fill_left_stripe` to fill the left verge and draw the edge/lane overlays.
 
@@ -134,11 +134,11 @@ Fills the left verge, then overlays road edge markings and lane dashes.
    off the end of `backbuffer[]`) whenever the column offset is 0xFF.
 2. **Left outer edge** ($C643) — looks up the left xpos (from
    `dr_left_table_hi_1` page). Builds a pointer into `edge_markings[]` using
-   `((xpos & 7) << 2) + dr_edge_graphic_offset` as the low byte within the
+   `((xpos & 7) << 2) + dr.edge_graphic_offset` as the low byte within the
    `$E4xx`page. Applies an AND-OR mask (two bytes: mask then colour) at the pixel column computed from`(xpos >> 3) & 31`.
-3. **Interior lane dashes** ($C667) — loops `dr_neg_lane_count` times
-   (−4 to −1), advancing through the `$E8xx`–`$ECxx`xpos table pages. For each non-zero entry, builds a pointer into`edge_markings[]`using`((xpos & 7) << 1) + dr_stripe_table_offset` and writes two bytes without masking (plain tarmac surface, no AND step).
-4. **Right outer edge** ($C68A) — mirrors the left edge using `dr_right_table_hi_1` and `dr_right_edge_offset` (= `dr_edge_graphic_offset + 1`, so that the right edge's mask/colour bytes are offset by one slot within the edge marking data).
+3. **Interior lane dashes** ($C667) — loops `dr.neg_lane_count` times
+   (−4 to −1), advancing through the `$E8xx`–`$ECxx`xpos table pages. For each non-zero entry, builds a pointer into`edge_markings[]`using`((xpos & 7) << 1) + dr.stripe_table_offset` and writes two bytes without masking (plain tarmac surface, no AND step).
+4. **Right outer edge** ($C68A) — mirrors the left edge using `dr_right_table_hi_1` and `dr.right_edge_offset` (= `dr.edge_graphic_offset + 1`, so that the right edge's mask/colour bytes are offset by one slot within the edge marking data).
 5. **Inner scanline loop** ($C6AD) — decrements `Ccounter`. If still positive, `goto`s back to the advance section chosen by `fill_sel` (`dr_advance_filled` / `dr_advance_unfilled`) to draw the next scanline. Only when `Ccounter` reaches zero does execution fall into the height-check block below.
 
 ---
@@ -151,8 +151,8 @@ Runs once per height-table entry, after Ccounter scanlines have been drawn.
 
 Toggles stripe phase and edge thickness each time it is reached (each height-table step):
 
-- `dr_initial_stripe_state ^= 1`: every other step flips the kerb phase (`dr_fill_pattern ^= 0x55`, `dr_edge_graphic_offset ^= 0x20`).
-- `dr_edge_thickness` counts down from 3 (or 5 when reset). When it hits zero, `dr_stripe_xor_base` advances by `$10` (shifting the edge graphic to a thinner variant) and `dr_edge_thickness` resets to 5. This is how the road markings appear to thin with distance.
+- `dr.initial_stripe_state ^= 1`: every other step flips the kerb phase (`dr.fill_pattern ^= 0x55`, `dr.edge_graphic_offset ^= 0x20`).
+- `dr.edge_thickness` counts down from 3 (or 5 when reset). When it hits zero, `dr.stripe_xor_base` advances by `$10` (shifting the edge graphic to a thinner variant) and `dr.edge_thickness` resets to 5. This is how the road markings appear to thin with distance.
 
 ### Height comparison ($C703)
 
@@ -174,9 +174,9 @@ When decreasing: computes the combined delta over the next two height entries. I
 
 Called when the road has risen to the horizon (large uphill delta or `dr_increasing` with diff ≥ 80).
 
-1. Computes the number of sky rows from the backbuffer pointer nibble and the horizon level, clamped to `dr_sky_rows`.
-2. Selects the backdrop source (even/odd `dr_horizon_x_scroll` → different pre-shifted copy) and the horizontal scroll offset via a jump-table cut into a 21-byte LDI chain.
-3. Copies `dr_sky_rows` rows of backdrop data to the ZX screen destination.
+1. Computes the number of sky rows from the backbuffer pointer nibble and the horizon level, clamped to `dr.sky_rows`.
+2. Selects the backdrop source (even/odd `dr.horizon_x_scroll` → different pre-shifted copy) and the horizontal scroll offset via a jump-table cut into a 21-byte LDI chain.
+3. Copies `dr.sky_rows` rows of backdrop data to the ZX screen destination.
 4. Fills remaining rows above the backdrop with `0x00` (open sky) or `0xFF` (tunnel ceiling).
 
 ---

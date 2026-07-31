@@ -39,7 +39,7 @@ void chq_test_layout_road(chqstate_t *state);
 void chq_test_exit_fork(chqstate_t *state);
 
 /** Run advance_hazards in isolation (advances and depth-sorts all active
- *  hazard slots into the draw list at xpos_road_centre_left). */
+ *  hazard slots into the draw list at xpos.centre_left). */
 void chq_test_advance_hazards(chqstate_t *state);
 
 /** Return the largest right/left-side object byte visible to

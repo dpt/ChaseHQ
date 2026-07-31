@@ -56,7 +56,7 @@ The asymmetry is in the original binary, not a porting slip: `$BA95` jumps the c
 
 ## Ramming the perp again while already spinning shortens the crash
 
-A crash ends when the hero car's speed decays below `ahc_crash_speed_threshold`, which `scenery_hit` (`$A4B8`) sets to min(cap, speed at impact) — so a fast crash spins longer. But `scenery_hit` returns immediately if you are already crashed, while its caller, `perp_behaviour` (`$A637`), keeps going and adds 40 to the threshold anyway (`$A7A8`). Every extra impact during a spin therefore raises the bar the speed has to fall under, ending the spin sooner. The cap itself is also softer when boosting (230 rather than 200), so a crash taken under turbo recovers faster than the same crash taken without.
+A crash ends when the hero car's speed decays below `ahc.crash_speed_threshold`, which `scenery_hit` (`$A4B8`) sets to min(cap, speed at impact) — so a fast crash spins longer. But `scenery_hit` returns immediately if you are already crashed, while its caller, `perp_behaviour` (`$A637`), keeps going and adds 40 to the threshold anyway (`$A7A8`). Every extra impact during a spin therefore raises the bar the speed has to fall under, ending the spin sooner. The cap itself is also softer when boosting (230 rather than 200), so a crash taken under turbo recovers faster than the same crash taken without.
 
 ## Continuing a stage cuts your smash bonuses to a tenth
 
