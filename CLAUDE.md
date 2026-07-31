@@ -10,7 +10,7 @@ This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by Oc
 
 ### Stage data converter
 
-`Speccy/scripts/convert_stage.py` turns a bank skool file into a C stage data
+`C/scripts/convert_stage.py` turns a bank skool file into a C stage data
 skeleton. See `C/docs/convert-stage.md` for full usage, options and what
 requires manual completion afterwards. The `convert_stages` CMake target in
 `C/CMakeLists.txt` drives it for stages 2-5.
@@ -23,10 +23,10 @@ stage data by hand.
 
 ### Road map text format
 
-`Speccy/scripts/map_compile.py` compiles a `.map` text table (one row per slice
+`C/scripts/map_compile.py` compiles a `.map` text table (one row per slice
 of road, the six map streams as columns) to C map arrays, and decompiles
 committed `Stage*Data.c` arrays back to that table. See
-`C/docs/map-text-format.md`; `C/docs/maps/stage1.map` is the worked example.
+`C/docs/map-text-format.md`; `C/maps/stage1.map` is the worked example.
 It writes a fragment to stdout for hand-pasting and has no CMake target.
 
 ### Disassembly (Speccy/ directory)
@@ -146,7 +146,7 @@ Rules:
 - The macros are plain integer constants, so they are equally valid in mask,
   attribute and non-graphics tables. Only use them where the byte really is a
   pixel row; elsewhere they mislead.
-- `Speccy/scripts/convert_stage.py` emits these names automatically when it
+- `C/scripts/convert_stage.py` emits these names automatically when it
   converts a bank skool file (see `C/docs/convert-stage.md`).
 
 ### Variable naming in Z80 translations

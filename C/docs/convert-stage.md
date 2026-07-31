@@ -1,6 +1,6 @@
 # convert_stage.py
 
-`convert_stage.py` (`Speccy/scripts/`) converts a Chase H.Q. skool file to a C stage data skeleton for one stage. It is the starting point for every stage data file beyond stage 1 (which is hand-crafted).
+`convert_stage.py` (`C/scripts/`) converts a Chase H.Q. skool file to a C stage data skeleton for one stage. It is the starting point for every stage data file beyond stage 1 (which is hand-crafted).
 
 > **The output is a skeleton, not a build product.** It compiles, but the committed `Stage{2-5}Data.c` files contain hand-work the script cannot reproduce — decoded `overhead_span_t` tables, resolved helicopter pointers, named `STAGE{N}_MAP_*_ADDR` macros, a Doxygen prologue on every table. Regenerating over a committed file discards all of it and reintroduces the `/* TODO */` placeholders. Use this to scaffold a _new_ stage; to change an existing one, edit the committed `.c` by hand. See [What requires manual completion](#what-requires-manual-completion).
 
@@ -27,22 +27,22 @@ The CMake `convert_stages` target (`cmake --build <dir> --target convert_stages`
 | --- | --- | --- |
 | `--obj-names A,B,...` | `NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,OBJ4,...` | Names for all object type indices 0–15 |
 
-Per-stage invocations (also encoded in `CMakeLists.txt`):
+Per-stage invocations (also encoded in `CMakeLists.txt`), run from the repository root:
 
 ```bash
-python3 convert_stage.py ChaseHQ-128K-bank-1.skool 2 \
+python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-1.skool 2 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8 \
     > C/libraries/ChaseHQ/Data/Stage2Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-6.skool 3 \
+python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-6.skool 3 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7 \
     > C/libraries/ChaseHQ/Data/Stage3Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-6.skool 4 \
+python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-6.skool 4 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT \
     > C/libraries/ChaseHQ/Data/Stage4Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-7.skool 5 \
+python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-7.skool 5 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE \
     > C/libraries/ChaseHQ/Data/Stage5Data.c
 ```

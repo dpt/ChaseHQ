@@ -1,17 +1,17 @@
 # The `.map` stage road format
 
-`Speccy/scripts/map_compile.py` compiles a line-based `.map` text file into the C map arrays used by `C/libraries/ChaseHQ/Data/Stage{1-6}Data.c`, and decompiles those arrays back into `.map` text.
+`C/scripts/map_compile.py` compiles a line-based `.map` text file into the C map arrays used by `C/libraries/ChaseHQ/Data/Stage{1-6}Data.c`, and decompiles those arrays back into `.map` text.
 
 ```bash
-# From Speccy/scripts/
-python3 map_compile.py decompile ../../C/libraries/ChaseHQ/Data/Stage1Data.c > stage1.map
-python3 map_compile.py compile   stage1.map > fragment.c
+# From C/scripts/
+python3 map_compile.py decompile ../libraries/ChaseHQ/Data/Stage1Data.c > ../maps/stage1.map
+python3 map_compile.py compile   ../maps/stage1.map > fragment.c
 python3 map_compile.py --selftest
 ```
 
 `compile` writes a C _fragment_ to stdout — `#define`s, six arrays per section and the goto-table rows. Paste it into the stage file by hand. Like `convert_stage.py`, this script never edits committed data in place, and it has no CMake target for the same reason `convert_stages` is documented as destructive.
 
-`C/docs/maps/stage1.map` is the committed worked example.
+`C/maps/stage1.map` is the committed worked example.
 
 ## Why the format exists
 

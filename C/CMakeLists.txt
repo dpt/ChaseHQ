@@ -151,7 +151,7 @@ endif()
 # running this discards it. Scaffold a new stage with it; edit an existing one
 # by hand. See docs/convert-stage.md.
 
-set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../Speccy/scripts/convert_stage.py)
+set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/convert_stage.py)
 set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/../Speccy)
 set(DATA_DIR       ${CMAKE_SOURCE_DIR}/libraries/ChaseHQ/Data)
 

@@ -45,7 +45,7 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-SCRIPT = os.path.join(ROOT, "Speccy", "scripts", "convert_stage.py")
+SCRIPT = os.path.join(HERE, "convert_stage.py")
 SKOOL = os.path.join(ROOT, "Speccy")
 DATA_DIR = os.path.join(ROOT, "C", "libraries", "ChaseHQ", "Data")
 STAGES_H = os.path.join(DATA_DIR, "Stages.h")

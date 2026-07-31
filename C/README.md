@@ -103,4 +103,4 @@ The C is a model of a Z80 program, written to be read. Locals are named after th
 
 ## Stage data
 
-Stage data is extracted from the disassembly rather than typed in by hand: `../Speccy/scripts/convert_stage.py` turns a bank skool file into a C stage data skeleton, though not always successfully. See `docs/convert-stage.md` for usage and what still needs completing by hand afterwards.
+Stage data is extracted from the disassembly rather than typed in by hand: `scripts/convert_stage.py` turns a bank skool file into a C stage data skeleton, though not always successfully. See `docs/convert-stage.md` for usage and what still needs completing by hand afterwards.
