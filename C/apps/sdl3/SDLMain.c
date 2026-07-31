@@ -1277,6 +1277,14 @@ int main(int argc, char *argv[])
   while (!state.quit)
     chq_sdl_main_loop(&state);
 
+  // Stop the audio device before anything else. chq_stop only signals the
+  // game thread, which longjmps out mid-frame and leaves the AY holding
+  // whatever tone the tune was playing; without this the callback keeps
+  // sounding that tone for the whole shutdown wait below. Pause before
+  // clear, or the callback refills between the two.
+  SDL_PauseAudioStreamDevice(state.audio_stream);
+  SDL_ClearAudioStream(state.audio_stream);
+
   chq_stop(state.game);
 
 #ifdef CHQ_GRACEFUL_SHUTDOWN
