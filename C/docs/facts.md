@@ -16,7 +16,7 @@ Taito called it "turbo" because in 1988 "turbo" was the glamour word (turbo Ferr
 
 The briefing screen is a police radio scanner, not a dashboard, and the two seven-segment bars on it are signal-strength meters: green cells for signal, red for noise.
 
-They are not measuring anything. `animate_meters` (`$860F`) calls the random-number generator once per bar each frame and uses only the sign of the result: negative steps the level down by one, positive steps it up by one, clamped to 0–7. There is no underlying signal value the bar is displaying — the displayed level *is* a random walk. `am_set_attrs` (`$8646`) then paints the green/red split for whatever level the walk has reached. Both bars run the same code independently, so they drift out of phase and the panel looks like live radio traffic for the cost of two random bytes a frame.
+They are not measuring anything. `animate_meters` (`$860F`) calls the random-number generator once per bar each frame and uses only the sign of the result: negative steps the level down by one, positive steps it up by one, clamped to 0–7. There is no underlying signal value the bar is displaying — the displayed level _is_ a random walk. `am_set_attrs` (`$8646`) then paints the green/red split for whatever level the walk has reached. Both bars run the same code independently, so they drift out of phase and the panel looks like live radio traffic for the cost of two random bytes a frame.
 
 ## The Z80 has no multiply instruction, so Chase H.Q. built one from three shifts
 
@@ -52,7 +52,7 @@ The asymmetry is in the original binary, not a porting slip: `$BA95` jumps the c
 
 ## Bonuses containing an interior zero print wrong
 
-`add_bonus` (`$9CD6`) formats a six-digit packed-BCD bonus into a string via its digit-printing helper `bonus_digit` (`$9CFC`), which suppresses leading and trailing zeros. The zero-suppression walks the digits and terminates the chain on the first non-zero-to-zero transition — which means a bonus with a zero *inside* it, such as 50,500, is not rendered correctly. The score itself is added properly; only the on-screen figure is mangled. Original bug, faithfully preserved in the port.
+`add_bonus` (`$9CD6`) formats a six-digit packed-BCD bonus into a string via its digit-printing helper `bonus_digit` (`$9CFC`), which suppresses leading and trailing zeros. The zero-suppression walks the digits and terminates the chain on the first non-zero-to-zero transition — which means a bonus with a zero _inside_ it, such as 50,500, is not rendered correctly. The score itself is added properly; only the on-screen figure is mangled. Original bug, faithfully preserved in the port.
 
 ## Ramming the perp again while already spinning shortens the crash
 

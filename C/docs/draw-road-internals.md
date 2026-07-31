@@ -4,26 +4,13 @@ This document traces the road render starting from `draw_road` ($C452). For the 
 
 ## Structure (C port)
 
-The Z80 `draw_road` routine ($C452–$C8BD) is one routine built from
-self-modified `JP` loops. The C port is a single `draw_road` function that
-mirrors it: the sections named below (`dr_read_lanes`, `dr_dispatch`,
-`dr_fill`, `dr_fill_left_stripe`, …) are **labelled blocks inside that one
-function**, kept in Z80 address order, not separate functions. Read the
-headings below as labels.
+The Z80 `draw_road` routine ($C452–$C8BD) is one routine built from self-modified `JP` loops. The C port is a single `draw_road` function that mirrors it: the sections named below (`dr_read_lanes`, `dr_dispatch`, `dr_fill`, `dr_fill_left_stripe`, …) are **labelled blocks inside that one function**, kept in Z80 address order, not separate functions. Read the headings below as labels.
 
-- The **outer segment loop** ($C4AD…$C797) is a `for (;;)`: each iteration
-  renders one road segment, then the height-check either `continue`s to the
-  next segment or `return`s at the horizon.
-- The **inner scanline loop** ($C6AD) and the **height-check** ($C6B0–$C79A)
-  stay as `goto` between labels — the Z80 has two scanline entry points
-  (filled/unfilled) that don't nest into a single structured loop without
-  reordering blocks, so source order is preserved and they remain `goto`.
-- The two Z80 self-modified operands are modelled as local `enum` selectors:
-  `callback_sel` (`CB_FOUR_LANE` | `CB_DISPATCH`, was the $C4B2 `CALL`) and
+- The **outer segment loop** ($C4AD…$C797) is a `for (;;)`: each iteration renders one road segment, then the height-check either `continue`s to the next segment or `return`s at the horizon.
+- The **inner scanline loop** ($C6AD) and the **height-check** ($C6B0–$C79A) stay as `goto` between labels — the Z80 has two scanline entry points (filled/unfilled) that don't nest into a single structured loop without reordering blocks, so source order is preserved and they remain `goto`.
+- The two Z80 self-modified operands are modelled as local `enum` selectors: `callback_sel` (`CB_FOUR_LANE` | `CB_DISPATCH`, was the $C4B2 `CALL`) and
   `fill_sel` (`FILL_FILLED` | `FILL_UNFILLED`, was the $C6AD `JP NZ`).
-- `draw_road_lanes_change` ($C2E7), `draw_forked_road` ($C8E3) and
-  `dr_start_backdrop_fill` ($C79A) remain **separate helper functions** called
-  from the loop.
+- `draw_road_lanes_change` ($C2E7), `draw_forked_road` ($C8E3) and `dr_start_backdrop_fill` ($C79A) remain **separate helper functions** called from the loop.
 
 ---
 
@@ -126,12 +113,8 @@ Fills the left verge, then overlays road edge markings and lane dashes.
 
 1. **Left verge fill** — `memset` of `(15 - jump_index) * 2` bytes with the fill pattern, starting at `SPoutput`.
 
-   Each two-byte edge/lane write below is `INC E` in the Z80: the low byte
-   of the backbuffer column wraps at 0xFF with no carry into the high byte
-   (row). The C port must recompute the second byte's address via
-   `ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF))`, not a
-   raw pointer increment — a plain `ptr++` runs past the row boundary (and
-   off the end of `backbuffer[]`) whenever the column offset is 0xFF.
+   Each two-byte edge/lane write below is `INC E` in the Z80: the low byte of the backbuffer column wraps at 0xFF with no carry into the high byte (row). The C port must recompute the second byte's address via `ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF))`, not a raw pointer increment — a plain `ptr++` runs past the row boundary (and off the end of `backbuffer[]`) whenever the column offset is 0xFF.
+
 2. **Left outer edge** ($C643) — looks up the left xpos (from
    `dr_left_table_hi_1` page). Builds a pointer into `edge_markings[]` using
    `((xpos & 7) << 2) + dr.edge_graphic_offset` as the low byte within the
@@ -183,8 +166,7 @@ Called when the road has risen to the horizon (large uphill delta or `dr_increas
 
 ## Summary diagram
 
-Single `draw_road` function; every `dr_*` name is a label in Z80 address order.
-`(fall)` = fall through to the next label; `[helper]` = a separate function.
+Single `draw_road` function; every `dr_*` name is a label in Z80 address order. `(fall)` = fall through to the next label; `[helper]` = a separate function.
 
 ```
 draw_road:

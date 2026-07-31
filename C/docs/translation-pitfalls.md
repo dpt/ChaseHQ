@@ -26,15 +26,15 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 **Root cause:** Z80 reuses A (and other registers) for different logical values within one function; the C port names locals after the register, so the same name can silently mean different things at different points. Two shapes:
 
 - **Overwrite before use:** a later instruction clobbers the register before an earlier comparison (that should read the old value) executes.
-- **`LD A,reg` swap-in:** the Z80 deliberately loads an *old* value into A right before a computation, even though a newer value is also in scope — easy to use the newer one by mistake since the C port just reads variable names, not instruction timing.
+- **`LD A,reg` swap-in:** the Z80 deliberately loads an _old_ value into A right before a computation, even though a newer value is also in scope — easy to use the newer one by mistake since the C port just reads variable names, not instruction timing.
 
 **Bugs:**
 
 - `dr_increasing` checked `if (A < 0x50)` but `A` had been overwritten by an xpos table read (always < 0x50), so the backdrop branch never fired and `draw_road` looped forever.
 - `rm_cycle_buffer_offset`: the HEIGHT section was copied from the CURVATURE section without updating the escape-byte check (`if (Amapcurvebyte == 0)` instead of `if (Aheight_byte == 0)`), stalling `road_height_ptr` and corrupting the perspective table. (`f8241bf`)
-- `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), saves A to `$E34D`, then does `LD A,E` at `$BD67` so the rest of the block operates on the *previous* delta. The C port kept using `A` (current delta) throughout, using the wrong frame's data whenever the block fired. Fix: after the save, switch to `E` for all subsequent computation — compute the sign-extension byte from `E` before shifting it.
+- `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), saves A to `$E34D`, then does `LD A,E` at `$BD67` so the rest of the block operates on the _previous_ delta. The C port kept using `A` (current delta) throughout, using the wrong frame's data whenever the block fired. Fix: after the save, switch to `E` for all subsequent computation — compute the sign-extension byte from `E` before shifting it.
 
-**Fix:** Give each logical value its own named variable (`Aheight_diff`, not just `A`), and reference it everywhere the register is still logically that value. After copy-pasting a parallel block, grep every variable name and confirm it's right for the new context. When the Z80 does `LD A,reg` at the start of a block, identify which logical value (usually the *old* one) the block actually needs.
+**Fix:** Give each logical value its own named variable (`Aheight_diff`, not just `A`), and reference it everywhere the register is still logically that value. After copy-pasting a parallel block, grep every variable name and confirm it's right for the new context. When the Z80 does `LD A,reg` at the start of a block, identify which logical value (usually the _old_ one) the block actually needs.
 
 **Commits:** `8071d1f`, `f8241bf`, fix ds_attributes A-vs-E bug
 
@@ -59,14 +59,14 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 ## 4. Pointer arithmetic: direction and carry logic
 
-**Root cause:** Z80 PUSH decrements SP; the ZX Spectrum screen layout means "previous scanline" involves non-obvious D:E arithmetic. `SUB $20` subtracts 32; `JR NC` skips the D adjustment on *no* carry. C translations routinely invert the sign or condition.
+**Root cause:** Z80 PUSH decrements SP; the ZX Spectrum screen layout means "previous scanline" involves non-obvious D:E arithmetic. `SUB $20` subtracts 32; `JR NC` skips the D adjustment on _no_ carry. C translations routinely invert the sign or condition.
 
 **Bugs (all in `dr_rollover_filled`/`unfilled`, `de88b6f`/`8449d0f`):**
 
 - `LO_ADD +32` should be `LO_ADD -32` (Z80 `SUB $20`).
 - `D += 16` condition inverted: Z80 adds 16 on no-carry; C added it on the carry branch.
 - `dr_rollover_unfilled`: `HI_ADD` missing entirely — the `dr_write_scanline_unfilled` call was accidentally inside a brace-less `if`.
-- Read-before-decrement: Z80 `DEC D; LD A,D` reads D *after* decrement; C read D before, skipping rollover with sentinel D=0x01.
+- Read-before-decrement: Z80 `DEC D; LD A,D` reads D _after_ decrement; C read D before, skipping rollover with sentinel D=0x01.
 - `LO_ADD` macro computed but never assigned back — a pure expression used as a statement (no-op).
 
 ---
@@ -90,7 +90,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 **Root cause:** Two related slips where the C port changes the wrong thing:
 
 - **Accumulate vs. assign:** `ADD A,IXl; LD IXl,A` accumulates into a register across iterations; plain assignment (`IXl = A`) discards the running total.
-- **Pointer step mistaken for value edit:** `LD A,(HL); DEC HL` (or `DEC HL; DEC HL`) reads the byte at HL into A, unaffected by the following pointer move. `A = *ptr - N` (or `*ptr -= N`) edits the *value* instead of stepping the *pointer*.
+- **Pointer step mistaken for value edit:** `LD A,(HL); DEC HL` (or `DEC HL; DEC HL`) reads the byte at HL into A, unaffected by the following pointer move. `A = *ptr - N` (or `*ptr -= N`) edits the _value_ instead of stepping the _pointer_.
 
 **Bugs:**
 
@@ -225,7 +225,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 - `ADD`/`SUB` overflow does not wrap at 256.
 - `CPL` complements 8 bits; C `~` complements the promoted `int`, so the result is negative (`~0x40` is −65, not `$BF`). Any comparison against a `u8` operand then succeeds unconditionally.
 - The sign-extension idiom `if (val & 0x80) val |= 0xFF00;` only works when `val` is already a negative `int`; for a positive `int` with bit 7 set (e.g. 128) it produces 65408 instead of −128.
-- A loop of the form `INC A; INC A; JP NZ` advances by 2 per iteration and terminates when A *wraps* from 254 to 0. Translating it as `Aiterations += 2; while (--Aiterations > 0)` gives a net step of +1, running roughly double the intended iterations and revisiting each slot.
+- A loop of the form `INC A; INC A; JP NZ` advances by 2 per iteration and terminates when A _wraps_ from 254 to 0. Translating it as `Aiterations += 2; while (--Aiterations > 0)` gives a net step of +1, running roughly double the intended iterations and revisiting each slot.
 
 **Bugs:**
 
@@ -250,7 +250,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 **Fix:** Expand to seven entries: index 0 = `&stage1` (pregame), 1–5 = `&stage1`–`&stage5`, 6 = `&stage5` (end-sequence backstop). Whenever `load_stage` indexes `stages[wanted]`, confirm the maximum reachable `wanted` (including end-of-game transitions) stays within bounds.
 
-**Related bug — table addressed via `base − 2` for 1-indexed access:** `car_jump_params` (`$B059`): the Z80 forms `HL = $B057 + 2A` — the table base minus 2, so that 1-indexed `A` lands on pair `A−1`. The C used `(Adiff * 2) − 1` (always odd, misaligned into the second half of each pair) instead of `(Adiff − 1) * 2`. Additionally `Adiff` can reach 6 (height byte −8 at top speed), where even the Z80 reads the two *code* bytes following the table at `$B063` — the C clamps to 5 (longest jump) with a `Conv:` note. When the skool loads a table pointer at `table ± k`, derive the C index from the computed landing offset, not from the loop variable's face value.
+**Related bug — table addressed via `base − 2` for 1-indexed access:** `car_jump_params` (`$B059`): the Z80 forms `HL = $B057 + 2A` — the table base minus 2, so that 1-indexed `A` lands on pair `A−1`. The C used `(Adiff * 2) − 1` (always odd, misaligned into the second half of each pair) instead of `(Adiff − 1) * 2`. Additionally `Adiff` can reach 6 (height byte −8 at top speed), where even the Z80 reads the two _code_ bytes following the table at `$B063` — the C clamps to 5 (longest jump) with a `Conv:` note. When the skool loads a table pointer at `table ± k`, derive the C index from the computed landing offset, not from the loop variable's face value.
 
 **Same pattern, single-entry stride:** `hazard_handler`'s slide-target lookup (`$A902–$A907`) bases HL at `hazard_pos_speed − 1` before adding the 1-based `current_lane`. The C indexed `hazard_pos_speed[current_lane]` directly — one column right of the intended lane — so a car clamped out of a 3-lane tunnel's rightmost slot still slid toward the 4-lane road's rightmost x-position. Fix: `hazard_pos_speed[current_lane - 1]`. (`2bf6d5e`)
 
@@ -258,13 +258,13 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 ## 18. `JR Z` / `JR NZ` / `RET Z` / `RET NZ` — branch polarity inverted
 
-**Root cause:** `JR NZ,label` means *act if non-zero* — code that runs when the jump is skipped runs on the condition **opposite** to what the mnemonic suggests at a glance.
+**Root cause:** `JR NZ,label` means _act if non-zero_ — code that runs when the jump is skipped runs on the condition **opposite** to what the mnemonic suggests at a glance.
 
 **Bugs:**
 
 - `update_road_level`: `if (Ay_offset) { /* jump setup */ }` where the Z80 was `JR NZ,$B970` (skip setup if `mhc.y_offset != 0`) — the launch code ran only when the car was already airborne. Fix: `if (!Ay_offset) { … }`.
 - `scroll_horizon` (`$B8A5–$B8A6`, `AND A; RET Z`): `if (Adiff) return` returned exactly when scrolling was due, making the function a no-op. Fix: `if (!Adiff) return;`.
-- Three-way ladder collapsed to two-way — `layout_road` fork-side choice (`$BA7A–$BA88`): `DEC D; JP M,right; JP NZ,left; <D==1: E<12 test>`. The C handled only the `D==1` case and defaulted everything else to the right fork, but the Z80 takes the *left* fork for `D−1` in 1..0x7F. Every exit of a branch ladder needs its own C arm; do not fold the middle exits into the default. (`f47f822`)
+- Three-way ladder collapsed to two-way — `layout_road` fork-side choice (`$BA7A–$BA88`): `DEC D; JP M,right; JP NZ,left; <D==1: E<12 test>`. The C handled only the `D==1` case and defaulted everything else to the right fork, but the Z80 takes the _left_ fork for `D−1` in 1..0x7F. Every exit of a branch ladder needs its own C arm; do not fold the middle exits into the default. (`f47f822`)
 
 **Rule:** `JR NZ → skip` = `if (reg == 0)` in C; `JR Z → skip` = `if (reg != 0)`. `RET Z` → `if (value == 0) return`; `RET NZ` → `if (value != 0) return`. The code that falls through should always be the "there is work to do" path.
 
@@ -316,7 +316,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 **Bugs:**
 
-- `ds_attributes` treats `horizon_attribute` as a pointer to the *last byte* of the current row and pushes backward 15 words, filling bytes 1–30. `memset(HLattrs, colour, 30)` (forward) spilled sky colour into the wrong rows. Fix: `memset(HLattrs - 30, colour, 30);`.
+- `ds_attributes` treats `horizon_attribute` as a pointer to the _last byte_ of the current row and pushes backward 15 words, filling bytes 1–30. `memset(HLattrs, colour, 30)` (forward) spilled sky colour into the wrong rows. Fix: `memset(HLattrs - 30, colour, 30);`.
 - `draw_tunnel` enters a fixed 16-slot `PUSH` chain via `JP (IX)` at a variable offset, filling `2*(16-start)` bytes backward. A 16-case switch works but is needless: `n = 16 - start; SPoutput -= n*2; memset(SPoutput, fill, n*2);`.
 - `plot_sprite_even`/`plot_sprite_odd` copy sprite bytes verbatim via `LD SP,HL; POP DE` — a single `memcpy(dst, src, n)` replaces a byte-by-byte switch, valid only because no mask/flip transform is applied.
 
@@ -340,18 +340,18 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 **Root cause:** `EX AF,AF'` swaps both A and F (all flags). Two related mistakes:
 
-1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'`, A receives the banked value and A' receives what was live in A — capture the value banked at the *first* EX immediately there, not at the unbank point (which by then holds an unrelated value).
-2. **Restored flags, not current A, drive the next branch.** `JP P`/`JP M` right after an `EX AF,AF'` tests the flags *restored* by that EX — set by whatever ran before the *original* bank — not any instruction that ran in between, even a `LD A,C` immediately before the branch.
-3. **Wrong variable compared after unbank.** When two values ping-pong through A/A' across several branches, a `CP` after an odd number of swaps tests the *other* value. Count the EX instructions on the actual path to the comparison to know which side is live in A.
+1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'`, A receives the banked value and A' receives what was live in A — capture the value banked at the _first_ EX immediately there, not at the unbank point (which by then holds an unrelated value).
+2. **Restored flags, not current A, drive the next branch.** `JP P`/`JP M` right after an `EX AF,AF'` tests the flags _restored_ by that EX — set by whatever ran before the _original_ bank — not any instruction that ran in between, even a `LD A,C` immediately before the branch.
+3. **Wrong variable compared after unbank.** When two values ping-pong through A/A' across several branches, a `CP` after an odd number of swaps tests the _other_ value. Count the EX instructions on the actual path to the comparison to know which side is live in A.
 
 **Bugs:**
 
 - `scroll_horizon` vertical-scroll loop: the final `EX AF,AF'` hands A (adjusted counter) to `var_a25b` and A' (accumulated delta) to `var_a25a`; the C update assignments were swapped.
-- `draw_dirt_and_stones` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index. The C code captured `saved_A = A` at the *unbank* comment (grabbing the always-non-negative LOD index) instead of the *bank* comment, making the intended `if (saved_A < 0)` branch permanently dead. Fix: assign at the bank point.
+- `draw_dirt_and_stones` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index. The C code captured `saved_A = A` at the _unbank_ comment (grabbing the always-non-negative LOD index) instead of the _bank_ comment, making the intended `if (saved_A < 0)` branch permanently dead. Fix: assign at the bank point.
 - `scroll_horizon` (`$B872`): the restored AF reflects `AND A` at `$B851` (sign of `current_curvature`); the following `LD A,C; JP P,$B879` (LD doesn't affect flags) branches on curvature's sign, not C's. The C code tested `(s8)Aregular < 0` (the always-non-negative table value C), so NEG was never applied and the backdrop could only scroll rightward. Fix: test `(s8)current_curvature < 0`.
-- `draw_road_lanes_change` (`$C357`/`$C3CA`): the distance (IYl) and the masked lane flags shuttle through A/A'. The path to each far-boundary branch passes through `$C2EE` (bank distance), `$C30A`/`$C37E` (unbank distance for `CP $02`) and then a third EX at the branch itself, so the `CP $04` there tests the *masked lane flags*, not the distance. The C tested `A_dist != 4` — the correct `// EX AF,AF'` comments were present but the wrong variable was read — so the angled transition piece only drew when a slot happened to sit at distance 4, and the masked==8/12 classes ran the interpolation with the wrong reference height, smearing the verge across the road. Fix: test `Adash_masked_lane_flags != 4`.
+- `draw_road_lanes_change` (`$C357`/`$C3CA`): the distance (IYl) and the masked lane flags shuttle through A/A'. The path to each far-boundary branch passes through `$C2EE` (bank distance), `$C30A`/`$C37E` (unbank distance for `CP $02`) and then a third EX at the branch itself, so the `CP $04` there tests the _masked lane flags_, not the distance. The C tested `A_dist != 4` — the correct `// EX AF,AF'` comments were present but the wrong variable was read — so the angled transition piece only drew when a slot happened to sit at distance 4, and the masked==8/12 classes ran the interpolation with the wrong reference height, smearing the verge across the road. Fix: test `Adash_masked_lane_flags != 4`.
 
-**Rule:** Assign the shadow variable at the bank-point `EX AF,AF'`, never the unbank point. After a loop-terminating `EX AF,AF'`, trace which variable was live in A vs A' and assign each to the correct field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction before the *original* bank to find what's actually tested.
+**Rule:** Assign the shadow variable at the bank-point `EX AF,AF'`, never the unbank point. After a loop-terminating `EX AF,AF'`, trace which variable was live in A vs A' and assign each to the correct field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction before the _original_ bank to find what's actually tested.
 
 **Commits:** `41de175`, `55be0c6`, `87f70fa`, `a0e41fd`
 
@@ -368,7 +368,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 - `advance_hazard` (`$AE74–$AE79`): `LD (IX+$02),L` / `LD (IX+$03),H` writes `horz_pos`/`horz_clip`, but the C port wrote the low byte into `distance` (offset 1) instead of `horz_pos` (offset 2), clobbering the distance value computed a few lines earlier. Since the depth-sorted draw list matches on `distance`, hazards were computed every frame but never drawn.
 - `advance_hazard` (`$AE74–$AE79`, `check_collision` call): the skool marks the following `check_collision` call's result "ignored", but `check_collision` internally reloads `hazard->horz_pos`/`horz_clip` for its own bounding-box test, and the C port piped that reload through an `HLout` parameter the caller then wrote back into the hazard — pinning every hazard near its stale (often 0) previous position and preventing collisions.
-- **Swapped call arguments:** `check_fork_scenery_collisions(state, DEdash, HLdash)` was called as `(state, HLdash_road_pos_a, DEdash_road_pos_b)`, crossing the pair over so the road clamp bounds `ahc_road_pos_a/b` stored swapped (min 472, max 72) while the fork was active; `animate_hero_car` then latched `road_pos` to alternating ends of the road every frame — a whole-screen two-frame flicker. When parameters are named after registers, check each call site against the *callee's* declared order, which need not match the caller's variable-declaration order. (`1c611dd`)
+- **Swapped call arguments:** `check_fork_scenery_collisions(state, DEdash, HLdash)` was called as `(state, HLdash_road_pos_a, DEdash_road_pos_b)`, crossing the pair over so the road clamp bounds `ahc_road_pos_a/b` stored swapped (min 472, max 72) while the fork was active; `animate_hero_car` then latched `road_pos` to alternating ends of the road every frame — a whole-screen two-frame flicker. When parameters are named after registers, check each call site against the _callee's_ declared order, which need not match the caller's variable-declaration order. (`1c611dd`)
 
 **Fix:** Cross-check the struct's field-offset table against the actual C member written at each site — don't trust the surrounding comment's prose alone; a field written correctly earlier in the function is a red flag if it reappears as an unrelated write target later. Before adding an output parameter, check every call site's skool for what happens to the register immediately after `CALL` returns — "result ignored" means don't invent one, even if the callee's internals happen to touch a same-named register. Match the skool ordering (write struct fields before the call) and drop the parameter once no caller needs it.
 
@@ -378,9 +378,9 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 25. Field decrement timing — write the wrapped result unconditionally, or don't write it at all
 
-**Root cause:** Two opposite mistakes about *when* a Z80 subtraction writes back to the field it reads from:
+**Root cause:** Two opposite mistakes about _when_ a Z80 subtraction writes back to the field it reads from:
 
-- **Gating the store on the pre-subtraction value:** `SUB $01` always executes and stores its wrapped result before branching on carry. Pre-checking `if (value == 0)` and only decrementing a *different* (sibling) field in that branch leaves the original field stuck at 0 forever while the sibling underflows unboundedly every subsequent frame.
+- **Gating the store on the pre-subtraction value:** `SUB $01` always executes and stores its wrapped result before branching on carry. Pre-checking `if (value == 0)` and only decrementing a _different_ (sibling) field in that branch leaves the original field stuck at 0 forever while the sibling underflows unboundedly every subsequent frame.
 - **Storing when the Z80 never does:** `LD A,(addr); DEC A; RET Z` has no matching `LD (addr),A` — the Z80 only tests a transient copy. `if (--state->field == 0) …` performs a write the original never makes, permanently corrupting the field.
 
 **Bugs:**
@@ -398,7 +398,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 - `play_engine_or_turbo_sfx_128k` (`$F2FA–$F301`): the Z80 loads `turbo_sfx_pitch` into A, decrements the copy, and `RET Z`s on it — A is never stored back to `$A23A`; the field is only ever assigned elsewhere (`0x3C`, `0`, `1`). `if (--state->turbo_sfx_pitch == 0) return;` decremented the field itself every frame the turbo effect ran, terminating it on its own 59-frame schedule instead of being driven solely by `ay_noise_pitch`. Fix: test a copy without storing it back: `if ((u8)(state->turbo_sfx_pitch - 1) == 0) return;`.
 
-**Rule:** Never gate a `SUB $01`/`DEC` on the pre-subtraction value to decide *whether* to store — always perform and store the wrap first, using the captured pre-value only for the borrow/zero branch. Conversely, before translating `LD A,(field); DEC A; RET Z/NZ` as `if (--state->field == 0)`, check the skool for a matching store back — no store means test a decremented copy only.
+**Rule:** Never gate a `SUB $01`/`DEC` on the pre-subtraction value to decide _whether_ to store — always perform and store the wrap first, using the captured pre-value only for the borrow/zero branch. Conversely, before translating `LD A,(field); DEC A; RET Z/NZ` as `if (--state->field == 0)`, check the skool for a matching store back — no store means test a decremented copy only.
 
 **Commits:** `507aa97`; (uncommitted — `play_engine_or_turbo_sfx_128k` fix)
 
@@ -414,19 +414,19 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 - **`D_col_pos` sign** (`doc_y_range_nonzero`, `$9359`): `Adash_y_range += D_col_pos` assumed `D_col_pos` is always `<= 0` (true historically, but `draw_hazard_sprites` sets it to `persp_col - hit_wobble`, which is commonly positive for cars/hazards). For positive values the Z80's `BIT 7,D; JR NZ` selects `SUB D`, not `ADD A,D` — the C's unconditional `+=` added instead of subtracted, inflating `y_range` and routing close objects into the wrong re-clip path. Fix: branch on sign explicitly (`D_col_pos < 0 ? += : -=`).
 - **Row count from the wrong shadow register** (`doc_compute_bitmap`, `$93AE–$93B4`): the direct-dispatch plot calls (`plot_sprite`, `plot_sprite_flipped`, `plot_masked_sprite_by_width`, etc.) all read their row count from shadow `B'`, which is banked with `B_clip_rows` at `$93AE`/`$93B1` — never from `B_height`, which is popped back into main `BC` immediately after purely for the back-buffer address calculation. The C port instead used `min(B_height, B_clip_rows)`, correct only when `B_height > B_clip_rows`. Left-side callers (`draw_object_left_width_entrypt`) pass a fixed `B_height = 1`, so the clamp almost never fired and the left/verge path always drew 1 row regardless of the object's real clipped height — explaining both the "grows worse as the object grows" pattern and the left/right asymmetry (the right path's perspective-derived `B_height` happened to exceed `B_clip_rows` far less often, masking the bug there). Fix: `B_height = B_clip_rows;` unconditionally before the dispatch, keeping `Bdash_height` for the address calc — mirroring a fix already present in the neighbouring `doc_masked_rows` loop (`$945C`).
 
-**Rule:** When a user-reported symptom persists after a fix that is individually verified correct against the skool, don't stop — the fix may be real but not sufficient. Audit every candidate computation feeding the same visible effect (source pointer, destination pointer, and row/height *count* can each carry an independent bug) before concluding the investigation. A left/right (or otherwise asymmetric) symptom is a strong clue: look for the one code path that is genuinely side-specific, not just the shared body both sides call into.
+**Rule:** When a user-reported symptom persists after a fix that is individually verified correct against the skool, don't stop — the fix may be real but not sufficient. Audit every candidate computation feeding the same visible effect (source pointer, destination pointer, and row/height _count_ can each carry an independent bug) before concluding the investigation. A left/right (or otherwise asymmetric) symptom is a strong clue: look for the one code path that is genuinely side-specific, not just the shared body both sides call into.
 
 **Commit:** `c41e508`
 
 ---
 
-## 27. Jump-table `JR` offsets can land inside a *later* PUSH chain — compute the landing address, don't assume the range
+## 27. Jump-table `JR` offsets can land inside a _later_ PUSH chain — compute the landing address, don't assume the range
 
-**Root cause:** A self-modified `JR` used as a jump table (`JR <offset>` where the offset selects how many `PUSH`es to skip) is not bounded by its own chain. The Z80 jump target is simply `PC + 2 + offset`, so a large offset sails past the end of the first chain, past any instructions between the chains and into the middle of the *next* one. The translation must be derived from the computed landing address of every offset the code can store, not from the assumption that offset N means "skip N of these 16 pushes".
+**Root cause:** A self-modified `JR` used as a jump table (`JR <offset>` where the offset selects how many `PUSH`es to skip) is not bounded by its own chain. The Z80 jump target is simply `PC + 2 + offset`, so a large offset sails past the end of the first chain, past any instructions between the chains and into the middle of the _next_ one. The translation must be derived from the computed landing address of every offset the code can store, not from the assumption that offset N means "skip N of these 16 pushes".
 
 **Bugs (`draw_tunnel`, `$C21F–$C2E1`, commit `e0cf3a9`):**
 
-- `$C221 JR <D>` with `D = 22` (the `dt_max_fill` case) lands at `$C239` — midway into the *second* PUSH chain. The row is one combined 15-push (30-byte) fill from the original SP, and crucially the skipped instructions include `$C233 SUB C` and the second `LD SP,HL`, so the later `$C248 ADD A,C` nets `L += C` instead of restoring L. The C treated `D = 22` as "first fill empty" followed by a normal second fill — drawing little or nothing on exactly the widest rows of the tunnel mouth.
+- `$C221 JR <D>` with `D = 22` (the `dt_max_fill` case) lands at `$C239` — midway into the _second_ PUSH chain. The row is one combined 15-push (30-byte) fill from the original SP, and crucially the skipped instructions include `$C233 SUB C` and the second `LD SP,HL`, so the later `$C248 ADD A,C` nets `L += C` instead of restoring L. The C treated `D = 22` as "first fill empty" followed by a normal second fill — drawing little or nothing on exactly the widest rows of the tunnel mouth.
 - The second-phase loop (`$C287`) and far-wall loop (`$C2C1`) look structurally identical to the first loop but contain **no jump table at all**: 15 unconditional `PUSH`es, a full-width fill every row. The C copied the first loop's `dt.fill_start_b` gating into both, drawing partial bands (or nothing when the stored index was 16).
 
 **Rule:** For every value the code can store into a jump-table `JR` operand, compute the landing address by hand and read what actually executes from there — including which set-up instructions between chains get skipped. When several fill loops sit side by side, check each one for the presence or absence of its own jump table rather than assuming they share the first loop's shape.
@@ -437,7 +437,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 28. `u16` state field holds a mod-65536 value that goes transiently negative — cast `(s16)` at every load
 
-**Root cause:** Z80 16-bit arithmetic wraps mod 65536 and downstream `SBC`/comparisons interpret the value as signed. A C `u16` field wraps correctly on *store*, but loading it into a wider `int` loses the sign: −6 arrives as 65530. This is the 16-bit sibling of pitfall 16 — there the store-side wrap was missing; here the store is fine and the *load* side is wrong.
+**Root cause:** Z80 16-bit arithmetic wraps mod 65536 and downstream `SBC`/comparisons interpret the value as signed. A C `u16` field wraps correctly on _store_, but loading it into a wider `int` loses the sign: −6 arrives as 65530. This is the 16-bit sibling of pitfall 16 — there the store-side wrap was missing; here the store is fine and the _load_ side is wrong.
 
 **Bugs:**
 
@@ -452,7 +452,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 29. Pointer-to-array parameter indexed directly — steps whole tables, not elements
 
-**Root cause:** Stage bitmap tables are declared `const bitmap_t (*x)[SPRITE_FRAMES]` — pointer to a whole 6-entry table. `x[A]` advances by A *tables* (A×6 entries); the A-th element is `(*x)[A]`. Both forms compile silently because both yield a `const bitmap_t *`.
+**Root cause:** Stage bitmap tables are declared `const bitmap_t (*x)[SPRITE_FRAMES]` — pointer to a whole 6-entry table. `x[A]` advances by A _tables_ (A×6 entries); the A-th element is `(*x)[A]`. Both forms compile silently because both yield a `const bitmap_t *`.
 
 **Bug:** `draw_dirt_and_stones` (`$AA13–$AA19`: `L = A*7; ADD HL,DE` — one 7-byte entry per LOD) used `DEbitmaps[A]`, reading up to 30 entries past `stage1_stones_bitmaps` (ASan: read just past `stage1_map_goto_table`). The garbage bitmap descriptor was handed to the sprite plotter, which scribbled 0xAA dither bytes over `road_buffer` — surfacing as the `draw_scene_objects` `Aobj=170` assert on dirt-track sections. Fix: `HLbitmap = &(*DEbitmaps)[A];`.
 
@@ -468,7 +468,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 **Bug:** On transient rows during dirt/fork transitions the zone positions cross (`pos_EA < pos_E8` etc.). Frame-deterministic corruption: `road_buffer` right-side object slots took the stripe fill byte, tripping the `draw_scene_objects` `Aobj <= 9` assert many frames later when the scan window reached the byte. Fix: compute the widths as `int` and fill with a 15-pair budget — each zone takes at most its non-negative width, right to left, and the lefthand verge takes the remainder, so the scanline is always exactly filled and the cursor cannot escape.
 
-**Rule:** When the Z80's worst-case damage is bounded by *code structure* — fixed-length PUSH chains, page-wrapped `INC L`, self-modified low bytes — plain C arithmetic does not inherit the bound. Reproduce the structural cap explicitly (clamp, mask or skip) and say so in a `Conv:` comment. A wild write that stays inside `chqstate` is invisible to ASan; the road-buffer corruption diagnostics (`rm_prewrite`, `chq_test_max_side_object`) and a bisecting watchpoint found this one.
+**Rule:** When the Z80's worst-case damage is bounded by _code structure_ — fixed-length PUSH chains, page-wrapped `INC L`, self-modified low bytes — plain C arithmetic does not inherit the bound. Reproduce the structural cap explicitly (clamp, mask or skip) and say so in a `Conv:` comment. A wild write that stays inside `chqstate` is invisible to ASan; the road-buffer corruption diagnostics (`rm_prewrite`, `chq_test_max_side_object`) and a bisecting watchpoint found this one.
 
 **Commits:** `e457f6b`, `c5b6347`
 
@@ -476,10 +476,10 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 31. Chained self-modified sections — apply each section's `INC H` at its entry, with its exact count
 
-**Root cause:** `draw_forked_road` walks the xpos pages twice per scanline: the fill boundary reads and the six marking sections both advance H by `INC H` at the *start* of each step, and the counts are irregular. Two opposite miscounts, months apart, in the same function:
+**Root cause:** `draw_forked_road` walks the xpos pages twice per scanline: the fill boundary reads and the six marking sections both advance H by `INC H` at the _start_ of each step, and the counts are irregular. Two opposite miscounts, months apart, in the same function:
 
 - **Fill boundaries** (`$C973–$C9F6`): the Z80 walks `$E8`, `INC H ×2` → `$EA`, `INC H` → `$EB`, `INC H ×2` → `$ED` (left road, median, right road). The C read consecutive `$E8/$E9/$EA/$EC`, shaping every fork scanline from the wrong tables — striped garbage across the whole fork.
-- **Marking sections** (`$CA90/$CAAD/$CACE/$CAF2/$CB0F`): each of sections 2–6 *begins* with a single `INC H`. The C incremented *after* each section, so every section from 2 on read the previous section's table: the lane dash drew at the left-edge position ("dashed centre line where the left edge should be"), the edge markings walked inward one boundary, and `$ED` — the right road's right edge — never received a marking ("no right edge, just ragged fill").
+- **Marking sections** (`$CA90/$CAAD/$CACE/$CAF2/$CB0F`): each of sections 2–6 _begins_ with a single `INC H`. The C incremented _after_ each section, so every section from 2 on read the previous section's table: the lane dash drew at the left-edge position ("dashed centre line where the left edge should be"), the edge markings walked inward one boundary, and `$ED` — the right road's right edge — never received a marking ("no right edge, just ragged fill").
 
 **Rule:** For a chain of self-modified sections, transcribe each section's exact `INC H` count at its entry point and verify every read's H page against the skool's address comments. Do not assume the pages are consecutive (the fill skips two) or that a shared increment can trail the section body (the markings advance before reading).
 
@@ -489,7 +489,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 32. One C variable modelling both banks of a register — shadow-side mutations leak into the main side
 
-**Root cause:** The Z80 banks L via `EXX`: `draw_forked_road`'s zone boundary reads run on a shadow L′ reloaded from main L every scanline pass (`$C96D LD A,L; EXX; LD L,A`), so boundary 4's `DEC L` (`$C9F0`) and the zero-fill path's `LD HL,$0000` (`$C937` — the PUSH fill *value*) touch only the shadow side. The C used a single `L` for both banks.
+**Root cause:** The Z80 banks L via `EXX`: `draw_forked_road`'s zone boundary reads run on a shadow L′ reloaded from main L every scanline pass (`$C96D LD A,L; EXX; LD L,A`), so boundary 4's `DEC L` (`$C9F0`) and the zero-fill path's `LD HL,$0000` (`$C937` — the PUSH fill _value_) touch only the shadow side. The C used a single `L` for both banks.
 
 **Bugs:**
 
@@ -505,7 +505,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 33. `EX AF,AF'` banked in one function, read in another — the shadow value needs a persistent state field, not a local
 
-**Root cause:** Section 23 covers `EX AF,AF'` mistranslated *within* one function's local shadow variable. Here the bank and the unbank are in two different functions, separated in time by a frame's worth of other calls. A Z80 shadow register survives across the whole intervening call chain (nothing else touches AF'); the C port has no equivalent unless the banked byte is stored in `chqstate_t` at the bank site and read back at the unbank site.
+**Root cause:** Section 23 covers `EX AF,AF'` mistranslated _within_ one function's local shadow variable. Here the bank and the unbank are in two different functions, separated in time by a frame's worth of other calls. A Z80 shadow register survives across the whole intervening call chain (nothing else touches AF'); the C port has no equivalent unless the banked byte is stored in `chqstate_t` at the bank site and read back at the unbank site.
 
 **Bug:** `move_hero_car` banks `BCcount_scaled` via `EX AF,AF'` at `$B296`; `scroll_horizon` unbanks it at `$B854` to pick one of four `horizon_table` rows for the curve x-scroll rate. The C treated the unbank site as if the value were unknowable (`Adash = 0`), reaching only two of the four table rows and producing a periodic stutter in curved-road scrolling. Fix: add `state->curvature_scroll_shadow`, written at the bank site and read at the unbank site — after confirming, from the skool, that no call on the path between the two (`spawn_cars`, `cycle_counters`, `play_engine_or_siren_sfx_hook`, `build_height_table`) executes `EX AF,AF'` itself.
 
@@ -517,7 +517,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 34. `INC E` wraps only the low byte — a raw pointer `++` carries into the row and overruns the buffer
 
-**Root cause:** `dr_fill_left_stripe`'s two-byte edge/lane writes are `LD (DE),A` then `INC E; LD (DE),A` in the Z80 — `INC E` wraps 0xFF to 0x00 with no carry into D, so the second byte always lands in the *same* backbuffer row, wrapping to column 0. A C `u8 *ptr; *ptr++ = …; *ptr = …` instead carries into the next row's memory (and, at the last row, off the end of `backbuffer[]`) whenever the column offset is 0xFF.
+**Root cause:** `dr_fill_left_stripe`'s two-byte edge/lane writes are `LD (DE),A` then `INC E; LD (DE),A` in the Z80 — `INC E` wraps 0xFF to 0x00 with no carry into D, so the second byte always lands in the _same_ backbuffer row, wrapping to column 0. A C `u8 *ptr; *ptr++ = …; *ptr = …` instead carries into the next row's memory (and, at the last row, off the end of `backbuffer[]`) whenever the column offset is 0xFF.
 
 **Secondary bug, same commit:** `Ldash_backbuf` (the low byte of `DEdash_backbuf + 31`) was declared `int` instead of `u8`; the unmasked +31 column computation could then exceed 255 and corrupt the high byte (row) when recombined into a backbuffer address, rather than wrapping as the Z80's 8-bit `L'` would.
 
@@ -531,7 +531,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 ## 35. `XOR A; IN A,($FE)` is an any-key read, not a half-row read
 
-**Root cause:** Keyboard reads select half-rows through the *high* byte of the port address. `LD A,$F7; IN A,($FE)` reads port `$F7FE` — the "1"-"5" row only. `XOR A; IN A,($FE)` reads port `$00FE`, which asserts all eight row-select lines at once and returns the AND of every row: any key on the keyboard. The two differ by one instruction and are often a few bytes apart in the same routine.
+**Root cause:** Keyboard reads select half-rows through the _high_ byte of the port address. `LD A,$F7; IN A,($FE)` reads port `$F7FE` — the "1"-"5" row only. `XOR A; IN A,($FE)` reads port `$00FE`, which asserts all eight row-select lines at once and returns the AND of every row: any key on the keyboard. The two differ by one instruction and are often a few bytes apart in the same routine.
 
 **Bug:** All three `XOR A; IN A,($FE)` sites in bank 3 (`$FC00` options-menu exit debounce, `$FECA` redefine-keys pre-capture debounce, `$FF02` test-mode confirmation screen) were translated as `port_KEYBOARD_12345`, copied from the genuine `LD A,$F7` poll at `$FBAE` a few lines above, `Conv:` comment and all. Symptom: the test-mode screen could only be dismissed with keys "1"-"5"; the original accepts any key. The equivalent 48K routines in the main binary (`$ED0B`, `$ED43`) were translated correctly first time — the main skool annotates them `; Read keyboard port $00FE`, whereas the bank-3 skool lines are bare.
 
