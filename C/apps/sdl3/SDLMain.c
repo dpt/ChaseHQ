@@ -56,9 +56,9 @@
 #define SPEED_STEP          (25)
 
 #define VOLUME_DEFAULT     (100) // percent
-#define VOLUME_MIN            (0)
-#define VOLUME_MAX          (100)
-#define VOLUME_STEP          (10)
+#define VOLUME_MIN           (0)
+#define VOLUME_MAX         (100)
+#define VOLUME_STEP         (10)
 
 // Whether the CRT post-effect starts switched on. Both display backends are
 // always built: the plain SDL_Renderer blit (any GPU backend,
@@ -138,13 +138,13 @@ typedef struct
   zxkeyset_t         keys;
   zxkempston_t       kempston;
 
-  int                quit; // bool
-  int                paused; // bool
+  int                quit;      // bool
+  int                paused;    // bool
   int                mode_128k; // bool; 0 selects the 48K entry point
 
-  int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
-  int                speed; // game speed, percent, SPEED_MIN..SPEED_MAX
-  int                volume; // output volume, percent, VOLUME_MIN..VOLUME_MAX
+  int                scale;     // window/render scale, SCALE_MIN..SCALE_MAX
+  int                speed;     // game speed, percent, SPEED_MIN..SPEED_MAX
+  int                volume;    // output volume, percent, VOLUME_MIN..VOLUME_MAX
 
   struct timeval     stamps[MAXSTAMPS];
   int                nstamps;
@@ -197,20 +197,20 @@ typedef struct
   int                dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
   int                show_dirty_overlay; // bool; toggled with F3, off by default
 
-  SDL_Window              *window;
+  SDL_Window        *window;
 
   // Display backend. Exactly one of these is live at a time, selected by
   // crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
   // renderer/texture when not. The other's handles are NULL.
-  int                      crt_enabled; // bool; toggled with F4
-  chq_CRT_shader_t         crt;
-  chq_CRT_params_t         crt_params;
-  int                      crt_param_index; // which crt_params field +/- adjusts
-  SDL_Renderer            *renderer;
-  SDL_Texture             *texture;
+  int                crt_enabled; // bool; toggled with F4
+  chq_CRT_shader_t   crt;
+  chq_CRT_params_t   crt_params;
+  int                crt_param_index; // which crt_params field +/- adjusts
+  SDL_Renderer      *renderer;
+  SDL_Texture       *texture;
 
-  SDL_Thread              *game_thread;
-  SDL_AudioStream         *audio_stream;
+  SDL_Thread        *game_thread;
+  SDL_AudioStream   *audio_stream;
 }
 chq_sdl_state_t;
 
@@ -223,11 +223,11 @@ static void chq_update_window_title(const chq_sdl_state_t *state)
   char title[64];
 
   SDL_snprintf(title, sizeof(title),
-              "Chase H.Q. - Speed: %d%% - Volume: %d%%%s%s",
-              state->speed,
-              state->volume,
-              state->audio_muted ? " (Muted)" : "",
-              state->paused ? " - Paused" : "");
+               "Chase H.Q. - Speed: %d%% - Volume: %d%%%s%s",
+               state->speed,
+               state->volume,
+               state->audio_muted ? " (Muted)" : "",
+               state->paused ? " - Paused" : "");
   SDL_SetWindowTitle(state->window, title);
 }
 
@@ -344,8 +344,6 @@ static void chq_border_handler(int colour, void *opaque)
 {
   NOT_USED(colour);
   NOT_USED(opaque);
-
-  // TODO: Set border colour.
 }
 
 static void chq_audio_queue_push(chq_sdl_state_t       *state,
@@ -355,6 +353,7 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
                                  Uint8                  value)
 {
   SDL_LockMutex(state->audio_queue_mutex);
+
   {
     int next_tail = (state->audio_queue_tail + 1) % AY_QUEUE_CAPACITY;
 
@@ -370,6 +369,7 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
       state->audio_queue_tail = next_tail;
     }
   }
+
   SDL_UnlockMutex(state->audio_queue_mutex);
 }
 
@@ -381,6 +381,7 @@ static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 
   if (on_off == state->speaker_last_level)
     return; // level unchanged: no edge to reproduce
+
   state->speaker_last_level = on_off;
 
   // Map the game's virtual T-state clock onto wall time (see the speaker
@@ -552,7 +553,7 @@ static void chq_audio_callback(void            *opaque,
       beeper = chq_apply_due_audio_events(state);
 
       sample = slopay_chip_get_sample(state->ay);
-      left   = (int16_t) (sample & 0xFFFF)         + beeper;
+      left   = (int16_t) ((sample >>  0) & 0xFFFF) + beeper;
       right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
       if (state->audio_muted)
       {
@@ -584,9 +585,10 @@ static int chq_game_thread(void *opaque)
 }
 
 // CRT shader tuning knobs, cycled with TAB (Shift-TAB steps backwards) and
-// adjusted with PAGEUP/PAGEDOWN
-// (see chq_sdl_key_pressed). offset indexes into chq_CRT_params_t so one
-// table drives all the controls instead of one keybinding per field.
+// adjusted with PAGEUP/PAGEDOWN (see chq_sdl_key_pressed).
+//
+// [offset] indexes into chq_CRT_params_t so one table drives all the controls
+// instead of one keybinding per field.
 typedef struct
 {
   const char *name;
@@ -602,19 +604,19 @@ static const chq_crt_param_desc_t chq_crt_param_descs[] =
   { "curvature",          offsetof(chq_CRT_params_t, curvature),          0.005f, 0.0f, 0.2f },
   { "bloom threshold",    offsetof(chq_CRT_params_t, bloom_threshold),    0.05f,  0.0f, 1.0f },
   { "bloom intensity",    offsetof(chq_CRT_params_t, bloom_intensity),    0.005f, 0.0f, 0.2f },
-  { "brightness",         offsetof(chq_CRT_params_t, brightness),        0.05f,  0.5f, 2.0f },
-  { "contrast",           offsetof(chq_CRT_params_t, contrast),          0.05f,  0.5f, 2.0f },
-  { "saturation",         offsetof(chq_CRT_params_t, saturation),        0.05f,  0.0f, 2.0f },
+  { "brightness",         offsetof(chq_CRT_params_t, brightness),         0.05f,  0.5f, 2.0f },
+  { "contrast",           offsetof(chq_CRT_params_t, contrast),           0.05f,  0.5f, 2.0f },
+  { "saturation",         offsetof(chq_CRT_params_t, saturation),         0.05f,  0.0f, 2.0f },
   { "scanline intensity", offsetof(chq_CRT_params_t, scanline_intensity), 0.05f,  0.0f, 1.0f },
   { "vignette strength",  offsetof(chq_CRT_params_t, vignette_strength),  0.05f,  0.0f, 1.0f },
   { "chroma bleed",       offsetof(chq_CRT_params_t, chroma_bleed),       0.05f,  0.0f, 1.0f },
-  { "glitch",             offsetof(chq_CRT_params_t, glitch),            0.05f,  0.0f, 1.0f },
+  { "glitch",             offsetof(chq_CRT_params_t, glitch),             0.05f,  0.0f, 1.0f },
 };
 
 #define CHQ_CRT_PARAM_COUNT \
   (int) (sizeof(chq_crt_param_descs) / sizeof(chq_crt_param_descs[0]))
 
-static float *chq_crt_param_field(chq_CRT_params_t          *params,
+static float *chq_crt_param_field(chq_CRT_params_t           *params,
                                   const chq_crt_param_desc_t *desc)
 {
   return (float *) ((char *) params + desc->offset);
@@ -799,7 +801,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
         speed = SPEED_DEFAULT;
       else
         speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
-                     SPEED_MIN, SPEED_MAX);
+                      SPEED_MIN, SPEED_MAX);
 
       state->speed = speed;
       chq_update_window_title(state);
@@ -1043,8 +1045,8 @@ static void chq_sdl_main_loop(void *opaque)
     if (state->crt_enabled)
     {
       chq_CRT_shader_render(&state->crt, state->window, state->zx,
-                           x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
-                           &state->crt_params);
+                            x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
+                            &state->crt_params);
       chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
     }
     else
@@ -1079,23 +1081,23 @@ static void chq_sdl_main_loop(void *opaque)
 
 int main(int argc, char *argv[])
 {
-  chq_sdl_state_t         state;
-  zxconfig_t              zxconfig;
-  SDL_Window             *window;
-  int                     arg;
-  int                     mode_128k;
+  chq_sdl_state_t state;
+  zxconfig_t      zxconfig;
+  SDL_Window     *window;
+  int             arg;
+  int             mode_128k;
 
   mode_128k = 1;
 
   for (arg = 1; arg < argc; arg++)
   {
-    if (strcmp(argv[arg], "--48k") == 0)
+    if (strcmp(argv[arg], "-48k") == 0)
       mode_128k = 0;
-    else if (strcmp(argv[arg], "--128k") == 0)
+    else if (strcmp(argv[arg], "-128k") == 0)
       mode_128k = 1;
     else
     {
-      fprintf(stderr, "Usage: %s [--48k | --128k]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-48k | -128k]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -1163,16 +1165,16 @@ int main(int argc, char *argv[])
   // picked once, so both backends have to agree; the CRT one cannot bend, so
   // the plain renderer takes an ABGR8888 texture to suit (see
   // chq_renderer_create).
-  zxconfig.width    = GAMEWIDTH / 8;
-  zxconfig.height   = GAMEHEIGHT / 8;
-  zxconfig.opaque   = &state;
-  zxconfig.draw     = &chq_draw_handler;
-  zxconfig.stamp    = &chq_stamp_handler;
-  zxconfig.sleep    = &chq_sleep_handler;
-  zxconfig.key      = &chq_key_handler;
-  zxconfig.border   = &chq_border_handler;
-  zxconfig.speaker  = &chq_speaker_handler;
-  zxconfig.ay_out   = &chq_ay_out_handler;
+  zxconfig.width      = GAMEWIDTH / 8;
+  zxconfig.height     = GAMEHEIGHT / 8;
+  zxconfig.opaque     = &state;
+  zxconfig.draw       = &chq_draw_handler;
+  zxconfig.stamp      = &chq_stamp_handler;
+  zxconfig.sleep      = &chq_sleep_handler;
+  zxconfig.key        = &chq_key_handler;
+  zxconfig.border     = &chq_border_handler;
+  zxconfig.speaker    = &chq_speaker_handler;
+  zxconfig.ay_out     = &chq_ay_out_handler;
   zxconfig.bgr_pixels = true; /* R in lower byte */
 
   state.zx = zxspectrum_create(&zxconfig);
@@ -1214,9 +1216,9 @@ int main(int argc, char *argv[])
     desired.channels = 2;
 
     state.audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
-                                                    &desired,
-                                                    &chq_audio_callback,
-                                                    &state);
+                                                   &desired,
+                                                   &chq_audio_callback,
+                                                   &state);
     if (state.audio_stream == NULL)
     {
       fprintf(stderr, "Error: SDL_OpenAudioDeviceStream: %s\n", SDL_GetError());

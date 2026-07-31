@@ -28,13 +28,12 @@
 // SDL3/Metal-only caveat.
 typedef struct
 {
-  SDL_GPUDevice           *gpu;
-  SDL_GPUTexture          *texture;         // holds the game's converted screen
-  SDL_GPUTransferBuffer   *transfer_buffer; // staging buffer for the upload above
-  SDL_GPUSampler           *sampler;
-  SDL_GPUGraphicsPipeline  *pipeline;
-}
-chq_CRT_shader_t;
+  SDL_GPUDevice         *gpu;
+  SDL_GPUTexture        *texture;         // holds the game's converted screen
+  SDL_GPUTransferBuffer *transfer_buffer; // staging buffer for the upload above
+  SDL_GPUSampler        *sampler;
+  SDL_GPUGraphicsPipeline *pipeline;
+} chq_CRT_shader_t;
 
 // Tunable shader knobs, pushed to the fragment shader as a uniform each
 // frame. Layout must match the MSL Params struct in CRTShader.c exactly
@@ -52,8 +51,7 @@ typedef struct
   float chroma_bleed;       // PAL horizontal colour smear, 0.0 = off
   float glitch;             // mains flicker + scanline tear, 0.0 = off
   float time;               // seconds since start; filled in by the renderer
-}
-chq_CRT_params_t;
+} chq_CRT_params_t;
 
 // Defaults re-tuned by eye against this game's screen; see CRTShader.c.
 #define CHQ_CRT_PARAMS_DEFAULT \
@@ -63,31 +61,31 @@ chq_CRT_params_t;
  * Creates the GPU device, texture, sampler and shader pipeline. Must be
  * called once, after the SDL window is created.
  *
- * \param[out] shader Shader state to initialise.
- * \param[in]  window SDL window to claim for the GPU device.
- * \param[in]  game_width Width in pixels of the game's screen buffer.
+ * \param[out] shader      Shader state to initialise.
+ * \param[in]  window      SDL window to claim for the GPU device.
+ * \param[in]  game_width  Width in pixels of the game's screen buffer.
  * \param[in]  game_height Height in pixels of the game's screen buffer.
  * \return 1 on success, 0 on failure (an error is printed to stderr).
  */
 int chq_CRT_shader_create(chq_CRT_shader_t *shader,
-                          SDL_Window        *window,
-                          int                game_width,
-                          int                game_height);
+                          SDL_Window       *window,
+                          int               game_width,
+                          int               game_height);
 
 /**
  * Uploads the game's current screen buffer and renders one frame through
  * the CRT shader pipeline.
  *
- * \param[in,out] shader Shader state, as created by chq_CRT_shader_create.
- * \param[in] window SDL window to present into.
- * \param[in] zx Facade instance to claim the screen buffer from.
- * \param[in] x Destination viewport X offset, in pixels.
- * \param[in] y Destination viewport Y offset, in pixels.
- * \param[in] w Destination viewport width, in pixels.
- * \param[in] h Destination viewport height, in pixels.
- * \param[in] game_width Width in pixels of the game's screen buffer.
- * \param[in] game_height Height in pixels of the game's screen buffer.
- * \param[in] params Shader tuning parameters for this frame.
+ * \param[in,out] shader      Shader state, as created by chq_CRT_shader_create.
+ * \param[in]     window      SDL window to present into.
+ * \param[in]     zx          Facade instance to claim the screen buffer from.
+ * \param[in]     x           Destination viewport X offset, in pixels.
+ * \param[in]     y           Destination viewport Y offset, in pixels.
+ * \param[in]     w           Destination viewport width, in pixels.
+ * \param[in]     h           Destination viewport height, in pixels.
+ * \param[in]     game_width  Width in pixels of the game's screen buffer.
+ * \param[in]     game_height Height in pixels of the game's screen buffer.
+ * \param[in]     params      Shader tuning parameters for this frame.
  */
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            SDL_Window             *window,
@@ -104,7 +102,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
  * Releases everything created by chq_CRT_shader_create.
  *
  * \param[in,out] shader Shader state to release.
- * \param[in] window SDL window to release the GPU device from.
+ * \param[in]     window SDL window to release the GPU device from.
  */
 void chq_CRT_shader_destroy(chq_CRT_shader_t *shader, SDL_Window *window);
 

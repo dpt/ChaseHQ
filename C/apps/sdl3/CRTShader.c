@@ -28,17 +28,17 @@
 // Fullscreen triangle is generated in the vertex shader from vertex_id, so
 // no vertex buffer is needed.
 static const char *const chq_crt_vertex_msl =
-  "#include <metal_stdlib>\n"
-  "using namespace metal;\n"
-  "struct VSOut { float4 position [[position]]; float2 uv; };\n"
-  "vertex VSOut vs_main(uint vid [[vertex_id]]) {\n"
-  "  float2 pos[3] = { float2(-1,-1), float2(3,-1), float2(-1,3) };\n"
-  "  float2 uv[3]  = { float2(0,1),  float2(2,1),  float2(0,-1) };\n"
-  "  VSOut out;\n"
-  "  out.position = float4(pos[vid], 0.0, 1.0);\n"
-  "  out.uv = uv[vid];\n"
-  "  return out;\n"
-  "}\n";
+    "#include <metal_stdlib>\n"
+    "using namespace metal;\n"
+    "struct VSOut { float4 position [[position]]; float2 uv; };\n"
+    "vertex VSOut vs_main(uint vid [[vertex_id]]) {\n"
+    "  float2 pos[3] = { float2(-1,-1), float2(3,-1), float2(-1,3) };\n"
+    "  float2 uv[3]  = { float2(0,1),  float2(2,1),  float2(0,-1) };\n"
+    "  VSOut out;\n"
+    "  out.position = float4(pos[vid], 0.0, 1.0);\n"
+    "  out.uv = uv[vid];\n"
+    "  return out;\n"
+    "}\n";
 
 // Port of a reference Three.js/GLSL CRTShader. Its uniforms (curvature,
 // bloom threshold/intensity, brightness/contrast/saturation, scanline
@@ -55,96 +55,106 @@ static const char *const chq_crt_vertex_msl =
 // Must match chq_CRT_params_t in CRTShader.h field-for-field: plain floats,
 // same order, no padding.
 static const char *const chq_crt_fragment_msl =
-  "#include <metal_stdlib>\n"
-  "using namespace metal;\n"
-  "struct VSOut { float4 position [[position]]; float2 uv; };\n"
-  "struct Params {\n"
-  "  float curvature;\n"
-  "  float bloomThreshold;\n"
-  "  float bloomIntensity;\n"
-  "  float brightness;\n"
-  "  float contrast;\n"
-  "  float saturation;\n"
-  "  float scanlineIntensity;\n"
-  "  float vignetteStrength;\n"
-  "  float chromaBleed;\n"
-  "  float glitch;\n"
-  "  float time;\n"
-  "};\n"
-  // Cheap hash: fract(sin(x) * large). Good enough for flicker and tear
-  // seeds; no noise texture or per-frame random uniform needed.
-  "static inline float chq_hash(float x) {\n"
-  "  return fract(sin(x * 12.9898) * 43758.5453);\n"
-  "}\n"
-  "fragment float4 fs_main(VSOut in [[stage_in]],\n"
-  "                        texture2d<float> tex [[texture(0)]],\n"
-  "                        sampler samp [[sampler(0)]],\n"
-  "                        constant Params& p [[buffer(0)]]) {\n"
-  // curveRemapUV: barrel distortion via dot(coord,coord) radial distance.
-  "  float2 coord = in.uv * 2.0 - 1.0;\n"
-  "  coord *= 1.0 + dot(coord, coord) * p.curvature;\n"
-  "  float2 uv = coord * 0.5 + 0.5;\n"
-  // Line tear: seed each source scanline separately, reseed at the Spectrum's
-  // 50Hz frame rate and shift the lines whose seed clears the threshold.
-  // step(0.9) picks roughly one line in ten, and picks a different ten every
-  // frame, so no torn line survives into the next.
-  "  float band = floor(uv.y * float(tex.get_height()));\n"
-  "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
-  "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
-  "          step(0.9, seed);\n"
-  // Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
-  // which otherwise aliases into a jagged edge along the curvature.
-  "  float2 edge = smoothstep(float2(0.0), float2(0.005), uv) *\n"
-  "                smoothstep(float2(0.0), float2(0.005), 1.0 - uv);\n"
-  "  float edgeMask = edge.x * edge.y;\n"
-  "  float2 uvc = clamp(uv, 0.0, 1.0);\n"
-  "  float2 texel = float2(1.0 / 256.0, 1.0 / 192.0);\n"
-  "  float4 c = tex.sample(samp, uvc);\n"
-  // PAL colour bleed: chroma was broadcast at a fraction of the luma
-  // bandwidth, so colour smears horizontally while edges stay sharp. Four
-  // taps to the left with decaying weights - the decoder lags the signal, so
-  // the smear trails to the right. Luma is taken from the centre tap only.
-  "  float3 W = float3(0.299, 0.587, 0.114);\n"
-  "  float3 bleed = c.rgb * 0.4;\n"
-  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, 1.0)).rgb * 0.3;\n"
-  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 2.0, 0.0), 0.0, 1.0)).rgb * 0.2;\n"
-  "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 3.0, 0.0), 0.0, 1.0)).rgb * 0.1;\n"
-  "  float ylum = dot(c.rgb, W);\n"
-  "  float3 chroma = mix(c.rgb - ylum, bleed - dot(bleed, W), p.chromaBleed);\n"
-  "  c.rgb = ylum + chroma;\n"
-  "  c *= edgeMask;\n"
-  // sampleBloom: threshold-gated centre + 4-tap cross sample.
-  "  float3 bloom = float3(0.0);\n"
-  "  float3 bc = c.rgb;\n"
-  "  float3 bn = tex.sample(samp, clamp(uvc + float2(0.0, texel.y), 0.0, 1.0)).rgb;\n"
-  "  float3 bs = tex.sample(samp, clamp(uvc - float2(0.0, texel.y), 0.0, 1.0)).rgb;\n"
-  "  float3 be = tex.sample(samp, clamp(uvc + float2(texel.x, 0.0), 0.0, 1.0)).rgb;\n"
-  "  float3 bw = tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, 1.0)).rgb;\n"
-  "  if (max(bc.r, max(bc.g, bc.b)) > p.bloomThreshold) bloom += bc;\n"
-  "  if (max(bn.r, max(bn.g, bn.b)) > p.bloomThreshold) bloom += bn;\n"
-  "  if (max(bs.r, max(bs.g, bs.b)) > p.bloomThreshold) bloom += bs;\n"
-  "  if (max(be.r, max(be.g, be.b)) > p.bloomThreshold) bloom += be;\n"
-  "  if (max(bw.r, max(bw.g, bw.b)) > p.bloomThreshold) bloom += bw;\n"
-  "  c.rgb += bloom * p.bloomIntensity;\n"
-  // brightness / contrast / saturation.
-  "  c.rgb = (c.rgb - 0.5) * p.contrast + 0.5;\n"
-  // Mains flicker: brightness wobble reseeded 50 times a second, the rate an
-  // unsynchronised 50Hz display would beat at.
-  "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
-  "                        0.06 * p.glitch;\n"
-  "  c.rgb *= p.brightness * flicker;\n"
-  "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
-  "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
-  // scanlines, intensity adapted to local luminance.
-  "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
-  "  float adaptive = mix(p.scanlineIntensity, p.scanlineIntensity * (1.0 - lum), 0.5);\n"
-  "  c.rgb *= 1.0 - adaptive * scan;\n"
-  // vignetteApprox: Chebyshev (max-component) distance falloff.
-  "  float2 d = abs(uv - 0.5) * 2.0;\n"
-  "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * p.vignetteStrength;\n"
-  "  c.rgb *= vignette;\n"
-  "  return c;\n"
-  "}\n";
+    "#include <metal_stdlib>\n"
+    "using namespace metal;\n"
+    "struct VSOut { float4 position [[position]]; float2 uv; };\n"
+    "struct Params {\n"
+    "  float curvature;\n"
+    "  float bloomThreshold;\n"
+    "  float bloomIntensity;\n"
+    "  float brightness;\n"
+    "  float contrast;\n"
+    "  float saturation;\n"
+    "  float scanlineIntensity;\n"
+    "  float vignetteStrength;\n"
+    "  float chromaBleed;\n"
+    "  float glitch;\n"
+    "  float time;\n"
+    "};\n"
+    // Cheap hash: fract(sin(x) * large). Good enough for flicker and tear
+    // seeds; no noise texture or per-frame random uniform needed.
+    "static inline float chq_hash(float x) {\n"
+    "  return fract(sin(x * 12.9898) * 43758.5453);\n"
+    "}\n"
+    "fragment float4 fs_main(VSOut in [[stage_in]],\n"
+    "                        texture2d<float> tex [[texture(0)]],\n"
+    "                        sampler samp [[sampler(0)]],\n"
+    "                        constant Params& p [[buffer(0)]]) {\n"
+    // curveRemapUV: barrel distortion via dot(coord,coord) radial distance.
+    "  float2 coord = in.uv * 2.0 - 1.0;\n"
+    "  coord *= 1.0 + dot(coord, coord) * p.curvature;\n"
+    "  float2 uv = coord * 0.5 + 0.5;\n"
+    // Line tear: seed each source scanline separately, reseed at the Spectrum's
+    // 50Hz frame rate and shift the lines whose seed clears the threshold.
+    // step(0.9) picks roughly one line in ten, and picks a different ten every
+    // frame, so no torn line survives into the next.
+    "  float band = floor(uv.y * float(tex.get_height()));\n"
+    "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
+    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
+    "          step(0.9, seed);\n"
+    // Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
+    // which otherwise aliases into a jagged edge along the curvature.
+    "  float2 edge = smoothstep(float2(0.0), float2(0.005), uv) *\n"
+    "                smoothstep(float2(0.0), float2(0.005), 1.0 - uv);\n"
+    "  float edgeMask = edge.x * edge.y;\n"
+    "  float2 uvc = clamp(uv, 0.0, 1.0);\n"
+    "  float2 texel = float2(1.0 / 256.0, 1.0 / 192.0);\n"
+    "  float4 c = tex.sample(samp, uvc);\n"
+    // PAL colour bleed: chroma was broadcast at a fraction of the luma
+    // bandwidth, so colour smears horizontally while edges stay sharp. Four
+    // taps to the left with decaying weights - the decoder lags the signal, so
+    // the smear trails to the right. Luma is taken from the centre tap only.
+    "  float3 W = float3(0.299, 0.587, 0.114);\n"
+    "  float3 bleed = c.rgb * 0.4;\n"
+    "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, "
+    "1.0)).rgb * 0.3;\n"
+    "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 2.0, 0.0), 0.0, "
+    "1.0)).rgb * 0.2;\n"
+    "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x * 3.0, 0.0), 0.0, "
+    "1.0)).rgb * 0.1;\n"
+    "  float ylum = dot(c.rgb, W);\n"
+    "  float3 chroma = mix(c.rgb - ylum, bleed - dot(bleed, W), "
+    "p.chromaBleed);\n"
+    "  c.rgb = ylum + chroma;\n"
+    "  c *= edgeMask;\n"
+    // sampleBloom: threshold-gated centre + 4-tap cross sample.
+    "  float3 bloom = float3(0.0);\n"
+    "  float3 bc = c.rgb;\n"
+    "  float3 bn = tex.sample(samp, clamp(uvc + float2(0.0, texel.y), 0.0, "
+    "1.0)).rgb;\n"
+    "  float3 bs = tex.sample(samp, clamp(uvc - float2(0.0, texel.y), 0.0, "
+    "1.0)).rgb;\n"
+    "  float3 be = tex.sample(samp, clamp(uvc + float2(texel.x, 0.0), 0.0, "
+    "1.0)).rgb;\n"
+    "  float3 bw = tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, "
+    "1.0)).rgb;\n"
+    "  if (max(bc.r, max(bc.g, bc.b)) > p.bloomThreshold) bloom += bc;\n"
+    "  if (max(bn.r, max(bn.g, bn.b)) > p.bloomThreshold) bloom += bn;\n"
+    "  if (max(bs.r, max(bs.g, bs.b)) > p.bloomThreshold) bloom += bs;\n"
+    "  if (max(be.r, max(be.g, be.b)) > p.bloomThreshold) bloom += be;\n"
+    "  if (max(bw.r, max(bw.g, bw.b)) > p.bloomThreshold) bloom += bw;\n"
+    "  c.rgb += bloom * p.bloomIntensity;\n"
+    // brightness / contrast / saturation.
+    "  c.rgb = (c.rgb - 0.5) * p.contrast + 0.5;\n"
+    // Mains flicker: brightness wobble reseeded 50 times a second, the rate an
+    // unsynchronised 50Hz display would beat at.
+    "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
+    "                        0.06 * p.glitch;\n"
+    "  c.rgb *= p.brightness * flicker;\n"
+    "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
+    "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
+    // scanlines, intensity adapted to local luminance.
+    "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
+    "  float adaptive = mix(p.scanlineIntensity, p.scanlineIntensity * (1.0 - "
+    "lum), 0.5);\n"
+    "  c.rgb *= 1.0 - adaptive * scan;\n"
+    // vignetteApprox: Chebyshev (max-component) distance falloff.
+    "  float2 d = abs(uv - 0.5) * 2.0;\n"
+    "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * "
+    "p.vignetteStrength;\n"
+    "  c.rgb *= vignette;\n"
+    "  return c;\n"
+    "}\n";
 
 int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                           SDL_Window       *window,
@@ -234,10 +244,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   }
 
   memset(&shader_info, 0, sizeof(shader_info));
-  shader_info.code         = (const Uint8 *) chq_crt_fragment_msl;
-  shader_info.code_size    = strlen(chq_crt_fragment_msl);
-  shader_info.entrypoint   = "fs_main";
-  shader_info.format       = SDL_GPU_SHADERFORMAT_MSL;
+  shader_info.code                = (const Uint8 *) chq_crt_fragment_msl;
+  shader_info.code_size           = strlen(chq_crt_fragment_msl);
+  shader_info.entrypoint          = "fs_main";
+  shader_info.format              = SDL_GPU_SHADERFORMAT_MSL;
   shader_info.stage               = SDL_GPU_SHADERSTAGE_FRAGMENT;
   shader_info.num_samplers        = 1;
   shader_info.num_uniform_buffers = 1;
@@ -253,11 +263,11 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   color_target_desc.format = SDL_GetGPUSwapchainTextureFormat(shader->gpu, window);
 
   memset(&pipeline_info, 0, sizeof(pipeline_info));
-  pipeline_info.vertex_shader                          = vertex_shader;
-  pipeline_info.fragment_shader                        = fragment_shader;
-  pipeline_info.primitive_type                         = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-  pipeline_info.target_info.color_target_descriptions  = &color_target_desc;
-  pipeline_info.target_info.num_color_targets          = 1;
+  pipeline_info.vertex_shader                         = vertex_shader;
+  pipeline_info.fragment_shader                       = fragment_shader;
+  pipeline_info.primitive_type                        = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+  pipeline_info.target_info.color_target_descriptions = &color_target_desc;
+  pipeline_info.target_info.num_color_targets         = 1;
 
   shader->pipeline = SDL_CreateGPUGraphicsPipeline(shader->gpu, &pipeline_info);
 
@@ -287,15 +297,15 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            int                     game_height,
                            const chq_CRT_params_t *params)
 {
-  SDL_GPUViewport             viewport;
+  SDL_GPUViewport              viewport;
   uint32_t                    *pixels;
   void                        *mapped;
   SDL_GPUCommandBuffer        *upload_cmdbuf;
   SDL_GPUCopyPass             *copy_pass;
-  SDL_GPUTextureTransferInfo  src;
-  SDL_GPUTextureRegion        dst;
+  SDL_GPUTextureTransferInfo   src;
+  SDL_GPUTextureRegion         dst;
   SDL_GPUTexture              *swapchain_texture;
-  SDL_GPUColorTargetInfo      color_target;
+  SDL_GPUColorTargetInfo       color_target;
   SDL_GPURenderPass           *render_pass;
   SDL_GPUTextureSamplerBinding tex_binding;
   chq_CRT_params_t             frame_params;
@@ -321,8 +331,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   memset(&src, 0, sizeof(src));
   src.transfer_buffer = shader->transfer_buffer;
-  src.pixels_per_row   = game_width;
-  src.rows_per_layer   = game_height;
+  src.pixels_per_row  = game_width;
+  src.rows_per_layer  = game_height;
 
   memset(&dst, 0, sizeof(dst));
   dst.texture = shader->texture;
