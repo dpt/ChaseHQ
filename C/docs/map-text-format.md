@@ -80,7 +80,7 @@ The two that do not are genuine desyncs in the original data, not tool bugs: `st
 | --- | -------------- | --------- | ---------- | ----- | ------ | ---- | ----- |
 |     |                |           |            |       |        |      | split left right |
 | 288 | .144           | H : : : H | .144       | >>    | -      |      |       |
-| 2   | .              | H : : :// | .          | <     | ^^     |      |       |
+| 2   | .              | H : :  // | .          | <     | ^^     |      |       |
 | 30  | B . B .3 B .3  | H : : H   | R .3 R .4  | :     | -      |      | start |
 ```
 
@@ -136,19 +136,19 @@ Pages `$E8..$EC` are the five lane boundaries 0..4, the left rail is `0xE7 + (by
 
 #### Transitions
 
-A lane transition draws its moving rail as a ramp. Because the table reads bottom to top, a rail whose column grows as the car drives on slants `/` and one whose column shrinks slants `\`; the two ramp characters sit on the outer side of the rail's travel, and the rest of the canvas is the state being entered.
+A lane transition draws its moving rail as a ramp. Because the table reads bottom to top, a rail whose column grows as the car drives on slants `/` and one whose column shrinks slants `\`; the two ramp characters sit on the outer side of the rail's travel, and the rest of the canvas is the state being entered. The column the rail leaves is blanked, so a ramp never abuts a divider.
 
 ```
 col:      012345678   macro
 4>3L      H : :  \\   MAP_LANES_4TO3L
 4>3R      //  : : H   MAP_LANES_4TO3R
-3L>4      H : : ://   MAP_LANES_3LTO4
-3R>4      \\: : : H   MAP_LANES_3RTO4
+3L>4      H : :  //   MAP_LANES_3LTO4
+3R>4      \\  : : H   MAP_LANES_3RTO4
 3L>2M     //  : H     MAP_LANES_3LTO2M
 3R>2R       //  : H   MAP_LANES_3RTO2R
 3L>2L     H :  \\     MAP_LANES_3LTO2L
-2L>3L     H : ://     MAP_LANES_2LTO3L
-2R>3R       \\: : H   MAP_LANES_2RTO3R
+2L>3L     H :  //     MAP_LANES_2LTO3L
+2R>3R       \\  : H   MAP_LANES_2RTO3R
 ```
 
 Those nine are the only pairs the engine defines; anything else is an error. `C/docs/lane-transitions-3lto2l-3rto2m.md` plans the missing mirror shape, `3R>2M`. Because the ramps are fiddly to draw by hand, the cell also accepts the transition written out — `4>3R` and so on — the same way it accepts a steady state written as `3R`.

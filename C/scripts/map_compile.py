@@ -206,11 +206,15 @@ def build_transition_canvas(source: str, dest: str) -> str:
     if source_left == dest_left:
         cols[2 * dest_left] = edge
     else:
+        # The column the rail leaves is where the ramp starts, so whatever the
+        # entered state draws there is blanked: a ramp never abuts a divider.
+        cols[2 * source_left] = " "
         outer = 2 * min(source_left, dest_left)
         cols[outer] = cols[outer + 1] = "/" if dest_left > source_left else "\\"
     if source_right == dest_right:
         cols[2 * dest_right] = edge
     else:
+        cols[2 * source_right] = " "
         outer = 2 * max(source_right, dest_right)
         cols[outer - 1] = cols[outer] = "/" if dest_right > source_right else "\\"
     return "".join(cols).rstrip()
