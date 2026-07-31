@@ -33,12 +33,14 @@
 
 /* ----------------------------------------------------------------------- */
 
-/// One 37-byte channel-tracker record used by the 128K bank-3 title-tune
-/// engine ($EC01/$EC26/$EC4B). Offsets read/written by
-/// compute_channel_ay_registers ($EE9E), advance_channel_pattern ($EDD6) and
-/// start_tune ($EB9E) are modelled, along with the phrase-pointer-table
-/// fields read/written by advance_channel_phrase ($F1AE, reached via pattern
-/// command 0x87) -- see that function's prologue for the table format.
+/**
+ * One 37-byte channel-tracker record used by the 128K bank-3 title-tune
+ * engine ($EC01/$EC26/$EC4B). Offsets read/written by
+ * compute_channel_ay_registers ($EE9E), advance_channel_pattern ($EDD6) and
+ * start_tune ($EB9E) are modelled, along with the phrase-pointer-table
+ * fields read/written by advance_channel_phrase ($F1AE, reached via pattern
+ * command 0x87) -- see that function's prologue for the table format.
+ */
 typedef struct title_tune_channel {
   u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
   const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
@@ -73,10 +75,12 @@ typedef struct title_tune_channel {
 }
 title_tune_channel_t;
 
-/// One 9-byte animated-object record used by the 128K bank-3 title screen
-/// ($BB00-$BB4F, 9 records). Populated from a scene table by
-/// title_screen_driver, drawn each frame by ts_animate_frame, and advanced
-/// by object_script_step ($C705).
+/**
+ * One 9-byte animated-object record used by the 128K bank-3 title screen
+ * ($BB00-$BB4F, 9 records). Populated from a scene table by
+ * title_screen_driver, drawn each frame by ts_animate_frame, and advanced
+ * by object_script_step ($C705).
+ */
 struct title_object {
   u8        opcode; // +$00 active movement-mode opcode, or 0 (idle: fetch next script opcode)
   u8        wait;   // +$01 "wait N frames" countdown, also reused as the decel/accel countdown

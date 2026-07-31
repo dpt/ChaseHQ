@@ -43,18 +43,18 @@
 // Conv: The C version uses IDs for strings and blocks rather than inline
 // addresses.
 
-/// Chatter commands
+/** Chatter commands */
 #define CHATTERCMD_RANDOM                   (0xFC) // Followed by three chatterblock indices
 #define CHATTERCMD_PAUSE                    (0xFE) // Followed by a single chatterblock index
 #define CHATTERCMD_STOP                     (0xFF)
 
-/// Chatter characters
+/** Chatter characters */
 #define CHATTERCHR_PILOT                       (0)
 #define CHATTERCHR_NANCY                       (1)
 #define CHATTERCHR_RAYMOND                     (2)
 #define CHATTERCHR_TONY                        (3)
 
-/// Chatter string indices
+/** Chatter string indices */
 #define CHATTERSTR_GIDDY_UP_BOY                (0)
 #define CHATTERSTR_HOLD_ON_MAN                 (1)
 #define CHATTERSTR_THIS_IS_NANCY               (2)
@@ -97,7 +97,7 @@
 #define CHATTERSTR_PERP_DESC_4                (39) // per-stage
 #define CHATTERSTR__LIMIT                     (40)
 
-/// Chatter block indices
+/** Chatter block indices */
 #define CHATTERBLK_START_STAGE                 (0)
 #define CHATTERBLK_TONY_GIDDY_UP               (1)
 #define CHATTERBLK_TONY_HOLD_ON                (2)
@@ -349,9 +349,11 @@ typedef union heli_part_ptr {
   const heli_bitmap_xonly_t *rotor; // entry 5
 } heli_part_ptr_t;
 
-/// Depth Set offset
-/// (7 is original game sizeof(bitmap_t))
-/// M is a bodge factor since the streetlamp values seem to be +2.
+/**
+ * Depth Set offset
+ * (7 is original game sizeof(bitmap_t))
+ * M is a bodge factor since the streetlamp values seem to be +2.
+ */
 #define DEPTHSET_OFFSET(N,M) ((N) * 7 + (M))
 
 #define DEPTHSET_MAX (10)

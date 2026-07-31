@@ -38,73 +38,272 @@ typedef u8 *(plot_sprite_cb_t)(chqstate_t *state,
                                int         DEdash_bitmap_stride,
                                const u8   *HLdash_bitmap_data);
 
-/// A hazard in Chase HQ is something that's on the road. It might be a moving
-/// object like the perp or NPC cars, or a fixed item like a barrier or a
-/// tumbleweed.
+/**
+ * A hazard in Chase H.Q. is something that's on the road. It might be a moving
+ * object like the perp or NPC cars, or a fixed item like a barrier or a
+ * tumbleweed.
+ *
+ * $A188-$A1FF: six slots of 20 bytes each, at $A188, $A19C, $A1B0, $A1C4,
+ * $A1D8 and $A1EC. Slot 0 is always the perp car; spawn_cars and
+ * spawn_hazards allocate from slots 1-5 by scanning for the first with
+ * [used] clear. Field comments give the byte offset within the record,
+ * which is how the Z80 reaches them -- always as (IX+n), never by absolute
+ * address.
+ */
 struct hazard {
-  u8                used;                        // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
-  u8                distance;                    // approach counter (21..0); also reused as road-col low byte during draw
-  u8                horz_pos;                    // horizontal screen position
-  s8                horz_clip;                   // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
-  u8                dist_frac;                   // fixed-point fractional distance; decremented by speed, carry advances distance
-  u8                horz_pos_on_road;            // lane/road position (0..255 across road width)
-  u8                persp_col;                   // perspective-scaled column: (dist_frac * scale) >> 8; used for sprite column and road-edge row lookup
-  s8                hit_timer;                   // hit sequence timer: 0=clear, >0=vehicle hit in progress, <0=perp hit cooldown ($FC=-4, counts to 0)
+  /* +0: Slot allocation flag
+   *
+   * HAZARD_USED ($FF) or HAZARD_UNUSED ($00). The spawn routines scan the
+   * five non-perp slots for the first unused one; update_hazard clears the
+   * flag when the object has passed the camera.
+   */
+  u8                used;
+
+  /* +1: Approach counter, counting 21 down to 0 as the object nears
+   *
+   * Advanced by the whole-units part of [speed] each frame. update_hazard
+   * retires the slot once this reaches 23 and only draws the object below
+   * 20. It doubles as the low byte of the road-buffer column while the
+   * object is being drawn, and perp_behaviour reads the perp's copy as a
+   * road-buffer offset when comparing hazard positions.
+   */
+  u8                distance;
+
+  /* +2: Horizontal screen position, low byte of the computed road X */
+  u8                horz_pos;
+
+  /* +3: Horizontal clip flag, high byte of the computed road X
+   *
+   * 0 means on screen, negative means clipped off the left edge, positive
+   * means clipped off the right. check_collision rejects any hazard whose
+   * clip byte is non-zero, and draw_hazard picks its plot entry point from
+   * the sign.
+   */
+  s8                horz_clip;
+
+  /* +4: Fractional part of the approach distance
+   *
+   * Decremented each frame by the low byte of [speed]; each borrow carries
+   * into [distance]. Also the multiplicand for the perspective column
+   * calculation, so it doubles as the sub-row depth within the current
+   * distance step.
+   */
+  u8                dist_frac;
+
+  /* +5: Position across the road, 0-255 left to right
+   *
+   * Observed values run 5..216. hazard_handler slides this +/-5 a frame
+   * toward the lane position in hazard_pos_speed, which is what makes a
+   * traffic car drift between lanes rather than jump.
+   */
+  u8                horz_pos_on_road;
+
+  /* +6: Perspective-scaled column, ([dist_frac] * height delta) >> 8
+   *
+   * Recomputed each frame by update_hazard. Selects the sprite's column and
+   * the road-edge row the object is drawn against; draw_hazard passes it on
+   * as doc.col_pos after subtracting [hit_wobble].
+   */
+  u8                persp_col;
+
+  /* +7: Hit sequence timer
+   *
+   * Zero when nothing is happening. Positive means a vehicle hit is in
+   * progress. Negative is the perp's post-hit cooldown: perp_behaviour sets
+   * it to $FC (-4) and counts back up to zero, ignoring input meanwhile.
+   */
+  s8                hit_timer;
+
+  /* +8: Collision box width and sprite set for this object
+   *
+   * +8 is the width used for the bounding-box overlap test in
+   * check_collision; +9 is the address of the object's bitmap table (the
+   * skool calls it the LOD). spawn_cars overwrites the bitmaps pointer with
+   * a random vehicle from the stage's table.
+   */
   hittable_t        hittable;
+
+  /* +11: Called once per frame by update_hazard after the object is drawn
+   *
+   * perp_behaviour for the perp car, hazard_handler for traffic and
+   * hazard_hit for barriers and tumbleweeds.
+   *
+   * Conv: the Z80 reaches the handler with JP (HL); the C port calls
+   *       through the function pointer.
+   */
   hazard_handler_t *hit_handler;
-  u16               speed;                       // fixed-point approach rate: high byte = whole distance units/frame added to distance counter; low byte = fractional units/frame subtracted from dist_frac (carry advances distance)
-  u8                hazard_flags;                // 0x80=spawned vehicle; 0xFF=perp car; 1/2=post-hit damage state; bit 7 = is vehicle
-  u8                hit_wobble;                  // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
-  u8                lane_or_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
-  u8                current_lane;                // target lane (counts down to 0 during lane-change animation)
-  u8                inverted;                    // sprite plot mode: 0=normal, 1=inverted
+
+  /* +13: Fixed-point approach rate
+   *
+   * High byte is whole distance units per frame, added to [distance]. Low
+   * byte is fractional units per frame, subtracted from [dist_frac], where
+   * each borrow carries a further unit into [distance]. hazard_hit decays
+   * it by 1/32 a frame while an object wobbles away from a collision.
+   */
+  u16               speed;
+
+  /* +15: What kind of object this is, and how far through a hit it is
+   *
+   * $80 marks a spawned vehicle and $FF the perp car -- bit 7 set means
+   * "is a vehicle", which is how spawn_cars counts the traffic already on
+   * screen. For a static hazard it is the hit state machine instead: 0 is
+   * untouched, 2 is wobbling and 1 is finished.
+   */
+  u8                hazard_flags;
+
+  /* +16: Horizontal wobble offset during a hit
+   *
+   * Indexed out of the wobble_amplitudes table in hazard_hit and subtracted
+   * from [persp_col] as the object is drawn, so a struck barrier shudders
+   * and settles.
+   */
+  u8                hit_wobble;
+
+  /* +17: Lane index, or the perp's distance high byte
+   *
+   * For the perp this is the high byte of [distance]. For a traffic car it
+   * is the lane the object currently occupies, which perp_behaviour compares
+   * against its own [current_lane] to decide whether to swerve. While a
+   * static hazard is being hit it is reused again, as the running index into
+   * wobble_amplitudes.
+   */
+  u8                lane_or_perp_dist_hi;
+
+  /* +18: Target lane, or the wobble countdown
+   *
+   * hazard_handler slides [horz_pos_on_road] toward this lane's position
+   * until the two agree. For a hazard mid-wobble it is instead the frame
+   * countdown; when it reaches zero the effect ends.
+   */
+  u8                current_lane;
+
+  /* +19: Sprite plot mode: 0 normal, 1 inverted
+   *
+   * hazard_hit toggles it every frame of the wobble, flipping the sprite
+   * vertically to fake a barrier tumbling.
+   */
+  u8                inverted;
 };
 
+/**
+ * $A16D-$A187: Counters and on-screen digit caches for the run in progress.
+ * All of it is reset between stages by load_scene.
+ */
 struct session {
-  // $A16D
+  /* $A16D: Object-spawning accumulator, usually 1
+   *
+   * layout_road adds allow_spawning to it each slice and subtracts 2 when it
+   * reaches that; every carry advances fork_distance by 16. Bit 0 also feeds
+   * the horizontal position of the untaken road, so it visibly oscillates
+   * 0/1 while the road forks.
+   */
   u8        spawn_accumulator;
-  // $A16E
+
+  /* $A16E: Frames left before Raymond complains about not moving
+   *
+   * Counts down from 100 and restarts whenever the hero car is stopped. At
+   * zero Raymond says "LET'S GET MOVIN' MAN!" and it reloads with 100.
+   */
   u8        idle_timer;
-  // $A16F
+
+  /* $A16F: Mask ANDed with the player's controls each frame
+   *
+   * USERINPUTFLAGMASK_ALLOW_ALL ($FF) in normal play. Set to Pause+Quit only
+   * once the perp is fully smashed, and to nothing at all while a cut scene
+   * plays, which is how the game locks out steering without a separate flag.
+   */
   u8        user_input_mask;
-  // $A170
+
+  /* $A170: Turbo boosts remaining; RESTART_BOOSTS (3) for a new game */
   u8        turbos;
-  // $A171
+
+  /* $A171: Height of the horizon, accumulated from the road's incline
+   *
+   * scroll_horizon adds the per-slice incline to it each frame, signed by
+   * the direction of travel. Read a byte at a time: the high byte gives the
+   * horizon's row, the low byte its sub-row phase.
+   */
   u16       horizon_level;
-  // $A173
+
+  /* $A173: Frames left while the caught perp is brought to a halt
+   *
+   * Set to 20 when the arrest begins and decremented each frame of the
+   * slow-down.
+   */
   u8        perp_halt_counter;
-  // $A174
+
+  /* $A174: Gear currently shown on the status panel, low or high
+   *
+   * A cache of what was last drawn: the panel is only redrawn when the car's
+   * actual gear differs from this.
+   */
   u8        displayed_gear;
-  // $A175
+
+  /* $A175: Score as currently shown, one digit per byte, least significant
+   * first
+   *
+   * A cache of what is on screen so that unchanged digits are not replotted.
+   */
   u8        score_digits[8];
-  // $A17D
+
+  /* $A17D: Frames left in the current second of the countdown
+   *
+   * Counts down from SUBSECOND_TICKS_PER_SECOND (15); reaching zero
+   * decrements [time_bcd] and reloads.
+   */
   u8        subsecond_ticks;
-  // $A17E
+
+  /* $A17E: Time remaining, packed BCD */
   u8        time_bcd;
-  // $A17F
+
+  /* $A17F: Time remaining as shown, one digit per byte
+   *
+   * The same replot-avoiding cache as [score_digits].
+   */
   u8        time_digits[2];
-  // $A181
+
+  /* $A181: Distance remaining as shown, one digit per byte
+   *
+   * The same replot-avoiding cache as [score_digits].
+   */
   u8        distance_digits[4];
-  // $A185
-  u8        no_objects_flag; // 1 (default) or 2 (don't spawn objects or hazards)
-  // $A186
-  u16       horizon_attribute; // Z80 address
+
+  /* $A185: Alternates object emission between road slices
+   *
+   * layout_road emits the right-side, left-side and hazard object columns
+   * when this is 1 and then sets it to 2; on the next slice it finds 2,
+   * blanks those three columns instead and sets it back to 1. Objects
+   * therefore appear on every other slice of road.
+   */
+  u8        no_objects_flag;
+
+  /* $A186: Z80 address of the last attribute cell on the horizon row
+   *
+   * Byte 31 of the row where sky meets ground, e.g. $59DF. ds_attributes
+   * fills the 30 cells before it and walks the pointer up or down as the
+   * horizon moves -- see the $E34B-$E34D notes in CLAUDE.md.
+   */
+  u16       horizon_attribute;
 };
 
-/// Private state for the 128K bank 3 title-screen / title-tune engine.
-/// Fully defined in Bank3State.h, included only by Bank3.c -- chqstate only
-/// ever sees this as an opaque pointer, so its fields aren't reachable from
-/// any other translation unit.
+/**
+ * Private state for the 128K bank 3 title-screen / title-tune engine.
+ * Fully defined in Bank3State.h, included only by Bank3.c -- chqstate only
+ * ever sees this as an opaque pointer, so its fields aren't reachable from
+ * any other translation unit.
+ */
 struct chq_bank3_state;
 struct chq_bank7_state;
 
-/// Per-frame AY-3-8912 register soft-copy cache, shared by the in-game audio
-/// engine (chqstate::ay_regs) and the 128K bank 3 title-tune engine
-/// (chq_bank3_state::title_ay_regs -- see Bank3State.h). write_audio_registers_128k
-/// (and its title-tune equivalent) walk this struct backwards as raw bytes
-/// from env_fine to chan_a_pitch's low byte, one AY register per byte, so
-/// field order and the absence of padding are correctness-critical -- do not
-/// reorder, insert, or remove fields.
+/**
+ * Per-frame AY-3-8912 register soft-copy cache, shared by the in-game audio
+ * engine (chqstate::ay_regs) and the 128K bank 3 title-tune engine
+ * (chq_bank3_state::title_ay_regs -- see Bank3State.h). write_audio_registers_128k
+ * (and its title-tune equivalent) walk this struct backwards as raw bytes
+ * from env_fine to chan_a_pitch's low byte, one AY register per byte, so
+ * field order and the absence of padding are correctness-critical -- do not
+ * reorder, insert, or remove fields.
+ */
 typedef struct {
   u16       chan_a_pitch;
   u16       chan_b_pitch;
