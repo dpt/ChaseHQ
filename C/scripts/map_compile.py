@@ -132,18 +132,18 @@ HEIGHT_NAME_TO_GLYPH = {name: g for g, name in HEIGHT_GLYPHS.items()}
 # boundaries 0..4, so each lane state is an interval [left, right] over 0..4.
 #
 # The canvas prints rail k at column 2k: edge glyph at the two outer rails,
-# '.' lane divider at each interior rail, space elsewhere.
+# ':' lane divider at each interior rail, space elsewhere.
 
 CANVAS_WIDTH = 9
 
 # name -> (left rail, right rail, edge glyph)
 LANE_GEOMETRY = {
-    "4": (0, 4, ":"),
-    "3L": (0, 3, ":"),
-    "3R": (1, 4, ":"),
-    "2L": (0, 2, ":"),
-    "2M": (1, 3, ":"),
-    "2R": (2, 4, ":"),
+    "4": (0, 4, "H"),
+    "3L": (0, 3, "H"),
+    "3R": (1, 4, "H"),
+    "2L": (0, 2, "H"),
+    "2M": (1, 3, "H"),
+    "2R": (2, 4, "H"),
     "TUNNEL_ENTRY": (0, 3, "#"),
     "TUNNEL_EXIT": (0, 3, "#"),
     "DIRTTRACK": (0, 4, "~"),
@@ -186,7 +186,33 @@ def build_canvas(name: str) -> str:
     cols[2 * left] = edge
     cols[2 * right] = edge
     for rail in range(left + 1, right):
-        cols[2 * rail] = "."
+        cols[2 * rail] = ":"
+    return "".join(cols).rstrip()
+
+
+def build_transition_canvas(source: str, dest: str) -> str:
+    """Render a lane transition as a canvas whose moving rail is a ramp.
+
+    The table reads bottom to top -- the start of the road is the last row --
+    so a rail whose column grows as the car drives on slants '/', and one whose
+    column shrinks slants '\\'. The two ramp characters sit on the outer side of
+    the rail's travel, so '4' -> '3R' (left rail 0 -> 1) draws "//  : : H".
+    """
+    source_left, source_right, _edge = LANE_GEOMETRY[source]
+    dest_left, dest_right, edge = LANE_GEOMETRY[dest]
+    cols = [" "] * CANVAS_WIDTH
+    for rail in range(dest_left + 1, dest_right):
+        cols[2 * rail] = ":"
+    if source_left == dest_left:
+        cols[2 * dest_left] = edge
+    else:
+        outer = 2 * min(source_left, dest_left)
+        cols[outer] = cols[outer + 1] = "/" if dest_left > source_left else "\\"
+    if source_right == dest_right:
+        cols[2 * dest_right] = edge
+    else:
+        outer = 2 * max(source_right, dest_right)
+        cols[outer - 1] = cols[outer] = "/" if dest_right > source_right else "\\"
     return "".join(cols).rstrip()
 
 
@@ -195,6 +221,13 @@ for _n in LANE_GEOMETRY:
     if _n == "TUNNEL_EXIT":
         continue  # shares TUNNEL_ENTRY's canvas
     CANVAS_TO_LANE[build_canvas(_n)] = _n
+
+# canvas -> macro suffix, e.g. "//  : : H" -> "4TO3R"
+TRANSITION_CANVASES = {
+    build_transition_canvas(a, b): macro for (a, b), macro in TRANSITIONS.items()
+}
+TRANSITION_TO_CANVAS = {macro: c for c, macro in TRANSITION_CANVASES.items()}
+assert len(TRANSITION_CANVASES) == len(TRANSITIONS), "transition canvases collide"
 
 # A written-out alternative to the canvas, for hand-editing. The canvas indent
 # distinguishes 3R from 3L and 2M/2R from 2L, and is easy to lose by accident.
@@ -816,8 +849,8 @@ def decompile_section(section: Section, legend: Dict[int, str]) -> List[List[str
 
         lane_val = section.lanes[start]
         lane_name = LANE_VALS.get(lane_val)
-        if lane_name in TRANSITION_TO_TOKEN:
-            road = TRANSITION_TO_TOKEN[lane_name]
+        if lane_name in TRANSITION_TO_CANVAS:
+            road = TRANSITION_TO_CANVAS[lane_name]
         elif lane_name in ("TUNNEL_ENTRY", "TUNNEL_EXIT"):
             road = build_canvas(TUNNEL_NAME)
         elif lane_name in LANE_GEOMETRY:
@@ -858,7 +891,7 @@ def decompile_section(section: Section, legend: Dict[int, str]) -> List[List[str
     return rows
 
 
-HEADERS = ["Cnt", "Left objs", "Road", "Right objs", "Curve", "Height", "Haz", "Loop"]
+HEADERS = ["Dst", "Left objs", "Road", "Right objs", "Curve", "Height", "Haz", "Loop"]
 ROAD_COLUMN = HEADERS.index("Road")
 
 
@@ -886,7 +919,8 @@ def decompile(path: str, allow_desync: bool, warn) -> str:
     prefix = "stage%d_map" % stage_file.stage
     lines = [
         "; Decompiled from %s by map_compile.py." % os.path.basename(path),
-        "; One row is one slice of road. See C/docs/map-text-format.md.",
+        "; One row is one slice of road, read bottom to top: the last row is",
+        "; the start of the stage. See C/docs/map-text-format.md.",
         "; stage: %d" % stage_file.stage,
         "; prefix: %s" % prefix,
     ]
@@ -909,6 +943,9 @@ def decompile(path: str, allow_desync: bool, warn) -> str:
         if section.desynced:
             lines.append("; DESYNC: section '%s' was padded" % section.name)
         all_rows.extend(decompile_section(section, legend))
+    # The table is written last-row-first so the road reads as ASCII art with
+    # the start of the stage at the bottom, the way the player meets it.
+    all_rows.reverse()
     lines.extend(render_table(all_rows))
     return "\n".join(lines) + "\n"
 
@@ -977,7 +1014,7 @@ def parse_map_text(text: str, path: str) -> MapText:
             continue
 
         # The Road cell keeps its leading spaces: the canvas is positional, and
-        # 3R ("  : . . :") differs from 3L (": . . :") only by that indent.
+        # 3R ("  H : : H") differs from 3L ("H : : H") only by that indent.
         # Renderers emit exactly one space of separator padding, so strip that
         # one and no more.
         raw_cells = line.strip("|").split("|")
@@ -993,6 +1030,8 @@ def parse_map_text(text: str, path: str) -> MapText:
         if [c.lower() for c in cells] == [h.lower() for h in HEADERS]:
             continue
         result.rows.append(Row(lineno, cells))
+    # Rows are written bottom-up; everything downstream works in road order.
+    result.rows.reverse()
     return result
 
 
@@ -1113,11 +1152,11 @@ def build_section(compiled: CompiledSection, mapping: MapText, path: str) -> Sec
 
     for row in compiled.rows:
         where = "%s:%d" % (path, row.lineno)
-        cnt_text, lobj, road, robj, curve, height, haz, _loop = row.cells
+        dst_text, lobj, road, robj, curve, height, haz, _loop = row.cells
 
-        count = (int(cnt_text) if cnt_text else 1) * mapping.scale
+        count = (int(dst_text) if dst_text else 1) * mapping.scale
         if count <= 0:
-            raise MapError("%s: Cnt must be positive" % where)
+            raise MapError("%s: Dst must be positive" % where)
         start = len(section.curvature)
 
         curve_name = CURVE_GLYPHS.get(curve or ":")
@@ -1138,7 +1177,10 @@ def build_section(compiled: CompiledSection, mapping: MapText, path: str) -> Sec
 
         canvas = road.rstrip()
         raw = re.fullmatch(r"raw\s+(0[xX][0-9A-Fa-f]+)", canvas)
-        if canvas in TRANSITION_TOKENS:
+        if canvas in TRANSITION_CANVASES:
+            lane_value = LANE_NAME_TO_VAL[TRANSITION_CANVASES[canvas]]
+        elif canvas in TRANSITION_TOKENS:
+            # "4>3R" spelled out, for hand-editing without drawing the ramp.
             lane_value = LANE_NAME_TO_VAL[TRANSITION_TOKENS[canvas]]
         elif raw:
             lane_value = int(raw.group(1), 16)
@@ -1148,12 +1190,20 @@ def build_section(compiled: CompiledSection, mapping: MapText, path: str) -> Sec
             # Spelling the state out ("3R") avoids the canvas indent, which is
             # significant and easy to lose when hand-editing.
             lane_value = LANE_NAME_TO_VAL[LANE_NAME_ALIASES[canvas.strip().upper()]]
-        elif ">" in canvas:
+        elif ">" in canvas or "/" in canvas or "\\" in canvas:
             raise MapError(
                 "%s: no lane transition exists for '%s'.\n"
-                "  Defined transitions: %s\n"
+                "  Defined transitions:\n%s\n"
                 "  See C/docs/lane-transitions-3lto2l-3rto2m.md, which plans "
-                "3L>2L and 3R>2M." % (where, canvas, ", ".join(TRANSITION_TOKENS))
+                "the missing mirror shape 3R>2M."
+                % (
+                    where,
+                    canvas,
+                    "\n".join(
+                        "    %-9s %s" % (TRANSITION_TO_CANVAS[macro], token)
+                        for token, macro in TRANSITION_TOKENS.items()
+                    ),
+                )
             )
         else:
             raise MapError(
@@ -1167,7 +1217,7 @@ def build_section(compiled: CompiledSection, mapping: MapText, path: str) -> Sec
                         for n in LANE_GEOMETRY
                         if n != "TUNNEL_EXIT"
                     ),
-                    ", ".join(TRANSITION_TOKENS),
+                    ", ".join(TRANSITION_CANVASES),
                 )
             )
         section.lanes.extend([lane_value] * count)

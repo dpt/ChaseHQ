@@ -76,13 +76,15 @@ The two that do not are genuine desyncs in the original data, not tool bugs: `st
 ; obj R = TREE
 ; addr start curvature = 0x5EC4
 
-| Cnt | Left objs      | Road      | Right objs | Curve | Height | Haz  | Loop  |
+| Dst | Left objs      | Road      | Right objs | Curve | Height | Haz  | Loop  |
 | --- | -------------- | --------- | ---------- | ----- | ------ | ---- | ----- |
-| 30  | B . B .3 B .3  | : . . :   | R .3 R .4  | :     | :      |      | start |
-| 2   | .              | 3L>4      | .          | <     | :      |      |       |
-| 288 | .144           | : . . . : | .144       | >>    | :      |      |       |
 |     |                |           |            |       |        |      | split left right |
+| 288 | .144           | H : : : H | .144       | >>    | :      |      |       |
+| 2   | .              | H : : :// | .          | <     | :      |      |       |
+| 30  | B . B .3 B .3  | H : : H   | R .3 R .4  | :     | :      |      | start |
 ```
+
+**The table reads bottom to top.** The last row is the start of the stage and the first row is the end of it, so the `Road` column draws the road the way the player meets it: the bottom of the page is nearest, the top is furthest away, and a lane transition slants in the direction the rail actually moves. Everything else — section labels, the running offset, `goto`/`split`/`end` — works in road order, which is the reverse of the file order.
 
 Lines starting with `;` are directives. Lines made only of `|`, `-` and spaces are skipped, as is the column-name header row. Everything else is a table row. Column order is fixed; the header text is decoration.
 
@@ -92,31 +94,31 @@ Lines starting with `;` are directives. Lines made only of `|`, `-` and spaces a
 | --- | --- |
 | `stage: N` | selects the `MAP_OBJ_S{N}_*` macro prefix |
 | `prefix: X` | array and `#define` name prefix, e.g. `stage1_map` |
-| `scale: N` | multiplies every `Cnt` (default 1) |
+| `scale: N` | multiplies every `Dst` (default 1) |
 | `base: 0x....` | first synthetic address for `*_ADDR` defines (default `0xC000`) |
 | `obj C = NAME` | object symbol `C` means `MAP_OBJ_S{N}_NAME`; `.` is reserved for NONE |
 | `addr <label> <stream> = 0x....` | pin a real address instead of synthesising one |
 
 The decompiler emits `addr` lines for every section it reads, so a decompiled file recompiles to the same addresses.
 
-### `Cnt`
+### `Dst`
 
-The row's length in road units, multiplied by `scale`. Blank means 1. A running offset accumulates down the section.
+The distance the row covers, in road units, multiplied by `scale`. Blank means 1. A running offset accumulates along the section — that is, _up_ the page.
 
 ### `Road`
 
-A 9-character canvas. Rail _k_ sits at column _2k_, the outer two rails carry the edge glyph and the interior rails are `.` lane dividers.
+A 9-character canvas. Rail _k_ sits at column _2k_, the outer two rails carry the edge glyph `H` and the interior rails are `:` lane dividers.
 
 ```
 col:      012345678   rails   macro
-4         : . . . :   [0,4]   MAP_LANES_4        (0x00)
-3L        : . . :     [0,3]   MAP_LANES_3L       (0x81)
-3R          : . . :   [1,4]   MAP_LANES_3R       (0x82)
-2L        : . :       [0,2]   MAP_LANES_2L       (0x01)
-2M          : . :     [1,3]   MAP_LANES_2M       (0x02)
-2R            : . :   [2,4]   MAP_LANES_2R       (0x03)
-tunnel    # . . #     [0,3]   MAP_LANES_TUNNEL_* (0x45/0x59)
-dirt      ~ . . . ~   [0,4]   MAP_LANES_DIRTTRACK(0xC1)
+4         H : : : H   [0,4]   MAP_LANES_4        (0x00)
+3L        H : : H     [0,3]   MAP_LANES_3L       (0x81)
+3R          H : : H   [1,4]   MAP_LANES_3R       (0x82)
+2L        H : H       [0,2]   MAP_LANES_2L       (0x01)
+2M          H : H     [1,3]   MAP_LANES_2M       (0x02)
+2R            H : H   [2,4]   MAP_LANES_2R       (0x03)
+tunnel    # : : #     [0,3]   MAP_LANES_TUNNEL_* (0x45/0x59)
+dirt      ~ : : : ~   [0,4]   MAP_LANES_DIRTTRACK(0xC1)
 ```
 
 **The indent is significant** — `3R` is `3L` shifted right by one rail, and they are otherwise identical. Because that is easy to lose when hand-editing, the cell also accepts the state written out: `4`, `3L`, `3R`, `2L`, `2M`, `2R`, `TUNNEL`, `DIRT`. A lane byte with no named macro can be written `raw 0x3D`.
@@ -134,7 +136,22 @@ Pages `$E8..$EC` are the five lane boundaries 0..4, the left rail is `0xE7 + (by
 
 #### Transitions
 
-A lane transition is written out in full: `4>3L`, `4>3R`, `3L>4`, `3R>4`, `3L>2M`, `3R>2R`, `2L>3L`, `2R>3R`. Those eight are the only pairs the engine defines; anything else is an error. `C/docs/lane-transitions-3lto2l-3rto2m.md` plans the two missing mirror shapes, `3L>2L` and `3R>2M`.
+A lane transition draws its moving rail as a ramp. Because the table reads bottom to top, a rail whose column grows as the car drives on slants `/` and one whose column shrinks slants `\`; the two ramp characters sit on the outer side of the rail's travel, and the rest of the canvas is the state being entered.
+
+```
+col:      012345678   macro
+4>3L      H : :  \\   MAP_LANES_4TO3L
+4>3R      //  : : H   MAP_LANES_4TO3R
+3L>4      H : : ://   MAP_LANES_3LTO4
+3R>4      \\: : : H   MAP_LANES_3RTO4
+3L>2M     //  : H     MAP_LANES_3LTO2M
+3R>2R       //  : H   MAP_LANES_3RTO2R
+3L>2L     H :  \\     MAP_LANES_3LTO2L
+2L>3L     H : ://     MAP_LANES_2LTO3L
+2R>3R       \\: : H   MAP_LANES_2RTO3R
+```
+
+Those nine are the only pairs the engine defines; anything else is an error. `C/docs/lane-transitions-3lto2l-3rto2m.md` plans the missing mirror shape, `3R>2M`. Because the ramps are fiddly to draw by hand, the cell also accepts the transition written out — `4>3R` and so on — the same way it accepts a steady state written as `3R`.
 
 Transitions are _not_ inferred from the neighbouring steady states, because the real data rules that out: `stage1_map_loop_lanes` has `MAP_LANES_4TO3R(34)` immediately followed by `MAP_LANES_3RTO4(2)`, so a transition's neighbour is not always a steady state, and a transition is not always 2 units long.
 
