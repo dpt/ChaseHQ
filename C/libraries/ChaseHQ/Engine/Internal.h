@@ -372,6 +372,7 @@ void  update_whole_playfield(chqstate_t *state);
 
 /* Shared with Bank3.c */
 
+void  play_start_noise(chqstate_t *state);
 u8   *z80addrtoscreen(chqstate_t *state, int addr, int left, int right);
 u8   *z80addrtoattrs(chqstate_t *state, int addr, int left, int right);
 u8   *z80addrtobackbuf(chqstate_t *state, int addr);

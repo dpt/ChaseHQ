@@ -175,8 +175,8 @@ static void chq_initialise(chqstate_t *state)
   state->music.pattern_start_ptr = &music_data[1];     // $F112
 
   // Conv: keydefs[] is installed by the options menu ($FBE5). chq_bank3_create
-  // seeds it with the same pristine defaults the Z80 holds at $FFF7, so the
-  // stubbed BANK3_INPUT_SELECTION path still gets the original key layout.
+  // seeds it with the same pristine defaults the Z80 holds at $FFF7, so play
+  // before any menu visit still gets the original key layout.
   state->kempston_flag = 0;
 }
 

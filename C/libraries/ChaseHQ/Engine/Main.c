@@ -990,7 +990,7 @@ static void plot_mini_font_char(
 static void clear_message_line(chqstate_t *state);
 
 static void check_time_up(chqstate_t *state);
-static void play_start_noise(chqstate_t *state);
+/* play_start_noise is shared with Bank3.c -- declared in Internal.h */
 
 static void speed_score(chqstate_t *state);
 
@@ -6643,7 +6643,7 @@ check_restart:
  *
  * Conv: Z80 JP $83C7 is a tail call; C uses a normal call.
  */
-static void play_start_noise(chqstate_t *state)
+void play_start_noise(chqstate_t *state)
 {
   play_speech_hook(state, SAMPLE_START);
 }

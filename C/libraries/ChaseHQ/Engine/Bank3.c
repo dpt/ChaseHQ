@@ -57,6 +57,14 @@
  * bound for a loop the Z80 never exits (see its Conv: note). */
 #define ATTRACT_TUNE_WAIT_FRAMES (0xB4)
 
+/* titlescr_wait_loop / run_title_screen outcomes. TITLESCR_START_GAME and
+ * TITLESCR_ATTRACT are the value the Z80 leaves in A when the title screen
+ * hands back to attract_mode_128k ($F421 AND A / RET Z); TITLESCR_RESTART is
+ * internal to run_title_screen, standing in for the Z80's `JP $C59E`. */
+#define TITLESCR_START_GAME (0) /* credit inserted: leave attract mode entirely */
+#define TITLESCR_ATTRACT    (1) /* tune-4 wait tail: run the attract demo */
+#define TITLESCR_RESTART    (2) /* re-run the title screen with a new scene */
+
 #define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr, 0, 0)
 
@@ -86,7 +94,7 @@ glyph_blit_geometry_t;
 
 /* ----------------------------------------------------------------------- */
 
-static void run_title_screen(chqstate_t *state);
+static u8 run_title_screen(chqstate_t *state);
 static u8 titlescr_wait_loop(chqstate_t *state);
 static void titlescr_credit_inserted(chqstate_t *state);
 static void titlescr_refresh_name_table(chqstate_t *state);
@@ -327,20 +335,17 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  *       state->bank3->title_animation; see titlescr_wait_loop where the "any
  *       key" restart path reseeds it.
  *
- * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
- *       real early-exit path in the Z80. It stays `void`: titlescr_wait_loop's
- *       fire-key branch now calls options_menu_driver's omd_redraw_and_poll
- *       directly and returns its result, which in the Z80 is itself a `JP
- *       $C59E` hand-off back to this function -- so the fire path rejoins this
- *       loop exactly like the "any key" and test-mode restarts, and no caller
- *       of run_title_screen ever needs to see it.
+ * Conv: the $FBA2 (ENTER pressed) branch is not an exit from this function:
+ *       titlescr_wait_loop calls options_menu_driver's omd_redraw_and_poll
+ *       directly, which in the Z80 ends in `JP $C59E` -- a hand-off back to
+ *       this function -- so the ENTER path rejoins this loop exactly like the
+ *       "any key" and test-mode restarts.
  *
- * Conv: despite the above, this function is *not* guaranteed to loop forever
- *       even today -- titlescr_wait_loop has two genuine RET paths of its own
- *       (the initial tune-4-and-180-frame-wait tail, and the credit-inserted
- *       tail), both of which fall out of this function normally via a plain C
- *       `return`. Only the ordinary polling path (no credit, no key) is
- *       unbounded.
+ * \return The value the Z80 leaves in A for attract_mode_128k's $F421 test:
+ * TITLESCR_START_GAME when a credit was inserted (fire pressed with controls
+ * selected), TITLESCR_ATTRACT after the tune-4 wait tail. Both come from
+ * titlescr_wait_loop's two genuine RET paths; the ordinary polling path (no
+ * credit, no key) is unbounded.
  *
  * Conv: the Z80's `$C67E JP $C59E` / `$C693 JP $C59E` restarts are plain jumps
  *       -- they do not grow the Z80 stack. Calling run_title_screen recursively
@@ -349,8 +354,9 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  *       attract-mode session), so instead titlescr_wait_loop returns non-zero
  *       to request a restart and this function loops.
  */
-static void run_title_screen(chqstate_t *state)
+static u8 run_title_screen(chqstate_t *state)
 {
+  u8        A_outcome;      /* titlescr_wait_loop outcome; restart or return (was A) */
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
@@ -436,8 +442,9 @@ static void run_title_screen(chqstate_t *state)
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
 
-    if (!titlescr_wait_loop(state)) /* $C61D falls through to $C61E */
-      return;
+    A_outcome = titlescr_wait_loop(state); /* $C61D falls through to $C61E */
+    if (A_outcome != TITLESCR_RESTART)
+      return A_outcome;
   }
 }
 
@@ -474,13 +481,13 @@ static void run_title_screen(chqstate_t *state)
  *       row). Both are translated here against the actual operand and its
  *       Spectrum.h port constant, not the skool's prose.
  *
- * \return 0 if this call ended via a genuine Z80 RET (the tune-4-wait tail
- * or the credit-inserted tail) -- the caller should stop, matching the real
- * control flow back to title_screen_driver's own caller. Non-zero if the
- * Z80 would have done `JP $C59E` to restart the title screen -- the caller
- * should re-run its own setup and call this again, rather than this
- * function recursing into title_screen_driver directly (see
- * title_screen_driver's prologue for why).
+ * \return TITLESCR_RESTART where the Z80 would have done `JP $C59E` to
+ * restart the title screen -- the caller re-runs its own setup and calls this
+ * again, rather than this function recursing into run_title_screen directly
+ * (see its prologue for why). Otherwise this call ended via a genuine Z80 RET
+ * and the value is the one the Z80 leaves in A for attract_mode_128k:
+ * TITLESCR_ATTRACT from the tune-4-wait tail, TITLESCR_START_GAME from the
+ * credit-inserted tail.
  */
 static u8 titlescr_wait_loop(chqstate_t *state)
 {
@@ -521,21 +528,23 @@ static u8 titlescr_wait_loop(chqstate_t *state)
        * Conv: DJNZ bookkeeping, omitted. */
 
       titlescr_refresh_name_table(state);
-      return 0; /* $C6C3 RET -- returns to run_title_screen's own caller.
-                 * Conv: contrary to the usual framing of this loop as
-                 * unbounded, this path is a genuine early exit in the Z80 --
-                 * see the prologue note on run_title_screen. */
+      return TITLESCR_ATTRACT;
+      /* $C6C3 RET -- returns to run_title_screen's own caller with A = B,
+       * which $C635 INC B has just made 1, so attract_mode_128k's $F421
+       * AND A / RET Z falls through into the attract demo. Conv: contrary
+       * to the usual framing of this loop as unbounded, this path is a
+       * genuine early exit in the Z80 -- see run_title_screen's prologue. */
     }
 
     /* ts_check_fire ($C638): fire (ENTER) check.
      * Conv: was IN+CPL+RRA; RRA only tests bit 0, so this is collapsed to a
      * direct bit-0 mask (cf. attract_mode_128k's ENTER check). */
     A_fire = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH);
-    if (A_fire & 1)
-      return omd_redraw_and_poll(state); /* hands off to the options menu;
-        * its own $C59E hand-off matches this function's own "restart
-        * run_title_screen" return contract, so the value passes straight
-        * through. */
+    if (A_fire & 1) {
+      omd_redraw_and_poll(state); /* hands off to the options menu, whose own
+        * $FC11 JP $C59E re-runs the title screen. */
+      return TITLESCR_RESTART;
+    }
 
     /* $C641-$C64C: credit mode / credit-slot check. Conv: $8001 is the same
      * address as state->controls_selected; the skool's prose calls it a
@@ -552,7 +561,13 @@ static u8 titlescr_wait_loop(chqstate_t *state)
       A_credit_input = keyscan(state);
       if (A_credit_input & USERINPUTFLAG_FIRE) {
         titlescr_credit_inserted(state);
-        return 0;
+        /* $C696 pushes $8011 before falling into the shared tail, so that
+         * tail's $C6C3 RET lands on $8011 -- three bytes ($C3,$79,$9C) that
+         * decode as `JP $9C79`, play_start_noise -- and only then returns to
+         * run_title_screen's caller. This is the path that starts a game
+         * from the title screen. */
+        play_start_noise(state);
+        return TITLESCR_START_GAME;
       }
     }
 
@@ -583,7 +598,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
       check_high_score(state);
 
-      return 1; /* ask the caller to restart */
+      return TITLESCR_RESTART; /* $C67E JP $C59E */
     }
 
     /* $C681-$C693: "any key" (1/2/3/4/5 row) check -- restarts the title
@@ -598,7 +613,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
     stop_music_and_silence(state);
 
-    return 1; /* ask the caller to restart */
+    return TITLESCR_RESTART; /* $C693 JP $C59E */
   }
 }
 
@@ -608,8 +623,12 @@ static u8 titlescr_wait_loop(chqstate_t *state)
  * Pushes $8011 as an extra "credit awarded" flag/value, then falls through
  * into the shared name-table refresh tail at titlescr_refresh_name_table.
  *
- * Conv: the $8011 push is a stack marker discarded by the shared tail's `POP
- *       AF` ($C6C2) -- it has no other effect and is not modelled.
+ * The $8011 push is *not* discarded by the shared tail's `POP AF` ($C6C2) --
+ * that pops the BC pushed at $C69A. $8011 stays put and becomes the address
+ * the tail's `RET` ($C6C3) jumps to: `JP $9C79` (play_start_noise), which then
+ * returns to run_title_screen's own caller. Modelled by titlescr_wait_loop's
+ * credit branch, which calls play_start_noise and returns TITLESCR_START_GAME
+ * after this function returns.
  */
 static void titlescr_credit_inserted(chqstate_t *state)
 {
@@ -2988,15 +3007,16 @@ finalize:
  * executes the patched CALL, then pages bank 3 back out, restores SP and
  * refills $B000 from $F000.
  *
- * In C, bank 3 routines are not yet implemented. A switch on [routine]
- * dispatches each Z80 entry-point address constant to its C stub.
- * BANK3_INPUT_SELECTION sets controls_selected and returns 0 to prompt the
- * caller's loop to exit; all other cases return 1.
+ * In C, a switch on [routine] dispatches each Z80 entry-point address constant
+ * to its C implementation.
  *
  * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
- * \return            1 on success; 0 to signal an early return in the caller's
- *                    loop (BANK3_INPUT_SELECTION only).
+ * \return            The value the Z80 leaves in A. Zero signals an early
+ *                    return in the caller's loop -- attract_mode_128k's $F421
+ *                    RET Z, i.e. start the game. Only BANK3_TITLE_SCREEN
+ *                    returns zero, and only when a credit was inserted; every
+ *                    other case returns 1.
  *
  * Conv: Z80 uses self-modification and 128K hardware memory paging; C
  *       dispatches via switch on the [routine] address constants.
@@ -3008,8 +3028,7 @@ u8 bank3_call(chqstate_t *state, int routine)
     assert(0);
     break;
   case BANK3_TITLE_SCREEN:
-    run_title_screen(state);
-    break;
+    return run_title_screen(state); /* 0 when a credit started a game */
   case BANK3_HI_SCORE:
     check_high_score(state);
     break;
@@ -3017,8 +3036,7 @@ u8 bank3_call(chqstate_t *state, int routine)
     play_success_music(state);
     break;
   case BANK3_INPUT_SELECTION:
-    state->controls_selected = 1; // temp
-    return 0; // cause an exit
+    return options_menu_driver(state); /* $C009 JP $FB99; always 1 */
   }
   return 1;
 }
@@ -3648,12 +3666,11 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
  * vector table, starts tune 0, and syncs to the next interrupt, then falls
  * into the redraw+poll loop at omd_redraw_and_poll ($FBA2).
  *
- * Called once from the cold-boot entry point ($C009, BANK3_INPUT_SELECTION,
- * not yet wired up here). The fire-key exit from the title screen's
- * attract-mode wait loop (titlescr_wait_loop, $C63E JP C,$FBA2) re-enters at
- * omd_redraw_and_poll directly, skipping this one-time setup -- titlescr_wait_loop's
- * existing TODO ("fire pressed -> start the game via $FBA2") should call
- * omd_redraw_and_poll(state), not this function.
+ * Called from the cold-boot entry point ($C009, BANK3_INPUT_SELECTION), which
+ * attract_mode_128k reaches when ENTER is pressed during the attract demo. The
+ * ENTER exit from the title screen's own wait loop (titlescr_wait_loop, $C63E
+ * JP C,$FBA2) re-enters at omd_redraw_and_poll directly instead, skipping this
+ * one-time setup.
  *
  * \return 1 always -- see omd_redraw_and_poll's return-value doc.
  */
