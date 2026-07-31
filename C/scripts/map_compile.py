@@ -1613,10 +1613,11 @@ def selftest() -> int:
             print("  FAIL %s%s" % (label, ("\n       " + detail) if detail else ""))
             failures.append(label)
 
-    # Stages 1, 2 and 4 satisfy the 2:1 rate rule throughout, so they must
+    # Stages 1, 2, 4 and 6 satisfy the 2:1 rate rule throughout, so they must
     # round-trip with no loss. Between them they cover SPLIT, FORK_END, GOTO,
     # tunnels, dirt track, objects, barriers, arrows, cars and helicopters.
-    for stage in (1, 2, 4):
+    # Stage 6 is this tool's own output: it was authored as C/maps/stage6.map.
+    for stage in (1, 2, 4, 6):
         print("round-trip Stage%dData.c" % stage)
         path = os.path.join(DATA_DIR, "Stage%dData.c" % stage)
         original = read_sections(StageFile(path), False, lambda m: None)
@@ -1637,13 +1638,6 @@ def selftest() -> int:
                 not differing,
                 "differs in: %s" % ", ".join(differing),
             )
-
-    print("stage 6's streams loop at unrelated periods and must be rejected")
-    try:
-        decompile(os.path.join(DATA_DIR, "Stage6Data.c"), False, lambda m: None)
-        check("Stage6Data.c raises MapError", False, "no error raised")
-    except MapError as error:
-        check("Stage6Data.c raises MapError", "2:1 rate rule" in str(error), str(error))
 
     # stage3_map_height_C5A0 is 107 units against 192 of curvature, and
     # stage5_map_height_C684 is 358 against 444: genuine desyncs in the

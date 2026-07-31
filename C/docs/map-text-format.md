@@ -64,7 +64,7 @@ curvature == height == lanes == 2 x hazards == 2 x leftobjs == 2 x rightobjs
 
 The two that do not are genuine desyncs in the original data, not tool bugs: `stage3_map_height_C5A0` is 107 units against 192 of curvature, and `stage5_map_height_C684` is 358 against 444. Decompiling those files needs `--allow-desync`, which pads the short stream with its last value and marks the section `; DESYNC`.
 
-**Stage 6 is out of scope.** Its six streams are 240 / 60 / 77 / 254 / 15 / 15 units and each `GOTO`s back to its own start, so they loop at unrelated periods. There is no row table that describes it; unrolling to their common multiple is not a useful document. `map_compile.py` reports its stream lengths and stops.
+**Stage 6 is this tool's own output.** The port-added test level was authored as `C/maps/stage6.map` and compiled into `Stage6Data.c`, so it obeys the rule by construction. It is the one stage where the `.map` file is the source and the C is generated, rather than the other way round.
 
 ## File structure
 
@@ -221,6 +221,5 @@ This makes compilation semantically faithful but not always textually identical.
 
 `python3 map_compile.py --selftest` round-trips the committed data:
 
-- stages 1, 2 and 4 decompile, recompile and must match per-unit — between them they cover GOTO, SPLIT, FORK_END, tunnels, dirt track, objects, barriers, arrows, cars and helicopters;
-- `Stage6Data.c` must be rejected with the rate-rule diagnostic;
+- stages 1, 2, 4 and 6 decompile, recompile and must match per-unit — between them they cover GOTO, SPLIT, FORK_END, tunnels, dirt track, objects, barriers, arrows, cars and helicopters;
 - stages 3 and 5 must be rejected by default and round-trip with `--allow-desync`.
