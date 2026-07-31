@@ -6454,9 +6454,11 @@ pmf_have_ascii:
  * The row counter starts in A and is banked to A' during each loop body so that
  * B can hold the zero fill value.
  *
- * Conv: Z80 LDIR zeros 30 bytes (HL through HL+29); C memset zeroes only the 29
- *       bytes HL+1 through HL+29, omitting HL itself. The first byte is part of
- *       the chatter area and is overwritten anyway by the next print call.
+ * Conv: the Z80's LD (HL),B + LDIR pair zeros 30 bytes, HL through HL+29; the
+ *       C memset does the same in one call. HL itself ($45C1) must be included:
+ *       it holds the left byte of the message line's first character (column 0
+ *       plots to $45C1/$45C2), so skipping it leaves a sliver of the last
+ *       message on screen until something else plots over that byte.
  */
 static void clear_message_line(chqstate_t *state)
 {
@@ -6466,11 +6468,11 @@ static void clear_message_line(chqstate_t *state)
   HL_screen = 0x45C1;
   A_rows   = MFHEIGHT;
   do {
-    memset(ADDRTOSCREEN(HL_screen + 1), ________, 29); /* Conv: replaces LD (HL),B + LDIR */
+    memset(ADDRTOSCREEN(HL_screen), ________, 30); /* Conv: replaces LD (HL),B + LDIR */
     HL_screen = next_screen_row(HL_screen);
   } while (--A_rows);
 
-  update_screen(state, 0x45C2, 29 * 8, MFHEIGHT); /* Conv: added */
+  update_screen(state, 0x45C1, 30 * 8, MFHEIGHT); /* Conv: added */
 }
 
 /**
