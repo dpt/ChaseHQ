@@ -102,17 +102,6 @@
 
 // -----------------------------------------------------------------------------
 
-static void chq_update_window_title(SDL_Window *window, int speed, int volume,
-                                    int paused)
-{
-  char title[64];
-
-  SDL_snprintf(title, sizeof(title),
-              "Chase H.Q. - Speed: %d%% - Volume: %d%%%s",
-              speed, volume, paused ? " - Paused" : "");
-  SDL_SetWindowTitle(window, title);
-}
-
 static int chq_window_width(int scale)
 {
   return (GAMEWIDTH + BORDER * 2) * scale;
@@ -226,6 +215,21 @@ typedef struct
 chq_sdl_state_t;
 
 /* ----------------------------------------------------------------------- */
+
+// The title bar doubles as the status display for the F-key controls: the
+// game itself has nowhere to show them.
+static void chq_update_window_title(const chq_sdl_state_t *state)
+{
+  char title[64];
+
+  SDL_snprintf(title, sizeof(title),
+              "Chase H.Q. - Speed: %d%% - Volume: %d%%%s%s",
+              state->speed,
+              state->volume,
+              state->audio_muted ? " (Muted)" : "",
+              state->paused ? " - Paused" : "");
+  SDL_SetWindowTitle(state->window, title);
+}
 
 static void chq_draw_handler(const zxbox_t *dirty,
                              void          *opaque)
@@ -739,14 +743,16 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     if (k->down && !k->repeat)
     {
       state->paused = !state->paused;
-      chq_update_window_title(state->window, state->speed, state->volume,
-                              state->paused);
+      chq_update_window_title(state);
     }
     return;
 
   case SDLK_F2:
     if (k->down && !k->repeat)
+    {
       state->audio_muted = !state->audio_muted;
+      chq_update_window_title(state);
+    }
     return;
 
   case SDLK_F3:
@@ -783,16 +789,19 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 
   case SDLK_LEFTBRACKET:
   case SDLK_RIGHTBRACKET:
+  case SDLK_BACKSLASH:
     if (k->down && !k->repeat)
     {
       int speed;
 
-      speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
-                   SPEED_MIN, SPEED_MAX);
+      if (sym == SDLK_BACKSLASH)
+        speed = SPEED_DEFAULT;
+      else
+        speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
+                     SPEED_MIN, SPEED_MAX);
 
       state->speed = speed;
-      chq_update_window_title(state->window, speed, state->volume,
-                              state->paused);
+      chq_update_window_title(state);
       printf("Speed: %d%%\n", speed);
     }
     return;
@@ -807,8 +816,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
                      VOLUME_MIN, VOLUME_MAX);
 
       state->volume = volume;
-      chq_update_window_title(state->window, state->speed, volume,
-                              state->paused);
+      chq_update_window_title(state);
       printf("Volume: %d%%\n", volume);
     }
     return;
@@ -1140,7 +1148,7 @@ int main(int argc, char *argv[])
 
   state.window = window;
 
-  chq_update_window_title(window, state.speed, state.volume, state.paused);
+  chq_update_window_title(&state);
 
   // The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
   // lowest memory byte), which is what Screen.c's palette_abgr table packs
