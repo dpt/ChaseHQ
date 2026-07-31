@@ -748,8 +748,14 @@ static u8 titlescr_animate_frame(chqstate_t *state)
     compute_glyph_blit_params_fg(state, rec->y, rec->x, rec->row);
   }
 
-  if (object_script_step(state))
+  if (object_script_step(state)) {
+    /* Conv: the frame's remaining work is abandoned, but the sleep still runs.
+     * The host pairs every stamp() with a sleep() on a fixed-depth stack;
+     * returning without one leaks an entry and the stack overflows after four
+     * scenes. */
+    state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
     return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
+  }
 
   clear_playfield_buffer(state);
 
@@ -3628,10 +3634,11 @@ static u8 options_menu_driver(chqstate_t *state)
   setup_im2_interrupt_table(state);
   titlescr_start_tune(state, 0);
 
-  state->speccy->stamp(state->speccy); /* $FBA0 EI / $FBA1 HALT: sync to the
-                                        * next interrupt before entering the
-                                        * poll loop (same EI/HALT -> stamp()
-                                        * convention as run_title_screen). */
+  /* $FBA0 EI / $FBA1 HALT: sync to the next interrupt before entering the poll
+   * loop. Conv: not modelled -- omd_redraw_and_poll's own per-frame stamp/sleep
+   * pair covers it. A stamp() here would never be slept out and would leak a
+   * host stack entry per options-menu entry (same treatment as run_title_screen's
+   * $C61D EI/HALT). */
 
   return omd_redraw_and_poll(state); /* $FBA2: falls straight in */
 }
