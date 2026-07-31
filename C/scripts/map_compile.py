@@ -820,12 +820,50 @@ def row_boundaries(section: Section) -> List[int]:
     return sorted(b for b in bounds if 0 <= b <= section.units())
 
 
+def group_object_tokens(tokens: List[str]) -> List[str]:
+    """Factor repeated token sequences into "(T .)9" groups.
+
+    A row of evenly spaced scenery is a short pattern repeated many times, and
+    written out in full it is unreadable. At each position take the group that
+    saves the most characters, so ". T . T . T . T ." collapses but a pair that
+    would barely pay for its own punctuation is left written out.
+    """
+    # "(. N)2" for ". N . N" saves one character and reads worse, so a group
+    # has to save more than the "()" and count it costs.
+    MIN_SAVING = 3
+
+    out = []                     # tokens and groups emitted so far
+    index = 0                    # position in tokens
+    while index < len(tokens):
+        best = None              # (saving, period, repeats)
+        for period in range(1, (len(tokens) - index) // 2 + 1):
+            unit = tokens[index:index + period]
+            repeats = 1
+            while unit == tokens[index + period * repeats:
+                                 index + period * (repeats + 1)]:
+                repeats += 1
+            if repeats < 2:
+                continue
+            plain = len(" ".join(tokens[index:index + period * repeats]))
+            saving = plain - len("(%s)%d" % (" ".join(unit), repeats))
+            if saving >= MIN_SAVING and (best is None or saving > best[0]):
+                best = (saving, period, repeats)
+        if best is None:
+            out.append(tokens[index])
+            index += 1
+            continue
+        _saving, period, repeats = best
+        out.append("(%s)%d" % (" ".join(tokens[index:index + period]), repeats))
+        index += period * repeats
+    return out
+
+
 def format_object_cell(runs: List[Tuple[int, int]], legend: Dict[int, str]) -> str:
     parts = []
     for value, count in runs:
         symbol = legend.get(value, "?")
         parts.append(symbol if count == 1 else "%s%d" % (symbol, count))
-    return " ".join(parts)
+    return " ".join(group_object_tokens(parts))
 
 
 def half_span(start: int, end: int) -> Tuple[int, int]:
@@ -1039,10 +1077,45 @@ def parse_map_text(text: str, path: str) -> MapText:
     return result
 
 
+OBJECT_CELL_RE = re.compile(r"\(([^()]*)\)(\d*)|([^\s()]+)")
+
+
+def expand_object_groups(cell: str, where: str) -> List[str]:
+    """Flatten "(T .)9" repeat groups into a plain token list."""
+    tokens: List[str] = []
+    position = 0
+    for match in OBJECT_CELL_RE.finditer(cell):
+        if cell[position:match.start()].strip():
+            raise MapError(
+                "%s: unbalanced parentheses in object cell '%s'" % (where, cell)
+            )
+        position = match.end()
+        body, repeats, single = match.group(1), match.group(2), match.group(3)
+        if single is not None:
+            tokens.append(single)
+            continue
+        inner = body.split()
+        if not inner:
+            raise MapError("%s: empty repeat group in '%s'" % (where, cell))
+        if not repeats:
+            raise MapError(
+                "%s: repeat group '(%s)' needs a count, as in '(%s)3'"
+                % (where, body, body)
+            )
+        if int(repeats) < 1:
+            raise MapError("%s: repeat count must be positive in '%s'" % (where, cell))
+        tokens.extend(inner * int(repeats))
+    if cell[position:].strip():
+        raise MapError(
+            "%s: unbalanced parentheses in object cell '%s'" % (where, cell)
+        )
+    return tokens
+
+
 def parse_object_cell(cell: str, symbols: Dict[str, str], where: str):
-    """"B .3 T" -> [(NAME, count), ...] in half-units."""
+    """"B .3 (T .)9" -> [(NAME, count), ...] in half-units."""
     runs = []
-    for token in cell.split():
+    for token in expand_object_groups(cell, where):
         symbol, digits = token[0], token[1:]
         if digits and not digits.isdigit():
             raise MapError("%s: bad object token '%s'" % (where, token))

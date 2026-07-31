@@ -177,6 +177,15 @@ Blank means straight / level.
 
 Whitespace-separated `<symbol><count>` tokens, count in **half-units** (see the rate rule above), default 1, `.` = none. `B .3 B .10` is bush, three blank, bush, ten blank.
 
+Evenly spaced scenery repeats, so a parenthesised run of tokens can carry a repeat count:
+
+```
+.5 T . T . T . T . T . T . T . T . T . T .3 T .3 T .3 T .3 T . T .3
+.5 (T .)9 (T .3)4 T . T .3
+```
+
+Both cells mean the same thing. Groups do not nest and the count is required. The decompiler factors out whatever saves more characters than the `()` and count cost, so a pattern repeated only twice is usually left written out.
+
 A row owns the half-units whose first road unit falls inside it, so the cells partition the stream exactly even when a row boundary lands on an odd road unit. The compiler checks each cell starts where the stream has reached, which catches a row inserted or deleted without adjusting the objects.
 
 ### `Haz`
