@@ -69,19 +69,41 @@
 
 /* Timing configuration constants */
 
+/* One 128K display frame. Every loop below that ends on a HALT or on a spin
+ * over the IM2 frame flag runs at exactly this rate, whatever work its body
+ * did, so they all share this one constant. */
+#define FRAME_TSTATES            (70908)
+
 #define MAIN_LOOP_TSTATES       (354955) /* calibrated so in-game timer is 60s */
 #define ATTRACT_TSTATES         (348173)
 #define PREGAME_TSTATES         (288192)
 #define ESCAPE_SCENE_TSTATES    (283239)
-#define TITLE_MUSIC_TSTATES     (100000) // TODO: Calibrate
-/* Paces titlescr_animate_frame's object-animation loop. Hand-tuned by eye
- * against the original rather than derived from a frame length, hence the
- * odd 57% scaling of the base figure. TODO: Calibrate properly. */
-#define TITLE_ANIM_TSTATES      (220167 * 57 / 100)
-#define KEMPSTON_MUSIC_TSTATES  (100000) // TODO: Calibrate
-#define OMD_MUSIC_TSTATES       (100000) // TODO: Calibrate
-#define SUCCESS_MUSIC_TSTATES   (100000) // TODO: Calibrate
-#define END_SCREEN_TSTATES       (60000) // TODO: Calibrate
+
+/* $F82F titlescr_music ends by spinning on the IM2 frame flag ($F8A7), so one
+ * call is exactly one frame. Trace: 8096 calls, median entry-to-entry delta
+ * 70908.
+ *
+ * Conv: the options-menu, Kempston-detect and success-jingle loops used to
+ * have their own placeholder constants. Each paces itself solely by calling
+ * titlescr_music once per iteration, so the frame is timed there and those
+ * outer sleeps have gone. Trace confirms the period is the same: 919 calls at
+ * $FBC8 (run_title_tune), median delta 70908. */
+#define TITLE_MUSIC_TSTATES     FRAME_TSTATES
+
+/* $C6C4 titlescr_animate_frame's self-loop opens with EI/HALT, so one animated
+ * title-screen frame is one display frame. Trace: 545 iterations at $C6C7,
+ * median delta 70908 (spread 70905..70911, i.e. where in the final instruction
+ * the interrupt lands).
+ *
+ * Note $C6C7 is also occupied by unrelated code in another bank paged to
+ * $C000-$FFFF; the sample above counts only the lines whose instruction is
+ * `LD B,$06`. */
+#define TITLE_ANIM_TSTATES      FRAME_TSTATES
+
+/* $E026 show_end_screen loop body: the relocated 48K music tick spins on the
+ * bank 7 interrupt flag, so one iteration is one frame. Trace: median delta
+ * 70913 at the relocated loop head $5C26. */
+#define END_SCREEN_TSTATES      FRAME_TSTATES
 
 /* $EF13 pm_wait_for_interrupt: play_music_48k ends by spinning until the next
  * 50Hz maskable interrupt, so one call is one frame however much of it was

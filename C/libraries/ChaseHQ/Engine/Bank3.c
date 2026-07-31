@@ -155,8 +155,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
                                         u8                   *A_volume_out);
 static void advance_channel_phrase(title_tune_channel_t *IX_channel,
                                    const u8            **DE_pattern);
-static void advance_channel_pattern(chqstate_t           *state,
-                                    title_tune_channel_t *IX_channel);
+static u8 advance_channel_pattern(chqstate_t           *state,
+                                  title_tune_channel_t *IX_channel);
 static void setup_im2_interrupt_table(chqstate_t *state);
 static void check_high_score(chqstate_t *state);
 static void insert_high_score_entry(chqstate_t *state, int row);
@@ -459,10 +459,10 @@ static void run_title_screen(chqstate_t *state)
  *       described in the skool ("one $F82F service call per frame") is
  *       informal; the real hardware relies on the background IM2 interrupt
  *       firing asynchronously while this loop spins. The C port makes the frame
- *       boundary explicit with stamp()/sleep() once per iteration (the same
- *       TITLE_MUSIC_TSTATES idiom used a few lines below for the tune-4 wait),
- *       matching every other per-frame loop in this file (attract_mode_128k,
- *       drive_attract_demo, run_pregame_screen_loop).
+ *       boundary explicit with the stamp()/sleep() pair inside titlescr_music
+ *       itself, one frame per call, matching every other per-frame loop in
+ *       this file (attract_mode_128k, drive_attract_demo,
+ *       run_pregame_screen_loop).
  *
  * Conv: DI/EI have no C equivalent (SDL owns interrupt delivery, matching
  *       setup_im2_interrupt_table) and are omitted throughout.
@@ -496,9 +496,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
   for (;;) {
     CHECK_HOST_QUIT(state);
 
-    state->speccy->stamp(state->speccy);
     titlescr_music(state);
-    state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
 
     if (!state->bank3->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one titlescr_music call per
@@ -517,9 +515,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
       B_wait = ATTRACT_TUNE_WAIT_FRAMES;
       do {
-        state->speccy->stamp(state->speccy);
         titlescr_music(state);
-        state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
       } while (--B_wait);
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */
@@ -1893,6 +1889,7 @@ static const struct {
 #define PCMD_SET_MIXER_BITS_LOW3         (0x8B) /* pcmd_set_mixer_bits_low3 $ED36 */
 #define PCMD_CLEAR_MIXER_BITS            (0x8C) /* pcmd_clear_mixer_bits $ED5F */
 #define PCMD_SET_STATUS_BIT1             (0x8D) /* pcmd_set_status_bit1 $EDB6 */
+#define PCMD_END_OF_TUNE                 (0x8E) /* $ED2F POP HL / JP $ED0B -- end of tune */
 #define PCMD_RESET_ROW_COUNTER           (0x8F) /* pcmd_reset_row_counter $EDC5 */
 #define PCMD_MUTE_CHANNEL                (0x90) /* pcmd_mute_channel $EDCB */
 #define PCMD_UNMUTE_CHANNEL              (0x91) /* pcmd_unmute_channel $EDD1 */
@@ -2111,17 +2108,25 @@ static void titlescr_ay_music(chqstate_t *state)
     /* $EC7D-$EC81: decrement the tempo counter; only re-process the tracker
      * patterns when it reaches zero. */
     if (--state->bank3->title_music.tempo_counter == 0) {
-      /* $EC84-$EC88: advance channel 1's pattern by one tracker row. */
+      /* $EC84-$EC88: advance channel 1's pattern by one tracker row.
+       *
+       * Conv: any of the three may hit the tune's end-of-data command (0x8E),
+       * whose Z80 handler unwinds the stack past this function and returns
+       * straight to titlescr_music. The tune is stopped and silenced by then,
+       * so returning here is equivalent. */
       IX_channel = &state->bank3->title_music.channel[0];
-      advance_channel_pattern(state, IX_channel);
+      if (advance_channel_pattern(state, IX_channel))
+        return;
 
       /* $EC8B-$EC8F: channel 2. */
       IX_channel = &state->bank3->title_music.channel[1];
-      advance_channel_pattern(state, IX_channel);
+      if (advance_channel_pattern(state, IX_channel))
+        return;
 
       /* $EC92-$EC96: channel 3. */
       IX_channel = &state->bank3->title_music.channel[2];
-      advance_channel_pattern(state, IX_channel);
+      if (advance_channel_pattern(state, IX_channel))
+        return;
 
       /* $EC99-$EC9B: reset the tempo counter (see Conv note above). */
       state->bank3->title_music.tempo_counter = 1;
@@ -2339,20 +2344,27 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
  *       advance_channel_phrase). Two further values are reachable but do not
  *       target a handler entry point: 0x85 lands mid-instruction inside
  *       pcmd_set_status_bits_3_7 (skipping its first SET 7, executing only SET
- *       3), and 0x8E lands on a bare "POP HL; JP $ED0B" that would pop the real
- *       return address off the stack and jump into stop_music_and_silence --
- *       almost certainly a crash, so this byte is assumed never to appear as an
- *       executed command (bytes with this value seen in the real pattern data
- *       all sit at stream positions consistent with an end-of-data marker, not
- *       a command dispatch). The remaining values (0x92-0xA7, 0xA9-0xAF) land
- *       on arbitrary bytes inside the handler block and are equally assumed
- *       unused. All of these fall into the `default` case below, which --
- *       unlike the Z80 -- treats them as a no-op rather than replicating
- *       undefined/crashing behaviour. See Translation notes for the full
- *       derivation.
+ *       3). The remaining values (0x92-0xA7, 0xA9-0xAF) land on arbitrary
+ *       bytes inside the handler block and are assumed unused. Both fall into
+ *       the `default` case below, which -- unlike the Z80 -- treats them as a
+ *       no-op rather than replicating undefined/crashing behaviour. See
+ *       Translation notes for the full derivation.
+ *
+ * 0x8E is the tune's end-of-data marker: it lands on the bare "POP HL; JP
+ * $ED0B" at $ED2F, which discards this function's own return address before
+ * stopping the tune, so the RET at the end of stop_music_and_silence returns
+ * two levels up -- past the rest of titlescr_ay_music, straight back to
+ * titlescr_music at $F832. Confirmed by trace (byte 0x8E dispatched at
+ * $EE9D, $ED0B reached, RET landing at $F832), which also settles the
+ * question of how the title tune ever stops: nothing clears the tune-active
+ * flag on a timer, the tune data ends with this command.
+ *
+ * \return 1 when the tune ended this row (0x8E), so the caller must abandon
+ * the rest of the frame's driver work, as the Z80's stack unwind does. 0
+ * otherwise.
  */
-static void advance_channel_pattern(chqstate_t           *state,
-                                    title_tune_channel_t *IX_channel)
+static u8 advance_channel_pattern(chqstate_t           *state,
+                                  title_tune_channel_t *IX_channel)
 {
   u8        A_status;   /* status byte tested by channel_slide_upkeep (was A, IX+$00) */
   const u8 *DE_pattern; /* pattern-command byte stream cursor (was DE, IX+$01/$02) */
@@ -2364,7 +2376,7 @@ static void advance_channel_pattern(chqstate_t           *state,
   u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
 
   if (IX_channel->pattern_ptr == NULL)
-    return; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
+    return 0; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
 
   /* $EDD6-$EDD9: per-row wait countdown. */
   if (--IX_channel->row_wait != 0) {
@@ -2372,13 +2384,13 @@ static void advance_channel_pattern(chqstate_t           *state,
      * while a portamento/slide effect is active. */
     A_status = IX_channel->status;
     if (!(A_status & CHSTATUS_SLIDE_UPKEEP))
-      return;
+      return 0;
 
     if (A_status & CHSTATUS_SLIDE_UPKEEP_UP) // Conv: RLA + JR NC collapsed to a direct bit-7 test
       IX_channel->note_index++;
     else
       IX_channel->note_index--;
-    return;
+    return 0;
   }
 
   /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
@@ -2491,6 +2503,14 @@ static void advance_channel_pattern(chqstate_t           *state,
         IX_channel->status |= CHSTATUS_BIT1;
         continue;
 
+      case PCMD_END_OF_TUNE:
+        /* $ED2F: the tune's data ends here. Conv: the Z80's POP HL discards
+         * this function's return address so that stop_music_and_silence's own
+         * RET unwinds past the rest of the driver; C reports the unwind to
+         * the caller instead. */
+        stop_music_and_silence(state);
+        return 1;
+
       case PCMD_RESET_ROW_COUNTER:
         IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
         goto reset_row_counter;
@@ -2507,9 +2527,8 @@ static void advance_channel_pattern(chqstate_t           *state,
         goto reset_row_counter;
 
       default:
-        /* 0x85, 0x8E and the rest of 0x92-0xAF: not a real handler entry
-         * point -- see the Conv note above the prologue. Conv: treat as a
-         * no-op. */
+        /* 0x85 and the rest of 0x92-0xAF: not a real handler entry point --
+         * see the Conv note above the prologue. Conv: treat as a no-op. */
         continue;
       }
     } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
@@ -2547,6 +2566,8 @@ reset_row_counter:
 
   if (IX_channel->mute_pending)
     IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
+
+  return 0;
 }
 
 /**
@@ -3055,9 +3076,7 @@ static void play_success_music(chqstate_t *state)
      * the host asks to quit. */
     CHECK_HOST_QUIT(state);
 
-    state->speccy->stamp(state->speccy);
     titlescr_music(state);
-    state->speccy->sleep(state->speccy, SUCCESS_MUSIC_TSTATES);
   } while (--B_wait);
 }
 
@@ -3265,6 +3284,12 @@ static void titlescr_music(chqstate_t *state)
   int       B_selector;    /* low-3-bits selector: which 1-bit-sample engine to trigger (was B) */
   int       A_pitch_param; /* pitch/rate parameter passed to the fixed-sample players (was A) */
 
+  /* Conv: one call is one frame, so the frame's stamp/sleep pacing lives here
+   * rather than being repeated around every call site. Callers that pace a
+   * wider block still stamp/sleep themselves; the outer sleep then finds the
+   * frame's time already spent here and returns without waiting again. */
+  state->speccy->stamp(state->speccy);
+
   titlescr_ay_music(state);
 
   if (!state->bank3->drums.slot1_busy) {
@@ -3319,15 +3344,15 @@ drum_dispatch_entry:
   A_pitch_param = D_entry >> 3;
   if (--B_selector == 0) {
     play_fixed_sample_1(state, A_pitch_param);
-    return;
+    goto tm_exit;
   }
   if (--B_selector == 0) {
     play_fixed_sample_2(state, A_pitch_param);
-    return;
+    goto tm_exit;
   }
   if (--B_selector == 0) {
     play_drum_noise_burst(state, A_pitch_param);
-    return;
+    goto tm_exit;
   }
 
 sfx2_tick_countdown:
@@ -3340,6 +3365,9 @@ sfx2_tick_countdown:
     play_sample_row(state,
                     state->bank3->drums.sample_resume_rows,
                     state->bank3->drums.sample_resume_ptr);
+
+tm_exit:
+  state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
 }
 
 /**
@@ -3697,9 +3725,7 @@ redraw:
 
 poll: /* $FBAB omd_service_and_read_keys */
   do {
-    state->speccy->stamp(state->speccy);
     run_title_tune(state);
-    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES); // keyscan sleep
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
   } while (A_key_mask == 0);
@@ -3748,9 +3774,7 @@ shared_tail:
   update_whole_playfield(state); /* Conv: added */
 
   do {
-    state->speccy->stamp(state->speccy);
     run_title_tune(state);
-    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
     /* $FC00 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
@@ -3816,9 +3840,7 @@ static u8 detect_kempston_joystick(chqstate_t *state)
     if (A_sample != C_baseline)
       return 0;
 
-    state->speccy->stamp(state->speccy);
     run_title_tune(state);
-    state->speccy->sleep(state->speccy, KEMPSTON_MUSIC_TSTATES);
   } while (--B_count);
 
   return 1;
@@ -4088,9 +4110,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     do {
       do {
-        state->speccy->stamp(state->speccy);
         run_title_tune(state);
-        state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
         /* $FECA XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
         A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
@@ -4103,9 +4123,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     B_wait = 0x14;
     do {
-      state->speccy->stamp(state->speccy);
       run_title_tune(state);
-      state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
     } while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
@@ -4120,9 +4138,7 @@ static void redefine_keys_screen(chqstate_t *state)
     update_whole_playfield(state); /* Conv: added */
 
     do {
-      state->speccy->stamp(state->speccy);
       run_title_tune(state);
-      state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
       /* $FF02 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
       A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
@@ -4230,9 +4246,7 @@ static void read_new_key_definition(chqstate_t *state,
 
 rescan:
   for (;;) {
-    state->speccy->stamp(state->speccy);
     run_title_tune(state);
-    state->speccy->sleep(state->speccy, OMD_MUSIC_TSTATES);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
     if (ambiguous)

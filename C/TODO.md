@@ -3,20 +3,21 @@
 ## P1 — Bugs / broken behaviour
 
 - Title screen
-  - title screen doesn't stop and yield to attract mode
   - music still not right (e.g. playing things twice or more over before stopping)
+    — end-of-tune command `0x8E` now handled, so the tune stops and the attract
+    wait runs; re-check by ear for anything still repeating
 - End screen
   - the interrupt mechanism wasn't ported so the timing feels a little off
+- Test flag is still on by default
 
 ## P2 — Game feel / calibration / timing
 
 - Restart bip-bow ticking twice as fast as it should
 - Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
-- Calibrate `TITLE_MUSIC_TSTATES`, `KEMPSTON_MUSIC_TSTATES`, `OMD_MUSIC_TSTATES`, `SUCCESS_MUSIC_TSTATES`, `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder values
+- Calibrate `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder value, no trace coverage yet
 - Title jingle T-state count is a guess, tune by ear (`Bank3.c:3038`)
 - Need to model RAM bank contention?
-- Held notes when the game is quit - might need more frequent quit-checks.
 
 ## P3 — Incomplete / missing content
 
@@ -29,10 +30,12 @@
 
 ## P4 — Polish / visual correctness
 
-- Stretchy test app produces crap output
+- Stretchy test app produces crap output [checked - still a bit rubbish]
 - Fix all warnings pass
 
 ## P5 — Clarity pass
+
+- Start backporting changes to the disasm
 
 ### Authority sweep (comments that read as guesswork)
 
