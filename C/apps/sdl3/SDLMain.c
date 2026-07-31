@@ -152,7 +152,6 @@ typedef struct
   int                quit; // bool
   int                paused; // bool
   int                mode_128k; // bool; 0 selects the 48K entry point
-  // int                  menu; // bool
 
   int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
   int                speed; // game speed, percent, SPEED_MIN..SPEED_MAX
@@ -1032,21 +1031,6 @@ static void chq_sdl_main_loop(void *opaque)
     if (state->quit)
       return;
 
-    // This was the TGE loop setup:
-    //
-    // if (state->menu)
-    // {
-    //   if (run_menu(state->game) > 0)
-    //   {
-    //     ruin_setup2(state->game);
-    //     state->menu = 0;
-    //   }
-    // }
-    // else
-    // {
-    //   run_main(state->game);
-    // }
-
     if (state->crt_enabled)
     {
       chq_CRT_shader_render(&state->crt, state->window, state->zx,
@@ -1128,7 +1112,6 @@ int main(int argc, char *argv[])
     state.crt_params = defaults;
   }
   state.crt_param_index = 0;
-  // state.menu      = 1;
 
 #ifdef __APPLE__
   // Conv: disable macOS press-and-hold accent popover so held keys repeat

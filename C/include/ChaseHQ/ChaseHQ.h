@@ -56,20 +56,6 @@ CHQ_API void chq_stop(chqstate_t *state);
  */
 CHQ_API void chq_setup(chqstate_t *state, int mode_128k);
 
-// /**
-//  * Run the game menu.
-//  *
-//  * Call this repeatedly until it returns > 0.
-//  *
-//  * \return > 0 when it's time to continue on to chq_setup2.
-//  */
-// chq_API int chq_menu(chqstate_t *state);
-//
-// /**
-//  * Prepare the game proper.
-//  */
-// chq_API void chq_setup2(chqstate_t *state);
-
 /**
  * Invoke the game instance.
  *
