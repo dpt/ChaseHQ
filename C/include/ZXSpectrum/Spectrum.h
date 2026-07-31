@@ -190,6 +190,13 @@ struct zxspectrum
   /**
    * The game calls this when a timed segment ends, to sleep if required.
    *
+   * Also closes the segment out on the virtual T-state clock: the clock is
+   * advanced to the stamp()'d start plus [duration], so time the game spent
+   * doing nothing the Z80 would have spent waiting for an interrupt is
+   * accounted for. Without that the clock only moves while the game is
+   * bit-banging the speaker, and audio timestamps drift against wall time
+   * between bursts.
+   *
    * \param[in] duration Sleep duration in T-states.
    *
    * \return Non-zero if the thread should terminate, zero otherwise.
@@ -238,13 +245,16 @@ typedef struct zxconfig
 
   /** App callback called to sound the speaker. 'tstates' is the virtual
    *  T-state clock at the moment of the OUT, advanced by the game via
-   *  logtime; it gives the callback the inter-toggle spacing that
-   *  wall-clock time cannot (the C "delay loops" run in no time). */
+   *  logtime and by each sleep()'s own duration; it gives the callback the
+   *  inter-toggle spacing that wall-clock time cannot (the C "delay loops"
+   *  run in no time). */
   void (*speaker)(int on_off, uint64_t tstates, void *opaque);
 
   /** App callback for AY-3-8912 register select (port_AY_REGISTER) and
-   *  data write (port_AY_DATA). May be NULL. */
-  void (*ay_out)(uint16_t port, uint8_t byte, void *opaque);
+   *  data write (port_AY_DATA). May be NULL. 'tstates' is the same virtual
+   *  clock the speaker callback is given: both must be timestamped from it,
+   *  or the two audio streams are ordered against clocks that disagree. */
+  void (*ay_out)(uint16_t port, uint8_t byte, uint64_t tstates, void *opaque);
 
   /** Non-zero to output 0x00BBGGRR pixels (ABGR8888); zero for 0x00RRGGBB (ARGB8888). */
   int bgr_pixels;

@@ -160,13 +160,19 @@ typedef struct
   int                audio_queue_head;
   int                audio_queue_tail;
 
-  // Speaker (beeper) state. The anchor maps the facade's virtual T-state
-  // clock onto wall-clock ns: within a burst of toggles wall time barely
-  // advances, so event times extrapolate from the anchor at the T-state
-  // rate; when the T-state clock falls behind the wall clock a new burst
-  // has begun and the anchor resets. Game thread only.
-  Uint64             speaker_anchor_ns;
-  Uint64             speaker_anchor_tstates;
+  // Audio clock anchor, mapping the facade's virtual T-state clock onto
+  // wall-clock ns. The game thread emits a frame's worth of audio in a
+  // fraction of that frame's wall time, so event times extrapolate from the
+  // anchor at the T-state rate rather than being read off the wall clock;
+  // if the T-state clock falls behind wall time the game thread has lost
+  // ground and the anchor resets to catch up. Game thread only.
+  //
+  // Both event types must go through this: they share one queue and one
+  // replay cursor, so timestamping AY writes off the wall clock while the
+  // beeper used the T-state clock made every frame's drums land wherever
+  // the two clocks happened to disagree.
+  Uint64             audio_anchor_ns;
+  Uint64             audio_anchor_tstates;
   int                speaker_last_level; // last queued level (game thread)
   int                speaker_level;      // current replay level (audio thread)
 
@@ -373,33 +379,50 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
   SDL_UnlockMutex(state->audio_queue_mutex);
 }
 
+// Maps a virtual T-state to the wall-clock ns the event should be heard at.
+// 1 T-state = 1e9/3.5e6 = 2000/7 ns. Game thread only; see the anchor
+// comment in chq_sdl_state_t.
+static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
+{
+  Uint64 now_ns;
+  Uint64 event_ns;
+
+  now_ns = SDL_GetTicksNS();
+
+  // Scaled by the speed setting for the same reason chq_sleep_handler scales
+  // its sleep: at 200% the game emits two frames of T-states in one frame of
+  // wall time, so a fixed 2000/7 would date every event further into the
+  // future than the last and the anchor would never catch up.
+  event_ns = state->audio_anchor_ns +
+             (tstates - state->audio_anchor_tstates) * 2000 / 7 *
+               100 / state->speed;
+  if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
+  {
+    state->audio_anchor_ns      = now_ns;
+    state->audio_anchor_tstates = tstates;
+    event_ns = now_ns;
+  }
+
+  return event_ns;
+}
+
 static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
-  Uint64           now_ns;
-  Uint64           event_ns;
 
   if (on_off == state->speaker_last_level)
     return; // level unchanged: no edge to reproduce
 
   state->speaker_last_level = on_off;
 
-  // Map the game's virtual T-state clock onto wall time (see the speaker
-  // state comment in chq_sdl_state_t). 1 T-state = 1e9/3.5e6 = 2000/7 ns.
-  now_ns   = SDL_GetTicksNS();
-  event_ns = state->speaker_anchor_ns +
-             (tstates - state->speaker_anchor_tstates) * 2000 / 7;
-  if (event_ns < now_ns) // T-state clock fell behind wall clock: new burst
-  {
-    state->speaker_anchor_ns      = now_ns;
-    state->speaker_anchor_tstates = tstates;
-    event_ns = now_ns;
-  }
-
-  chq_audio_queue_push(state, event_ns, CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
+  chq_audio_queue_push(state, chq_tstates_to_ns(state, tstates),
+                       CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
 }
 
-static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
+static void chq_ay_out_handler(uint16_t port,
+                               uint8_t  byte,
+                               uint64_t tstates,
+                               void    *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
@@ -413,9 +436,12 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 
   // port_AY_DATA: queue the write with a timestamp instead of applying it
   // immediately, so chq_audio_callback can replay it at the right sample
-  // position (see the AY_QUEUE_CAPACITY comment above).
+  // position (see the AY_QUEUE_CAPACITY comment above). Timestamped from the
+  // same T-state clock as the beeper: the queue is a FIFO drained in order,
+  // so two clocks here means one stream's events are ordered against times
+  // the other's were never measured on.
   chq_audio_queue_push(state,
-                       SDL_GetTicksNS(),
+                       chq_tstates_to_ns(state, tstates),
                        CHQ_AUDIO_EVENT_AY,
                        state->ay_latched_reg,
                        byte);

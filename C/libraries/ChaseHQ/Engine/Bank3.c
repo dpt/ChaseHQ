@@ -3473,13 +3473,22 @@ static void play_fixed_sample_start(chqstate_t *state,
   play_sample_row(state, D_length, HL_data); /* was FALLTHROUGH */
 }
 
-/* One real ZX Spectrum 128K interrupt period in T-states (3546900 Hz CPU
- * clock / 50.021 Hz frame rate) -- the budget play_sample_row's mid-sample
- * yield check compares itself against, standing in for the real hardware's
- * $F8A8 frame flag (see play_sample_row's own Conv note). Not to be confused
- * with TITLE_MUSIC_TSTATES, which paces titlescr_wait_loop's outer call
- * cadence and is left alone. */
-#define SAMPLE_ROW_FRAME_TSTATES (70908)
+/* T-states one titlescr_music call spends before it can resume sample
+ * playback: the AY driver at $EC71 plus the slot-1/slot-2 dispatch above.
+ * On real hardware that time comes out of the same interrupt period the
+ * bit-bang loop runs in, so the loop never gets a whole frame. */
+#define TITLE_MUSIC_TICK_TSTATES (8384)
+
+/* What is left of one real ZX Spectrum 128K interrupt period (3546900 Hz CPU
+ * clock / 50.021 Hz frame rate = 70908 T-states) for bit-banging -- the budget
+ * play_sample_row's mid-sample yield check compares itself against, standing
+ * in for the real hardware's $F8A8 frame flag (see play_sample_row's own Conv
+ * note). Both figures are measured, not assumed: an instruction-level trace of
+ * the real game's title screen (8096 frames) shows playing frames bit-bang a
+ * median 98 rows = 62524 T-states, leaving 8384 for the tick. Not to be
+ * confused with TITLE_MUSIC_TSTATES, which paces the outer call cadence in
+ * wall-clock terms and is left alone. */
+#define SAMPLE_ROW_FRAME_TSTATES (FRAME_TSTATES - TITLE_MUSIC_TICK_TSTATES)
 
 /**
  * $F8CC/$F8CD: Pulse a 1-bit PCM sample out over the beeper
@@ -3504,7 +3513,8 @@ static void play_fixed_sample_start(chqstate_t *state,
  *       real 70908 T-state interrupt period, so on real hardware it genuinely
  *       spans several frames. The C port has no background interrupt to set
  *       $F8A8 asynchronously, so SAMPLE_ROW_FRAME_TSTATES below stands in for
- *       it: once this call has spent one frame's worth of bit-bang time, it
+ *       it: once this call has spent the bit-bang time a real frame leaves
+ *       after the music tick, it
  *       yields exactly as $F8E2's check would, saving position in
  *       sample_resume_ptr/sample_resume_rows (the shadow HL'/D' equivalent) for
  *       titlescr_music's tail to resume next call. Playing every sample to
@@ -3546,7 +3556,10 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
       RLC(*HL_data); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
       speccy->logtime(speccy, 63);
-      frame_tstates += 63;
+      /* The OUT above costs a further 11, billed to the virtual clock by the
+       * facade's out() rather than by logtime. The yield budget must count the
+       * full 74 or it lets ~16% too many rows through per frame. */
+      frame_tstates += 63 + 11;
     } while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
