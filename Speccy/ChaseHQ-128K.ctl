@@ -4680,7 +4680,7 @@ W $98CD,2,2 -> "GOTCHA NANCY BABY!"
 B $98CF,1,1 <STOP>
 @ $98D0 label=raymond_says_wrong_way_chatter
 B $98D0,1,1 Raymond ($02)
-W $98D1,2,2 -> "WHAT ARE YOU DOING MAN!!"
+W $98D1,2,2 -> "WHAT ARE YOU DOING MAN!"
 W $98D3,2,2 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
 B $98D5,1,1 <STOP>
 @ $98D6 label=smash_chatter
@@ -9064,7 +9064,7 @@ C $BAA1,1 Set top digits
 C $BAA2,1 Clear low digit
 C $BAA3,1 Clear middle digits
 C $BAA4,3 Call add_bonus
-C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
+C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
 C $BAAA,5 Call start_chatter (with priority 20)
 C $BAAF,1 Restore HL (holds fork_distance)
