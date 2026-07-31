@@ -107,7 +107,7 @@ HEIGHT_GLYPHS = {
     "^^^": "UP5",
     "^^": "UP3",
     "^": "UP1",
-    ":": "LEVEL",
+    "-": "LEVEL",
     "v": "DOWN1",
     "vv": "DOWN3",
     "vvv": "DOWN5",
@@ -1167,7 +1167,7 @@ def build_section(compiled: CompiledSection, mapping: MapText, path: str) -> Sec
             )
         section.curvature.extend([curve_name] * count)
 
-        height_name = HEIGHT_GLYPHS.get(height or ":")
+        height_name = HEIGHT_GLYPHS.get(height or "-")
         if height_name is None:
             raise MapError(
                 "%s: bad Height cell '%s' (expected one of %s)"

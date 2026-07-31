@@ -79,9 +79,9 @@ The two that do not are genuine desyncs in the original data, not tool bugs: `st
 | Dst | Left objs      | Road      | Right objs | Curve | Height | Haz  | Loop  |
 | --- | -------------- | --------- | ---------- | ----- | ------ | ---- | ----- |
 |     |                |           |            |       |        |      | split left right |
-| 288 | .144           | H : : : H | .144       | >>    | :      |      |       |
-| 2   | .              | H : : :// | .          | <     | :      |      |       |
-| 30  | B . B .3 B .3  | H : : H   | R .3 R .4  | :     | :      |      | start |
+| 288 | .144           | H : : : H | .144       | >>    | -      |      |       |
+| 2   | .              | H : : :// | .          | <     | ^^     |      |       |
+| 30  | B . B .3 B .3  | H : : H   | R .3 R .4  | :     | -      |      | start |
 ```
 
 **The table reads bottom to top.** The last row is the start of the stage and the first row is the end of it, so the `Road` column draws the road the way the player meets it: the bottom of the page is nearest, the top is furthest away, and a lane transition slants in the direction the rail actually moves. Everything else — section labels, the running offset, `goto`/`split`/`end` — works in road order, which is the reverse of the file order.
@@ -167,7 +167,7 @@ Write the whole tunnel as tunnel rows. A run of N units emits `MAP_LANES_TUNNEL_
 | `<<` | `MAP_CURVE_LEFT_HARD` |  | `^^^` | `MAP_HEIGHT_UP5` |
 | `<` | `MAP_CURVE_LEFT` |  | `^^` | `MAP_HEIGHT_UP3` |
 | `:` | `MAP_CURVE_STRAIGHT` |  | `^` | `MAP_HEIGHT_UP1` |
-| `>` | `MAP_CURVE_RIGHT` |  | `:` | `MAP_HEIGHT_LEVEL` |
+| `>` | `MAP_CURVE_RIGHT` |  | `-` | `MAP_HEIGHT_LEVEL` |
 | `>>` | `MAP_CURVE_RIGHT_HARD` |  | `v` `vv` `vvv` `vvvv` | `_DOWN1/3/5/7` |
 | `>>>` | `MAP_CURVE_RIGHT_VERY_HARD` |  |  |  |
 
