@@ -84,6 +84,13 @@
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
 
+// SlopAY-style beeper/AY mix: the beeper is a hard on/off level, so summing
+// it straight into the AY signal biases the waveform upward whenever it is
+// high. AY_GAIN_WITH_BEEPER headroom keeps that sum inside int16 range, and
+// the DC-block one-pole highpass removes the resulting bias before the sum.
+#define AY_GAIN_WITH_BEEPER (0.90f)
+#define BEEPER_DC_BLOCK_R   (0.995f)
+
 // Sampled speech drives the AY DAC by writing a new volume-register value
 // every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
 // PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
@@ -175,6 +182,8 @@ typedef struct
   Uint64             audio_anchor_tstates;
   int                speaker_last_level; // last queued level (game thread)
   int                speaker_level;      // current replay level (audio thread)
+  float              beeper_dc_prev_in;  // DC-block filter state (audio thread)
+  float              beeper_dc_prev_out; // DC-block filter state (audio thread)
 
   // Replay cursor: maps generated samples onto event timestamps. The wall
   // clock and the audio device's sample clock drift apart (measured ~1.4ms/s
@@ -295,9 +304,14 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
   }
   else
   {
-    // A Spectrum 48K has 69,888 T-states per frame and its Z80 runs at
-    // 3.5MHz (~50Hz) for a total of 3,500,000 T-states per second.
-    const double          tstatesPerSec = 3.5e6;
+    // A Spectrum 48K's Z80 runs at 3.5MHz (3,500,000 T-states per second).
+    // A 128K runs its Z80 faster, at 3.5469MHz (3,546,900 T-states per
+    // second) — pacing every mode at the 48K rate throttles wall-clock time
+    // per T-state on a 128K, which slows the beeper's real-time toggle rate
+    // (timed by how fast the game thread actually runs) without affecting
+    // the AY chip's own tone pitch (computed from its own fixed clock,
+    // independent of this loop) — the two drift ~1.3% apart.
+    const double          tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
 
     struct timeval        now;
     double                duration; // seconds
@@ -380,22 +394,29 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 }
 
 // Maps a virtual T-state to the wall-clock ns the event should be heard at.
-// 1 T-state = 1e9/3.5e6 = 2000/7 ns. Game thread only; see the anchor
+// 1 T-state = 1e9 / tstatesPerSec ns, where tstatesPerSec matches the Z80
+// clock chq_sleep_handler paces the game thread against (3.5MHz on 48K,
+// 3.5469MHz on 128K) — using the wrong one here mis-schedules every AY and
+// beeper event's real playback time by the same ratio chq_sleep_handler
+// would otherwise mis-pace the game thread, and this is the function that
+// actually drives it, not the pacing loop. Game thread only; see the anchor
 // comment in chq_sdl_state_t.
 static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
 {
-  Uint64 now_ns;
-  Uint64 event_ns;
+  const double tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+  const double nsPerTstate   = 1.0e9 / tstatesPerSec;
+  Uint64       now_ns;
+  Uint64       event_ns;
 
   now_ns = SDL_GetTicksNS();
 
   // Scaled by the speed setting for the same reason chq_sleep_handler scales
   // its sleep: at 200% the game emits two frames of T-states in one frame of
-  // wall time, so a fixed 2000/7 would date every event further into the
+  // wall time, so a fixed rate would date every event further into the
   // future than the last and the anchor would never catch up.
   event_ns = state->audio_anchor_ns +
-             (tstates - state->audio_anchor_tstates) * 2000 / 7 *
-               100 / state->speed;
+             (Uint64) ((tstates - state->audio_anchor_tstates) * nsPerTstate *
+                       100 / state->speed);
   if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
   {
     state->audio_anchor_ns      = now_ns;
@@ -544,6 +565,24 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
   return beeper;
 }
 
+// One-pole highpass removing the DC bias the box-filtered beeper level
+// (chq_apply_due_audio_events) introduces before it is summed with the AY
+// signal. Filter state lives on the audio thread only.
+static float chq_beeper_dc_block(chq_sdl_state_t *state, int beeper_raw)
+{
+  float in;
+  float out;
+
+  in  = (float) beeper_raw;
+  out = (in - state->beeper_dc_prev_in) +
+        (BEEPER_DC_BLOCK_R * state->beeper_dc_prev_out);
+
+  state->beeper_dc_prev_in  = in;
+  state->beeper_dc_prev_out = out;
+
+  return out;
+}
+
 // Runs on SDL's audio thread. Called whenever SDL wants more data queued.
 static void chq_audio_callback(void            *opaque,
                                SDL_AudioStream *stream,
@@ -572,15 +611,17 @@ static void chq_audio_callback(void            *opaque,
 
     for (i = 0; i < npairs; i++)
     {
-      int beeper;
-      int left;
-      int right;
+      int   beeper_raw;
+      float beeper;
+      int   left;
+      int   right;
 
-      beeper = chq_apply_due_audio_events(state);
+      beeper_raw = chq_apply_due_audio_events(state);
+      beeper     = chq_beeper_dc_block(state, beeper_raw);
 
       sample = slopay_chip_get_sample(state->ay);
-      left   = (int16_t) ((sample >>  0) & 0xFFFF) + beeper;
-      right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
+      left   = (int) ((int16_t) ((sample >>  0) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
+      right  = (int) ((int16_t) ((sample >> 16) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
       if (state->audio_muted)
       {
         left = right = 0;
@@ -590,8 +631,8 @@ static void chq_audio_callback(void            *opaque,
         left  = left  * state->volume / 100;
         right = right * state->volume / 100;
       }
-      buf[i * 2 + 0] = (int16_t) CLAMP(left,  INT16_MIN, INT16_MAX);
-      buf[i * 2 + 1] = (int16_t) CLAMP(right, INT16_MIN, INT16_MAX);
+      buf[i * 2 + 0] = CLAMP(left,  INT16_MIN, INT16_MAX);
+      buf[i * 2 + 1] = CLAMP(right, INT16_MIN, INT16_MAX);
       state->samples_played++;
     }
 

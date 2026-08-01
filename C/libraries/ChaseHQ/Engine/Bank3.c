@@ -2186,6 +2186,10 @@ static void titlescr_ay_music(chqstate_t *state)
   /* $ECCF-$ECE2: output the cached register block. */
   if (state->bank3->title_music.tune_active)
     titlescr_write_ay_registers(state);
+
+  /* $ECE2: RET back to titlescr_music -- pairs with the CALL $EC71 overhead
+   * billed at the call site. */
+  state->speccy->logtime(state->speccy, 10);
 }
 
 /**
@@ -3220,15 +3224,35 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
     A = *HL;
     HL++;
 
+    /* $F7FE LD A,(HL) / $F7FF INC HL / $F800 CP $FE / $F802 JP Z,$F829
+     * (7+6+7+10=30). */
+    state->speccy->logtime(state->speccy, 30);
+
     if (A == 0xFE) {
+      /* $F829-$F82B POP HL / POP HL / DI have no C equivalent (see prologue
+       * Conv note); $F82C JP $ED0B's own cost is billed inside
+       * stop_music_and_silence. */
       stop_music_and_silence(state);
       return;
     }
 
+    /* $F805 CP $FF (7). */
+    state->speccy->logtime(state->speccy, 7);
+
     if (A == 0xFF) {
+      /* $F807 JR Z,$F823 taken (12) + $F823 LD A,(HL) / $F824 INC HL /
+       * $F825 LD H,(HL) / $F826 LD L,A / $F827 JR $F7FE (7+6+7+4+12=36). */
+      state->speccy->logtime(state->speccy, 12 + 36);
       HL = resolve_drum_script_addr(wordat(HL));
       continue;
     }
+
+    /* $F807 JR Z,$F823 not taken (7) + $F809 LD ($F7F5),A / $F80C LD C,(HL) /
+     * $F80D INC HL / $F80E LD ($F7FC),HL / $F811 LD B,$00 / $F813 LD
+     * HL,$FAA4 / $F816 ADD HL,BC / $F817 LD A,(HL) / $F818 INC HL / $F819 LD
+     * ($F84E),A / $F81C LD ($F842),A / $F81F LD ($F85E),HL / $F822 RET
+     * (13+7+6+16+7+10+11+7+6+13+13+16+10=135). */
+    state->speccy->logtime(state->speccy, 7 + 135);
 
     state->bank3->drums.script_delay = A;
 
@@ -3299,7 +3323,7 @@ static void titlescr_music(chqstate_t *state)
   u8        A;             /* general accumulator, reused for each state check (was A) */
   const u8 *HL_stream;     /* selector-stream cursor (was HL) */
   u8        D_entry;       /* dispatch entry byte, masked if bit 7 was set (was D) */
-  int       B_selector;    /* low-3-bits selector: which 1-bit-sample engine to trigger (was B) */
+  int       B_instrument;  /* low-3-bits: which 1-bit-sample engine to trigger (was B) */
   int       A_pitch_param; /* pitch/rate parameter passed to the fixed-sample players (was A) */
 
   /* Conv: one call is one frame, so the frame's stamp/sleep pacing lives here
@@ -3308,19 +3332,47 @@ static void titlescr_music(chqstate_t *state)
    * frame's time already spent here and returns without waiting again. */
   state->speccy->stamp(state->speccy);
 
+  /* $F82F: CALL $EC71 -- call overhead into titlescr_ay_music. The RET this
+   * pairs with is billed at that function's own exit. */
+  state->speccy->logtime(state->speccy, 17);
+
   titlescr_ay_music(state);
 
+  /* $F832-$F833: XOR A / LD ($F8A8),A -- clears the "frame occurred" flag.
+   * Conv: functionally omitted (see prologue), since nothing here polls
+   * $F8A8, but the two instructions still cost real T-states on hardware. */
+  state->speccy->logtime(state->speccy, 4 + 13);
+
+  /* $F836-$F839: LD A,(slot1_busy) / AND A -- common prefix before the
+   * busy/idle branch. */
+  state->speccy->logtime(state->speccy, 7 + 4);
+
   if (!state->bank3->drums.slot1_busy) {
-    // idle -> arm slot 1, reload and enter the loop
+    /* $F839 JR NZ,$F841 not taken (7) + $F83B INC A / $F83C LD
+     * (slot1_busy),A / $F83F JR $F85D (4+13+12=29) -- idle -> arm slot 1,
+     * reload and enter the loop. */
+    state->speccy->logtime(state->speccy, 7 + 29);
     state->bank3->drums.slot1_busy = 1;
     goto sfx1_reload_pointer;
   }
 
+  /* $F839 JR NZ,$F841 taken (12) + $F841 LD A,(slot1_countdown) / $F843 DEC
+   * A / $F844 JP Z,$F84D (7+4+10=21). */
+  state->speccy->logtime(state->speccy, 12 + 21);
+
   A = (u8)(state->bank3->drums.slot1_countdown - 1);
   if (A != 0) {
+    /* $F847 LD (slot1_countdown),A / $F84A JP $F894 -- skip slot 1 entirely
+     * this frame. */
+    state->speccy->logtime(state->speccy, 13 + 10);
     state->bank3->drums.slot1_countdown = A;
     goto sfx2_tick_countdown; // skip slot 1 entirely this frame
   }
+
+  /* $F84D LD A,(SM,$00) / $F84F LD (slot1_countdown),A / $F852 LD
+   * HL,(SM,stream_ptr) (7+13+10=30) -- reached the countdown's last tick;
+   * reset it and fall into the stream-reading loop. */
+  state->speccy->logtime(state->speccy, 30);
 
   // Conv: $F84D is self-modifying -- its "LD A,$00" operand ($F84E) is
   // patched by load_drum_op to the current trigger-table entry's selector
@@ -3334,55 +3386,104 @@ static void titlescr_music(chqstate_t *state)
   goto drum_read_stream_byte;
 
 sfx1_reload_pointer:
-  HL_stream                     = state->bank3->drums.stream_reload_ptr;
+  /* $F85D LD HL,(SM,stream_reload_ptr) / $F860 LD (stream_ptr),HL / $F863 JP
+   * $F855 (10+16+10=36). Reached both from the idle-arm path above and from
+   * the stream-retry loop below, so this bill fires once per visit exactly
+   * as the real instructions would re-execute each time. */
+  state->speccy->logtime(state->speccy, 36);
+  HL_stream                      = state->bank3->drums.stream_reload_ptr;
   state->bank3->drums.stream_ptr = HL_stream;
 
 drum_read_stream_byte:
+  /* $F855 LD A,(HL) / $F856 DEC A / $F857 JP NZ,$F866 (7+4+10=21). */
+  state->speccy->logtime(state->speccy, 21);
   A = *HL_stream - 1;
   if (A != 0)
     goto drum_dispatch_entry;
+  /* $F85A CALL $F7F4 -- pull in a fresh trigger-table entry. */
+  state->speccy->logtime(state->speccy, 17);
   titlescr_drum_advance(state); // pull in a fresh trigger-table entry
   goto sfx1_reload_pointer;
 
 drum_dispatch_entry:
-  HL_stream++;
-  state->bank3->drums.stream_ptr = HL_stream;
+  /* $F866 INC HL / $F867 LD (stream_ptr),HL / $F86A INC A / $F86B BIT 7,A
+   * (6+16+4+8=34). */
+  state->speccy->logtime(state->speccy, 34);
+  state->bank3->drums.stream_ptr = ++HL_stream;
   A++; // restore the original entry byte (undo the -1 above)
   if (A & 0x80) {
-    A &= 0x7F;
+    /* $F86D JR Z,$F87B not taken (7) + $F86F AND $7F / $F871 EX AF,AF' /
+     * $F872 LD A,$01 / $F874 LD (slot1_countdown),A / $F877 LD
+     * (slot2_busy),A / $F87A EX AF,AF' (7+48=55) -- also arm slot 2. */
+    state->speccy->logtime(state->speccy, 7 + 48);
+    A &= ~0x80;
     state->bank3->drums.slot1_countdown = 1;
     state->bank3->drums.slot2_busy      = 1;
+  } else {
+    /* $F86D JR Z,$F87B taken (12). */
+    state->speccy->logtime(state->speccy, 12);
   }
+
+  /* $F87B LD D,A / $F87C AND $07 (4+7=11). */
+  state->speccy->logtime(state->speccy, 11);
   D_entry = A;
   A &= 0x07;
-  if (A == 0)
+  if (A == 0) {
+    /* $F87E JR Z,$F894 taken (12) -- nothing to trigger this frame. */
+    state->speccy->logtime(state->speccy, 12);
     goto sfx2_tick_countdown; // nothing to trigger this frame
+  }
 
-  B_selector     = A;
+  /* $F87E JR Z,$F894 not taken (7) + $F880 LD B,A / $F881 LD A,D / $F882-
+   * $F886 SRL A x3 / $F888 DEC B / $F889 JP Z,$F8B6 (4+4+24+4+10=46) --
+   * common prefix for the selector-1 check; selectors 2 and 3 bill their
+   * extra DEC B/JP Z pair below. */
+  state->speccy->logtime(state->speccy, 7 + 46);
+
+  B_instrument  = A;
   A_pitch_param = D_entry >> 3;
-  if (--B_selector == 0) {
+  switch (B_instrument) {
+  case 1:
     play_fixed_sample_1(state, A_pitch_param);
     goto tm_exit;
-  }
-  if (--B_selector == 0) {
+  case 2:
+    /* $F88C DEC B / $F88D JP Z,$F8BD (4+10=14). */
+    state->speccy->logtime(state->speccy, 14);
     play_fixed_sample_2(state, A_pitch_param);
     goto tm_exit;
-  }
-  if (--B_selector == 0) {
+  case 3:
+    /* $F88C-$F88D and $F890-$F891 DEC B/JP Z pairs, both missed then hit
+     * (14+14=28). */
+    state->speccy->logtime(state->speccy, 28);
     play_drum_noise_burst(state, A_pitch_param);
     goto tm_exit;
   }
 
 sfx2_tick_countdown:
+  /* $F894 LD A,(slot2_busy) / $F896 AND A (7+4=11). */
+  state->speccy->logtime(state->speccy, 11);
   if (state->bank3->drums.slot2_busy) {
+    /* $F897 JR Z,$F8A1 not taken (7) + $F899 LD HL,$F842 / $F89C DEC (HL) /
+     * $F89D LD HL,$F895 / $F8A0 DEC (HL) (10+11+10+11=42). */
+    state->speccy->logtime(state->speccy, 7 + 42);
     state->bank3->drums.slot1_countdown--;
     state->bank3->drums.slot2_busy--;
+  } else {
+    /* $F897 JR Z,$F8A1 taken (12). */
+    state->speccy->logtime(state->speccy, 12);
   }
 
-  if (state->bank3->drums.sample_active)
+  /* $F8A1 LD A,(sample_active) / $F8A3 DEC A / $F8A4 JP Z,$F8CC
+   * (7+4+10=21). */
+  state->speccy->logtime(state->speccy, 21);
+  if (state->bank3->drums.sample_active) {
+    /* $F8CC EXX -- bank into the shadow HL'/D' that play_sample_row resumes
+     * from. */
+    state->speccy->logtime(state->speccy, 4);
     play_sample_row(state,
                     state->bank3->drums.sample_resume_rows,
                     state->bank3->drums.sample_resume_ptr);
+  }
 
 tm_exit:
   state->speccy->sleep(state->speccy, TITLE_MUSIC_TSTATES);
@@ -3421,6 +3522,9 @@ static void frame_interrupt_handler(chqstate_t *state)
  */
 static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param)
 {
+  /* $F8B6 LD HL,$F8F2 / $F8B9 LD D,$68 / $F8BB JR $F8C2 (10+7+12=29) --
+   * table-pointer load for the 104-byte sample table. */
+  state->speccy->logtime(state->speccy, 29);
   play_fixed_sample_start(state,
                           A_pitch_param,
                           &state->bank3->drums.sample1[0],
@@ -3440,6 +3544,9 @@ static void play_fixed_sample_1(chqstate_t *state, int A_pitch_param)
  */
 static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
 {
+  /* $F8BD LD HL,$F95A / $F8C0 LD D,$E0 (10+7=17) -- table-pointer load for
+   * the 224-byte sample table; falls straight through to $F8C2, no JR here. */
+  state->speccy->logtime(state->speccy, 17);
   play_fixed_sample_start(state,
                           A_pitch_param,
                           &state->bank3->drums.sample2[0],
@@ -3447,7 +3554,7 @@ static void play_fixed_sample_2(chqstate_t *state, int A_pitch_param)
 }
 
 /**
- * $F8C2: Arm 1-bit sample playback
+ * $F8C2: Start 1-bit sample playback
  *
  * Shared tail for play_fixed_sample_1/play_fixed_sample_2: stashes the
  * pitch/rate parameter, marks sample playback active, then falls into
@@ -3468,6 +3575,9 @@ static void play_fixed_sample_start(chqstate_t *state,
                                     u8         *HL_data,
                                     int         D_length)
 {
+  /* $F8C2 LD ($F8CE),A / $F8C5 LD A,$01 / $F8C7 LD ($F8A2),A / $F8CA JR
+   * $F8CD (13+7+13+12=45). */
+  state->speccy->logtime(state->speccy, 45);
   state->bank3->drums.sample_pitch_param = A_pitch_param;
   state->bank3->drums.sample_active      = 1;
   play_sample_row(state, D_length, HL_data); /* was FALLTHROUGH */
@@ -3535,11 +3645,11 @@ static void play_fixed_sample_start(chqstate_t *state,
  */
 static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
 {
-  zxspectrum_t *speccy;      /* game's ZX Spectrum facade (was N/A) */
+  zxspectrum_t *speccy;        /* game's ZX Spectrum facade (was N/A) */
   int           frame_tstates; /* bit-bang T-states spent so far this call (was N/A) */
-  int           i;           /* inner loop counter: row-bit-count from sample_pitch_param (was B) */
-  int           bits;        /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
-  int           carry;       /* carry from the RLC rotation, unused after (carry) */
+  int           i;             /* inner loop counter: row-bit-count from sample_pitch_param (was B) */
+  int           bits;          /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+  int           carry;         /* carry from the RLC rotation, unused after (carry) */
 
   speccy        = state->speccy;
   frame_tstates = 0;
@@ -3645,7 +3755,7 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
     do {
       state->bank3->drums.noise_phase += 3;
       B_phase = state->bank3->drums.noise_phase;
-      A      = state->bank3->drums.noise_accum - 0x8D;
+      A       = state->bank3->drums.noise_accum - 0x8D;
       state->bank3->drums.noise_accum = A;
       A += B_phase;
       RLC(A);
@@ -3657,8 +3767,7 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
       if (A & (1 << 4)) {
         /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
         speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - E_duration));
-        speccy->out(speccy, port_BORDER_EAR_MIC,
-                    port_MASK_EAR | port_MASK_MIC);
+        speccy->out(speccy, port_BORDER_EAR_MIC, port_MASK_EAR | port_MASK_MIC);
         /* $FA5E: LD B,E; DJNZ; XOR A (4 + loop + 4) */
         speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
