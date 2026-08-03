@@ -1252,10 +1252,6 @@ static void draw_forked_road(chqstate_t *state,
 static void dr_start_backdrop_fill(chqstate_t *state,
                                    int         DE_backbuf,
                                    int         L_row);
-static void backdrop_fill_dispatch(chqstate_t *state,
-                                   int         DE_backbuf,
-                                   int         L_row);
-
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
                                    int         DE_roadpos,
@@ -17583,22 +17579,6 @@ dfr_next_scanline_c969:
 // mystery_cba4 would go here, if we knew what it did
 
 /**
- * $CBC5: Backdrop fill choice
- *
- * Called from draw_forked_road when the height difference is >= 0x50. The A <
- * 0x50 branch (JP C,$C915) is handled inline by the caller because dfr_c915 is
- * a label inside draw_forked_road. This function handles only the $CBCB JP
- * $C79A path (diff >= 0x50 → start backdrop fill).
- *
- * \param[in] DE_backbuf Back-buffer pointer at call site (D=high, E=low).
- * \param[in] L_row      Road table row index at call site.
- */
-static void backdrop_fill_dispatch(chqstate_t *state, int DE_backbuf, int L_row)
-{
-  dr_start_backdrop_fill(state, DE_backbuf, L_row);
-}
-
-/**
  * $CBD6: Build curve table
  *
  * Fills curvature_table[] with 22 per-row x-position deltas derived from the
@@ -17632,8 +17612,8 @@ static void build_curve_table(chqstate_t *state, int forked)
    * reached only when a forked road's negated curvature run (see `forked`
    * below) walks the accumulator back past the inward table's start.
    *
-   * inward_bend_table / curvature_to_xpos ($E540-$E5FF, 96 entries): converts
-   * a curvature to a road X position for regular (non-forked) bending;
+   * inward_bend_table ($E540-$E5FF, 96 entries): converts a curvature to a road
+   * X position for regular (non-forked) bending;
    * v[i] = round(128 * (1 + tan((i - 32) * pi/128))), which reproduces all 96
    * entries exactly.
    */
@@ -17671,7 +17651,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     0xFFEC,
     0xFFF3,
     0xFFFA,
-    // inward_bend_table / curvature_to_xpos ($E540)
+    // inward_bend_table ($E540)
     0x0000,
     0x0006,
     0x000C,
