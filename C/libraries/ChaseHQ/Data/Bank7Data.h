@@ -25,15 +25,13 @@
  * draw_endshot ($E4A9, Bank7.c). Row/attribute counts are not exactly
  * 64*13+8*13 in every case -- sizes here are taken verbatim from the skool's
  * label boundaries, not recomputed from the nominal 104x64 dimensions. */
-extern const u8 bitmap_endshot_1[936];
-extern const u8 bitmap_endshot_2[936];
-extern const u8 bitmap_endshot_3[936];
-extern const u8 bitmap_endshot_4[936];
 
 /* Handshake animation frames: 8-byte-wide rows only, no attribute data
  * (handshake's own routine_e3b7 supplies attributes via the fixed $59AC
  * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
  * from skool label boundaries. */
+extern const u8 es_script[268];
+
 extern const u8 bitmap_handshake_1[296];
 extern const u8 bitmap_handshake_2[280];
 extern const u8 bitmap_handshake_3[272];
@@ -46,25 +44,19 @@ typedef struct {
   const u8 *image;
 } handshake_frame_t;
 
-extern const handshake_frame_t handshake_frames[6];
 
-extern const u8 chatterblk_nancy_congratulates[6];
-extern const u8 chatterblk_press_gear[3];
 
 /* Bank 7's own copy of the 48K music engine's pattern/data tables, played by
  * es_play_music_48k et al (Bank7.c). Same (repeats, offset) / note-stream
  * format as CommonData.c's music_patterns/music_data, but a separate tune
  * and a separate table (relocated base $F53C, not $F0FE). */
 extern const u8 es_music_patterns[23];
-extern const u8 es_music_data[172];
 
 /* Bank 7's own drum sample templates, played by es_playdrum_2/es_playdrum_1
  * (Bank7.c). Byte-for-byte identical to CommonData.c's drum2_template/
  * drum1_template for all but the final byte -- not aliases of those tables,
  * since that last byte differs (0x00 here vs 0xFF there), and bank 7 uses
  * shorter lengths (94/160 vs 108/252) throughout. */
-extern const u8 es_drum_sample_2_template[94];
-extern const u8 es_drum_sample_1_template[160];
 
 /* End-screen script command bytes, dispatched by run_script's switch
  * (Bank7.c). Argument-encoding macros (ESCMD_CHATTER, ESCMD_IDLE, etc.) are
@@ -95,7 +87,6 @@ extern const u8 es_drum_sample_1_template[160];
 
 /* $E0FE-$E209: End-screen script bytecode (268 bytes). See its definition in
  * Bank7Data.c for the full format description. */
-extern const u8 es_script[268];
 
 /* Conv: skool $E251 "LD HL,$5E04 / JR $E20D" -- on an unrecognised command
  * byte the Z80 resets HL to the CHATTER(0x5C78) command three bytes back
