@@ -37,7 +37,7 @@ Only the 128K (`ChaseHQ-128K.ctl`) version is under active disassembly. There is
    You'll see:
 
    ```
-   Downloading https://worldofspectrum.net/pub/sinclair/games/c/ChaseH.Q..tzx.zip
+   Downloading https://www.worldofspectrum.org/pub/sinclair/games/c/ChaseH.Q..tzx.zip
    Extracting Chase HQ - Side 1.tzx
    Program: CHASE HQ
    Fast loading data block: 23755,3870
