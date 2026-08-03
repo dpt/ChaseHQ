@@ -27,8 +27,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-
-
 extern const u8 bitmap_smoke1[4 * 13];
 extern const u8 bitmap_smoke2[4 * 11];
 extern const u8 bitmap_smoke3[4 * 9];
@@ -90,7 +88,6 @@ extern const char *common_chatter_strings[CHATTERSTR__LIMIT];
 
 extern const u8 sfx_crash_table[93];
 
-
 extern const u8 chatterblk_pilot_turn_left[6];
 extern const u8 chatterblk_pilot_turn_right[6];
 extern const u8 chatterblk_heroes_acknowledge[4];
@@ -123,19 +120,12 @@ extern const u8 chatterblk_tony_lets_go[3];
 
 extern const u8 *chatter_blocks[CHATTERBLK__LIMIT];
 
-
 extern const u8 font[41 * 7];
-
 
 extern const u8 hazard_pos_speed[3 * 4];
 
 extern const u8 hero_car_jump_table[10 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
-
-
-
-
-
 
 extern const u8 bitmap_arrow[3 * 2 * 28];
 extern const u8 bitmap_cherry_light[1 * 2 * 7];
@@ -199,7 +189,6 @@ extern const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12];
 
 #define LEDFONT_HEIGHT (15) // 15 rows/char
 #define MINIFONT_HEIGHT (6) // 6 rows/char
-
 
 extern const depthset_t tunnellight;
 extern const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES];
@@ -267,9 +256,6 @@ extern const transition_t transitions[8];
 
 extern const u8 square_transition_frames[5 * 8];
 extern const u8 diamond_transition_frames[6 * 8];
-
-
-
 
 extern const u8 music_patterns[19];
 extern const u8 music_data[271];

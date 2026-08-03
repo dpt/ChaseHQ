@@ -30,11 +30,6 @@
 
 // clang-format off
 
-
-
-
-
-
 /** $D462-$EB9D: title_glyph_bitmaps -- glyph/sprite bitmap data (car, truck, logo letters). */
 const u8 title_glyph_bitmaps[5948] = {
   ________, ______XX, XXXXXX__, ________,
@@ -2025,8 +2020,6 @@ const u8 title_glyph_bitmaps[5948] = {
   ______XX, ________,
 };
 
-
-
 /**
  * $F225-$F240: tunes
  *
@@ -3432,11 +3425,7 @@ const u8 options_menu_text[366] = {
 
 /* ----------------------------------------------------------------------- */
 
-
-
 /* ----------------------------------------------------------------------- */
-
-
 
 const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
   "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",

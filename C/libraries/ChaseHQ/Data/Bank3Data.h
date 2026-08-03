@@ -22,7 +22,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-
 #define TITLE_SCENE_COUNT          (5)
 #define TITLE_SCENE_DATA_BASE (0xCCB7)
 #define TITLE_GLYPH_COUNT        (115)
