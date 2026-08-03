@@ -8,9 +8,13 @@ set(CMAKE_C_STANDARD 90)
 # -Wunterminated-string-initialization fires on key_names (CommonData.c):
 # a packed row-major char table sized to its exact content, never treated
 # as a NUL-terminated string.
-add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers -Wno-unterminated-string-initialization)
-add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+if(MSVC)
+  add_compile_options(/W4)
+else()
+  add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers -Wno-unterminated-string-initialization)
+  add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+  add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+endif()
 
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
 
