@@ -1,4 +1,4 @@
-# Disassembling and Rebuilding _Chase H.Q._ for the ZX Spectrum
+# _Chase H.Q._ for ZX Spectrum — reverse-engineered and reconstructed in portable C
 
 by David Thomas, 2023-2026
 
