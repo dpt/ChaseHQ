@@ -27,11 +27,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-extern const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
 
-extern const u8 pregame_messages[68];
-extern const u8 pregame_data[207];
-extern const u8 pregame_tiles[45 * 8];
 
 extern const u8 bitmap_smoke1[4 * 13];
 extern const u8 bitmap_smoke2[4 * 11];
@@ -51,9 +47,9 @@ extern const u8 bitmap_fire6s[4 * 6];
 
 extern const u8 bitmap_faces[FACEBYTES * NFACES];
 
-extern const stretchy_t stretchy_shortpole[3];
 extern const depthset_t shortpole_bottom;
 extern const depthset_t shortpole_middle;
+extern const stretchy_t stretchy_shortpole[3];
 extern const depthset_t streetlampbottom_left;
 extern const depthset_t streetlampbottom_right;
 extern const depthset_t streetlampmiddle2_left;
@@ -92,27 +88,14 @@ extern const u8 chatterblk_tony_hold_on[3];
 
 extern const char *common_chatter_strings[CHATTERSTR__LIMIT];
 
-extern const u8 attract_messages[38];
-extern const u8 credits_messages[84];
-extern const u8 copyright_messages[92];
 
 /* $86F6: backdrop blit instruction templates.
  * Two 18-byte chunks; selected slice is copied to dr.backdrop_copy_instrs by
  * dr_start_backdrop_fill.  0x2C = INC L (skip), 0xED/0xA0 = LDI (copy). */
-extern const u8 backdrop_copy_instrs_template[36];
 
-extern const scenedata_t escape_scene_data;
-extern const hazard_t escape_scene_perp;
 
 extern const u8 sfx_crash_table[93];
 
-extern const u8 score_messages_template[90];
-extern const u8 sighting_message[36];
-extern const u8 pull_over_message[30];
-extern const u8 game_over_message[20];
-extern const u8 time_up_message[20];
-extern const u8 continue_messages_template[119];
-extern const u8 stage_n_template[7];
 
 extern const u8 chatterblk_pilot_turn_left[6];
 extern const u8 chatterblk_pilot_turn_right[6];
@@ -146,37 +129,19 @@ extern const u8 chatterblk_tony_lets_go[3];
 
 extern const u8 *chatter_blocks[CHATTERBLK__LIMIT];
 
-extern const session_t saved_game_state;
-extern const hazard_t saved_game_state_perp_hazard;
 
 extern const u8 font[41 * 7];
 
-extern const hazard_t hazard_template;
 
 extern const u8 hazard_pos_speed[3 * 4];
 
 extern const u8 hero_car_jump_table[10 * 2];
-extern const u8 car_jump_params[5 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
 
-extern const u8 smoke_ce0c_template[13];
-extern const u8 smoke_ce19_template[13];
-extern const u8 smoke_ce26_template[13];
 
-extern const u8 debris_subtable_1_template[19];
-extern const u8 debris_subtable_2_template[19];
-extern const u8 debris_subtable_3_template[19];
-extern const u8 debris_subtable_4_template[19];
-extern const u8 debris_subtable_5_template[19];
 
-extern const u8 bitmap_debris[4][2 * 6];
 
-extern const carpart_t hero_car_parts[9][5];
-extern const carpart_t hero_car_shadow[3];
-extern const carsmokeframe_t hero_car_turbo_smoke[4];
 
-extern const carframe_t car_frames[39];
-extern const caradornment_t car_adornments[6];
 
 extern const u8 bitmap_arrow[3 * 2 * 28];
 extern const u8 bitmap_cherry_light[1 * 2 * 7];
@@ -239,20 +204,8 @@ extern const u8 bitmap_shadow_turn_right[7 * 2 * 12];
 extern const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12];
 
 #define LEDFONT_HEIGHT (15) // 15 rows/char
-extern const u8 ledfont[10 * LEDFONT_HEIGHT];
 #define MINIFONT_HEIGHT (6) // 6 rows/char
-extern const u8 minifont[31 * MINIFONT_HEIGHT];
 
-extern const bitmap_t fire1_defns[SPRITE_FRAMES];
-extern const bitmap_t fire2_defns[SPRITE_FRAMES];
-extern const bitmap_t fire3_defns[SPRITE_FRAMES];
-extern const bitmap_t fire4_defns[SPRITE_FRAMES];
-extern const bitmap_t fire5_defns[SPRITE_FRAMES];
-extern const bitmap_t fire6_defns[SPRITE_FRAMES];
-extern const bitmap_t smoke_defns[SPRITE_FRAMES];
-extern const bitmap_t floating_arrow_here_defn;
-extern const bitmap_t floating_arrow_left_defn;
-extern const bitmap_t floating_arrow_right_defn;
 
 extern const depthset_t tunnellight;
 extern const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES];
@@ -290,11 +243,6 @@ extern const u8 fork_leftrightobjs[6];
 extern const u8 forked_road_curvature[6];
 extern const u8 forked_road_height[5];
 extern const u8 forked_road_lanes[2];
-extern const u8 forked_road_exit_hazards[3];
-extern const u8 forked_road_exit_rightobjs[4];
-extern const u8 forked_road_exit_leftobjs[4];
-extern const u8 forked_road_exit_curvature[5];
-extern const u8 forked_road_exit_height[5];
 
 /* Z80 addresses of the shared map sections above, as referenced by the map
  * GOTO commands in CommonData.c and resolved by z80addrtocommonmap (Main.c).
@@ -306,8 +254,6 @@ extern const u8 forked_road_exit_height[5];
 #define FORKED_ROAD_CURVATURE_ADDR (0xE2C6)
 #define FORKED_ROAD_HEIGHT_ADDR    (0xE2CC)
 #define FORKED_ROAD_LANES_ADDR     (0xE2D1)
-extern const u8 forked_road_exit_left_lanes[12];
-extern const u8 forked_road_exit_right_lanes[12];
 
 extern const u8 spiral_transition_frames[11 * 8];
 extern const u8 circle_transition_frames[7 * 8];
@@ -315,11 +261,8 @@ extern const u8 circle_transition_frames[7 * 8];
 extern const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
 
 extern const u16 outward_bend_table[32];
-extern const u16 curvature_to_xpos[96];
 
 extern const u8 persp_y_scale[8][PERSP_TABLE_COLS];
-extern const u8 persp_x_scale_right[8][PERSP_TABLE_COLS];
-extern const u8 persp_x_delta_left[8][PERSP_TABLE_COLS];
 
 typedef struct {
   u8        nframes; // stores nframes+1
@@ -331,31 +274,14 @@ extern const transition_t transitions[8];
 extern const u8 square_transition_frames[5 * 8];
 extern const u8 diamond_transition_frames[6 * 8];
 
-extern const u8 messages_stop_the_tape[45];
-extern const u8 messages_input_methods[112];
-extern const u8 messages_redefine_keys[138];
-extern const u8 messages_test_mode[151];
-extern const u8 messages_cannot_be_remodified[127];
 
-extern const u8 key_names[10 * 8];
-extern const u8 sinclair_joy_keydefs[5];
-extern const u8 cursor_joy_keydefs[5];
-extern const u8 shocked_keydefs[8];
-extern const u8 temp_keydefs_template[8];
 
-extern const u8 drum1_template[252];
-extern const u8 drum2_template[108];
 
 extern const u8 music_patterns[19];
 extern const u8 music_data[271];
 
-extern const u8 press_gear_messages[17];
-extern const u8 enter_for_options_messages[23];
-extern const u8 credits_messages_128[98];
-extern const u8 best_officers[163];
-
-extern const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
-extern const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
+extern const u8 sinclair_joy_keydefs[5];
+extern const u8 temp_keydefs_template[8];
 
 /* ----------------------------------------------------------------------- */
 

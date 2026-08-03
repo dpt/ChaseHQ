@@ -1462,6 +1462,73 @@ static void play_engine_sfx_48k(chqstate_t *state)
  */
 static void attract_mode_48k(chqstate_t *state)
 {
+  // clang-format off
+  /** $82A6: attract_messages */
+  static const u8 attract_messages[38] = {
+    DRAWCHARSTYLE_DOUBLE,
+    attribute_BLACK_OVER_BLACK, // zero
+    TWOBYTES(0xF02C), // back buffer addr
+    TWOBYTES(0x594C), // attr addr
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', 'Q' | EOS,
+
+    DRAWCHARSTYLE_SINGLE,
+    attribute_BLACK_OVER_BLACK, // zero
+    TWOBYTES(0xF847),
+    TWOBYTES(0x59A7),
+    'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | EOS
+  };
+
+  /** $82CC: credits_messages */
+  static const u8 credits_messages[84] = {
+    10, // frame delay
+    8, // frames to hold before the next message is revealed
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF086),
+    TWOBYTES(0x5A06),
+    'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF0A6),
+    TWOBYTES(0x5A46),
+    'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
+    0x28,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF0C6),
+    TWOBYTES(0x5A86),
+    'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
+    3,
+    0
+  };
+
+  /** $8320: copyright_messages */
+  static const u8 copyright_messages[92] = {
+    10,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF084),
+    TWOBYTES(0x5A04),
+    '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF0A3),
+    TWOBYTES(0x5A43),
+    '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK, // 2
+    TWOBYTES(0xF0C6),
+    TWOBYTES(0x5A86),
+    'A', 'L', 'L', ' ', 'R', 'I', 'G', 'H', 'T', 'S', ' ', 'R', 'E', 'S', 'E', 'R', 'V', 'E', 'D' | EOS,
+    3,
+    0
+  };
+  // clang-format on
+
   int          carry;           /* carry flag used by RRC (carry) */
   int          blinker;         /* credits/copyright toggle; SM at $828C (was $828C) */
   int          keys;            /* keyscan result (was A) */
@@ -2118,6 +2185,629 @@ static void am_set_attrs(int counter, u8 *attrs)
  */
 static void draw_pregame(chqstate_t *state)
 {
+  // clang-format off
+  /**
+   * $7798: pregame_messages
+   *
+   * Conv: Added unused bytes which original game omitted.
+   */
+  static const u8 pregame_messages[68] = {
+    0xFF, // unused
+    attribute_BRIGHT_BLACK_OVER_WHITE,
+    TWOBYTES(0xF802),
+    TWOBYTES(0x5922),
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'M', 'O', 'N', 'I', 'T', 'O', 'R', 'I', 'N', 'G', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' | EOS,
+
+    0xFF, // unused
+    0x60, // must be attr but doesn't seem to do what it should
+    TWOBYTES(0xF863),
+    TWOBYTES(0x59E3),
+    'T', 'U', 'N', 'E' | EOS,
+
+    0xFF, // unused
+    0x60,
+    TWOBYTES(0xF8A2),
+    TWOBYTES(0x5A62),
+    'V', 'O', 'L', 'U', 'M', 'E' | EOS,
+
+    0xFF, // unused
+    0x58,
+    TWOBYTES(0xF077),
+    TWOBYTES(0x59D7),
+    'S', 'I', 'G', 'N', 'A', 'L' | EOS
+  };
+
+  /** $77D8: pregame_data */
+  static const u8 pregame_data[207] = {
+    0xDC, // Set colour 12 (Bright Green)
+    0xE1, // Draw horizontally
+    TWOBYTES(0x01F0), // Set address to (1,0)
+    0x1F, // Plot tile 0
+    0x1C, // Repeat 28
+    0x25, // Plot tile 6
+    0x20, // Plot tile 1
+    TWOBYTES(0x21F0), // Set address to (1,0)
+    0x21, // Plot tile 2
+    0x1C, // Repeat 28
+    0x24, // Plot tile 5
+    0x22, // Plot tile 3
+    TWOBYTES(0x01F8), // Set address to (1,1)
+    0x23, // Plot tile 4
+    TWOBYTES(0x1EF8), // Set address to (30,1)
+    0x26, // Plot tile 7
+    0xDD, // Set colour 13 (Bright Cyan)
+    TWOBYTES(0x41F0), // Set address to (1,4)
+    0x1F, // Plot tile 0
+    0x1C, // Repeat 28
+    0x25, // Plot tile 6
+    0x20, // Plot tile 1
+    TWOBYTES(0xE1F8), // Set address to (1,13)
+    0x21, // Plot tile 2
+    0x1C, // Repeat 28
+    0x24, // Plot tile 5
+    0x22, // Plot tile 3
+    0xE2, // Draw vertically
+    TWOBYTES(0x41F8), // Set address to (1,5)
+    0x0A, // Repeat 10
+    0x23, // Plot tile 4
+    TWOBYTES(0x5EF8), // Set address to (30,5)
+    0x0A, // Repeat 10
+    0x26, // Plot tile 7
+    0xD0, // Set colour 0 (Black)
+    0xE1, // Draw horizontally
+    TWOBYTES(0x97F0), // Set address to (23,9)
+    0x07, // Repeat 7
+    0x27, // Plot tile 8
+    TWOBYTES(0xB7F0), // Set address to (23,9)
+    0x07, // Repeat 7
+    0x27, // Plot tile 8
+    TWOBYTES(0x49F8), // Set address to (9,5)
+    0xDF, // Set colour 15 (Bright White)
+    0x2A, // Plot tile 11
+    0x2B, // Plot tile 12
+    0x09, // Repeat 9
+    0x2C, // Plot tile 13
+    0x2D, // Plot tile 14
+    0x2E, // Plot tile 15
+    0x2F, // Plot tile 16
+    TWOBYTES(0x69F0), // Set address to (9,4)
+    0xDF, // Set colour 15 (Bright White)
+    0x35, // Plot tile 22
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x36, // Plot tile 23
+    0x09, // Repeat 9
+    0x37, // Plot tile 24
+    0x38, // Plot tile 25
+    0x39, // Plot tile 26
+    0xDF, // Set colour 15 (Bright White)
+    0x3A, // Plot tile 27
+    TWOBYTES(0x6BF8), // Set address to (11,5)
+    0xD6, // Set colour 6 (Yellow)
+    0x42, // Plot tile 35
+    0x30, // Plot tile 17
+    0x30, // Plot tile 17
+    0x04, // Repeat 4
+    0x31, // Plot tile 18
+    0x30, // Plot tile 17
+    0x30, // Plot tile 17
+    0x43, // Plot tile 36
+    TWOBYTES(0x8BF0), // Set address to (11,8)
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x0A, // Repeat 10
+    0x4B, // Plot tile 44
+    TWOBYTES(0x8BF8), // Set address to (11,9)
+    0x0A, // Repeat 10
+    0x4B, // Plot tile 44
+    TWOBYTES(0xABF0), // Set address to (11,8)
+    0x0A, // Repeat 10
+    0x4B, // Plot tile 44
+    TWOBYTES(0xABF8), // Set address to (11,9)
+    0x0A, // Repeat 10
+    0x4B, // Plot tile 44
+    TWOBYTES(0xCBF0), // Set address to (11,12)
+    0x0A, // Repeat 10
+    0x4B, // Plot tile 44
+    0xE2, // Draw vertically
+    TWOBYTES(0x69F8), // Set address to (9,5)
+    0xD7, // Set colour 7 (White)
+    0x40, // Plot tile 33
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x40, // Plot tile 33
+    0xD5, // Set colour 5 (Cyan)
+    0x06, // Repeat 6
+    0x40, // Plot tile 33
+    TWOBYTES(0x76F8), // Set address to (22,5)
+    0xD7, // Set colour 7 (White)
+    0x45, // Plot tile 38
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x45, // Plot tile 38
+    0xD5, // Set colour 5 (Cyan)
+    0x06, // Repeat 6
+    0x45, // Plot tile 38
+    TWOBYTES(0x6AF8), // Set address to (10,5)
+    0x03, // Repeat 3
+    0x41, // Plot tile 34
+    TWOBYTES(0x75F8), // Set address to (21,5)
+    0x03, // Repeat 3
+    0x44, // Plot tile 37
+    0xE1, // Draw horizontally
+    TWOBYTES(0xCAF8), // Set address to (10,13)
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x3B, // Plot tile 28
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x3C, // Plot tile 29
+    0x08, // Repeat 8
+    0x3D, // Plot tile 30
+    0x3E, // Plot tile 31
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x3F, // Plot tile 32
+    TWOBYTES(0xEAF0), // Set address to (10,12)
+    0x46, // Plot tile 39
+    0x47, // Plot tile 40
+    0x08, // Repeat 8
+    0x48, // Plot tile 41
+    0x49, // Plot tile 42
+    0x4A, // Plot tile 43
+    TWOBYTES(0xEAF8), // Set address to (10,13)
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x0C, // Repeat 12
+    0x32, // Plot tile 19
+    TWOBYTES(0x84F0), // Set address to (4,8)
+    0xDF, // Set colour 15 (Bright White)
+    0x28, // Plot tile 9
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x29, // Plot tile 10
+    TWOBYTES(0x84F8), // Set address to (4,9)
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x33, // Plot tile 20
+    0xD5, // Set colour 5 (Cyan)
+    0x34, // Plot tile 21
+    TWOBYTES(0xC4F0), // Set address to (4,12)
+    0xDF, // Set colour 15 (Bright White)
+    0x28, // Plot tile 9
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x29, // Plot tile 10
+    TWOBYTES(0xC4F8), // Set address to (4,13)
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x33, // Plot tile 20
+    0xD5, // Set colour 5 (Cyan)
+    0x34, // Plot tile 21
+    TWOBYTES(0xD8F0), // Set address to (24,13)
+    0xDF, // Set colour 15 (Bright White)
+    0x28, // Plot tile 9
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x29, // Plot tile 10
+    TWOBYTES(0xD8F8), // Set address to (24,13)
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x33, // Plot tile 20
+    0xD5, // Set colour 5 (Cyan)
+    0x34, // Plot tile 21
+    TWOBYTES(0xDBF0), // Set address to (27,13)
+    0xDF, // Set colour 15 (Bright White)
+    0x28, // Plot tile 9
+    0xDD, // Set colour 13 (Bright Cyan)
+    0x29, // Plot tile 10
+    TWOBYTES(0xDBF8), // Set address to (27,13)
+    0xDE, // Set colour 14 (Bright Yellow)
+    0x33, // Plot tile 20
+    0xD5, // Set colour 5 (Cyan)
+    0x34, // Plot tile 21
+    0x00 // Stop
+  };
+
+  /**
+   * $78A7: pregame_tiles
+   *
+   * 45 tiles used to draw the pre-game screen.
+   */
+  static const u8 pregame_tiles[45 * 8] = {
+    ________,
+    _X_X_X_X,
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+
+    ________,
+    _X_X_X__,
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    __X_X_X_,
+    ________,
+
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+    X_X_X_X_,
+    ________,
+
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    X_X_X_X_,
+    ________,
+
+    ________,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXX__,
+
+    X_______,
+    X_______,
+    X_______,
+    X_______,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXX___,
+    XXX_____,
+    XX___XXX,
+    X___X_X_,
+    X__X___X,
+    __X___XX,
+    __XX_XXX,
+    __X_XXXX,
+
+    ___XXXXX,
+    _____XXX,
+    XXX_X_XX,
+    X_XXXXXX,
+    _XXXX_XX,
+    XXXXXXXX,
+    XXXXXX_X,
+    XXXXXXXX,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXX__,
+    XXXXXX__,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    ________,
+    ________,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    ________,
+    ________,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    ________,
+    ________,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    ________,
+    ________,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+
+    XXXXXXXX,
+    _X_X_X_X,
+    X_X_X_X_,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+
+    XXXXXXXX,
+    _X_X_X_X,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+
+    ________,
+    ________,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    X_X_X_X_,
+    ________,
+
+    __XX_XXX,
+    __X_XXXX,
+    __XXXXXX,
+    X__XXXXX,
+    X___XXXX,
+    XX___XXX,
+    XXX_____,
+    XXXXX___,
+
+    XXXXXX_X,
+    XXXXXXXX,
+    XXXXXX_X,
+    XXXXX_XX,
+    XXXXXXXX,
+    XXX_X_XX,
+    _____XXX,
+    ___XXXXX,
+
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+
+    _XXXXXXX,
+    XXXXXXXX,
+    XX_X_X_X,
+    XXX_X_X_,
+    XX_X_X_X,
+    XXX_XXXX,
+    XX_X_XXX,
+    XXX_XXXX,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    _X_X_X_X,
+    X_X_X_X_,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    _X_X_X_X,
+    X_X_X_X_,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXXXX_,
+    XXXXXXXX,
+    _X_X_XXX,
+    X_X_X_XX,
+    _X_X_XXX,
+    XXX_X_XX,
+    XXXX_XXX,
+    XXX_X_XX,
+
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXX_,
+    XXXXXX_X,
+    XXXXXXX_,
+    XXXXXX_X,
+    XXXXXX__,
+
+    X_______,
+    X_______,
+    X_______,
+    X_______,
+    X_______,
+    _X______,
+    XX______,
+    __XX____,
+
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+
+    _______X,
+    _______X,
+    _______X,
+    _______X,
+    _______X,
+    ______XX,
+    ______X_,
+    ____XX__,
+
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    _XXXXXXX,
+    X_XXXXXX,
+    _XXXXXXX,
+    X_XXXXXX,
+    __XXXXXX,
+
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+
+    XX_X_XXX,
+    XXX_XXXX,
+    XX_X_XXX,
+    XXX_XXXX,
+    XX_X_XXX,
+    XXX_XXXX,
+    XX_X_XXX,
+    XXX_XXXX,
+
+    XXXXXXXX,
+    XXXX_X_X,
+    XX__X_X_,
+    XX______,
+    X_X_____,
+    XX______,
+    X_______,
+    XX______,
+
+    XXXXXXXX,
+    _X_XXXXX,
+    X_X_X_XX,
+    _____XXX,
+    _______X,
+    ______XX,
+    _______X,
+    ______XX,
+
+    XXXX_XXX,
+    XXX_X_XX,
+    XXXX_XXX,
+    XXX_X_XX,
+    XXXX_XXX,
+    XXX_X_XX,
+    XXXX_XXX,
+    XXX_X_XX,
+
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXX__,
+    XXXXXXX_,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    _XXXXXXX,
+
+    ____XXXX,
+    _____X_X,
+    __X_X_X_,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXXXXX,
+    _X_X_X_X,
+    X_X_X_X_,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    XXXXX___,
+    _X_X_X__,
+    X_X_X___,
+    _X_X_X_X,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+
+    __XXXXXX,
+    __XXXXXX,
+    __XXXXXX,
+    _XXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXXX,
+    XXXXXXX_,
+
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________
+  };
+  // clang-format on
+
   int       carry;      /* carry from attribute-address shift computation (carry) */
   const u8 *cmds;       /* pointer walking pregame_data[] command stream (was HL) */
   int       cmd;        /* current command byte from the stream (was A) */
@@ -2248,6 +2938,52 @@ dp_repeat_or_plot_tile:
  */
 static void escape_scene(chqstate_t *state)
 {
+  // clang-format off
+  /** $871A: escape_scene_data */
+  static const scenedata_t escape_scene_data = {
+    308, // road_pos
+    &perp_escape_curvature[-1],
+    &perp_escape_height[-1],
+    &perp_escape_lanes[-1],
+    &perp_escape_curvature[-1],
+    &perp_escape_curvature[-1],
+    &perp_escape_hazards[-1],
+  };
+
+  /** $8728: escape_scene_perp */
+  static const hazard_t escape_scene_perp = {
+    HAZARD_USED,
+    1,      // distance
+    0,
+    0,
+    0,
+    0x4C,   // horz_pos_on_road
+    0,
+    0,
+    {
+      0x2C,
+      NULL,
+    },
+    no_op,  // hit_handler (ptr!)
+    250,    // speed
+    0,
+    0,
+    0,
+    0,
+    0
+  };
+
+  /** $8CF4: game_over_message */
+  static const u8 game_over_message[20] = {
+    0x01, 0x1E, 0x03,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF02B),
+    TWOBYTES(0x594B),
+    'G', 'A', 'M', 'E', ' ', 'O', 'V', 'E', 'R' | EOS,
+    3, 0
+  };
+  // clang-format on
+
   silence_audio_hook(state);
   set_up_stage(state, &escape_scene_data);
   state->speed = 250; // speed of camera
@@ -2326,6 +3062,50 @@ static void escape_scene(chqstate_t *state)
  */
 static void set_up_stage(chqstate_t *state, const scenedata_t *scene_data)
 {
+  // clang-format off
+  /** $A13E: saved_game_state */
+  static const session_t saved_game_state = {
+    1, // spawn_accumulator
+    100, // idle_timer
+    USERINPUTFLAGMASK_ALLOW_ALL,
+    INITIAL_BOOSTS, // turbos
+    0x54, // horizon_level
+    20, // perp_halt_counter
+    0xFF, // displayed_gear
+    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, // score digits
+    15, // sixteenths
+    INITIAL_TIME_BCD,
+    { 0xFF, 0xFF }, // time_digits
+    { 0xFF, 0xFF, 0xFF, 0xFF }, // distance_digits
+    1, // no_objects_flag
+    0x59BF // horizon_attribute
+  };
+  #define PERP_INITIAL_DISTANCE (868)
+
+  /** $A159: saved_game_state_perp_hazard */
+  static const hazard_t saved_game_state_perp_hazard = {
+    0,
+    PERP_INITIAL_DISTANCE & 0xFF,
+    0,
+    0,
+    0,
+    0x47,
+    0,
+    0,
+    0x2C,
+    0x0000,
+    perp_behaviour,
+    0x003C,
+    0xFF,
+    0,
+    PERP_INITIAL_DISTANCE >> 8,
+    2,
+    0
+  };
+
+  #undef PERP_INITIAL_DISTANCE
+  // clang-format on
+
   int iterations; /* map reader prime loop count (was B) */
 
   state->roadbufptr = &state->road_buffer[0];
@@ -3298,6 +4078,18 @@ static void hpc_set_perp_speed(chqstate_t *state, int speed)
  */
 static void fully_smashed(chqstate_t *state)
 {
+  // clang-format off
+  /** $8CD6: pull_over_message */
+  static const u8 pull_over_message[30] = {
+    0x01, 0x1E, 0x02,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF026),
+    TWOBYTES(0x5946),
+    'O', 'K', '!', ' ', 'P', 'U', 'L', 'L', ' ', 'O', 'V', 'E', 'R', ' ', 'C', 'R', 'E', 'E', 'P', '!' | EOS,
+    0, 0
+  };
+  // clang-format on
+
   state->perp_caught_phase  = PERPCAUGHTPHASE_ALIGNING;
   state->hand_flag          = HANDFLAG_STOP;
   state->smash_counter      = SMASHCOUNTER_MAX;
@@ -3807,6 +4599,18 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state,
  */
 static void draw_scene_objects(chqstate_t *state)
 {
+  // clang-format off
+  /** $E1DF: floating_arrow_left_defn */
+  static const bitmap_t floating_arrow_left_defn = {
+    3, BITMAPFLAG_MASKED, 21, bitmap_arrow, NULL
+  };
+
+  /** $E1E4: floating_arrow_right_defn */
+  static const bitmap_t floating_arrow_right_defn = {
+    3, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 21, bitmap_arrow, NULL
+  };
+  // clang-format on
+
   u8             *HL_height_table;     /* pointer walking height_table[], adjusted +32 (was HL) */
   u8             *DE_clamped_heights;  /* pointer walking clamped_heights[], adjusted +32 (was DE) */
   int             B_iterations;        /* loop counter for table-adjustment and object passes (was B) */
@@ -6336,6 +7140,228 @@ static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character)
 static void plot_mini_font_char(
     chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2)
 {
+  // clang-format off
+  /** $DFF8: minifont */
+  static const u8 minifont[31 * MINIFONT_HEIGHT] = {
+    _XX_____,
+    X__X____,
+    X__X____,
+    XXXX____,
+    X__X____,
+    X__X____,
+
+    XXX_____,
+    X__X____,
+    XXX_____,
+    X__X____,
+    X__X____,
+    XXX_____,
+
+    _XX_____,
+    X__X____,
+    X_______,
+    X_______,
+    X__X____,
+    _XX_____,
+
+    XXX_____,
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+    XXX_____,
+
+    XXXX____,
+    X_______,
+    XXX_____,
+    X_______,
+    X_______,
+    XXXX____,
+
+    XXXX____,
+    X_______,
+    XXX_____,
+    X_______,
+    X_______,
+    X_______,
+
+    _XX_____,
+    X__X____,
+    X_______,
+    X_XX____,
+    X__X____,
+    _XXX____,
+
+    X__X____,
+    X__X____,
+    XXXX____,
+    X__X____,
+    X__X____,
+    X__X____,
+
+    _XXX____,
+    __X_____,
+    __X_____,
+    __X_____,
+    __X_____,
+    _XXX____,
+
+    ___X____,
+    ___X____,
+    ___X____,
+    ___X____,
+    X__X____,
+    _XX_____,
+
+    X__X____,
+    X__X____,
+    X_X_____,
+    XXX_____,
+    X__X____,
+    X__X____,
+
+    X_______,
+    X_______,
+    X_______,
+    X_______,
+    X_______,
+    XXXX____,
+
+    X__X____,
+    XXXX____,
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+
+    X__X____,
+    XX_X____,
+    XX_X____,
+    X_XX____,
+    X_XX____,
+    X__X____,
+
+    _XX_____,
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+    _XX_____,
+
+    XXX_____,
+    X__X____,
+    X__X____,
+    XXX_____,
+    X_______,
+    X_______,
+
+    _XX_____,
+    X__X____,
+    X__X____,
+    XX_X____,
+    X_XX____,
+    _XX_____,
+
+    XXX_____,
+    X__X____,
+    X__X____,
+    XXX_____,
+    X__X____,
+    X__X____,
+
+    _XX_____,
+    X_______,
+    _XX_____,
+    ___X____,
+    X__X____,
+    _XX_____,
+
+    _XXX____,
+    __X_____,
+    __X_____,
+    __X_____,
+    __X_____,
+    __X_____,
+
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+    _XX_____,
+
+    X__X____,
+    X__X____,
+    X__X____,
+    X__X____,
+    _XX_____,
+    _XX_____,
+
+    X__X____,
+    X__X____,
+    X__X____,
+    XXXX____,
+    XXXX____,
+    X__X____,
+
+    X__X____,
+    X__X____,
+    _XX_____,
+    _XX_____,
+    X__X____,
+    X__X____,
+
+    _X_X____,
+    _X_X____,
+    _X_X____,
+    __X_____,
+    __X_____,
+    __X_____,
+
+    XXXX____,
+    ___X____,
+    __X_____,
+    _X______,
+    X_______,
+    XXXX____,
+
+    ________,
+    ________,
+    ________,
+    ________,
+    _XX_____,
+    _XX_____,
+
+    ________,
+    ________,
+    ________,
+    __X_____,
+    __X_____,
+    _X______,
+
+    __X_____,
+    __X_____,
+    __X_____,
+    __X_____,
+    ________,
+    __X_____,
+
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+    ________,
+
+    __X_____,
+    __X_____,
+    _X______,
+    ________,
+    ________,
+    ________
+  };
+  // clang-format on
+
   int       carry;     /* carry from SRL/RR shift operations (carry) */
   int       extra2;    /* extra bits for right (low) glyph byte; self-modifies $9B61 (was C) */
   int       extra1;    /* extra bits ORed into left (high) glyph byte; self-modifies $9B64 (was B) */
@@ -6494,6 +7520,18 @@ static void clear_message_line(chqstate_t *state)
  */
 static void check_time_up(chqstate_t *state)
 {
+  // clang-format off
+  /** $8D07: time_up_message */
+  static const u8 time_up_message[20] = {
+    0x01, 0x19, 0x03,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF02C),
+    TWOBYTES(0x594C),
+    'T', 'I', 'M', 'E', ' ', 'U', 'P' | EOS,
+    3, 0
+  };
+  // clang-format on
+
   const u8 *ptime_bcd;            /* pointer to BCD time counter in session state (was HL) */
   int       time_bcd;             /* updated BCD time value after DAA_sub decrement (was A) */
   int       time_up_state;        /* FSM state at entry, used as switch index (was A) */
@@ -7029,6 +8067,57 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
  */
 static void plot_turbos_and_digits(chqstate_t *state)
 {
+  // clang-format off
+  /** $76F0: bitmap_turbospin */
+  // clang-format off
+  static const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
+    ________, ________, ___XXXXX, ________,
+    ________, _XXXXXXX, ____XXXX, XXX_____,
+    ________, _XXXXXXX, _____XXX, XXXX____,
+    ________, ________, ______XX, __XXX___,
+    ________, _XXX____, _______X, _X_XXX__,
+    ________, _XXX_XX_, _______X, _X__XX__,
+    X_______, __XX___X, _______X, X___XX__,
+    X_______, __XX___X, _______X, X___XX__,
+    X_______, __XX__X_, ________, _XX_XXX_,
+    X_______, __XXX_X_, ________, ____XXX_,
+    XX______, ___XXX__, ________, ________,
+    XXX_____, ____XXXX, ________, XXXXXXX_,
+    XXXX____, _____XXX, ________, XXXXXXX_,
+    XXXXX___, ________, ________, ________,
+
+    ________, ________, ___XXXXX, ________,
+    ________, _XXXXXXX, ____XXXX, XXX_____,
+    ________, _XXXXXXX, _____XXX, XXXX____,
+    ________, ________, ______XX, __XXX___,
+    ________, _XXX__X_, _______X, ___XXX__,
+    ________, _XXX___X, _______X, __X_XX__,
+    X_______, __XX___X, _______X, XX__XX__,
+    X_______, __XX__XX, _______X, X___XX__,
+    X_______, __XX_X__, ________, X___XXX_,
+    X_______, __XXX___, ________, _X__XXX_,
+    XX______, ___XXX__, ________, ________,
+    XXX_____, ____XXXX, ________, XXXXXXX_,
+    XXXX____, _____XXX, ________, XXXXXXX_,
+    XXXXX___, ________, ________, ________,
+
+    ________, ________, ___XXXXX, ________,
+    ________, _XXXXXXX, ____XXXX, XXX_____,
+    ________, _XXXXXXX, _____XXX, XXXX____,
+    ________, ________, ______XX, __XXX___,
+    ________, _XXX___X, _______X, ___XXX__,
+    ________, _XXX____, _______X, X___XX__,
+    X_______, __XX__XX, _______X, X_X_XX__,
+    X_______, __XX_X_X, _______X, XX__XX__,
+    X_______, __XX___X, ________, ____XXX_,
+    X_______, __XXX___, ________, X___XXX_,
+    XX______, ___XXX__, ________, ________,
+    XXX_____, ____XXXX, ________, XXXXXXX_,
+    XXXX____, _____XXX, ________, XXXXXXX_,
+    XXXXX___, ________, ________, ________
+  };
+  // clang-format on
+
   int        carry;           /* carry from RL/SBC operations in the speed multiply (carry) */
   int        A_turbos;        /* number of turbo boost sprites remaining to draw (was A) */
   int        C_turbos;        /* turbo countdown; decremented to select frame (was C) */
@@ -7298,6 +8387,171 @@ ptad_led_plot_2nd:
  */
 static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
+  // clang-format off
+  /** $DF62: ledfont */
+  static const u8 ledfont[10 * LEDFONT_HEIGHT] = {
+    _XXXXX__,
+    X_XXX_X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_____X_,
+    X_____X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    _XXXXX__,
+
+    ________,
+    ______X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    ______X_,
+    ______X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    ______X_,
+    ________,
+
+    _XXXXX__,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    __XXX_X_,
+    X_XXX___,
+    XX______,
+    XX______,
+    XX______,
+    XX______,
+    XX______,
+    X_XXX___,
+    _XXXXX__,
+
+    _XXXXX__,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    __XXX_X_,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    __XXX_X_,
+    _XXXXX__,
+
+    ________,
+    X_____X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    ______X_,
+    ________,
+
+    _XXXXX__,
+    X_XXX___,
+    XX______,
+    XX______,
+    XX______,
+    XX______,
+    X_XXX___,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    __XXX_X_,
+    _XXXXX__,
+
+    _XXXXX__,
+    X_XXX___,
+    XX______,
+    XX______,
+    XX______,
+    XX______,
+    X_XXX___,
+    X_XXX_X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    _XXXXX__,
+
+    _XXXXX__,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    ______X_,
+    ______X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    ______X_,
+    ________,
+
+    _XXXXX__,
+    X_XXX_X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    X_XXX_X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    _XXXXX__,
+
+    _XXXXX__,
+    X_XXX_X_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    XX___XX_,
+    X_XXX_X_,
+    __XXX_X_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    _____XX_,
+    __XXX_X_,
+    _XXXXX__,
+  };
+  // clang-format on
+
   const u8 *src;         /* pointer walking the LED font glyph data (was HL) */
   u8       *orig_screen; /* screen start for this digit, saved for next-column advance (was PUSH DE) */
   int       i;           /* loop index for unrolled LDI sequences (Conv: no Z80 register) */
@@ -8658,6 +9912,28 @@ pb_a7be:
  */
 static void spawn_cars(chqstate_t *state)
 {
+  // clang-format off
+  /** $A623: hazard_template */
+  static const hazard_t hazard_template = {
+    HAZARD_USED,
+    21, // distance
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    { 0x28, NULL },
+    hazard_handler,
+    0, // speed
+    0x80, // hazard_flags = spawned vehicle
+    0,
+    0,
+    0,
+    0
+  };
+  // clang-format on
+
   int       allow_spawning;     /* allow_spawning flag: 0=disabled, 1/2=normal/fast (was A) */
   int       random_extra_delay; /* random 0–15 jitter added to spawn delay (was C) */
   int       spawn_delay;        /* total spawn delay: base + sighted boost + jitter (was A) */
@@ -10195,6 +11471,73 @@ static void draw_hazard_sprites(chqstate_t *state,
                                 int         B_iterations,
                                 const u8   *IY_height)
 {
+  // clang-format off
+  /** $E0B2: fire1_defns */
+  static const bitmap_t fire1_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
+    { 3, BITMAPFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
+    { 2, BITMAPFLAG_MASKED,   5, bitmap_fire5,      bitmap_fire5s      },
+    { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+    { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+    { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 }
+  };
+
+  /** $E0DC: fire2_defns */
+  static const bitmap_t fire2_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
+    { 3, BITMAPFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
+    { 2, BITMAPFLAG_MASKED,   6, bitmap_fire6,      bitmap_fire6s      },
+    { 2, BITMAPFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+    { 2, BITMAPFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+    { 2, BITMAPFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 }
+  };
+
+  /** $E106: fire3_defns */
+  static const bitmap_t fire3_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
+    { 3, BITMAPFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
+    { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+    { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+    { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+    { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
+  };
+
+  /** $E130: fire4_defns */
+  static const bitmap_t fire4_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
+    { 3, BITMAPFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
+    { 2, BITMAPFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+    { 2, BITMAPFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+    { 2, BITMAPFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+    { 2, BITMAPFLAG_MASKED,   2, bitmap_fire6 + 16, bitmap_fire6s + 16 }
+  };
+
+  /** $E15A: fire5_defns */
+  static const bitmap_t fire5_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
+    { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 30, bitmap_fire3 + 30  },
+    { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+    { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+    { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 },
+    { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
+  };
+
+  /** $E184: fire6_defns */
+  static const bitmap_t fire6_defns[SPRITE_FRAMES] = {
+    { 4, BITMAPFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
+    { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 30, bitmap_fire4 + 30  },
+    { 2, BITMAPFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+    { 2, BITMAPFLAG_MASKED,  2, bitmap_fire6 + 16, bitmap_fire6s + 16 },
+    { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 },
+    { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 }
+  };
+
+  /** $E1D8: floating_arrow_here_defn */
+  static const bitmap_t floating_arrow_here_defn = {
+    3, BITMAPFLAG_MASKED, 28, bitmap_arrow, bitmap_arrow
+  };
+  // clang-format on
+
   // $CDEC
   //
   // 4 pair of X,Y
@@ -10417,6 +11760,18 @@ dafs_done_draw_object:
  */
 static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
 {
+  // clang-format off
+  /** $E1AE: smoke_defns */
+  static const bitmap_t smoke_defns[SPRITE_FRAMES] = {
+    { 2, BITMAPFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
+    { 2, BITMAPFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
+    { 2, BITMAPFLAG_MASKED,  9, bitmap_smoke3, bitmap_smoke3 },
+    { 1, BITMAPFLAG_MASKED,  7, bitmap_smoke4, bitmap_smoke4 },
+    { 1, BITMAPFLAG_MASKED,  5, bitmap_smoke5, bitmap_smoke5 },
+    { 1, BITMAPFLAG_MASKED,  3, bitmap_smoke6, bitmap_smoke6 }
+  };
+  // clang-format on
+
   int counter;   /* frame counter: counts down 5..1, resets to 5 at zero (was A, then E) */
   int index;     /* dhs.lod_index: base LOD level (was A) */
   int newindex;  /* combined index: dhs.lod_index + counter; selects smoke frame (was A, C, D) */
@@ -11167,6 +12522,18 @@ static void ahc_check_hand_flag(chqstate_t *state)
  */
 static void start_chase(chqstate_t *state)
 {
+  // clang-format off
+  /** $8CB2: sighting_message */
+  static const u8 sighting_message[36] = {
+    0x01, 0x1E, 0x02,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF023),
+    TWOBYTES(0x5943),
+    'S', 'I', 'G', 'H', 'T', 'I', 'N', 'G', ' ', 'O', 'F', ' ', 'T', 'A', 'R', 'G', 'E', 'T', ' ', 'V', 'E', 'H', 'I', 'C', 'L', 'E' | EOS,
+    0, 0
+  };
+  // clang-format on
+
   state->ahc.hand_step = 0;
   // Starts the animation that puts the cherry light on the roof
   state->hand_flag = HANDFLAG_ANIMATING;
@@ -11246,6 +12613,49 @@ static void smash(chqstate_t *state)
  */
 static void draw_debris(chqstate_t *state)
 {
+  // clang-format off
+  /**
+   * $CEAA-$CED9: four 12-byte debris frames, contiguous in the original binary.
+   * draw_debris indexes this as one 48-byte table (frame * 12), so it must stay
+   * a single array; C does not guarantee the relative placement of four
+   * separate globals.
+   */
+  static const u8 bitmap_debris[4][2 * 6] = {
+    { // $CEAA
+      XXXX___X, ____XXX_,
+      _______X, XXXX__X_,
+      ________, X______X,
+      ________, X_____XX,
+      X______X, _X__XXX_,
+      XX__XXXX, __XX____
+    },
+    { // $CEB6
+      XXX___XX, ___XXX__,
+      X______X, _XXX_XX_,
+      X______X, _X____X_,
+      X______X, _X____X_,
+      XX_____X, __X_XXX_,
+      XX__XXXX, __XX____
+    },
+    { // $CEC2
+      XXX__XXX, ___XX___,
+      XX___XXX, __X_X___,
+      XX____XX, __X__X__,
+      XX____XX, __X__X__,
+      XXX___XX, ___X_X__,
+      XXXX_XXX, ____X___
+    },
+    { // $CECE
+      XXX___XX, ___XXX__,
+      X______X, _XXX_XX_,
+      X______X, _X____X_,
+      X______X, _X____X_,
+      XX_____X, __X_XXX_,
+      XX__XXXX, __XX____
+    }
+  };
+  // clang-format on
+
   int       A_frame_counter;   /* dd.frame_counter: counts 9..1, 0=skip (was A) */
   int       B_iterations;      /* loop counter: 3 debris pieces per smash (was B) */
   u8      **HL_subtables;      /* pointer walking dd.subtables_start array (was HL) */
@@ -11329,6 +12739,82 @@ static void draw_debris(chqstate_t *state)
  */
 static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
 {
+  // clang-format off
+  /** $CEDA: hero_car_parts */
+  static const carpart_t hero_car_parts[9][5] = {
+    {
+      {  6, 14, bitmap_hero_centre_straight },
+      { 20,  9, bitmap_hero_top_straight    },
+      {  0,  6, bitmap_hero_bottom_straight },
+      {  6, 14, bitmap_hero_left_straight   },
+      {  6, 14, bitmap_hero_right_straight  }
+    },
+    {
+      {  4, 17, bitmap_hero_centre_straight_right },
+      { 21,  8, bitmap_hero_top_straight_right    },
+      {  0,  4, bitmap_hero_bottom_straight_right },
+      {  7, 13, bitmap_hero_left_straight_left    },
+      {  7, 13, bitmap_hero_right_straight_right  }
+    },
+    {
+      {  4, 16, bitmap_hero_centre_straight_right_hard },
+      { 20,  9, bitmap_hero_top_straight_right_hard    },
+      {  0,  4, bitmap_hero_bottom_straight_right_hard },
+      {  7, 12, bitmap_hero_left_straight_right_hard   },
+      {  5, 15, bitmap_hero_right_straight_right_hard  }
+    },
+    {
+      {  6, 14, bitmap_hero_centre_up },
+      { 20, 10, bitmap_hero_top_up    },
+      {  0,  6, bitmap_hero_bottom_up },
+      {  6, 13, bitmap_hero_left_up   },
+      {  6, 14, bitmap_hero_right_up  }
+    },
+    {
+      {  4, 17, bitmap_hero_centre_up_right },
+      { 21,  9, bitmap_hero_top_right       },
+      {  0,  4, bitmap_hero_bottom_right    },
+      {  7, 12, bitmap_hero_left_right      },
+      {  6, 14, bitmap_hero_right_right     }
+    },
+    {
+      {  6, 15, bitmap_hero_centre_up_right_hard },
+      { 21,  9, bitmap_hero_up_right_hard        },
+      {  0,  6, bitmap_hero_bottom_right_hard    },
+      {  7, 11, bitmap_hero_left_right_hard      },
+      {  6, 15, bitmap_hero_right_right_hard     }
+    },
+    {
+      {  6, 14, bitmap_hero_centre_down },
+      { 20,  8, bitmap_hero_top_down    },
+      {  0,  6, bitmap_hero_bottom_down },
+      {  6, 13, bitmap_hero_left_down   },
+      {  6, 14, bitmap_hero_right_down  }
+    },
+    {
+      {  4, 16, bitmap_hero_centre_down_right },
+      { 20,  8, bitmap_hero_top_down_right    },
+      {  0,  4, bitmap_hero_bottom_down_right },
+      {  7, 13, bitmap_hero_left_down_right   },
+      {  6, 13, bitmap_hero_right_down_right  }
+    },
+    {
+      {  4, 16, bitmap_hero_centre_down_right_hard },
+      { 20,  8, bitmap_hero_top_down_right_hard    },
+      {  0,  4, bitmap_hero_bottom_down_right_hard },
+      {  7, 13, bitmap_hero_left_down_right_hard   },
+      {  5, 15, bitmap_hero_right_down_right_hard  }
+    }
+  };
+
+  /** $CF8E: hero_car_shadow */
+  static const carpart_t hero_car_shadow[3] = {
+    { 0, 12, bitmap_shadow_straight        },
+    { 0, 12, bitmap_shadow_turn_right      },
+    { 0, 12, bitmap_shadow_turn_right_hard }
+  };
+  // clang-format on
+
   int              C_turn_speed;        /* copy of A_turn_speed preserved across shadow draw (was C) */
   u8               D_y;                 /* vertical screen position: 117 minus dhc.jump_y (was D) */
   int              A_car_direction;     /* body part index 0..8: turn + wobble + pitch (was A) */
@@ -11505,6 +12991,32 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
  */
 static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
 {
+  // clang-format off
+  /** $CF9A: hero_car_turbo_smoke */
+  static const carsmokeframe_t hero_car_turbo_smoke[4] = {
+    {
+      16, 4,
+      16, 216,
+      &bitmap_turbo_1[0]
+    },
+    {
+      16, 4,
+      16, 216,
+      &bitmap_turbo_2[0]
+    },
+    {
+      16, 4,
+      16, 216,
+      &bitmap_turbo_3[0]
+    },
+    {
+      16, 4,
+      16, 216,
+      &bitmap_turbo_4[0]
+    }
+  };
+  // clang-format on
+
   const carsmokeframe_t *HL_frame;          /* pointer to the chosen smoke animation frame (was HL) */
   u8                     C_width;           /* sprite byte width from the frame (was C) */
   int                    B_height;          /* sprite row count from the frame (was B) */
@@ -11627,6 +13139,61 @@ static void draw_crash(chqstate_t *state,
                        int         Bdash_flip_flag,
                        int         Cdash)
 {
+  // clang-format off
+  /** $CFB2: car_frames */
+  static const carframe_t car_frames[39] = {
+    { 0xE1, 0x00, 0x00 }, // Cherry light
+    { 0xE4, 0xF8, 0x04 }, // Flashing cherry light
+    { 0xE1, 0x00, 0x00 }, // Cherry light
+    { 0xE4, 0xF8, 0x04 }, // Flashing cherry light
+    { 0xE1, 0xF8, 0x00 }, // Cherry light
+    { 0xE4, 0xF0, 0x04 }, // Flashing cherry light
+    { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xE3, 0x08, 0x00 }, // Cherry light
+    { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE0, 0x08, 0x00 }, // Cherry light
+    { 0xE8, 0x08, 0x14 }, // Putting-cherry-on-roof anim frame 3
+    { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xE3, 0x08, 0x00 }, // Cherry light
+    { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE0, 0x08, 0x00 }, // Cherry light
+    { 0xE8, 0x08, 0x14 }, // Putting-cherry-on-roof anim frame 3
+    { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xE8, 0xF8, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xE3, 0x00, 0x00 }, // Cherry light
+    { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE0, 0x00, 0x00 }, // Cherry light
+    { 0xE8, 0x00, 0x14 }, // Putting-cherry-on-roof anim frame 3
+    { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE8, 0xF8, 0x0C }, // Putting-cherry-on-roof anim frame 1
+    { 0xEC, 0x00, 0x08 }, // Crash/spark
+    { 0xF0, 0x08, 0x08 }, // Crash/spark
+    { 0xEE, 0xF8, 0x08 }, // Crash/spark
+    { 0xEC, 0xE0, 0x08 }, // Crash/spark
+    { 0xEE, 0xE8, 0x08 }, // Crash/spark
+    { 0xF0, 0xD8, 0x08 }, // Crash/spark
+    { 0xEC, 0xF0, 0x08 }, // Crash/spark
+    { 0xEE, 0xF8, 0x08 }, // Crash/spark
+    { 0xEE, 0xE8, 0x08 }, // Crash/spark
+    { 0xE8, 0xF0, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+    { 0xE8, 0xF0, 0x10 }  // Putting-cherry-on-roof anim frame 2
+  };
+
+  /** $CFB2: car_adornments */
+  static const caradornment_t car_adornments[6] = {
+    {  7, 1, &bitmap_cherry_light[0] },
+    { 14, 3, &bitmap_cherry_light_lit[0] },
+    { 20, 3, &bitmap_spark[0] },
+    {  4, 2, &bitmap_cherryout_1[0] },
+    {  9, 2, &bitmap_cherryout_2[0] },
+    { 12, 1, &bitmap_cherryout_3[0] }
+  };
+  // clang-format on
+
   const carframe_t     *frame;         /* pointer to car_frames[A_frame_index] (was HL) */
   u8                    y;             /* base vertical position: frame->y + 121 adjusted for jump/pitch (was D) */
   u8                    x;             /* horizontal position: 128 + frame->x (was E) */
@@ -12210,6 +13777,21 @@ static void scroll_horizon(chqstate_t *state)
  */
 static void update_road_level(chqstate_t *state)
 {
+  // clang-format off
+  /**
+   * $B059: car_jump_params
+   *
+   * Five pairs of (jump_arc_offset, y_height)
+   */
+  static const u8 car_jump_params[5 * 2] = {
+    0x08, 0x02,
+    0x06, 0x04,
+    0x04, 0x06,
+    0x02, 0x08,
+    0x00, 0x0A
+  };
+  // clang-format on
+
   int       carry;              /* carry/borrow flag */
   int       B_horizon_accum;     /* accumulated horizon step from scroll_horizon (was B) */
   int       C_negate_flag;       /* 1 if incline is negative (climbing) (was C) */
@@ -12632,6 +14214,64 @@ lr_badf:
  */
 static void exit_fork(chqstate_t *state)
 {
+  // clang-format off
+  /** $ED23: forked_road_exit_hazards */
+  static const u8 forked_road_exit_hazards[3] = {
+    MAP_HAZARD_WAIT(18),
+    MAP_CMD_FORK_END
+  };
+
+  /** $ED26: forked_road_exit_rightobjs */
+  static const u8 forked_road_exit_rightobjs[4] = {
+    MAP_OBJ_S1_SHORT_POLE(5),
+    MAP_OBJ_S1_NONE(13),
+    MAP_CMD_FORK_END
+  };
+
+  /** $E2DA: forked_road_exit_leftobjs */
+  static const u8 forked_road_exit_leftobjs[4] = {
+    MAP_OBJ_S1_NONE(5),
+    MAP_OBJ_S1_NONE(13),
+    MAP_CMD_FORK_END
+  };
+
+  /** $E2DE: forked_road_exit_curvature */
+  static const u8 forked_road_exit_curvature[5] = {
+    MAP_CURVE_STRAIGHT(15), // 15 is max
+    MAP_CURVE_STRAIGHT(15),
+    MAP_CURVE_STRAIGHT(6),
+    MAP_CMD_FORK_END
+  };
+
+  /** $E2E3: forked_road_exit_height */
+  static const u8 forked_road_exit_height[5] = {
+    MAP_HEIGHT_LEVEL(15),
+    MAP_HEIGHT_LEVEL(15),
+    MAP_HEIGHT_LEVEL(6),
+    MAP_CMD_FORK_END
+  };
+
+  /** $E2E8: forked_road_exit_left_lanes */
+  static const u8 forked_road_exit_left_lanes[12] = {
+    MAP_LANES_2L(10),
+    MAP_LANES_2LTO3L(2),
+    MAP_LANES_3L(10),
+    MAP_LANES_3LTO4(2),
+    MAP_LANES_4(12),
+    MAP_CMD_FORK_END
+  };
+
+  /** $E2F4: forked_road_exit_right_lanes */
+  static const u8 forked_road_exit_right_lanes[12] = {
+    MAP_LANES_2R(10),
+    MAP_LANES_2RTO3R(2),
+    MAP_LANES_3R(10),
+    MAP_LANES_3RTO4(2),
+    MAP_LANES_4(12),
+    MAP_CMD_FORK_END
+  };
+  // clang-format on
+
   int D_curve_type; /* curvature byte to fill: +4 (right turn) or -4 (left) (was D) */
   int E_lanes_type; /* lanes byte to fill: 0x03 (right fork) or 0x01 (left) (was E) */
   int C_obj_offset; /* extra road-buffer offset for zeroing object bytes (was C) */
@@ -15186,6 +16826,24 @@ static void draw_road(chqstate_t *state)
  */
 static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
 {
+  // clang-format off
+  /**
+   * $86F6: backdrop_copy_instrs_template
+   *
+   * Backdrop blit instruction templates (36 bytes, two 18-byte chunks).
+   * Chunk 0 (bytes 0-17):  INC L (0x2C) + NOP (0x00) x 9 -- skip backdrop bytes.
+   * Chunk 1 (bytes 18-35): LDI   (0xED, 0xA0) x 9       -- copy backdrop bytes.
+   * dr_start_backdrop_fill copies 18 bytes starting at offset dr.backdrop_copy_jump into
+   * state->dr.backdrop_copy_instrs, which the blit loop then interprets.
+   */
+  static const u8 backdrop_copy_instrs_template[36] = {
+    0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+    0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+    0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0,
+    0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0
+  };
+  // clang-format on
+
   int       D;                  /* screen address high byte (was D) */
   int       E;                  /* screen address low byte after INC E (was E) */
   int       C;                  /* pixel-row nibble → 24 → sky-row count (was C) */
@@ -15959,6 +17617,136 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DE_backbuf, int L_row)
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
+  // clang-format off
+  /**
+   * $E540 - Converts a curvature to a road X position
+   * v[i] = round(128 * (1 + tan((i − 32) · π/128))), which reproduces all 96
+   * entries exactly.
+   */
+  static const u16 curvature_to_xpos[96] = {
+    0x0000,
+    0x0006,
+    0x000C,
+    0x0012,
+    0x0017,
+    0x001C,
+    0x0021,
+    0x0026,
+    0x002A,
+    0x002F,
+    0x0033,
+    0x0037,
+    0x003C,
+    0x0040,
+    0x0043,
+    0x0047,
+    0x004B,
+    0x004F,
+    0x0052,
+    0x0056,
+    0x0059,
+    0x005D,
+    0x0060,
+    0x0063,
+    0x0067,
+    0x006A,
+    0x006D,
+    0x0070,
+    0x0073,
+    0x0077,
+    0x007A,
+    0x007D,
+    0x0080,
+    0x0083,
+    0x0086,
+    0x0089,
+    0x008D,
+    0x0090,
+    0x0093,
+    0x0096,
+    0x0099,
+    0x009D,
+    0x00A0,
+    0x00A3,
+    0x00A7,
+    0x00AA,
+    0x00AE,
+    0x00B1,
+    0x00B5,
+    0x00B9,
+    0x00BD,
+    0x00C0,
+    0x00C4,
+    0x00C9,
+    0x00CD,
+    0x00D1,
+    0x00D6,
+    0x00DA,
+    0x00DF,
+    0x00E4,
+    0x00E9,
+    0x00EE,
+    0x00F4,
+    0x00FA,
+    0x0100,
+    0x0106,
+    0x010D,
+    0x0114,
+    0x011C,
+    0x0124,
+    0x012D,
+    0x0136,
+    0x0140,
+    0x014A,
+    0x0156,
+    0x0162,
+    0x016F,
+    0x017E,
+    0x018F,
+    0x01A1,
+    0x01B5,
+    0x01CC,
+    0x01E6,
+    0x0203,
+    0x0226,
+    0x024F,
+    0x027F,
+    0x02BA,
+    0x0303,
+    0x0362,
+    0x03DF,
+    0x048E,
+    0x0594,
+    0x0747,
+    0x0AAD,
+    0x14DE
+  };
+
+  /** $E6B0 - Horizontal perspective multipliers for right road edge curvature */
+  static const u8 persp_x_scale_right[8][PERSP_TABLE_COLS] = {
+    { 0xEB, 0xC1, 0xAA, 0x8F, 0x8E, 0x6E, 0x5D, 0x66, 0x71, 0x55, 0x2E, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0xD5, 0xCA, 0xA7, 0x8C, 0x8B, 0x6B, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0xB5, 0xCF, 0xB3, 0x89, 0x88, 0x83, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x30, 0x66, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0xA0, 0xCA, 0xBD, 0x9A, 0x88, 0x69, 0x75, 0x63, 0x6D, 0x51, 0x59, 0x30, 0x66, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0x80, 0xDB, 0xAA, 0xA7, 0x85, 0x80, 0x75, 0x63, 0x49, 0x76, 0x2C, 0x5D, 0x33, 0x6B, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0x60, 0xDF, 0xB5, 0xA4, 0x82, 0x7C, 0x71, 0x60, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x6B, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0x4B, 0xDB, 0xBE, 0xA1, 0x95, 0x7C, 0x71, 0x60, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x35, 0x71, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+    { 0x20, 0xE7, 0xB9, 0xAD, 0x92, 0x79, 0x6E, 0x7C, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D }
+  };
+
+  /** $E760 - Horizontal position deltas applied to shift left road edge relative to right */
+  static const u8 persp_x_delta_left[8][PERSP_TABLE_COLS] = {
+    { 0x42, 0x2A, 0x1E, 0x15, 0x12, 0x0C, 0x09, 0x09, 0x09, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x3D, 0x2D, 0x1F, 0x15, 0x12, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x34, 0x30, 0x21, 0x15, 0x12, 0x0F, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x2E, 0x30, 0x24, 0x18, 0x12, 0x0C, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x25, 0x36, 0x21, 0x1C, 0x12, 0x0F, 0x0C, 0x09, 0x06, 0x09, 0x03, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x1C, 0x3A, 0x24, 0x1B, 0x12, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x15, 0x39, 0x27, 0x1B, 0x15, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+    { 0x0A, 0x3F, 0x27, 0x1E, 0x15, 0x0F, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 }
+  };
+  // clang-format on
+
   s16       *H_righttab_end;         /* right-side xpos output table (was H, SM $CC72) */
   s16       *L_lefttab_end;          /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
@@ -16466,6 +18254,112 @@ static void entry_128k(chqstate_t *state)
  */
 static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
 {
+  // clang-format off
+  /** $F5BE: marquee_initial */
+  static const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
+    ________, ________, ________, ________, ________, ______XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX______, ________, ________, ________, ________, ________,
+    XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, __XXX_XX, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+    XXXXXXXX, _____X_X, ________, ________, XXXXXXXX, _XXX_X__, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, _____X_X, ________, ________, XXXXXXXX,
+    XXXXXXXX, ___XXX_X, XX_XXX_X, _____XX_, XXXXXXXX, _XXX_X_X, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ___XXX_X, XX_XXX_X, _____XX_, XXXXXXXX,
+    XXXXXXX_, _XX_X_X_, X_______, _____XXX, __XXXXXX, _XXX_X_X, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, _XX_X_X_, X_______, _____XXX, __XXXXXX,
+    XXXXX__X, ___X__X_, X_X__X_X, _X__X___, _X_XXXXX, XXX_XX__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXXX__X, ___X__X_, X_X__X_X, _X__X___, _X_XXXXX,
+    XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X__XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    ________, ________, ________, ________, ________, ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________, ________, ________, ________, ________,
+    XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, __XXX_XX, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, ________, _XXXXX__, _XXXXX__, ________, _XXXXX__, _XXXXX__, _XXXXX__, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+    XXXXXXXX, ____X_X_, X_______, ____X___, XXXXXXXX, _XXX_XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ____X_X_, X_______, ____X___, XXXXXXXX,
+    XXXXXXX_, __XXXXXX, _XXX_XXX, ____X_X_, _XXXXXXX, _XXX_XX_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, __XXXXXX, _XXX_XXX, ____X_X_, _XXXXXXX,
+    XXXXXX__, __XX____, ________, ____X_X_, __XXXXXX, _XXX_XX_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXX__, __XX____, ________, ____X_X_, __XXXXXX,
+    XXXX__X_, __X__X_X, XX____XX, X_X__X__, __X_XXXX, XXX_X_X_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXX__X_, __X__X_X, XX____XX, X_X__X__, __X_XXXX,
+    XXX_____, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    ________, ________, ________, ________, ________, ___XXXX_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _XXXX___, ________, ________, ________, ________, ________,
+    XXXXXXXX, XXX_____, ________, _____XXX, XXXXXXXX, __XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XXX_____, ________, _____XXX, XXXXXXXX,
+    XXXXXXXX, _____XXX, ________, _____X__, XXXXXXXX, _XXX_X__, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, _____XXX, ________, _____X__, XXXXXXXX,
+    XXXXXXX_, ___XX_X_, X_X_X_X_, _____X__, _XXXXXXX, _XXX_X__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, ___XX_X_, X_X_X_X_, _____X__, _XXXXXXX,
+    XXXXXX__, _XX_X_X_, X_______, _____X_X, __XXXXXX, _XXX_X__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXX__, _XX_X_X_, X_______, _____X_X, __XXXXXX,
+    XXX__X__, __XX__X_, X_X__X_X, XX__X_X_, _X__XXXX, XXX_XX__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXX__X__, __XX__X_, X_X__X_X, XX__X_X_, _X__XXXX,
+    X_______, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _______X,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    ________, ________, ________, ________, ________, ___XXX__, XXXXX_XX, _XX_X__X, _____XX_, _XX___XX, __XXX__X, XX____X_, _XX_X_XX, XX_XXX_X, X__X___X, XX_XXX_X, __X_XXX_, _X_XX_X_, __XX_XXX, __XXX_XX, X_XXX___, _X__X_X_, XX_X_X__, X_______, X__X_XX_, XX_XXXXX, __XXX___, ________, ________, ________, ________, ________,
+    XXXXXXXX, XX______, ________, ______XX, XXXXXXXX, __XXX_X_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XX______, ________, ______XX, XXXXXXXX,
+    XXXXXXXX, ____X_X_, X_X_____, ____X___, XXXXXXXX, _XXX_XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ____X_X_, X_X_____, ____X___, XXXXXXXX,
+    XXXXXXX_, __XX_X_X, _X______, ____X_X_, _XXXXXXX, _XXX_XX_, ________, ________, ________, ________, ________, ________, ________, ________, XX__XXX_, _XX__XXX, _______X, XX__X__X, X_XXX__X, X__X__X_, _XX__XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, __XX_X_X, _X______, ____X_X_, _XXXXXXX,
+    XXXXXX__, _X_X____, ________, ____X_X_, __XXXXXX, XXXX_XX_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXXX, XXXXXX__, _X_X____, ________, ____X_X_, __XXXXXX,
+    XXX___X_, _X___XXX, XX____X_, X_X___X_, __X__XXX, XXX_X___, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXX___X_, _X___XXX, XX____X_, X_X___X_, __X__XXX,
+    X_______, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _______X,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    ________, ________, ________, ________, ________, __XXXX_X, XX_X_X__, ________, ____X___, X__X_X__, X_X__X_X, ________, ________, ________, ________, X___X__X, XXX_X___, ________, _X___X__, X_X___X_, __X__X__, ________, ________, ________, ________, __X_X_XX, X__XXX__, ________, ________, ________, ________, ________,
+    XXXXXXXX, XX______, ________, ______XX, XXXXXXXX, __XXX_X_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XX______, ________, ______XX, XXXXXXXX,
+    XXXXXXXX, ___X_XXX, ________, _____X__, XXXXXXXX, _XXX_X__, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ___X_XXX, ________, _____X__, XXXXXXXX,
+    XXXXXXX_, __XXX_X_, X_X_____, _____XX_, _XXXXXXX, _XXX_X_X, ________, ________, ________, ________, ________, ________, ________, _______X, ____X___, X__X_X__, X______X, __X_X_X_, ___X__X_, _X_X__X_, X__X_X__, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, __XXX_X_, X_X_____, _____XX_, _XXXXXXX,
+    XXXXXX__, _XX_X_X_, X_______, ___X_XXX, __XXXXXX, XXX_XX__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXXXX__, _XX_X_X_, X_______, ___X_XXX, __XXXXXX,
+    XX___X__, _XX_X_X_, X______X, XXXX_XX_, ___X_XXX, XXX_XX__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XX___X__, _XX_X_X_, X______X, XXXX_XX_, ___X_XXX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    X_______, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _______X,
+    ________, ________, ________, ________, ________, __XXX_XX, X_X_____, ________, _____X__, X____X__, X_XXX__X, X_______, ________, ________, ________, X___X__X, __X_XX__, ________, __X__XXX, __XX__XX, __X__X__, ________, ________, ________, ________, ________, ___XXX__, ________, ________, ________, ________, ________,
+    XXXXXXXX, X_______, ________, ______XX, XXXXXXXX, __XXX_X_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, X_______, ________, _______X, XXXXXXXX,
+    XXXXXXXX, ___XX_X_, X_X_____, ____X___, XXXXXXXX, _XXX_XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ___XX_X_, X_X_____, ____X___, XXXXXXXX,
+    XXXXXXX_, __XX_X__, ________, ____X_X_, _XXXXXXX, _XXX_XX_, ________, ________, ________, ________, ________, ________, ________, _______X, _X__XX__, XXXX_XXX, _______X, __X_X__X, ___X__XX, XX_XX_X_, X____XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, __XX_X__, ________, ____X_X_, _XXXXXXX,
+    XXXXXX__, __XX____, ________, ____X_X_, __XXXXXX, XXX_X_X_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXXXX__, __XX____, ________, ____X_X_, __XXXXXX,
+    XX__X_X_, _X___XXX, XX____X_, X_X___X_, __X__XXX, XXX_X_X_, X_______, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XX__X_X_, _X___XXX, XX____X_, X_X___X_, __X__XXX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    X_______, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _______X,
+    ________, ________, ________, ________, ________, __XXX_XX, ________, ________, ______X_, X__X_X__, X_X__X_X, ________, ________, ________, ________, X___X__X, __X_X___, ________, ___X_X__, __X___X_, __X__X__, ______XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXX__, ________, ________, ________, ________, ________,
+    XXXXXXXX, X_______, ________, _______X, XXXXXXXX, _XXXX_X_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, ________, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, X_______, ________, _______X, XXXXXXXX,
+    XXXXXXXX, ___X_X_X, ________, _____X__, XXXXXXXX, _XXX_X__, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ___X_X_X, ________, _____X__, XXXXXXXX,
+    XXXXXXX_, _XXXX_X_, X_X_____, _____X__, _XXXXXXX, _XXX_X__, ________, ________, ________, ________, ________, ________, ________, _______X, __X_X___, X__X_X__, X______X, __X_X___, X__X__X_, _X_X_XX_, X__X_X__, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, _XXXX_X_, X_X_____, _____X__, _XXXXXXX,
+    XXXXXX__, _XX_X_X_, X_______, ___X_X_X, __XXXXXX, XXX_XX__, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, XX___XX_, XX___XX_, XX___XX_, XX___XX_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXXXX__, _XX_X_X_, X_______, ___X_X_X, __XXXXXX,
+    XX___X__, _XX_X_X_, X______X, XXXX_XX_, ___X__XX, XXX_XX_X, __X_____, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX__XXX, XX___X__, _XX_X_X_, X______X, XXXX_XX_, ___X__XX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    XXX_____, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX,
+    ________, ________, ________, ________, ________, __XXX_XX, X_______, ________, ____XX__, _XX___XX, __X__X_X, XX______, ________, ________, ________, X__XXX_X, __X_XXX_, ________, _XX__X__, __XXX_XX, X_XXX___, _____X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_XX__, ________, ________, ________, ________, ________,
+    XXXXXXXX, X_______, ________, _______X, XXXXXXXX, _XXX_XX_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, X_______, ________, _______X, XXXXXXXX,
+    XXXXXXXX, ___XXXX_, X_X_____, __X_X_X_, XXXXXXXX, _XXX_XX_, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, ________, _XXXXX__, _XXXXX__, ________, _XXXXX__, _XXXXX__, _XXXXX__, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, ___XXXX_, X_X_____, __X_X_X_, XXXXXXXX,
+    XXXXXXX_, _X_X____, ________, ____X_X_, _XXXXXXX, _XXX_XX_, ________, ________, ________, ________, ________, ________, ________, ________, XX__XXX_, X__X_X__, X______X, XX__X_XX, ___X__X_, _X_X__X_, _XX__XX_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXX_, _X_X____, ________, ____X_X_, _XXXXXXX,
+    XXXXXX__, _X_X____, ________, __X_X_X_, __XXXXXX, XXX_X___, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX__XXX, XXXXXX__, _X_X____, ________, __X_X_X_, __XXXXXX,
+    XX__X_X_, _X___XXX, _X____X_, X_X___X_, __X_X_XX, XXX__XXX, XX_XX_X_, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _XXXXX__, _XXXXX__, _XXXXX__, _XXXXX__, _____XX_, ________, ________, ________, ________, _XX__XXX, XX__X_X_, _X___XXX, _X____X_, X_X___X_, __X_X_XX,
+    ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
+    XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  };
+
+  /** $FDBE: marquee_attrs */
+  static const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
+    0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
+    0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
+    0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
+    0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
+    0x10, 0x10, 0x10, 0x10, 0x10, 0x47, 0x45, 0x45,
+    0x45, 0x45, 0x45, 0x45, 0x45, 0x45, 0x47, 0x46,
+    0x46, 0x47, 0x45, 0x45, 0x45, 0x47, 0x06, 0x06,
+    0x06, 0x06, 0x47, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x10, 0x17, 0x17, 0x11, 0x10, 0x47, 0x05, 0x05,
+    0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07, 0x06,
+    0x06, 0x07, 0x05, 0x05, 0x05, 0x47, 0x06, 0x06,
+    0x06, 0x06, 0x47, 0x08, 0x0D, 0x0D, 0x08, 0x08,
+    0x10, 0x17, 0x17, 0x11, 0x10, 0x47, 0x44, 0x04,
+    0x04, 0x04, 0x04, 0x04, 0x04, 0x47, 0x47, 0x47,
+    0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x06, 0x06,
+    0x06, 0x06, 0x47, 0x08, 0x0D, 0x0D, 0x08, 0x08,
+    0x10, 0x17, 0x17, 0x11, 0x10, 0x47, 0x44, 0x44,
+    0x44, 0x44, 0x44, 0x44, 0x04, 0x47, 0x43, 0x43,
+    0x05, 0x04, 0x04, 0x04, 0x04, 0x47, 0x06, 0x06,
+    0x06, 0x06, 0x47, 0x08, 0x0D, 0x0D, 0x08, 0x08,
+    0x28, 0x6C, 0x3E, 0x6C, 0x28, 0x47, 0x04, 0x44,
+    0x44, 0x44, 0x44, 0x44, 0x04, 0x47, 0x03, 0x03,
+    0x45, 0x44, 0x44, 0x44, 0x44, 0x47, 0x06, 0x06,
+    0x06, 0x06, 0x47, 0x28, 0x6C, 0x3E, 0x6C, 0x28,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+    0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78
+  };
+  // clang-format on
+
 #if 0
   static const struct Relocations {
     const u8 *src;
@@ -16542,6 +18436,71 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
  */
 void stop_the_tape_48k(chqstate_t *state)
 {
+  // clang-format off
+  /** $E9B4: messages_stop_the_tape */
+  static const u8 messages_stop_the_tape[45] = {
+    attribute_GREEN_OVER_BLACK,
+    TWOBYTES(0x488A),
+    'S', 'T', 'O', 'P', ' ', 'T', 'H', 'E', ' ', 'T', 'A', 'P', 'E' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x5044),
+    'P', 'R', 'E', 'S', 'S', ' ', 'A', 'N', 'Y', ' ', 'K', 'E', 'Y', ' ', 'T', 'O', ' ', 'C', 'O', 'N', 'T', 'I', 'N', 'U', 'E' | EOS,
+    0 // end marker
+  };
+
+  /** $E9E1: messages_input_methods */
+  static const u8 messages_input_methods[112] = {
+    attribute_GREEN_OVER_BLACK,
+    TWOBYTES(0x484B),
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x48C6),
+    '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x5006),
+    '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x5046),
+    '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x5086),
+    '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    TWOBYTES(0x50C6),
+    '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    0 // end marker
+  };
+
+  /** $EB78: messages_cannot_be_remodified */
+  static const u8 messages_cannot_be_remodified[127] = {
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0x484B),
+    'C', 'H', 'A', 'S', 'E', ' ', ' ', 'H', '.', 'Q', '.' | EOS,
+    0xC6,
+    TWOBYTES(0x48C2),
+    'P', 'L', 'E', 'A', 'S', 'E', ' ', 'N', 'O', 'T', 'E', ' ', 'C', 'O', 'N', 'T', 'R', 'O', 'L', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS,
+    0xC6,
+    TWOBYTES(0x48E5),
+    'C', 'A', 'N', 'N', 'O', 'T', ' ', 'B', 'E', ' ', 'R', 'E', 'M', 'O', 'D', 'I', 'F', 'I', 'E', 'D', '.' | EOS,
+    0xC5,
+    TWOBYTES(0x5041),
+    'A', 'R', 'E', ' ', 'Y', 'O', 'U', ' ', 'H', 'A', 'P', 'P', 'Y', ' ', 'W', 'I', 'T', 'H', ' ', 'Y', 'O', 'U', 'R', ' ', 'C', 'H', 'O', 'I', 'C', 'E', '.' | EOS,
+    0x07,
+    TWOBYTES(0x5085),
+    'P', 'R', 'E', 'S', 'S', ' ', 'Y', 'E', 'S', '(', 'Y', ')', ' ', 'O', 'R', ' ', 'N', 'O', '(', 'N', ')' | EOS,
+    0
+  };
+
+  /** $EE2B: cursor_joy_keydefs */
+  static const u8 cursor_joy_keydefs[5] = {
+    KEYDEF(4, 3), // 0
+    KEYDEF(1, 3), // 7
+    KEYDEF(0, 3), // 6
+    KEYDEF(0, 4), // 5
+    KEYDEF(2, 3)  // 8
+  };
+  // clang-format on
+
   int       A_keys;      /* active-high key bits from the 1-5 half-row (was A) */
   const u8 *HL_keydefs;  /* fixed joystick scheme to copy into temp_keydefs (was HL) */
   int       A_kempston;  /* Kempston-present flag destined for kempston_flag (was A) */
@@ -16914,6 +18873,78 @@ static void clear_screen(chqstate_t *state)
  */
 static void redefine_keys_48k(chqstate_t *state)
 {
+  // clang-format off
+  /** $EA52: messages_redefine_keys */
+  static const u8 messages_redefine_keys[138] = {
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0x4849),
+    'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    0xC6, // attribute_BRIGHT_YELLOW_OVER_BLACK + single height bit
+    TWOBYTES(0x48C9),
+    'G', 'E', 'A', 'R', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC6,
+    TWOBYTES(0x48E9),
+    'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E', '.', '.' | EOS,
+    0xC6,
+    TWOBYTES(0x5009),
+    'B', 'R', 'A', 'K', 'E', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC6,
+    TWOBYTES(0x5029),
+    'L', 'E', 'F', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC6,
+    TWOBYTES(0x5049),
+    'R', 'I', 'G', 'H', 'T', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x5089),
+    'Q', 'U', 'I', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x50A9),
+    'P', 'A', 'U', 'S', 'E', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x50C9),
+    'T', 'U', 'R', 'B', 'O', '.', '.', '.', '.', '.', '.', '.' | EOS,
+    0 // end marker
+  };
+
+  /** $EAE1: messages_test_mode */
+  static const u8 messages_test_mode[151] = {
+    0xC1,
+    TWOBYTES(SCREEN_START_ADDRESS),
+    'T', 'E', 'S', 'T' | EOS,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0x4824),
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', ' ', ' ', ' ', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
+    0xC5,
+    TWOBYTES(0x5000),
+    'I', 'N', ' ', 'G', 'A', 'M', 'E', '.', '.', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x5041),
+    'P', 'R', 'E', 'S', 'S', ' ', '1', '.', '.', '.', '.', '.', '.', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x5067),
+    '2', '.', '.', '.', '.', '.', '.', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x5087),
+    '3', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N', '.' | EOS,
+    0xC4,
+    TWOBYTES(0x50A7),
+    '4', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T', '.' | EOS,
+    0
+  };
+
+  /** $EE30: shocked_keydefs */
+  static const u8 shocked_keydefs[8] = {
+    KEYDEF(3, 6), // S
+    KEYDEF(0, 1), // H
+    KEYDEF(3, 2), // O
+    KEYDEF(1, 7), // C
+    KEYDEF(2, 1), // K
+    KEYDEF(2, 5), // E
+    KEYDEF(2, 6), // D
+    KEYDEF(4, 1)  // <ENTER>
+  };
+  // clang-format on
+
   u16       DE_scr;       /* current screen address for key-name drawing (was DE) */
   int       B_iterations; /* outer loop: 8 keys to define; inner: 20 music ticks to wait (was B) */
   int       C_index;      /* index into temp_keydefs for the current key being defined (was C) */
@@ -17072,6 +19103,19 @@ static int define_a_key(chqstate_t *state,
                         int         C_index,
                         int         DE_screen)
 {
+  // clang-format off
+  /** $EDD6: key_names */
+  static const u8 key_names[10 * 8] =
+    "B N M SYSP"
+    "H J K L EN"
+    "Y U I O P "
+    "6 7 8 9 0 "
+    "5 4 3 2 1 "
+    "T R E W Q "
+    "G F D S A "
+    "V C X Z CP";
+  // clang-format on
+
   int       carry;         /* carry from SRL in redefine_keyscan (not used directly here) (carry) */
   u8        D_keydef;      /* keydef byte returned by redefine_keyscan: kkkkkrrr (was D) */
   u8       *HL_tmpkeys;    /* pointer walking temp_keydefs[] to check for duplicate assignments (was HL) */
@@ -17963,6 +20007,94 @@ static void reset_paging_128k(chqstate_t *state)
  */
 static void attract_mode_128k(chqstate_t *state)
 {
+  // clang-format off
+  /** $F491: press_gear_messages */
+  static const u8 press_gear_messages[17] = {
+    DRAWCHARSTYLE_SINGLE,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF84B),
+    TWOBYTES(0x59AB),
+    'P', 'R', 'E', 'S', 'S', ' ', ' ', 'G', 'E', 'A', 'R' | EOS
+  };
+
+  /** $F4A2: enter_for_options_messages */
+  static const u8 enter_for_options_messages[23] = {
+    DRAWCHARSTYLE_SINGLE,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF848),
+    TWOBYTES(0x59A8),
+    'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
+  };
+
+  /** $F4B9: credits_messages_128 */
+  static const u8 credits_messages_128[98] = {
+    10,
+    8,
+    DRAWCHARSTYLE_DOUBLE,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF02D),
+    TWOBYTES(0x594D),
+    'C', 'R', 'E', 'D', 'I', 'T', 'S' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF086),
+    TWOBYTES(0x5A06),
+    'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF0A6),
+    TWOBYTES(0x5A46),
+    'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
+    0x50,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF0C6),
+    TWOBYTES(0x5A86),
+    'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
+    3,
+    0
+  };
+
+  /** $F51B: best_officers */
+  static const u8 best_officers[163] = {
+    10,
+    8,
+    DRAWCHARSTYLE_DOUBLE,
+    attribute_BLACK_OVER_BLACK,
+    TWOBYTES(0xF02A),
+    TWOBYTES(0x594A),
+    'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF082),
+    TWOBYTES(0x5A02),
+    'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF0A2),
+    TWOBYTES(0x5A42),
+    '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF0C2),
+    TWOBYTES(0x5A82),
+    '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | EOS,
+    0x50,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    TWOBYTES(0xF0E2),
+    TWOBYTES(0x5AC2),
+    '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | EOS,
+    3,
+    0
+  };
+  // clang-format on
+
   int       HL_routine;           /* bank-3 routine address constant to invoke (was HL) */
   int       A_result;             /* return value from bank3_call: 0 = early return (was A) */
   const u8 *DE_messages;          /* messages pointer: enter_for_options or press_gear (was DE) */
