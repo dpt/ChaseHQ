@@ -104,3 +104,7 @@ The C is a model of a Z80 program, written to be read. Locals are named after th
 ## Stage data
 
 Stage data is extracted from the disassembly rather than typed in by hand: `scripts/convert_stage.py` turns a bank skool file into a C stage data skeleton, though not always successfully. See `docs/convert-stage.md` for usage and what still needs completing by hand afterwards.
+
+### Building your own level
+
+A stage's road is six parallel byte streams (curvature, height, lanes, hazards, left/right objects) that are unreadable on their own and easy to desync. `scripts/map_compile.py` compiles a human-readable `.map` text table — one row per slice of road, a column per stream — into those C arrays, and decompiles existing stage data back into the same table for editing. `maps/stage1.map` is a worked example; `maps/stage6.map` is the port's own hand-authored test stage, built entirely from this format. See `docs/map-text-format.md` for the full column and directive reference.
