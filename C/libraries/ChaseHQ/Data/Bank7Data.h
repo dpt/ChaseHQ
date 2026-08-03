@@ -20,43 +20,29 @@
 
 /* ----------------------------------------------------------------------- */
 
-/* End-game montage shots: 64 bitmap rows (13 bytes each) followed by 8
- * attribute rows (13 bytes each), consumed as one contiguous blob by
- * draw_endshot ($E4A9, Bank7.c). Row/attribute counts are not exactly
- * 64*13+8*13 in every case -- sizes here are taken verbatim from the skool's
- * label boundaries, not recomputed from the nominal 104x64 dimensions. */
+/* $E0FE-$E209: End-screen script bytecode (268 bytes). See its definition in
+ * Bank7Data.c for the full format description. */
+extern const u8 es_script[268];
 
 /* Handshake animation frames: 8-byte-wide rows only, no attribute data
  * (handshake's own routine_e3b7 supplies attributes via the fixed $59AC
  * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
  * from skool label boundaries. */
-extern const u8 es_script[268];
-
 extern const u8 bitmap_handshake_1[296];
 extern const u8 bitmap_handshake_2[280];
 extern const u8 bitmap_handshake_3[272];
 extern const u8 bitmap_handshake_4[256];
 
-/* $E3A5 handshake_frames: row-count + source bitmap per animation frame,
- * cycling 1-2-3-4-3-2 (es_handler_handshake_advance, Bank7.c). */
 typedef struct {
   u8        rows;
   const u8 *image;
 } handshake_frame_t;
-
-
 
 /* Bank 7's own copy of the 48K music engine's pattern/data tables, played by
  * es_play_music_48k et al (Bank7.c). Same (repeats, offset) / note-stream
  * format as CommonData.c's music_patterns/music_data, but a separate tune
  * and a separate table (relocated base $F53C, not $F0FE). */
 extern const u8 es_music_patterns[23];
-
-/* Bank 7's own drum sample templates, played by es_playdrum_2/es_playdrum_1
- * (Bank7.c). Byte-for-byte identical to CommonData.c's drum2_template/
- * drum1_template for all but the final byte -- not aliases of those tables,
- * since that last byte differs (0x00 here vs 0xFF there), and bank 7 uses
- * shorter lengths (94/160 vs 108/252) throughout. */
 
 /* End-screen script command bytes, dispatched by run_script's switch
  * (Bank7.c). Argument-encoding macros (ESCMD_CHATTER, ESCMD_IDLE, etc.) are

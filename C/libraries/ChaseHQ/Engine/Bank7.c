@@ -1109,6 +1109,12 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 static const u8 *z80addrtoendshot(u16 addr)
 {
   // clang-format off
+  /* End-game montage shots: 64 bitmap rows (13 bytes each) followed by 8
+   * attribute rows (13 bytes each), consumed as one contiguous blob by
+   * draw_endshot ($E4A9, Bank7.c). Row/attribute counts are not exactly
+   * 64*13+8*13 in every case -- sizes here are taken verbatim from the
+   * skool's label boundaries, not recomputed from the nominal 104x64
+   * dimensions. */
   /** $60E1: bitmap_endshot_1 */
   static const u8 bitmap_endshot_1[936] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X___, _______X, ___X_X_X, _XXXXXXX, XXXXXXXX,
@@ -1813,6 +1819,12 @@ pd_end_of_sample:
 int bank7_state_create(chqstate_t *state)
 {
   // clang-format off
+  /* Bank 7's own drum sample templates, played by es_playdrum_2/
+   * es_playdrum_1 (Bank7.c). Byte-for-byte identical to CommonData.c's
+   * drum2_template/drum1_template for all but the final byte -- not aliases
+   * of those tables, since that last byte differs (0x00 here vs 0xFF
+   * there), and bank 7 uses shorter lengths (94/160 vs 108/252)
+   * throughout. */
   /** $F8F5 (source; used by es_playdrum_2) */
   static const u8 es_drum_sample_2_template[94] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,

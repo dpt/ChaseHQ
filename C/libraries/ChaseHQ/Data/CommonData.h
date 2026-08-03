@@ -88,12 +88,6 @@ extern const u8 chatterblk_tony_hold_on[3];
 
 extern const char *common_chatter_strings[CHATTERSTR__LIMIT];
 
-
-/* $86F6: backdrop blit instruction templates.
- * Two 18-byte chunks; selected slice is copied to dr.backdrop_copy_instrs by
- * dr_start_backdrop_fill.  0x2C = INC L (skip), 0xED/0xA0 = LDI (copy). */
-
-
 extern const u8 sfx_crash_table[93];
 
 

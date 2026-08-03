@@ -71,8 +71,9 @@ extern const u8 title_glyph_bitmaps[5948];
 #define OSS_OP_DEAD()                           OSS_OP_DEAD_VAL
 #define OSS_OP_END_SCRIPT()                     OSS_OP_END_SCRIPT_VAL
 
-/* Index names for note_periods[] below, in scientific pitch notation
- * (A4 = 440 Hz, C4 = middle C), derived from each entry's AY tone period. */
+/* Index names for note_periods (compute_channel_ay_registers, Bank3.c), in
+ * scientific pitch notation (A4 = 440 Hz, C4 = middle C), derived from each
+ * entry's AY tone period. */
 enum note_index {
   NOTE_AS0, NOTE_B0,
   NOTE_C1, NOTE_CS1, NOTE_D1, NOTE_DS1, NOTE_E1, NOTE_F1, NOTE_FS1, NOTE_G1, NOTE_GS1, NOTE_A1, NOTE_AS1, NOTE_B1,
@@ -84,12 +85,6 @@ enum note_index {
   NOTE_C7, NOTE_CS7, NOTE_D7, NOTE_DS7, NOTE_E7, NOTE_F7, NOTE_FS7, NOTE_G7, NOTE_GS7, NOTE_A7, NOTE_AS7, NOTE_B7,
   NOTE_C8, NOTE_CS8, NOTE_D8, NOTE_DS8, NOTE_E8, NOTE_F8, NOTE_FS8, NOTE_G8, NOTE_GS8, NOTE_A8
 };
-
-/* 128K bank 3: title-tune engine AY tone-period lookup table, $EFBC-$F07B,
- * 96 entries (2 bytes/note, little-endian), indexed by
- * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
- * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
- * extend this array into it. Indices name-checked against enum note_index. */
 
 /* One tune's entry in the tune-select table below: a tempo/speed byte plus
  * the raw Z80 address of each of the 3 channels' pattern-data blocks. */
@@ -130,24 +125,6 @@ extern const u8 title_tune1_data[222];
 
 extern const u8 options_menu_text[366];
 
-/* 128K bank 3: two fixed 1-bit PCM "digitised sample" tables played by
- * play_sample_row via the drum-sample dispatch in sfx_music_service. Each
- * byte is one playback row of 8 bits, rotated out with RLC so playback
- * mutates the table in place -- state keeps a mutable per-game copy, these
- * are the pristine templates. Same underlying sample content as CommonData.c's
- * drum1_template/drum2_template and Bank7Data.h's es_drum1/es_drum2 (this
- * game's PCM drum/noise assets are duplicated, at slightly different
- * lengths, across every bank that plays them) -- transcribed separately here
- * because bank 3's copies are shorter than either. */
-
-/* 128K bank 3: drum-sample cue-script/trigger-table data, $FA75-$FB98,
- * transcribed byte-exact from bank3.bin. Covers the per-tune cue-script
- * pointer table ($FA75-$FA7E), the 5 tunes' cue-script byte-code
- * ($FA7F-$FAA3), and the per-drum-ID trigger table ($FAA4-$FB98) --
- * see stst_load_sfx_script/ssa_read_opcode in Bank3.c for how this is
- * walked, and resolve_drum_script_addr for how raw Z80 addresses within it
- * are resolved to C pointers. */
-
 #define DRUM_CUE_SCRIPT_DATA_BASE (0xFA75)
 
 /* 128K bank 3: one row of the high-score table, $C408-$C42A stride (the
@@ -164,22 +141,12 @@ typedef struct high_score_row {
 
 #define HIGH_SCORE_TABLE_ROWS (10)
 
-/* 128K bank 3: preset high-score table rows, $C408-$C552 (33-byte stride in
- * the original; only the fields that move are transcribed here -- see
- * high_score_row_t above). Row 0 = 1st place .. row 9 = 10th place. Row 0's
- * initials "JOB" are John O'Brien, this game's programmer. */
-
 /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
  * each high-score row (fixed to screen position, never shifted -- see
  * high_score_row_t's own comment). Not consumed yet: the high-score screen's
  * rendering is not translated (see insert_high_score_entry's Conv note in
  * Bank3.c); kept here for when it is. */
 extern const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5];
-
-/* 128K bank 3: $C567-$C57E, the 6-entry stage-code table read by
- * insert_high_score_entry ($C09F), indexed by wanted_stage_number-1 (state
- * fields are 1-6; the Z80 table is addressed from a base 3 bytes before its
- * first real entry so that a raw 1-based multiply lands correctly). */
 
 /* ----------------------------------------------------------------------- */
 

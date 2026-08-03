@@ -288,6 +288,10 @@ static void check_high_score(chqstate_t *state)
 static void insert_high_score_entry(chqstate_t *state, int row)
 {
   // clang-format off
+  /* 128K bank 3: $C567-$C57E, the 6-entry stage-code table read by
+   * insert_high_score_entry ($C09F), indexed by wanted_stage_number-1 (state
+   * fields are 1-6; the Z80 table is addressed from a base 3 bytes before
+   * its first real entry so that a raw 1-based multiply lands correctly). */
   static const u8 high_score_stage_codes[6][3] = {
     " 1 ", " 2 ", " 3 ", " 4 ", " 5 ", "ALL",
   };
@@ -3379,7 +3383,10 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
    * 128K bank 3: title-tune engine AY tone-period lookup table. 96 entries,
    * one per note, transcribed directly from the skool's DEFB bytes
    * (little-endian pairs). Used by compute_channel_ay_registers ($EE9E@bank3)
-   * to convert a note index into an AY tone-period value.
+   * to convert a note index into an AY tone-period value. $F07C onward is a
+   * different, unrelated table (an indexed pointer table, see $EE5A@bank3)
+   * -- do not extend this array into it. Indices name-checked against enum
+   * note_index (Bank3Data.h).
    */
   static const u16 note_periods[96] = {
     0x0EF8, /* NOTE_AS0 */
@@ -3965,8 +3972,13 @@ static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
 static const u8 *resolve_drum_script_addr(u16 addr)
 {
   // clang-format off
-  /** $FA75-$FB98: drum_cue_script_data -- see stst_load_sfx_script/
-   * ssa_read_opcode prologues (Bank3.c) for the byte-code this drives. */
+  /* 128K bank 3: drum-sample cue-script/trigger-table data, $FA75-$FB98,
+   * transcribed byte-exact from bank3.bin. Covers the per-tune cue-script
+   * pointer table ($FA75-$FA7E), the 5 tunes' cue-script byte-code
+   * ($FA7F-$FAA3), and the per-drum-ID trigger table ($FAA4-$FB98) -- see
+   * stst_load_sfx_script/ssa_read_opcode prologues (Bank3.c) for the
+   * byte-code this drives, and resolve_drum_script_addr for how raw Z80
+   * addresses within it are resolved to C pointers. */
   static const u8 drum_cue_script_data[292] = {
     // $FA75-$FA7E: per-tune cue-script pointer table, indexed by tune*2
     // (stst_load_sfx_script). Tunes actually started: 0, 1, 2, 3, 4.
@@ -5485,6 +5497,16 @@ static u16 advance_key_label_column(u16 DE_screen)
 int bank3_state_create(chqstate_t *state)
 {
   // clang-format off
+  /* 128K bank 3: two fixed 1-bit PCM "digitised sample" tables played by
+   * play_sample_row via the drum-sample dispatch in sfx_music_service. Each
+   * byte is one playback row of 8 bits, rotated out with RLC so playback
+   * mutates the table in place -- state keeps a mutable per-game copy, these
+   * are the pristine templates. Same underlying sample content as
+   * CommonData.c's drum1_template/drum2_template and Bank7Data.h's
+   * es_drum1/es_drum2 (this game's PCM drum/noise assets are duplicated, at
+   * slightly different lengths, across every bank that plays them) --
+   * transcribed separately here because bank 3's copies are shorter than
+   * either. */
   /** $F8F2: drum_sample_1_template (104 bytes, played back with D=$68 rows) */
   static const u8 drum_sample_1_template[104] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
@@ -5534,6 +5556,11 @@ int bank3_state_create(chqstate_t *state)
     0x7E, 0xFC, 0xFE, 0x7F, 0xE7, 0x6F, 0xDE, 0x00
   };
 
+  /* 128K bank 3: preset high-score table rows, $C408-$C552 (33-byte stride
+   * in the original; only the fields that move are transcribed here -- see
+   * high_score_row_t, Bank3Data.h). Row 0 = 1st place .. row 9 = 10th
+   * place. Row 0's initials "JOB" are John O'Brien, this game's
+   * programmer. */
   static const high_score_row_t high_score_table_template[HIGH_SCORE_TABLE_ROWS] = {
     { "10000000", "ALL", '2', "JOB" }, /* $C408: row 0 (1st place) */
     { " 9888700", " 5 ", '2', "BIL" }, /* $C429: row 1 (2nd place) */
