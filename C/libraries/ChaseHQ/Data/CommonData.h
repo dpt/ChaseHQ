@@ -243,8 +243,6 @@ extern const u8 circle_transition_frames[7 * 8];
 
 extern const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
 
-extern const u16 outward_bend_table[32];
-
 extern const u8 persp_y_scale[8][PERSP_TABLE_COLS];
 
 typedef struct {

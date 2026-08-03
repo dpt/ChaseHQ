@@ -17619,11 +17619,59 @@ static void build_curve_table(chqstate_t *state, int forked)
 {
   // clang-format off
   /**
-   * $E540 - Converts a curvature to a road X position
-   * v[i] = round(128 * (1 + tan((i − 32) · π/128))), which reproduces all 96
+   * $E500-$E5FF: bend_table
+   *
+   * One contiguous 128-entry table the Z80 addresses as a single page ($E5xx)
+   * via an 8-bit accumulator (IXl) that wraps mod 256 -- there is no bounds
+   * check in the original, so a curvature run can walk the accumulator either
+   * side of the inward table's start ($E540) and land in the outward table
+   * instead. The two halves:
+   *
+   * outward_bend_table ($E500-$E53F, 32 entries): bends the road horizontally
+   * *away* from the centre of the screen as it disappears into the distance;
+   * reached only when a forked road's negated curvature run (see `forked`
+   * below) walks the accumulator back past the inward table's start.
+   *
+   * inward_bend_table / curvature_to_xpos ($E540-$E5FF, 96 entries): converts
+   * a curvature to a road X position for regular (non-forked) bending;
+   * v[i] = round(128 * (1 + tan((i - 32) * pi/128))), which reproduces all 96
    * entries exactly.
    */
-  static const u16 curvature_to_xpos[96] = {
+  static const u16 bend_table[32 + 96] = {
+    // outward_bend_table ($E500)
+    0x0000,
+    0xEC22,
+    0xF653,
+    0xF9B9,
+    0xFB6C,
+    0xFC72,
+    0xFD21,
+    0xFD9E,
+    0xFDFD,
+    0xFE46,
+    0xFE81,
+    0xFEB1,
+    0xFEDA,
+    0xFEFD,
+    0xFF1A,
+    0xFF34,
+    0xFF4B,
+    0xFF5F,
+    0xFF71,
+    0xFF82,
+    0xFF91,
+    0xFF9E,
+    0xFFAA,
+    0xFFB6,
+    0xFFC0,
+    0xFFCA,
+    0xFFD3,
+    0xFFDC,
+    0xFFE4,
+    0xFFEC,
+    0xFFF3,
+    0xFFFA,
+    // inward_bend_table / curvature_to_xpos ($E540)
     0x0000,
     0x0006,
     0x000C,
@@ -17747,8 +17795,8 @@ static void build_curve_table(chqstate_t *state, int forked)
   };
   // clang-format on
 
-  s16       *H_righttab_end;         /* right-side xpos output table (was H, SM $CC72) */
-  s16       *L_lefttab_end;          /* left-side xpos output table (was L, SM $CCA7) */
+  s16       *H_righttab_end;     /* right-side xpos output table (was H, SM $CC72) */
+  s16       *L_lefttab_end;      /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
   int        C_curvature;        /* curvature byte from road buffer (was C) */
   const u8  *IY_height;          /* perspective x-scale row pointer (was IY) */
@@ -17791,15 +17839,14 @@ static void build_curve_table(chqstate_t *state, int forked)
    * three bits are used -- 111 for both $E6 and $E7. The row therefore has no
    * influence here; the call reduces to round(7 * C_curvature / 8). */
   A_scratch = scale_curvature_or_height(A_scratch, C_curvature);
-  /* $CC09-$CC0D: curvature_to_xpos holds 16-bit entries, so AND $FE forces the
-   * index onto a word boundary. Road-buffer curvature bytes are always one of
+  /* $CC09-$CC0D: bend_table holds 16-bit entries, so AND $FE forces the index
+   * onto a word boundary. Road-buffer curvature bytes are always one of
    * {0, ±2, ±4, ±6} (see the curvature stream decode at $BE7D), which puts this
    * in $7A..$84: $80 dead ahead, below it bending right, above it bending
-   * left. */
-  A_scratch = (128 - A_scratch) & 0xFE;
-  A_scratch = (A_scratch - 0x40) / 2; // adjust to index inward_bend_table
-  assert(A_scratch >= 0 && A_scratch <= 95);
-  IX_lanes = &curvature_to_xpos[A_scratch]; // table is 16-bit
+   * left -- always deep inside the inward half at start-up; only the
+   * accumulation below can walk it into the outward half. */
+  A_scratch = (128 - A_scratch) & 0xFE; // byte offset from bend_table's $E500 base
+  IX_lanes = &bend_table[A_scratch / 2];
 
   DE_output = &state->curvature_table[0];
   B_iterations = PERSP_TABLE_COLS;
@@ -17823,13 +17870,14 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     // EXX Bank
 
-    // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
-    // Conv: Z80 IXl wraps in 8-bit; values < 0x40 index before the table (adjacent Z80 RAM).
-    // Clamp to table bounds rather than letting the pointer escape the array.
-    IX_l = (IX_lanes - &curvature_to_xpos[0]) * 2 + 0x40;
+    // Z80: ADD A,IXl; LD IXl,A -- IXl accumulates curvature, walking the byte
+    // offset from bend_table's $E500 base. Z80 IXl wraps in 8-bit; a forked
+    // road's negated curvature run can walk this back past $E540 into
+    // outward_bend_table's half of the table, which is why the two halves
+    // are modelled as one combined array rather than clamped apart.
+    IX_l = (IX_lanes - &bend_table[0]) * 2;
     IX_l = (IX_l + A_curvature) & 0xFF;
-    if (IX_l < 0x40) IX_l = 0x40;
-    IX_lanes = &curvature_to_xpos[(IX_l - 0x40) / 2];
+    IX_lanes = &bend_table[IX_l / 2];
 
     HLdash_multiplied = 0; // Initialise a multiplier result
     BCdash = *IX_lanes - DEdash_roadposacc;
