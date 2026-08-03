@@ -22,8 +22,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-extern const u8 title_screen_credits_text[56];
-extern const u8 title_screen_overlay_text[47];
 
 #define TITLE_SCENE_COUNT          (5)
 #define TITLE_SCENE_DATA_BASE (0xCCB7)
@@ -35,11 +33,7 @@ typedef struct title_glyph {
   const u8 *bitmap;      /* source pixel bytes, OR-blitted verbatim */
 } title_glyph_t;
 
-extern const u8 title_scene_data[1467];
-extern const u16 title_scene_table_offset[TITLE_SCENE_COUNT];
-extern const u8 title_speed_curve[36];
 extern const u8 title_glyph_bitmaps[5948];
-extern const title_glyph_t title_glyph_table[TITLE_GLYPH_COUNT];
 
 /* Object animation script opcodes (title_object::opcode / script byte-code
  * in title_scene_data above). Bytes with the sign bit clear ($00-$7F) are
@@ -96,7 +90,6 @@ enum note_index {
  * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
  * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
  * extend this array into it. Indices name-checked against enum note_index. */
-extern const u16 note_periods[96];
 
 /* One tune's entry in the tune-select table below: a tempo/speed byte plus
  * the raw Z80 address of each of the 3 channels' pattern-data blocks. */
@@ -146,8 +139,6 @@ extern const u8 options_menu_text[366];
  * game's PCM drum/noise assets are duplicated, at slightly different
  * lengths, across every bank that plays them) -- transcribed separately here
  * because bank 3's copies are shorter than either. */
-extern const u8 drum_sample_1_template[104]; /* $F8F2, played with D=$68 rows */
-extern const u8 drum_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
 
 /* 128K bank 3: drum-sample cue-script/trigger-table data, $FA75-$FB98,
  * transcribed byte-exact from bank3.bin. Covers the per-tune cue-script
@@ -156,7 +147,6 @@ extern const u8 drum_sample_2_template[224]; /* $F95A, played with D=$E0 rows */
  * see stst_load_sfx_script/ssa_read_opcode in Bank3.c for how this is
  * walked, and resolve_drum_script_addr for how raw Z80 addresses within it
  * are resolved to C pointers. */
-extern const u8 drum_cue_script_data[292];
 
 #define DRUM_CUE_SCRIPT_DATA_BASE (0xFA75)
 
@@ -178,7 +168,6 @@ typedef struct high_score_row {
  * the original; only the fields that move are transcribed here -- see
  * high_score_row_t above). Row 0 = 1st place .. row 9 = 10th place. Row 0's
  * initials "JOB" are John O'Brien, this game's programmer. */
-extern const high_score_row_t high_score_table_template[HIGH_SCORE_TABLE_ROWS];
 
 /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
  * each high-score row (fixed to screen position, never shifted -- see
@@ -191,7 +180,6 @@ extern const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5];
  * insert_high_score_entry ($C09F), indexed by wanted_stage_number-1 (state
  * fields are 1-6; the Z80 table is addressed from a base 3 bytes before its
  * first real entry so that a raw 1-based multiply lands correctly). */
-extern const u8 high_score_stage_codes[6][3];
 
 /* ----------------------------------------------------------------------- */
 
