@@ -24,15 +24,6 @@
  * Bank7Data.c for the full format description. */
 extern const u8 es_script[268];
 
-/* Handshake animation frames: 8-byte-wide rows only, no attribute data
- * (handshake's own routine_e3b7 supplies attributes via the fixed $59AC
- * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
- * from skool label boundaries. */
-extern const u8 bitmap_handshake_1[296];
-extern const u8 bitmap_handshake_2[280];
-extern const u8 bitmap_handshake_3[272];
-extern const u8 bitmap_handshake_4[256];
-
 typedef struct {
   u8        rows;
   const u8 *image;
