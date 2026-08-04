@@ -27,22 +27,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-extern const u8 bitmap_smoke1[4 * 13];
-extern const u8 bitmap_smoke2[4 * 11];
-extern const u8 bitmap_smoke3[4 * 9];
-extern const u8 bitmap_smoke4[2 * 7];
-extern const u8 bitmap_smoke5[2 * 5];
-extern const u8 bitmap_smoke6[2 * 3];
-
-extern const u8 bitmap_fire1[4 * 16];
-extern const u8 bitmap_fire2[4 * 16];
-extern const u8 bitmap_fire3[6 * 8];
-extern const u8 bitmap_fire4[6 * 8];
-extern const u8 bitmap_fire5[4 * 5];
-extern const u8 bitmap_fire5s[4 * 5];
-extern const u8 bitmap_fire6[4 * 6];
-extern const u8 bitmap_fire6s[4 * 6];
-
 extern const u8 bitmap_faces[FACEBYTES * NFACES];
 
 extern const depthset_t shortpole_bottom;
@@ -125,64 +109,6 @@ extern const u8 hero_car_jump_table[10 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
 
 extern const u8 bitmap_arrow[3 * 2 * 28];
-extern const u8 bitmap_cherry_light[1 * 2 * 7];
-extern const u8 bitmap_cherry_light_lit[3 * 2 * 14];
-extern const u8 bitmap_spark[3 * 2 * 20];
-extern const u8 bitmap_cherryout_1[2 * 2 * 4];
-extern const u8 bitmap_cherryout_2[2 * 2 * 9];
-extern const u8 bitmap_cherryout_3[1 * 2 * 12];
-extern const u8 bitmap_turbo_1[4 * 2 * 16];
-extern const u8 bitmap_turbo_2[4 * 2 * 16];
-extern const u8 bitmap_turbo_3[4 * 2 * 16];
-extern const u8 bitmap_turbo_4[4 * 2 * 16];
-extern const u8 bitmap_hero_centre_straight[5 * 14];
-extern const u8 bitmap_hero_centre_straight_right[5 * 17];
-extern const u8 bitmap_hero_centre_straight_right_hard[5 * 16];
-extern const u8 bitmap_hero_centre_up[5 * 14];
-extern const u8 bitmap_hero_centre_up_right[5 * 17];
-extern const u8 bitmap_hero_centre_up_right_hard[5 * 15];
-extern const u8 bitmap_hero_centre_down[5 * 14];
-extern const u8 bitmap_hero_centre_down_right[5 * 16];
-extern const u8 bitmap_hero_centre_down_right_hard[5 * 16];
-extern const u8 bitmap_hero_top_straight[5 * 2 * 9];
-extern const u8 bitmap_hero_bottom_straight[5 * 2 * 6];
-extern const u8 bitmap_hero_left_straight[1 * 2 * 14];
-extern const u8 bitmap_hero_right_straight[1 * 2 * 14];
-extern const u8 bitmap_hero_top_straight_right[5 * 2 * 8];
-extern const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4];
-extern const u8 bitmap_hero_left_straight_left[1 * 2 * 13];
-extern const u8 bitmap_hero_right_straight_right[1 * 2 * 13];
-extern const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9];
-extern const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4];
-extern const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12];
-extern const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15];
-extern const u8 bitmap_hero_top_up[5 * 2 * 10];
-extern const u8 bitmap_hero_bottom_up[5 * 2 * 6];
-extern const u8 bitmap_hero_left_up[1 * 2 * 13];
-extern const u8 bitmap_hero_right_up[1 * 2 * 14];
-extern const u8 bitmap_hero_top_right[5 * 2 * 9];
-extern const u8 bitmap_hero_bottom_right[5 * 2 * 4];
-extern const u8 bitmap_hero_left_right[1 * 2 * 12];
-extern const u8 bitmap_hero_right_right[1 * 2 * 14];
-extern const u8 bitmap_hero_up_right_hard[5 * 2 * 9];
-extern const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6];
-extern const u8 bitmap_hero_left_right_hard[1 * 2 * 11];
-extern const u8 bitmap_hero_right_right_hard[1 * 2 * 15];
-extern const u8 bitmap_hero_top_down[5 * 2 * 8];
-extern const u8 bitmap_hero_bottom_down[5 * 2 * 6];
-extern const u8 bitmap_hero_left_down[1 * 2 * 13];
-extern const u8 bitmap_hero_right_down[1 * 2 * 14];
-extern const u8 bitmap_hero_top_down_right[5 * 2 * 8];
-extern const u8 bitmap_hero_bottom_down_right[5 * 2 * 4];
-extern const u8 bitmap_hero_left_down_right[1 * 2 * 13];
-extern const u8 bitmap_hero_right_down_right[1 * 2 * 13];
-extern const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8];
-extern const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4];
-extern const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13];
-extern const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15];
-extern const u8 bitmap_shadow_straight[7 * 2 * 12];
-extern const u8 bitmap_shadow_turn_right[7 * 2 * 12];
-extern const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12];
 
 #define LEDFONT_HEIGHT (15) // 15 rows/char
 #define MINIFONT_HEIGHT (6) // 6 rows/char
@@ -214,10 +140,8 @@ extern const heli_bitmap_xonly_t heli_rotor_frame1;
 extern const heli_part_ptr_t heli_table_frame0[SPRITE_FRAMES];
 extern const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES];
 
-extern const u8 perp_escape_hazards[6 + 5];
 extern const u8 perp_escape_curvature[5];
 extern const u8 perp_escape_height[5];
-extern const u8 perp_escape_lanes[4];
 extern const u8 fork_hazards[8];
 extern const u8 fork_leftrightobjs[6];
 extern const u8 forked_road_curvature[6];
