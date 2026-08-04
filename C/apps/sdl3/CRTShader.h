@@ -22,10 +22,11 @@
 
 #include "ZXSpectrum/Spectrum.h"
 
-// CRT post-effect prototype: renders the game's converted screen buffer
-// through a Metal fragment shader (scanlines/bloom/vignette) via SDL's GPU
-// API, instead of the plain SDL_Renderer blit. See CRTShader.c for the
-// SDL3/Metal-only caveat.
+/* CRT post-effect prototype: renders the game's converted screen buffer
+ * through a Metal fragment shader (scanlines/bloom/vignette) via SDL's GPU
+ * API, instead of the plain SDL_Renderer blit. See CRTShader.c for the
+ * SDL3/Metal-only caveat.
+ */
 typedef struct
 {
   SDL_GPUDevice         *gpu;
@@ -35,9 +36,10 @@ typedef struct
   SDL_GPUGraphicsPipeline *pipeline;
 } chq_CRT_shader_t;
 
-// Tunable shader knobs, pushed to the fragment shader as a uniform each
-// frame. Layout must match the MSL Params struct in CRTShader.c exactly
-// (plain floats, same order, no padding).
+/* Tunable shader knobs, pushed to the fragment shader as a uniform each
+ * frame. Layout must match the MSL Params struct in CRTShader.c exactly
+ * (plain floats, same order, no padding).
+ */
 typedef struct
 {
   float curvature;          // barrel distortion strength

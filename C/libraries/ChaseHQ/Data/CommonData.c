@@ -29,8 +29,9 @@
 
 // clang-format off
 
-// [Graphics] Faces
-//
+/* [Graphics] Faces
+ *
+ */
 
 /** $7BE9: bitmap_faces */
 const u8 bitmap_faces[FACEBYTES * NFACES] = {
@@ -176,8 +177,9 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
   0x30, 0x70, 0x70, 0x28,
 };
 
-// [Graphics] Street lamps etc.
-//
+/* [Graphics] Street lamps etc.
+ *
+ */
 
 /**
  * $7E0C: shortpole_bottom

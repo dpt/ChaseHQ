@@ -546,10 +546,11 @@ static void es_handler_draw_score(chqstate_t *state)
                     &state->session.score_digits[7], ADDRTOSCREEN(0x4126));
     sfx_bipbow(state, 2, 2);
 
-    // Sleeps out the whole per-increment body timed from the stamp() above,
-    // not just sfx_bipbow's delay loops (see SCORE_TALLY_TSTATES). Without
-    // this the 1000-iteration tally runs in zero real time and the classic
-    // rising-score animation is never seen.
+    /* Sleeps out the whole per-increment body timed from the stamp() above,
+     * not just sfx_bipbow's delay loops (see SCORE_TALLY_TSTATES). Without
+     * this the 1000-iteration tally runs in zero real time and the classic
+     * rising-score animation is never seen.
+     */
     state->speccy->sleep(state->speccy, SCORE_TALLY_TSTATES);
   }
 
@@ -1915,8 +1916,9 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
     NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8),
     NOTE_END,
 
-    // 0x8C (delay=6) - drum2/drum1 beat, a silent note, then a descending
-    // noise fade-out sweep (param 11..1) before END
+    /* 0x8C (delay=6) - drum2/drum1 beat, a silent note, then a descending
+     * noise fade-out sweep (param 11..1) before END
+     */
     NOTE_DELAY(6),
     NOTE_DRUM2(8), NOTE_NOISE(3), NOTE_DRUM2(8), NOTE_NOISE(3),
     NOTE_DRUM1(8), NOTE_NOISE(3), NOTE_DRUM1(8), NOTE_DRUM2(8),
@@ -2046,9 +2048,10 @@ pm_reset_pattern:
     state->bank7->es_music.extra_delay--;
   }
 
-  // Conv: b7pm_start_drums/b7pm_wait_for_interrupt -- resuming a drum sample
-  // suspended by a real Z80 interrupt has no equivalent here; playdrum
-  // playback (once ported) will always run to completion within one call.
+  /* Conv: b7pm_start_drums/b7pm_wait_for_interrupt -- resuming a drum sample
+   * suspended by a real Z80 interrupt has no equivalent here; playdrum
+   * playback (once ported) will always run to completion within one call.
+   */
 }
 
 /**

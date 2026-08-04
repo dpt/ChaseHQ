@@ -40,8 +40,9 @@
 
 /* ----------------------------------------------------------------------- */
 
-// Conv: The C version uses IDs for strings and blocks rather than inline
-// addresses.
+/* Conv: The C version uses IDs for strings and blocks rather than inline
+ * addresses.
+ */
 
 /** Chatter commands */
 #define CHATTERCMD_RANDOM                   (0xFC) // Followed by three chatterblock indices
@@ -137,15 +138,16 @@
 // Map escape byte
 #define MAP_ESC                         (0)
 
-// Map commands
-//
-// Commands 3..9 all latch the same value: rm.hazard_byte = cmd - 3 ($C02C).
-// spawn_hazards ($AB9A) reads it back and treats 1/2/3 as one obstacle left,
-// one right, or a pair, drawn with the stage's light hittable object
-// (addrof_hittable_objects[0] — the tumbleweed on the stage 1/3 dirt track).
-// 4/5/6 are the same three placements drawn with the heavy hittable
-// (addrof_hittable_objects[1] — the barrier), which is why the obstacle and
-// barrier commands come in matching triples.
+/* Map commands
+ *
+ * Commands 3..9 all latch the same value: rm.hazard_byte = cmd - 3 ($C02C).
+ * spawn_hazards ($AB9A) reads it back and treats 1/2/3 as one obstacle left,
+ * one right, or a pair, drawn with the stage's light hittable object
+ * (addrof_hittable_objects[0] — the tumbleweed on the stage 1/3 dirt track).
+ * 4/5/6 are the same three placements drawn with the heavy hittable
+ * (addrof_hittable_objects[1] — the barrier), which is why the obstacle and
+ * barrier commands come in matching triples.
+ */
 #define MAP_CMDCODE_GOTO                (0)
 #define MAP_CMDCODE_FORK_END            (1)
 #define MAP_CMDCODE_SPLIT               (2)
@@ -161,9 +163,10 @@
 #define MAP_CMDCODE_ARROW_R             (12)
 #define MAP_CMDCODE_START_CARS          (13)
 #define MAP_CMDCODE_STOP_CARS           (14)
-// Codes 15 and up set helicopter_control = code - 11, the state that
-// drive_helicopter ($AB33) dispatches on. Code 16 (state 2, "departing") is
-// never written by a stage, since drive_helicopter reaches that state itself.
+/* Codes 15 and up set helicopter_control = code - 11, the state that
+ * drive_helicopter ($AB33) dispatches on. Code 16 (state 2, "departing") is
+ * never written by a stage, since drive_helicopter reaches that state itself.
+ */
 #define MAP_CMDCODE_HELI_LEAVE          (15)
 #define MAP_CMDCODE_HELI_DEPARTING      (16) // unused
 #define MAP_CMDCODE_HELI_TURN_L         (17)
@@ -222,8 +225,9 @@
 #define MAP_LANES_3RTO4_VAL             (0x9E) // 1001_1110
 #define MAP_LANES_3LTO2M_VAL            (0x06) // 0000_0110
 #define MAP_LANES_3RTO2R_VAL            (0x0F) // 0000_1111
-// The mirror of 2LTO3L, differing only in bit 4. Used once in the original
-// game, in stage 2 ($E56D), between a 3L run and a 2L run.
+/* The mirror of 2LTO3L, differing only in bit 4. Used once in the original
+ * game, in stage 2 ($E56D), between a 3L run and a 2L run.
+ */
 #define MAP_LANES_3LTO2L_VAL            (0x3D) // 0011_1101
 #define MAP_LANES_2LTO3L_VAL            (0x2D) // 0010_1101
 #define MAP_LANES_2RTO3R_VAL            (0x1F) // 0001_1111
@@ -235,28 +239,29 @@
 
 // Bottom two bits are the left hand offset.
 
-// Decoding lanes bits:
-//
-// if all clear => four lane road
-// - if bit 6 clear => normal road
-//   - if bit 7 set => 3 / 4-to-3 / 3-to-4 lanes
-//     else if bit 7 clear => 2 / 3-to-2 / 2-to-3 lanes
-// - else if bit 6 set => tunnel, dirt track or forked road
-//   - if bit 7 clear => in tunnel
-//     - if bits 2 or 3 set => tunnel transition
-//       - if bit 4 set => tunnel exit
-//       - else if bit 4 clear => tunnel entrance
-//     - else bits 2 or 3 clear => tunnel body
-//   - else if bit 7 set => forked road or dirt track
-//     - if bit 5 set => forked road
-//     - else if bit 5 clear => dirt track or (unknown)
-//       - if bits 2 or 3 set => (unknown)
-//       - else if bits 2 or 3 clear => dirt track
-//
-// Testing for bits 2 or 3 is used by draw_road_lanes_change to detect lane
-// changing sections, but there must be some other test involved there since
-// tunnel/forked would be included.
-//
+/* Decoding lanes bits:
+ *
+ * if all clear => four lane road
+ * - if bit 6 clear => normal road
+ *   - if bit 7 set => 3 / 4-to-3 / 3-to-4 lanes
+ *     else if bit 7 clear => 2 / 3-to-2 / 2-to-3 lanes
+ * - else if bit 6 set => tunnel, dirt track or forked road
+ *   - if bit 7 clear => in tunnel
+ *     - if bits 2 or 3 set => tunnel transition
+ *       - if bit 4 set => tunnel exit
+ *       - else if bit 4 clear => tunnel entrance
+ *     - else bits 2 or 3 clear => tunnel body
+ *   - else if bit 7 set => forked road or dirt track
+ *     - if bit 5 set => forked road
+ *     - else if bit 5 clear => dirt track or (unknown)
+ *       - if bits 2 or 3 set => (unknown)
+ *       - else if bits 2 or 3 clear => dirt track
+ *
+ * Testing for bits 2 or 3 is used by draw_road_lanes_change to detect lane
+ * changing sections, but there must be some other test involved there since
+ * tunnel/forked would be included.
+ *
+ */
 
 #define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
 
@@ -283,16 +288,18 @@
 // Map hazards
 #define MAP_HAZARD_WAIT(T)              (T)
 
-// Objects
-//
-// These names are valid for Stage 1 but I'm not yet sure which ones are the
-// same across all stages.
+/* Objects
+ *
+ * These names are valid for Stage 1 but I'm not yet sure which ones are the
+ * same across all stages.
+ */
 #define MAP_OBJ_NONE_VAL                (0)
 
 #define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
-// Code 2 selects stage1_{left,right}_hand_graphics_defs[1], which is an
-// all-zero entry with no bitmap and no draw handler. Every stage's object
-// table has the same hole; no map stream uses the code.
+/* Code 2 selects stage1_{left,right}_hand_graphics_defs[1], which is an
+ * all-zero entry with no bitmap and no draw handler. Every stage's object
+ * table has the same hole; no map stream uses the code.
+ */
 #define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe/common
 #define MAP_OBJ_S1_TREE_VAL             (4)
 #define MAP_OBJ_S1_BUSH_VAL             (5)
@@ -313,9 +320,10 @@
 
 /* ----------------------------------------------------------------------- */
 
-// No. 5 per depth level for depthset objects (×sub-components: 15, 25 etc.).
-// 6 for directly-indexed objects: four size bands where 2–3 share data, 4–5
-// are an unshifted/shifted pair. Turn signs: 10 = 5 unflipped + 5 flipped.
+/* No. 5 per depth level for depthset objects (×sub-components: 15, 25 etc.).
+ * 6 for directly-indexed objects: four size bands where 2–3 share data, 4–5
+ * are an unshifted/shifted pair. Turn signs: 10 = 5 unflipped + 5 flipped.
+ */
 typedef struct bitmap {
   u8        width_bytes;
   u8        flags;
@@ -339,11 +347,12 @@ typedef struct heli_bitmap {
   heli_bitmap_xonly_t bitmap_x;
 } heli_bitmap_t;
 
-// Table of 6 part pointers used by draw_helicopter: entries 0-4 point to a
-// heli_bitmap_t (body parts, which carry a y_offset); entry 5 points to a
-// bare heli_bitmap_xonly_t (the rotor, whose Z80 block has no y_offset
-// byte). The Z80 never type-checks these; the union lets each of the two use
-// sites pick the right member instead of casting an untyped pointer.
+/* Table of 6 part pointers used by draw_helicopter: entries 0-4 point to a
+ * heli_bitmap_t (body parts, which carry a y_offset); entry 5 points to a
+ * bare heli_bitmap_xonly_t (the rotor, whose Z80 block has no y_offset
+ * byte). The Z80 never type-checks these; the union lets each of the two use
+ * sites pick the right member instead of casting an untyped pointer.
+ */
 typedef union heli_part_ptr {
   const heli_bitmap_t       *part;  // entries 0-4
   const heli_bitmap_xonly_t *rotor; // entry 5
@@ -363,11 +372,12 @@ typedef struct depthset_pair {
   u8 offset; // byte offset from 'bitmaps' in parent structure
 } depthset_pair_t;
 
-// Conv: In the Z80 data, overhead-spanning objects (bridges) pack an extra
-// 10-entry table directly after 'pairs' in memory: draw_overhead reads past
-// pairs[10] with raw pointer arithmetic to reach it. Modelled explicitly
-// here rather than as an out-of-bounds read. Only overhead-bridge depthsets
-// populate 'spans'; all other depthset_t instances leave it NULL.
+/* Conv: In the Z80 data, overhead-spanning objects (bridges) pack an extra
+ * 10-entry table directly after 'pairs' in memory: draw_overhead reads past
+ * pairs[10] with raw pointer arithmetic to reach it. Modelled explicitly
+ * here rather than as an out-of-bounds read. Only overhead-bridge depthsets
+ * populate 'spans'; all other depthset_t instances leave it NULL.
+ */
 typedef struct overhead_span {
   u8        nrows;      // number of scanlines in the span
   const u8 *fill_bytes; // one fill byte per scanline, nrows entries
@@ -379,21 +389,24 @@ typedef struct depthset {
   const overhead_span_t *spans; // overhead-bridge span table, or NULL
 } depthset_t;
 
-// root objects (an array of these) used with routine draw_stretchy_object_left/right
-// bottom-most object is given first
+/* root objects (an array of these) used with routine draw_stretchy_object_left/right
+ * bottom-most object is given first
+ */
 typedef struct stretchy {
-  // STRETCHY_TYPE_END:   terminator
-  // STRETCHY_TYPE_FIXED: draw at height = bitmap->width_bytes - 2 (no perspective scaling)
-  // STRETCHY_TYPE_*PC:   draw at given % of the perspective height
+  /* STRETCHY_TYPE_END:   terminator
+   * STRETCHY_TYPE_FIXED: draw at height = bitmap->width_bytes - 2 (no perspective scaling)
+   * STRETCHY_TYPE_*PC:   draw at given % of the perspective height
+   */
   u8                type;
   const depthset_t *set; // Conv: this is always present, can be NULL for
   // final entry
 } stretchy_t;
 
 typedef struct obj {
-  // Together these define the hit zone [lo, hi). Which field is lo and which
-  // is hi swaps between sides: for right-hand objects field1=hi, field2=lo;
-  // for left-hand objects field1=lo, field2=hi.
+  /* Together these define the hit zone [lo, hi). Which field is lo and which
+   * is hi swaps between sides: for right-hand objects field1=hi, field2=lo;
+   * for left-hand objects field1=lo, field2=hi.
+   */
   u8             hit_max_or_min;
   u8             hit_min_or_max;
   u8             impact_speed_cap; // capped with speed → ahc.crash_speed_threshold
@@ -402,14 +415,15 @@ typedef struct obj {
 } obj_t;
 
 typedef struct scenedata {
-  // $A26C
-  // Normal range: ROAD_RIGHTMOST (0x00F5) .. ROAD_LEFTMOST (0x0105), capped
-  // to ROAD_126 (0x0126) during car bounce (see Internal.h). During fork
-  // layout, layout_road temporarily sets this to road_pos +/- fork_distance,
-  // which can go negative; the Z80 wraps mod 65536, so the u16 storage is
-  // correct as-is but every consumer must read it through an (s16) cast
-  // while a fork is being laid out (see the (s16) casts in build_curve_table
-  // in Main.c).
+  /* $A26C
+   * Normal range: ROAD_RIGHTMOST (0x00F5) .. ROAD_LEFTMOST (0x0105), capped
+   * to ROAD_126 (0x0126) during car bounce (see Internal.h). During fork
+   * layout, layout_road temporarily sets this to road_pos +/- fork_distance,
+   * which can go negative; the Z80 wraps mod 65536, so the u16 storage is
+   * correct as-is but every consumer must read it through an (s16) cast
+   * while a fork is being laid out (see the (s16) casts in build_curve_table
+   * in Main.c).
+   */
   u16       road_pos;
   // $A26E
   const u8 *road_curvature_ptr;

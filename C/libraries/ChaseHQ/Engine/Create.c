@@ -258,9 +258,10 @@ static void chq_initialise(chqstate_t *state)
   state->wanted_stage_number   = MINSTAGE;
   state->current_stage_number  = MINSTAGE;
 
-  // $8244, $8249, $8251 — engine sfx SM operands as assembled: 3 iterations
-  // with zero (= 256 via DJNZ) delay counts until setup_engine_sfx_48k
-  // stores real values
+  /* $8244, $8249, $8251 — engine sfx SM operands as assembled: 3 iterations
+   * with zero (= 256 via DJNZ) delay counts until setup_engine_sfx_48k
+   * stores real values
+   */
   state->engine_sfx.nloops    = 3;
   state->engine_sfx.off_cycle = 0;
   state->engine_sfx.on_cycle  = 0;
@@ -335,19 +336,21 @@ static void chq_initialise(chqstate_t *state)
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
 
-  // $EE76/$EEBF/$EECA: music driver SM pointer operands. The Z80 assembles
-  // all three as $0000 — harmless there (a stray read lands in ROM) but a
-  // crash as NULL in C — so point them at the starts of the pattern table
-  // and music data instead. pattern_start_ptr skips music_data's leading
-  // per-pattern delay byte, preserving the driver's invariant that it never
-  // points at a delay byte.
+  /* $EE76/$EEBF/$EECA: music driver SM pointer operands. The Z80 assembles
+   * all three as $0000 — harmless there (a stray read lands in ROM) but a
+   * crash as NULL in C — so point them at the starts of the pattern table
+   * and music data instead. pattern_start_ptr skips music_data's leading
+   * per-pattern delay byte, preserving the driver's invariant that it never
+   * points at a delay byte.
+   */
   state->music.pattern_addr      = &music_patterns[0]; // $F0FE
   state->music.data_ptr          = &music_data[1];
   state->music.pattern_start_ptr = &music_data[1];     // $F112
 
-  // Conv: keydefs[] is installed by the options menu ($FBE5). chq_bank3_create
-  // seeds it with the same pristine defaults the Z80 holds at $FFF7, so the
-  // stubbed BANK3_INPUT_SELECTION path still gets the original key layout.
+  /* Conv: keydefs[] is installed by the options menu ($FBE5). chq_bank3_create
+   * seeds it with the same pristine defaults the Z80 holds at $FFF7, so the
+   * stubbed BANK3_INPUT_SELECTION path still gets the original key layout.
+   */
   state->kempston_flag = 0;
 }
 

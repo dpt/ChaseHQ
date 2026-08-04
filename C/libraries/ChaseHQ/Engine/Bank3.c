@@ -7488,11 +7488,12 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     state->bank3->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = CHMIXER_TONE_MASK;
   } else {
-    // Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
-    // ($EF7A, pending_mixer_bits), not a literal 0 -- see State.h. A literal
-    // 0x00 here permanently forces every channel's noise-enable bit on,
-    // producing constant harsh noise; the real driver patches this operand
-    // via advance_channel_pattern's mixer-bit commands.
+    /* Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
+     * ($EF7A, pending_mixer_bits), not a literal 0 -- see State.h. A literal
+     * 0x00 here permanently forces every channel's noise-enable bit on,
+     * producing constant harsh noise; the real driver patches this operand
+     * via advance_channel_pattern's mixer-bit commands.
+     */
     A_mixer_val = state->bank3->title_music.pending_mixer_bits; // $EF7A (SM)
   }
 
@@ -7834,17 +7835,19 @@ static const u8 *resolve_drum_script_addr(u16 addr)
    * byte-code this drives, and resolve_drum_script_addr for how raw Z80
    * addresses within it are resolved to C pointers. */
   static const u8 drum_cue_script_data[292] = {
-    // $FA75-$FA7E: per-tune cue-script pointer table, indexed by tune*2
-    // (stst_load_sfx_script). Tunes actually started: 0, 1, 2, 3, 4.
+    /* $FA75-$FA7E: per-tune cue-script pointer table, indexed by tune*2
+     * (stst_load_sfx_script). Tunes actually started: 0, 1, 2, 3, 4.
+     */
     TWOBYTES(0xFA7F), /* $FA75: tune 0 cue script */
     TWOBYTES(0xFA86), /* $FA77: tune 1 cue script */
     TWOBYTES(0xFA89), /* $FA79: tune 2 cue script */
     TWOBYTES(0xFA8E), /* $FA7B: tune 3 cue script */
     TWOBYTES(0xFA9D), /* $FA7D: tune 4 cue script */
 
-    // $FA7F-$FAA3: cue scripts (all 5 tunes' bytecode -- ssa_read_opcode).
-    // Each step is a delay byte + a raw offset into the trigger table below
-    // ($FAA4 + offset); $FF reads a 2-byte jump target; $FE ends the script.
+    /* $FA7F-$FAA3: cue scripts (all 5 tunes' bytecode -- ssa_read_opcode).
+     * Each step is a delay byte + a raw offset into the trigger table below
+     * ($FAA4 + offset); $FF reads a 2-byte jump target; $FE ends the script.
+     */
     0x03, /* $FA7F: delay=3 */
     0x00, /* $FA80: offset -> entry $FAA4 */
     0x01, /* $FA81: delay=1 */
@@ -7880,13 +7883,14 @@ static const u8 *resolve_drum_script_addr(u16 addr)
     0xFF, /* $FAA1: FF jump */
     TWOBYTES(0xFA9F), /* $FAA2: jump target */
 
-    // $FAA4-$FB98: per-drum-ID trigger table (ssa_read_opcode/
-    // sfx_music_service). Each entry is a selector byte (copied to
-    // slot1_countdown/slot1_selector_dup, purpose otherwise unestablished)
-    // followed by a stream of per-frame dispatch bytes (bit 7 = also arm
-    // slot 2, low 3 bits = engine: 1 = sample1, 2 = sample2, 3 = procedural
-    // noise, 0 = nothing; upper 5 bits = pitch/rate param), terminated by a
-    // literal 1 (sfx_dispatch_entry's reload sentinel).
+    /* $FAA4-$FB98: per-drum-ID trigger table (ssa_read_opcode/
+     * sfx_music_service). Each entry is a selector byte (copied to
+     * slot1_countdown/slot1_selector_dup, purpose otherwise unestablished)
+     * followed by a stream of per-frame dispatch bytes (bit 7 = also arm
+     * slot 2, low 3 bits = engine: 1 = sample1, 2 = sample2, 3 = procedural
+     * noise, 0 = nothing; upper 5 bits = pitch/rate param), terminated by a
+     * literal 1 (sfx_dispatch_entry's reload sentinel).
+     */
     0x08, /* $FAA4: entry selector */
     0x8B, /* $FAA5: slot2+noise pitch=17 */
     0x41, /* $FAA6: sample1 pitch=8 */
@@ -8320,13 +8324,14 @@ static void titlescr_music(chqstate_t *state)
     goto sfx2_tick_countdown; // skip slot 1 entirely this frame
   }
 
-  // Conv: $F84D is self-modifying -- its "LD A,$00" operand ($F84E) is
-  // patched by load_drum_op to the current trigger-table entry's selector
-  // byte (slot1_selector_dup), so this reload is NOT a literal 0. Using a
-  // literal here starves slot1_countdown on every non-bit7 dispatch byte
-  // (which never re-arms it), making it wrap to 0xFF on the next tick and
-  // stall for ~255 frames instead of the ~selector-byte-frame gap the real
-  // trigger-table pacing intends.
+  /* Conv: $F84D is self-modifying -- its "LD A,$00" operand ($F84E) is
+   * patched by load_drum_op to the current trigger-table entry's selector
+   * byte (slot1_selector_dup), so this reload is NOT a literal 0. Using a
+   * literal here starves slot1_countdown on every non-bit7 dispatch byte
+   * (which never re-arms it), making it wrap to 0xFF on the next tick and
+   * stall for ~255 frames instead of the ~selector-byte-frame gap the real
+   * trigger-table pacing intends.
+   */
   state->bank3->drums.slot1_countdown = state->bank3->drums.slot1_selector_dup;
   HL_stream = state->bank3->drums.stream_ptr;
   goto drum_read_stream_byte;
@@ -9434,8 +9439,9 @@ int bank3_state_create(chqstate_t *state)
   if (state->bank3 == NULL)
     return -1;
 
-  // Conv: calloc has already zeroed the sub-state, so only the fields whose
-  // pristine value is non-zero are written below.
+  /* Conv: calloc has already zeroed the sub-state, so only the fields whose
+   * pristine value is non-zero are written below.
+   */
 
   /* mixer_mask is static initial RAM content in the Z80 (not written by
    * titlescr_start_ay), confirmed against the skool's DEFB data: channel-tracker
@@ -9444,10 +9450,11 @@ int bank3_state_create(chqstate_t *state)
   state->bank3->title_music.channel[1].mixer_mask = AY_MIXER_NO_NOISE_B | AY_MIXER_NO_TONE_B;
   state->bank3->title_music.channel[2].mixer_mask = AY_MIXER_NO_NOISE_C | AY_MIXER_NO_TONE_C;
 
-  // $EFAF-$EFBA (128K bank 3): title-tune AY register cache. Matches the
-  // skool's DEFB bytes at $EFAF-$EFBA exactly; per the skool comment these
-  // are placeholder start-up defaults, overwritten every frame once a tune
-  // is playing (mixer = 0x3F disables all tone/noise channels until then).
+  /* $EFAF-$EFBA (128K bank 3): title-tune AY register cache. Matches the
+   * skool's DEFB bytes at $EFAF-$EFBA exactly; per the skool comment these
+   * are placeholder start-up defaults, overwritten every frame once a tune
+   * is playing (mixer = 0x3F disables all tone/noise channels until then).
+   */
   state->bank3->title_ay_regs.mixer      = AY_MIXER_ALL_OFF;
   state->bank3->title_ay_regs.chan_a_vol = 0x0F;
   state->bank3->title_ay_regs.chan_b_vol = 0x0F;
@@ -9459,18 +9466,20 @@ int bank3_state_create(chqstate_t *state)
   memcpy(state->bank3->high_score_table, high_score_table_template,
          sizeof(state->bank3->high_score_table));
 
-  // $FFF7-$FFFE (128K bank 3): pristine scan-key codes for the keyboard
-  // scheme. Option "4" copies no key list, so these are what gets installed
-  // unless the player redefines the keys first.
+  /* $FFF7-$FFFE (128K bank 3): pristine scan-key codes for the keyboard
+   * scheme. Option "4" copies no key list, so these are what gets installed
+   * unless the player redefines the keys first.
+   */
   memcpy(state->bank3->control_keys, default_control_keys,
          sizeof(state->bank3->control_keys));
 
-  // Conv: seed the live keydefs from the same table, in the layout
-  // omd_redraw_and_poll installs ($FBE5-$FBF8). The Z80 needs no equivalent:
-  // its $A0CD table is assembled with the Sinclair-joystick codes and is
-  // always overwritten by the options menu before play. Ours can be reached
-  // with the menu skipped while BANK3_INPUT_SELECTION is stubbed, and zeroed
-  // keydefs put every action on one key.
+  /* Conv: seed the live keydefs from the same table, in the layout
+   * omd_redraw_and_poll installs ($FBE5-$FBF8). The Z80 needs no equivalent:
+   * its $A0CD table is assembled with the Sinclair-joystick codes and is
+   * always overwritten by the options menu before play. Ours can be reached
+   * with the menu skipped while BANK3_INPUT_SELECTION is stubbed, and zeroed
+   * keydefs put every action on one key.
+   */
   memcpy(&state->keydefs[KEYDEF_QUIT], &default_control_keys[5], 3);
   memcpy(&state->keydefs[KEYDEF_GEAR], &default_control_keys[0], 5);
 

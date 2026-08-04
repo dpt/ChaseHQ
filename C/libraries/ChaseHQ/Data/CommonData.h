@@ -123,8 +123,9 @@ extern const u8 bitmap_tunnellight_5[1 * 5];
 extern const u8 bitmap_tunnellight_6[2 * 2 * 6];
 extern const u8 bitmap_tunnellight_6s[2 * 2 * 6];
 
-// Helicopter sprite (stages 2 and 4 share identical part data; only the
-// per-stage bank addresses of the two frame tables differ in the original).
+/* Helicopter sprite (stages 2 and 4 share identical part data; only the
+ * per-stage bank addresses of the two frame tables differ in the original).
+ */
 extern const u8 bitmap_helicopter[590];
 extern const heli_bitmap_t heli_part0;
 extern const heli_bitmap_t heli_part1_frame0;

@@ -2052,8 +2052,9 @@ static void animate_meters(chqstate_t *state)
   random = (s8) rng(state);
   level  = state->meter_level[0];
 
-  // Use sign of the random value to enlarge or reduce the apparent meter
-  // level.
+  /* Use sign of the random value to enlarge or reduce the apparent meter
+   * level.
+   */
   if (random < 0)
     if (--level >= 0)
       goto set_level;
@@ -3804,8 +3805,9 @@ phase4:
     H = L;
     L = ' ';
   }
-  // Write to CLEAR BONUS line
-  // Conv: Split up
+  /* Write to CLEAR BONUS line
+   * Conv: Split up
+   */
   state->score_messages[0x8C6F - SCORE_MESSAGES_BASE] = L;
   state->score_messages[0x8C70 - SCORE_MESSAGES_BASE] = H;
 
@@ -3833,8 +3835,9 @@ have_high_digit:
 
 store_time_bonus_high:
   A = Adash;
-  // $8B34 EX AF,AF' is a swap: A' takes the old main A, which is 0 on both
-  // entry paths, so a zero low digit later stores '0' not the high digit.
+  /* $8B34 EX AF,AF' is a swap: A' takes the old main A, which is 0 on both
+   * entry paths, so a zero low digit later stores '0' not the high digit.
+   */
   Adash = 0;
   state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
     A; // Write to TIME BONUS line
@@ -3842,9 +3845,10 @@ store_time_bonus_high:
   if (A == 0)
     goto store_time_bonus_low;
 
-  // The $8B3D EX AF,AF' bug is fixed here: B_iterations takes the low digit
-  // directly, so the time-bonus loop runs once per unit as intended. See the
-  // prologue.
+  /* The $8B3D EX AF,AF' bug is fixed here: B_iterations takes the low digit
+   * directly, so the time-bonus loop runs once per unit as intended. See the
+   * prologue.
+   */
   B_iterations = A;
   Adash = A;
   do
@@ -3921,9 +3925,10 @@ assign_perp_pos: // $8B9D, entered directly from the "already at 35" test
   A = C;
   state->hazards[0].horz_pos_on_road = A;
   HL_roadpos = state->scenedata.road_pos;
-  // Conv: $8BA8 SBC HL,$0105 has carry_in=1 when the perp moved right-to-left
-  // ($8B9B ADD A,$FB set carry), making the Z80 test road_pos < 0x0106 in
-  // that case; this models carry_in=0 unconditionally (one boundary value).
+  /* Conv: $8BA8 SBC HL,$0105 has carry_in=1 when the perp moved right-to-left
+   * ($8B9B ADD A,$FB set carry), making the Z80 test road_pos < 0x0106 in
+   * that case; this models carry_in=0 unconditionally (one boundary value).
+   */
   carry = (HL_roadpos < ROAD_LEFTMOST); /* was PUSH/SUB/POP */
   A_input = USERINPUTFLAG_UP | USERINPUTFLAG_RIGHT;
   if (!carry)
@@ -3964,9 +3969,10 @@ perp_too_far_away:
   A_perpdistance = state->hazards[0].distance;
   HL_speed = SPEED_PERP_CHASE;
   if (A_perpdistance < 15)
-    // Conv: $8BEF CPL; ADD A,$0F gives 14-distance (not 16-), and the ADD
-    // leaves carry set so the first SBC HL,DE subtracts 21. Z80 edge case
-    // distance==14 gives B=0 so DJNZ loops 256 times; here it subtracts 1.
+    /* Conv: $8BEF CPL; ADD A,$0F gives 14-distance (not 16-), and the ADD
+     * leaves carry set so the first SBC HL,DE subtracts 21. Z80 edge case
+     * distance==14 gives B=0 so DJNZ loops 256 times; here it subtracts 1.
+     */
     HL_speed -= 20 * (14 - A_perpdistance) + 1;
   DE_speed = HL_speed; // perp's adjusted speed
   HL_speed = state->speed; // our speed
@@ -4736,9 +4742,10 @@ left_hand_stuff:
   assert(E_obj >= 1
          && E_obj <= 9); // valid index range given base ptr at [-1] of a 9-element array
   assert(state->stage->addrof_left_hand_objects != NULL);
-  // Conv: Z80 $9024 jumps to handler directly if A==2 (skips IX[1] check).
-  //       $902C exits without calling handler if IX[1] != 0.
-  //       Handler runs when: A_obj == 2 OR IX[1] == 0.
+  /* Conv: Z80 $9024 jumps to handler directly if A==2 (skips IX[1] check).
+   *       $902C exits without calling handler if IX[1] != 0.
+   *       Handler runs when: A_obj == 2 OR IX[1] == 0.
+   */
   if (A_obj == 2
       || !((u8 *)IX_table_ea00)[1]) { // Z80: LD A,(IX+1) -- buffer offset/distance
     HL_obj = &state->stage->addrof_left_hand_objects[E_obj];
@@ -4799,9 +4806,10 @@ void draw_overhead(chqstate_t *state,
 
   DE_stretchy = (const stretchy_t *) arg;
 
-  // PUSH IX_xpos/DE/BC
-  // Conv: IX_xpos[1] would index the *next* s16 element (see pitfall: index-
-  // before-u8-cast); (IX+1) in the Z80 is the high byte of *this* entry.
+  /* PUSH IX_xpos/DE/BC
+   * Conv: IX_xpos[1] would index the *next* s16 element (see pitfall: index-
+   * before-u8-cast); (IX+1) in the Z80 is the high byte of *this* entry.
+   */
   if (((const u8 *) IX_xpos)[1] == 0) // buffer offset/distance
     draw_stretchy_object_left(state, B_param, arg, IX_xpos, IY_height);
   // POP BC/HL/IX_xpos
@@ -4828,10 +4836,11 @@ void draw_overhead(chqstate_t *state,
     if (A)
       return;
     A = (IX_xpos[0] + 24) & 0xFF; // $90AD-$90B0: ADD A,$18 (8-bit wrap)
-    // Conv: each Z80 SUB below sets carry (borrow) when the subtrahend
-    // exceeds A; a sign-bit test on the difference is only reliable while
-    // the difference fits -128..+127; direct unsigned comparisons are used
-    // instead (see pitfall: borrow detection via bit 7).
+    /* Conv: each Z80 SUB below sets carry (borrow) when the subtrahend
+     * exceeds A; a sign-bit test on the difference is only reliable while
+     * the difference fits -128..+127; direct unsigned comparisons are used
+     * instead (see pitfall: borrow detection via bit 7).
+     */
     if (A >= C_depth) { // $90B2-$90B3: SUB C; JR C (skip on borrow)
       A -= C_depth;
       if (A >= 8) { // $90B5-$90B7: SUB $08; JR C (skip on borrow)
@@ -4842,9 +4851,10 @@ void draw_overhead(chqstate_t *state,
     }
   }
 
-  // Conv: Z80 `DEC IX; DEC IX` moves back 2 *bytes* = 1 entry in a table of
-  // s16 words (the paired right-hand slot for this row). IX_xpos -= 2 on a
-  // s16* moves back 2 *elements* (4 bytes), landing one row too far.
+  /* Conv: Z80 `DEC IX; DEC IX` moves back 2 *bytes* = 1 entry in a table of
+   * s16 words (the paired right-hand slot for this row). IX_xpos -= 2 on a
+   * s16* moves back 2 *elements* (4 bytes), landing one row too far.
+   */
   IX_xpos -= 1;
 
   E = 0x1F;
@@ -4887,14 +4897,15 @@ void draw_overhead(chqstate_t *state,
       return;
 
 do_draw_span:
-    // Conv: state->overhead.span_width_words is the JR displacement self-modified
-    // at $9116, which selects an entry point into the 30-write unrolled
-    // fill loop ($9117-$9151, LD (HL),A / INC L pairs, 2 bytes each). A
-    // larger displacement skips further into the loop, leaving FEWER writes
-    // before the fixed end at $9151 — so the byte count is (30 - words/2),
-    // not words/2. Using words/2 directly inverts the clip: as the deck
-    // narrows towards the right edge (words grows), the span was drawn
-    // *wider* instead of narrower, overrunning past the edge.
+    /* Conv: state->overhead.span_width_words is the JR displacement self-modified
+     * at $9116, which selects an entry point into the 30-write unrolled
+     * fill loop ($9117-$9151, LD (HL),A / INC L pairs, 2 bytes each). A
+     * larger displacement skips further into the loop, leaving FEWER writes
+     * before the fixed end at $9151 — so the byte count is (30 - words/2),
+     * not words/2. Using words/2 directly inverts the clip: as the deck
+     * narrows towards the right edge (words grows), the span was drawn
+     * *wider* instead of narrower, overrunning past the edge.
+     */
     memset(HL_dst, *DE_src, BRIDGE_DECK_LOOP_WRITES - state->overhead.span_width_words / 2);
     HL_dst = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HL_dst)));
   }
@@ -5043,11 +5054,12 @@ static void draw_stretchy_object_common(chqstate_t       *state,
     if (--B_stretchy_type)
       break;
 
-    // Type 2
-    // Conv: $91C8 `LD B,(HL)` reads *before* the `DEC HL` x2 at $91C9-$91CA
-    // that backs HL up to the bitmap struct's start (byte 0 = width_bytes)
-    // for the callback call below. So at $91C8, HL still points at
-    // struct_start + 2, which is the `height` field, not `width_bytes`.
+    /* Type 2
+     * Conv: $91C8 `LD B,(HL)` reads *before* the `DEC HL` x2 at $91C9-$91CA
+     * that backs HL up to the bitmap struct's start (byte 0 = width_bytes)
+     * for the callback call below. So at $91C8, HL still points at
+     * struct_start + 2, which is the `height` field, not `width_bytes`.
+     */
     B_coltotal_delta = HL_bitmap->height;
     // PUSH (B_coltotal_delta,C_total)
     B_pairdepth = A_pairdepth;
@@ -5062,8 +5074,9 @@ dso_loop_continue:
   // EX AF,AF' -- save Adepth
 
   A_vertical = SM_91DB_vertical;
-  // Conv: Dispatch ladder converted to switch.
-  // B_stretchy_type = data_type - 2 (two decrements already applied).
+  /* Conv: Dispatch ladder converted to switch.
+   * B_stretchy_type = data_type - 2 (two decrements already applied).
+   */
   switch (B_stretchy_type) {
   default:                      /* data type STRETCHY_TYPE_200PC (and any higher) */
   case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_150PC */
@@ -5118,12 +5131,13 @@ dso_continue:
     B_vertical += A;
 
   state->doc.rows_main = B_vertical;
-  // Conv: $9236 `LD A,(HL)` reads the same HL_bitmap pointer as the Type 2
-  // case above ($91C8), which is the bitmap struct's `height` field, not
-  // `width_bytes` (see the Conv: comment at the Type 2 assignment). This is
-  // the per-tile repeat height for the doc.rows_main/doc.rows_2nd split loop
-  // in draw_object_clipped; reading width_bytes here made each repeat
-  // section too short, doubling the visible repeat count at half height.
+  /* Conv: $9236 `LD A,(HL)` reads the same HL_bitmap pointer as the Type 2
+   * case above ($91C8), which is the bitmap struct's `height` field, not
+   * `width_bytes` (see the Conv: comment at the Type 2 assignment). This is
+   * the per-tile repeat height for the doc.rows_main/doc.rows_2nd split loop
+   * in draw_object_clipped; reading width_bytes here made each repeat
+   * section too short, doubling the visible repeat count at half height.
+   */
   state->doc.rows_2nd = HL_bitmap->height;
   state->doc.plot_mode = 2; // inverted
 
@@ -5368,11 +5382,12 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     }
 
     E_bitmap_stride = HL_bitmap->width_bytes;
-    // Conv: Z80 $92AE-$92AF is RRCA RRCA on the raw (unmasked) byte, not a
-    // shift -- unlike the negative-width branch below, which ANDs off the low
-    // 2 bits with $FC before rotating. Here bits rotated off the bottom wrap
-    // into bits 7-6, so a plain >>= 2 silently drops them instead of setting
-    // them (pitfall: rotate mistranslated as shift).
+    /* Conv: Z80 $92AE-$92AF is RRCA RRCA on the raw (unmasked) byte, not a
+     * shift -- unlike the negative-width branch below, which ANDs off the low
+     * 2 bits with $FC before rotating. Here bits rotated off the bottom wrap
+     * into bits 7-6, so a plain >>= 2 silently drops them instead of setting
+     * them (pitfall: rotate mistranslated as shift).
+     */
     A_width_bytes = ((A_width_bytes >> 2) | (A_width_bytes << 6)) & 0xFF;
     state->doc.shift_select = A_width_bytes;
     A_width_bytes = E_bitmap_stride - 1;
@@ -5415,10 +5430,11 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     B_height--; /* $92D9 */
     A_width_bytes++; /* $92DA */
     C_padding = 0;
-    // $92DD EX AF,AF' -- banks the width *and* the flags. draw_object_common_
-    // flipped swaps both back at $9332 so that $9333's JR NC tests the masked
-    // flag in the banked carry, with the width waiting in A. Conv: modelled as
-    // three explicit arguments rather than a shadow register set.
+    /* $92DD EX AF,AF' -- banks the width *and* the flags. draw_object_common_
+     * flipped swaps both back at $9332 so that $9333's JR NC tests the masked
+     * flag in the banked carry, with the width waiting in A. Conv: modelled as
+     * three explicit arguments rather than a shadow register set.
+     */
     Adash = A_width_bytes;
     Fdash_zero = zero;
     Fdash_carry = carry;
@@ -5599,8 +5615,9 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   A_width_bytes = 31 - A_width_bytes;
   if (E_bitmap_stride < A_width_bytes)
     A_width_bytes = E_bitmap_stride;
-  // Conv: B_height=31 gives A_width_bytes=0 (no columns to draw); Z80 executes a
-  // zero-width sprite which reads past the jump table — skip it.
+  /* Conv: B_height=31 gives A_width_bytes=0 (no columns to draw); Z80 executes a
+   * zero-width sprite which reads past the jump table — skip it.
+   */
   if (A_width_bytes <= 0)
     return;
   // Conv: HL_bitmap++ removed, now passed as-is into draw_object_common/_9333
@@ -5667,8 +5684,9 @@ static void draw_object_common_flipped(chqstate_t     *state,
   int zero;          /* not-flipped flag, unbanked from shadow F' (was Z flag) */
   int carry;         /* masked flag, unbanked from shadow F' (was carry) */
 
-  // Conv: Z80 reads/complements/writes the byte at $9396 directly;
-  //       here we complement the state field that models that byte.
+  /* Conv: Z80 reads/complements/writes the byte at $9396 directly;
+   *       here we complement the state field that models that byte.
+   */
   state->doc.shift_select = ~state->doc.shift_select;
 
   // EX AF,AF' - unbank A' and F' into main registers
@@ -5747,8 +5765,9 @@ static void draw_object_clipped(chqstate_t     *state,
     // EX AF,AF'  - restore
   }
 
-  // EX AF,AF'  - bank A_width_bytes & carry_masked_flag
-  // INC HL  - point HL at height field -- removed
+  /* EX AF,AF'  - bank A_width_bytes & carry_masked_flag
+   * INC HL  - point HL at height field -- removed
+   */
 
   /* $933D doc_loop. The single back edge is $938B, taken only by the inverted
    * re-clip path at the bottom, so this iterates once per band of the object
@@ -5769,12 +5788,13 @@ doc_y_range_is_zero:
       Adash_clip_rows++;
 
       D_height = HL_bitmap->height; /* Conv: HL_bitmap adjusted, this loads from bitmap.height */
-      // Conv: Z80 $934F SUB D; JR C,$9353 tests unsigned borrow (was
-      // Adash_clip_rows < D_height before the subtraction), not the sign of
-      // the wrapped 8-bit difference. Close-up objects give height values
-      // large enough that (s8)(Adash_clip_rows - D_height) does not track
-      // true borrow (pitfall #8) -- use a direct unsigned comparison, giving
-      // Adash_clip_rows = min(Adash_clip_rows, D_height).
+      /* Conv: Z80 $934F SUB D; JR C,$9353 tests unsigned borrow (was
+       * Adash_clip_rows < D_height before the subtraction), not the sign of
+       * the wrapped 8-bit difference. Close-up objects give height values
+       * large enough that (s8)(Adash_clip_rows - D_height) does not track
+       * true borrow (pitfall #8) -- use a direct unsigned comparison, giving
+       * Adash_clip_rows = min(Adash_clip_rows, D_height).
+       */
       if ((u8) Adash_clip_rows >= (u8) D_height)
         Adash_clip_rows = D_height;
       // INC HL  - point HL at data field -- removed
@@ -5782,14 +5802,15 @@ doc_y_range_is_zero:
       goto doc_compute_bitmap;
     }
 
-    // Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects ADD A,D (D negative) or
-    // SUB D (D positive/zero) -- net effect is always A -= |D|. doc.col_pos
-    // (D_col_pos) is s8 and CAN be positive: draw_hazard_sprites sets it to
-    // persp_col - hit_wobble ($AF04-$AF0A), which is commonly positive for
-    // cars and hazards. A plain `+= D_col_pos` only matches the Z80 for D_col_pos <= 0;
-    // for positive D_col_pos it added instead of subtracted, inflating
-    // Adash_y_range and pushing close-range objects into the "inverted"
-    // re-clip path below, which then chops rows off their top.
+    /* Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects ADD A,D (D negative) or
+     * SUB D (D positive/zero) -- net effect is always A -= |D|. doc.col_pos
+     * (D_col_pos) is s8 and CAN be positive: draw_hazard_sprites sets it to
+     * persp_col - hit_wobble ($AF04-$AF0A), which is commonly positive for
+     * cars and hazards. A plain `+= D_col_pos` only matches the Z80 for D_col_pos <= 0;
+     * for positive D_col_pos it added instead of subtracted, inflating
+     * Adash_y_range and pushing close-range objects into the "inverted"
+     * re-clip path below, which then chops rows off their top.
+     */
     if (D_col_pos < 0)
       Adash_y_range += D_col_pos;
     else
@@ -5802,13 +5823,14 @@ doc_y_range_is_zero:
     Adash_y_pos = IY_height[53];
     Adash_y_pos_pushed = Adash_y_pos; // PUSH AF  -- push Adash_y_pos (& flags)
 
-    // Conv: $936F SUB D; $9370 JP NC tests true unsigned borrow (whether
-    // height-1 < D_y_range), not the sign of the wrapped 8-bit difference --
-    // same pitfall as the zero-y-range branch's clamp above ($9350). Close-up
-    // percentage bands push HL_bitmap->height past 127, at which point
-    // (s8)(height-1-D_y_range) stops tracking the true borrow and this branch
-    // wrongly falls into the "inverted" re-clip path instead of breaking out
-    // to draw, chopping rows off the top of the band.
+    /* Conv: $936F SUB D; $9370 JP NC tests true unsigned borrow (whether
+     * height-1 < D_y_range), not the sign of the wrapped 8-bit difference --
+     * same pitfall as the zero-y-range branch's clamp above ($9350). Close-up
+     * percentage bands push HL_bitmap->height past 127, at which point
+     * (s8)(height-1-D_y_range) stops tracking the true borrow and this branch
+     * wrongly falls into the "inverted" re-clip path instead of breaking out
+     * to draw, chopping rows off the top of the band.
+     */
     D_height = HL_bitmap->height; /* Conv: HL_bitmap adjusted, this loads from bitmap.height */
     if ((u8) (D_height - 1) >= (u8) D_y_range) {
       Adash_clip_rows = D_height - 1 - D_y_range;
@@ -5849,8 +5871,9 @@ doc_y_range_is_zero:
 
   // $9390
 doc_compute_bitmap:
-  // PUSH BC - store B_height & C_padding
-  // PUSH DE - store D_iy_diff & E_bitmap_stride
+  /* PUSH BC - store B_height & C_padding
+   * PUSH DE - store D_iy_diff & E_bitmap_stride
+   */
   D_clip_rows = Adash_clip_rows;
   BC_padding = C_padding; // widen. was B = 0
   HL_bitmap_data = (state->doc.shift_select & 1) ? HL_bitmap->shifted : HL_bitmap->data;
@@ -5871,35 +5894,39 @@ doc_compute_bitmap:
 
   // $93B1 - EXX - BANK - first banking op in this routine
 
-  // Conv: B_height = 0 from perspective calc means A_width_bytes was in [1,3]; the Z80
-  // would wrap B to 255 and plot 256 garbage rows — treat as nothing to draw.
+  /* Conv: B_height = 0 from perspective calc means A_width_bytes was in [1,3]; the Z80
+   * would wrap B to 255 and plot 256 garbage rows — treat as nothing to draw.
+   */
   if (B_height <= 0)
     return;
 
   // POP BC - restoring B_height & C_padding to Bdash and Cdash
   Bdash_height = B_height;
-  // Cdash_padding = C_padding; // restore if we find this is used
-  // Conv: $93AE/$93B1 bank B_clip_rows into shadow B' before the POP BC above
-  // restores the unrelated B_height/C_padding pair into main BC. Every plot
-  // dispatched below reads its row count from shadow B', i.e. B_clip_rows,
-  // not from B_height — Bdash_height (unclamped B_height) is used only for
-  // the backbuf address calculation just below. A previous translation
-  // instead clamped B_height to B_clip_rows (min of the two), which is only
-  // correct when B_height > B_clip_rows; whenever B_height <= B_clip_rows
-  // (the common case for perspective-derived and fixed-height=1 callers)
-  // it wrongly drew B_height rows instead of B_clip_rows, truncating the
-  // top of tall/close objects. This mirrors the fix already applied to the
-  // doc_masked_rows loop below (see its comment at $945C).
+  /* Cdash_padding = C_padding; // restore if we find this is used
+   * Conv: $93AE/$93B1 bank B_clip_rows into shadow B' before the POP BC above
+   * restores the unrelated B_height/C_padding pair into main BC. Every plot
+   * dispatched below reads its row count from shadow B', i.e. B_clip_rows,
+   * not from B_height — Bdash_height (unclamped B_height) is used only for
+   * the backbuf address calculation just below. A previous translation
+   * instead clamped B_height to B_clip_rows (min of the two), which is only
+   * correct when B_height > B_clip_rows; whenever B_height <= B_clip_rows
+   * (the common case for perspective-derived and fixed-height=1 callers)
+   * it wrongly drew B_height rows instead of B_clip_rows, truncating the
+   * top of tall/close objects. This mirrors the fix already applied to the
+   * doc_masked_rows loop below (see its comment at $945C).
+   */
   B_height = B_clip_rows;
   // POP AF - restoring Adash_y_pos_pushed & flags
 
-  // $93B4
-  // 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
+  /* $93B4
+   * 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
+   */
   HLdash_backbuf_addr = OFFSETTOBACKBUF(
       ((Adash_y_pos_pushed & 0x0F) << 8) |
       ((((Adash_y_pos_pushed & 0x70) << 1) + Bdash_height) & 0xFF)); // Conv: $93BE ADD A,B wraps
-                                                                      // 8-bit; mask before OR'ing
-                                                                      // into high byte
+                                                                      /* 8-bit; mask before OR'ing
+                                                                       * into high byte
+                                                                       */
   assert(VALID_BACKBUF_PTR(HLdash_backbuf_addr));
 
   // $93C0
@@ -5978,26 +6005,28 @@ doc_set_callbacks:
 
   // EXX - UNBANK
 
-  // Conv: $9404–$941D is a loop (back-edge at $9417 JP $9404), structurally
-  // identical to the doc_masked_rows loop below.  Each iteration subtracts the
-  // current section height (B = B_clip_rows, then doc.rows_2nd) from
-  // doc.rows_main; exits via $9407 JR Z / $9409 JR C when remaining ≤ 0.
-  // $941A ADD A,B recovers the final (partial) section height; $941D JP falls
-  // through to doc.plot_fn_2.  B' (= D_draw_height, banked) carries the actual
-  // row count into each plot call; main B ($941B LD B,A) is for the back-buffer
-  // address only.
+  /* Conv: $9404–$941D is a loop (back-edge at $9417 JP $9404), structurally
+   * identical to the doc_masked_rows loop below.  Each iteration subtracts the
+   * current section height (B = B_clip_rows, then doc.rows_2nd) from
+   * doc.rows_main; exits via $9407 JR Z / $9409 JR C when remaining ≤ 0.
+   * $941A ADD A,B recovers the final (partial) section height; $941D JP falls
+   * through to doc.plot_fn_2.  B' (= D_draw_height, banked) carries the actual
+   * row count into each plot call; main B ($941B LD B,A) is for the back-buffer
+   * address only.
+   */
   BC_padding = B_clip_rows; /* $9403 EXX: MAIN B = B_clip_rows for first iteration */
   for (;;) {
     A_width_bytes = state->doc.rows_main - BC_padding; // $9404/$9406
     if (A_width_bytes > 0) {                           // $9407 JR Z / $9409 JR C
       state->doc.rows_main = A_width_bytes;         // $940B: update SM
-      // Conv: the Z80 leaves the advanced backbuffer address in shadow HL'
-      // across the CALL (it is never reloaded from a fixed value); the C
-      // callback returns it explicitly so it carries into the next iteration.
-      // Conv: the row count drawn each call is the section height just
-      // subtracted (BC_padding), not the outer B_height — mirrors the
-      // doc_masked_rows loop below, which reuses the same variable for both
-      // roles instead of a separate constant.
+      /* Conv: the Z80 leaves the advanced backbuffer address in shadow HL'
+       * across the CALL (it is never reloaded from a fixed value); the C
+       * callback returns it explicitly so it carries into the next iteration.
+       * Conv: the row count drawn each call is the section height just
+       * subtracted (BC_padding), not the outer B_height — mirrors the
+       * doc_masked_rows loop below, which reuses the same variable for both
+       * roles instead of a separate constant.
+       */
       HLdash_backbuf_addr = state->doc.plot_fn(state,
                          IX_jump_offset,
                          HLdash_backbuf_addr,
@@ -6039,22 +6068,24 @@ doc_masked_rows:
   // EXX - UNBANK
 
   DE_bitmap_stride &= 0xFF; // clear top of DE_bitmap_stride
-  // Conv: $9442 `LD B,$00` (masked jump-table offset scratch) clobbers the
-  // B_height that was popped into this bank at $93B2 before it is ever read;
-  // the value the real Z80 actually uses for the first iteration below is
-  // B_clip_rows, banked away at $93AE and restored by the $945C EXX -- this
-  // mirrors the unmasked loop above, which explicitly seeds its first
-  // iteration with `BC_padding = B_clip_rows`. Using the raw B_height
-  // parameter here (unclipped) skipped the first-section split for
-  // tall/close objects, truncating their top rows.
+  /* Conv: $9442 `LD B,$00` (masked jump-table offset scratch) clobbers the
+   * B_height that was popped into this bank at $93B2 before it is ever read;
+   * the value the real Z80 actually uses for the first iteration below is
+   * B_clip_rows, banked away at $93AE and restored by the $945C EXX -- this
+   * mirrors the unmasked loop above, which explicitly seeds its first
+   * iteration with `BC_padding = B_clip_rows`. Using the raw B_height
+   * parameter here (unclipped) skipped the first-section split for
+   * tall/close objects, truncating their top rows.
+   */
   B_height = B_clip_rows; /* $945C EXX: MAIN B = B_clip_rows for first iteration */
   for (;;) {
     A_y_remaining = state->doc.mask_rows_main - B_height;
     if (A_y_remaining > 0) {
       state->doc.mask_rows_main = A_y_remaining;
 
-      // Conv: same backbuffer-address carry as the unmasked repeat loop
-      // above (see the doc.plot_fn comment) — must be captured across calls.
+      /* Conv: same backbuffer-address carry as the unmasked repeat loop
+       * above (see the doc.plot_fn comment) — must be captured across calls.
+       */
       HLdash_backbuf_addr = plot_masked_sprite(state,
                          IX_jump_offset,
                          B_height,
@@ -6193,8 +6224,9 @@ static u8 *plot_sprite_even(chqstate_t *state,
   assert(height >= 1 && height < 192);
   assert(bitmap_data != NULL);
 
-  // Conv: B & C moved into prev_buf_row
-  // EXX - bank
+  /* Conv: B & C moved into prev_buf_row
+   * EXX - bank
+   */
   goto plot_sprite_even_start;
 
   for (;;) {
@@ -6300,8 +6332,9 @@ static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
   assert(height >= 1);
   assert(bitmap_data != NULL);
 
-  // Conv: B & C moved into prev_buf_row
-  // EXX - bank
+  /* Conv: B & C moved into prev_buf_row
+   * EXX - bank
+   */
   goto plot_sprite_odd_start;
 
   for (;;) {
@@ -6498,9 +6531,10 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
   width_bytes++;
   jump_offset = 4 - width_bytes; // 9 bytes/op mult - removed
 
-  // Conv: Removed D' the flipped bytes table ptr
-  // EXX - bank
-  // Ddash = 0;  widen bitmap_stride to DE'
+  /* Conv: Removed D' the flipped bytes table ptr
+   * EXX - bank
+   * Ddash = 0;  widen bitmap_stride to DE'
+   */
 
   goto psf_odd_body;
 
@@ -6703,8 +6737,9 @@ read_message:
     pc_chatter_message(state, chatterblk); /* tail call */
     goto exit;
   }
-  // Conv: The next byte is no longer an address but an index into table of
-  // chatter blocks.
+  /* Conv: The next byte is no longer an address but an index into table of
+   * chatter blocks.
+   */
   state->chatterblk_ptr = chatter_blocks[*++chatterblk];
   goto clear;
 
@@ -8169,12 +8204,13 @@ ptad_turbo_setup:
     HLdash <<= 1;
   } while (--Bdash_iterations > 0);
 
-  // Count 10,000s
-  // Conv: $9E97 XOR A and $9E9E AND A exist to clear the carry flag, which
-  // SBC HL,BC takes as a borrow input. Each loop below derives its borrow
-  // from a direct comparison instead, so there is no carry to pre-clear.
-  // $9EA8's XOR A does double duty and is still needed: it also zeroes the
-  // 100s counter, which unlike the other two starts at 0 rather than -1.
+  /* Count 10,000s
+   * Conv: $9E97 XOR A and $9E9E AND A exist to clear the carry flag, which
+   * SBC HL,BC takes as a borrow input. Each loop below derives its borrow
+   * from a direct comparison instead, so there is no carry to pre-clear.
+   * $9EA8's XOR A does double duty and is still needed: it also zeroes the
+   * 100s counter, which unlike the other two starts at 0 rather than -1.
+   */
   BCdash = 10000;
   Ddash = Edash = -1; // Conv: original inited both at once
   do {
@@ -8205,8 +8241,9 @@ ptad_turbo_setup:
   DE_screen = ledfont_plot(state, Edash, DE_screen); // draw  1,000s
   (void) ledfont_plot(state, A, DE_screen); // draw    100s
 
-  // Time
-  // EXX
+  /* Time
+   * EXX
+   */
   ptad_led_digits(state, 1, &state->session.time_bcd,
                   &state->session.time_digits[1],
                   ADDRTOSCREEN(0x412F)); // (120,9)
@@ -9002,15 +9039,16 @@ static void check_scenery_collisions(chqstate_t *state)
       return;
   }
 
-  // Check left hand side
-  //
-  // high byte ≠ 0, or value < 64 => trigger_lefthand_sfx = 0; fall through to right hand check
-  // 64 – 105                     => on-road; jump to right hand check
-  // 106 – 132                    => off_road = 1 (one wheel left of road)
-  // ≥ 133                        => off_road = 2 (both wheels left of road)
-  //
-  // Note that is where an object *could be*. There's not necessarily an
-  // object always there.
+  /* Check left hand side
+   *
+   * high byte ≠ 0, or value < 64 => trigger_lefthand_sfx = 0; fall through to right hand check
+   * 64 – 105                     => on-road; jump to right hand check
+   * 106 – 132                    => off_road = 1 (one wheel left of road)
+   * ≥ 133                        => off_road = 2 (both wheels left of road)
+   *
+   * Note that is where an object *could be*. There's not necessarily an
+   * object always there.
+   */
   HL_xpos = state->xpos.centre[127];
   if ((HL_xpos >> 8) == 0 && HL_xpos >= 64) { // 64..255
     if (HL_xpos < 106)
@@ -9023,17 +9061,18 @@ static void check_scenery_collisions(chqstate_t *state)
   // If we don't arrive here we're close to the left hand object
   state->trigger_lefthand_sfx = 0;
 
-  // Check right hand side
-  //
-  // high byte ≠ 0 (off-screen right) => trigger_righthand_sfx = 0; skip off-road
-  // high byte = 0, ≥ 190             => on-road right; trigger_righthand_sfx = 0
-  // high byte = 0, 142 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
-  // high byte = 0, 125 – 141         => off_road = 1
-  // high byte = 0, < 125             => off_road = 2
-  //
-  // $A3EE JR NC uses the carry from the $A3EB SBC HL,$8E test, which is still
-  // live when $A3F2 SBC HL,$7C executes, making the effective lower threshold
-  // $7C+1 = 125 (not $7C = 124).
+  /* Check right hand side
+   *
+   * high byte ≠ 0 (off-screen right) => trigger_righthand_sfx = 0; skip off-road
+   * high byte = 0, ≥ 190             => on-road right; trigger_righthand_sfx = 0
+   * high byte = 0, 142 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
+   * high byte = 0, 125 – 141         => off_road = 1
+   * high byte = 0, < 125             => off_road = 2
+   *
+   * $A3EE JR NC uses the carry from the $A3EB SBC HL,$8E test, which is still
+   * live when $A3F2 SBC HL,$7C executes, making the effective lower threshold
+   * $7C+1 = 125 (not $7C = 124).
+   */
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HL_xpos = state->xpos.centre[126];
@@ -9096,11 +9135,12 @@ store_crash_spin:
   if (C_crash_spin) // Conv: use of A removed
     return;
 
-  // -- RIGHT SIDE OBJECT HIT CHECKING --
-  // Conv: $A44F banks the right-side offset in A' purely so $A480 can
-  // recover it and reach the left-side data with a single ADD A,$20. The
-  // left-side pointer below is built from ROADBUF_LEFTOBJS_OFFSET directly,
-  // so no shadow variable is needed.
+  /* -- RIGHT SIDE OBJECT HIT CHECKING --
+   * Conv: $A44F banks the right-side offset in A' purely so $A480 can
+   * recover it and reach the left-side data with a single ADD A,$20. The
+   * left-side pointer below is built from ROADBUF_LEFTOBJS_OFFSET directly,
+   * so no shadow variable is needed.
+   */
   HL_bufptr = ROADBUF_FWD2PTR(ROADBUF_RIGHTOBJS_OFFSET);
   A = ROADBUF_FWD2IDX(0);
   RL(A);
@@ -9247,9 +9287,10 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   int          A;              /* impact_speed_cap loaded from object but overridden to 0x8C (was A) */
   int          pos2;           /* x position from xpos.centre for the final collision test (was HL') */
 
-  // $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
-  // the fc_a510 right-hand check below; only pos in [0x6A,0xFF] with H==0
-  // resolves off-road here without checking the right side.
+  /* $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
+   * the fc_a510 right-hand check below; only pos in [0x6A,0xFF] with H==0
+   * resolves off-road here without checking the right side.
+   */
   pos = state->xpos.left[127];
   if ((pos >> 8) == 0 && pos >= 0x6A) {
     off_road = (pos >= 0x85) ? 2 : 1;
@@ -9382,9 +9423,10 @@ set_right_hand:
         goto load_and_store_right;
       }
 
-      // The left hand position of the road in A is 1/2/3 here. Use that to
-      // select table $E8xx/$E9xx/$EAxx.
-      // Not sure if I trust structure layout, so using a switch here.
+      /* The left hand position of the road in A is 1/2/3 here. Use that to
+       * select table $E8xx/$E9xx/$EAxx.
+       * Not sure if I trust structure layout, so using a switch here.
+       */
       switch (laneoffset) {
       case 1: tabptr = &state->xpos.left[Ldash]; break;
       case 2: tabptr = &state->xpos.centre_left[Ldash]; break;
@@ -9431,10 +9473,11 @@ load_and_store_right:
       return; // no fork
   }
 
-  // Forking. $A5EB is reached two ways, with different countdowns: from $A5A4
-  // when the fork is visible and fork_countdown is 0, filling all 21 slots
-  // from the fork tables; or by falling out of the positions loop with a
-  // non-zero fork_countdown, filling only the slots beyond the fork point.
+  /* Forking. $A5EB is reached two ways, with different countdowns: from $A5A4
+   * when the fork is visible and fork_countdown is 0, filling all 21 slots
+   * from the fork tables; or by falling out of the positions loop with a
+   * non-zero fork_countdown, filling only the slots beyond the fork point.
+   */
   A = ROAD_SLOT_COUNT - countdown;
   if (A == 0)
     return; /* fork_countdown == 21: fork past the last slot, no tail to fill */
@@ -9532,16 +9575,18 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX_perp)
   if (state->perp_caught_phase > 0)
     return;
 
-  // Start the chase if required (enables flashing lights, smash bar, sirens,
-  // etc.)
+  /* Start the chase if required (enables flashing lights, smash bar, sirens,
+   * etc.)
+   */
   if (state->sighted_flag == 0)
     start_chase(state);
 
-  // hit_timer is a post-collision cooldown. hazard_hit leaves it positive
-  // when the hero has just rammed the perp; pb_set_delay then reloads it with
-  // $FC (-4) and it counts up one per frame. While it is negative this
-  // function returns immediately, so the perp holds its last lane and speed
-  // for four frames after a hit.
+  /* hit_timer is a post-collision cooldown. hazard_hit leaves it positive
+   * when the hero has just rammed the perp; pb_set_delay then reloads it with
+   * $FC (-4) and it counts up one per frame. While it is negative this
+   * function returns immediately, so the perp holds its last lane and speed
+   * for four frames after a hit.
+   */
   A_hit_timer = IX_perp->hit_timer; // Read IX_perp[7] e.g. $A18F
   if (A_hit_timer == 0)
     goto pb_hit_timer_clear; // cooldown over: run the normal frame
@@ -9549,13 +9594,15 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX_perp)
     goto pb_set_delay; // Jump to set delay if positive
   // Otherwise A is negative.
 
-  // This line gets hit 4 times when we smash into the perp's car - matching
-  // the $FC value it's reset to.
+  /* This line gets hit 4 times when we smash into the perp's car - matching
+   * the $FC value it's reset to.
+   */
   if (++IX_perp->hit_timer)
     return; // do nothing
 
-  // IX_perp[7] must be zero to arrive here. We now iterate over all non-perp
-  // hazards.
+  /* IX_perp[7] must be zero to arrive here. We now iterate over all non-perp
+   * hazards.
+   */
 pb_hit_timer_clear:
   // PUSH IY
   C_perp_distance =
@@ -9579,9 +9626,10 @@ pb_ensure_vehicle:
       0) // it's not a vehicle, continue to next hazard
     goto pb_find_unused_hazard_continue;
 
-  // Calculate distance between current hazard-car and the perp. The two arms
-  // form one proximity window: the hazard counts as blocking when it sits
-  // within two distance units behind the perp or three ahead of it.
+  /* Calculate distance between current hazard-car and the perp. The two arms
+   * form one proximity window: the hazard counts as blocking when it sits
+   * within two distance units behind the perp or three ahead of it.
+   */
   A_distancediff = (u8) (IY_hazard->distance - C_perp_distance);
   if (IY_hazard->distance < C_perp_distance) {
     // Otherwise hazard-car is behind perp...
@@ -9599,29 +9647,33 @@ pb_ensure_vehicle:
   if (IY_hazard->lane_or_perp_dist_hi != IX_perp->current_lane)
     goto pb_find_unused_hazard_continue;
 
-  // So the lanes match
-  // POP IY
+  /* So the lanes match
+   * POP IY
+   */
   goto pb_random_move_left_or_right;
 
 pb_check_changing_lane_flag:
-  // load "changing lane" flag that appears to be set to 1 when the perp
-  // changes lane
+  /* load "changing lane" flag that appears to be set to 1 when the perp
+   * changes lane
+   */
   A_changing_lane_flag = state->pb.changing_lane;
   if (A_changing_lane_flag)
     goto pb_check_lane;
 
-  // Not mid lane-change, so a new one may be started -- but only once the perp
-  // is within 7 slots of the player ($A697). Further away than that and $A699
-  // skips straight to pb_check_lane, leaving the delay counter below untouched.
+  /* Not mid lane-change, so a new one may be started -- but only once the perp
+   * is within 7 slots of the player ($A697). Further away than that and $A699
+   * skips straight to pb_check_lane, leaving the delay counter below untouched.
+   */
   A_dist_lane_gate = IX_perp->distance;
   if (A_dist_lane_gate >= 7)
     goto pb_check_lane;
   carry = 1; // Conv: CP $07 ($A697) leaves carry set here (distance < 7); it
              // survives to the SBC HL,DE at $A6B4 on the fall-through path.
 
-  // Delay between perp lane changes: pb.lane_change_timer counts down; on
-  // zero it resets to perp_lane_change_base + (rng & 31).
-  // In-place decrementing counter.
+  /* Delay between perp lane changes: pb.lane_change_timer counts down; on
+   * zero it resets to perp_lane_change_base + (rng & 31).
+   * In-place decrementing counter.
+   */
   A_lane_timer = state->pb.lane_change_timer - 1;
   if (A_lane_timer)
     goto pb_update_counter;
@@ -9634,10 +9686,11 @@ pb_check_changing_lane_flag:
 pb_update_counter:
   state->pb.lane_change_timer = A_lane_timer;
 
-  // Turn the road position into a min/max lane pair by stepping down through
-  // the road-width bands (164, then 70 per band), the same banding
-  // get_spawn_lanes uses. B_min_lane and C_max_lane bound the lane the perp
-  // may pick below.
+  /* Turn the road position into a min/max lane pair by stepping down through
+   * the road-width bands (164, then 70 per band), the same banding
+   * get_spawn_lanes uses. B_min_lane and C_max_lane bound the lane the perp
+   * may pick below.
+   */
 
   HL = state->scenedata.road_pos - 164 - carry; // SBC HL,DE ($A6B4) takes carry-in
   B_min_lane = 4; C_max_lane = 4;
@@ -9672,10 +9725,11 @@ pb_random_move_left_or_right:
   A_currlane = C_newlane;
   C_delta = 2; // lane delta
   if (A_currlane != 0) {
-    // Lanes are numbered 1..4 (get_spawn_lanes returns that range at $A8A7),
-    // and the step above is +/-1, so the new value is 0..5. The two out-of-
-    // range results are reflected back inside by +/-2: 0 becomes 2, 5
-    // becomes 3.
+    /* Lanes are numbered 1..4 (get_spawn_lanes returns that range at $A8A7),
+     * and the step above is +/-1, so the new value is 0..5. The two out-of-
+     * range results are reflected back inside by +/-2: 0 becomes 2, 5
+     * becomes 3.
+     */
     if (A_currlane < 5)
       goto pb_set_current_lane;
 
@@ -9696,9 +9750,10 @@ pb_check_lane:
   if (A_currlane >= B_min_spawn_lane)
     goto pb_min_lane_set;
 
-  // Otherwise the perp needs to move right to stay on the road. The clamp
-  // steps two lanes so the perp lands inside the legal band rather than on
-  // its boundary, where the next random walk could step straight back out.
+  /* Otherwise the perp needs to move right to stay on the road. The clamp
+   * steps two lanes so the perp lands inside the legal band rather than on
+   * its boundary, where the next random walk could step straight back out.
+   */
   A_currlane += 2;
   IX_perp->current_lane = A_currlane;
 
@@ -9718,10 +9773,11 @@ pb_reread_current_lane:
     IX_perp->current_lane; // Re-read current_lane [not convinced this is required]
   HL_tab = &hazard_pos_speed[A_currlane - 1];
   A_horzpos = IX_perp->horz_pos_on_road;
-  // changing_lane is set here and cleared on every path that snaps horz_pos
-  // to the table value, so it ends up 1 while the perp is still sliding
-  // toward its target column and 0 once it has arrived. The slide is +/-10
-  // per frame.
+  /* changing_lane is set here and cleared on every path that snaps horz_pos
+   * to the table value, so it ends up 1 while the perp is still sliding
+   * toward its target column and 0 once it has arrived. The slide is +/-10
+   * per frame.
+   */
   changing_lane = 1;
 
   if (A_horzpos == *HL_tab)
@@ -9787,19 +9843,21 @@ pb_bypass:
   if (A_distance >= 13)
     goto pb_a776;
 
-  // Distance to perp is 12 or less. The perp's speed is raised by 30 for each
-  // unit the hero has closed inside 13, so it pulls away hardest just as the
-  // hero draws alongside. IX[13] is speed, not a position.
+  /* Distance to perp is 12 or less. The perp's speed is raised by 30 for each
+   * unit the hero has closed inside 13, so it pulls away hardest just as the
+   * hero draws alongside. IX[13] is speed, not a position.
+   */
 
   HL_speed += (13 - A_distance) * DE_speedmult;
 
 pb_a776:
   A_dist_minus_6 = IX_perp->distance - 6;
   if ((s8) A_dist_minus_6 < 0) {
-    // Distance to perp is 5 or less. $A77D-$A781 scales the difference up by
-    // 8 and then discards it: nothing reads A before the next store and
-    // ADD HL,DE does not consume flags, so the calculation is dead in the
-    // original. Only the flat +30 below has any effect. Kept for fidelity.
+    /* Distance to perp is 5 or less. $A77D-$A781 scales the difference up by
+     * 8 and then discards it: nothing reads A before the next store and
+     * ADD HL,DE does not consume flags, so the calculation is dead in the
+     * original. Only the flat +30 below has any effect. Kept for fidelity.
+     */
     A_dist_minus_6 = (A_dist_minus_6 + 5) * 8;
     HL_speed += DE_speedmult;
   }
@@ -9903,8 +9961,9 @@ static void spawn_cars(chqstate_t *state)
   const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the chosen lane (was HL) */
   int       bitmap_index;       /* random even index 0–6 selecting the car bitmap pair (was C) */
 
-  // Return without spawning anything if perp_caught_phase is non-zero or the
-  // dont_spawn_cars flag is set.
+  /* Return without spawning anything if perp_caught_phase is non-zero or the
+   * dont_spawn_cars flag is set.
+   */
   if (state->perp_caught_phase > PERPCAUGHTPHASE_NONE || state->dont_spawn_cars)
     return;
 
@@ -9913,8 +9972,9 @@ static void spawn_cars(chqstate_t *state)
   if (allow_spawning == 0)
     return;
 
-  // Reduce inline spawn delay counter by the value of allow_spawning (1 or 2
-  // here).
+  /* Reduce inline spawn delay counter by the value of allow_spawning (1 or 2
+   * here).
+   */
   state->sc_spawn_counter -= allow_spawning;
   if (state->sc_spawn_counter > allow_spawning)
     return;
@@ -9971,8 +10031,9 @@ fill_in:
 
   // Now pick a random car bitmap to show.
   bitmap_index = rng(state) & 6;
-  // If we've sighted the perp then don't spawn any generic cars (offset 6)
-  // since they look just like the perp's. Instead use offset 4.
+  /* If we've sighted the perp then don't spawn any generic cars (offset 6)
+   * since they look just like the perp's. Instead use offset 4.
+   */
   if (state->sighted_flag && bitmap_index == 6)
     bitmap_index -= 2; // 6 -> 4
 
@@ -10077,9 +10138,10 @@ void hazard_handler(chqstate_t *state, hazard_t *IX_hazard)
 
   current_lane = IX_hazard->current_lane;
   if (current_lane != IX_hazard->lane_or_perp_dist_hi) {
-    // $A8FB CP (IX+$11) borrow, carried through the RL/RR B round trip
-    // ($A900-$A90B); min_lane itself is never read again, so the round
-    // trip collapses to the comparison it was shuttling.
+    /* $A8FB CP (IX+$11) borrow, carried through the RL/RR B round trip
+     * ($A900-$A90B); min_lane itself is never read again, so the round
+     * trip collapses to the comparison it was shuttling.
+     */
     carry = current_lane < lane;
     phazard_pos_speed = &hazard_pos_speed[current_lane - 1];
     horz_pos = IX_hazard->horz_pos_on_road;
@@ -10141,8 +10203,9 @@ static void choose_dirt_and_stones(chqstate_t *state)
   if (state->on_dirt_track == 0 || state->allow_spawning == 0)
     return;
 
-  // Conv: byte offset 0x28 into the $ED00 page = $ED28, the first particle
-  // table entry: [0]=type, [1]=position.
+  /* Conv: byte offset 0x28 into the $ED00 page = $ED28, the first particle
+   * table entry: [0]=type, [1]=position.
+   */
   table = (u8 *) state->xpos.fork_right + 0x28;
   table[0] = ((s8) rng(state) >= 0) ? 1 : 2; // choose stone or dirt
   table[1] = rng(state); // choose random position
@@ -10214,9 +10277,10 @@ ldas_do_work:
 
   // EX AF,AF' - bank A ($A9AB)
 
-  // Conv: ADD A,A and CPL are 8-bit so Ldash is (255 - 2 * obj_pos[1]) & 0xFF,
-  // always odd. Both edge reads are the little-endian word at bytes
-  // Ldash-1/Ldash, i.e. word index Ldash / 2.
+  /* Conv: ADD A,A and CPL are 8-bit so Ldash is (255 - 2 * obj_pos[1]) & 0xFF,
+   * always odd. Both edge reads are the little-endian word at bytes
+   * Ldash-1/Ldash, i.e. word index Ldash / 2.
+   */
   Ldash = (u8) ~(obj_pos[1] * 2);
   DEdash_left_edge  = state->xpos.left[Ldash / 2];
   HLdash_right_edge = state->xpos.right[Ldash / 2];
@@ -10316,9 +10380,10 @@ ddas_bitmaps:
     A_iterations = 10;
 
   A_iterations >>= 1;
-  // Conv: $AA13-$AA19: L = A * 7; ADD HL,DE — each LOD entry is 7 bytes, so
-  // this selects the A-th bitmap_t within the single table. DEbitmaps[A]
-  // would step A whole 6-entry tables (A*6 bitmap_t) and read out of bounds.
+  /* Conv: $AA13-$AA19: L = A * 7; ADD HL,DE — each LOD entry is 7 bytes, so
+   * this selects the A-th bitmap_t within the single table. DEbitmaps[A]
+   * would step A whole 6-entry tables (A*6 bitmap_t) and read out of bounds.
+   */
   HL_bitmap = &(*DEbitmaps)[A_iterations];
   E_width = HL_bitmap->width_bytes * 8;
 
@@ -10401,14 +10466,15 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
   if (state->stage->addrof_helicopter_frames[0] == NULL)
     return;
 
-  // Conv: see prologue for the IY+$4E/IY+$4F addressing. $AA42-$AA46 widens
-  // the SUB result into DE as an *unsigned* byte (LD D,$00), so the delta is
-  // truncated to match. object_positions holds a prefix sum stored in u8, so
-  // a wrap between these two slots would make a plain int subtraction go
-  // negative and feed the multiply below an operand the Z80 never sees.
-  // Instrumenting the test suite showed slots 2 and 3 sit early enough in the
-  // sum that they do not wrap in practice (sampled at 41 and 50), so this is
-  // fidelity to the Z80 rather than a fix for observed behaviour.
+  /* Conv: see prologue for the IY+$4E/IY+$4F addressing. $AA42-$AA46 widens
+   * the SUB result into DE as an *unsigned* byte (LD D,$00), so the delta is
+   * truncated to match. object_positions holds a prefix sum stored in u8, so
+   * a wrap between these two slots would make a plain int subtraction go
+   * negative and feed the multiply below an operand the Z80 never sees.
+   * Instrumenting the test suite showed slots 2 and 3 sit early enough in the
+   * sum that they do not wrap in practice (sampled at 41 and 50), so this is
+   * fidelity to the Z80 rather than a fix for observed behaviour.
+   */
   diff = (u8) (state->object_positions[B_distance] -
                state->object_positions[B_distance - 1]);
   total = 0;
@@ -10423,14 +10489,15 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
   } while (--B_iterations2 > 0);
 
   A_total = total >> 8;
-  // $AA56 RRA rotates in the carry left by the loop's final ADD HL,HL, i.e.
-  // bit 15 of the product before that last doubling. The loop computes
-  // diff * (fast_counter & $E0), so that value is at most 255 * 7 * 16 =
-  // 28560 and its bit 15 is always clear -- the rotate is therefore always a
-  // plain halve, undoing the extra doubling the 8-iteration loop performs on
-  // a 3-bit multiplier. C reaches the same place from the other direction:
-  // total <<= 1 does not touch [carry], so [carry] still holds the last bit
-  // shifted out of fast_counter, which is likewise always 0 by this point.
+  /* $AA56 RRA rotates in the carry left by the loop's final ADD HL,HL, i.e.
+   * bit 15 of the product before that last doubling. The loop computes
+   * diff * (fast_counter & $E0), so that value is at most 255 * 7 * 16 =
+   * 28560 and its bit 15 is always clear -- the rotate is therefore always a
+   * plain halve, undoing the extra doubling the 8-iteration loop performs on
+   * a 3-bit multiplier. C reaches the same place from the other direction:
+   * total <<= 1 does not touch [carry], so [carry] still holds the last bit
+   * shifted out of fast_counter, which is likewise always 0 by this point.
+   */
   RR(A_total);
   state->dheli.rotor_pos = A_total;
 
@@ -10442,11 +10509,12 @@ static void draw_helicopter(chqstate_t *state, int B_distance, u8 *IY_height)
 
   heliframes = state->stage->addrof_helicopter_frames[frame];
 
-  // Conv: the table is six 16-bit pointers to per-part blocks (HL advances 2
-  // bytes per part; pitfall #29), not six consecutive heli_bitmap_t structs.
-  // Parts 1-5 are heli_bitmap_t (y_offset + bitmap_x); part 6 (rotor, $AA86) is
-  // a bare heli_bitmap_xonly_t with no y_offset byte, so it is read via a
-  // separate pointer type after the loop.
+  /* Conv: the table is six 16-bit pointers to per-part blocks (HL advances 2
+   * bytes per part; pitfall #29), not six consecutive heli_bitmap_t structs.
+   * Parts 1-5 are heli_bitmap_t (y_offset + bitmap_x); part 6 (rotor, $AA86) is
+   * a bare heli_bitmap_xonly_t with no y_offset byte, so it is read via a
+   * separate pointer type after the loop.
+   */
   do {
     helipart = (*heliframes++).part;
     draw_helicopter_part(state, helipart->y_offset + state->dheli.y_offset,
@@ -10506,10 +10574,11 @@ static void draw_helicopter_part(chqstate_t                *state,
     if (A_top != 0)
       return;
 
-    // $AAB8 is CP $80 / JP NC, an unsigned "at or above 128" test, which this
-    // mirrors literally. The sign test in this function is the separate JP M
-    // on D at $AAB4 above; this one selects the right-hand clipping entry
-    // point for a part whose x position starts in the right half.
+    /* $AAB8 is CP $80 / JP NC, an unsigned "at or above 128" test, which this
+     * mirrors literally. The sign test in this function is the separate JP M
+     * on D at $AAB4 above; this one selects the right-hand clipping entry
+     * point for a part whose x position starts in the right half.
+     */
     if (A_bot >= 0x80) {
       draw_object_right_width_entrypt(state, A_bot, HL_bitmap,
                                            IY_height); /* tail call */
@@ -10643,9 +10712,10 @@ static void drive_helicopter(chqstate_t *state)
   // Otherwise helicopter_control is 2.
 
   helipos = state->helicopter_x;
-  // Conv: original tests the high byte of the 16-bit helicopter_x word for
-  // zero (RET Z), i.e. waits while helicopter_x is still non-negative and
-  // falls through to disable once it has gone negative (flown off-screen).
+  /* Conv: original tests the high byte of the 16-bit helicopter_x word for
+   * zero (RET Z), i.e. waits while helicopter_x is still non-negative and
+   * falls through to disable once it has gone negative (flown off-screen).
+   */
   if (helipos >= 0)
     return;
 
@@ -10729,11 +10799,12 @@ static void spawn_hazards(chqstate_t *state)
   // Point HL at hazards data.
   roadbuf = ROADBUF_FWD2PTR(ROADBUF_HAZARDS_OFFSET + C_distance);
 
-  // The hazard byte is the map command minus 3, written by $C02C. So 0 is
-  // MAP_CMD_STOP_BARRIERS (nothing to spawn), 1/2/3 are the tumbleweed
-  // commands left/right/both, and 4/5/6 are the barrier commands left/right/
-  // both. Subtracting 3 from the barrier codes below folds them onto the same
-  // 1/2/3 placement cases, with the hittable offset carrying the difference.
+  /* The hazard byte is the map command minus 3, written by $C02C. So 0 is
+   * MAP_CMD_STOP_BARRIERS (nothing to spawn), 1/2/3 are the tumbleweed
+   * commands left/right/both, and 4/5/6 are the barrier commands left/right/
+   * both. Subtracting 3 from the barrier codes below folds them onto the same
+   * 1/2/3 placement cases, with the hittable offset carrying the difference.
+   */
   hazard = *roadbuf;
   if (hazard == 0)
     return;
@@ -10762,21 +10833,23 @@ static void spawn_hazards(chqstate_t *state)
   if (hazard != 3)
     goto sh_add_two_tumbleweeds;
 
-  // Three barriers rather than two whenever collisions are switched off.
-  // inhibit_collision_detection is set to $FF at $875C, in the sequence run
-  // when the perp escapes, and check_hazard_collisions ($AD0D) returns
-  // immediately while it is set. So the three-barrier arrangement below is
-  // only ever placed when none of the barriers can be driven into.
+  /* Three barriers rather than two whenever collisions are switched off.
+   * inhibit_collision_detection is set to $FF at $875C, in the sequence run
+   * when the perp escapes, and check_hazard_collisions ($AD0D) returns
+   * immediately while it is set. So the three-barrier arrangement below is
+   * only ever placed when none of the barriers can be driven into.
+   */
   hazard = state->inhibit_collision_detection;
   if (hazard == 0)
     goto sh_add_two_barriers;
 
   // Flag was set.
 
-  // Populate hazards with three barriers (e.g. for perp escape screen).
-  // Conv: POP HL used in original code to cause
-  // spawn_hazards to return when the hazards table is full.
-  // We have to specifically check in the C port.
+  /* Populate hazards with three barriers (e.g. for perp escape screen).
+   * Conv: POP HL used in original code to cause
+   * spawn_hazards to return when the hazards table is full.
+   * We have to specifically check in the C port.
+   */
   if (sh_find_free(state, 32, C_distance, DE_hittable_offset)) return;
   if (sh_find_free(state, 86, C_distance, DE_hittable_offset)) return;
   horz_pos = 140;
@@ -10864,12 +10937,13 @@ sh_found_free:
  */
 static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
 {
-  // $ACDB
-  //
-  // Per-frame wobble amplitudes: a series of ever-smaller humps, each
-  // rising to a peak, falling back and ending in a zero. A hit enters
-  // part-way through (see wobble_params_by_speed) and reads one value
-  // per frame, so the hazard's shudder decays away to nothing.
+  /* $ACDB
+   *
+   * Per-frame wobble amplitudes: a series of ever-smaller humps, each
+   * rising to a peak, falling back and ending in a zero. A hit enters
+   * part-way through (see wobble_params_by_speed) and reads one value
+   * per frame, so the hazard's shudder decays away to nothing.
+   */
   static const u8 wobble_amplitudes[] = {
     0x19, 0x28, 0x32, 0x37, 0x39, 0x37, 0x32, 0x28,
     0x19, 0x00, 0x0F, 0x19, 0x1F, 0x22, 0x24, 0x22,
@@ -10878,11 +10952,12 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
     0x06, 0x00, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00
   };
 
-  // $AD03
-  //
-  // Pairs of (start index into wobble_amplitudes, wobble frame countdown)
-  // for five speed brackets, slowest first. Faster hits start earlier in
-  // the amplitude table so the wobble is bigger and lasts longer.
+  /* $AD03
+   *
+   * Pairs of (start index into wobble_amplitudes, wobble frame countdown)
+   * for five speed brackets, slowest first. Faster hits start earlier in
+   * the amplitude table so the wobble is bigger and lasts longer.
+   */
   static const u8 wobble_params_by_speed[5 * 2] = {
     0x06, 0x22,
     0x0C, 0x1C,
@@ -10907,17 +10982,19 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
     // If we arrive here then a hit has occurred.
     speed = (hit_timer >= 0) ? state->speed : 280;
 
-    // Conv: $AC56-$AC60: RL E/RLA/AND 3 yields (speed >> 7) & 3; RR D puts
-    // bit 8 of speed into carry which ADC A,D adds back.
+    /* Conv: $AC56-$AC60: RL E/RLA/AND 3 yields (speed >> 7) & 3; RR D puts
+     * bit 8 of speed into carry which ADC A,D adds back.
+     */
     index = ((speed >> 7) & 3) + ((speed >> 8) & 1);
     ptable = &wobble_params_by_speed[index * 2];
 
     IX_hazard->lane_or_perp_dist_hi = ptable[0];
     IX_hazard->current_lane = ptable[1];
 
-    // $AC6D-$AC76: SLA C / RL B doubles the retained impact speed, then
-    // CP $02 on the high byte clamps anything that reaches 512 back to the
-    // perp's base chase speed of 350 ($015E).
+    /* $AC6D-$AC76: SLA C / RL B doubles the retained impact speed, then
+     * CP $02 on the high byte clamps anything that reaches 512 back to the
+     * perp's base chase speed of 350 ($015E).
+     */
     speed *= 2;
     if ((speed >> 8) >= 2)
       speed = SPEED_PERP_CHASE;
@@ -10936,20 +11013,22 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
     return;
   }
 
-  // Conv: wobble_params_by_speed entry 4 starts the index at 20 with a countdown of 0,
-  // which wraps to 255 and marches the index past the 40-byte table. The Z80
-  // harmlessly reads whatever follows $ACDB; here we clamp to 0 (the table's
-  // settled value) to avoid the out-of-bounds read.
+  /* Conv: wobble_params_by_speed entry 4 starts the index at 20 with a countdown of 0,
+   * which wraps to 255 and marches the index past the 40-byte table. The Z80
+   * harmlessly reads whatever follows $ACDB; here we clamp to 0 (the table's
+   * settled value) to avoid the out-of-bounds read.
+   */
   if (IX_hazard->lane_or_perp_dist_hi < sizeof(wobble_amplitudes))
     IX_hazard->hit_wobble = wobble_amplitudes[IX_hazard->lane_or_perp_dist_hi];
   else
     IX_hazard->hit_wobble = 0;
   IX_hazard->lane_or_perp_dist_hi++;
 
-  // Conv: $ACAC-$ACB8 is not a plain speed/32. SRL D/RR E shifts the pair
-  // right once, then four SRL E shift the low byte alone -- so D retains
-  // speed>>9 and E is masked to (speed>>5)&$0F. The last SRL E leaves bit 4
-  // of speed in carry, which the following SBC HL,DE subtracts as a borrow.
+  /* Conv: $ACAC-$ACB8 is not a plain speed/32. SRL D/RR E shifts the pair
+   * right once, then four SRL E shift the low byte alone -- so D retains
+   * speed>>9 and E is masked to (speed>>5)&$0F. The last SRL E leaves bit 4
+   * of speed in carry, which the following SBC HL,DE subtracts as a borrow.
+   */
   DE_decay = (((IX_hazard->speed >> 9) & 0xFF) << 8)
              | ((IX_hazard->speed >> 5) & 0x0F);
   borrow   = (IX_hazard->speed >> 4) & 1;
@@ -11596,9 +11675,10 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
   // clang-format on
 
-  // $CDEC
-  //
-  // 4 pair of X,Y
+  /* $CDEC
+   *
+   * 4 pair of X,Y
+   */
   static const u8 arrow_offsets[4 * 2] = {
     0xDE, 0x30,
     0xE6, 0x20,
@@ -11616,9 +11696,10 @@ static void draw_hazard_sprites(chqstate_t *state,
     &fire2_defns[0]
   };
 
-  // $CE00
-  //
-  // 6 pair of X,Y
+  /* $CE00
+   *
+   * 6 pair of X,Y
+   */
   static const u8 smoke_offsets[6 * 2] = {
     0xEE, 0x08,
     0xF3, 0x08,
@@ -11769,8 +11850,9 @@ dafs_done_draw_object:
     A_smash_level_scaled += (state->slow_anim_counter & 1) * 2;
     HL_bitmap = fire_bitmaps[A_smash_level_scaled / 2];
 
-    // POP DE (DE_bitmapoffset)
-    // PUSH DE (DE_bitmapoffset)
+    /* POP DE (DE_bitmapoffset)
+     * PUSH DE (DE_bitmapoffset)
+     */
 
     dhs_draw(state, B_x, C_y, DE_bitmapoffset, HL_bitmap, IY_height);
   }
@@ -12136,9 +12218,10 @@ static void move_hero_car(chqstate_t *state)
     state->session.idle_timer = 100;
     start_chatter(state, 10, &chatterblk_raymond_get_moving[0]);
   }
-  // Conv: $B102-$B103 copies the speed into DE only so $B116-$B117 can
-  // restore HL after `SBC HL,BC` destroys it comparing against the max
-  // speed. The comparisons below leave [speed] alone, so the copy is dropped.
+  /* Conv: $B102-$B103 copies the speed into DE only so $B116-$B117 can
+   * restore HL after `SBC HL,BC` destroys it comparing against the max
+   * speed. The comparisons below leave [speed] alone, so the copy is dropped.
+   */
   off_road = state->off_road;
   if (off_road) {
     // Handle off-road (A_off_road can be 1 or 2 here)
@@ -12195,22 +12278,24 @@ mhc_check_brake:
   if ((s8) A_inclined < 0) {
     A_pitch = state->dhc.pitch;
     if (A_pitch == 0 || speed == 0) {
-      // Level ($B1C2) or stopped ($B1C7): no pitch adjustment. Both exits
-      // reach $B1E4 with A already zero -- from the pitch byte itself, or
-      // from the H OR L that tested the speed -- so the counter resets to 0
-      // and the check runs again next frame, where the adjusting path below
-      // instead sets 3 and skips the following two.
+      /* Level ($B1C2) or stopped ($B1C7): no pitch adjustment. Both exits
+       * reach $B1E4 with A already zero -- from the pitch byte itself, or
+       * from the H OR L that tested the speed -- so the counter resets to 0
+       * and the check runs again next frame, where the adjusting path below
+       * instead sets 3 and skips the following two.
+       */
       A_inclined = 0;
     } else {
       // New speed is non-zero
       BC_pitch_speed_delta = (A_pitch - 5) | 1; // 0/3/6 in Cpitch => -5/-1/1
       DE_oldspeed = speed;
       speed += BC_pitch_speed_delta;
-      // $B1D8-$B1DF: unreachable. state->speed is stored through a cap of 511
-      // ($B1EC), the largest speed delta any path above can add is 63 (the
-      // low-gear accelerate term), and the pitch term adds at most 1, so
-      // [speed] cannot exceed 575 here. The skool's "surely always the case?!"
-      // at $B1DF is correct: the branch is never taken. Kept for fidelity.
+      /* $B1D8-$B1DF: unreachable. state->speed is stored through a cap of 511
+       * ($B1EC), the largest speed delta any path above can add is 63 (the
+       * low-gear accelerate term), and the pitch term adds at most 1, so
+       * [speed] cannot exceed 575 here. The skool's "surely always the case?!"
+       * at $B1DF is correct: the branch is never taken. Kept for fidelity.
+       */
       if (speed >= 695)
         speed = DE_oldspeed; // clamp to max
       A_inclined = 3;
@@ -12222,8 +12307,9 @@ mhc_check_brake:
   H_input = C_input; /* was POP HL (get user input) */
   B_right_turn = state->right_turn;
   C_left_turn  = state->left_turn;
-  // $B1FB-$B1FF: mhc.y_offset is the jump counter, non-zero for the whole of a
-  // jump, so steering input is ignored while the car is airborne.
+  /* $B1FB-$B1FF: mhc.y_offset is the jump counter, non-zero for the whole of a
+   * jump, so steering input is ignored while the car is airborne.
+   */
   if (state->mhc.y_offset == 0) {
     if (H_input & USERINPUTFLAG_RIGHT)
       goto mhc_turning_right;
@@ -12583,10 +12669,11 @@ static void ahc_check_hand_flag(chqstate_t *state)
     Cdash = A_hand_flag;
     // EXX UNBANK
 
-    // The hand is drawn from whichever sprite matches the car's angle.
-    // turn_speed is 0/1/2 for straight/turn/turn hard ($A250, set at $B2FA
-    // from the turning force), so only a hard turn needs the angled pair at
-    // 37/38, chosen by flip_car; everything else uses the straight-on hand.
+    /* The hand is drawn from whichever sprite matches the car's angle.
+     * turn_speed is 0/1/2 for straight/turn/turn hard ($A250, set at $B2FA
+     * from the turning force), so only a hard turn needs the angled pair at
+     * 37/38, chosen by flip_car; everything else uses the straight-on hand.
+     */
     if (state->turn_speed != 2)
       draw_crash(state, 36, Bdash_flip_flag, Cdash); /* tail call */
     else
@@ -12622,9 +12709,10 @@ static void ahc_check_hand_flag(chqstate_t *state)
     // $B4A9-$B4B1 computes flip_car * 7 + 13 by RLCA x3 then SUB B.
     A_hand_frame = (state->flip_car * 7) + 13;
 
-  // Same angle-matching as the static hand above, one base per car angle: 6
-  // straight-on, 13 or 20 for the two hard-turn directions. The step index
-  // then selects the frame within that run of seven.
+  /* Same angle-matching as the static hand above, one base per car angle: 6
+   * straight-on, 13 or 20 for the two hard-turn directions. The step index
+   * then selects the frame within that run of seven.
+   */
   A_hand_frame += C_hand_flag;
   // PUSH AF
   draw_crash_unflipped(state, A_hand_frame);
@@ -12669,8 +12757,9 @@ static void start_chase(chqstate_t *state)
   state->hand_flag = HANDFLAG_ANIMATING;
   // Enable flashing lights and smash bar
   state->sighted_flag = 1;
-  // Frames to hold each animation step, not a frame index: ahc_check_hand_flag
-  // counts it down and only advances ahc.hand_step when it reaches zero.
+  /* Frames to hold each animation step, not a frame index: ahc_check_hand_flag
+   * counts it down and only advances ahc.hand_step when it reaches zero.
+   */
   state->ahc.hand_delay = 2;
 
   state->session.subsecond_ticks = SUBSECOND_TICKS_PER_SECOND;
@@ -12717,8 +12806,9 @@ static void smash(chqstate_t *state)
     start_chatter(state, 10, &chatterblk_raymond_one_more_time[0]);
   state->smash_counter = hits;
 
-  // Conv: the Z80 walks a chain of INC C / CP n / JR C tests ($B525-$B543);
-  // each test becomes one arm here, in the same order.
+  /* Conv: the Z80 walks a chain of INC C / CP n / JR C tests ($B525-$B543);
+   * each test becomes one arm here, in the same order.
+   */
   if (hits == 0)      level = 0;
   else if (hits < 4)  level = 1;
   else if (hits < 7)  level = 2;
@@ -12829,8 +12919,9 @@ static void draw_debris(chqstate_t *state)
 
     HL_bitmap = &bitmap_debris[0][0] + BC_frame_offset;
 
-    // bitmap_debris is [4][2 * 6]: four frames of six rows, each row one mask
-    // byte plus one data byte. So the sprite really is a single byte wide.
+    /* bitmap_debris is [4][2 * 6]: four frames of six rows, each row one mask
+     * byte plus one data byte. So the sprite really is a single byte wide.
+     */
     B_height = 6; // rows
     C_width_bytes = 1;
     // EXX - bank
@@ -12847,8 +12938,9 @@ static void draw_debris(chqstate_t *state)
                        BCdash & 0xFF,
                        Edash_width_bytes);
 
-    // POP HL // addr
-    // POP BC // iterations
+    /* POP HL // addr
+     * POP BC // iterations
+     */
   } while (--B_iterations > 0);
 }
 
@@ -13722,22 +13814,25 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
                    13); // Conv: merged to one stmt
   // INC HL
   Bdash_height = HL_carpart->rows;
-  // INC HL
-  // orig only fetched low byte here allowing below PUSH to store HL_carpart
+  /* INC HL
+   * orig only fetched low byte here allowing below PUSH to store HL_carpart
+   */
   HL_bitmap_data = HL_carpart->bitmap; // Conv: shuffled around
-  // INC HL
-  // PUSH HL_carpart .. saving halfway through address build
-  // PUSH DE_backbuf_addr -- backbuffer plotaddr
+  /* INC HL
+   * PUSH HL_carpart .. saving halfway through address build
+   * PUSH DE_backbuf_addr -- backbuffer plotaddr
+   */
 
   A_width_bytes = 5; // width & stride
   DE_bitmap_stride = 5;
   // EXX - Bank for plot_sprite (DE' = stride, HL' = address of bitmap data)
   HLdash_backbuf_addr =
     DE_backbuf_addr; /* was POP HL_backbuf_addr  -- backbuffer plotaddr */
-  // EX AF,AF'
-  // $B5E9 EX AF,AF' banks the width (5) so that A is free to hold flip_car for
-  // the test below; both branches swap it back before calling the plotter,
-  // which takes the width in A. Same idiom as $B6E5 in draw_masked_sprite.
+  /* EX AF,AF'
+   * $B5E9 EX AF,AF' banks the width (5) so that A is free to hold flip_car for
+   * the test below; both branches swap it back before calling the plotter,
+   * which takes the width in A. Same idiom as $B6E5 in draw_masked_sprite.
+   */
   Adash_flip_car = state->flip_car;
   if (!Adash_flip_car) {
     // EX AF,AF' -- A is (width in bytes)
@@ -13758,8 +13853,9 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
                         HL_bitmap_data);
   }
 
-  // POP HL herocarpart ptr
-  // POP DE car vert pos
+  /* POP HL herocarpart ptr
+   * POP DE car vert pos
+   */
   HL_carpart++; // INC HL advance to next car part
 
   // Draw the windscreen (top) part
@@ -13812,14 +13908,16 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
   B_height = HL_part->rows;
   // PUSH HL_part -- orig stacks HL_part+1
   HL_bitmap = HL_part->bitmap;
-  // PUSH BC -- pres byte width
-  // EXX BANK
-  // POP BC -- restore byte width
+  /* PUSH BC -- pres byte width
+   * EXX BANK
+   * POP BC -- restore byte width
+   */
   Bdash_flip_flag = state->flip_car;
-  // $B63A LD E,C copies the byte width straight into the stride, so yes: for
-  // hero car parts the two are always equal. $B63B-$B63F then sets C' to the
-  // horizontal start column within the sprite -- 0 normally, or the last
-  // column when flipped, so the flipped blit walks the rows backwards.
+  /* $B63A LD E,C copies the byte width straight into the stride, so yes: for
+   * hero car parts the two are always equal. $B63B-$B63F then sets C' to the
+   * horizontal start column within the sprite -- 0 normally, or the last
+   * column when flipped, so the flipped blit walks the rows backwards.
+   */
   Edash_bitmap_stride = C_width_bytes;
   Cdash = (Bdash_flip_flag) ? C_width_bytes - 1 : 0;
   // EXX UNBANK
@@ -13832,8 +13930,9 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
                              Bdash_flip_flag,
                              Cdash,
                              Edash_bitmap_stride);
-  // POP HL_part
-  // POP DE -- restore x,y
+  /* POP HL_part
+   * POP DE -- restore x,y
+   */
   return HL_part + 1; // return next row
 }
 
@@ -13981,9 +14080,10 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
   E_unflipped_x = HL_frame->unflipped_x;
   HL_bitmap     = HL_frame->bitmap;
 
-  // PUSH BC -- preserve width/height
-  // EXX - Bank
-  // EX AF,AF' - Bank
+  /* PUSH BC -- preserve width/height
+   * EXX - Bank
+   * EX AF,AF' - Bank
+   */
   Cdash = C_width; /* was POP BCdash -- restore width/height */
   Bdash_flip_flag = Adash_flip_flag;
   Edash_width_bytes = Cdash;
@@ -14342,10 +14442,11 @@ static void draw_masked_sprite(chqstate_t *state,
 
   DE_backbuf = (E_x & 0xF8) >> 3; // x pixel pos to field CCCCC
   A_y = D_y;
-  // $B6E5 EX AF,AF' -- banks the unmasked y, because $B6EB overwrites D with
-  // the masked value and $B6ED still needs the original. Nothing to do with
-  // the flags; the carry-preserving pair is $B6FB/$B6FD below.
-  // y pixel pos (bottom nibble) to field LLLL
+  /* $B6E5 EX AF,AF' -- banks the unmasked y, because $B6EB overwrites D with
+   * the masked value and $B6ED still needs the original. Nothing to do with
+   * the flags; the carry-preserving pair is $B6FB/$B6FD below.
+   * y pixel pos (bottom nibble) to field LLLL
+   */
   DE_backbuf |= ((D_y & 0x0F) << 8) | BACKBUFFER_START_ADDRESS;
   // $B6EC EX AF,AF' -- unbanks it
   DE_backbuf |= (A_y & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
@@ -14398,8 +14499,9 @@ static void plot_masked_sprite_by_width(chqstate_t *state,
   int IX_jump_offset; /* fall-through index: (8 − A_width_bytes) × 6 (was IX) */
 
   IX_jump_offset = (8 - A_width_bytes) * 6;
-  // B = 15; // Conv: Mask removed
-  // EXX
+  /* B = 15; // Conv: Mask removed
+   * EXX
+   */
 
   plot_masked_sprite(state,
                      IX_jump_offset,
@@ -14457,8 +14559,9 @@ static u8 *plot_masked_sprite(chqstate_t *state,
 
     bitmap_data += bitmap_stride; // Advance to start of next row
 
-    // Conv: This entry point pms_entry is used directly. In this C version it's
-    // just the same as calling the function.
+    /* Conv: This entry point pms_entry is used directly. In this C version it's
+     * just the same as calling the function.
+     */
 plot_masked_sprite_entry:
     src = bitmap_data;
     // EXX - Bank
@@ -14566,16 +14669,18 @@ static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
   // EX DE,HL  -- move backbuffer ptr to DE
   jump_offset = 8 - width_bytes; // Conv: Multiplication removed
 
-  // HL = $EFxx  -- set reversing table addr top byte
-  // EXX - Bank
+  /* HL = $EFxx  -- set reversing table addr top byte
+   * EXX - Bank
+   */
   /* $B787 LD D,$00: the caller passes the row stride in E' alone, so D' must be
    * cleared before $B795 ADD HL,DE advances the source by one row. */
   // Ddash = 0;
   goto pmsf_start;
 
   for (;;) {
-    // EX AF,AF' - Unbank
-    // EXX - Bank
+    /* EX AF,AF' - Unbank
+     * EXX - Bank
+     */
     if (--height == 0)
       return;
 
@@ -14651,8 +14756,9 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
 
   // Conv: Setting SP restore removed
   jump_offset = (8 - A_width_bytes) * 6; // jump table index * entry size
-  // Conv: Removed setting B to 15 for line stepping
-  // EXX - Bank
+  /* Conv: Removed setting B to 15 for line stepping
+   * EXX - Bank
+   */
   DEdash_bitmap_stride = Edash_bitmap_stride;
   HLdash_bitmap_data_final = (Bdash_height - 1) * DEdash_bitmap_stride + HLdash_bitmap_data;
   B_height = Bdash_height;
@@ -14704,19 +14810,21 @@ static void scroll_horizon(chqstate_t *state)
   if ((speed = state->speed) == 0)
     return;
 
-  // Horizontal scrolling
-  //
+  /* Horizontal scrolling
+   *
+   */
 
   if ((current_curvature = state->current_curvature) != 0) {
-    // Conv: current_curvature is banked into A' by EX AF,AF' at $B854 and is
-    // never read back — it is immediately overwritten by LD A,C at $B873.
-    // The RLA sequence instead operates on the old A' value (Adash), which
-    // the Z80 carries in from move_hero_car ($B296): the last BC_count_scaled
-    // it banked into shadow. state->curvature_scroll_shadow models that
-    // shadow slot (see State.h) — none of the calls between $B296 and $B854
-    // (spawn_cars, cycle_counters, play_engine_or_siren_sfx_hook,
-    // build_height_table) execute EX AF,AF', so it survives unclobbered.
-    // Conv: $B854: EX AF,AF' banks current_curvature; $B855: RR H gives carry
+    /* Conv: current_curvature is banked into A' by EX AF,AF' at $B854 and is
+     * never read back — it is immediately overwritten by LD A,C at $B873.
+     * The RLA sequence instead operates on the old A' value (Adash), which
+     * the Z80 carries in from move_hero_car ($B296): the last BC_count_scaled
+     * it banked into shadow. state->curvature_scroll_shadow models that
+     * shadow slot (see State.h) — none of the calls between $B296 and $B854
+     * (spawn_cars, cycle_counters, play_engine_or_siren_sfx_hook,
+     * build_height_table) execute EX AF,AF', so it survives unclobbered.
+     * Conv: $B854: EX AF,AF' banks current_curvature; $B855: RR H gives carry
+     */
     /* RL Adash x3; AND 6: top two bits of speed, scaled up by 2 */
     Adash = ((state->curvature_scroll_shadow >> 6) & 2) | (((speed >> 8) & 1) << 2);
     B_horizon_table_value = horizon_table[state->horizon_curve_index + Adash];
@@ -14725,10 +14833,11 @@ static void scroll_horizon(chqstate_t *state)
     // Decrement horizon_a25e
     if (--state->horizon_x_scroll == 0) {
       state->horizon_x_scroll = B_horizon_table_value;
-      // EX AF,AF' - $B872 restores AF from the bank made at $B854;
-      // F now holds the Sign flag from AND A ($B851) which reflects the
-      // sign of current_curvature.  JP P ($B874) therefore branches on the
-      // sign of current_curvature, not on the sign of C.
+      /* EX AF,AF' - $B872 restores AF from the bank made at $B854;
+       * F now holds the Sign flag from AND A ($B851) which reflects the
+       * sign of current_curvature.  JP P ($B874) therefore branches on the
+       * sign of current_curvature, not on the sign of C.
+       */
       A_regular = C_horizon_x_delta;
       if ((s8) current_curvature < 0)
         A_regular = -A_regular;
@@ -14746,8 +14855,9 @@ static void scroll_horizon(chqstate_t *state)
   B_counter = 0;
   E_set_if_incline_negative = 0;
 
-  // Vertical scrolling
-  //
+  /* Vertical scrolling
+   *
+   */
 
   // EX AF,AF' - bank zeroed A_regular, unbank A_incline from earlier
   if ((A_incline = state->incline) == 0)
@@ -14901,14 +15011,15 @@ static void update_road_level(chqstate_t *state)
         if (!A_y_offset) { /* Z80: JR NZ → skip if already airborne */
           A_diff = B_prev_road_height - (3 - ((state->speed >> 7) & 3)); // result = 1..6 // Conv: folded a lot here
           if (A_diff > 0) { /* was !C && !Z */
-            // PUSH HL_prev_road_height
-            // Conv: $B95A-$B961: RLCA (A*=2) folded into the index. Z80 forms
-            // HL = $B057 + 2A but the table starts at $B059, so the byte
-            // offset is (A-1)*2 — always the first byte of a pair.
-            // Conv: clamp A_diff to 5. For A_diff == 6 (height byte -8 at top
-            // speed) the Z80 reads the two code bytes at $B063 that follow
-            // the table, yielding a garbage jump; use the longest jump
-            // instead.
+            /* PUSH HL_prev_road_height
+             * Conv: $B95A-$B961: RLCA (A*=2) folded into the index. Z80 forms
+             * HL = $B057 + 2A but the table starts at $B059, so the byte
+             * offset is (A-1)*2 — always the first byte of a pair.
+             * Conv: clamp A_diff to 5. For A_diff == 6 (height byte -8 at top
+             * speed) the Z80 reads the two code bytes at $B063 that follow
+             * the table, yielding a garbage jump; use the longest jump
+             * instead.
+             */
             if (A_diff > 5)
               A_diff = 5;
             car_jump_params_index = (A_diff - 1) * 2;
@@ -14940,9 +15051,10 @@ static void update_road_level(chqstate_t *state)
   }
 
   state->current_curvature = A_curvature_byte;
-  // Conv: $B995/$B998/$B99D build a 1-or-2 sign code in E and $B9A1 copies
-  // the magnitude into D. Neither is read again before the RET, and the
-  // caller at $C05F reloads DE at $C066, so both are dropped here.
+  /* Conv: $B995/$B998/$B99D build a 1-or-2 sign code in E and $B9A1 copies
+   * the magnitude into D. Neither is read again before the RET, and the
+   * caller at $C05F reloads DE at $C066, so both are dropped here.
+   */
   if (A_curvature_byte) {
     if ((s8) A_curvature_byte < 0)
       A_curvature_byte = -A_curvature_byte;
@@ -15075,8 +15187,9 @@ lr_calc_single_lane:
     HLdash -= DEdash; // calc centre-halved width
     *SMroadcentreleft = HLdash; // store centre-left pos
 
-    // $BA47 - moved below
-    // $BA4A EXX Unbank
+    /* $BA47 - moved below
+     * $BA4A EXX Unbank
+     */
   } while (++A_iterations != 128);
   return;
 
@@ -15093,12 +15206,13 @@ lr_forked_road:
   if ((*DE_lanedata & 4) !=
       0) // check for forked road (have already checked flags for 0xE1)
     goto lr_badf;
-  // $BA67 fell through, so the lanes byte's bit 2 is clear: this is the fork
-  // itself, not the approach to it. fork_in_progress is a once-only latch, not
-  // a counter -- $BC29 clears it and $BA71 is the only other writer, so it
-  // holds 0 (the fork decision has not been made) or 1 (it has). The DEC/NEG
-  // pair is how the Z80 spells that latch: 0 decrements to $FF, which negates
-  // to 1; 1 decrements to 0 and takes the branch below instead.
+  /* $BA67 fell through, so the lanes byte's bit 2 is clear: this is the fork
+   * itself, not the approach to it. fork_in_progress is a once-only latch, not
+   * a counter -- $BC29 clears it and $BA71 is the only other writer, so it
+   * holds 0 (the fork decision has not been made) or 1 (it has). The DEC/NEG
+   * pair is how the Z80 spells that latch: 0 decrements to $FF, which negates
+   * to 1; 1 decrements to 0 and takes the branch below instead.
+   */
   A_forkinprogress = state->fork_in_progress - 1;
   if (A_forkinprogress == 0)
     goto lr_check_spawning; /* decision already made for this fork */
@@ -15106,10 +15220,11 @@ lr_forked_road:
   DE_roadpos = state->scenedata.road_pos;
   A_iterations = 1;
   D_side = ((DE_roadpos >> 8) - 1) & 0xFF; /* was DEC D */
-  // Chooses the fork taken based on car's distance from centre
-  // Conv: Z80 $BA7B JP M,$BA89 fires when D−1 is negative as a byte (D==0 or
-  //       D≥0x81): right fork with A==1. $BA7E JP NZ,$BA88 fires when D−1 is
-  //       1..0x7F: left fork. Only D==1 falls through to the E<12 test.
+  /* Chooses the fork taken based on car's distance from centre
+   * Conv: Z80 $BA7B JP M,$BA89 fires when D−1 is negative as a byte (D==0 or
+   *       D≥0x81): right fork with A==1. $BA7E JP NZ,$BA88 fires when D−1 is
+   *       1..0x7F: left fork. Only D==1 falls through to the E<12 test.
+   */
   if (D_side & 0x80) {
     // Right fork: A_iterations stays 1
   } else if (D_side != 0) {
@@ -15128,11 +15243,12 @@ lr_forked_road:
   } else {
     // Incorrect fork taken
     state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
-    // The bonus lands on the wrong-fork branch only: $BA95 jumps the correct
-    // fork straight to the chatter at $BAAA, skipping $BAA4 entirely. So
-    // taking the wrong fork both speeds the perp up and pays 40,000 +
-    // 10,000 * stage. The asymmetry is in the original binary, not a
-    // translation slip, and is preserved here.
+    /* The bonus lands on the wrong-fork branch only: $BA95 jumps the correct
+     * fork straight to the chatter at $BAAA, skipping $BAA4 entirely. So
+     * taking the wrong fork both speeds the perp up and pays 40,000 +
+     * 10,000 * stage. The asymmetry is in the original binary, not a
+     * translation slip, and is preserved here.
+     */
     add_bonus(state, 0, state->wanted_stage_number + 4, 0);
     HL_chatterblk = &chatterblk_raymond_wrong_way[0];
   }
@@ -15146,10 +15262,11 @@ lr_check_spawning:
   A_iterations += state->session.spawn_accumulator;
   C_spawn_accum = A_iterations; // new value for $A16D
   A_iterations -= 2;
-  // $BABE JR C: taken when the SUB borrowed, i.e. the accumulator was below 2.
-  // A_iterations is u8, so 0 and 1 wrap to 254 and 255 and the test below
-  // catches exactly those two. This is the borrow-via-wrap idiom rather than
-  // the unreliable bit-7 test, and it is safe here because the subtrahend is 2.
+  /* $BABE JR C: taken when the SUB borrowed, i.e. the accumulator was below 2.
+   * A_iterations is u8, so 0 and 1 wrap to 254 and 255 and the test below
+   * catches exactly those two. This is the borrow-via-wrap idiom rather than
+   * the unreliable bit-7 test, and it is safe here because the subtrahend is 2.
+   */
   if (A_iterations >= 256 - 2)
     goto lr_set_var_a16d_from_c;
   C_spawn_accum = A_iterations; // new value for $A16D
@@ -15187,8 +15304,9 @@ lr_badf:
   HL_roadpos = HL_roadpos_saved; /* was POP HL_roadpos */
   state->scenedata.road_pos =
     HL_roadpos; // restore normal road pos after fork rendering
-  // Conv: $BB0B POP BC restores PUSH AF value into B = Bdash_fork_iters (DJNZ counter)
-  // Conv: $BB0C/$BB10 restore SP to $EC30 (road right) for POP-based reads
+  /* Conv: $BB0B POP BC restores PUSH AF value into B = Bdash_fork_iters (DJNZ counter)
+   * Conv: $BB0C/$BB10 restore SP to $EC30 (road right) for POP-based reads
+   */
   SP_roadright = &state->xpos.right[0x30 >> 1];
   A_iterations = 0x30;
   do {
@@ -15382,8 +15500,9 @@ static void exit_fork(chqstate_t *state)
   state->fork_distance             = 0;
 }
 
-// The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
-// The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
+/* The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
+ * The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
+ */
 
 /**
  * $BC3E: Copy the backbuffer to the playfield and update attributes.
@@ -15437,8 +15556,9 @@ static void send_playfield(chqstate_t *state)
   HL_buf = ADDRTOBACKBUF(0xF001); // (8, 1)
 
   for (;;) {
-    // Conv: $BC49-$BCB8 ds_loop_16bytes: Z80 uses SP/PUSH/POP chains to bulk-copy
-    //       16 bytes per scanline; C uses memcpy. Left-half of each row (bytes 17-32).
+    /* Conv: $BC49-$BCB8 ds_loop_16bytes: Z80 uses SP/PUSH/POP chains to bulk-copy
+     *       16 bytes per scanline; C uses memcpy. Left-half of each row (bytes 17-32).
+     */
     do {
       memcpy(HL_scr - 16, HL_buf, 16); HL_scr += 256; HL_buf += 256;
       memcpy(HL_scr - 16, HL_buf, 16); HL_scr += 256; HL_buf += 256;
@@ -15448,8 +15568,9 @@ static void send_playfield(chqstate_t *state)
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
-    // Conv: $BCBE-$BCC7: advance both pointers to the right-half start.
-    // $BCC8-$BD27 ds_loop_14bytes: 14-byte copy per scanline (bytes 2-15).
+    /* Conv: $BCBE-$BCC7: advance both pointers to the right-half start.
+     * $BCC8-$BD27 ds_loop_14bytes: 14-byte copy per scanline (bytes 2-15).
+     */
     HL_buf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
     screen_off = SCREENTOOFFSET_M(HL_scr) - 0x07F2;
     HL_scr = OFFSETTOSCREEN(screen_off);
@@ -15545,8 +15666,9 @@ static void send_playfield(chqstate_t *state)
         HL_attrs += DE_level;
       }
 
-      // Z80 fills 30 bytes backward via PUSH BC×15 from end-of-row pointer;
-      // equivalent forward fill starts 30 bytes before HL_attrs.
+      /* Z80 fills 30 bytes backward via PUSH BC×15 from end-of-row pointer;
+       * equivalent forward fill starts 30 bytes before HL_attrs.
+       */
       memset(HL_attrs - 30, BC_attrs & 0xFF, 30);
       // $BD8F ADD HL,DE — sky only: advance pointer to next row
       if (DE_level >= 0)
@@ -15893,11 +16015,12 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
         break;
       }
 
-      // $BF12-$BF13: the reload lands in A_lanes_counter — the Z80 keeps the
-      // counter byte in A through $BF13/$BF14. Reading it into A_lanes_byte
-      // left the $BF15 store computing 0 - 1 = 255 after any lanes command,
-      // stalling the channel for ~256 steps (tunnel walls arrived long after
-      // the tunnel lights). Same shape as the hazards-channel fix.
+      /* $BF12-$BF13: the reload lands in A_lanes_counter — the Z80 keeps the
+       * counter byte in A through $BF13/$BF14. Reading it into A_lanes_byte
+       * left the $BF15 store computing 0 - 1 = 255 after any lanes command,
+       * stalling the channel for ~256 steps (tunnel walls arrived long after
+       * the tunnel lights). Same shape as the hazards-channel fix.
+       */
       A_lanes_counter = *DE_lanes_ptr;
     }
 
@@ -16063,8 +16186,9 @@ rm_restart_hazards_read: // $BFF3
                   else
                     /* $C018: cmd 13/14 → dont_spawn_cars = cmd - 13 */
                     state->dont_spawn_cars = A_hazards_byte - 10;
-                  // $C016/$C01D
-                  // DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+                  /* $C016/$C01D
+                   * DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+                   */
                   goto rm_restart_hazards_read;
                 } else {
                   // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
@@ -16072,8 +16196,9 @@ rm_restart_hazards_read: // $BFF3
                   state->floating_arrow = A_hazards_byte;
                   if (A_hazards_byte != 0)
                     state->correct_fork = A_hazards_byte;
-                  // $C029
-                  // DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+                  /* $C029
+                   * DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+                   */
                   goto rm_restart_hazards_read;
                 }
               } else {
@@ -16095,13 +16220,14 @@ rm_restart_hazards_read: // $BFF3
           DE_hazards_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_hazards_ptr));
         }
 
-        // $C04E: pointer already set up; byte is always regular here
-        // DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
-        // Conv: the reload lands in A_hazards_counter — the Z80 keeps the
-        // regular data byte in A through $C04F/$C054/$C055. Reading it into
-        // A_hazards_byte left the $C055 store holding the escape byte (0),
-        // swallowing the first WAIT after any command (the fork arrow
-        // vanished ~2 steps after the SPLIT instead of after WAIT(12)).
+        /* $C04E: pointer already set up; byte is always regular here
+         * DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+         * Conv: the reload lands in A_hazards_counter — the Z80 keeps the
+         * regular data byte in A through $C04F/$C054/$C055. Reading it into
+         * A_hazards_byte left the $C055 store holding the escape byte (0),
+         * swallowing the first WAIT after any command (the fork arrow
+         * vanished ~2 steps after the SPLIT instead of after WAIT(12)).
+         */
         A_hazards_counter = *DE_hazards_ptr;
       }
 
@@ -16133,8 +16259,9 @@ rm_restart_hazards_read: // $BFF3
     /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
     if (A_flags_inc == 0) { // hazard_flags was 0xFF: rm_c096
       A_flags_inc = IX_hazard->distance; // value before the subtract, for the borrow test
-      // SUB $01 always executes and always stores, wrapping 0 -> 255 (Conv:
-      // the u8 field assignment performs the wraparound).
+      /* SUB $01 always executes and always stores, wrapping 0 -> 255 (Conv:
+       * the u8 field assignment performs the wraparound).
+       */
       IX_hazard->distance = (u8) (A_flags_inc - 1);
       if (A_flags_inc == 0) { // rm_c0b2: distance was already 0 -> borrowed
         IX_hazard->lane_or_perp_dist_hi--;
@@ -16681,16 +16808,18 @@ static void draw_road_lanes_change(chqstate_t *state,
   A_dist = *IY_heightptr - &state->height_table[0];
   assert(A_dist < PERSP_TABLE_COLS);
   if (A_dist < 19) {
-    // $C2EE -- bank A_dist
-    // EX AF,AF'
+    /* $C2EE -- bank A_dist
+     * EX AF,AF'
+     */
 
     // $C2EF
     L_lane_flags = (*IX_lanesptr)[0];
     Adash_masked_lane_flags = L_lane_flags & 0x0C;
     if (Adash_masked_lane_flags) {
-      // Road is changing width. Any of:
-      // {4TO3L, 4TO3R, 3TO4L, 3TO4R, 3TO2L, 3TO2R, 2TO3L, 2TO3R,
-      // TUNNEL_ENTRY, TUNNEL_EXIT, FORKED}
+      /* Road is changing width. Any of:
+       * {4TO3L, 4TO3R, 3TO4L, 3TO4R, 3TO2L, 3TO2R, 2TO3L, 2TO3R,
+       * TUNNEL_ENTRY, TUNNEL_EXIT, FORKED}
+       */
 
       // $C2F8
       (*IY_heightptr)--;
@@ -16711,13 +16840,15 @@ static void draw_road_lanes_change(chqstate_t *state,
       if (L_lane_flags & (1 << 4)) { /* bit 4 SET */
         // {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT}
 
-        // $C30A -- unbank A_dist / bank Adash_curve_bits
-        // EX AF,AF'
+        /* $C30A -- unbank A_dist / bank Adash_curve_bits
+         * EX AF,AF'
+         */
 
 
         if (A_dist < 2) {
-          // $C310 -- bank A_dist / unbank Adash_curve_bits
-          // EX AF,AF'
+          /* $C310 -- bank A_dist / unbank Adash_curve_bits
+           * EX AF,AF'
+           */
 
           /* $C311: path 1a -- bit4=1, dist<2 */
           if (Adash_masked_lane_flags != 4) {
@@ -16764,8 +16895,9 @@ static void draw_road_lanes_change(chqstate_t *state,
         } else {
           /* $C357: bit4=1, dist>=2 (must be 4): far-boundary setup, no animation offset */
 
-          // $C357 -- unbank A_dist / bank Adash_curve_bits
-          // EX AF,AF'
+          /* $C357 -- unbank A_dist / bank Adash_curve_bits
+           * EX AF,AF'
+           */
 
           if (Adash_masked_lane_flags != 4 ||
               (*IY_heightptr)[0] <= (*IY_heightptr)[2])
@@ -16790,8 +16922,9 @@ static void draw_road_lanes_change(chqstate_t *state,
         /* $C37E: bit4=0 entry: dispatch to far-boundary or fall through to near-boundary */
         // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
         if (A_dist < 2) {
-          // $C37E -- bank 'dist' again / unbank Adash_curve_bits
-          // EX AF,AF'
+          /* $C37E -- bank 'dist' again / unbank Adash_curve_bits
+           * EX AF,AF'
+           */
 
           /* $C37F: path 2 -- bit4=0, dist<2 */
           if (Adash_masked_lane_flags != 4) {
@@ -16831,15 +16964,17 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C3B2
           A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_bend_offset;
 
-          // $C3BF-$C3C2: DE = road_pos + anim  ($C3C2: ADD HL,DE; $C3C3: EX DE,HL)
-          // Conv: path 2a adds anim (Z80: ADD HL,DE) whereas path 1a subtracts it
-          // (Z80: SBC HL,DE) — mirror-image treatment of the two road edges.
+          /* $C3BF-$C3C2: DE = road_pos + anim  ($C3C2: ADD HL,DE; $C3C3: EX DE,HL)
+           * Conv: path 2a adds anim (Z80: ADD HL,DE) whereas path 1a subtracts it
+           * (Z80: SBC HL,DE) — mirror-image treatment of the two road edges.
+           */
           DE_roadpos += A_anim_offset;
         } else {
           /* $C3CA: bit4=0, dist>=2 (must be 4): far-boundary setup, no animation offset */
 
-          // $C3CA -- unbank A_dist / bank Adash_curve_bits
-          // EX AF,AF'
+          /* $C3CA -- unbank A_dist / bank Adash_curve_bits
+           * EX AF,AF'
+           */
 
           if (Adash_masked_lane_flags != 4 ||
               (*IY_heightptr)[0] <= (*IY_heightptr)[2])
@@ -16916,10 +17051,11 @@ drlc_continue:
     }
   }
 
-  // $C43B: the Z80 JPs into draw_road's dispatch via dr_set_lane_callback
-  // (dr_four_lane_highway).  Conv: draw_road_lanes_change is now a setup-only
-  // helper that returns here; the merged draw_road sets callback_sel to
-  // CB_FOUR_LANE and resumes the dispatch itself.
+  /* $C43B: the Z80 JPs into draw_road's dispatch via dr_set_lane_callback
+   * (dr_four_lane_highway).  Conv: draw_road_lanes_change is now a setup-only
+   * helper that returns here; the merged draw_road sets callback_sel to
+   * CB_FOUR_LANE and resumes the dispatch itself.
+   */
   return;
 
 drlc_steep_step:
@@ -17648,8 +17784,9 @@ static void draw_road(chqstate_t *state)
       DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
       /* Draw - no masking since we're on a plain surface. */
-      // Conv: see left-edge write above; second byte's low address byte wraps
-      // rather than a raw pointer increment.
+      /* Conv: see left-edge write above; second byte's low address byte wraps
+       * rather than a raw pointer increment.
+       */
       *DEdash_backbufptr = *HLdash_markingsptr++; // also BC--;
       *ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF)) = *HLdash_markingsptr;
 
@@ -17677,8 +17814,9 @@ static void draw_road(chqstate_t *state)
       DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
       /* AND-OR masking here. */
-      // Conv: see left-edge write above; second byte's low address byte wraps
-      // rather than a raw pointer increment.
+      /* Conv: see left-edge write above; second byte's low address byte wraps
+       * rather than a raw pointer increment.
+       */
       *DEdash_backbufptr = *HLdash_markingsptr++; // also BC--;
       DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | ((Edash + 1) & 0xFF));
       *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1];
@@ -17688,12 +17826,13 @@ static void draw_road(chqstate_t *state)
 
     /* $C6AB - Loop end */
     L_row = (L_row - 1) & 0xFF;
-    // Conv: This is a loop in the original but since the C conversion splits
-    // draw_road into multiple functions this becomes recursion. The height-check
-    // block below ($C6B0..$C79A) runs ONCE after the Z80 JP NZ loop exits. So
-    // outer recursion levels must return here; only the innermost level (where
-    // --C_counter reaches 0 and the call is skipped) falls through to the
-    // height-check.
+    /* Conv: This is a loop in the original but since the C conversion splits
+     * draw_road into multiple functions this becomes recursion. The height-check
+     * block below ($C6B0..$C79A) runs ONCE after the Z80 JP NZ loop exits. So
+     * outer recursion levels must return here; only the innermost level (where
+     * --C_counter reaches 0 and the call is skipped) falls through to the
+     * height-check.
+     */
     if (--C_counter > 0) {
       // Conv: was self-modified JP NZ ($C6AD); fill_sel selects the target.
       if (fill_sel == FILL_FILLED)
@@ -17786,9 +17925,10 @@ static void draw_road(chqstate_t *state)
     if ((C_lane_byte & (1 << 7)) != 0)
       goto dr_calc_height_delta; /* loop/jump if not dirt track */
     /* it's a tunnel */
-    // $C753 EX AF,AF' -- banks A_height_diff, which the block below clobbers
-    // at $C758, so that $C774 LD C,A gets the original back. Conv: the C code
-    // keeps A_height_diff in its own variable, so no shadow copy is needed.
+    /* $C753 EX AF,AF' -- banks A_height_diff, which the block below clobbers
+     * at $C758, so that $C774 LD C,A gets the original back. Conv: the C code
+     * keeps A_height_diff in its own variable, so no shadow copy is needed.
+     */
     B = 0xFF;
     A_tunnel_visible = 1;
     A_in_tunnel = 1;
@@ -17964,11 +18104,12 @@ dr_backdrop_fill_advance:
     goto dr_copy_row;
 
     do {
-      // EXX ($C821)
-      // EX AF,AF' ($C822) — A_col is shuttled through E ($C823 LD E,A) so that
-      // $C82C LD L,A can retrieve it after the exchange; E (screen column)
-      // is otherwise unaffected, so the C model leaves it untouched here and
-      // reads A_col directly at the point of use below.
+      /* EXX ($C821)
+       * EX AF,AF' ($C822) — A_col is shuttled through E ($C823 LD E,A) so that
+       * $C82C LD L,A can retrieve it after the exchange; E (screen column)
+       * is otherwise unaffected, so the C model leaves it untouched here and
+       * reads A_col directly at the point of use below.
+       */
 
 dr_c824:
       A = D;
@@ -18609,8 +18750,9 @@ dfr_next_scanline_c969:
   goto dfr_c969;
 }
 
-// $CBA4
-// mystery_cba4 would go here, if we knew what it did
+/* $CBA4
+ * mystery_cba4 would go here, if we knew what it did
+ */
 
 /**
  * $CBD6: Build curve table
@@ -18864,13 +19006,15 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   DE_output = &state->curvature_table[0];
   B_iterations = PERSP_TABLE_COLS;
-  // EXX Bank
-  // Conv: (s16) cast: during a fork layout_road temporarily sets road_pos to
-  // road_pos ± fork_distance, which can go negative. The Z80 works mod 65536
-  // throughout; the u16 field must be re-signed when loaded into a wider int.
+  /* EXX Bank
+   * Conv: (s16) cast: during a fork layout_road temporarily sets road_pos to
+   * road_pos ± fork_distance, which can go negative. The Z80 works mod 65536
+   * throughout; the u16 field must be re-signed when loaded into a wider int.
+   */
   DEdash_roadposacc = (s16)state->scenedata.road_pos;
-  // PUSH DEdash; // save on stack
-  // EXX Unbank
+  /* PUSH DEdash; // save on stack
+   * EXX Unbank
+   */
 
   // Calculate curvature_table
   do {
@@ -18884,11 +19028,12 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     // EXX Bank
 
-    // Z80: ADD A,IXl; LD IXl,A -- IXl accumulates curvature, walking the byte
-    // offset from bend_table's $E500 base. Z80 IXl wraps in 8-bit; a forked
-    // road's negated curvature run can walk this back past $E540 into
-    // outward_bend_table's half of the table, which is why the two halves
-    // are modelled as one combined array rather than clamped apart.
+    /* Z80: ADD A,IXl; LD IXl,A -- IXl accumulates curvature, walking the byte
+     * offset from bend_table's $E500 base. Z80 IXl wraps in 8-bit; a forked
+     * road's negated curvature run can walk this back past $E540 into
+     * outward_bend_table's half of the table, which is why the two halves
+     * are modelled as one combined array rather than clamped apart.
+     */
     IX_l = (IX_lanes - &bend_table[0]) * 2;
     IX_l = (IX_l + A_curvature) & 0xFF;
     IX_lanes = &bend_table[IX_l / 2];
@@ -19029,8 +19174,9 @@ static void build_curve_table_fill(chqstate_t *state,
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
     // $CCCD
     if ((Ldash & (1 << 7)) != 0) {
-      // $CCD2 NEG is an 8-bit operation on a byte register, so the mask
-      // reproduces it exactly: L becomes the magnitude of the curvature byte.
+      /* $CCD2 NEG is an 8-bit operation on a byte register, so the mask
+       * reproduces it exactly: L becomes the magnitude of the curvature byte.
+       */
       Ldash = -Ldash & 0xFF;
       A = Bdash_iterations;
       A_opcode = Z80_DEC_DE;
@@ -19055,25 +19201,26 @@ bct_continue:
   } while (--B_iterations > 0);
   return;
 
-  // Register roles on entry, all established at $CCC7-$CCCA:
-  //
-  //   A  opcode of the self-modified instruction, INC DE or DEC DE, i.e. the
-  //      direction the road bends
-  //   B  row span of this road slot: the height-table delta plus 2, the same
-  //      value just written to object_positions. DJNZ counter, so one output
-  //      entry is emitted per screen row the slot covers
-  //   C  the same span value, copied at $CCC8. Here it is the amount added to
-  //      the accumulator each step
-  //   L  magnitude of this slot's curvature byte, negated at $CCD1-$CCD4 when
-  //      the byte was negative. Here it is the threshold the accumulator is
-  //      measured against
-  //   DE running road x position, stepped by the opcode in A and pushed to the
-  //      output table once per row
-  //
-  // C and L swap roles between the two paths. The main loop at $CCE8 adds L
-  // and reduces modulo C, moving DE at most once per row; this path is entered
-  // from $CCD9/$CCE1 when the span is smaller than the curvature, so DE has to
-  // move more than once per row and the roles invert.
+  /* Register roles on entry, all established at $CCC7-$CCCA:
+   *
+   *   A  opcode of the self-modified instruction, INC DE or DEC DE, i.e. the
+   *      direction the road bends
+   *   B  row span of this road slot: the height-table delta plus 2, the same
+   *      value just written to object_positions. DJNZ counter, so one output
+   *      entry is emitted per screen row the slot covers
+   *   C  the same span value, copied at $CCC8. Here it is the amount added to
+   *      the accumulator each step
+   *   L  magnitude of this slot's curvature byte, negated at $CCD1-$CCD4 when
+   *      the byte was negative. Here it is the threshold the accumulator is
+   *      measured against
+   *   DE running road x position, stepped by the opcode in A and pushed to the
+   *      output table once per row
+   *
+   * C and L swap roles between the two paths. The main loop at $CCE8 adds L
+   * and reduces modulo C, moving DE at most once per row; this path is entered
+   * from $CCD9/$CCE1 when the span is smaller than the curvature, so DE has to
+   * move more than once per row and the roles invert.
+   */
 bct_endbit_A:
   /* Conv: Z80 $CCF8 LD ($CCFC),A stores the opcode into the self-modifying
    * instruction. A already holds Z80_DEC_DE or Z80_INC_DE (set just before JR C,$CCF8).
@@ -19101,9 +19248,10 @@ bct_endbit_negative:
   Bdash_iterations = A;
   A = state->curvature_table[IY_height_table - 1 -
                              &state->height_table[0]]; // IY[$1F]; // $E320+
-  //Ldash = A;
-  //carry = (A & (1<<7) != 0;
-  //Hdash = -carry; //sign ext
+  /*Ldash = A;
+   *carry = (A & (1<<7) != 0;
+   *Hdash = -carry; //sign ext
+   */
   HLdash = (s8) A;
   HLdash += DE_roadpos;
   DE_roadpos = HLdash; /* was EX */
@@ -19431,8 +19579,9 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
     { transitions, offsetof(chqstate_t, transitions_ec00), sizeof(transitions) },
     { square_transition_frames, 0xEB00, sizeof(square_transition_frames) },
     { diamond_transition_frames, 0xEA00, sizeof(diamond_transition_frames) },
-    // { 0xF220, 0x8014, 926 }, // copies load_stage_128k into place
-    // { 0xE876, 0x83B5, 24 },  // copies hooks_128k
+    /* { 0xF220, 0x8014, 926 }, // copies load_stage_128k into place
+     * { 0xE876, 0x83B5, 24 },  // copies hooks_128k
+     */
   };
 
   const struct Relocations *reloc; /* was HL */
@@ -19727,14 +19876,16 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
 
   /* $EC0B: Calculate attribute address from screen address */
   HL_attr = (0x5800 + ((DE_scr >> 3) & 0x0300)) | (DE_scr & 0xFF);
-  // EXX - Bank (shadow HL' = HL_attr, shadow DE' = DE_scr)
-  // EX (SP),HL_string
-  // PUSH DEdash, BCdash
+  /* EXX - Bank (shadow HL' = HL_attr, shadow DE' = DE_scr)
+   * EX (SP),HL_string
+   * PUSH DEdash, BCdash
+   */
   do {
     A_ascii = *HL_string & 0x7F;
-    // PUSH HL_string
-    // Conv: Z80 uses DE'/HL' directly as pointers; C converts between u16 address
-    //       and u8* at each character step via ADDRTOSCREEN/ADDRTOATTRS/SCREENTOADDR
+    /* PUSH HL_string
+     * Conv: Z80 uses DE'/HL' directly as pointers; C converts between u16 address
+     *       and u8* at each character step via ADDRTOSCREEN/ADDRTOATTRS/SCREENTOADDR
+     */
     DE_scr_ptr  = ADDRTOSCREEN(DE_scr);
     HL_attr_ptr = ADDRTOATTRS(HL_attr);
     menu_draw_char(A_ascii,
@@ -19748,9 +19899,10 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HL_string)
     HL_attr = ATTRSTOADDR(HL_attr_ptr);
     // POP HL_string
   } while ((*HL_string++ & EOS) == 0);
-  // EXX - Unbank
-  // POP BC, DE, HL_string
-  // EXX - Bank
+  /* EXX - Unbank
+   * POP BC, DE, HL_string
+   * EXX - Bank
+   */
 
   return HL_string;
 }
@@ -19839,8 +19991,9 @@ mdc_have_ascii:
 
 mdc_have_glyph:
   HL_font = &font[C_glyphid * 7]; // add symbol for glyph height
-  // EXX
-  // PUSH DEdash
+  /* EXX
+   * PUSH DEdash
+   */
   /* Conv: $EC68-$EC6C EXX/PUSH DE/INC E/EXX/POP DE. The PUSH/POP pair keeps
    * the address as-was for the blit while the INC E advances only the copy the
    * caller sees next time round, so the glyph is drawn at DEdash and DEdash is
@@ -19848,8 +20001,9 @@ mdc_have_glyph:
    * glyph one column right of the attribute cell menu_draw_char colours below,
    * which left the last character of every word black on black. */
   DE_screen = DEdash;
-  // EXX
-  // POP DE
+  /* EXX
+   * POP DE
+   */
   DEdash++;
   if (!Fdash) { // checking banked carry here
     // double height
@@ -19881,8 +20035,9 @@ mdc_have_glyph:
      * nothing a previous glyph drew can survive in row 14 -- the write only
      * matters against whatever was on screen before the text was drawn. */
     *DE_screen = 0;
-    // EXX
-    // Conv: $ECAB LD B,L saves only L' (column); C saves full pointer for simplicity
+    /* EXX
+     * Conv: $ECAB LD B,L saves only L' (column); C saves full pointer for simplicity
+     */
     HLdash_saved = HLdash;
     Cdash |= ATTR_BRIGHT;
     *HLdash = Cdash; // set with bright set
@@ -20196,8 +20351,9 @@ dak_loop1:
   } while (D_keydef == 0);
   D_keydef--;
   A_keydef = D_keydef;
-  // POP BC -- get C_index back
-  // PUSH BC -- save index in C_index
+  /* POP BC -- get C_index back
+   * PUSH BC -- save index in C_index
+   */
   HL_tmpkeys = &state->temp_keydefs[0];
   B_iterations = C_index - 1;
   // Checking for existing uses of that key
@@ -20207,12 +20363,14 @@ dak_loop1:
         goto dak_loop1; // Already used - try again
       HL_tmpkeys++;
     } while (--B_iterations > 0);
-  // POP BC -- get C_index back
-  // PUSH BC -- retrieve index
+  /* POP BC -- get C_index back
+   * PUSH BC -- retrieve index
+   */
   state->temp_keydefs[C_index] = A_keydef;
   HL_keynames = &key_names[(A_keydef & 7) * 10 + (A_keydef >> 3) * 2]; // row + key
-  // POP BC,DE
-  // PUSH BC,DE
+  /* POP BC,DE
+   * PUSH BC,DE
+   */
   state->messages_key_string[0] = 0xC7; // Conv: added
   setwordat(&state->messages_key_string[1], DE_screen);
   state->messages_key_string[3] = *HL_keynames++;
@@ -20412,8 +20570,9 @@ static void play_music_48k(chqstate_t *state)
     state->music.note_delay = state->music.note_delay_reload;
     HL = state->music.data_ptr;
 
-    // Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is
-    // argument, iii is instrument index)
+    /* Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is
+     * argument, iii is instrument index)
+     */
     for (;;) {
       A = *HL - 1;
       if (A)
@@ -20921,8 +21080,9 @@ void play_speech_128k(chqstate_t *state, int index)
   H_ff      = 0xFF;
   L_bf      = 0xBF;
   D_eight   = 8; // Channel A volume register
-  // EXX - Bank
-  // EX AF,AF' - Unbank index
+  /* EXX - Bank
+   * EX AF,AF' - Unbank index
+   */
   DEdash_length  = speech_samples_table[index - 1].length;
   HLdash_samples = &sound_samples[speech_samples_table[index - 1].data - SOUND_SAMPLES_Z80_BASE];
 
@@ -20936,8 +21096,9 @@ void play_speech_128k(chqstate_t *state, int index)
       speccy->stamp(speccy); // stamp at $F36E, start of the per-nibble body
 
       A_sample &= 0x0F;
-      // EX AF,AF' - Bank A_sample
-      // EXX - Unbank
+      /* EX AF,AF' - Bank A_sample
+       * EXX - Unbank
+       */
 
       // Write sample as Channel A volume.
 
@@ -20975,8 +21136,9 @@ void play_speech_128k(chqstate_t *state, int index)
                   A_sample); // OUT (C),A -- Write to $BFFD to write volume register
       // EXX - Bank
 
-      // Sleeps out the whole per-nibble body timed from the stamp() above,
-      // not just the LD B,$13/DJNZ delay loop (see SPEECH_NIBBLE_TSTATES).
+      /* Sleeps out the whole per-nibble body timed from the stamp() above,
+       * not just the LD B,$13/DJNZ delay loop (see SPEECH_NIBBLE_TSTATES).
+       */
       speccy->sleep(speccy, SPEECH_NIBBLE_TSTATES);
 
       A_sample = *HLdash_samples; // Load next sample (same byte, but next nibble)
@@ -21265,8 +21427,9 @@ CHQ_API void chq_stop(chqstate_t *state)
  */
 CHQ_API void chq_main(chqstate_t *state)
 {
-  // There's no point calling this function yet. Not until the game logic is
-  // teased apart. The real game logic hangs off of 'bootstrap'.
+  /* There's no point calling this function yet. Not until the game logic is
+   * teased apart. The real game logic hangs off of 'bootstrap'.
+   */
   assert(0);
   while (run_pregame_screen_loop(state)) /* Conv: Split out */
     ;

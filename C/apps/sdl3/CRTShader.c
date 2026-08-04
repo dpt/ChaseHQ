@@ -20,13 +20,14 @@
 
 #include "CRTShader.h"
 
-// MSL source is handed to SDL_CreateGPUShader() as SDL_GPU_SHADERFORMAT_MSL
-// and compiled at runtime by Metal; no offline .metallib build step. This
-// is macOS/iOS-only (Metal backend only) - fine for a prototype, would need
-// SPIR-V/DXIL variants to run elsewhere.
-//
-// Fullscreen triangle is generated in the vertex shader from vertex_id, so
-// no vertex buffer is needed.
+/* MSL source is handed to SDL_CreateGPUShader() as SDL_GPU_SHADERFORMAT_MSL
+ * and compiled at runtime by Metal; no offline .metallib build step. This
+ * is macOS/iOS-only (Metal backend only) - fine for a prototype, would need
+ * SPIR-V/DXIL variants to run elsewhere.
+ *
+ * Fullscreen triangle is generated in the vertex shader from vertex_id, so
+ * no vertex buffer is needed.
+ */
 static const char *const chq_crt_vertex_msl =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
@@ -40,20 +41,21 @@ static const char *const chq_crt_vertex_msl =
     "  return out;\n"
     "}\n";
 
-// Port of a reference Three.js/GLSL CRTShader. Its uniforms (curvature,
-// bloom threshold/intensity, brightness/contrast/saturation, scanline
-// count/intensity, adaptive intensity, vignette strength) are hardcoded
-// below rather than plumbed through as tunable uniforms - none of them
-// change at runtime in this game; the constants have been re-tuned by eye
-// against this game's screen and no longer match the reference's own
-// defaults.
-// The reference's rgbShift channel-separation effect is dropped - it
-// defaults to 0.0 (a no-op in the source shader too). Its time-driven
-// flicker is kept, folded into the `glitch` knob along with an occasional
-// single-scanline tear; both are driven by the `time` field the renderer
-// fills in each frame.
-// Must match chq_CRT_params_t in CRTShader.h field-for-field: plain floats,
-// same order, no padding.
+/* Port of a reference Three.js/GLSL CRTShader. Its uniforms (curvature,
+ * bloom threshold/intensity, brightness/contrast/saturation, scanline
+ * count/intensity, adaptive intensity, vignette strength) are hardcoded
+ * below rather than plumbed through as tunable uniforms - none of them
+ * change at runtime in this game; the constants have been re-tuned by eye
+ * against this game's screen and no longer match the reference's own
+ * defaults.
+ * The reference's rgbShift channel-separation effect is dropped - it
+ * defaults to 0.0 (a no-op in the source shader too). Its time-driven
+ * flicker is kept, folded into the `glitch` knob along with an occasional
+ * single-scanline tear; both are driven by the `time` field the renderer
+ * fills in each frame.
+ * Must match chq_CRT_params_t in CRTShader.h field-for-field: plain floats,
+ * same order, no padding.
+ */
 static const char *const chq_crt_fragment_msl =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
@@ -71,8 +73,9 @@ static const char *const chq_crt_fragment_msl =
     "  float glitch;\n"
     "  float time;\n"
     "};\n"
-    // Cheap hash: fract(sin(x) * large). Good enough for flicker and tear
-    // seeds; no noise texture or per-frame random uniform needed.
+    /* Cheap hash: fract(sin(x) * large). Good enough for flicker and tear
+     * seeds; no noise texture or per-frame random uniform needed.
+     */
     "static inline float chq_hash(float x) {\n"
     "  return fract(sin(x * 12.9898) * 43758.5453);\n"
     "}\n"
@@ -84,26 +87,29 @@ static const char *const chq_crt_fragment_msl =
     "  float2 coord = in.uv * 2.0 - 1.0;\n"
     "  coord *= 1.0 + dot(coord, coord) * p.curvature;\n"
     "  float2 uv = coord * 0.5 + 0.5;\n"
-    // Line tear: seed each source scanline separately, reseed at the Spectrum's
-    // 50Hz frame rate and shift the lines whose seed clears the threshold.
-    // step(0.9) picks roughly one line in ten, and picks a different ten every
-    // frame, so no torn line survives into the next.
+    /* Line tear: seed each source scanline separately, reseed at the Spectrum's
+     * 50Hz frame rate and shift the lines whose seed clears the threshold.
+     * step(0.9) picks roughly one line in ten, and picks a different ten every
+     * frame, so no torn line survives into the next.
+     */
     "  float band = floor(uv.y * float(tex.get_height()));\n"
     "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
     "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
     "          step(0.9, seed);\n"
-    // Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
-    // which otherwise aliases into a jagged edge along the curvature.
+    /* Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
+     * which otherwise aliases into a jagged edge along the curvature.
+     */
     "  float2 edge = smoothstep(float2(0.0), float2(0.005), uv) *\n"
     "                smoothstep(float2(0.0), float2(0.005), 1.0 - uv);\n"
     "  float edgeMask = edge.x * edge.y;\n"
     "  float2 uvc = clamp(uv, 0.0, 1.0);\n"
     "  float2 texel = float2(1.0 / 256.0, 1.0 / 192.0);\n"
     "  float4 c = tex.sample(samp, uvc);\n"
-    // PAL colour bleed: chroma was broadcast at a fraction of the luma
-    // bandwidth, so colour smears horizontally while edges stay sharp. Four
-    // taps to the left with decaying weights - the decoder lags the signal, so
-    // the smear trails to the right. Luma is taken from the centre tap only.
+    /* PAL colour bleed: chroma was broadcast at a fraction of the luma
+     * bandwidth, so colour smears horizontally while edges stay sharp. Four
+     * taps to the left with decaying weights - the decoder lags the signal, so
+     * the smear trails to the right. Luma is taken from the centre tap only.
+     */
     "  float3 W = float3(0.299, 0.587, 0.114);\n"
     "  float3 bleed = c.rgb * 0.4;\n"
     "  bleed += tex.sample(samp, clamp(uvc - float2(texel.x, 0.0), 0.0, "
@@ -136,8 +142,9 @@ static const char *const chq_crt_fragment_msl =
     "  c.rgb += bloom * p.bloomIntensity;\n"
     // brightness / contrast / saturation.
     "  c.rgb = (c.rgb - 0.5) * p.contrast + 0.5;\n"
-    // Mains flicker: brightness wobble reseeded 50 times a second, the rate an
-    // unsynchronised 50Hz display would beat at.
+    /* Mains flicker: brightness wobble reseeded 50 times a second, the rate an
+     * unsynchronised 50Hz display would beat at.
+     */
     "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
     "                        0.06 * p.glitch;\n"
     "  c.rgb *= p.brightness * flicker;\n"
@@ -213,9 +220,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
     return 0;
   }
 
-  // Linear filtering: the CRT shader (curvature, bloom, scanlines) reads
-  // this softer look as part of the effect rather than the crisp pixels
-  // nearest-neighbour gave the plain blit.
+  /* Linear filtering: the CRT shader (curvature, bloom, scanlines) reads
+   * this softer look as part of the effect rather than the crisp pixels
+   * nearest-neighbour gave the plain blit.
+   */
   memset(&sampler_info, 0, sizeof(sampler_info));
   sampler_info.min_filter     = SDL_GPU_FILTER_LINEAR;
   sampler_info.mag_filter     = SDL_GPU_FILTER_LINEAR;
@@ -271,9 +279,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
 
   shader->pipeline = SDL_CreateGPUGraphicsPipeline(shader->gpu, &pipeline_info);
 
-  // Conv: pipelines don't retain the shader modules internally past this
-  // call, so these can be released immediately rather than kept alive for
-  // the lifetime of the app.
+  /* Conv: pipelines don't retain the shader modules internally past this
+   * call, so these can be released immediately rather than kept alive for
+   * the lifetime of the app.
+   */
   SDL_ReleaseGPUShader(shader->gpu, vertex_shader);
   SDL_ReleaseGPUShader(shader->gpu, fragment_shader);
 
@@ -310,8 +319,9 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   SDL_GPUTextureSamplerBinding tex_binding;
   chq_CRT_params_t             frame_params;
 
-  // Conv: the caller owns the tunable knobs but not the clock, so the time
-  // the flicker and tear run off is filled in here, on a copy.
+  /* Conv: the caller owns the tunable knobs but not the clock, so the time
+   * the flicker and tear run off is filled in here, on a copy.
+   */
   frame_params      = *params;
   frame_params.time = SDL_GetTicks() * 0.001f;
 

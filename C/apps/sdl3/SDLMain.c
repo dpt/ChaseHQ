@@ -40,8 +40,9 @@
 
 // -----------------------------------------------------------------------------
 
-// Configuration
-//
+/* Configuration
+ *
+ */
 #define GAMEWIDTH          (256)
 #define GAMEHEIGHT         (192)
 #define BORDER              (16)
@@ -60,16 +61,17 @@
 #define VOLUME_MAX         (100)
 #define VOLUME_STEP         (10)
 
-// Whether the CRT post-effect starts switched on. Both display backends are
-// always built: the plain SDL_Renderer blit (any GPU backend,
-// nearest-neighbour scaling) and the SDL3 GPU/Metal CRT post-effect pipeline
-// (Metal only). F4 switches between them at runtime, so this only chooses
-// which one comes up first. Override with -DCHQ_CRT_SHADER=1.
-//
-// They cannot both be live at once -- SDL_CreateRenderer and
-// SDL_ClaimWindowForGPUDevice each want the window's swapchain -- so
-// switching tears one down and builds the other. If the CRT backend will not
-// start (no Metal), chq_set_crt_enabled falls back to the plain renderer.
+/* Whether the CRT post-effect starts switched on. Both display backends are
+ * always built: the plain SDL_Renderer blit (any GPU backend,
+ * nearest-neighbour scaling) and the SDL3 GPU/Metal CRT post-effect pipeline
+ * (Metal only). F4 switches between them at runtime, so this only chooses
+ * which one comes up first. Override with -DCHQ_CRT_SHADER=1.
+ *
+ * They cannot both be live at once -- SDL_CreateRenderer and
+ * SDL_ClaimWindowForGPUDevice each want the window's swapchain -- so
+ * switching tears one down and builds the other. If the CRT backend will not
+ * start (no Metal), chq_set_crt_enabled falls back to the plain renderer.
+ */
 #ifndef CHQ_CRT_SHADER
 #define CHQ_CRT_SHADER       (0)
 #endif
@@ -84,20 +86,22 @@
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
 
-// Sampled speech drives the AY DAC by writing a new volume-register value
-// every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
-// PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
-// so a naive "read the current register value" approach loses every write
-// that happened between bursts. Instead, register writes are queued here
-// with a timestamp and replayed one sample at a time against a matching
-// virtual audio clock (see chq_apply_due_audio_events), so the reconstructed
-// waveform reflects the write history rather than a single stale snapshot.
-// The same queue carries 48K beeper level changes, timestamped from the
-// game's virtual T-state clock (see chq_speaker_handler).
+/* Sampled speech drives the AY DAC by writing a new volume-register value
+ * every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
+ * PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
+ * so a naive "read the current register value" approach loses every write
+ * that happened between bursts. Instead, register writes are queued here
+ * with a timestamp and replayed one sample at a time against a matching
+ * virtual audio clock (see chq_apply_due_audio_events), so the reconstructed
+ * waveform reflects the write history rather than a single stale snapshot.
+ * The same queue carries 48K beeper level changes, timestamped from the
+ * game's virtual T-state clock (see chq_speaker_handler).
+ */
 #define AY_QUEUE_CAPACITY (16384) // ~1.9s of nibble writes at ~8.4KHz; ample headroom
 
-// Replay cursor anchor cushion; see the replay cursor comment in
-// chq_sdl_state_t.
+/* Replay cursor anchor cushion; see the replay cursor comment in
+ * chq_sdl_state_t.
+ */
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
 
 // -----------------------------------------------------------------------------
@@ -153,45 +157,49 @@ typedef struct
   slopay_chip_t     *ay;
   slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
 
-  // Timestamped audio event queue (AY register writes and beeper level
-  // changes): game thread produces, audio thread consumes. audio_queue_mutex
-  // guards head/tail and the slots between them.
+  /* Timestamped audio event queue (AY register writes and beeper level
+   * changes): game thread produces, audio thread consumes. audio_queue_mutex
+   * guards head/tail and the slots between them.
+   */
   SDL_Mutex         *audio_queue_mutex;
   chq_audio_event_t  audio_queue[AY_QUEUE_CAPACITY];
   int                audio_queue_head;
   int                audio_queue_tail;
 
-  // Speaker (beeper) state. The anchor maps the facade's virtual T-state
-  // clock onto wall-clock ns: within a burst of toggles wall time barely
-  // advances, so event times extrapolate from the anchor at the T-state
-  // rate; when the T-state clock falls behind the wall clock a new burst
-  // has begun and the anchor resets. Game thread only.
+  /* Speaker (beeper) state. The anchor maps the facade's virtual T-state
+   * clock onto wall-clock ns: within a burst of toggles wall time barely
+   * advances, so event times extrapolate from the anchor at the T-state
+   * rate; when the T-state clock falls behind the wall clock a new burst
+   * has begun and the anchor resets. Game thread only.
+   */
   Uint64             speaker_anchor_ns;
   Uint64             speaker_anchor_tstates;
   int                speaker_last_level; // last queued level (game thread)
   int                speaker_level;      // current replay level (audio thread)
 
-  // Replay cursor: maps generated samples onto event timestamps. The wall
-  // clock and the audio device's sample clock drift apart (measured ~1.4ms/s
-  // here), so event times are never compared against a wall-clock-anchored
-  // sample time. Instead, whenever the queue runs dry the cursor re-anchors
-  // to the next event's timestamp minus AY_REPLAY_CUSHION_NS, then advances
-  // by exactly one sample period per generated sample. Spacing within a
-  // burst is preserved regardless of drift and every gap in the sound
-  // re-syncs the two clocks. The cushion (extra output latency) absorbs
-  // consumer-fast drift so a continuous stream (a speech sample) does not
-  // starve mid-burst: at the measured drift, 30ms lasts ~21s of continuous
-  // writes and speech samples are only ~1-2s long.
+  /* Replay cursor: maps generated samples onto event timestamps. The wall
+   * clock and the audio device's sample clock drift apart (measured ~1.4ms/s
+   * here), so event times are never compared against a wall-clock-anchored
+   * sample time. Instead, whenever the queue runs dry the cursor re-anchors
+   * to the next event's timestamp minus AY_REPLAY_CUSHION_NS, then advances
+   * by exactly one sample period per generated sample. Spacing within a
+   * burst is preserved regardless of drift and every gap in the sound
+   * re-syncs the two clocks. The cushion (extra output latency) absorbs
+   * consumer-fast drift so a continuous stream (a speech sample) does not
+   * starve mid-burst: at the measured drift, 30ms lasts ~21s of continuous
+   * writes and speech samples are only ~1-2s long.
+   */
   Uint64             samples_played;
   Uint64             replay_anchor_ns;     // event time at the last anchor
   Uint64             replay_anchor_sample; // samples_played at the last anchor
   int                replay_anchored;      // bool; cleared when queue runs dry
   int                audio_muted;          // bool; mute sound if true
 
-  // Dirty-rect overlay: the game (thread) reports each screen region it
-  // refreshes via chq_draw_handler; we stash them here and outline them over
-  // the rendered frame so refreshed regions are visible on screen. Cleared
-  // once drawn. dirty_mutex guards all fields in this group.
+  /* Dirty-rect overlay: the game (thread) reports each screen region it
+   * refreshes via chq_draw_handler; we stash them here and outline them over
+   * the rendered frame so refreshed regions are visible on screen. Cleared
+   * once drawn. dirty_mutex guards all fields in this group.
+   */
   SDL_Mutex         *dirty_mutex;
   zxbox_t            dirty_rects[MAXDIRTYRECTS];
   int                dirty_count;
@@ -200,9 +208,10 @@ typedef struct
 
   SDL_Window        *window;
 
-  // Display backend. Exactly one of these is live at a time, selected by
-  // crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
-  // renderer/texture when not. The other's handles are NULL.
+  /* Display backend. Exactly one of these is live at a time, selected by
+   * crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
+   * renderer/texture when not. The other's handles are NULL.
+   */
   int                crt_enabled; // bool; toggled with F4
   chq_CRT_shader_t   crt;
   chq_CRT_params_t   crt_params;
@@ -217,8 +226,9 @@ chq_sdl_state_t;
 
 /* ----------------------------------------------------------------------- */
 
-// The title bar doubles as the status display for the F-key controls: the
-// game itself has nowhere to show them.
+/* The title bar doubles as the status display for the F-key controls: the
+ * game itself has nowhere to show them.
+ */
 static void chq_update_window_title(const chq_sdl_state_t *state)
 {
   char title[64];
@@ -237,10 +247,11 @@ static void chq_draw_handler(const zxbox_t *dirty,
 {
   chq_sdl_state_t *state = opaque;
 
-  // SDL_UpdateTexture must be called from the main thread (Metal requirement).
-  // The main loop picks up changes via zxspectrum_claim_screen. Here we only
-  // stash the dirty region (game thread) for the main loop to outline once it
-  // renders the frame.
+  /* SDL_UpdateTexture must be called from the main thread (Metal requirement).
+   * The main loop picks up changes via zxspectrum_claim_screen. Here we only
+   * stash the dirty region (game thread) for the main loop to outline once it
+   * renders the frame.
+   */
   SDL_LockMutex(state->dirty_mutex);
   if (dirty == NULL)
     state->dirty_full_screen = 1;
@@ -290,8 +301,9 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
   }
   else
   {
-    // A Spectrum 48K has 69,888 T-states per frame and its Z80 runs at
-    // 3.5MHz (~50Hz) for a total of 3,500,000 T-states per second.
+    /* A Spectrum 48K has 69,888 T-states per frame and its Z80 runs at
+     * 3.5MHz (~50Hz) for a total of 3,500,000 T-states per second.
+     */
     const double          tstatesPerSec = 3.5e6;
 
     struct timeval        now;
@@ -303,8 +315,9 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
     gettimeofday(&now, NULL); // get time now before anything else
 
     {
-      // 'duration' tells us how long the operation should take since the previous mark call.
-      // Turn T-state duration into seconds
+      /* 'duration' tells us how long the operation should take since the previous mark call.
+       * Turn T-state duration into seconds
+       */
       duration = durationTStates / tstatesPerSec;
       // Adjust the game speed: higher speed -> shorter sleep
       duration = duration * 100 / state->speed;
@@ -385,8 +398,9 @@ static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 
   state->speaker_last_level = on_off;
 
-  // Map the game's virtual T-state clock onto wall time (see the speaker
-  // state comment in chq_sdl_state_t). 1 T-state = 1e9/3.5e6 = 2000/7 ns.
+  /* Map the game's virtual T-state clock onto wall time (see the speaker
+   * state comment in chq_sdl_state_t). 1 T-state = 1e9/3.5e6 = 2000/7 ns.
+   */
   now_ns   = SDL_GetTicksNS();
   event_ns = state->speaker_anchor_ns +
              (tstates - state->speaker_anchor_tstates) * 2000 / 7;
@@ -406,15 +420,17 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 
   if (port == port_AY_REGISTER)
   {
-    // Register select: only ever touched from the game thread, immediately
-    // followed by the paired data write below, so no queuing needed here.
+    /* Register select: only ever touched from the game thread, immediately
+     * followed by the paired data write below, so no queuing needed here.
+     */
     state->ay_latched_reg = byte;
     return;
   }
 
-  // port_AY_DATA: queue the write with a timestamp instead of applying it
-  // immediately, so chq_audio_callback can replay it at the right sample
-  // position (see the AY_QUEUE_CAPACITY comment above).
+  /* port_AY_DATA: queue the write with a timestamp instead of applying it
+   * immediately, so chq_audio_callback can replay it at the right sample
+   * position (see the AY_QUEUE_CAPACITY comment above).
+   */
   chq_audio_queue_push(state,
                        SDL_GetTicksNS(),
                        CHQ_AUDIO_EVENT_AY,
@@ -422,20 +438,21 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
                        byte);
 }
 
-// Applies any queued audio events (AY register writes and beeper level
-// changes) due within the current output sample's period, and returns the
-// beeper contribution for that sample. Called once per generated sample
-// from chq_audio_callback so rapid writes (e.g. sampled speech) land on the
-// correct output sample rather than all being collapsed into whichever
-// value was current when the audio callback happened to run. See the replay
-// cursor comment in chq_sdl_state_t for how clock drift is handled.
-//
-// Beeper level changes can arrive faster than the sample rate (the 48K
-// engine tone toggles every ~60 T-states, under one 44.1kHz sample), so
-// sampling the instantaneous level would alias or silence them entirely.
-// Instead the level is integrated over the sample period (a box filter):
-// the returned value is BEEPER_AMPLITUDE scaled by the fraction of the
-// period the speaker spent high.
+/* Applies any queued audio events (AY register writes and beeper level
+ * changes) due within the current output sample's period, and returns the
+ * beeper contribution for that sample. Called once per generated sample
+ * from chq_audio_callback so rapid writes (e.g. sampled speech) land on the
+ * correct output sample rather than all being collapsed into whichever
+ * value was current when the audio callback happened to run. See the replay
+ * cursor comment in chq_sdl_state_t for how clock drift is handled.
+ *
+ * Beeper level changes can arrive faster than the sample rate (the 48K
+ * engine tone toggles every ~60 T-states, under one 44.1kHz sample), so
+ * sampling the instantaneous level would alias or silence them entirely.
+ * Instead the level is integrated over the sample period (a box filter):
+ * the returned value is BEEPER_AMPLITUDE scaled by the fraction of the
+ * period the speaker spent high.
+ */
 static int chq_apply_due_audio_events(chq_sdl_state_t *state)
 {
   Uint64 start_ns; // sample period start on the replay cursor timeline
@@ -459,8 +476,9 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
     {
       Uint64 head_time_ns = state->audio_queue[state->audio_queue_head].time_ns;
 
-      // SDL_GetTicksNS() starts near zero, so guard the cushion subtraction
-      // against underflow for writes made just after launch.
+      /* SDL_GetTicksNS() starts near zero, so guard the cushion subtraction
+       * against underflow for writes made just after launch.
+       */
       state->replay_anchor_ns =
         (head_time_ns > AY_REPLAY_CUSHION_NS) ?
           head_time_ns - AY_REPLAY_CUSHION_NS : 0;
@@ -468,8 +486,9 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
       state->replay_anchored = 1;
     }
 
-    // Computed fresh from the anchor rather than accumulated, so truncation
-    // never drifts the cursor away from the sample count.
+    /* Computed fresh from the anchor rather than accumulated, so truncation
+     * never drifts the cursor away from the sample count.
+     */
     start_ns = state->replay_anchor_ns +
                ((state->samples_played - state->replay_anchor_sample) *
                 1000000000ULL) / AY_SAMPLE_RATE;
@@ -585,11 +604,12 @@ static int chq_game_thread(void *opaque)
   return 0;
 }
 
-// CRT shader tuning knobs, cycled with TAB (Shift-TAB steps backwards) and
-// adjusted with PAGEUP/PAGEDOWN (see chq_sdl_key_pressed).
-//
-// [offset] indexes into chq_CRT_params_t so one table drives all the controls
-// instead of one keybinding per field.
+/* CRT shader tuning knobs, cycled with TAB (Shift-TAB steps backwards) and
+ * adjusted with PAGEUP/PAGEDOWN (see chq_sdl_key_pressed).
+ *
+ * [offset] indexes into chq_CRT_params_t so one table drives all the controls
+ * instead of one keybinding per field.
+ */
 typedef struct
 {
   const char *name;
@@ -625,8 +645,9 @@ static float *chq_crt_param_field(chq_CRT_params_t           *params,
 
 /* ----------------------------------------------------------------------- */
 
-// Display backend setup. Only one backend may hold the window at a time, so
-// each of these tears its own down completely before the other is built.
+/* Display backend setup. Only one backend may hold the window at a time, so
+ * each of these tears its own down completely before the other is built.
+ */
 
 static void chq_renderer_destroy(chq_sdl_state_t *state)
 {
@@ -644,9 +665,10 @@ static void chq_renderer_destroy(chq_sdl_state_t *state)
 
 static int chq_renderer_create(chq_sdl_state_t *state)
 {
-  // Every failure below tears down what it got so far, so the caller can
-  // read "renderer == NULL" as "no plain renderer" without having to know
-  // how far this got.
+  /* Every failure below tears down what it got so far, so the caller can
+   * read "renderer == NULL" as "no plain renderer" without having to know
+   * how far this got.
+   */
   state->renderer = SDL_CreateRenderer(state->window, NULL);
   if (state->renderer == NULL)
   {
@@ -656,11 +678,12 @@ static int chq_renderer_create(chq_sdl_state_t *state)
 
   SDL_SetRenderVSync(state->renderer, 1);
 
-  // The screen buffer is always converted with R in the lowest memory byte
-  // (zxconfig.bgr_pixels below), because that is what the CRT backend's
-  // R8G8B8A8 GPU texture requires and the backend can change at any time.
-  // SDL_PIXELFORMAT_ABGR8888 is the same order for this texture; SDL
-  // converts on upload if the renderer would rather have something else.
+  /* The screen buffer is always converted with R in the lowest memory byte
+   * (zxconfig.bgr_pixels below), because that is what the CRT backend's
+   * R8G8B8A8 GPU texture requires and the backend can change at any time.
+   * SDL_PIXELFORMAT_ABGR8888 is the same order for this texture; SDL
+   * converts on upload if the renderer would rather have something else.
+   */
   state->texture = SDL_CreateTexture(state->renderer,
                                      SDL_PIXELFORMAT_ABGR8888,
                                      SDL_TEXTUREACCESS_STREAMING,
@@ -679,16 +702,18 @@ static int chq_renderer_create(chq_sdl_state_t *state)
     return 0;
   }
 
-  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
-  // is scaled up; SDL3's default is linear, which blurs them.
+  /* Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
+   * is scaled up; SDL3's default is linear, which blurs them.
+   */
   SDL_SetTextureScaleMode(state->texture, SDL_SCALEMODE_NEAREST);
 
   return 1;
 }
 
-// Switches the display backend. Returns 1 if the requested backend is now
-// live, 0 if it could not be created and the other one was restored instead
-// (the CRT backend needs Metal, so this is the normal result elsewhere).
+/* Switches the display backend. Returns 1 if the requested backend is now
+ * live, 0 if it could not be created and the other one was restored instead
+ * (the CRT backend needs Metal, so this is the normal result elsewhere).
+ */
 static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 {
   if (enable == state->crt_enabled &&
@@ -706,10 +731,11 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
       return 1;
     }
 
-    // chq_CRT_shader_create zeroes the struct before it starts, so a NULL
-    // device means it failed on the very first step and there is nothing to
-    // release; anything later leaves a device that must be given back before
-    // the plain renderer can claim the window.
+    /* chq_CRT_shader_create zeroes the struct before it starts, so a NULL
+     * device means it failed on the very first step and there is nothing to
+     * release; anything later leaves a device that must be given back before
+     * the plain renderer can claim the window.
+     */
     if (state->crt.gpu != NULL)
       chq_CRT_shader_destroy(&state->crt, state->window);
     memset(&state->crt, 0, sizeof(state->crt));
@@ -834,8 +860,9 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     }
     return;
 
-  // The shader tuning keys only belong to the shader. With the plain
-  // renderer up they fall through to the game like any other key.
+  /* The shader tuning keys only belong to the shader. With the plain
+   * renderer up they fall through to the game like any other key.
+   */
   case SDLK_TAB:
     if (state->crt_enabled)
     {
@@ -844,9 +871,10 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
         const chq_crt_param_desc_t *desc;
         int                         step;
 
-        // Shift-TAB steps backwards. Adding COUNT keeps the modulus
-        // operand positive, since C's % on a negative left operand would
-        // give -1 rather than the last index.
+        /* Shift-TAB steps backwards. Adding COUNT keeps the modulus
+         * operand positive, since C's % on a negative left operand would
+         * give -1 rather than the last index.
+         */
         step = (k->mod & SDL_KMOD_SHIFT) ? CHQ_CRT_PARAM_COUNT - 1 : 1;
 
         state->crt_param_index = (state->crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
@@ -920,18 +948,20 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   }
 }
 
-// Outlines the screen regions chq_draw_handler reported dirty since the last
-// frame, so refreshed areas are visible over the rendered texture. Rects are
-// in game pixel space (256x192, bottom-left origin); (x, y) is the top-left
-// of the game view within the window, already scaled.
-//
-// Called every frame whichever backend is up, because it also drains the
-// list the game thread keeps filling. Only the plain renderer can draw it;
-// under the CRT shader it just empties the list and returns.
+/* Outlines the screen regions chq_draw_handler reported dirty since the last
+ * frame, so refreshed areas are visible over the rendered texture. Rects are
+ * in game pixel space (256x192, bottom-left origin); (x, y) is the top-left
+ * of the game view within the window, already scaled.
+ *
+ * Called every frame whichever backend is up, because it also drains the
+ * list the game thread keeps filling. Only the plain renderer can draw it;
+ * under the CRT shader it just empties the list and returns.
+ */
 #define DIRTYOVERLAY_THICKNESS (8) // outline thickness in window pixels
 
-// Draws 'rect' as a filled-in outline DIRTYOVERLAY_THICKNESS pixels thick by
-// insetting and stroking it repeatedly (SDL_RenderRect has no line-width).
+/* Draws 'rect' as a filled-in outline DIRTYOVERLAY_THICKNESS pixels thick by
+ * insetting and stroking it repeatedly (SDL_RenderRect has no line-width).
+ */
 static void chq_render_thick_rect(SDL_Renderer *renderer, const SDL_FRect *rect)
 {
   int i;
@@ -1137,8 +1167,9 @@ int main(int argc, char *argv[])
   state.crt_param_index = 0;
 
 #ifdef __APPLE__
-  // Conv: disable macOS press-and-hold accent popover so held keys repeat
-  // instead of opening the accent picker.
+  /* Conv: disable macOS press-and-hold accent popover so held keys repeat
+   * instead of opening the accent picker.
+   */
   CFPreferencesSetAppValue(CFSTR("ApplePressAndHoldEnabled"),
                             kCFBooleanFalse,
                             kCFPreferencesCurrentApplication);
@@ -1165,18 +1196,19 @@ int main(int argc, char *argv[])
 
   chq_update_window_title(&state);
 
-  // The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
-  // lowest memory byte), which is what Screen.c's palette_abgr table packs
-  // when bgr_pixels is true - despite the name, "bgr_pixels" selects which
-  // palette table to use, not which byte order it produces. See the
-  // 0x00RRGGBB/0x00BBGGRR comments in Screen.c.
-  //
-  // Conv: this is fixed rather than matched to the renderer's preferred
-  // format, as it was when the backend was chosen at compile time. The
-  // backend can now change at any keypress but the conversion palette is
-  // picked once, so both backends have to agree; the CRT one cannot bend, so
-  // the plain renderer takes an ABGR8888 texture to suit (see
-  // chq_renderer_create).
+  /* The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
+   * lowest memory byte), which is what Screen.c's palette_abgr table packs
+   * when bgr_pixels is true - despite the name, "bgr_pixels" selects which
+   * palette table to use, not which byte order it produces. See the
+   * 0x00RRGGBB/0x00BBGGRR comments in Screen.c.
+   *
+   * Conv: this is fixed rather than matched to the renderer's preferred
+   * format, as it was when the backend was chosen at compile time. The
+   * backend can now change at any keypress but the conversion palette is
+   * picked once, so both backends have to agree; the CRT one cannot bend, so
+   * the plain renderer takes an ABGR8888 texture to suit (see
+   * chq_renderer_create).
+   */
   zxconfig.width      = GAMEWIDTH / 8;
   zxconfig.height     = GAMEHEIGHT / 8;
   zxconfig.opaque     = &state;
@@ -1211,12 +1243,13 @@ int main(int argc, char *argv[])
     goto failure;
   }
 
-  // Conv: force mono output. The chip defaults to ABC stereo separation
-  // (left = A+B, right = B+C), which sounds right-heavy or left-heavy
-  // depending on which channels a given tune favours; we don't know whether
-  // this game's music assumes ABC, ACB, or no separation at all, so mono
-  // sidesteps the question. Volume is turned down from the chip's own
-  // default (10%) as three channels plus envelope can otherwise clip loud.
+  /* Conv: force mono output. The chip defaults to ABC stereo separation
+   * (left = A+B, right = B+C), which sounds right-heavy or left-heavy
+   * depending on which channels a given tune favours; we don't know whether
+   * this game's music assumes ABC, ACB, or no separation at all, so mono
+   * sidesteps the question. Volume is turned down from the chip's own
+   * default (10%) as three channels plus envelope can otherwise clip loud.
+   */
   slopay_chip_set_stereo_mode(state.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
   slopay_chip_set_volume(state.ay, AY_VOLUME_PCT);
 
@@ -1240,9 +1273,10 @@ int main(int argc, char *argv[])
     SDL_ResumeAudioStreamDevice(state.audio_stream);
   }
 
-  // Bring up the starting backend. A CRT request that cannot be met falls
-  // back to the plain renderer rather than failing to start; only losing
-  // both is fatal.
+  /* Bring up the starting backend. A CRT request that cannot be met falls
+   * back to the plain renderer rather than failing to start; only losing
+   * both is fatal.
+   */
   chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
   if (!state.crt_enabled && state.renderer == NULL)
     goto failure;
@@ -1284,9 +1318,10 @@ int main(int argc, char *argv[])
 
   SDL_Quit();
 #else
-  // Give the game thread 500ms to exit cleanly, then bail out. A hung game
-  // thread (translation bug in an inner loop that never calls sleep) would
-  // block SDL_WaitThread indefinitely.
+  /* Give the game thread 500ms to exit cleanly, then bail out. A hung game
+   * thread (translation bug in an inner loop that never calls sleep) would
+   * block SDL_WaitThread indefinitely.
+   */
   SDL_DetachThread(state.game_thread);
   usleep(500000);
 #endif

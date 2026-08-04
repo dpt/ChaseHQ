@@ -198,14 +198,15 @@ void zxscreen_convert(const void    *vscr,
 
 
 
-// flash  = (attr & (1 << 7)) != 0;
-// bright = (attr & (1 << 6)) != 0;
-// paper  = (attr & (7 << 3)) >> 3;
-// ink    = (attr & (7 << 0)) >> 0;
-//
-// for (attr = 0..127)
-//   tab[i] = ((bright * 8 + ink)   << 0) |
-//            ((bright * 8 + paper) << 4);
+/* flash  = (attr & (1 << 7)) != 0;
+ * bright = (attr & (1 << 6)) != 0;
+ * paper  = (attr & (7 << 3)) >> 3;
+ * ink    = (attr & (7 << 0)) >> 0;
+ *
+ * for (attr = 0..127)
+ *   tab[i] = ((bright * 8 + ink)   << 0) |
+ *            ((bright * 8 + paper) << 4);
+ */
 
 // Extract attribute colour and fold in bright flag
 #define ATTR(v,s) ((((v) & (1 << 6)) >> 3) + (((v) >> s) & 7))
@@ -230,8 +231,9 @@ static const unsigned int pixels8tab[128 * 2] =
   E64(0) E64(64)
 };
 
-// Convert an 8-bit pixel into a 32-bit mask with a 0x0 or 0xF nibble for
-// each input bit (also includes a byte flip).
+/* Convert an 8-bit pixel into a 32-bit mask with a 0x0 or 0xF nibble for
+ * each input bit (also includes a byte flip).
+ */
 static const unsigned int mask8tab[256] =
 {
   0x00000000,
