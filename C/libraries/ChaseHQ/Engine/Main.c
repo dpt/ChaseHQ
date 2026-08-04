@@ -132,47 +132,41 @@
 
 /* Pointer validators */
 
-/** Return if ptr is within the screen bitmap, extended by left/right bytes. */
-#define VALID_SCREEN_LR(ptr, left, right) \
-((ptr) >= &state->speccy->screen.pixels[0] - (left) && (ptr) < &state->speccy->screen.pixels[SCREEN_BITMAP_LENGTH] + (right))
+/** Return if ptr is within the screen bitmap. */
+#define VALID_SCREEN_PTR(ptr) \
+((ptr) >= &state->speccy->screen.pixels[0] && (ptr) < &state->speccy->screen.pixels[SCREEN_BITMAP_LENGTH])
 
-/** Return if ptr is within the screen attributes, extended by left/right bytes. */
-#define VALID_ATTRS_LR(ptr, left, right) \
-((ptr) >= &state->speccy->screen.attributes[0] - (left) && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH] + (right))
+/** Return if ptr is within the screen attributes. */
+#define VALID_ATTRS_PTR(ptr) \
+((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
 
-/** Return if ptr is within the backbuffer, extended by left/right bytes. */
-#define VALID_BACKBUF_PTR_LR(ptr, left, right) \
-((ptr) >= &state->backbuffer[-left] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH + right])
-
-#define VALID_SCREEN_PTR(ptr)  VALID_SCREEN_LR(ptr, 0, 0)
-#define VALID_ATTRS_PTR(ptr)   VALID_ATTRS_LR(ptr, 0, 0)
-#define VALID_BACKBUF_PTR(ptr) VALID_BACKBUF_PTR_LR(ptr, 0, 0)
+/** Return if ptr is within the backbuffer. */
+#define VALID_BACKBUF_PTR(ptr) \
+((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
 
 /* Address validators */
 
-/** Return if addr is within the screen bitmap address range, extended by left/right. */
-#define VALID_SCREEN_ADDR_LR(addr, left, right) \
-((addr) >= SCREEN_START_ADDRESS - (left) && (addr) < SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH + (right))
+/** Return if addr is within the screen bitmap address range. */
+#define VALID_SCREEN_ADDR(addr) \
+((addr) >= SCREEN_START_ADDRESS && (addr) < SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH)
 
-/** Return if addr is within the screen attributes address range, extended by left/right. */
-#define VALID_ATTRS_ADDR_LR(addr, left, right) \
-((addr) >= SCREEN_ATTRIBUTES_START_ADDRESS - (left) && (addr) < SCREEN_ATTRIBUTES_START_ADDRESS + SCREEN_ATTRIBUTES_LENGTH + (right))
+/** Return if addr is within the screen attributes address range. */
+#define VALID_ATTRS_ADDR(addr) \
+((addr) >= SCREEN_ATTRIBUTES_START_ADDRESS && (addr) < SCREEN_ATTRIBUTES_START_ADDRESS + SCREEN_ATTRIBUTES_LENGTH)
 
-/** Return if addr is within the backbuffer address range, extended by left/right. */
-#define VALID_BACKBUF_ADDR_LR(addr, left, right) \
-((addr) >= BACKBUFFER_START_ADDRESS - (left) && (addr) < BACKBUFFER_END_ADDRESS + (right))
-
-#define VALID_BACKBUF_ADDR(addr) VALID_BACKBUF_ADDR_LR(addr, 0, 0)
+/** Return if addr is within the backbuffer address range. */
+#define VALID_BACKBUF_ADDR(addr) \
+((addr) >= BACKBUFFER_START_ADDRESS && (addr) < BACKBUFFER_END_ADDRESS)
 
 /* Offset validators */
 
-/** Return if off is a valid screen bitmap byte offset, extended by left/right. */
-#define VALID_SCREEN_OFFSET_LR(off, left, right) \
-((off) >= -(left) && (off) < SCREEN_BITMAP_LENGTH + (right))
+/** Return if off is a valid screen bitmap byte offset. */
+#define VALID_SCREEN_OFFSET(off) \
+((off) >= 0 && (off) < SCREEN_BITMAP_LENGTH)
 
-/** Return if off is a valid backbuffer byte offset, extended by left/right. */
-#define VALID_BACKBUF_OFFSET_LR(off, left, right) \
-((off) >= -(left) && (off) < BACKBUFFER_LENGTH + (right))
+/** Return if off is a valid backbuffer byte offset. */
+#define VALID_BACKBUF_OFFSET(off) \
+((off) >= 0 && (off) < BACKBUFFER_LENGTH)
 
 
 /* Address-to-pointer converters */
@@ -185,24 +179,22 @@
  * Return a screen bitmap pointer for a Z80 screen address.
  *
  * Conv: helper backing the ADDRTOSCREEN macro; not a Z80 routine, so there is
- *       no single originating address. Asserts the address (extended by [left]/
- *       [right]) is in range both before and after conversion.
+ *       no single originating address. Asserts the address is in range both
+ *       before and after conversion.
  *
  * \param[in] addr  Z80 screen bitmap address.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
  * \return          Screen bitmap pointer.
  */
-u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
+u8 *z80addrtoscreen(chqstate_t *state, int addr)
 {
   u8 *ptr;
-  assert(VALID_SCREEN_ADDR_LR(addr, left, right));
+  assert(VALID_SCREEN_ADDR(addr));
   ptr = ADDRTOSCREEN_M(addr);
-  assert(VALID_SCREEN_LR(ptr, left, right));
+  assert(VALID_SCREEN_PTR(ptr));
   return ptr;
 }
 
-#define ADDRTOSCREEN(addr)                 z80addrtoscreen(state, addr, 0, 0)
+#define ADDRTOSCREEN(addr)                 z80addrtoscreen(state, addr)
 
 /** Return attributes pointer given a Z80 address. */
 #define ADDRTOATTRS_M(addr) \
@@ -212,24 +204,22 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
  * Return a screen attributes pointer for a Z80 attributes address.
  *
  * Conv: helper backing the ADDRTOATTRS macro; not a Z80 routine, so there is no
- *       single originating address. Asserts the address (extended by [left]/
- *       [right]) is in range both before and after conversion.
+ *       single originating address. Asserts the address is in range both
+ *       before and after conversion.
  *
  * \param[in] addr  Z80 screen attributes address.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
  * \return          Screen attributes pointer.
  */
-u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
+u8 *z80addrtoattrs(chqstate_t *state, int addr)
 {
   u8 *ptr;
-  assert(VALID_ATTRS_ADDR_LR(addr, left, right));
+  assert(VALID_ATTRS_ADDR(addr));
   ptr = ADDRTOATTRS_M(addr);
-  assert(VALID_ATTRS_LR(ptr, left, right));
+  assert(VALID_ATTRS_PTR(ptr));
   return ptr;
 }
 
-#define ADDRTOATTRS(addr)                 z80addrtoattrs(state, addr, 0, 0)
+#define ADDRTOATTRS(addr)                 z80addrtoattrs(state, addr)
 
 /** Return backbuffer[] pointer given a Z80 address. */
 #define ADDRTOBACKBUF_M(addr) \
@@ -278,27 +268,22 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
  * Return the byte offset of a backbuffer[] pointer.
  *
  * Conv: helper backing the BACKBUFTOOFFSET macro; not a Z80 routine, so there
- *       is no single originating address. Asserts the pointer (extended by
- *       [left]/[right]) is in range both before and after conversion.
+ *       is no single originating address. Asserts the pointer is in range
+ *       both before and after conversion.
  *
- * \param[in] ptr   Backbuffer pointer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Byte offset into the backbuffer.
+ * \param[in] ptr Backbuffer pointer.
+ * \return        Byte offset into the backbuffer.
  */
-static int z80backbuftooffset(chqstate_t *state,
-                              const u8   *ptr,
-                              int         left,
-                              int         right)
+static int z80backbuftooffset(chqstate_t *state, const u8 *ptr)
 {
   int off;
-  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  assert(VALID_BACKBUF_PTR(ptr));
   off = BACKBUFTOOFFSET_M(ptr);
-  assert(VALID_BACKBUF_OFFSET_LR(off, left, right));
+  assert(VALID_BACKBUF_OFFSET(off));
   return off;
 }
 
-#define BACKBUFTOOFFSET(ptr)                 z80backbuftooffset(state, ptr, 0, 0)
+#define BACKBUFTOOFFSET(ptr)                 z80backbuftooffset(state, ptr)
 
 /* Pointer-to-address converters */
 
@@ -310,27 +295,22 @@ static int z80backbuftooffset(chqstate_t *state,
  * Return the Z80 address of a screen[] pointer.
  *
  * Conv: helper backing the SCREENTOADDR macro; not a Z80 routine, so there is
- *       no single originating address. Asserts the pointer (extended by
- *       [left]/[right]) is in range both before and after conversion.
+ *       no single originating address. Asserts the pointer is in range both
+ *       before and after conversion.
  *
- * \param[in] ptr   Screen bitmap pointer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Z80 screen bitmap address.
+ * \param[in] ptr Screen bitmap pointer.
+ * \return        Z80 screen bitmap address.
  */
-static int z80screentoaddr(chqstate_t *state,
-                           const u8   *ptr,
-                           int         left,
-                           int         right)
+static int z80screentoaddr(chqstate_t *state, const u8 *ptr)
 {
   int addr;
-  assert(VALID_SCREEN_LR(ptr, left, right));
+  assert(VALID_SCREEN_PTR(ptr));
   addr = SCREENTOADDR_M(ptr);
-  assert(VALID_SCREEN_ADDR_LR(addr, left, right));
+  assert(VALID_SCREEN_ADDR(addr));
   return addr;
 }
 
-#define SCREENTOADDR(ptr)                 z80screentoaddr(state, ptr, 0, 0)
+#define SCREENTOADDR(ptr)                 z80screentoaddr(state, ptr)
 
 /** Return a Z80 address of an attributes[] pointer. */
 #define ATTRSTOADDR_M(ptr) \
@@ -340,24 +320,22 @@ static int z80screentoaddr(chqstate_t *state,
  * Return the Z80 address of a screen attributes pointer.
  *
  * Conv: helper backing the ATTRSTOADDR macro; not a Z80 routine, so there is no
- *       single originating address. Asserts the pointer (extended by [left]/
- *       [right]) is in range both before and after conversion.
+ *       single originating address. Asserts the pointer is in range both
+ *       before and after conversion.
  *
- * \param[in] ptr   Screen attributes pointer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Z80 screen attributes address.
+ * \param[in] ptr Screen attributes pointer.
+ * \return        Z80 screen attributes address.
  */
-static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+static int z80attrstoaddr(chqstate_t *state, const u8 *ptr)
 {
   int addr;
-  assert(VALID_ATTRS_LR(ptr, left, right));
+  assert(VALID_ATTRS_PTR(ptr));
   addr = ATTRSTOADDR_M(ptr);
-  assert(VALID_ATTRS_ADDR_LR(addr, left, right));
+  assert(VALID_ATTRS_ADDR(addr));
   return addr;
 }
 
-#define ATTRSTOADDR(ptr)                 z80attrstoaddr(state, ptr, 0, 0)
+#define ATTRSTOADDR(ptr)                 z80attrstoaddr(state, ptr)
 
 /** Return a Z80 address of a backbuffer[] pointer. */
 #define BACKBUFTOADDR_M(ptr) \
@@ -367,27 +345,22 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
  * Return the Z80 address of a backbuffer[] pointer.
  *
  * Conv: helper backing the BACKBUFTOADDR macro; not a Z80 routine, so there is
- *       no single originating address. Asserts the pointer (extended by
- *       [left]/[right]) is in range both before and after conversion.
+ *       no single originating address. Asserts the pointer is in range both
+ *       before and after conversion.
  *
- * \param[in] ptr   Backbuffer pointer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Z80 backbuffer address.
+ * \param[in] ptr Backbuffer pointer.
+ * \return        Z80 backbuffer address.
  */
-static int z80backbuftoaddr(chqstate_t *state,
-                            const u8   *ptr,
-                            int         left,
-                            int         right)
+static int z80backbuftoaddr(chqstate_t *state, const u8 *ptr)
 {
   int addr;
-  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  assert(VALID_BACKBUF_PTR(ptr));
   addr = BACKBUFTOADDR_M(ptr);
-  assert(VALID_BACKBUF_ADDR_LR(addr, left, right));
+  assert(VALID_BACKBUF_ADDR(addr));
   return addr;
 }
 
-#define BACKBUFTOADDR(ptr)                 z80backbuftoaddr(state, ptr, 0, 0)
+#define BACKBUFTOADDR(ptr)                 z80backbuftoaddr(state, ptr)
 
 /* Offset-to-pointer converters */
 
@@ -399,24 +372,22 @@ static int z80backbuftoaddr(chqstate_t *state,
  * Return a screen[] pointer for a given byte offset.
  *
  * Conv: helper backing the OFFSETTOSCREEN macro; not a Z80 routine, so there is
- *       no single originating address. Asserts the offset (extended by
- *       [left]/[right]) is in range both before and after conversion.
+ *       no single originating address. Asserts the offset is in range both
+ *       before and after conversion.
  *
- * \param[in] off   Byte offset into the screen bitmap.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Screen bitmap pointer.
+ * \param[in] off Byte offset into the screen bitmap.
+ * \return        Screen bitmap pointer.
  */
-static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
+static u8 *z80offsettoscreen(chqstate_t *state, int off)
 {
   u8 *ptr;
-  assert(VALID_SCREEN_OFFSET_LR(off, left, right));
+  assert(VALID_SCREEN_OFFSET(off));
   ptr = OFFSETTOSCREEN_M(off);
-  assert(VALID_SCREEN_LR(ptr, left, right));
+  assert(VALID_SCREEN_PTR(ptr));
   return ptr;
 }
 
-#define OFFSETTOSCREEN(off)                 z80offsettoscreen(state, off, 0, 0)
+#define OFFSETTOSCREEN(off)                 z80offsettoscreen(state, off)
 
 /** Return backbuffer[] pointer given byte offset. */
 #define OFFSETTOBACKBUF_M(off) \
@@ -426,24 +397,22 @@ static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
  * Return a backbuffer[] pointer for a given byte offset.
  *
  * Conv: helper backing the OFFSETTOBACKBUF macro; not a Z80 routine, so there
- *       is no single originating address. Asserts the offset (extended by
- *       [left]/[right]) is in range both before and after conversion.
+ *       is no single originating address. Asserts the offset is in range both
+ *       before and after conversion.
  *
- * \param[in] off   Byte offset into the backbuffer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Backbuffer pointer.
+ * \param[in] off Byte offset into the backbuffer.
+ * \return        Backbuffer pointer.
  */
-static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
+static u8 *z80offsettobackbuf(chqstate_t *state, int off)
 {
   u8 *ptr;
-  assert(VALID_BACKBUF_OFFSET_LR(off, left, right));
+  assert(VALID_BACKBUF_OFFSET(off));
   ptr = OFFSETTOBACKBUF_M(off);
-  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  assert(VALID_BACKBUF_PTR(ptr));
   return ptr;
 }
 
-#define OFFSETTOBACKBUF(off)                 z80offsettobackbuf(state, off, 0, 0)
+#define OFFSETTOBACKBUF(off)                 z80offsettobackbuf(state, off)
 
 /* ----------------------------------------------------------------------- */
 
@@ -464,7 +433,7 @@ void update_screen(chqstate_t *state, int screen, int width, int height)
   int     x;
   int     y;
 
-  assert(VALID_SCREEN_ADDR_LR(screen, 0, 0));
+  assert(VALID_SCREEN_ADDR(screen));
 
   x = (screen & 0x1F) * 8;
   y = ((screen >> 11) & 3) * 64 + ((screen >> 5) & 7) * 8 + ((screen >> 8) & 7);
@@ -496,7 +465,7 @@ void update_attrs(chqstate_t *state, int attrs, int width, int height)
   int     x;
   int     y;
 
-  assert(VALID_ATTRS_ADDR_LR(attrs, 0, 0));
+  assert(VALID_ATTRS_ADDR(attrs));
 
   offset = attrs - SCREEN_ATTRIBUTES_START_ADDRESS;
   x      = (offset % SCREEN_ATTRIBUTES_ROWBYTES) * 8;

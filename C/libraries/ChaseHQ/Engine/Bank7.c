@@ -55,8 +55,8 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr, 0, 0)
-#define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr, 0, 0)
+#define ADDRTOSCREEN(addr)  z80addrtoscreen(state, addr)
+#define ADDRTOATTRS(addr)   z80addrtoattrs(state, addr)
 #define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
 #define ENDSHOT_WIDTH  (13 * 8) /* pixel width of an end-screen bitmap */

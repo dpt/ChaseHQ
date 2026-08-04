@@ -57,8 +57,8 @@
  * bound for a loop the Z80 never exits (see its Conv: note). */
 #define ATTRACT_TUNE_WAIT_FRAMES (0xB4)
 
-#define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
-#define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr, 0, 0)
+#define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr)
+#define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr)
 
 /* ----------------------------------------------------------------------- */
 
