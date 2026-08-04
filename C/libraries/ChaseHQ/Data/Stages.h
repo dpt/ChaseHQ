@@ -290,8 +290,8 @@
 
 /* Objects
  *
- * These names are valid for Stage 1 but I'm not yet sure which ones are the
- * same across all stages.
+ * These names are valid for Stage 1; it is not yet confirmed which codes are
+ * shared across all stages.
  */
 #define MAP_OBJ_NONE_VAL                (0)
 

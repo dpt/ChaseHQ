@@ -643,8 +643,8 @@ static u16 prev_buf_row(int backbuf)
  * Map a Z80 address to its equivalent C conversion pointer
  *
  * Given a ZX Chase HQ Z80 map address return the equivalent C conversion
- * pointer. This is for mapping addresses that I've decided to leave
- * in-place for the time being.
+ * pointer. This is for mapping addresses left in-place rather than given a
+ * dedicated C representation.
  *
  * \param[in] current_stage_number Stage whose per-stage lookup table to fall
  *                                 back on for addresses not handled by the
@@ -6063,7 +6063,7 @@ doc_masked_rows:
   state->doc.mask_rows_2nd  = state->doc.rows_2nd;
   state->doc.mask_rows_main = state->doc.rows_main;
 
-  // Bdash = 0xF; // mask [commented out - I can't see why this exists]
+  // Bdash = 0xF; // mask [commented out - purpose unclear, appears unused]
 
   // EXX - UNBANK
 
@@ -9284,7 +9284,7 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   const obj_t *shortpoleobj;   /* pointer to the short pole object on the non-taken fork side (was HL) */
   int          hit_max_or_min; /* upper collision threshold from the pole object data (was BC') */
   int          hit_min_or_max; /* lower collision threshold from the pole object data (was DE') */
-  int          A;              /* impact_speed_cap loaded from object but overridden to 0x8C (was A) */
+  int          A;              /* impact_speed_cap loaded from object, dead in the original -- $A546 LD A,(HL) is annotated "unused" in the skool (was A) */
   int          pos2;           /* x position from xpos.centre for the final collision test (was HL') */
 
   /* $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
@@ -9317,6 +9317,7 @@ set_off_road:
     hit_min_or_max = shortpoleobj->hit_min_or_max; // min
     A              =
       shortpoleobj->impact_speed_cap;  // overridden to 0x8C in the call below
+    NOT_USED(A);
 
     pos2 = state->xpos.centre[127];
     if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)
@@ -9425,7 +9426,8 @@ set_right_hand:
 
       /* The left hand position of the road in A is 1/2/3 here. Use that to
        * select table $E8xx/$E9xx/$EAxx.
-       * Not sure if I trust structure layout, so using a switch here.
+       * Conv: switch rather than computed struct-member offset, since C
+       * gives no portable guarantee of xpos member layout/spacing.
        */
       switch (laneoffset) {
       case 1: tabptr = &state->xpos.left[Ldash]; break;
@@ -12150,7 +12152,6 @@ static void move_hero_car(chqstate_t *state)
   int        A_counter;             /* remaining fast_counter ticks minus horizon_scroll_sub (was A') */
   int        C_horz_tab_value;      /* horizon_table entry for this curvature (was C) */
   int        A_count;               /* copy of B_count for curvature_ticks accumulation (was A') */
-  int        saved_horiz_adj;       /* horizontal_adjust before clearing; diagnostic only (Conv: added) */
   int        HL_horizontal_adjust;  /* horizontal position delta: curvature scroll + net turn (was HL) */
   int        DE_adjust;             /* horizontal adjustment when crashed: low byte of HL (was DE) */
   int        A_crashedflag;         /* ahc.crashed_flag on entry (was A) */
@@ -12402,7 +12403,6 @@ mhc_handle_speed:
    * branch. The zero-curvature test at $B25C jumps here, the zero-tick test at
    * $B274 jumps here, and the scrolling path falls through. BC is still zero on
    * both jumps, so those two arrive with no scroll to apply. */
-  saved_horiz_adj = state->horizontal_adjust;
   HL_horizontal_adjust = state->horizontal_adjust + BC_count_scaled;
   DE_adjust = 0;
   state->horizontal_adjust = 0;
@@ -16804,6 +16804,14 @@ static void draw_road_lanes_change(chqstate_t *state,
   s8   A_direction;         /* Bresenham direction (+1/-1) (was A) */
   u8   A_accum;             /* Bresenham accumulator (was A) */
 
+  /* Conv: these mirror registers still live at the $C2E7 entry point, but the
+   * merge into draw_road (see prologue) moved this function's actual
+   * continuation into the caller, so the values themselves go unused here. */
+  NOT_USED(B_fill_pattern);
+  NOT_USED(C_horizon);
+  NOT_USED(DE_backbuf);
+  NOT_USED(L_row);
+
   // $C2E7
   A_dist = *IY_heightptr - &state->height_table[0];
   assert(A_dist < PERSP_TABLE_COLS);
@@ -17109,7 +17117,7 @@ static void draw_road(chqstate_t *state)
   u8        *SP_output;           /* back-buffer write pointer (was SP) */
   int        jump_index;          /* fill-switch entry index (was IX offset) */
   int        B_neg_lane_count;    /* negative lane count (was B) */
-  int        Cdash_zerofill;      /* zero fill byte for the verge (was C') */
+  int        Cdash_zerofill;      /* dead in the original: $C63E DEC C' result is never read back (was C') */
   u16        DEdash_backbuf;      /* banked back-buffer copy (was DE') */
   int        Hdash_fill;          /* fill word (was HL'/H') */
   int        callback_sel;        /* CB_FOUR_LANE | CB_DISPATCH (was dr_callback) */
@@ -17179,7 +17187,7 @@ static void draw_road(chqstate_t *state)
   u8         A_prev_height;        /* previous height entry (was A) */
   u8         A_height_diff;        /* height delta (was A) */
   u8         C_lane_byte;          /* lane byte at height-check (was C) */
-  u8         B;                   /* tunnel counter (was B) */
+  u8         B;                   /* dead in the original: LD B,$FF/INC B/DEC B at $C724-$C739 are never stored back (was B) */
   u8         C_in_tunnel;          /* tunnel state (was C) */
   u8         A_in_tunnel;          /* in-tunnel flag (was A) */
   u8         C_height_diff;        /* saved height delta (was C) */
@@ -17330,8 +17338,6 @@ static void draw_road(chqstate_t *state)
           return;
         } else {
           /* If bit 5 was clear then it's a dirt track section. */
-          /* Note: This is a mystery. There's a check here which sets conditionally
-           * on_dirt_track but I've not yet found any use of this track type. */
           state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0; /* bits 2 or 3 clear => dirt track */
           state->dr.neg_lane_count = -1;
           callback_sel = CB_FOUR_LANE; /* dr_set_lane_callback(dr_four_lane_highway) */
@@ -17723,6 +17729,7 @@ static void draw_road(chqstate_t *state)
 
     Bdash = DE_backbuf & 0xFF;
     Cdash_zerofill--; // 0 -> 255
+    NOT_USED(Cdash_zerofill);
     Hdash_markingsptr_hi = 0xE4; // edge_markings hi/page
 
     // EXX - Unbank
@@ -17945,6 +17952,7 @@ static void draw_road(chqstate_t *state)
       state->dt.tunnel_visible = A_tunnel_visible;
       A_in_tunnel = C_in_tunnel;
     }
+    NOT_USED(B);
     // $C770
     state->dr.in_tunnel = A_in_tunnel;
     // $C773 EX AF,AF' -- unbanks A_height_diff for $C774 below
