@@ -4934,14 +4934,14 @@ static void run_title_screen(chqstate_t *state)
  */
 static u8 titlescr_wait_loop(chqstate_t *state)
 {
-  int B_wait;       /* tune-4 wait countdown, 180 frames (was B) */
-  u8  A_fire;       /* ENTER/L/K/J/H half-row, tested for fire (was A) */
+  int B_wait;         /* tune-4 wait countdown, 180 frames (was B) */
+  u8  A_fire;         /* ENTER/L/K/J/H half-row, tested for fire (was A) */
   u8  A_credit_mode;  /* controls_selected read as a credit mode flag (was A) */
   u8  A_credit_input; /* credit-slot input, read via keyscan (was A) */
-  u8  A_test_mode;  /* test_mode flag (was A) */
-  u8  A_key6;       /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
-  u8  A_anykey;     /* 1/2/3/4/5 half-row, tested for any key (was A) */
-  int carry;        /* required by the RRC macro, unused (carry) */
+  u8  A_test_mode;    /* test_mode flag (was A) */
+  u8  A_key6;         /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
+  u8  A_anykey;       /* 1/2/3/4/5 half-row, tested for any key (was A) */
+  int carry;          /* required by the RRC macro, unused (carry) */
 
   for (;;) {
     CHECK_HOST_QUIT(state);
@@ -9264,9 +9264,9 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index)
 {
-  u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
-  u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
-  u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
+  u8 ambiguous;  /* scan_keyboard_matrix ambiguity flag (was flags) */
+  u8 D_key_code; /* packed key code from scan_keyboard_matrix (was D) */
+  u8 A_key_code; /* accepted key code, used for storage/lookup (was A) */
   int B_dup_count; /* duplicate-check count: C_control_index-1 already-
                     * assigned slots (was B) */
   int dup_i;       /* duplicate-check loop index (was HL-$FFF7) */

@@ -523,8 +523,8 @@ void update_whole_playfield(chqstate_t *state)
  */
 static void roadbuf_fill(chqstate_t *state, int offset, u8 value, int count)
 {
-  int idx;    /* wrapped start index for this fill */
-  int first;  /* bytes available before the buffer wraps */
+  int idx;   /* wrapped start index for this fill */
+  int first; /* bytes available before the buffer wraps */
 
   idx   = ROADBUF_FWD2IDX(offset);
   first = 256 - idx;
@@ -1624,11 +1624,11 @@ static void attract_mode_hook(chqstate_t *state)
  */
 static void bootstrap(chqstate_t *state)
 {
-  int  carry;        /* carry flag used by RLC/RR (carry) */
-  u8   C_result;     /* bit-reversed result accumulator (was C) */
-  u8  *HL_flipped;   /* pointer walking the 256-byte flip table (was HL) */
-  int  B_iterations; /* inner loop iteration count, 8 bits per byte (was B) */
-  u8   A_index;      /* current table index; bit source for RLC (was A) */
+  int carry;        /* carry flag used by RLC/RR (carry) */
+  u8  C_result;     /* bit-reversed result accumulator (was C) */
+  u8 *HL_flipped;   /* pointer walking the 256-byte flip table (was HL) */
+  int B_iterations; /* inner loop iteration count, 8 bits per byte (was B) */
+  u8  A_index;      /* current table index; bit source for RLC (was A) */
 
   // Bootstrap is itself a loop
   for (;;) {
@@ -1689,12 +1689,12 @@ static void bootstrap(chqstate_t *state)
  */
 static void main_loop(chqstate_t *state)
 {
-  int  carry;              /* carry flag used by SRL (carry) */
-  int  start_speech_index; /* index into the 3-entry speech cycle (was A) */
-  int  start_speech;       /* speech sample index to play (was A) */
-  u8   keys;               /* keyboard state in test mode (was A) */
-  u8  *pstart_speech;      /* pointer to start_speech field (was HL) */
-  int  quit_state;         /* current quit-state value (was A) */
+  int carry;              /* carry flag used by SRL (carry) */
+  int start_speech_index; /* index into the 3-entry speech cycle (was A) */
+  int start_speech;       /* speech sample index to play (was A) */
+  u8  keys;               /* keyboard state in test mode (was A) */
+  u8 *pstart_speech;      /* pointer to start_speech field (was HL) */
+  int quit_state;         /* current quit-state value (was A) */
   carry = 0;
 
   for (;;) {
@@ -3224,11 +3224,11 @@ static void set_up_stage_reset_lights(u8 *attrptr)
  */
 static void check_user_input(chqstate_t *state)
 {
-  int  transctl;   /* transition control value; FADE suppresses input (was A) */
-  u8  *puserinput; /* pointer to user_input field (was HL) */
-  int  input;      /* masked user input flags (was A) */
-  u8  *pboost;     /* pointer to boost timer field (was HL) */
-  int  keys;       /* keyscan result during pause/debounce loop (was A) */
+  int transctl;   /* transition control value; FADE suppresses input (was A) */
+  u8 *puserinput; /* pointer to user_input field (was HL) */
+  int input;      /* masked user input flags (was A) */
+  u8 *pboost;     /* pointer to boost timer field (was HL) */
+  int keys;       /* keyscan result during pause/debounce loop (was A) */
 
   transctl = state->transition_control;
   puserinput = &state->user_input;
@@ -6433,8 +6433,8 @@ static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         bitmap_stride,
                                      const u8   *bitmap_data)
 {
-  const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
-  u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
+  const u8 *src;    /* bitmap source pointer; Z80 used SP via POP (was SP) */
+  u8 *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
 
   assert(jump_offset % 9 == 0);
   assert(jump_offset / 9 >= 0 && jump_offset / 9 <= 3);
@@ -7034,8 +7034,8 @@ static void plot_face(chqstate_t *state, int screen, const u8 *face)
  */
 static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face)
 {
-  u8  A_attrhi; /* screen high byte, rotated to extract band, then biased to $58 (was A) */
-  int counter;  /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
+  u8 A_attrhi; /* screen high byte, rotated to extract band, then biased to $58 (was A) */
+  int counter; /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
 
   A_attrhi = screen >> 8;
   A_attrhi = (A_attrhi >> 3) & 3;
@@ -7837,9 +7837,9 @@ void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md)
  */
 static void calc_overtake_bonus(chqstate_t *state)
 {
-  int  A_counter;    /* BCD accumulator: current overtake bonus value (was A) */
-  int  B_iterations; /* loop count: number of pending overtakes (was B) */
-  u8  *HL_bcd;       /* pointer to state->overtake_bonus_bcd (was HL) */
+  int A_counter;    /* BCD accumulator: current overtake bonus value (was A) */
+  int B_iterations; /* loop count: number of pending overtakes (was B) */
+  u8 *HL_bcd;       /* pointer to state->overtake_bonus_bcd (was HL) */
 
   A_counter = state->overtake_bonus_counter;
   if (A_counter == 0)
@@ -15816,8 +15816,8 @@ static void read_map(chqstate_t *state)
  */
 static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
 {
-  u8        *HL_rightside_ptr;   /* road buffer right-side objects slot (was HL) */
-  u8        *HL_leftside_ptr;    /* road buffer left-side objects slot (was HL) */
+  u8 *HL_rightside_ptr; /* road buffer right-side objects slot (was HL) */
+  u8 *HL_leftside_ptr;  /* road buffer left-side objects slot (was HL) */
 
   u8        *HL_curve_ptr;       /* road buffer curvature slot (was HL) */
   u8         A_curve_byte;       /* raw curvature byte from map; format $CT (was A) */
@@ -20399,10 +20399,10 @@ dak_loop1:
  */
 static u16 dak_move_down(int DE_screen)
 {
-  int E_sum;   /* E + 32 before truncation, to test for overflow (was A) */
-  int carry;   /* carry out of the E += 32 addition (carry) */
-  u8  E;       /* low byte of DE_screen: byte column offset + 32 (was E) */
-  u8  D;       /* high byte of DE_screen: pixel row within third (was D) */
+  int E_sum; /* E + 32 before truncation, to test for overflow (was A) */
+  int carry; /* carry out of the E += 32 addition (carry) */
+  u8  E;     /* low byte of DE_screen: byte column offset + 32 (was E) */
+  u8  D;     /* high byte of DE_screen: pixel row within third (was D) */
 
   E_sum = (DE_screen & 0xFF) + 32;
   carry = E_sum > 0xFF;
@@ -20955,7 +20955,7 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
 {
   u16 pitch;      /* AY channel C pitch divisor, derived from speed (was HL) */
   u16 base_pitch; /* base pitch divisor: tunnel vs non-tunnel constant (was DE) */
-  u8  volume;     /* AY channel C volume (was A) */
+  u8 volume;      /* AY channel C volume (was A) */
 
   pitch = (~(state->speed >> 1)) & 0xFF;
   if (state->gear)
@@ -21566,9 +21566,9 @@ void chq_test_game_frame(chqstate_t *state)
  */
 int chq_test_max_side_object(chqstate_t *state)
 {
-  u8  *HL_roadbuf;   /* pointer into road_buffer, as in draw_scene_objects */
-  int  max;          /* largest object byte seen */
-  int  B_iterations; /* loop counter, as in draw_scene_objects */
+  u8 *HL_roadbuf;   /* pointer into road_buffer, as in draw_scene_objects */
+  int max;          /* largest object byte seen */
+  int B_iterations; /* loop counter, as in draw_scene_objects */
 
   HL_roadbuf = ROADBUF_FWD2PTR(115);
   max = 0;
