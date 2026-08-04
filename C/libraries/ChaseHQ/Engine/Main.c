@@ -134,39 +134,39 @@
 
 /** Return if ptr is within the screen bitmap. */
 #define VALID_SCREEN_PTR(ptr) \
-((ptr) >= &state->speccy->screen.pixels[0] && (ptr) < &state->speccy->screen.pixels[SCREEN_BITMAP_LENGTH])
+  ((ptr) >= &state->speccy->screen.pixels[0] && (ptr) < &state->speccy->screen.pixels[SCREEN_BITMAP_LENGTH])
 
 /** Return if ptr is within the screen attributes. */
 #define VALID_ATTRS_PTR(ptr) \
-((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
+  ((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
 
 /** Return if ptr is within the backbuffer. */
 #define VALID_BACKBUF_PTR(ptr) \
-((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
+  ((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
 
 /* Address validators */
 
 /** Return if addr is within the screen bitmap address range. */
 #define VALID_SCREEN_ADDR(addr) \
-((addr) >= SCREEN_START_ADDRESS && (addr) < SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH)
+  ((addr) >= SCREEN_START_ADDRESS && (addr) < SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH)
 
 /** Return if addr is within the screen attributes address range. */
 #define VALID_ATTRS_ADDR(addr) \
-((addr) >= SCREEN_ATTRIBUTES_START_ADDRESS && (addr) < SCREEN_ATTRIBUTES_START_ADDRESS + SCREEN_ATTRIBUTES_LENGTH)
+  ((addr) >= SCREEN_ATTRIBUTES_START_ADDRESS && (addr) < SCREEN_ATTRIBUTES_START_ADDRESS + SCREEN_ATTRIBUTES_LENGTH)
 
 /** Return if addr is within the backbuffer address range. */
 #define VALID_BACKBUF_ADDR(addr) \
-((addr) >= BACKBUFFER_START_ADDRESS && (addr) < BACKBUFFER_END_ADDRESS)
+  ((addr) >= BACKBUFFER_START_ADDRESS && (addr) < BACKBUFFER_END_ADDRESS)
 
 /* Offset validators */
 
 /** Return if off is a valid screen bitmap byte offset. */
 #define VALID_SCREEN_OFFSET(off) \
-((off) >= 0 && (off) < SCREEN_BITMAP_LENGTH)
+  ((off) >= 0 && (off) < SCREEN_BITMAP_LENGTH)
 
 /** Return if off is a valid backbuffer byte offset. */
 #define VALID_BACKBUF_OFFSET(off) \
-((off) >= 0 && (off) < BACKBUFFER_LENGTH)
+  ((off) >= 0 && (off) < BACKBUFFER_LENGTH)
 
 
 /* Address-to-pointer converters */
@@ -194,7 +194,7 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr)
   return ptr;
 }
 
-#define ADDRTOSCREEN(addr)                 z80addrtoscreen(state, addr)
+#define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr)
 
 /** Return attributes pointer given a Z80 address. */
 #define ADDRTOATTRS_M(addr) \
@@ -219,7 +219,7 @@ u8 *z80addrtoattrs(chqstate_t *state, int addr)
   return ptr;
 }
 
-#define ADDRTOATTRS(addr)                 z80addrtoattrs(state, addr)
+#define ADDRTOATTRS(addr) z80addrtoattrs(state, addr)
 
 /** Return backbuffer[] pointer given a Z80 address. */
 #define ADDRTOBACKBUF_M(addr) \
@@ -283,7 +283,7 @@ static int z80backbuftooffset(chqstate_t *state, const u8 *ptr)
   return off;
 }
 
-#define BACKBUFTOOFFSET(ptr)                 z80backbuftooffset(state, ptr)
+#define BACKBUFTOOFFSET(ptr) z80backbuftooffset(state, ptr)
 
 /* Pointer-to-address converters */
 
@@ -310,7 +310,7 @@ static int z80screentoaddr(chqstate_t *state, const u8 *ptr)
   return addr;
 }
 
-#define SCREENTOADDR(ptr)                 z80screentoaddr(state, ptr)
+#define SCREENTOADDR(ptr) z80screentoaddr(state, ptr)
 
 /** Return a Z80 address of an attributes[] pointer. */
 #define ATTRSTOADDR_M(ptr) \
@@ -335,7 +335,7 @@ static int z80attrstoaddr(chqstate_t *state, const u8 *ptr)
   return addr;
 }
 
-#define ATTRSTOADDR(ptr)                 z80attrstoaddr(state, ptr)
+#define ATTRSTOADDR(ptr) z80attrstoaddr(state, ptr)
 
 /** Return a Z80 address of a backbuffer[] pointer. */
 #define BACKBUFTOADDR_M(ptr) \
@@ -360,7 +360,7 @@ static int z80backbuftoaddr(chqstate_t *state, const u8 *ptr)
   return addr;
 }
 
-#define BACKBUFTOADDR(ptr)                 z80backbuftoaddr(state, ptr)
+#define BACKBUFTOADDR(ptr) z80backbuftoaddr(state, ptr)
 
 /* Offset-to-pointer converters */
 
@@ -387,7 +387,7 @@ static u8 *z80offsettoscreen(chqstate_t *state, int off)
   return ptr;
 }
 
-#define OFFSETTOSCREEN(off)                 z80offsettoscreen(state, off)
+#define OFFSETTOSCREEN(off) z80offsettoscreen(state, off)
 
 /** Return backbuffer[] pointer given byte offset. */
 #define OFFSETTOBACKBUF_M(off) \
@@ -412,7 +412,7 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off)
   return ptr;
 }
 
-#define OFFSETTOBACKBUF(off)                 z80offsettobackbuf(state, off)
+#define OFFSETTOBACKBUF(off) z80offsettobackbuf(state, off)
 
 /* ----------------------------------------------------------------------- */
 
@@ -489,6 +489,7 @@ void update_whole_playfield(chqstate_t *state)
   static const zxbox_t playfield_box = {
     8, 0, SCREEN_WIDTH - 8, PLAYFIELD_HEIGHT
   };
+
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
@@ -700,7 +701,6 @@ typedef void draw_object_entrypt_t(chqstate_t       *state,
 
 /* ----------------------------------------------------------------------- */
 
-
 static void load_stage(chqstate_t *state);
 
 static void setup_engine_sfx_48k(chqstate_t *state);
@@ -714,7 +714,7 @@ static void silence_audio_hook(chqstate_t *state);
 static void write_audio_registers_hook(chqstate_t *state);
 static void setup_engine_sfx_hook(chqstate_t *state);
 static void play_engine_sfx_hook(chqstate_t *state);
-static void play_speech_hook(chqstate_t *state, int A_sample); /* (was A) */
+static void play_speech_hook(chqstate_t *state, int A_sample);
 static void attract_mode_hook(chqstate_t *state);
 
 static void bootstrap(chqstate_t *state);
@@ -745,7 +745,6 @@ static void sfx_crash(chqstate_t *state, int param1, int param2);
 static void sfx_thud(chqstate_t *state, int param1, int param2);
 static void sfx_cornering(chqstate_t *state, int param1, int param2);
 static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2);
-void sfx_bipbow(chqstate_t *state, int param1, int param2);
 
 static int handle_perp_caught(chqstate_t *state);
 static void hpc_set_perp_speed(chqstate_t *state, int speed);
@@ -909,11 +908,6 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
 
 static u8 rng(chqstate_t *state);
 
-void start_chatter(chqstate_t       *state,
-                   chatterpriority_t priority,
-                   const u8         *chatterblk);
-
-
 static void print_chatter(chqstate_t *state);
 static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk);
 static void pc_clear_line(chqstate_t *state, int x);
@@ -927,8 +921,11 @@ static void plot_face_attributes(chqstate_t *state, int screen, const u8 *face);
 
 static void plot_mini_font_cursor_off(chqstate_t *state, int x, char character);
 static void plot_mini_font_cursor_on(chqstate_t *state, int x, char character);
-static void plot_mini_font_char(
-    chqstate_t *state, int x, char ascii, int extrabm1, int extrabm2);
+static void plot_mini_font_char(chqstate_t *state,
+                                int         x,
+                                char        ascii,
+                                int         extrabm1,
+                                int         extrabm2);
 
 static void clear_message_line(chqstate_t *state);
 
@@ -940,8 +937,6 @@ static void speed_score(chqstate_t *state);
 static void add_bonus(chqstate_t *state, int A_lo, int D_hi, int E_md);
 static int bonus_digit(int A_digit, int *pCzeroflag, char **pHLoutput);
 
-void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
-
 static void calc_overtake_bonus(chqstate_t *state);
 
 static void update_scoreboard(chqstate_t *state);
@@ -949,11 +944,6 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
-void ptad_led_digits(chqstate_t *state,
-                     int         iterations,
-                     const u8   *digits,
-                     u8         *stored,
-                     u8         *screen);
 
 static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen);
 
@@ -963,8 +953,11 @@ static const u8 *draw_string_with_style(chqstate_t *state,
                                         u8         *backbuf,
                                         const u8   *string,
                                         int         style);
-static const u8 *draw_string_screen(
-    chqstate_t *state, int attrval, u8 *attrs, u8 *dst, const u8 *string);
+static const u8 *draw_string_screen(chqstate_t *state,
+                                    int         attrval,
+                                    u8         *attrs,
+                                    u8         *dst,
+                                    const u8   *string);
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *dst,
                                   const u8   *string,
@@ -1177,10 +1170,6 @@ static void draw_road_lanes_change(chqstate_t *state,
                                    const u8  **IY_heightptr);
 
 static void draw_road(chqstate_t *state);
-/* dr_read_lanes, dr_four_lane_highway, dr_set_lane_callback, dr_dispatch,
- * dr_advance_unfilled, dr_write_scanline_unfilled, dr_rollover_filled,
- * dr_rollover_unfilled, dr_dispatch_filled, dr_advance_filled, dr_fill and
- * dr_fill_left_stripe are now labelled sections inside draw_road (merged). */
 
 static void pre_shift_backdrop(chqstate_t *state);
 
@@ -1246,7 +1235,6 @@ static void playdrum_bank_go(chqstate_t *state,
                              int         Ddash_length,
                              u8         *HLdash_data);
 static void playdrum_go(chqstate_t *state, int D_length, u8 *HL_data);
-void play_noise(chqstate_t *state, int A_param);
 
 static void start_siren_128k(chqstate_t *state);
 static void play_siren_sfx_128k(chqstate_t *state);
@@ -1701,12 +1689,12 @@ static void bootstrap(chqstate_t *state)
  */
 static void main_loop(chqstate_t *state)
 {
-  int  carry;               /* carry flag used by SRL (carry) */
-  int  start_speech_index;  /* index into the 3-entry speech cycle (was A) */
-  int  start_speech;        /* speech sample index to play (was A) */
-  u8   keys;                /* keyboard state in test mode (was A) */
-  u8  *pstart_speech;       /* pointer to start_speech field (was HL) */
-  int  quit_state;          /* current quit-state value (was A) */
+  int  carry;              /* carry flag used by SRL (carry) */
+  int  start_speech_index; /* index into the 3-entry speech cycle (was A) */
+  int  start_speech;       /* speech sample index to play (was A) */
+  u8   keys;               /* keyboard state in test mode (was A) */
+  u8  *pstart_speech;      /* pointer to start_speech field (was HL) */
+  int  quit_state;         /* current quit-state value (was A) */
   carry = 0;
 
   for (;;) {
@@ -2922,7 +2910,7 @@ static void escape_scene(chqstate_t *state)
       NULL,
     },
     no_op,  // hit_handler (ptr!)
-    250,    // speed
+    250,    // speed of hazard
     0,
     0,
     0,
