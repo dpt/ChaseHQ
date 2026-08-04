@@ -43,10 +43,6 @@ set(SOURCE_FILES
         include/ZXSpectrum/Spectrum.h
         include/ZXSpectrum/Z80.h
         include/ZXSpectrum/slopay-chip.h
-        libraries/ChaseHQ/Data/Bank3Data.c
-        libraries/ChaseHQ/Data/Bank3Data.h
-        libraries/ChaseHQ/Data/Bank7Data.c
-        libraries/ChaseHQ/Data/Bank7Data.h
         libraries/ChaseHQ/Data/CommonData.c
         libraries/ChaseHQ/Data/CommonData.h
         libraries/ChaseHQ/Data/SoundSamples.c
@@ -118,11 +114,7 @@ set(TEST_SOURCE_FILES
         libraries/ChaseHQ/Data/Stage2Data.c
         libraries/ChaseHQ/Data/Stage3Data.c
         libraries/ChaseHQ/Data/Stage4Data.c
-        libraries/ChaseHQ/Data/Stage5Data.c
-        libraries/ChaseHQ/Data/Bank3Data.c
-        libraries/ChaseHQ/Data/Bank3Data.h
-        libraries/ChaseHQ/Data/Bank7Data.c
-        libraries/ChaseHQ/Data/Bank7Data.h)
+        libraries/ChaseHQ/Data/Stage5Data.c)
 
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)

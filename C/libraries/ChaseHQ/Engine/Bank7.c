@@ -41,7 +41,6 @@
 
 #include "ChaseHQ/ChaseHQ.h"
 
-#include "ChaseHQ/Data/Bank7Data.h"
 #include "ChaseHQ/Data/CommonData.h"
 
 #include "Types.h"
@@ -52,6 +51,209 @@
 #include "Bank7.h"
 
 #include <assert.h>
+
+/* ----------------------------------------------------------------------- */
+
+typedef struct {
+  u8        rows;
+  const u8 *image;
+} handshake_frame_t;
+
+/* End-screen script command bytes, dispatched by run_script's switch below.
+ * Argument-encoding macros (ESCMD_CHATTER, ESCMD_IDLE, etc.) are private to
+ * es_script's own definition, where they build the table below. */
+#define ESCMD_CLEAR_DRAW_FRAME_VAL    (1) /* -> $E2D9 es_clear_then_draw_frame, runs immediately */
+#define ESCMD_DRAW_WORD_VAL           (2) /* -> $E2DE es_handler_draw_word, runs immediately */
+#define ESCMD_FADE_IN_A_VAL           (3) /* -> $E42E es_attribute_fade_in via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_B_VAL           (4) /* -> $E472 es_handler_glyph_fade_b via rs_exit, reload 16 */
+#define ESCMD_HANDSHAKE_VAL           (5) /* -> $E3B7 es_handler_handshake via rs_exit, reload 16 */
+#define ESCMD_FADE_IN_C_VAL           (6) /* -> $E46D es_handler_glyph_fade_c via rs_exit, reload 32 */
+#define ESCMD_IDLE_VAL                (7) /* -> rs_exit, handler = no-op, reload = script byte */
+#define ESCMD_RESET_HANDSHAKE_VAL     (8) /* -> rs_exit, sets $A172, handler = handshake, reload = script byte */
+#define ESCMD_HANDSHAKE_AGAIN_VAL     (9) /* -> rs_exit, handler = handshake, reload = script byte */
+#define ESCMD_DRAW_TEXT_NO_CLEAR_VAL (10) /* -> $E2F5 render_text_common, runs immediately, no backbuffer clear */
+#define ESCMD_DRAW_TEXT_VAL          (11) /* -> $E2F0 es_handler_render_text, runs immediately, clears backbuffer first */
+#define ESCMD_CHATTER_VAL            (12) /* -> $E2B2, runs immediately */
+#define ESCMD_DRAW_SCORE_VAL         (13) /* -> $E256, runs immediately */
+
+/* Z80 addresses that the end-screen script encodes as literal pointer words.
+ * es_script below emits them; z80addrtoendshot/z80addrtochatterblk lookups
+ * turn them back into the C arrays elsewhere in this file. */
+#define BITMAP_ENDSHOT_1_ADDR               (0x60E1)
+#define BITMAP_ENDSHOT_2_ADDR               (0x6489)
+#define BITMAP_ENDSHOT_3_ADDR               (0x6831)
+#define BITMAP_ENDSHOT_4_ADDR               (0x6BD9)
+#define CHATTERBLK_NANCY_CONGRATULATES_ADDR (0x5C6E)
+#define CHATTERBLK_PRESS_GEAR_ADDR          (0x5C78)
+
+/* Conv: skool $E251 "LD HL,$5E04 / JR $E20D" -- on an unrecognised command
+ * byte the Z80 resets HL to the CHATTER(0x5C78) command three bytes back
+ * and re-enters the loop rather than returning, which is what makes
+ * "PRESS GEAR TO CONTINUE" blink forever instead of a one-shot draw. */
+#define ES_SCRIPT_RESET_OFFSET (sizeof(es_script) - 6)
+
+/* Conv: skool $E052 "LD HL,$5DE3 / LD ($A16D),HL" -- the first fire press
+ * jumps the script program counter to the congratulations sequence at
+ * $E1E3, which is 0xE5 bytes into the script block based at $E0FE. */
+#define ES_SCRIPT_CONGRATS_OFFSET (0xE1E3 - 0xE0FE)
+
+/* ----------------------------------------------------------------------- */
+
+// clang-format off
+
+/* Private argument-encoding macros for es_script below; command values
+ * (ESCMD_*_VAL) are shared with run_script's switch elsewhere in this file. */
+#define ESCMD_CLEAR_DRAW_FRAME(BMADDR, SCRADDR) ESCMD_CLEAR_DRAW_FRAME_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
+#define ESCMD_DRAW_WORD(BMADDR, SCRADDR)        ESCMD_DRAW_WORD_VAL, TWOBYTES(BMADDR), TWOBYTES(SCRADDR)
+#define ESCMD_FADE_IN_A                         ESCMD_FADE_IN_A_VAL
+#define ESCMD_FADE_IN_B                         ESCMD_FADE_IN_B_VAL
+#define ESCMD_HANDSHAKE                         ESCMD_HANDSHAKE_VAL
+#define ESCMD_FADE_IN_C                         ESCMD_FADE_IN_C_VAL
+#define ESCMD_IDLE(D)                           ESCMD_IDLE_VAL, (D)
+#define ESCMD_RESET_HANDSHAKE(D)                ESCMD_RESET_HANDSHAKE_VAL, (D)
+#define ESCMD_HANDSHAKE_AGAIN(D)                ESCMD_HANDSHAKE_AGAIN_VAL, (D)
+#define ESCMD_DRAW_TEXT_NO_CLEAR(ATTR, SCRADDR) ESCMD_DRAW_TEXT_NO_CLEAR_VAL, (ATTR), TWOBYTES(SCRADDR)
+#define ESCMD_DRAW_TEXT(ATTR, SCRADDR)          ESCMD_DRAW_TEXT_VAL, (ATTR), TWOBYTES(SCRADDR)
+#define ESCMD_CHATTER(ADDR)                     ESCMD_CHATTER_VAL, TWOBYTES(ADDR)
+#define ESCMD_DRAW_SCORE                        ESCMD_DRAW_SCORE_VAL
+
+/* ----------------------------------------------------------------------- */
+
+/**
+ * $E0FE-$E209: End-screen script bytecode.
+ *
+ * Verbatim transcription of the skool's es_script block (268 bytes):
+ * command/argument bytes interleaved with bitmap addresses (as raw
+ * little-endian DEFW pairs) and embedded high-bit-terminated ASCII text
+ * ("CONGRATULATIONS!", "ALL  CLEAR", "(C) 1989 OCEAN SOFTWARE", "(C) 1988
+ * TAITO CORPORATION", "THE  END", "FINAL  SCORE"). Every byte has now been
+ * decoded against run_script's command dispatch below -- see the inline
+ * comments through the tail of the array.
+ *
+ * Conv: this master copy is const. show_end_screen copies it into
+ * state->bank7->es_script at entry; es_handler_draw_score patches the
+ * "GBP________ PTS" placeholder text in-place (offset 0xFD, matching $5DFB
+ * relocated) in that per-instance copy, not here, exactly as the original
+ * self-modifies its own es_script at that address but without concurrent
+ * game instances trampling each other's score text.
+ */
+static const u8 es_script[268] = {
+  ESCMD_CHATTER(CHATTERBLK_NANCY_CONGRATULATES_ADDR),
+  ESCMD_IDLE(0xC0),
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_1_ADDR, XYTOSCREEN(72, 96)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_2_ADDR, XYTOSCREEN(72, 96)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_3_ADDR, XYTOSCREEN(72, 96)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_4_ADDR, XYTOSCREEN(72, 96)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xA0),
+  ESCMD_FADE_IN_B,
+  ESCMD_CLEAR_DRAW_FRAME(BITMAP_ENDSHOT_1_ADDR, XYTOSCREEN(16, 64)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_2_ADDR, XYTOSCREEN(136, 64)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_3_ADDR, XYTOSCREEN(16, 128)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_DRAW_WORD(BITMAP_ENDSHOT_4_ADDR, XYTOSCREEN(136, 128)), // screen dst
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x50),
+  ESCMD_RESET_HANDSHAKE(0xC0),
+  ESCMD_HANDSHAKE_AGAIN(0xB0),
+  ESCMD_HANDSHAKE,
+  ESCMD_HANDSHAKE_AGAIN(0xB0),
+  ESCMD_FADE_IN_B,
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(64, 80)), /* clear */
+  'C', 'O', 'N', 'G', 'R', 'A', 'T', 'U', 'L', 'A', 'T', 'I', 'O', 'N', 'S', '!' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x08),
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(88, 112)),
+  'A', 'L', 'L', ' ', ' ', 'C', 'L', 'E', 'A', 'R' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x08),
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(72, 144)),
+  '5', ',', '0', '0', '0', ',', '0', '0', '0', ' ', ' ', 'P', 'T', 'S', '.' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xC0),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(32, 96)), /* clear */
+  '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(24, 144)),
+  '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xF0),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 112)), /* clear */
+  'T', 'H', 'E', ' ', ' ', 'E', 'N', 'D' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0xF0),
+  ESCMD_IDLE(0x60),
+  ESCMD_FADE_IN_C,
+  ESCMD_IDLE(0x60),
+  ESCMD_DRAW_TEXT(attribute_BRIGHT_CYAN_OVER_BLACK, XYTOSCREEN(80, 104)), /* clear */
+  'F', 'I', 'N', 'A', 'L', ' ', ' ', 'S', 'C', 'O', 'R', 'E' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_IDLE(0x1E),
+  ESCMD_DRAW_SCORE, /* tallies bonus, patches offset 0xFD below with score ASCII */
+  ESCMD_DRAW_TEXT_NO_CLEAR(attribute_BRIGHT_WHITE_OVER_BLACK, XYTOSCREEN(96, 136)), /* "GBP________ PTS" placeholder, digits patched at offset 0xFD by es_handler_draw_score */
+  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | EOS,
+  ESCMD_FADE_IN_A,
+  ESCMD_CHATTER(CHATTERBLK_PRESS_GEAR_ADDR),
+  ESCMD_IDLE(0x00),
+  0x0E /* unrecognised command: run_script's default case resets HL here (see
+        * ES_SCRIPT_RESET_OFFSET above) rather than stopping */
+};
+// clang-format on
+
+#undef ESCMD_CLEAR_DRAW_FRAME
+#undef ESCMD_DRAW_WORD
+#undef ESCMD_FADE_IN_A
+#undef ESCMD_FADE_IN_B
+#undef ESCMD_HANDSHAKE
+#undef ESCMD_FADE_IN_C
+#undef ESCMD_IDLE
+#undef ESCMD_RESET_HANDSHAKE
+#undef ESCMD_HANDSHAKE_AGAIN
+#undef ESCMD_DRAW_TEXT_NO_CLEAR
+#undef ESCMD_DRAW_TEXT
+#undef ESCMD_CHATTER
+#undef ESCMD_DRAW_SCORE
+
+/* ----------------------------------------------------------------------- */
+
+/* Bank 7's own copy of the 48K music engine's pattern/data tables, played by
+ * es_play_music_48k et al below. Same (repeats, offset) / note-stream format
+ * as CommonData.c's music_patterns/music_data, but a separate tune and a
+ * separate table (relocated base $F53C, not $F0FE).
+ *
+ * $F53C (relocated; source $FA2B) */
+static const u8 es_music_patterns[23] = {
+  // (repetitions, offset)
+  0x01, 0x00,
+  0x04, 0x22,
+  0x04, 0x44,
+  0x05, 0x56,
+  0x01, 0x68,
+  0x04, 0x7A, // weird separate repeat of same part
+  0x04, 0x7A,
+  0x03, 0x7A,
+  0x01, 0x8C,
+  0x3C, 0xA9, // silence: 60x repeat of the single silent note at 0xA9
+  0xFF, // stop marker
+  TWOBYTES(0xF54E) // restart address
+};
 
 /* ----------------------------------------------------------------------- */
 
@@ -435,8 +637,8 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * returning).
  *
  * Conv: data_e06e (the only live target) is NOT a standard {CHATTERCHR,
- *       CHATTERSTR, CHATTERCMD} chatterblk -- see the comment on data_e06e in
- *       Bank7Data.h. Byte 2 of that block ($3F = 63) would be consumed as a
+ *       CHATTERSTR, CHATTERCMD} chatterblk -- see CHATTERBLK_NANCY_CONGRATULATES_ADDR
+ *       above. Byte 2 of that block ($3F = 63) would be consumed as a
  *       CHATTERSTR index by pc_chatter_message (Main.c, the "assert(*chatterblk
  *       < CHATTERSTR__LIMIT)" guard around line 5871) and fail that bounds
  *       check immediately -- CHATTERSTR__LIMIT is 36. In a release build

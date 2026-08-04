@@ -996,7 +996,7 @@ static void test_show_end_screen_runs_script(void)
  * subsystem, restarting the current tune whenever it finds no tune active.
  * Mirrors run_title_screen's own entry-time call to titlescr_start_tune
  * ($C61B) for each of the 4 tunes the tune-select table (tunes[],
- * Bank3Data.c) defines, then drives a few seconds' worth of frames and
+ * Bank3.c) defines, then drives a few seconds' worth of frames and
  * checks the tune stays active throughout -- proof the music/drum service
  * loop runs without crashing or stalling for every tune, not just the one
  * the title screen happens to start.

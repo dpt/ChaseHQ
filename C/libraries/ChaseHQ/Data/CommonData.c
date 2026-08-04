@@ -2081,7 +2081,7 @@ const u8 music_patterns[19] = {
  *
  * Layout: each block is a delay-reload byte (ticks per note) followed by a
  * note stream, terminated by NOTE_END. NOTE_* macros are defined in
- * Internal.h. Same format as es_music_data (Bank7Data.c), but this table also
+ * Internal.h. Same format as es_music_data (Bank7.c), but this table also
  * uses bit7 "extra delay" notes (NOTE_XDELAY). See play_music_48k (Main.c)
  * for the byte-level decode this is built from.
  */

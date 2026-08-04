@@ -246,7 +246,7 @@
 /* ----------------------------------------------------------------------- */
 
 /* 48K music engine note bytes: shared by music_data (CommonData.c) and
- * es_music_data (Bank7Data.c). See play_music_48k (Main.c) / es_play_music_48k
+ * es_music_data (Bank7.c). See play_music_48k (Main.c) / es_play_music_48k
  * (Bank7.c) for the byte-level decode these are built from. */
 #define NOTE_DELAY(ticks) (ticks) // ticks between notes, reloaded into note_delay
 #define NOTE_INST_MASK    (0x07)

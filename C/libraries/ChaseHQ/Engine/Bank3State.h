@@ -27,11 +27,23 @@
 
 #include "C99/Types.h"
 
-#include "ChaseHQ/Data/Bank3Data.h"
-
 #include "State.h"
 
 /* ----------------------------------------------------------------------- */
+
+/* 128K bank 3: one row of the high-score table, $C408-$C42A stride (the
+ * fields that actually move when a row is shifted -- see
+ * insert_high_score_entry in Bank3.c). The 5-char rank suffix ("1ST  " etc)
+ * is fixed to its screen position, never shifts, and is stored separately in
+ * high_score_rank_suffixes (Bank3.c) rather than per-row. */
+typedef struct high_score_row {
+  u8 score[8];      /* $C408: ASCII score digits, most significant first */
+  u8 stage_code[3]; /* $C414: e.g. " 1 ", "ALL" */
+  u8 retry_digit;   /* $C41C: ASCII '1'-'3' (or higher in test-mode data) */
+  u8 name[3];        /* $C41F: 3-character initials */
+} high_score_row_t;
+
+#define HIGH_SCORE_TABLE_ROWS (10)
 
 /**
  * One 37-byte channel-tracker record used by the 128K bank-3 title-tune
@@ -275,7 +287,7 @@ struct chq_bank3_state {
     u8       *sample_resume_ptr;
     u8        sample_resume_rows;
 
-    // $F8F2/$F95A (Bank3Data.h: drum_sample_1_template/drum_sample_2_template):
+    // $F8F2/$F95A (Bank3.c: drum_sample_1_template/drum_sample_2_template):
     // mutable per-game copies -- play_sample_row rotates each byte in place
     // with RLC as it plays, so these cannot be the read-only template tables
     // directly (same reasoning as chqstate_t::music.drum1/music.drum2).
@@ -297,7 +309,7 @@ struct chq_bank3_state {
 
   // $C408-$C552 (128K bank 3): the mutable per-game high-score table, one
   // entry per rank (index 0 = 1st place .. index 9 = 10th place). Seeded
-  // from high_score_table_template (Bank3Data.h) by bank3_state_create and
+  // from high_score_table_template (Bank3.c) by bank3_state_create and
   // updated in place by insert_high_score_entry.
   high_score_row_t high_score_table[HIGH_SCORE_TABLE_ROWS];
 };
