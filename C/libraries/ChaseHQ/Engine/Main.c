@@ -266,32 +266,6 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 #define SCREENTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.pixels[0])
 
-/**
- * Return the byte offset of a screen[] pointer.
- *
- * Conv: helper backing the SCREENTOOFFSET macro; not a Z80 routine, so there is
- *       no single originating address. Asserts the pointer (extended by
- *       [left]/[right]) is in range both before and after conversion.
- *
- * \param[in] ptr   Screen bitmap pointer.
- * \param[in] left  Extra bytes the caller needs valid to the left.
- * \param[in] right Extra bytes the caller needs valid to the right.
- * \return          Byte offset into the screen bitmap.
- */
-static int z80screentooffset(chqstate_t *state,
-                             const u8   *ptr,
-                             int         left,
-                             int         right)
-{
-  int off;
-  assert(VALID_SCREEN_LR(ptr, left, right));
-  off = SCREENTOOFFSET_M(ptr);
-  assert(VALID_SCREEN_OFFSET_LR(off, left, right));
-  return off;
-}
-
-#define SCREENTOOFFSET(ptr) z80screentooffset(state, ptr, 0, 0)
-
 /** Return byte offset of an attributes[] pointer. */
 #define ATTRSTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.attributes[0])
