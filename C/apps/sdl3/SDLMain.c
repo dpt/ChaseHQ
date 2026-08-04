@@ -142,9 +142,10 @@ typedef struct
   int                paused;    // bool
   int                mode_128k; // bool; 0 selects the 48K entry point
 
-  int                scale;     // window/render scale, SCALE_MIN..SCALE_MAX
-  int                speed;     // game speed, percent, SPEED_MIN..SPEED_MAX
-  int                volume;    // output volume, percent, VOLUME_MIN..VOLUME_MAX
+  int                scale;      // window/render scale, SCALE_MIN..SCALE_MAX
+  int                fullscreen; // bool; toggled with F11
+  int                speed;      // game speed, percent, SPEED_MIN..SPEED_MAX
+  int                volume;     // output volume, percent, VOLUME_MIN..VOLUME_MAX
 
   struct timeval     stamps[MAXSTAMPS];
   int                nstamps;
@@ -771,6 +772,15 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     }
     return;
 
+  case SDLK_F11:
+    if (k->down && !k->repeat)
+    {
+      state->fullscreen = !state->fullscreen;
+      SDL_SetWindowFullscreen(state->window, state->fullscreen);
+      printf("Fullscreen: %s\n", state->fullscreen ? "on" : "off");
+    }
+    return;
+
   case SDLK_MINUS:
   case SDLK_EQUALS:
     if (k->down && !k->repeat)
@@ -1000,11 +1010,13 @@ static void chq_sdl_main_loop(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
   int              x, y, w, h; // destination rect: game view within the window
+  int              ww, wh;     // actual window size (may exceed scale*game size in fullscreen)
 
-  x = BORDER     * state->scale;
-  y = BORDER     * state->scale;
   w = GAMEWIDTH  * state->scale;
   h = GAMEHEIGHT * state->scale;
+  SDL_GetWindowSize(state->window, &ww, &wh);
+  x = (ww - w) / 2; // centred; equals BORDER*scale in windowed mode, letterboxes in fullscreen
+  y = (wh - h) / 2;
 
   {
     SDL_Event event;
