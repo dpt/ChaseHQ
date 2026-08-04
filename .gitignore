@@ -1,6 +1,8 @@
-build
 *.d
+*.skool
 *.swp
 .DS_Store
 .idea/
+C/cmake-build-*/
 __pycache__/
+build
