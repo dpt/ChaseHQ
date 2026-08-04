@@ -194,6 +194,8 @@ typedef struct
   Uint64             replay_anchor_sample; // samples_played at the last anchor
   int                replay_anchored;      // bool; cleared when queue runs dry
   int                audio_muted;          // bool; mute sound if true
+  int                ay_channel_muted[3];  // bool per AY channel A/B/C; toggled with F7/F8/F9
+  int                speaker_muted;        // bool; beeper sfx muted; toggled with F10
 
   /* Dirty-rect overlay: the game (thread) reports each screen region it
    * refreshes via chq_draw_handler; we stash them here and outline them over
@@ -535,7 +537,7 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
 
   SDL_UnlockMutex(state->audio_queue_mutex);
 
-  return beeper;
+  return state->speaker_muted ? 0 : beeper;
 }
 
 // Runs on SDL's audio thread. Called whenever SDL wants more data queued.
@@ -795,6 +797,29 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       chq_set_crt_enabled(state, !state->crt_enabled);
       printf("CRT shader: %s\n", state->crt_enabled ? "on" : "off");
+    }
+    return;
+
+  case SDLK_F7:
+  case SDLK_F8:
+  case SDLK_F9:
+    if (k->down && !k->repeat)
+    {
+      static const char *names[3] = { "A", "B", "C" };
+      int                 ch      = sym - SDLK_F7;
+
+      state->ay_channel_muted[ch] = !state->ay_channel_muted[ch];
+      slopay_chip_enable_channel(state->ay, ch, !state->ay_channel_muted[ch]);
+      printf("AY channel %s: %s\n", names[ch],
+            state->ay_channel_muted[ch] ? "muted" : "on");
+    }
+    return;
+
+  case SDLK_F10:
+    if (k->down && !k->repeat)
+    {
+      state->speaker_muted = !state->speaker_muted;
+      printf("Speaker: %s\n", state->speaker_muted ? "muted" : "on");
     }
     return;
 
