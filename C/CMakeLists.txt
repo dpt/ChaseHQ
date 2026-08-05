@@ -138,6 +138,23 @@ if(CHQ_ENABLE_TEST_STAGE)
   target_compile_definitions(StretchyRenderer PRIVATE CHQ_ENABLE_TEST_STAGE)
 endif()
 
+# ---- Title drum renderer (offline audio timing check, no SDL dependency) ---
+# Renders the 128K title tune's beeper drums from the engine's own virtual
+# T-state clock, with wall-clock pacing removed, and reports the inter-onset
+# intervals. See the file header for the real-hardware reference figures.
+
+set(TITLEDRUMS_SOURCE_FILES ${TEST_SOURCE_FILES})
+list(REMOVE_ITEM TITLEDRUMS_SOURCE_FILES Tests/UnitTest.c)
+list(APPEND TITLEDRUMS_SOURCE_FILES Tests/RenderTitleDrums.c)
+
+add_executable(TitleDrums ${TITLEDRUMS_SOURCE_FILES})
+target_compile_definitions(TitleDrums PRIVATE CHQ_TESTS)
+target_include_directories(TitleDrums PRIVATE ${INCLUDE_DIRS})
+if(CHQ_ENABLE_TEST_STAGE)
+  target_sources(TitleDrums PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
+  target_compile_definitions(TitleDrums PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
+
 # ---- Stage data generation --------------------------------------------------
 # Regenerate committed .c files from their skool sources.
 # Usage: cmake --build <dir> --target convert_stages

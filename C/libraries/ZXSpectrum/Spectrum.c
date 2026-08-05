@@ -98,6 +98,12 @@ static int zxbox_exceeds(const zxbox_t *b, int width, int height)
          (b->x1 >= width) && (b->y1 >= height);
 }
 
+/* Depth of the stamp()/sleep() nesting the clock tracks. Matches the host's
+ * own timestamp stack (MAXSTAMPS in the SDL app); both assert rather than
+ * grow, so an unbalanced stamp shows up as a crash in the offending build
+ * rather than as silently wrong audio timing. */
+#define MAXSTAMPS (4)
+
 /* Return the union in 'c' of boxes 'a' and 'b'. */
 static void zxbox_union(const zxbox_t *a, const zxbox_t *b, zxbox_t *c)
 {
@@ -117,6 +123,8 @@ typedef struct zxspectrum_private
   unsigned int    prev_border;
 
   uint64_t        tstates; // virtual Z80 clock; game thread only (see logtime)
+  uint64_t        stamp_tstates[MAXSTAMPS]; // clock at each open stamp()
+  int             nstamps;
 
   mutex_t         lock;
   zxbox_t         dirty;
@@ -206,8 +214,12 @@ static void zx_out(zxspectrum_t *state, uint16_t address, uint8_t byte)
 
   case port_AY_REGISTER:
   case port_AY_DATA:
+    /* OUT (C),A costs 12 T-states. Billed for the same reason the speaker's
+     * OUT is: the host timestamps both streams from this one clock, so an
+     * unbilled write would land on top of its neighbour. */
+    prv->tstates += 12;
     if (prv->config.ay_out)
-      prv->config.ay_out(address, byte, prv->config.opaque);
+      prv->config.ay_out(address, byte, prv->tstates, prv->config.opaque);
     break;
 
   default:
@@ -312,12 +324,34 @@ static void zx_stamp(zxspectrum_t *state)
 {
   zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
 
+  /* Remember where the virtual clock stood, so the matching zx_sleep can
+   * close the segment out on it. Stamps nest, so this is a stack, the same
+   * shape and depth as the host's own wall-clock one. */
+  assert(prv->nstamps < MAXSTAMPS);
+  if (prv->nstamps < MAXSTAMPS)
+    prv->stamp_tstates[prv->nstamps++] = prv->tstates;
+
   prv->config.stamp(prv->config.opaque);
 }
 
 static int zx_sleep(zxspectrum_t *state, int duration)
 {
   zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
+  uint64_t              segment_end;
+
+  /* A real Z80 spends the whole interrupt period either working or waiting
+   * on the frame flag; either way the clock has moved on by the segment's
+   * full duration by the time the segment ends. The C port does the work in
+   * a fraction of that and sleeps off the rest, so advance the clock here to
+   * match -- but never rewind it, since a nested outer segment may end after
+   * inner ones have already carried the clock past its own start+duration. */
+  assert(prv->nstamps > 0);
+  if (prv->nstamps > 0)
+  {
+    segment_end = prv->stamp_tstates[--prv->nstamps] + (uint64_t) duration;
+    if (segment_end > prv->tstates)
+      prv->tstates = segment_end;
+  }
 
   return prv->config.sleep(duration, prv->config.opaque);
 }
