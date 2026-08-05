@@ -2,10 +2,6 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Title screen
-  - music still not right (e.g. playing things twice or more over before stopping)
-    — end-of-tune command `0x8E` now handled, so the tune stops and the attract
-    wait runs; re-check by ear for anything still repeating
 - End screen
   - the interrupt mechanism wasn't ported so the timing feels a little off
 - Test flag is still on by default

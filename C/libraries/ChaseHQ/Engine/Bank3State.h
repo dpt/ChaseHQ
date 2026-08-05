@@ -123,13 +123,11 @@ struct chq_bank3_state {
     struct title_tune_channel channel[3];
 
     /* $EC70 (128K bank 3): per-tick tempo countdown, decremented by
-     * ts_music_service ($EC71) each call; the 3
-     * channels' patterns only advance one row when it reaches zero, after
-     * which it always reloads to a fixed 1 -- per the skool's own comment at
-     * $EC99, *not* the tune's stored tempo/speed byte (tune_tempo, $EC9A),
-     * so the driver appears to always tick every other call regardless of
-     * the selected tune. Set to 1 by start_tune ($EBF9-$EBFA) so the very
-     * first service call after a tune starts always advances.
+     * ts_music_service ($EC71) each call; the 3 channels' patterns only
+     * advance one row when it reaches zero, after which it reloads from
+     * tune_tempo ($EC9A) -- $EC99 "LD A,$01" is self-modifying, its operand
+     * byte is tune_tempo itself. Set to 1 by start_tune ($EBF9-$EBFA) so the
+     * very first service call after a tune starts always advances.
      */
     u8        tempo_counter;
 
@@ -140,10 +138,11 @@ struct chq_bank3_state {
      */
     u8        shared_note_value;
 
-    /* $EC9A (128K bank 3): tune tempo/speed byte. Written by start_tune
-     * ($EBB3, not yet translated) and by advance_channel_pattern's
-     * decode_pattern_command cascade ($EE71); not currently read anywhere in
-     * bank 3 (see the skool comment at $EC9B in ts_music_service).
+    /* $EC9A (SM): tune tempo/speed byte, and also the operand of the
+     * self-modifying "LD A,$01" at $EC99 in ts_music_service -- the reload
+     * value for tempo_counter. Written by start_tune ($EBB3) and by
+     * advance_channel_pattern's decode_pattern_command cascade ($EE71); read
+     * by ts_music_service via that self-modified instruction.
      */
     u8        tune_tempo;
 

@@ -4009,7 +4009,8 @@ static const u8 *resolve_phrase_addr(u16 addr);
 static u16 compute_channel_ay_registers(chqstate_t           *state,
                                         title_tune_channel_t *IX_channel,
                                         u8                   *A_volume_out);
-static void advance_channel_phrase(title_tune_channel_t *IX_channel,
+static void advance_channel_phrase(chqstate_t           *state,
+                                   title_tune_channel_t *IX_channel,
                                    const u8            **DE_pattern);
 static u8 advance_channel_pattern(chqstate_t           *state,
                                   title_tune_channel_t *IX_channel);
@@ -4017,7 +4018,7 @@ static void setup_im2_interrupt_table(chqstate_t *state);
 static void check_high_score(chqstate_t *state);
 static void insert_high_score_entry(chqstate_t *state, int row);
 static void play_success_music(chqstate_t *state);
-static void titlescr_start_tune(chqstate_t *state, u8 A_tune);
+static void titlescr_start_tune(chqstate_t *state, u8 tune_no);
 static void load_drum_script(chqstate_t *state, u8 A_tune);
 static const u8 *resolve_drum_script_addr(u16 addr);
 static void load_drum_op(chqstate_t *state, const u8 *HL);
@@ -4806,13 +4807,13 @@ static u8 run_title_screen(chqstate_t *state)
   };
   // clang-format on
 
-  u8        A_outcome;      /* titlescr_wait_loop outcome; restart or return (was A) */
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
   int       scene_idx;      /* chosen scene table index, 0-4 (Conv: rolled, no Z80 equivalent) */
   const u8 *HL_scene_table; /* chosen scene table's object-record base (was HL) */
   int       obj;            /* object-record loop index, 0-8 (was B) */
+  u8        A_outcome;      /* titlescr_wait_loop outcome; restart or return (was A) */
 
   for (;;) {
     clear_and_fill_border_attrs(state);
@@ -4887,8 +4888,6 @@ static u8 run_title_screen(chqstate_t *state)
 
     titlescr_start_tune(state, 0);
 
-    update_whole_playfield(state); /* Conv: added */
-
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
 
@@ -4941,14 +4940,11 @@ static u8 run_title_screen(chqstate_t *state)
  */
 static u8 titlescr_wait_loop(chqstate_t *state)
 {
-  int B_wait;       /* tune-4 wait countdown, 180 frames (was B) */
-  u8  A_fire;       /* ENTER/L/K/J/H half-row, tested for fire (was A) */
-  u8  A_credit_mode;  /* controls_selected read as a credit mode flag (was A) */
-  u8  A_credit_input; /* credit-slot input, read via keyscan (was A) */
-  u8  A_test_mode;  /* test_mode flag (was A) */
-  u8  A_key6;       /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
-  u8  A_anykey;     /* 1/2/3/4/5 half-row, tested for any key (was A) */
-  int carry;        /* required by the RRC macro, unused (carry) */
+  int B_wait;   /* tune-4 wait countdown, 180 frames (was B) */
+  u8  A_fire;   /* ENTER/L/K/J/H half-row, tested for fire (was A) */
+  u8  A_key6;   /* 0/9/8/7/6 half-row, tested for the "6" key (was A) */
+  u8  A_anykey; /* 1/2/3/4/5 half-row, tested for any key (was A) */
+  int carry;    /* required by the RRC macro, unused (carry) */
 
   for (;;) {
     CHECK_HOST_QUIT(state);
@@ -4971,13 +4967,14 @@ static u8 titlescr_wait_loop(chqstate_t *state)
       load_drum_script(state, 4);
 
       B_wait = ATTRACT_TUNE_WAIT_FRAMES;
-      do {
+      do
         titlescr_music(state);
-      } while (--B_wait);
+      while (--B_wait);
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */
 
       titlescr_refresh_name_table(state);
+
       return TITLESCR_ATTRACT;
       /* $C6C3 RET -- returns to run_title_screen's own caller with A = B,
        * which $C635 INC B has just made 1, so attract_mode_128k's $F421
@@ -5002,14 +4999,12 @@ static u8 titlescr_wait_loop(chqstate_t *state)
      * credit configuration doubling as "controls selected") or just loose
      * wording -- either way this reuses the existing field rather than
      * inventing a second one. */
-    A_credit_mode = state->controls_selected;
-    if (A_credit_mode) {
+    if (state->controls_selected) {
       /* Conv: $800E is CALL $A0D6 (keyscan) in disguise -- see the skool's
        * $8008 entry. Bit 4 (USERINPUTFLAG_FIRE) is the credit-insert key,
        * matching the "confirm" bit used the same way by $800E's other
        * caller, name_entry_input. */
-      A_credit_input = keyscan(state);
-      if (A_credit_input & USERINPUTFLAG_FIRE) {
+      if (keyscan(state) & USERINPUTFLAG_FIRE) {
         titlescr_credit_inserted(state);
         /* $C696 pushes $8011 before falling into the shared tail, so that
          * tail's $C6C3 RET lands on $8011 -- three bytes ($C3,$79,$9C) that
@@ -5027,8 +5022,7 @@ static u8 titlescr_wait_loop(chqstate_t *state)
     /* $C652-$C653: AND A; JR Z,$C61E -- a loop-restart, not a skip-this-
      * block branch: $C61E is the loop head, so test_mode == 0 skips the
      * "any key" check below too, not just this one. */
-    A_test_mode = state->test_mode;
-    if (!A_test_mode)
+    if (!state->test_mode)
       continue; /* Conv: no balancing sleep() needed -- already closed out by
                  * the stamp()/sleep() pair at the top of this loop */
 
@@ -6719,10 +6713,12 @@ static void titlescr_start_ay(chqstate_t *state, u8 A_tune)
  *       equivalent to the first -- both are kept, matching the two-guard
  *       structure of the original.
  *
- * Conv: $EC99-$EC9B reloads the tempo counter with a fixed 1, not the tune's
- *       own stored tempo/speed byte at title_music.tune_tempo -- see the skool
- *       comment at $EC99; the driver always ticks every other frame regardless
- *       of the selected tune.
+ * $EC99 "LD A,$01" is self-modifying: its operand byte at $EC9A is the same
+ * storage as title_music.tune_tempo, written by start_tune ($EBB3) and by
+ * the PCMD_TEMPO_BASE pattern command ($EE71). The reload therefore uses
+ * whatever tempo the current tune (or an in-song tempo command) has set,
+ * not a fixed 1 -- confirmed against a real-hardware trace, which showed a
+ * period-2 fire/skip alternation for tune 0 (tempo byte 0x02).
  */
 static void titlescr_ay_music(chqstate_t *state)
 {
@@ -6760,8 +6756,9 @@ static void titlescr_ay_music(chqstate_t *state)
       if (advance_channel_pattern(state, IX_channel))
         return;
 
-      /* $EC99-$EC9B: reset the tempo counter (see Conv note above). */
-      state->bank3->title_music.tempo_counter = 1;
+      /* $EC99-$EC9B: reset the tempo counter from the tune's tempo byte --
+       * self-modifying code, see prologue note above. */
+      state->bank3->title_music.tempo_counter = state->bank3->title_music.tune_tempo;
     }
 
     /* $EC9E-$ECA8 tms_refresh_registers: recompute the AY register values
@@ -6826,12 +6823,22 @@ static void titlescr_write_ay_registers(chqstate_t *state)
   int           reg;    /* AY register index, 11 down to 0 (was A) */
 
   speccy = state->speccy;
+
+  /* $ECCF-$ECD4: LD HL,$EFBA / LD A,$0B / LD C,$FD (10+7+7=24). */
+  speccy->logtime(speccy, 24);
   values = &state->bank3->title_ay_regs.env_fine;
   reg  = AY_REG_ENVELOPE_FINE_DURATION;
   do {
+    /* $ECD6-$ECDF: LD B,$FF / OUT (C),A / LD B,$BF / OUTD / DEC A / JP P
+     * (7+12+7+16+4+10=56). */
+    speccy->logtime(speccy, 56);
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
   } while (--reg >= 0);
+
+  /* $ECE2: RET -- pairs with the CALL overhead billed at the call site
+   * inside titlescr_ay_music. */
+  speccy->logtime(speccy, 10);
 }
 
 /**
@@ -7020,20 +7027,40 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   if (IX_channel->pattern_ptr == NULL)
     return 0; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
 
+  /* $EDD6: DEC (IX+$10) (23) -- shared by both outcomes below. */
+  state->speccy->logtime(state->speccy, 23);
+
   /* $EDD6-$EDD9: per-row wait countdown. */
   if (--IX_channel->row_wait != 0) {
+    /* $EDD9-$EE3B: JR NZ taken (12); LD A,(IX+$00)/BIT 3,A (19+8=27). Total
+     * 12+27=39. */
+    state->speccy->logtime(state->speccy, 39);
+
     /* $EE38 channel_slide_upkeep: nudge the note by one semitone per frame
      * while a portamento/slide effect is active. */
     A_status = IX_channel->status;
-    if (!(A_status & CHSTATUS_SLIDE_UPKEEP))
+    if (!(A_status & CHSTATUS_SLIDE_UPKEEP)) {
+      /* $EE3D: RET Z taken (11). */
+      state->speccy->logtime(state->speccy, 11);
       return 0;
+    }
+    /* $EE3D: RET Z not taken (5). */
+    state->speccy->logtime(state->speccy, 5);
 
-    if (A_status & CHSTATUS_SLIDE_UPKEEP_UP) // Conv: RLA + JR NC collapsed to a direct bit-7 test
+    if (A_status & CHSTATUS_SLIDE_UPKEEP_UP) { // Conv: RLA + JR NC collapsed to a direct bit-7 test
+      /* $EE3E-$EE44: RLA/JR NC not taken/INC (IX+$12)/RET (4+7+23+10=44). */
+      state->speccy->logtime(state->speccy, 44);
       IX_channel->note_index++;
-    else
+    } else {
+      /* $EE3E-$EE48: RLA/JR NC taken/DEC (IX+$12)/RET (4+12+23+10=49). */
+      state->speccy->logtime(state->speccy, 49);
       IX_channel->note_index--;
+    }
     return 0;
   }
+  /* $EDD9-$EDE1: JR NZ not taken (7); LD (IX+$00),B/LD E,(IX+$01)/
+   * LD D,(IX+$02) (19+19+19=57). Total 7+57=64. */
+  state->speccy->logtime(state->speccy, 64);
 
   /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
    * bytes. */
@@ -7041,17 +7068,37 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   DE_pattern = IX_channel->pattern_ptr;
 
   for (;;) {
-    /* $EDE4 acp_read_pattern_byte. */
+    /* $EDE4-$EDE5 acp_read_pattern_byte: LD A,(DE)/INC DE (7+6=13). This pair
+     * recurs at every operand-byte read site below (each acp_read_byte
+     * call). */
+    state->speccy->logtime(state->speccy, 13);
     A_byte = acp_read_byte(IX_channel, &DE_pattern);
 
+    /* $EDE6-$EDE7: AND A/JP M (4+10=14). */
+    state->speccy->logtime(state->speccy, 14);
     if (!(A_byte & 0x80)) {
-      /* $EDEA-$EE1E: note value. */
+      /* $EDEA-$EDED: ADD A,(IX+$20)/LD (IX+$12),A (19+19=38). */
+      state->speccy->logtime(state->speccy, 38);
       A_note = (u8) (A_byte + IX_channel->transpose);
       IX_channel->note_index = A_note;
 
-      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
+      /* $EDF0: BIT 0,(IX+$1E) (20). */
+      state->speccy->logtime(state->speccy, 20);
+      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE) {
+        /* $EDF4: JR Z not taken (7); $EDF6: LD ($EC79),A (13). Total 20. */
+        state->speccy->logtime(state->speccy, 20);
         state->bank3->title_music.shared_note_value = A_note; /* $EC79 (SM) */
+      } else {
+        /* $EDF4: JR Z taken (12). */
+        state->speccy->logtime(state->speccy, 12);
+      }
 
+      /* $EDF9-$EE1E: LD L,(IX+$09)/LD H,(IX+$0A)/LD (IX+$0B),L/
+       * LD (IX+$0C),H/LD L,(IX+$14)/LD (IX+$16),L/LD H,(IX+$15)/
+       * LD (IX+$17),H (8x19=152); LD A,(HL)/LD (IX+$18),A/LD (IX+$13),A/
+       * LD A,(IX+$0F)/LD (IX+$19),A (7+19+19+19+19=83); SET 5,(IX+$00) (23).
+       * Total 152+83+23=258. */
+      state->speccy->logtime(state->speccy, 258);
       HL_ptr = IX_channel->pitch_offset_default;    /* +$09/$0A */
       IX_channel->pitch_offset_cur = HL_ptr;        /* +$0B/$0C: reset to loop start */
 
@@ -7071,53 +7118,101 @@ static u8 advance_channel_pattern(chqstate_t           *state,
 
     /* $EE49 decode_pattern_command: command/effect byte. */
     if (A_byte < PCMD_TEMPO_BASE) {
-      /* $EE96 dispatch_pattern_command -- see the Conv note above the
-       * prologue for how this mapping was derived. */
+      /* $EE49-$EE59 cascade (CP $B0/JR C not taken x3 folded into the
+       * enclosing if/else-if chain -- see the else-if branches below) plus
+       * $EE96-$EE9D dispatch_pattern_command: ADD HL,BC-style table walk and
+       * JP (HL) landing on the handler entry point (47). Combined with this
+       * branch's own CP/JR C cascade cost (19) the total dispatch overhead
+       * for every switch case below is 66; see the Conv note above the
+       * prologue for how the jump table was recovered. */
+      state->speccy->logtime(state->speccy, 66);
       switch (A_byte) {
       case PCMD_RESET_ROW_COUNTER_CLEAR_ENV:
+        /* $EDBC-$EDC3: LD (IX+$13),B/RES 5,(IX+$00)/JR $EE22 (19+23+12=54). */
+        state->speccy->logtime(state->speccy, 54);
         IX_channel->volume = 0;
         IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
         goto reset_row_counter;
 
       case PCMD_VIBRATO_OFF:
+        /* $EDA5-$EDA8: LD (IX+$1D),B/JR $EDE4 (19+12=31). */
+        state->speccy->logtime(state->speccy, 31);
         IX_channel->flags = 0;
         continue;
 
       case PCMD_VIBRATO_ON:
+        /* $EDAA-$EDAE: LD (IX+$1D),$40/JR $EDE4 (19+12=31). */
+        state->speccy->logtime(state->speccy, 31);
         IX_channel->flags = CHFLAGS_VIBRATO_ENABLE;
         continue;
 
       case PCMD_VIBRATO_ON_MODE2:
+        /* $EDB0-$EDB4: LD (IX+$1D),$C0/JR $EDE4 (19+12=31). */
+        state->speccy->logtime(state->speccy, 31);
         IX_channel->flags = CHFLAGS_VIBRATO_ON_MODE2;
         continue;
 
       case PCMD_SET_SLIDE_TARGET:
+        /* $ED6F-$ED77: LD A,(DE)/INC DE (operand 1 read, 7+6=13); LD (IX+$07),B/
+         * LD (IX+$08),B/LD (IX+$0D),A (clear slide_accum + store slide_step,
+         * 19+19+19=57). Total 70. */
+        state->speccy->logtime(state->speccy, 70);
         IX_channel->slide_step      = (s8) acp_read_byte(IX_channel, &DE_pattern); /* operand 1 */
         IX_channel->slide_accum     = 0;
+
+        /* $ED7A: SET 2,(IX+$00) (23). */
+        state->speccy->logtime(state->speccy, 23);
         IX_channel->status         |= CHSTATUS_SLIDE_ACTIVE;
+
+        /* $ED7E-$ED83: LD A,(DE)/INC DE (operand 2 read, 7+6=13); LD (IX+$0E),A
+         * (19); JR $EDE4 (12). Total 44. */
+        state->speccy->logtime(state->speccy, 44);
         IX_channel->slide_countdown = acp_read_byte(IX_channel, &DE_pattern);      /* operand 2 */
         continue;
 
       case PCMD_SET_STATUS_BITS_3_7:
+        /* $ED9B-$EDA3: SET 7,(IX+$00)/SET 3,(IX+$00)/JR $EDE4 (23+23+12=58). */
+        state->speccy->logtime(state->speccy, 58);
         IX_channel->status |= CHSTATUS_SLIDE_UPKEEP_ON;
         continue;
 
       case PCMD_ADVANCE_PHRASE: /* see advance_channel_phrase's own prologue */
-        advance_channel_phrase(IX_channel, &DE_pattern);
+        /* $ED33: JP $F1AE (10). */
+        state->speccy->logtime(state->speccy, 10);
+        advance_channel_phrase(state, IX_channel, &DE_pattern);
+        /* $F1F0: JP $EDE4 (10) -- advance_channel_phrase's own exit back into
+         * this loop. */
+        state->speccy->logtime(state->speccy, 10);
         continue;
 
       case PCMD_SET_ENVELOPE_PARAMS:
+        /* $ED8C-$ED90: LD A,(DE)/LD (IX+$1B),A/INC DE (operand 1, 7+19+6=32). */
+        state->speccy->logtime(state->speccy, 32);
         IX_channel->vibrato_increment = acp_read_byte(IX_channel, &DE_pattern); /* operand 1 -> +$1B */
+
+        /* $ED91-$ED95: LD A,(DE)/INC DE (operand 2 read, 7+6=13). */
+        state->speccy->logtime(state->speccy, 13);
         A_operand = acp_read_byte(IX_channel, &DE_pattern);                     /* operand 2, stored twice */
+
+        /* $ED92-$ED99: LD (IX+$1A),A/LD (IX+$1C),A/JR $EDE4 (19+19+12=50). */
+        state->speccy->logtime(state->speccy, 50);
         IX_channel->vibrato_depth = A_operand; /* +$1A */
         IX_channel->vibrato_phase = A_operand; /* +$1C */
         continue;
 
       case PCMD_SET_DRIVER_FLAG:
+        /* $ED85-$ED86: LD A,(DE)/INC DE (7+6=13) -- operand read. */
+        state->speccy->logtime(state->speccy, 13);
         state->bank3->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
+        /* $ED87-$ED8A: LD ($EED1),A/JR $EDE4 (13+12=25). */
+        state->speccy->logtime(state->speccy, 25);
         continue;
 
       case PCMD_SET_MIXER_BITS_HIGH3:
+        /* $ED4B-$ED5C: LD A,(IX+$24)/LD C,A/AND $38/LD HL,$EF7A/XOR (HL)/
+         * AND C/XOR (HL)/LD (HL),A/XOR A/LD (IX+$1E),A/JP $EDE4
+         * (19+4+7+10+7+4+7+7+4+19+10=98). */
+        state->speccy->logtime(state->speccy, 98);
         A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
@@ -7127,6 +7222,10 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         continue;
 
       case PCMD_SET_MIXER_BITS_LOW3:
+        /* $ED36-$ED48: LD A,(IX+$24)/LD C,A/AND $07/LD HL,$EF7A/XOR (HL)/
+         * AND C/XOR (HL)/LD (HL),A/LD A,$01/LD (IX+$1E),A/JP $EDE4
+         * (19+4+7+10+7+4+7+7+7+19+10=101). */
+        state->speccy->logtime(state->speccy, 101);
         A_mix  = (u8) (IX_channel->mixer_mask & CHMIXER_TONE_MASK);
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
@@ -7136,48 +7235,84 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         continue;
 
       case PCMD_CLEAR_MIXER_BITS:
+        /* $ED5F-$ED6D: LD HL,$EF7A/LD A,(IX+$24)/CPL/AND (HL)/LD (HL),A/
+         * LD A,$01/LD (IX+$1E),A/JR $EDE4 (10+19+4+7+7+7+19+12=85). */
+        state->speccy->logtime(state->speccy, 85);
         state->bank3->title_music.pending_mixer_bits =
           (u8) (~IX_channel->mixer_mask & state->bank3->title_music.pending_mixer_bits);
         IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
         continue;
 
       case PCMD_SET_STATUS_BIT1:
+        /* $EDB6-$EDBA: SET 1,(IX+$00)/JR $EDE4 (23+12=35). */
+        state->speccy->logtime(state->speccy, 35);
         IX_channel->status |= CHSTATUS_BIT1;
         continue;
 
       case PCMD_END_OF_TUNE:
-        /* $ED2F: the tune's data ends here. Conv: the Z80's POP HL discards
-         * this function's return address so that stop_music_and_silence's own
-         * RET unwinds past the rest of the driver; C reports the unwind to
-         * the caller instead. */
+        /* $ED2F-$ED33: POP HL/JP $ED0B (10+10=20). Conv: the Z80's POP HL
+         * discards this function's return address so that
+         * stop_music_and_silence's own RET unwinds past the rest of the
+         * driver; C reports the unwind to the caller instead, so
+         * stop_music_and_silence's own cost is billed inside that function,
+         * not here (it is outside this task's scope). */
+        state->speccy->logtime(state->speccy, 20);
         stop_music_and_silence(state);
         return 1;
 
       case PCMD_RESET_ROW_COUNTER:
+        /* $EDC5-$EDC9: RES 5,(IX+$00)/JR $EE22 (23+12=35). */
+        state->speccy->logtime(state->speccy, 35);
         IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
         goto reset_row_counter;
 
       case PCMD_MUTE_CHANNEL:
+        /* $EDCB-$EDCF: LD (IX+$1F),$FF/JR $EDE4 (19+12=31). */
+        state->speccy->logtime(state->speccy, 31);
         IX_channel->mute_pending = CHMUTE_PENDING;
         continue;
 
       case PCMD_UNMUTE_CHANNEL:
+        /* $EDD1-$EDD4: LD (IX+$1F),B/JR $EDE4 (19+12=31). */
+        state->speccy->logtime(state->speccy, 31);
         IX_channel->mute_pending = 0;
         continue;
 
       case PCMD_RESET_ROW_COUNTER_ALT:
+        /* 0xA8 lands exactly on acp_reset_row_counter's entry point via the
+         * dispatch table displacement -- no further Z80 instructions execute
+         * before $EE22, so no additional bill beyond the shared dispatch
+         * overhead above. */
         goto reset_row_counter;
 
       default:
-        /* 0x85 and the rest of 0x92-0xAF: not a real handler entry point --
-         * see the Conv note above the prologue. Conv: treat as a no-op. */
+        /* Ambiguous case, flagged rather than guessed: 0x85 lands
+         * mid-instruction inside pcmd_set_status_bits_3_7, executing only
+         * its SET 3,(IX+$00)/JR $EDE4 tail (23+12=35) -- exact. The other
+         * values folded into this default (0x92-0xA7, 0xA9-0xAF) land on
+         * arbitrary bytes inside unrelated handler blocks; their real cost
+         * cannot be determined without disassembling those byte sequences as
+         * opcodes, and none of them occur in the extracted tune data, so the
+         * branch is dead in practice. Approximated with the same 35 as 0x85
+         * -- see the Conv note above the prologue. */
+        state->speccy->logtime(state->speccy, 35);
         continue;
       }
     } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
+      /* $EE49-$EE74: CP $B0/JR C not taken/ADD A,$20/JR C not taken/
+       * ADD A,$10/JR C not taken/ADD A,$18/JR NC taken (cascade,
+       * 7+7+7+7+7+7+7+12=61); ADD A,$09/LD ($EC9A),A/JP $EDE4
+       * (7+13+10=30). Total 61+30=91. */
+      state->speccy->logtime(state->speccy, 91);
       /* $EE6F: set the tune tempo/speed byte. */
       state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
       continue;
     } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE) {
+      /* $EE49-$EE57 cascade (7+7+7+7+7+7+7+7=56); $EE59-$EE6C: LD C,A/
+       * LD HL,$F07C/ADD HL,BC/LD C,(HL)/ADD HL,BC/LD (IX+$0B),L/
+       * LD (IX+$09),L/LD (IX+$0C),H/LD (IX+$0A),H/JP $EDE4
+       * (4+10+11+7+11+19+19+19+19+10=129). Total 56+129=185. */
+      state->speccy->logtime(state->speccy, 185);
       /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
        * entries). Sets both the "current" and "default" pointers immediately
        * (unlike the envelope-shape select below, which only sets the
@@ -7187,6 +7322,11 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
       continue;
     } else if (A_byte < PCMD_ROW_WAIT_BASE) {
+      /* $EE49-$EE53 cascade (7+7+7+7+7+12=47); $EE7E-$EE93: LD HL,$F123/
+       * ADD A,A/LD C,A/ADD HL,BC/LD A,(HL)/INC HL/LD H,(HL)/LD L,A/
+       * LD (IX+$14),L/LD (IX+$15),H/DEC HL/LD A,(HL)/LD (IX+$0F),A/JP $EDE4
+       * (10+4+4+11+7+6+7+4+19+19+6+7+19+10=133). Total 47+133=180. */
+      state->speccy->logtime(state->speccy, 180);
       /* $EE7E-$EE93: select an envelope shape via the $F123 pointer table (16
        * entries). Sets envelope_shape_default and envelope_speed;
        * envelope_shape_ptr is only reset from the default at the next note
@@ -7195,6 +7335,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
       continue;
     } else {
+      /* $EE49-$EE4F cascade (7+7+7+12=33); $EE77-$EE7B: INC A/LD (IX+$11),A/
+       * JP $EDE4 (4+19+10=33). Total 33+33=66. */
+      state->speccy->logtime(state->speccy, 66);
       /* $EE77: set the per-row wait reload value. */
       IX_channel->row_wait_reload = (u8) (A_byte - PCMD_ROW_WAIT_BASE + 1); /* +$11 */
       continue;
@@ -7202,13 +7345,23 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   }
 
 reset_row_counter:
-  /* $EE22 acp_reset_row_counter. */
+  /* $EE22 acp_reset_row_counter: LD A,(IX+$11)/LD (IX+$10),A/LD (IX+$02),D/
+   * LD (IX+$01),E (19+19+19+19=76). */
+  state->speccy->logtime(state->speccy, 76);
   IX_channel->row_wait    = IX_channel->row_wait_reload; /* +$10 = +$11 */
   IX_channel->pattern_ptr = DE_pattern;                  /* +$01/+$02 */
 
-  if (IX_channel->mute_pending)
+  /* $EE2E-$EE31: LD A,(IX+$1F)/AND A (19+4=23). */
+  state->speccy->logtime(state->speccy, 23);
+  if (IX_channel->mute_pending) {
+    /* $EE32: RET Z not taken (5); $EE33-$EE37: LD (IX+$1F),$FF/RET
+     * (19+10=29). Total 34. */
+    state->speccy->logtime(state->speccy, 34);
     IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
-
+    return 0;
+  }
+  /* $EE32: RET Z taken (11). */
+  state->speccy->logtime(state->speccy, 11);
   return 0;
 }
 
@@ -7411,43 +7564,86 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   u8         A_noise_mask;      /* this channel's noise-enable bits, complemented for clearing (was A) */
 
   /* $EE9E-$EED0: phase 1, envelope amplitude advance. */
+  /* $EE9E-$EEA1: LD C,(IX+$00)/BIT 5,C (19+8=27). */
+  state->speccy->logtime(state->speccy, 27);
   C_status = IX_channel->status;
   if (C_status & CHSTATUS_ENVELOPE_ACTIVE) {
+    /* $EEA3-$EEAA: JR Z not taken(7); LD A,(IX+$19)/SUB $01/LD (IX+$19),A
+     * (19+7+19=45) -- the Z80 speculatively decrements and stores here
+     * regardless of underflow; the reload branch below overwrites this store
+     * at $EEB2. Total 7+45=52. */
+    state->speccy->logtime(state->speccy, 52);
     A_env_step = IX_channel->envelope_step_counter;
     if (A_env_step == 0) {
+      /* $EEAD: JR NC not taken (7). */
+      state->speccy->logtime(state->speccy, 7);
       /* Underflow: reload the counter and try to advance the envelope shape
        * pointer. */
       A_env_step = IX_channel->envelope_speed;
       IX_channel->envelope_step_counter = A_env_step;
 
+      /* $EEAF-$EEBD: LD A,(IX+$0F)/LD (IX+$19),A/LD L,(IX+$16)/
+       * LD H,(IX+$17)/INC HL/LD A,(HL)/AND A (19+19+19+19+6+7+4=93). */
+      state->speccy->logtime(state->speccy, 93);
       HL_env_shape = IX_channel->envelope_shape_ptr + 1;
       A_env_byte = *HL_env_shape;
       if ((s8) A_env_byte >= 0) { /* SEQ_END_BIT clear */
+        /* $EEBE: JP M not taken (10); $EEC1-$EEC7: LD (IX+$16),L/
+         * LD (IX+$17),H/LD (IX+$18),A (19+19+19=57). Total 67. */
+        state->speccy->logtime(state->speccy, 67);
         /* Not an end-of-table marker: commit the advance. */
         IX_channel->envelope_shape_ptr = HL_env_shape;
         IX_channel->envelope_amplitude = A_env_byte;
+      } else {
+        /* $EEBE: JP M taken (10). */
+        state->speccy->logtime(state->speccy, 10);
       }
       /* Else: halt the pointer, keep the previous amplitude. */
     } else {
+      /* $EEAD: JR NC taken (12). */
+      state->speccy->logtime(state->speccy, 12);
       IX_channel->envelope_step_counter = A_env_step - 1;
     }
+    /* $EECA-$EECD: LD A,(IX+$18)/LD (IX+$13),A (19+19=38). */
+    state->speccy->logtime(state->speccy, 38);
     IX_channel->volume = IX_channel->envelope_amplitude;
+  } else {
+    /* $EEA3: JR Z taken (12) -- envelope not active, phase 1 skipped
+     * entirely. */
+    state->speccy->logtime(state->speccy, 12);
   }
 
   /* $EED0-$EEFC: phase 2, tone-period lookup. */
+  /* $EED0-$EED5: LD A,$00/ADD A,(IX+$12)/LD B,A (7+19+4=30) -- collapsed to a
+   * direct read in C (see Conv note above). */
+  state->speccy->logtime(state->speccy, 30);
   B_note = IX_channel->note_index; // Conv: LD A,$00; ADD A,(IX+$12) collapsed to a direct read
 
+  /* $EED6-$EEDE: LD L,(IX+$0B)/LD H,(IX+$0C)/LD A,(HL)/INC HL/AND A
+   * (19+19+7+6+4=55). */
+  state->speccy->logtime(state->speccy, 55);
   HL_offset_ptr = IX_channel->pitch_offset_cur;
   A_offset_byte = *HL_offset_ptr;
   HL_offset_ptr++;
   if ((s8) A_offset_byte < 0) { /* SEQ_END_BIT set */
+    /* $EEDF: JP P not taken (10); $EEE2-$EEE8: LD L,(IX+$09)/LD H,(IX+$0A)/
+     * AND $7F (19+19+7=45). Total 55. */
+    state->speccy->logtime(state->speccy, 55);
     /* End-of-sequence marker: reset to the default/loop-start pointer and
      * strip the marker bit. */
     HL_offset_ptr = IX_channel->pitch_offset_default;
     A_offset_byte &= (u8) ~SEQ_END_BIT;
+  } else {
+    /* $EEDF: JP P taken (10). */
+    state->speccy->logtime(state->speccy, 10);
   }
+  /* $EEEA-$EEED: LD (IX+$0B),L/LD (IX+$0C),H (19+19=38). */
+  state->speccy->logtime(state->speccy, 38);
   IX_channel->pitch_offset_cur = HL_offset_ptr;
 
+  /* $EEF0-$EEFB: ADD A,B/LD HL,$EFBC/LD D,$00/ADD A,A/LD E,A/ADD HL,DE/
+   * LD E,(HL)/INC HL/LD D,(HL) (4+10+7+4+4+11+7+6+7=60). */
+  state->speccy->logtime(state->speccy, 60);
   A_note_combined = (u8) (A_offset_byte + B_note);
   A_note_lookup   = (u8) (A_note_combined * 2); // ADD A,A: 8-bit doubling, wraps mod 256
 
@@ -7463,75 +7659,178 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
                 : 0;
 
   /* $EEFC-$EF4B: phase 3, vibrato. */
+  /* $EEFC-$EEFF: LD L,(IX+$1D)/BIT 6,L (19+8=27). */
+  state->speccy->logtime(state->speccy, 27);
   if (IX_channel->flags & CHFLAGS_VIBRATO_ENABLE) {
+    /* $EF01: JR Z not taken (7); $EF03-$EF0B: LD H,A/LD B,(IX+$1A)/SLA B/
+     * BIT 7,L/LD A,(IX+$1C) (4+19+8+8+19=58). Total 7+58=65. */
+    state->speccy->logtime(state->speccy, 65);
     B_vib_range = IX_channel->vibrato_depth;
     B_vib_range <<= 1;
 
     A_vib_phase = IX_channel->vibrato_phase;
+
+    /* $EF0E-$EF12: JR Z / BIT 0,C / JR NZ gate-check cascade -- costs 12 when
+     * the gate bit is clear (always update), 22 when the gate bit is set but
+     * the toggle bit is clear (also update), or 27 when both are set (skip
+     * update). This re-derives the condition purely to select the billing
+     * constant; it does not alter behaviour. */
+    if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE)) {
+      state->speccy->logtime(state->speccy, 12);
+    } else if (!(C_status & CHSTATUS_TOGGLE)) {
+      state->speccy->logtime(state->speccy, 22);
+    } else {
+      state->speccy->logtime(state->speccy, 27);
+    }
     if (!((IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE) && (C_status & CHSTATUS_TOGGLE))) {
       /* Conv: $EF09-$EF12 gate whether the phase updates this call at all
        * (runs every other call); not fully resolved against source, mirrored
        * literally from the skool. */
       if (!(IX_channel->flags & CHFLAGS_VIBRATO_ASCENDING)) {
+        /* $EF14-$EF16: BIT 5,L/JR NZ not taken (8+7=15). */
+        state->speccy->logtime(state->speccy, 15);
         /* Descending. */
         if (A_vib_phase >= IX_channel->vibrato_increment) {
+          /* $EF18-$EF1B: SUB (IX+$1B)/JR NC taken (19+12=31). */
+          state->speccy->logtime(state->speccy, 31);
           A_vib_phase -= IX_channel->vibrato_increment;
         } else {
+          /* $EF18-$EF22: SUB (IX+$1B)/JR NC not taken/SET 5,(IX+$1D)/SUB A/JR
+           * (19+7+23+4+12=65). */
+          state->speccy->logtime(state->speccy, 65);
           IX_channel->flags |= CHFLAGS_VIBRATO_ASCENDING; // flip to ascending
           A_vib_phase = 0;
         }
       } else {
+        /* $EF14-$EF16: BIT 5,L/JR NZ taken (8+12=20). */
+        state->speccy->logtime(state->speccy, 20);
         /* Ascending. */
         A_vib_phase += IX_channel->vibrato_increment;
         if (A_vib_phase >= B_vib_range) {
+          /* $EF24-$EF2A: ADD A,(IX+$1B)/CP B/JR C not taken/RES 5,(IX+$1D)/
+           * LD A,B (19+4+7+23+4=57). */
+          state->speccy->logtime(state->speccy, 57);
           IX_channel->flags &= ~CHFLAGS_VIBRATO_ASCENDING; // flip to descending
           A_vib_phase = B_vib_range;
+        } else {
+          /* $EF24-$EF28: ADD A,(IX+$1B)/CP B/JR C taken (19+4+12=35). */
+          state->speccy->logtime(state->speccy, 35);
         }
       }
+      /* $EF2F: LD (IX+$1C),A (19). */
+      state->speccy->logtime(state->speccy, 19);
       IX_channel->vibrato_phase = A_vib_phase;
     }
 
+    /* $EF32-$EF38: EX DE,HL(Conv folded)/SRL B/SUB B/LD E,A/LD A,D/LD D,$00
+     * (4+8+4+4+4+7=31). */
+    state->speccy->logtime(state->speccy, 31);
     // Conv: EX DE,HL ($EF32/$EF4A) folded -- add the scaled offset directly.
     DE_vib_offset = (s8) (A_vib_phase - (B_vib_range >> 1)); // centre phase; (s8)->(s16) sign-extends
+    /* $EF3A: JR NC (12 taken/11 not taken) -- re-derives the sign of the
+     * expression above purely to select the billing constant; no behaviour
+     * change. */
+    if (DE_vib_offset >= 0) {
+      state->speccy->logtime(state->speccy, 12);
+    } else {
+      state->speccy->logtime(state->speccy, 11);
+    }
 
     A_shift_test = (u16) A_note_lookup + 0xA0;
+    /* $EF3D: ADD A,$A0 (7). */
+    state->speccy->logtime(state->speccy, 7);
     if (A_shift_test <= 0xFF) {
+      /* $EF3F: JR C not taken (7) -- loop entered. */
+      state->speccy->logtime(state->speccy, 7);
       do {
         DE_vib_offset <<= 1;
         A_shift_test = (A_shift_test & 0xFF) + 0x18;
+        /* $EF41-$EF47: SLA E/RL D/ADD A,$18/JR NC (8+8+7=23, +12 taken/+7 not
+         * taken depending on whether the loop continues). */
+        if (A_shift_test <= 0xFF)
+          state->speccy->logtime(state->speccy, 23 + 12);
+        else
+          state->speccy->logtime(state->speccy, 23 + 7);
       } while (A_shift_test <= 0xFF);
+    } else {
+      /* $EF3F: JR C taken (12) -- loop skipped entirely. */
+      state->speccy->logtime(state->speccy, 12);
     }
 
+    /* $EF49-$EF4A: ADD HL,DE/EX DE,HL (Conv folded) (11+4=15). */
+    state->speccy->logtime(state->speccy, 15);
     DE_period += DE_vib_offset;
+  } else {
+    /* $EF01: JR Z taken (12) -- vibrato disabled, phase 3 skipped entirely. */
+    state->speccy->logtime(state->speccy, 12);
   }
 
   /* $EF4B-$EF76: phase 4, portamento/slide. */
+  /* $EF4B-$EF4E: LD A,C/XOR $01/LD (IX+$00),A (4+7+19=30). */
+  state->speccy->logtime(state->speccy, 30);
   A_status_new = C_status ^ CHSTATUS_TOGGLE;
   IX_channel->status = A_status_new;
 
+  /* $EF51: BIT 2,C (8). */
+  state->speccy->logtime(state->speccy, 8);
   if (C_status & CHSTATUS_SLIDE_ACTIVE) {
+    /* $EF53: JR Z not taken (7); $EF55: LD B,(IX+$0E) (19). Total 26. */
+    state->speccy->logtime(state->speccy, 26);
     B_slide_countdown = IX_channel->slide_countdown;
     B_slide_countdown--;
     if (B_slide_countdown != 0) {
+      /* $EF58: DJNZ taken (13); $EF73: LD (IX+$0E),B (19). Total 32. */
+      state->speccy->logtime(state->speccy, 32);
       IX_channel->slide_countdown = B_slide_countdown;
     } else {
+      /* $EF58: DJNZ not taken (8); $EF5A-$EF5D: LD C,(IX+$0D)/BIT 7,C
+       * (19+8=27). Total 35. */
+      state->speccy->logtime(state->speccy, 35);
       C_slide_step = IX_channel->slide_step;
 
+      /* $EF5F: JR Z (12 taken/11 not taken) -- re-derives the sign of
+       * C_slide_step purely to select the billing constant; matches the
+       * BIT 7,C test above. */
+      if ((s8) C_slide_step >= 0) {
+        state->speccy->logtime(state->speccy, 12);
+      } else {
+        state->speccy->logtime(state->speccy, 11);
+      }
+
       HL_slide_accum = IX_channel->slide_accum + (s16) C_slide_step; // sign-extended add
+      /* $EF62-$EF6C: LD L,(IX+$07)/LD H,(IX+$08)/ADD HL,BC/LD (IX+$07),L/
+       * LD (IX+$08),H (19+19+11+19+19=87). */
+      state->speccy->logtime(state->speccy, 87);
       IX_channel->slide_accum = HL_slide_accum;
 
+      /* $EF6F-$EF71: ADD HL,DE/EX DE,HL(Conv folded)/JR $EF76 (11+4+12=27). */
+      state->speccy->logtime(state->speccy, 27);
       DE_period += HL_slide_accum;
     }
+  } else {
+    /* $EF53: JR Z taken (12). */
+    state->speccy->logtime(state->speccy, 12);
   }
 
   /* $EF76-$EFAE: phase 5, mixer/volume finalisation. */
+  /* $EF76-$EF77: CPL/AND $03 (4+7=11). */
+  state->speccy->logtime(state->speccy, 11);
   A_mixer_test = (u8) ~A_status_new & (CHSTATUS_TOGGLE | CHSTATUS_BIT1);
+
+  /* $EF79: LD A,$00 (7) -- reads the self-modified pending_mixer_bits operand
+   * (see State.h); this is the same load either branch below consumes. */
+  state->speccy->logtime(state->speccy, 7);
   if (A_mixer_test == 0) {
+    /* $EF7B: JR NZ not taken (7); $EF7D-$EF85: LD A,($EC79)/XOR $08/
+     * LD ($ECC6),A/LD A,$07 (13+7+13+7=40). Total 47. */
+    state->speccy->logtime(state->speccy, 47);
     /* Every 4th call. */
     A_shared = state->bank3->title_music.shared_note_value ^ 0x08; // $EC79
     state->bank3->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = CHMIXER_TONE_MASK;
   } else {
+    /* $EF7B: JR NZ taken (12). */
+    state->speccy->logtime(state->speccy, 12);
     /* Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
      * ($EF7A, pending_mixer_bits), not a literal 0 -- see State.h. A literal
      * 0x00 here permanently forces every channel's noise-enable bit on,
@@ -7541,6 +7840,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     A_mixer_val = state->bank3->title_music.pending_mixer_bits; // $EF7A (SM)
   }
 
+  /* $EF87-$EF8F: LD HL,$EFB6/XOR (HL)/AND (IX+$24)/XOR (HL)/LD (HL),A
+   * (10+7+19+7+7=50). */
+  state->speccy->logtime(state->speccy, 50);
   /* Replace-bits-under-mask: merge this channel's tone-enable bits into the
    * shared mixer cache without disturbing the other channels' bits. */
   A_mixer_val ^= state->bank3->title_ay_regs.mixer;
@@ -7548,19 +7850,39 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   A_mixer_val ^= state->bank3->title_ay_regs.mixer;
   state->bank3->title_ay_regs.mixer = A_mixer_val;
 
+  /* $EF90-$EF93: LD A,(IX+$1F)/AND A (19+4=23). */
+  state->speccy->logtime(state->speccy, 23);
   A_mute_flag = IX_channel->mute_pending;
   if ((s8) A_mute_flag < 0) {
+    /* $EF94: JP P not taken (10); $EF97-$EF99: AND $7F/LD (IX+$1F),A
+     * (7+19=26). Total 36. */
+    state->speccy->logtime(state->speccy, 36);
     /* One-shot mute transition. */
     A_mute_flag &= (u8) ~CHMUTE_GATE_BIT;
     IX_channel->mute_pending = A_mute_flag;
 
+    /* $EF9C-$EFA1: LD A,(IX+$24)/AND $38/XOR $FF (19+7+7=33). */
+    state->speccy->logtime(state->speccy, 33);
     A_noise_mask = (u8) ~(IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
+    /* $EFA3-$EFA4: AND (HL)/LD (HL),A (7+7=14). */
+    state->speccy->logtime(state->speccy, 14);
     state->bank3->title_ay_regs.mixer &= A_noise_mask;
 
+    /* $EFA5-$EFA7: LD A,$41/LD ($ECC6),A (7+13=20). */
+    state->speccy->logtime(state->speccy, 20);
     state->bank3->title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
+  } else {
+    /* $EF94: JP P taken (10). */
+    state->speccy->logtime(state->speccy, 10);
   }
 
+  /* $EFAA-$EFAB: EX DE,HL (Conv folded)/LD A,(IX+$13) (4+19=23). */
+  state->speccy->logtime(state->speccy, 23);
   *A_volume_out = IX_channel->volume;
+
+  /* $EFAE: RET -- pairs with the CALL overhead billed at the call site in
+   * titlescr_ay_music. (10) */
+  state->speccy->logtime(state->speccy, 10);
   return DE_period;
 }
 
@@ -7641,7 +7963,8 @@ static const u8 *resolve_phrase_addr(u16 addr)
  * Conv: the Z80 also clears B to 0 at every exit ($F1EA/$F1ED "LD B,$00"); this
  *       has no C equivalent since BC is not otherwise modelled here.
  */
-static void advance_channel_phrase(title_tune_channel_t *IX_channel,
+static void advance_channel_phrase(chqstate_t           *state,
+                                   title_tune_channel_t *IX_channel,
                                    const u8            **DE_pattern)
 {
   u16       BC_table_offset; /* byte offset into this channel's phrase table (was BC, +$05/$06) */
@@ -7651,12 +7974,18 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
   u8        A_new_repeat;    /* freshly-read repeat count for a repeating entry (was A) */
   u16       DE_new_ptr;      /* freshly-read pointer for a repeating entry (was DE) */
 
+  /* $F1AE-$F1B1: LD C,(IX+$05)/LD B,(IX+$06) (19+19=38). */
+  state->speccy->logtime(state->speccy, 38);
   BC_table_offset = IX_channel->phrase_table_offset;
 
   for (;;) {
+    /* $F1B4-$F1BA: LD L,(IX+$03)/LD H,(IX+$04)/ADD HL,BC (19+19+11=49). */
+    state->speccy->logtime(state->speccy, 49);
     /* $F1B4: HL -> this table position. */
     HL_entry = IX_channel->pattern_data_ptr + BC_table_offset;
 
+    /* $F1BB-$F1BF: LD A,(IX+$21)/DEC A/JP M (19+4+10=33). */
+    state->speccy->logtime(state->speccy, 33);
     /* $F1BB-$F1BF: decrement the repeat count; underflow means this
      * position's repeats are exhausted and a new table word must be read. */
     A_repeat = (s8) (IX_channel->phrase_repeat_count - 1);
@@ -7670,26 +7999,46 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
      * phrase_ptr -- $F1C2-$F1C8 (the two LD (IX+d),reg / LD reg,(IX+d)
      * stores) do not affect flags, so $F1CB's JR NZ still reads the Z flag
      * left over from $F1BE's DEC A, not phrase_ptr's contents. */
+    /* $F1C2: LD (IX+$21),A (19). */
+    state->speccy->logtime(state->speccy, 19);
     IX_channel->phrase_repeat_count = (u8) A_repeat;
 
+    /* $F1C5-$F1C8: LD E,(IX+$22)/LD D,(IX+$23) (19+19=38) -- loaded
+     * unconditionally by the Z80 regardless of the JR NZ outcome below; the
+     * loaded value is only consumed when A_repeat != 0. */
+    state->speccy->logtime(state->speccy, 38);
     if (A_repeat != 0) {
+      /* $F1CB: JR NZ taken (12). */
+      state->speccy->logtime(state->speccy, 12);
       *DE_pattern = IX_channel->phrase_ptr;
       goto finalize;
     }
+    /* $F1CB-$F1CF: JR NZ not taken (7); INC BC/INC BC/JR $F1B4
+     * (6+6+12=24). Total 31. */
+    state->speccy->logtime(state->speccy, 31);
 
     BC_table_offset += 2;
   }
 
+  /* $F1D1: LD (IX+$20),$00 (19). */
+  state->speccy->logtime(state->speccy, 19);
   /* $F1D1: a new table word must be read -- reset this phrase's transpose
    * override to none. */
   IX_channel->transpose = 0;
 
   for (;;) {
+    /* $F1D5-$F1D9: LD A,(HL)/INC HL/LD D,(HL)/LD E,A (word read, 7+6+7+4=24);
+     * $F1D9: OR D (4). Total 28. */
+    state->speccy->logtime(state->speccy, 28);
     /* $F1D5-$F1D9: read a little-endian word at HL_entry. */
     DE_word = wordat(HL_entry++);
 
     switch (DE_word) {
     case PHRASE_TABLE_RESET:
+      /* $F1DA-$F1E7: JR NZ not taken (7); LD L,(IX+$03)/LD H,(IX+$04)/
+       * LD BC,$0002/LD E,(HL)/INC HL/LD D,(HL) (19+19+10+7+6+7=68). Total
+       * 7+68=75. */
+      state->speccy->logtime(state->speccy, 75);
       /* $F1DC-$F1E7: table exhausted -- restart from this channel's own
        * header word, offset reset to the table's start (2). */
       HL_entry        = IX_channel->pattern_data_ptr;
@@ -7699,6 +8048,11 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
       goto finalize;
 
     case PHRASE_TABLE_TRANSPOSE_PREFIX:
+      /* $F1DA-$F202: JR NZ taken(from RESET test, 12); DEC DE/LD A,D/OR E/
+       * JR NZ not taken (6+4+4+7=21); INC HL/LD A,(HL)/LD (IX+$20),A/INC HL/
+       * INC BC x3/INC DE/JR $F1D5 (6+7+19+6+6+6+6+6+12=74). Total
+       * 12+21+74=107. */
+      state->speccy->logtime(state->speccy, 107);
       /* $F1F8-$F202: inline transpose override -- apply it and re-read the
        * next word, 3 bytes further into the table. */
       IX_channel->transpose = *++HL_entry;
@@ -7707,6 +8061,12 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
       continue;
 
     case PHRASE_TABLE_REPEATING_ENTRY:
+      /* $F1DA-$F21D: JR NZ taken(12); DEC DE/LD A,D/OR E/JR NZ taken
+       * (6+4+4+12=26); DEC DE/LD A,D/OR E/INC DE/INC DE/JR NZ not taken
+       * (6+4+4+6+6+7=33); INC HL/LD A,(HL)/LD (IX+$21),A/INC HL/LD E,(HL)/
+       * LD (IX+$22),E/INC HL/LD D,(HL)/LD (IX+$23),D/INC BC x3/JR $F1E8
+       * (6+7+19+6+7+19+6+7+19+6+6+6+12=126). Total 12+26+33+126=197. */
+      state->speccy->logtime(state->speccy, 197);
       /* $F20B-$F21D: repeating entry -- repeat count then pointer follow.
        * Leaves BC_table_offset at the pointer's own low byte, so the next
        * lookup at this same table position re-reads it as a plain pointer
@@ -7723,6 +8083,11 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
       goto finalize;
 
     default:
+      /* $F1DA-$F221: JR NZ taken(12); DEC DE/LD A,D/OR E/JR NZ taken
+       * (6+4+4+12=26); DEC DE/LD A,D/OR E/INC DE/INC DE/JR NZ taken
+       * (6+4+4+6+6+12=38); INC BC x2/JR $F1E8 (6+6+12=24). Total
+       * 12+26+38+24=100. */
+      state->speccy->logtime(state->speccy, 100);
       /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
       BC_table_offset += 2;
       *DE_pattern = resolve_phrase_addr(DE_word);
@@ -7731,6 +8096,9 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
   }
 
 finalize:
+  /* $F1E8-$F1EE: LD (IX+$05),C/LD (IX+$06),B/LD B,$00 (19+19+7=45). The
+   * LD B,$00 has no C equivalent (BC is not otherwise modelled here). */
+  state->speccy->logtime(state->speccy, 45);
   /* $F1E8-$F1EB: persist the table cursor for next time. */
   IX_channel->phrase_table_offset = BC_table_offset;
 }
@@ -7837,16 +8205,16 @@ static void play_success_music(chqstate_t *state)
 /**
  * $F7D6: Start a tune and arm its drum-sample trigger table
  *
- * Plays tune A_tune (via titlescr_start_ay), then falls into
+ * Plays tune [tune_no] (via titlescr_start_ay), then falls into
  * load_drum_script to look up and arm that tune's drum-sample cue
  * script.
  *
- * \param[in] A_tune Tune number to start (was A).
+ * \param[in] tune_no Tune number to start (was A).
  */
-static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
+static void titlescr_start_tune(chqstate_t *state, u8 tune_no)
 {
-  titlescr_start_ay(state, A_tune);
-  load_drum_script(state, A_tune);
+  titlescr_start_ay(state, tune_no);
+  load_drum_script(state, tune_no);
 }
 
 /**
@@ -7859,7 +8227,7 @@ static void titlescr_start_tune(chqstate_t *state, u8 A_tune)
  *
  * \param[in] addr Raw Z80 address in the $FA75-$FB98 range. (was HL)
  *
- * \return         Pointer into drum_cue_script_data. (was HL)
+ * \return Pointer into drum_cue_script_data. (was HL)
  *
  * Conv: not a Z80 routine of its own -- see resolve_phrase_addr's own Conv note
  *       for why raw addresses read out of transcribed data must be resolved
@@ -8386,11 +8754,9 @@ static void titlescr_music(chqstate_t *state)
   /* $F832-$F833: XOR A / LD ($F8A8),A -- clears the "frame occurred" flag.
    * Conv: functionally omitted (see prologue), since nothing here polls
    * $F8A8, but the two instructions still cost real T-states on hardware. */
-  state->speccy->logtime(state->speccy, 4 + 13);
-
   /* $F836-$F839: LD A,(slot1_busy) / AND A -- common prefix before the
    * busy/idle branch. */
-  state->speccy->logtime(state->speccy, 7 + 4);
+  state->speccy->logtime(state->speccy, 4 + 13 + 7 + 4);
 
   if (!state->bank3->drums.slot1_busy) {
     /* $F839 JR NZ,$F841 not taken (7) + $F83B INC A / $F83C LD
