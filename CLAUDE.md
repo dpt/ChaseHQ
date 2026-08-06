@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by Ocean Software. The project has two parallel strands: reverse engineering via SkoolKit, and a faithful C reimplementation of the game logic.
 
+Known rough edges (title screen timing, perp-car jitter, incomplete 128K options menu, sound-effect gaps) are tracked in `C/TODO.md` — check it before assuming an issue is new.
+
 ## Building
 
 ### Stage data converter

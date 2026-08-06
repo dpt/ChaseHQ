@@ -131,11 +131,11 @@ typedef struct {
  * comments through the tail of the array.
  *
  * Conv: this master copy is const. show_end_screen copies it into
- * state->bank7->es_script at entry; es_handler_draw_score patches the
- * "GBP________ PTS" placeholder text in-place (offset 0xFD, matching $5DFB
- * relocated) in that per-instance copy, not here, exactly as the original
- * self-modifies its own es_script at that address but without concurrent
- * game instances trampling each other's score text.
+ *       state->bank7->es_script at entry; es_handler_draw_score patches the
+ *       "GBP________ PTS" placeholder text in-place (offset 0xFD, matching
+ *       $5DFB relocated) in that per-instance copy, not here, exactly as the
+ *       original self-modifies its own es_script at that address but without
+ *       concurrent game instances trampling each other's score text.
  */
 static const u8 es_script[268] = {
   ESCMD_CHATTER(CHATTERBLK_NANCY_CONGRATULATES_ADDR),
@@ -638,19 +638,19 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * returning).
  *
  * Conv: data_e06e (the only live target) is NOT a standard {CHATTERCHR,
- *       CHATTERSTR, CHATTERCMD} chatterblk -- see CHATTERBLK_NANCY_CONGRATULATES_ADDR
- *       above. Byte 2 of that block ($3F = 63) would be consumed as a
- *       CHATTERSTR index by pc_chatter_message (Main.c, the "assert(*chatterblk
- *       < CHATTERSTR__LIMIT)" guard around line 5871) and fail that bounds
- *       check immediately -- CHATTERSTR__LIMIT is 36. In a release build
- *       without asserts this reads common_chatter_strings[63] out of its
- *       36-entry array and dereferences whatever garbage pointer turns up, i.e.
- *       every single playthrough would crash on reaching the end screen. The
- *       original Z80 has the same malformed data, so this path is presumed
- *       unreached in practice (the skool marks it "unproven, dead end"); rather
- *       than risk that byte-for-byte here, the start_chatter call is skipped
- *       whenever the resolved target does not look like a well-formed
- *       chatterblk.
+ *       CHATTERSTR, CHATTERCMD} chatterblk -- see
+ *       CHATTERBLK_NANCY_CONGRATULATES_ADDR above. Byte 2 of that block ($3F =
+ *       63) would be consumed as a CHATTERSTR index by pc_chatter_message
+ *       (Main.c, the "assert(*chatterblk < CHATTERSTR__LIMIT)" guard around
+ *       line 5871) and fail that bounds check immediately -- CHATTERSTR__LIMIT
+ *       is 36. In a release build without asserts this reads
+ *       common_chatter_strings[63] out of its 36-entry array and dereferences
+ *       whatever garbage pointer turns up, i.e. every single playthrough would
+ *       crash on reaching the end screen. The original Z80 has the same
+ *       malformed data, so this path is presumed unreached in practice (the
+ *       skool marks it "unproven, dead end"); rather than risk that
+ *       byte-for-byte here, the start_chatter call is skipped whenever the
+ *       resolved target does not look like a well-formed chatterblk.
  *
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
  *                      read and advanced past the word consumed.
@@ -1708,11 +1708,11 @@ static const u8 *z80addrtoendshot(u16 addr)
   /**
    * $6BD9: bitmap_endshot_4
    *
-   * Conv: the original binary's table for bitmap_endshot_4 is only 928 bytes; draw_endshot's
-   * fixed 72-row (64 bitmap + 8 attribute) loop always consumes 936 bytes, so
-   * the original spills 8 bytes into the next label (handshake_1, $F381:
-   * $C0,$00,$00,$00,$00,$00,$00,$00). Reproduced verbatim below rather than
-   * zero-padding.
+   * Conv: the original binary's table for bitmap_endshot_4 is only 928 bytes;
+   *       draw_endshot's fixed 72-row (64 bitmap + 8 attribute) loop always
+   *       consumes 936 bytes, so the original spills 8 bytes into the next
+   *       label (handshake_1, $F381: $C0,$00,$00,$00,$00,$00,$00,$00).
+   *       Reproduced verbatim below rather than zero-padding.
    */
   static const u8 bitmap_endshot_4[936] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,

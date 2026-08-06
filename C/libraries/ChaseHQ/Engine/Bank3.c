@@ -4795,8 +4795,9 @@ static u8 run_title_screen(chqstate_t *state)
    * title_scene_table_offset
    *
    * Conv: byte offsets into title_scene_data for each scene's object-record
-   * block; not a Z80 table itself, so there is no single originating address
-   * -- each entry's corresponding scene start address is given inline below.
+   *       block; not a Z80 table itself, so there is no single originating
+   *       address -- each entry's corresponding scene start address is given
+   *       inline below.
    */
   static const u16 title_scene_table_offset[TITLE_SCENE_COUNT] = {
     0x0000, /* $CCB7 */
@@ -4916,9 +4917,8 @@ static u8 run_title_screen(chqstate_t *state)
  *       informal; the real hardware relies on the background IM2 interrupt
  *       firing asynchronously while this loop spins. The C port makes the frame
  *       boundary explicit with the stamp()/sleep() pair inside titlescr_music
- *       itself, one frame per call, matching every other per-frame loop in
- *       this file (attract_mode_128k, drive_attract_demo,
- *       run_pregame_screen_loop).
+ *       itself, one frame per call, matching every other per-frame loop in this
+ *       file (attract_mode_128k, drive_attract_demo, run_pregame_screen_loop).
  *
  * Conv: DI/EI have no C equivalent (SDL owns interrupt delivery, matching
  *       setup_im2_interrupt_table) and are omitted throughout.
@@ -6563,18 +6563,17 @@ static const struct {
  *       from bank3.bin as C data for tunes 0 and 1 only (the title tune and the
  *       perp-caught success jingle -- the only tunes reachable from code paths
  *       wired up so far; see title_tune0_data/title_tune1_data above).
- *       DE_pattern_addr (the raw Z80 pointer read from the
- *       table) is resolved to a C pointer into one of those two blobs via
- *       resolve_phrase_addr; pattern_ptr is then seeded by following that
- *       pointer to the 2-byte envelope-pointer header every pattern begins
- *       with, exactly as the Z80 does. pattern_base/pattern_len (State.h, Conv
- *       fields with no Z80 counterpart) cover only a fixed prefix of the real
- *       tune, not the whole thing, and let advance_channel_pattern wrap back to
- *       the start once it runs off the end rather than reading out of bounds;
- *       the lengths come from tune_pattern_lens below. Tunes 2 and 3 are not
- *       extracted; their channels are left with
- *       pattern_ptr/pattern_data_ptr/pattern_base = NULL, which
- *       advance_channel_pattern must treat as silent/idle.
+ *       DE_pattern_addr (the raw Z80 pointer read from the table) is resolved
+ *       to a C pointer into one of those two blobs via resolve_phrase_addr;
+ *       pattern_ptr is then seeded by following that pointer to the 2-byte
+ *       envelope-pointer header every pattern begins with, exactly as the Z80
+ *       does. pattern_base/pattern_len (State.h, Conv fields with no Z80
+ *       counterpart) cover only a fixed prefix of the real tune, not the whole
+ *       thing, and let advance_channel_pattern wrap back to the start once it
+ *       runs off the end rather than reading out of bounds; the lengths come
+ *       from tune_pattern_lens below. Tunes 2 and 3 are not extracted; their
+ *       channels are left with pattern_ptr/pattern_data_ptr/pattern_base =
+ *       NULL, which advance_channel_pattern must treat as silent/idle.
  *
  * Conv: pitch_offset_default/_cur and envelope_shape_default/_ptr are set for
  *       real once a note stream issues the pattern-command bytes $B8-$CF
@@ -6976,8 +6975,6 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
  * envelope-shape sequence tables (e.g. title_pitch_offset_seq_* and
  * title_envelope_shape_* tables).
  *
- * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
- *
  * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
  *       $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
  *       1-byte displacement per command byte (0x80-0xAF) rather than a full
@@ -6993,11 +6990,11 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
  *       advance_channel_phrase). Two further values are reachable but do not
  *       target a handler entry point: 0x85 lands mid-instruction inside
  *       pcmd_set_status_bits_3_7 (skipping its first SET 7, executing only SET
- *       3). The remaining values (0x92-0xA7, 0xA9-0xAF) land on arbitrary
- *       bytes inside the handler block and are assumed unused. Both fall into
- *       the `default` case below, which -- unlike the Z80 -- treats them as a
- *       no-op rather than replicating undefined/crashing behaviour. See
- *       Translation notes for the full derivation.
+ *       3). The remaining values (0x92-0xA7, 0xA9-0xAF) land on arbitrary bytes
+ *       inside the handler block and are assumed unused. Both fall into the
+ *       `default` case below, which -- unlike the Z80 -- treats them as a no-op
+ *       rather than replicating undefined/crashing behaviour. See Translation
+ *       notes for the full derivation.
  *
  * 0x8E is the tune's end-of-data marker: it lands on the bare "POP HL; JP
  * $ED0B" at $ED2F, which discards this function's own return address before
@@ -7008,9 +7005,11 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel, const u8 **DE_pattern)
  * question of how the title tune ever stops: nothing clears the tune-active
  * flag on a timer, the tune data ends with this command.
  *
- * \return 1 when the tune ended this row (0x8E), so the caller must abandon
- * the rest of the frame's driver work, as the Z80's stack unwind does. 0
- * otherwise.
+ * \param[in,out] IX_channel Channel tracker record to advance. (was IX)
+ *
+ * \return                   1 when the tune ended this row (0x8E), so the
+ *                           caller must abandon the rest of the frame's driver
+ *                           work, as the Z80's stack unwind does. 0 otherwise.
  */
 static u8 advance_channel_pattern(chqstate_t           *state,
                                   title_tune_channel_t *IX_channel)
@@ -8227,7 +8226,7 @@ static void titlescr_start_tune(chqstate_t *state, u8 tune_no)
  *
  * \param[in] addr Raw Z80 address in the $FA75-$FB98 range. (was HL)
  *
- * \return Pointer into drum_cue_script_data. (was HL)
+ * \return         Pointer into drum_cue_script_data. (was HL)
  *
  * Conv: not a Z80 routine of its own -- see resolve_phrase_addr's own Conv note
  *       for why raw addresses read out of transcribed data must be resolved
@@ -9036,15 +9035,15 @@ static void play_fixed_sample_start(chqstate_t *state,
  *       spans several frames. The C port has no background interrupt to set
  *       $F8A8 asynchronously, so SAMPLE_ROW_FRAME_TSTATES below stands in for
  *       it: once this call has spent the bit-bang time a real frame leaves
- *       after the music tick, it
- *       yields exactly as $F8E2's check would, saving position in
- *       sample_resume_ptr/sample_resume_rows (the shadow HL'/D' equivalent) for
- *       titlescr_music's tail to resume next call. Playing every sample to
- *       completion in a single call instead (as playdrum_go/es_playdrum_go
- *       still do for the 48K and bank 7 drum samples) starves the rest of
- *       titlescr_music -- the AY tick, and the drum dispatch stream itself --
- *       of the frames a long sample should genuinely take, which is audible as
- *       increasingly late drum hits ("lazy drummer").
+ *       after the music tick, it yields exactly as $F8E2's check would, saving
+ *       position in sample_resume_ptr/sample_resume_rows (the shadow HL'/D'
+ *       equivalent) for titlescr_music's tail to resume next call. Playing
+ *       every sample to completion in a single call instead (as
+ *       playdrum_go/es_playdrum_go still do for the 48K and bank 7 drum
+ *       samples) starves the rest of titlescr_music -- the AY tick, and the
+ *       drum dispatch stream itself -- of the frames a long sample should
+ *       genuinely take, which is audible as increasingly late drum hits ("lazy
+ *       drummer").
  *
  * Conv: the inter-OUT delay code is modelled as speccy->logtime so the host can
  *       reconstruct the bit timing -- same accounting as playdrum_go/
@@ -9434,11 +9433,6 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * BRIGHT set on the upper row) or single-height (7 font bytes, one scanline
  * each), selected by the header's style bit.
  *
- * \param[in] HL_record Pointer to the 3-byte header + character stream
- *                      (was HL).
- * \return              Pointer to the byte following the record's terminator
- *                      (was HL).
- *
  * Sister function: menu_draw_char ($EC2C, Main.c). The two are near-clones --
  * the same glyph ladder, the same 4-row/-2016/3-row double-height blit and the
  * same seven-row single-height blit. They are kept separate because they are
@@ -9446,6 +9440,11 @@ static void print_string(chqstate_t *state, const u8 *HL_string)
  * are plumbing only: this one loops over a packed record and derives its
  * attribute address from D/E, where menu_draw_char draws a single character
  * and takes the attribute address as a parameter. Fix bugs in both.
+ *
+ * \param[in] HL_record Pointer to the 3-byte header + character stream
+ *                      (was HL).
+ * \return              Pointer to the byte following the record's terminator
+ *                      (was HL).
  *
  * Conv: $FDA4-$FDB9 (header unpack), the classification ladder ($FDDA-$FDFE)
  *       and the double/single-height blits ($FE16-$FE7E) all follow
@@ -9785,9 +9784,9 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index)
 {
-  u8 ambiguous;  /* scan_keyboard_matrix ambiguity flag (was flags) */
-  u8 D_key_code; /* packed key code from scan_keyboard_matrix (was D) */
-  u8 A_key_code; /* accepted key code, used for storage/lookup (was A) */
+  u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
+  u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
+  u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
   int B_dup_count; /* duplicate-check count: C_control_index-1 already-
                     * assigned slots (was B) */
   int dup_i;       /* duplicate-check loop index (was HL-$FFF7) */
@@ -9863,6 +9862,7 @@ static u16 advance_key_label_column(u16 DE_screen)
 
   return (u16) ((D << 8) | E);
 }
+
 /* ----------------------------------------------------------------------- */
 
 /**
@@ -9886,6 +9886,7 @@ int bank3_state_create(chqstate_t *state)
    * every bank that plays them) --
    * transcribed separately here because bank 3's copies are shorter than
    * either. */
+
   /** $F8F2: drum_sample_1_template (104 bytes, played back with D=$68 rows) */
   static const u8 drum_sample_1_template[104] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
@@ -9952,6 +9953,7 @@ int bank3_state_create(chqstate_t *state)
     { "  235050", " 1 ", '1', "PIX" }, /* $C510: row 8 (9th place) */
     { "  123000", " 1 ", '1', "IES" }, /* $C531: row 9 (10th place) */
   };
+
   // clang-format on
 
   state->bank3 = calloc(1, sizeof(*state->bank3));

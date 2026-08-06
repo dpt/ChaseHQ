@@ -182,8 +182,8 @@
  *       no single originating address. Asserts the address is in range both
  *       before and after conversion.
  *
- * \param[in] addr  Z80 screen bitmap address.
- * \return          Screen bitmap pointer.
+ * \param[in] addr Z80 screen bitmap address.
+ * \return         Screen bitmap pointer.
  */
 u8 *z80addrtoscreen(chqstate_t *state, int addr)
 {
@@ -204,11 +204,11 @@ u8 *z80addrtoscreen(chqstate_t *state, int addr)
  * Return a screen attributes pointer for a Z80 attributes address.
  *
  * Conv: helper backing the ADDRTOATTRS macro; not a Z80 routine, so there is no
- *       single originating address. Asserts the address is in range both
- *       before and after conversion.
+ *       single originating address. Asserts the address is in range both before
+ *       and after conversion.
  *
- * \param[in] addr  Z80 screen attributes address.
- * \return          Screen attributes pointer.
+ * \param[in] addr Z80 screen attributes address.
+ * \return         Screen attributes pointer.
  */
 u8 *z80addrtoattrs(chqstate_t *state, int addr)
 {
@@ -268,8 +268,8 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
  * Return the byte offset of a backbuffer[] pointer.
  *
  * Conv: helper backing the BACKBUFTOOFFSET macro; not a Z80 routine, so there
- *       is no single originating address. Asserts the pointer is in range
- *       both before and after conversion.
+ *       is no single originating address. Asserts the pointer is in range both
+ *       before and after conversion.
  *
  * \param[in] ptr Backbuffer pointer.
  * \return        Byte offset into the backbuffer.
@@ -320,8 +320,8 @@ static int z80screentoaddr(chqstate_t *state, const u8 *ptr)
  * Return the Z80 address of a screen attributes pointer.
  *
  * Conv: helper backing the ATTRSTOADDR macro; not a Z80 routine, so there is no
- *       single originating address. Asserts the pointer is in range both
- *       before and after conversion.
+ *       single originating address. Asserts the pointer is in range both before
+ *       and after conversion.
  *
  * \param[in] ptr Screen attributes pointer.
  * \return        Z80 screen attributes address.
@@ -4763,8 +4763,7 @@ left_hand_stuff:
  *                      (was B)
  * \param[in] arg       Pointer to the stretchy object descriptor array.
  *                      (was DE)
- * \param[in] IX_xpos   Pointer into xpos.centre for this object slot.
- *                      (was IX)
+ * \param[in] IX_xpos   Pointer into xpos.centre for this object slot. (was IX)
  * \param[in] IY_height Pointer into height_table for this object slot. (was IY)
  */
 void draw_overhead(chqstate_t *state,
@@ -7459,8 +7458,8 @@ pmf_have_ascii:
  * The row counter starts in A and is banked to A' during each loop body so that
  * B can hold the zero fill value.
  *
- * Conv: the Z80's LD (HL),B + LDIR pair zeros 30 bytes, HL through HL+29; the
- *       C memset does the same in one call. HL itself ($45C1) must be included:
+ * Conv: the Z80's LD (HL),B + LDIR pair zeros 30 bytes, HL through HL+29; the C
+ *       memset does the same in one call. HL itself ($45C1) must be included:
  *       it holds the left byte of the message line's first character (column 0
  *       plots to $45C1/$45C2), so skipping it leaves a sliver of the last
  *       message on screen until something else plots over that byte.
@@ -20704,8 +20703,8 @@ static void playdrum_bank_go(chqstate_t *state,
  * [D_length] bytes have been output, drum_active is cleared.
  *
  * \param[in] D_length Number of sample bytes remaining to output. (was D)
- * \param[in] HL_data  Pointer to the next sample byte in state->music.drum1[] or
- *                     state->music.drum2[]. (was HL)
+ * \param[in] HL_data  Pointer to the next sample byte in state->music.drum1[]
+ *                     or state->music.drum2[]. (was HL)
  *
  * Conv: the Z80 uses RLC (HL) to walk bit 7 through all 8 bit positions across
  *       8 iterations -- the byte doubles as its own iteration counter, no
@@ -21382,6 +21381,9 @@ call_bank_3:
 
 /**
  * Run the game until a quit signal is received.
+ *
+ * Chooses the 48K or 128K entry point and blocks there, via longjmp, until
+ * the host requests a quit.
  *
  * \param[in] mode_128k Non-zero to run the 128K entry point, zero for 48K.
  *

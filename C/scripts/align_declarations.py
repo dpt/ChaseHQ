@@ -31,6 +31,13 @@ FUNC_OPEN_RE = re.compile(r"^\{$")
 DECL_LINE_RE = re.compile(
     r"^[A-Za-z_][\w\s\*]*\*?\s+\**[A-Za-z_]\w*(\[\w*\])?;(\s*/\*.*\*/)?\s*$"
 )
+# A decl whose trailing "(was X)" comment wraps onto following lines: opens
+# a "/*" that this line does not close. The continuation lines are plain
+# comment prose, picked up separately in find_blocks so they don't look like
+# a block boundary.
+DECL_OPEN_COMMENT_RE = re.compile(
+    r"^[A-Za-z_][\w\s\*]*\*?\s+\**[A-Za-z_]\w*(\[\w*\])?;\s*/\*(?:(?!\*/).)*$"
+)
 NOT_DECL_RE = re.compile(r"[=()]")
 
 
@@ -44,19 +51,50 @@ def is_decl_line(line):
     return bool(DECL_LINE_RE.match(stripped))
 
 
+def is_decl_open_line(line):
+    stripped = line.strip()
+    if not stripped:
+        return False
+    code = stripped.split("/*", 1)[0]
+    if NOT_DECL_RE.search(code):
+        return False
+    return bool(DECL_OPEN_COMMENT_RE.match(stripped))
+
+
 def find_blocks(lines):
     """Yield (start, end) line-index ranges (end exclusive) of declaration
     blocks: runs of >=2 decl lines directly after a function's opening
-    brace, which stands alone on its own line at column 0."""
+    brace, which stands alone on its own line at column 0.
+
+    A decl line whose trailing comment wraps (opens "/*" without closing it)
+    keeps the block open through its continuation lines -- those lines are
+    comment prose, not a new decl and not a block boundary."""
     i = 0
     n = len(lines)
     while i < n:
         if FUNC_OPEN_RE.match(lines[i]):
             start = i + 1
             j = start
-            while j < n and is_decl_line(lines[j]):
-                j += 1
-            if j - start >= 2:
+            decl_count = 0
+            in_comment = False
+            while j < n:
+                line = lines[j]
+                if in_comment:
+                    if "*/" in line:
+                        in_comment = False
+                    j += 1
+                    continue
+                if is_decl_line(line):
+                    decl_count += 1
+                    j += 1
+                    continue
+                if is_decl_open_line(line):
+                    decl_count += 1
+                    in_comment = True
+                    j += 1
+                    continue
+                break
+            if decl_count >= 2:
                 yield start, j
             i = j
         else:
