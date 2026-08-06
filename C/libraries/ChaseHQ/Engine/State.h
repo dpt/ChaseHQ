@@ -335,7 +335,7 @@ struct chqstate {
 
   /* Unwind target for a host-requested quit
    *
-   * chq_setup sets this up; every long-running loop unwinds to it via
+   * chq_start sets this up; every long-running loop unwinds to it via
    * CHECK_HOST_QUIT.
    *
    * Conv: port-added. The Z80 has no clean-exit path -- the game only ever

@@ -21393,7 +21393,7 @@ call_bank_3:
  *       a second memory bank in the secondary loader ($5B22); C leaves the
  *       choice to the host.
  */
-CHQ_API void chq_setup(chqstate_t *state, int mode_128k)
+CHQ_API void chq_start(chqstate_t *state, int mode_128k)
 {
   if (setjmp(state->host_quit_jmp) == 0)
   {
@@ -21414,23 +21414,6 @@ CHQ_API void chq_setup(chqstate_t *state, int mode_128k)
 CHQ_API void chq_stop(chqstate_t *state)
 {
   state->host_quit = 1;
-}
-
-/**
- * Reserved modular entry point; not yet wired into the runtime path.
- *
- * Conv: host lifecycle entry point; has no Z80 counterpart. Declared in the
- *       public API for future modular use but not currently called; asserts if
- *       invoked.
- */
-CHQ_API void chq_main(chqstate_t *state)
-{
-  /* There's no point calling this function yet. Not until the game logic is
-   * teased apart. The real game logic hangs off of 'bootstrap'.
-   */
-  assert(0);
-  while (run_pregame_screen_loop(state)) /* Conv: Split out */
-    ;
 }
 
 /* ----------------------------------------------------------------------- */

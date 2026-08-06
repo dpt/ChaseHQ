@@ -27,7 +27,7 @@
 /* Conv: the Z80 has no clean-exit path -- the game only ever stops when the
  * machine is switched off. The C port lets the host ask for a quit at any
  * time, so every loop that can run for an appreciable number of frames tests
- * the flag and unwinds to the setjmp in chq_setup. Placed at the top of the
+ * the flag and unwinds to the setjmp in chq_start. Placed at the top of the
  * loop body, before the frame's stamp(). */
 #define CHECK_HOST_QUIT(state)             \
   do {                                     \

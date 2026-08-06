@@ -84,10 +84,10 @@ Tests live in `C/Tests/` (`UnitTest.c`, `RenderStretchyObject.c`). They are buil
 `C/apps/sdl3/SDLMain.c` owns the SDL window and a dedicated game thread. The runtime lifecycle is:
 
 ```
-chq_create → chq_setup (blocks via longjmp until quit signal) → chq_stop → chq_destroy
+chq_create → chq_start (blocks via longjmp until quit signal) → chq_stop → chq_destroy
 ```
 
-`chq_setup()` calls `bootstrap()` which runs the internal game loop via `longjmp` until a quit signal arrives. `chq_main()` is declared in the public API but not wired into the runtime path — it exists for future modular use.
+`chq_start()` calls `bootstrap()` which runs the internal game loop via `longjmp` until a quit signal arrives.
 
 ### Layers
 - **Host** (`C/apps/sdl3/SDLMain.c`): SDL3 window, event loop, `zxconfig_t` callbacks wired to game

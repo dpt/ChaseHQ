@@ -939,7 +939,7 @@ static void test_advance_hazards_insert_shift_preserves_records(void)
 /*
  * show_end_screen ($E000): an infinite input-driven loop with no natural
  * exit under an all-keys-unpressed fake in(). Bound it with the project's
- * host_quit/longjmp escape hatch -- the same idiom chq_setup uses around
+ * host_quit/longjmp escape hatch -- the same idiom chq_start uses around
  * entry_128k -- so the test can run a fixed number of frames and then
  * inspect state. state->bank7's fields are private to Bank7.c (only
  * forward-declared in State.h), so the observable proof of life is that the

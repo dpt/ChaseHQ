@@ -687,7 +687,7 @@ static int chq_game_thread(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  chq_setup(state->game, state->mode_128k);
+  chq_start(state->game, state->mode_128k);
   state->quit = 1;
   return 0;
 }

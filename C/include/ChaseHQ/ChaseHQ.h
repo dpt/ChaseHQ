@@ -54,14 +54,7 @@ CHQ_API void chq_stop(chqstate_t *state);
  *
  * \param mode_128k Non-zero to start the game in 128K mode.
  */
-CHQ_API void chq_setup(chqstate_t *state, int mode_128k);
-
-/**
- * Invoke the game instance.
- *
- * Call this repeatedly. [This will depend on the choices made on how to break the game loops up].
- */
-CHQ_API void chq_main(chqstate_t *state);
+CHQ_API void chq_start(chqstate_t *state, int mode_128k);
 
 /* ----------------------------------------------------------------------- */
 
