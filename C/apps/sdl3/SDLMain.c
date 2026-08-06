@@ -54,7 +54,7 @@
 #define SPEED_DEFAULT      (100) // percent
 #define SPEED_MIN           (25)
 #define SPEED_MAX         (1000)
-#define SPEED_STEP          (25)
+#define SPEED_STEP           (5)
 
 #define VOLUME_DEFAULT     (100) // percent
 #define VOLUME_MIN           (0)
@@ -162,6 +162,12 @@ typedef struct
   struct timeval     stamps[MAXSTAMPS];
   int                nstamps;
 
+  /* Absolute wall-clock deadline for the next sleep, advanced by each call's
+   * nominal duration rather than re-anchored from "now" -- see
+   * chq_sleep_handler for why. */
+  double             next_deadline; // seconds, gettimeofday-epoch
+  int                deadline_valid; // bool
+
   slopay_chip_t     *ay;
   slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
 
@@ -256,7 +262,7 @@ static void chq_update_window_title(const chq_sdl_state_t *state)
                state->speed,
                state->volume,
                state->audio_muted ? " (Muted)" : "",
-               state->paused ? " - Paused" : "");
+               state->paused ? " (Paused)" : "");
   SDL_SetWindowTitle(state->window, title);
 }
 
@@ -327,39 +333,52 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
      * the AY chip's own tone pitch (computed from its own fixed clock,
      * independent of this loop) -- the two drift ~1.3% apart.
      */
-    const double          tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+    const double   tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+    const double   maxLagFrames  = 4.0; // cap catch-up burst after a stall/pause
 
-    struct timeval        now;
-    double                duration; // seconds
-    const struct timeval *then;
-    struct timeval        delta;
-    double                consumed; // seconds
+    struct timeval now;
+    double         nowSecs;
+    double         duration; // seconds
 
     gettimeofday(&now, NULL); // get time now before anything else
+    nowSecs = now.tv_sec + now.tv_usec / 1e6;
 
+    /* 'duration' tells us how long the operation should take. Turn T-state
+     * duration into seconds. */
+    duration = durationTStates / tstatesPerSec;
+    // Adjust the game speed: higher speed -> shorter sleep
+    duration = duration * 100 / state->speed;
+
+    /* Pace off an absolute deadline that advances by 'duration' every call,
+     * rather than re-anchoring from 'now' each time. usleep() on this host
+     * routinely overshoots its requested delay by a few ms (OS scheduler
+     * granularity); re-anchoring from 'now' every call bakes that overshoot
+     * into every single frame with nothing to claw it back, producing a
+     * steady-state frame rate well under 50Hz (measured ~42fps) even though
+     * each call's own math looks correct in isolation. Advancing a
+     * fixed schedule instead means an overshoot simply shortens (or zeroes)
+     * the next call's sleep, so the long-run average rate is right.
+     */
+    if (!state->deadline_valid)
     {
-      /* 'duration' tells us how long the operation should take since the previous mark call.
-       * Turn T-state duration into seconds
-       */
-      duration = durationTStates / tstatesPerSec;
-      // Adjust the game speed: higher speed -> shorter sleep
-      duration = duration * 100 / state->speed;
+      state->next_deadline  = nowSecs + duration;
+      state->deadline_valid = 1;
+    }
+    else
+    {
+      state->next_deadline += duration;
 
-      then = &state->stamps[state->nstamps];
+      // Behind by more than a few frames (paused, breakpoint, host stall) --
+      // don't try to fast-forward through the whole backlog.
+      if (state->next_deadline < nowSecs - duration * maxLagFrames)
+        state->next_deadline = nowSecs - duration * maxLagFrames;
     }
 
-    delta.tv_sec  = now.tv_sec  - then->tv_sec;
-    delta.tv_usec = now.tv_usec - then->tv_usec;
-
-    consumed = delta.tv_sec + delta.tv_usec / 1e6;
-    if (consumed < duration)
+    if (state->next_deadline > nowSecs)
     {
-      double     delay; // seconds
-      useconds_t udelay;
+      double     delay = state->next_deadline - nowSecs; // seconds
+      useconds_t udelay = (useconds_t) (delay * 1e6);
 
-      // We didn't take enough time - sleep for the remainder of our duration
-      delay = duration - consumed;
-      udelay = delay * 1e6;
       usleep(udelay);
     }
   }
