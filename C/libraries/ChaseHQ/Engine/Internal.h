@@ -112,11 +112,18 @@
  * length; the callers are 48K-mode menu loops. */
 #define MUSIC_TICK_48K_TSTATES   (69888)
 
-/* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
- * summed from the skool T-state counts. Covers the three OUT (C),A triplets
- * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole
- * per-nibble output rate, not just the explicit delay. */
-#define SPEECH_NIBBLE_TSTATES      (375) // TODO: Calibrate
+/* $F36E-$F393: one nibble of play_speech_128k, summed from the skool
+ * T-state counts between successive entries to $F36E (the stamp point).
+ * Common body (AND $0F .. LD A,(HL)/DEC C) is 407 T-states. Two distinct
+ * gaps alternate:
+ *   - high nibble -> low nibble (same byte): JR NZ,$F36E taken (+12) = 419
+ *   - low nibble -> next byte's high nibble: JR NZ not taken (+7), then
+ *     $F395-$F366 byte bookkeeping (INC HL/DEC DE/LD A,D/OR E/JP NZ/
+ *     LD C,$02/LD A,(HL)/RRA x4 = 60) = 474
+ * A single stamp/sleep can only model one rate, so use the average of the
+ * two (446.5, rounded). Using only the cheap 419 case undercounts the
+ * byte-boundary overhead and plays speech ~5% too fast. */
+#define SPEECH_NIBBLE_TSTATES      (447) // Calibrated from skool T-states
 
 /* $E256 loop body (es_handler_draw_score, Bank7.c): one bonus-tally
  * increment, comprising increment_score, ptad_led_digits and a sfx_bipbow(2,

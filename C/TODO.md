@@ -11,7 +11,6 @@
 - Restart bip-bow ticking twice as fast as it should
 - Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
-- Calibrate `SPEECH_NIBBLE_TSTATES` (`Internal.h`) — placeholder value, no trace coverage yet
 - Title jingle T-state count is a guess, tune by ear (`Bank3.c:3038`)
 - Need to model RAM bank contention?
 
