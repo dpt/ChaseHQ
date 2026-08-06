@@ -942,12 +942,14 @@ static void chq_action_adjust_scale(chq_sdl_state_t *state, SDL_Keycode sym)
   }
 }
 
-static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym)
+static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym, int shift)
 {
   int speed;
 
   if (sym == SDLK_BACKSLASH)
     speed = SPEED_DEFAULT;
+  else if (shift)
+    speed = sym == SDLK_LEFTBRACKET ? SPEED_MIN : SPEED_MAX;
   else
     speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
                   SPEED_MIN, SPEED_MAX);
@@ -1085,7 +1087,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_RIGHTBRACKET:
   case SDLK_BACKSLASH:
     if (k->down)
-      chq_action_adjust_speed(state, sym);
+      chq_action_adjust_speed(state, sym, k->mod & SDL_KMOD_SHIFT);
     return;
 
   case SDLK_F5:
