@@ -1394,75 +1394,76 @@ static void attract_mode_48k(chqstate_t *state)
   static const u8 attract_messages[38] = {
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK, // zero
-    TWOBYTES(0xF02C), // back buffer addr
-    TWOBYTES(0x594C), // attr addr
+    Z80BACKBUF(0xF02C),
+    Z80ATTRS(0x594C),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', 'Q' | EOS,
 
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK, // zero
-    TWOBYTES(0xF847),
-    TWOBYTES(0x59A7),
+    Z80BACKBUF(0xF847),
+    Z80ATTRS(0x59A7),
     'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | EOS
   };
 
   /** $82CC: credits_messages */
   static const u8 credits_messages[84] = {
-    10, // frame delay
-    8, // frames to hold before the next message is revealed
+    10, // initial reveal delay (state->overlay.delay)
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF086),
-    TWOBYTES(0x5A06),
+    Z80BACKBUF(0xF086),
+    Z80ATTRS(0x5A06),
     'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
-    8,
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF0A6),
-    TWOBYTES(0x5A46),
+    Z80BACKBUF(0xF0A6),
+    Z80ATTRS(0x5A46),
     'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
-    0x28,
+    0x28, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF0C6),
-    TWOBYTES(0x5A86),
+    Z80BACKBUF(0xF0C6),
+    Z80ATTRS(0x5A86),
     'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
-    3,
-    0
+    3, // transition_control once done
+    DRAWOVERLAY_STOP
   };
 
   /** $8320: copyright_messages */
   static const u8 copyright_messages[92] = {
-    10,
-    8,
+    10, // initial reveal delay (state->overlay.delay)
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF084),
-    TWOBYTES(0x5A04),
+    Z80BACKBUF(0xF084),
+    Z80ATTRS(0x5A04),
     '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
-    8,
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF0A3),
-    TWOBYTES(0x5A43),
+    Z80BACKBUF(0xF0A3),
+    Z80ATTRS(0x5A43),
     '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
-    8,
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    TWOBYTES(0xF0C6),
-    TWOBYTES(0x5A86),
+    Z80BACKBUF(0xF0C6),
+    Z80ATTRS(0x5A86),
     'A', 'L', 'L', ' ', 'R', 'I', 'G', 'H', 'T', 'S', ' ', 'R', 'E', 'S', 'E', 'R', 'V', 'E', 'D' | EOS,
-    3,
-    0
+    3, // transition_control once done
+    DRAWOVERLAY_STOP
   };
   // clang-format on
 
-  int          carry;           /* carry flag used by RRC (carry) */
-  int          blinker;         /* credits/copyright toggle; SM at $828C (was $828C) */
-  int          keys;            /* keyscan result (was A) */
-  const u8    *messages;        /* pointer to current message record (was HL) */
-  int          nmessages;       /* number of messages to draw (was B) */
-  u8           attract_blinker; /* rotating blink pattern for the second message (was A) */
-  int          style;           /* message style byte read from record (was A) */
+  int       carry;           /* carry flag used by RRC (carry) */
+  int       blinker;         /* credits/copyright toggle; SM at $828C (was $828C) */
+  int       keys;            /* keyscan result (was A) */
+  const u8 *messages;        /* pointer to current message record (was HL) */
+  int       nmessages;       /* number of messages to draw (was B) */
+  u8        attract_blinker; /* rotating blink pattern for the second message (was A) */
+  int       style;           /* message style byte read from record (was A) */
+  
   carry = 0;
 
   set_up_stage(state, &state->stage->attract_data);
@@ -2122,26 +2123,26 @@ static void draw_pregame(chqstate_t *state)
   static const u8 pregame_messages[68] = {
     0xFF, // unused
     attribute_BRIGHT_BLACK_OVER_WHITE,
-    TWOBYTES(0xF802),
-    TWOBYTES(0x5922),
+    Z80BACKBUF(0xF802),
+    Z80ATTRS(0x5922),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'M', 'O', 'N', 'I', 'T', 'O', 'R', 'I', 'N', 'G', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' | EOS,
 
     0xFF, // unused
     0x60, // must be attr but doesn't seem to do what it should
-    TWOBYTES(0xF863),
-    TWOBYTES(0x59E3),
+    Z80BACKBUF(0xF863),
+    Z80ATTRS(0x59E3),
     'T', 'U', 'N', 'E' | EOS,
 
     0xFF, // unused
     0x60,
-    TWOBYTES(0xF8A2),
-    TWOBYTES(0x5A62),
+    Z80BACKBUF(0xF8A2),
+    Z80ATTRS(0x5A62),
     'V', 'O', 'L', 'U', 'M', 'E' | EOS,
 
     0xFF, // unused
     0x58,
-    TWOBYTES(0xF077),
-    TWOBYTES(0x59D7),
+    Z80BACKBUF(0xF077),
+    Z80ATTRS(0x59D7),
     'S', 'I', 'G', 'N', 'A', 'L' | EOS
   };
 
@@ -2922,8 +2923,8 @@ static void escape_scene(chqstate_t *state)
   static const u8 game_over_message[20] = {
     0x01, 0x1E, 0x03,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF02B),
-    TWOBYTES(0x594B),
+    Z80BACKBUF(0xF02B),
+    Z80ATTRS(0x594B),
     'G', 'A', 'M', 'E', ' ', 'O', 'V', 'E', 'R' | EOS,
     3, 0
   };
@@ -4033,8 +4034,8 @@ static void fully_smashed(chqstate_t *state)
   static const u8 pull_over_message[30] = {
     0x01, 0x1E, 0x02,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF026),
-    TWOBYTES(0x5946),
+    Z80BACKBUF(0xF026),
+    Z80ATTRS(0x5946),
     'O', 'K', '!', ' ', 'P', 'U', 'L', 'L', ' ', 'O', 'V', 'E', 'R', ' ', 'C', 'R', 'E', 'E', 'P', '!' | EOS,
     0, 0
   };
@@ -7503,8 +7504,8 @@ static void check_time_up(chqstate_t *state)
   static const u8 time_up_message[20] = {
     0x01, 0x19, 0x03,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF02C),
-    TWOBYTES(0x594C),
+    Z80BACKBUF(0xF02C),
+    Z80ATTRS(0x594C),
     'T', 'I', 'M', 'E', ' ', 'U', 'P' | EOS,
     3, 0
   };
@@ -12732,8 +12733,8 @@ static void start_chase(chqstate_t *state)
   static const u8 sighting_message[36] = {
     0x01, 0x1E, 0x02,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF023),
-    TWOBYTES(0x5943),
+    Z80BACKBUF(0xF023),
+    Z80ATTRS(0x5943),
     'S', 'I', 'G', 'H', 'T', 'I', 'N', 'G', ' ', 'O', 'F', ' ', 'T', 'A', 'R', 'G', 'E', 'T', ' ', 'V', 'E', 'H', 'I', 'C', 'L', 'E' | EOS,
     0, 0
   };
@@ -21231,8 +21232,8 @@ static void attract_mode_128k(chqstate_t *state)
   static const u8 press_gear_messages[17] = {
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF84B),
-    TWOBYTES(0x59AB),
+    Z80BACKBUF(0xF84B),
+    Z80ATTRS(0x59AB),
     'P', 'R', 'E', 'S', 'S', ' ', ' ', 'G', 'E', 'A', 'R' | EOS
   };
 
@@ -21240,40 +21241,40 @@ static void attract_mode_128k(chqstate_t *state)
   static const u8 enter_for_options_messages[23] = {
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF848),
-    TWOBYTES(0x59A8),
+    Z80BACKBUF(0xF848),
+    Z80ATTRS(0x59A8),
     'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
   };
 
   /** $F4B9: credits_messages_128 */
   static const u8 credits_messages_128[98] = {
-    10,
-    8,
+    10, // initial reveal delay (state->overlay.delay)
+    8, // reveal gap before this block
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF02D),
-    TWOBYTES(0x594D),
+    Z80BACKBUF(0xF02D),
+    Z80ATTRS(0x594D),
     'C', 'R', 'E', 'D', 'I', 'T', 'S' | EOS,
-    8,
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF086),
-    TWOBYTES(0x5A06),
+    Z80BACKBUF(0xF086),
+    Z80ATTRS(0x5A06),
     'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
-    8,
+    8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF0A6),
-    TWOBYTES(0x5A46),
+    Z80BACKBUF(0xF0A6),
+    Z80ATTRS(0x5A46),
     'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
-    0x50,
+    0x50, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF0C6),
-    TWOBYTES(0x5A86),
+    Z80BACKBUF(0xF0C6),
+    Z80ATTRS(0x5A86),
     'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
-    3,
-    0
+    3, // transition_control once done
+    0 // DRAWOVERLAY_STOP
   };
 
   /** $F51B: best_officers */
@@ -21282,32 +21283,32 @@ static void attract_mode_128k(chqstate_t *state)
     8,
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK,
-    TWOBYTES(0xF02A),
-    TWOBYTES(0x594A),
+    Z80BACKBUF(0xF02A),
+    Z80ATTRS(0x594A),
     'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF082),
-    TWOBYTES(0x5A02),
+    Z80BACKBUF(0xF082),
+    Z80ATTRS(0x5A02),
     'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF0A2),
-    TWOBYTES(0x5A42),
+    Z80BACKBUF(0xF0A2),
+    Z80ATTRS(0x5A42),
     '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF0C2),
-    TWOBYTES(0x5A82),
+    Z80BACKBUF(0xF0C2),
+    Z80ATTRS(0x5A82),
     '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | EOS,
     0x50,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0xF0E2),
-    TWOBYTES(0x5AC2),
+    Z80BACKBUF(0xF0E2),
+    Z80ATTRS(0x5AC2),
     '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | EOS,
     3,
     0

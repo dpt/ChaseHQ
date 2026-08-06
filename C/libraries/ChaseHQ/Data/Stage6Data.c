@@ -176,8 +176,8 @@ static const u8 stage6_arrest_messages[83] = {
   6,  // delay
   DRAWCHARSTYLE_SINGLE,
   0,  // attribute
-  TWOBYTES(0xF802),  // backbuf
-  TWOBYTES(0x5922),  // attr
+  Z80BACKBUF(0xF802),
+  Z80ATTRS(0x5922),
   'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T' | EOS,
 
   TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control

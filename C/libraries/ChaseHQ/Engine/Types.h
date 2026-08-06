@@ -22,6 +22,12 @@
 
 #define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
 
+/* Z80BACKBUF/Z80ATTRS are aliases of TWOBYTES that document, at the call
+ * site, whether the address pair feeds ADDRTOBACKBUF ($F000+) or
+ * ADDRTOATTRS ($5800+). */
+#define Z80BACKBUF(addr) TWOBYTES(addr)
+#define Z80ATTRS(addr)   TWOBYTES(addr)
+
 #define EOS (1<<7) // End of String - string terminator bit
 
 /* ----------------------------------------------------------------------- */

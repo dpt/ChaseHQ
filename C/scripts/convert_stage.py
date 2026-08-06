@@ -1683,8 +1683,8 @@ def emit_arrest_messages(
             content.append(f"  {val(recs[i])},  // delay")
             content.append(f"  {style},")
             content.append(f"  {val(recs[i + 2])},  // attribute")
-            content.append(f"  TWOBYTES(0x{val(recs[i + 3]):04X}),  // backbuf")
-            content.append(f"  TWOBYTES(0x{val(recs[i + 4]):04X}),  // attr")
+            content.append(f"  Z80BACKBUF(0x{val(recs[i + 3]):04X}),  // backbuf")
+            content.append(f"  Z80ATTRS(0x{val(recs[i + 4]):04X}),  // attr")
             total += 7  # 3 × DEFB + 2 × DEFW
             i += 5
             if defm_addr in defm_bytes:
