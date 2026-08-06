@@ -5149,9 +5149,9 @@ static const u8 shocked_keydef_sequence[8] = {
 /**
  * $C6C4: Per-frame title-screen animation driver
  *
- * Syncs to the next interrupt, draws the 6 foreground objects ($BB00-$BB2C)
+ * Syncs to the next interrupt, draws the six foreground objects ($BB00-$BB2C)
  * via the masked blitter ($C8C5), steps every object's animation script by
- * one frame ($C705), clears the playfield bitmap ($CC04), then draws the 3
+ * one frame ($C705), clears the playfield bitmap ($CC04), then draws the three
  * background objects ($BB36-$BB4A) via the alternate blitter ($C94F). In the
  * Z80 this block ends with an unconditional jump back to its own top
  * ($C702 JP $C6C4), so it never returns to its caller under normal
@@ -5197,37 +5197,35 @@ static const u8 shocked_keydef_sequence[8] = {
  */
 static u8 titlescr_animate_frame(chqstate_t *state)
 {
-  int                  obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
+  int                  obj; /* object index within the fg/bg loop (was B) */
   struct title_object *rec; /* current object record (was IX) */
 
   state->speccy->stamp(state->speccy);
 
-  for (obj = 0; obj < 6; obj++) { /* $C6C7-$C6E0: 6 foreground objects */
+  clear_playfield_buffer(state);
+
+  /* Draw the six "foreground" objects: C, H, A, S, E, H */
+  for (obj = 0; obj < 6; obj++) {
     rec = &state->bank3->title_objects[obj];
     compute_glyph_blit_params_fg(state, rec->y, rec->x, rec->row);
   }
 
-  if (object_script_step(state)) {
-    /* Conv: the frame's remaining work is abandoned, but the sleep still runs.
-     * The host pairs every stamp() with a sleep() on a fixed-depth stack;
-     * returning without one leaks an entry and the stack overflows after four
-     * scenes. */
-    state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
-    return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
-  }
-
-  clear_playfield_buffer(state);
-
-  for (obj = 6; obj < 9; obj++) { /* $C6EA-$C700: 3 background objects */
+  /* Draw the three "background" objects: DOT, Q, DOT */
+  for (obj = 6; obj < 9; obj++) {
     rec = &state->bank3->title_objects[obj];
     compute_glyph_blit_params_bg(state, rec->y, rec->x, rec->row);
   }
 
-  update_whole_playfield(state); /* Conv: added */
-
+  /* Conv: added */
+  update_whole_playfield(state);
   state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
 
-  return 1;
+  if (object_script_step(state)) {
+    /* Conv: the frame's remaining work is abandoned, but the sleep still runs. */
+    return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
+  } else {
+    return 1;
+  }
 }
 
 /**
