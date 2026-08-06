@@ -194,14 +194,16 @@ if(CLANG_FORMAT)
   set(ALL_SOURCE_FILES ${SOURCE_FILES} ${TEST_SOURCE_FILES})
   list(FILTER ALL_SOURCE_FILES INCLUDE REGEX "\\.(c|h)$")
   list(REMOVE_DUPLICATES ALL_SOURCE_FILES)
-  # clang-format cannot align a signature against the prologue above it, so
-  # format_signatures.py runs afterwards over the .c files to lay out the
-  # signatures and their \param/\return blocks.
+  # clang-format cannot align a signature against the prologue above it, or
+  # a declaration block against its "(was X)" comments, so format_all.py
+  # runs afterwards over the .c files: it reflows signatures and \param
+  # blocks, realigns declaration blocks, and checks prologue structure
+  # (check_prologues.py has no --fix -- a missing \param needs a human).
   set(SIGNATURE_SOURCE_FILES ${ALL_SOURCE_FILES})
   list(FILTER SIGNATURE_SOURCE_FILES INCLUDE REGEX "\\.c$")
   add_custom_target(format
     COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES}
-    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/format_signatures.py --fix
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/format_all.py --fix
             ${SIGNATURE_SOURCE_FILES}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Formatting sources with clang-format"
