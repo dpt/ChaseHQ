@@ -86,6 +86,14 @@
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
 
+/* SlopAY-style beeper/AY mix: the beeper is a hard on/off level, so summing
+ * it straight into the AY signal biases the waveform upward whenever it is
+ * high. AY_GAIN_WITH_BEEPER headroom keeps that sum inside int16 range, and
+ * the DC-block one-pole highpass removes the resulting bias before the sum.
+ */
+#define AY_GAIN_WITH_BEEPER (0.90f)
+#define BEEPER_DC_BLOCK_R   (0.995f)
+
 /* Sampled speech drives the AY DAC by writing a new volume-register value
  * every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
  * PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
@@ -166,16 +174,24 @@ typedef struct
   int                audio_queue_head;
   int                audio_queue_tail;
 
-  /* Speaker (beeper) state. The anchor maps the facade's virtual T-state
-   * clock onto wall-clock ns: within a burst of toggles wall time barely
-   * advances, so event times extrapolate from the anchor at the T-state
-   * rate; when the T-state clock falls behind the wall clock a new burst
-   * has begun and the anchor resets. Game thread only.
+  /* Audio clock anchor, mapping the facade's virtual T-state clock onto
+   * wall-clock ns. The game thread emits a frame's worth of audio in a
+   * fraction of that frame's wall time, so event times extrapolate from the
+   * anchor at the T-state rate rather than being read off the wall clock;
+   * if the T-state clock falls behind wall time the game thread has lost
+   * ground and the anchor resets to catch up. Game thread only.
+   *
+   * Both event types must go through this: they share one queue and one
+   * replay cursor, so timestamping AY writes off the wall clock while the
+   * beeper used the T-state clock made every frame's drums land wherever
+   * the two clocks happened to disagree.
    */
-  Uint64             speaker_anchor_ns;
-  Uint64             speaker_anchor_tstates;
+  Uint64             audio_anchor_ns;
+  Uint64             audio_anchor_tstates;
   int                speaker_last_level; // last queued level (game thread)
   int                speaker_level;      // current replay level (audio thread)
+  float              beeper_dc_prev_in;  // DC-block filter state (audio thread)
+  float              beeper_dc_prev_out; // DC-block filter state (audio thread)
 
   /* Replay cursor: maps generated samples onto event timestamps. The wall
    * clock and the audio device's sample clock drift apart (measured ~1.4ms/s
@@ -303,10 +319,15 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
   }
   else
   {
-    /* A Spectrum 48K has 69,888 T-states per frame and its Z80 runs at
-     * 3.5MHz (~50Hz) for a total of 3,500,000 T-states per second.
+    /* A Spectrum 48K's Z80 runs at 3.5MHz (3,500,000 T-states per second).
+     * A 128K runs its Z80 faster, at 3.5469MHz (3,546,900 T-states per
+     * second) -- pacing every mode at the 48K rate throttles wall-clock time
+     * per T-state on a 128K, which slows the beeper's real-time toggle rate
+     * (timed by how fast the game thread actually runs) without affecting
+     * the AY chip's own tone pitch (computed from its own fixed clock,
+     * independent of this loop) -- the two drift ~1.3% apart.
      */
-    const double          tstatesPerSec = 3.5e6;
+    const double          tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
 
     struct timeval        now;
     double                duration; // seconds
@@ -389,34 +410,57 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
   SDL_UnlockMutex(state->audio_queue_mutex);
 }
 
+// Maps a virtual T-state to the wall-clock ns the event should be heard at.
+// 1 T-state = 1e9 / tstatesPerSec ns, where tstatesPerSec matches the Z80
+// clock chq_sleep_handler paces the game thread against (3.5MHz on 48K,
+// 3.5469MHz on 128K) — using the wrong one here mis-schedules every AY and
+// beeper event's real playback time by the same ratio chq_sleep_handler
+// would otherwise mis-pace the game thread, and this is the function that
+// actually drives it, not the pacing loop. Game thread only; see the anchor
+// comment in chq_sdl_state_t.
+static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
+{
+  const double tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+  const double nsPerTstate   = 1.0e9 / tstatesPerSec;
+  Uint64       now_ns;
+  Uint64       event_ns;
+
+  now_ns = SDL_GetTicksNS();
+
+  // Scaled by the speed setting for the same reason chq_sleep_handler scales
+  // its sleep: at 200% the game emits two frames of T-states in one frame of
+  // wall time, so a fixed rate would date every event further into the
+  // future than the last and the anchor would never catch up.
+  event_ns = state->audio_anchor_ns +
+             (Uint64) ((tstates - state->audio_anchor_tstates) * nsPerTstate *
+                       100 / state->speed);
+  if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
+  {
+    state->audio_anchor_ns      = now_ns;
+    state->audio_anchor_tstates = tstates;
+    event_ns = now_ns;
+  }
+
+  return event_ns;
+}
+
 static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
-  Uint64           now_ns;
-  Uint64           event_ns;
 
   if (on_off == state->speaker_last_level)
     return; // level unchanged: no edge to reproduce
 
   state->speaker_last_level = on_off;
 
-  /* Map the game's virtual T-state clock onto wall time (see the speaker
-   * state comment in chq_sdl_state_t). 1 T-state = 1e9/3.5e6 = 2000/7 ns.
-   */
-  now_ns   = SDL_GetTicksNS();
-  event_ns = state->speaker_anchor_ns +
-             (tstates - state->speaker_anchor_tstates) * 2000 / 7;
-  if (event_ns < now_ns) // T-state clock fell behind wall clock: new burst
-  {
-    state->speaker_anchor_ns      = now_ns;
-    state->speaker_anchor_tstates = tstates;
-    event_ns = now_ns;
-  }
-
-  chq_audio_queue_push(state, event_ns, CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
+  chq_audio_queue_push(state, chq_tstates_to_ns(state, tstates),
+                       CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
 }
 
-static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
+static void chq_ay_out_handler(uint16_t port,
+                               uint8_t  byte,
+                               uint64_t tstates,
+                               void    *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
@@ -431,10 +475,13 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 
   /* port_AY_DATA: queue the write with a timestamp instead of applying it
    * immediately, so chq_audio_callback can replay it at the right sample
-   * position (see the AY_QUEUE_CAPACITY comment above).
+   * position (see the AY_QUEUE_CAPACITY comment above). Timestamped from the
+   * same T-state clock as the beeper: the queue is a FIFO drained in order,
+   * so two clocks here means one stream's events are ordered against times
+   * the other's were never measured on.
    */
   chq_audio_queue_push(state,
-                       SDL_GetTicksNS(),
+                       chq_tstates_to_ns(state, tstates),
                        CHQ_AUDIO_EVENT_AY,
                        state->ay_latched_reg,
                        byte);
@@ -540,6 +587,24 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
   return state->speaker_muted ? 0 : beeper;
 }
 
+// One-pole highpass removing the DC bias the box-filtered beeper level
+// (chq_apply_due_audio_events) introduces before it is summed with the AY
+// signal. Filter state lives on the audio thread only.
+static float chq_beeper_dc_block(chq_sdl_state_t *state, int beeper_raw)
+{
+  float in;
+  float out;
+
+  in  = (float) beeper_raw;
+  out = (in - state->beeper_dc_prev_in) +
+        (BEEPER_DC_BLOCK_R * state->beeper_dc_prev_out);
+
+  state->beeper_dc_prev_in  = in;
+  state->beeper_dc_prev_out = out;
+
+  return out;
+}
+
 // Runs on SDL's audio thread. Called whenever SDL wants more data queued.
 static void chq_audio_callback(void            *opaque,
                                SDL_AudioStream *stream,
@@ -568,15 +633,17 @@ static void chq_audio_callback(void            *opaque,
 
     for (i = 0; i < npairs; i++)
     {
-      int beeper;
-      int left;
-      int right;
+      int   beeper_raw;
+      float beeper;
+      int   left;
+      int   right;
 
-      beeper = chq_apply_due_audio_events(state);
+      beeper_raw = chq_apply_due_audio_events(state);
+      beeper     = chq_beeper_dc_block(state, beeper_raw);
 
       sample = slopay_chip_get_sample(state->ay);
-      left   = (int16_t) ((sample >>  0) & 0xFFFF) + beeper;
-      right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
+      left   = (int) ((int16_t) ((sample >>  0) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
+      right  = (int) ((int16_t) ((sample >> 16) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
       if (state->audio_muted)
       {
         left = right = 0;
@@ -586,8 +653,8 @@ static void chq_audio_callback(void            *opaque,
         left  = left  * state->volume / 100;
         right = right * state->volume / 100;
       }
-      buf[i * 2 + 0] = (int16_t) CLAMP(left,  INT16_MIN, INT16_MAX);
-      buf[i * 2 + 1] = (int16_t) CLAMP(right, INT16_MIN, INT16_MAX);
+      buf[i * 2 + 0] = CLAMP(left,  INT16_MIN, INT16_MAX);
+      buf[i * 2 + 1] = CLAMP(right, INT16_MIN, INT16_MAX);
       state->samples_played++;
     }
 
@@ -1321,6 +1388,14 @@ int main(int argc, char *argv[])
 
   while (!state.quit)
     chq_sdl_main_loop(&state);
+
+  // Stop the audio device before anything else. chq_stop only signals the
+  // game thread, which longjmps out mid-frame and leaves the AY holding
+  // whatever tone the tune was playing; without this the callback keeps
+  // sounding that tone for the whole shutdown wait below. Pause before
+  // clear, or the callback refills between the two.
+  SDL_PauseAudioStreamDevice(state.audio_stream);
+  SDL_ClearAudioStream(state.audio_stream);
 
   chq_stop(state.game);
 
