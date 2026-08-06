@@ -9785,9 +9785,9 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index)
 {
-  u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
-  u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
-  u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
+  u8 ambiguous;  /* scan_keyboard_matrix ambiguity flag (was flags) */
+  u8 D_key_code; /* packed key code from scan_keyboard_matrix (was D) */
+  u8 A_key_code; /* accepted key code, used for storage/lookup (was A) */
   int B_dup_count; /* duplicate-check count: C_control_index-1 already-
                     * assigned slots (was B) */
   int dup_i;       /* duplicate-check loop index (was HL-$FFF7) */
