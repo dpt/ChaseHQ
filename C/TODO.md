@@ -17,11 +17,7 @@
 ## P3 — Incomplete / missing content
 
 - Complete decoding of all stage data (via the level converter script)
-- Split the main loop up into menu/main phases
-- `Bank3.c` SFX subsystem gaps (out of scope stubs, need wiring):
-  - high-score name/rank copy from `$C403`
-  - active-control-config header write at (`$8008`)
-  - `pitch_offset_default`/`pitch_offset_cur` and `envelope_shape_default`/`envelope_shape_ptr` left NULL pending `decode_pattern_command` table support
+- Split the main loop up into menu/main phases (need for emscripten / RISC OS)
 
 ## P4 — Polish / visual correctness
 
@@ -30,6 +26,9 @@
 
 ## P5 — Clarity pass
 
+- ~~Remove much logtime()~~ done: merged every adjacent-run logtime() call
+  across Bank3.c/Main.c/Bank7.c (branch/loop/out()-boundary safe only);
+  remaining ~170 calls are each already the minimum for their branch
 - Start backporting changes to the disasm
 
 ### Authority sweep (comments that read as guesswork)
