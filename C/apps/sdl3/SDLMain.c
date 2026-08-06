@@ -940,7 +940,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_LEFTBRACKET:
   case SDLK_RIGHTBRACKET:
   case SDLK_BACKSLASH:
-    if (k->down && !k->repeat)
+    if (k->down)
     {
       int speed;
 
