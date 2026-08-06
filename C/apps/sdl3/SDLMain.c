@@ -114,6 +114,23 @@
 
 // -----------------------------------------------------------------------------
 
+// Defaults re-tuned by eye against this game's screen; see CRTShader.c.
+static const chq_CRT_params_t crt_default_params = {
+  0.025f,
+  0.5f,
+  0.025f,
+  1.1f,
+  1.1f,
+  1.0f,
+  0.75f,
+  0.3f,
+  0.6f,
+  0.0f,
+  0.0f
+};
+
+// -----------------------------------------------------------------------------
+
 static int chq_window_width(int scale)
 {
   return (GAMEWIDTH + BORDER * 2) * scale;
@@ -142,109 +159,130 @@ typedef struct
 }
 chq_audio_event_t;
 
-typedef struct
+// chq_sdl_state_t.flags bits
+#define CHQ_FLAG_QUIT      (1u << 0)
+#define CHQ_FLAG_PAUSED    (1u << 1)
+#define CHQ_FLAG_MODE_128K (1u << 2) // 0 selects the 48K entry point
+
+#define CHQ_FLAG_TEST(state, flag)   (((state)->flags & (flag)) != 0)
+#define CHQ_FLAG_SET(state, flag)    ((state)->flags |= (flag))
+#define CHQ_FLAG_CLEAR(state, flag)  ((state)->flags &= ~(flag))
+#define CHQ_FLAG_ASSIGN(state, flag, on) \
+  ((on) ? CHQ_FLAG_SET(state, flag) : CHQ_FLAG_CLEAR(state, flag))
+
+typedef struct chq_sdl_state
 {
-  zxspectrum_t      *zx;
-  chqstate_t        *game;
+  zxspectrum_t     *zx;
+  chqstate_t       *game;
 
-  zxkeyset_t         keys;
-  zxkempston_t       kempston;
+  zxkeyset_t        keys;
+  zxkempston_t      kempston;
 
-  int                quit;      // bool
-  int                paused;    // bool
-  int                mode_128k; // bool; 0 selects the 48K entry point
+  unsigned int      flags;      // CHQ_FLAG_* bits: quit, paused, mode_128k
 
-  int                scale;      // window/render scale, SCALE_MIN..SCALE_MAX
-  int                fullscreen; // bool; toggled with F11
-  int                speed;      // game speed, percent, SPEED_MIN..SPEED_MAX
-  int                volume;     // output volume, percent, VOLUME_MIN..VOLUME_MAX
+  int               speed;      // game speed, percent, SPEED_MIN..SPEED_MAX
 
-  struct timeval     stamps[MAXSTAMPS];
-  int                nstamps;
+  struct timeval    stamps[MAXSTAMPS];
+  int               nstamps;
 
   /* Absolute wall-clock deadline for the next sleep, advanced by each call's
    * nominal duration rather than re-anchored from "now" -- see
    * chq_sleep_handler for why. */
-  double             next_deadline; // seconds, gettimeofday-epoch
-  int                deadline_valid; // bool
+  double            next_deadline;  // seconds, gettimeofday-epoch
+  int               deadline_valid; // bool
 
-  slopay_chip_t     *ay;
-  slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
+  struct
+  {
+    int             volume; // output volume, percent, VOLUME_MIN..VOLUME_MAX
 
-  /* Timestamped audio event queue (AY register writes and beeper level
-   * changes): game thread produces, audio thread consumes. audio_queue_mutex
-   * guards head/tail and the slots between them.
-   */
-  SDL_Mutex         *audio_queue_mutex;
-  chq_audio_event_t  audio_queue[AY_QUEUE_CAPACITY];
-  int                audio_queue_head;
-  int                audio_queue_tail;
+    slopay_chip_t  *ay;
+    slopay_chip_reg_t ay_latched_reg; // register selected by last port_AY_REGISTER write
 
-  /* Audio clock anchor, mapping the facade's virtual T-state clock onto
-   * wall-clock ns. The game thread emits a frame's worth of audio in a
-   * fraction of that frame's wall time, so event times extrapolate from the
-   * anchor at the T-state rate rather than being read off the wall clock;
-   * if the T-state clock falls behind wall time the game thread has lost
-   * ground and the anchor resets to catch up. Game thread only.
-   *
-   * Both event types must go through this: they share one queue and one
-   * replay cursor, so timestamping AY writes off the wall clock while the
-   * beeper used the T-state clock made every frame's drums land wherever
-   * the two clocks happened to disagree.
-   */
-  Uint64             audio_anchor_ns;
-  Uint64             audio_anchor_tstates;
-  int                speaker_last_level; // last queued level (game thread)
-  int                speaker_level;      // current replay level (audio thread)
-  float              beeper_dc_prev_in;  // DC-block filter state (audio thread)
-  float              beeper_dc_prev_out; // DC-block filter state (audio thread)
+    /* Timestamped audio event queue (AY register writes and beeper level
+     * changes): game thread produces, audio thread consumes. queue_mutex
+     * guards head/tail and the slots between them.
+     */
+    SDL_Mutex      *queue_mutex;
+    chq_audio_event_t queue[AY_QUEUE_CAPACITY];
+    int             queue_head;
+    int             queue_tail;
 
-  /* Replay cursor: maps generated samples onto event timestamps. The wall
-   * clock and the audio device's sample clock drift apart (measured ~1.4ms/s
-   * here), so event times are never compared against a wall-clock-anchored
-   * sample time. Instead, whenever the queue runs dry the cursor re-anchors
-   * to the next event's timestamp minus AY_REPLAY_CUSHION_NS, then advances
-   * by exactly one sample period per generated sample. Spacing within a
-   * burst is preserved regardless of drift and every gap in the sound
-   * re-syncs the two clocks. The cushion (extra output latency) absorbs
-   * consumer-fast drift so a continuous stream (a speech sample) does not
-   * starve mid-burst: at the measured drift, 30ms lasts ~21s of continuous
-   * writes and speech samples are only ~1-2s long.
-   */
-  Uint64             samples_played;
-  Uint64             replay_anchor_ns;     // event time at the last anchor
-  Uint64             replay_anchor_sample; // samples_played at the last anchor
-  int                replay_anchored;      // bool; cleared when queue runs dry
-  int                audio_muted;          // bool; mute sound if true
-  int                ay_channel_muted[3];  // bool per AY channel A/B/C; toggled with F7/F8/F9
-  int                speaker_muted;        // bool; beeper sfx muted; toggled with F10
+    /* Audio clock anchor, mapping the facade's virtual T-state clock onto
+     * wall-clock ns. The game thread emits a frame's worth of audio in a
+     * fraction of that frame's wall time, so event times extrapolate from
+     * the anchor at the T-state rate rather than being read off the wall
+     * clock; if the T-state clock falls behind wall time the game thread
+     * has lost ground and the anchor resets to catch up. Game thread only.
+     *
+     * Both event types must go through this: they share one queue and one
+     * replay cursor, so timestamping AY writes off the wall clock while the
+     * beeper used the T-state clock made every frame's drums land wherever
+     * the two clocks happened to disagree.
+     */
+    Uint64          anchor_ns;
+    Uint64          anchor_tstates;
+    int             speaker_last_level;  // last queued level (game thread)
+    int             speaker_level;       // current replay level (audio thread)
+    float           speaker_dc_prev_in;  // DC-block filter state (audio thread)
+    float           speaker_dc_prev_out; // DC-block filter state (audio thread)
 
-  /* Dirty-rect overlay: the game (thread) reports each screen region it
-   * refreshes via chq_draw_handler; we stash them here and outline them over
-   * the rendered frame so refreshed regions are visible on screen. Cleared
-   * once drawn. dirty_mutex guards all fields in this group.
-   */
-  SDL_Mutex         *dirty_mutex;
-  zxbox_t            dirty_rects[MAXDIRTYRECTS];
-  int                dirty_count;
-  int                dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
-  int                show_dirty_overlay; // bool; toggled with F3, off by default
+    /* Replay cursor: maps generated samples onto event timestamps. The wall
+     * clock and the audio device's sample clock drift apart (measured
+     * ~1.4ms/s here), so event times are never compared against a
+     * wall-clock-anchored sample time. Instead, whenever the queue runs dry
+     * the cursor re-anchors to the next event's timestamp minus
+     * AY_REPLAY_CUSHION_NS, then advances by exactly one sample period per
+     * generated sample. Spacing within a burst is preserved regardless of
+     * drift and every gap in the audio re-syncs the two clocks. The cushion
+     * (extra output latency) absorbs consumer-fast drift so a continuous
+     * stream (a speech sample) does not starve mid-burst: at the measured
+     * drift, 30ms lasts ~21s of continuous writes and speech samples are
+     * only ~1-2s long.
+     */
+    Uint64          samples_played;
+    Uint64          replay_anchor_ns;     // event time at the last anchor
+    Uint64          replay_anchor_sample; // samples_played at the last anchor
+    int             replay_anchored;      // bool; cleared when queue runs dry
+    int             muted;                // bool; mute audio if true
+    int             ay_channel_muted[3];  // bool per AY channel A/B/C; toggled with F7/F8/F9
+    int             speaker_muted;        // bool; beeper sfx muted; toggled with F10
 
-  SDL_Window        *window;
+    SDL_AudioStream *stream;
+  }
+  audio;
 
-  /* Display backend. Exactly one of these is live at a time, selected by
-   * crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
-   * renderer/texture when not. The other's handles are NULL.
-   */
-  int                crt_enabled; // bool; toggled with F4
-  chq_CRT_shader_t   crt;
-  chq_CRT_params_t   crt_params;
-  int                crt_param_index; // which crt_params field +/- adjusts
-  SDL_Renderer      *renderer;
-  SDL_Texture       *texture;
+  struct
+  {
+    int             scale;      // window/render scale, SCALE_MIN..SCALE_MAX
+    int             fullscreen; // bool; toggled with F11
 
-  SDL_Thread        *game_thread;
-  SDL_AudioStream   *audio_stream;
+    /* Dirty-rect overlay: the game (thread) reports each screen region it
+     * refreshes via chq_draw_handler; we stash them here and outline them
+     * over the rendered frame so refreshed regions are visible on screen.
+     * Cleared once drawn. dirty_mutex guards all fields in this group.
+     */
+    SDL_Mutex      *dirty_mutex;
+    zxbox_t         dirty_rects[MAXDIRTYRECTS];
+    int             dirty_count;
+    int             dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
+    int             show_dirty_overlay; // bool; toggled with F3, off by default
+
+    SDL_Window     *window;
+
+    /* Display backend. Exactly one of these is live at a time, selected by
+     * crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
+     * renderer/texture when not. The other's handles are NULL.
+     */
+    int             crt_enabled; // bool; toggled with F4
+    chq_CRT_shader_t crt;
+    chq_CRT_params_t crt_params;
+    int             crt_param_index; // which crt_params field +/- adjusts
+    SDL_Renderer   *renderer;
+    SDL_Texture    *texture;
+  }
+  video;
+
+  SDL_Thread       *game_thread;
 }
 chq_sdl_state_t;
 
@@ -260,10 +298,10 @@ static void chq_update_window_title(const chq_sdl_state_t *state)
   SDL_snprintf(title, sizeof(title),
                "Chase H.Q. - Speed: %d%% - Volume: %d%%%s%s",
                state->speed,
-               state->volume,
-               state->audio_muted ? " (Muted)" : "",
-               state->paused ? " (Paused)" : "");
-  SDL_SetWindowTitle(state->window, title);
+               state->audio.volume,
+               state->audio.muted ? " (Muted)" : "",
+               CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? " (Paused)" : "");
+  SDL_SetWindowTitle(state->video.window, title);
 }
 
 static void chq_draw_handler(const zxbox_t *dirty,
@@ -276,12 +314,12 @@ static void chq_draw_handler(const zxbox_t *dirty,
    * stash the dirty region (game thread) for the main loop to outline once it
    * renders the frame.
    */
-  SDL_LockMutex(state->dirty_mutex);
+  SDL_LockMutex(state->video.dirty_mutex);
   if (dirty == NULL)
-    state->dirty_full_screen = 1;
-  else if (state->dirty_count < MAXDIRTYRECTS)
-    state->dirty_rects[state->dirty_count++] = *dirty;
-  SDL_UnlockMutex(state->dirty_mutex);
+    state->video.dirty_full_screen = 1;
+  else if (state->video.dirty_count < MAXDIRTYRECTS)
+    state->video.dirty_rects[state->video.dirty_count++] = *dirty;
+  SDL_UnlockMutex(state->video.dirty_mutex);
 }
 
 static void chq_stamp_handler(void *opaque)
@@ -303,20 +341,20 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
   // Unstack timestamps (even if we're paused)
   assert(state->nstamps > 0);
   if (state->nstamps <= 0)
-    return state->quit;
+    return CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT);
   --state->nstamps;
 
   // Quit straight away if signalled
-  if (state->quit)
+  if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
     return 1;
 
-  paused = state->paused;
+  paused = CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED);
   if (paused)
   {
     // If paused, sit in this loop, checking twice per second for unpausing
     for (;;)
     {
-      paused = state->paused;
+      paused = CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED);
       if (!paused)
         break;
 
@@ -333,7 +371,7 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
      * the AY chip's own tone pitch (computed from its own fixed clock,
      * independent of this loop) -- the two drift ~1.3% apart.
      */
-    const double   tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+    const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
     const double   maxLagFrames  = 4.0; // cap catch-up burst after a stall/pause
 
     struct timeval now;
@@ -408,25 +446,25 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
                                  slopay_chip_reg_t      reg,
                                  Uint8                  value)
 {
-  SDL_LockMutex(state->audio_queue_mutex);
+  SDL_LockMutex(state->audio.queue_mutex);
 
   {
-    int next_tail = (state->audio_queue_tail + 1) % AY_QUEUE_CAPACITY;
+    int next_tail = (state->audio.queue_tail + 1) % AY_QUEUE_CAPACITY;
 
-    if (next_tail != state->audio_queue_head) // drop event if the queue is full
+    if (next_tail != state->audio.queue_head) // drop event if the queue is full
     {
-      chq_audio_event_t *ev = &state->audio_queue[state->audio_queue_tail];
+      chq_audio_event_t *ev = &state->audio.queue[state->audio.queue_tail];
 
       ev->time_ns = time_ns;
       ev->type    = type;
       ev->reg     = reg;
       ev->value   = value;
 
-      state->audio_queue_tail = next_tail;
+      state->audio.queue_tail = next_tail;
     }
   }
 
-  SDL_UnlockMutex(state->audio_queue_mutex);
+  SDL_UnlockMutex(state->audio.queue_mutex);
 }
 
 // Maps a virtual T-state to the wall-clock ns the event should be heard at.
@@ -439,7 +477,7 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 // comment in chq_sdl_state_t.
 static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
 {
-  const double tstatesPerSec = state->mode_128k ? 3546900.0 : 3.5e6;
+  const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
   const double nsPerTstate   = 1.0e9 / tstatesPerSec;
   Uint64       now_ns;
   Uint64       event_ns;
@@ -450,13 +488,13 @@ static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
   // its sleep: at 200% the game emits two frames of T-states in one frame of
   // wall time, so a fixed rate would date every event further into the
   // future than the last and the anchor would never catch up.
-  event_ns = state->audio_anchor_ns +
-             (Uint64) ((tstates - state->audio_anchor_tstates) * nsPerTstate *
+  event_ns = state->audio.anchor_ns +
+             (Uint64) ((tstates - state->audio.anchor_tstates) * nsPerTstate *
                        100 / state->speed);
   if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
   {
-    state->audio_anchor_ns      = now_ns;
-    state->audio_anchor_tstates = tstates;
+    state->audio.anchor_ns      = now_ns;
+    state->audio.anchor_tstates = tstates;
     event_ns = now_ns;
   }
 
@@ -467,10 +505,10 @@ static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  if (on_off == state->speaker_last_level)
+  if (on_off == state->audio.speaker_last_level)
     return; // level unchanged: no edge to reproduce
 
-  state->speaker_last_level = on_off;
+  state->audio.speaker_last_level = on_off;
 
   chq_audio_queue_push(state, chq_tstates_to_ns(state, tstates),
                        CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
@@ -488,7 +526,7 @@ static void chq_ay_out_handler(uint16_t port,
     /* Register select: only ever touched from the game thread, immediately
      * followed by the paired data write below, so no queuing needed here.
      */
-    state->ay_latched_reg = byte;
+    state->audio.ay_latched_reg = byte;
     return;
   }
 
@@ -502,7 +540,7 @@ static void chq_ay_out_handler(uint16_t port,
   chq_audio_queue_push(state,
                        chq_tstates_to_ns(state, tstates),
                        CHQ_AUDIO_EVENT_AY,
-                       state->ay_latched_reg,
+                       state->audio.ay_latched_reg,
                        byte);
 }
 
@@ -529,54 +567,54 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
   Uint64 high_ns;  // time spent high within the period
   int    beeper;
 
-  SDL_LockMutex(state->audio_queue_mutex);
+  SDL_LockMutex(state->audio.queue_mutex);
 
-  if (state->audio_queue_head == state->audio_queue_tail)
+  if (state->audio.queue_head == state->audio.queue_tail)
   {
-    state->replay_anchored = 0;
+    state->audio.replay_anchored = 0;
 
     // No pending edges: the speaker holds its level for the whole period.
-    beeper = state->speaker_level ? BEEPER_AMPLITUDE : 0;
+    beeper = state->audio.speaker_level ? BEEPER_AMPLITUDE : 0;
   }
   else
   {
-    if (!state->replay_anchored)
+    if (!state->audio.replay_anchored)
     {
-      Uint64 head_time_ns = state->audio_queue[state->audio_queue_head].time_ns;
+      Uint64 head_time_ns = state->audio.queue[state->audio.queue_head].time_ns;
 
       /* SDL_GetTicksNS() starts near zero, so guard the cushion subtraction
        * against underflow for writes made just after launch.
        */
-      state->replay_anchor_ns =
+      state->audio.replay_anchor_ns =
         (head_time_ns > AY_REPLAY_CUSHION_NS) ?
           head_time_ns - AY_REPLAY_CUSHION_NS : 0;
-      state->replay_anchor_sample = state->samples_played;
-      state->replay_anchored = 1;
+      state->audio.replay_anchor_sample = state->audio.samples_played;
+      state->audio.replay_anchored = 1;
     }
 
     /* Computed fresh from the anchor rather than accumulated, so truncation
      * never drifts the cursor away from the sample count.
      */
-    start_ns = state->replay_anchor_ns +
-               ((state->samples_played - state->replay_anchor_sample) *
+    start_ns = state->audio.replay_anchor_ns +
+               ((state->audio.samples_played - state->audio.replay_anchor_sample) *
                 1000000000ULL) / AY_SAMPLE_RATE;
-    end_ns   = state->replay_anchor_ns +
-               ((state->samples_played + 1 - state->replay_anchor_sample) *
+    end_ns   = state->audio.replay_anchor_ns +
+               ((state->audio.samples_played + 1 - state->audio.replay_anchor_sample) *
                 1000000000ULL) / AY_SAMPLE_RATE;
 
     level_ns = start_ns;
     high_ns  = 0;
 
-    while (state->audio_queue_head != state->audio_queue_tail)
+    while (state->audio.queue_head != state->audio.queue_tail)
     {
-      chq_audio_event_t *ev = &state->audio_queue[state->audio_queue_head];
+      chq_audio_event_t *ev = &state->audio.queue[state->audio.queue_head];
 
       if (ev->time_ns > end_ns)
         break;
 
       if (ev->type == CHQ_AUDIO_EVENT_AY)
       {
-        slopay_chip_write_register(state->ay, ev->reg, ev->value);
+        slopay_chip_write_register(state->audio.ay, ev->reg, ev->value);
       }
       else
       {
@@ -584,26 +622,26 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
 
         if (edge_ns < start_ns) // overdue edge: takes effect at period start
           edge_ns = start_ns;
-        if (state->speaker_level)
+        if (state->audio.speaker_level)
           high_ns += edge_ns - level_ns;
         level_ns = edge_ns;
-        state->speaker_level = ev->value;
+        state->audio.speaker_level = ev->value;
       }
 
-      state->audio_queue_head = (state->audio_queue_head + 1) %
+      state->audio.queue_head = (state->audio.queue_head + 1) %
                                 AY_QUEUE_CAPACITY;
     }
 
-    if (state->speaker_level)
+    if (state->audio.speaker_level)
       high_ns += end_ns - level_ns;
 
     beeper = (int) ((Uint64) BEEPER_AMPLITUDE * high_ns /
                     (end_ns - start_ns));
   }
 
-  SDL_UnlockMutex(state->audio_queue_mutex);
+  SDL_UnlockMutex(state->audio.queue_mutex);
 
-  return state->speaker_muted ? 0 : beeper;
+  return state->audio.speaker_muted ? 0 : beeper;
 }
 
 // One-pole highpass removing the DC bias the box-filtered beeper level
@@ -615,11 +653,11 @@ static float chq_beeper_dc_block(chq_sdl_state_t *state, int beeper_raw)
   float out;
 
   in  = (float) beeper_raw;
-  out = (in - state->beeper_dc_prev_in) +
-        (BEEPER_DC_BLOCK_R * state->beeper_dc_prev_out);
+  out = (in - state->audio.speaker_dc_prev_in) +
+        (BEEPER_DC_BLOCK_R * state->audio.speaker_dc_prev_out);
 
-  state->beeper_dc_prev_in  = in;
-  state->beeper_dc_prev_out = out;
+  state->audio.speaker_dc_prev_in  = in;
+  state->audio.speaker_dc_prev_out = out;
 
   return out;
 }
@@ -645,8 +683,8 @@ static void chq_audio_callback(void            *opaque,
   while (additional_amount > 0)
   {
     npairs = additional_amount / framebytes;
-    if (npairs > (int) (sizeof(buf) / sizeof(*buf) / 2))
-      npairs = sizeof(buf) / sizeof(*buf) / 2;
+    if (npairs > (int) (NELEMS(buf) / 2))
+      npairs = NELEMS(buf) / 2;
     if (npairs <= 0)
       break;
 
@@ -660,21 +698,21 @@ static void chq_audio_callback(void            *opaque,
       beeper_raw = chq_apply_due_audio_events(state);
       beeper     = chq_beeper_dc_block(state, beeper_raw);
 
-      sample = slopay_chip_get_sample(state->ay);
+      sample = slopay_chip_get_sample(state->audio.ay);
       left   = (int) ((int16_t) ((sample >>  0) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
       right  = (int) ((int16_t) ((sample >> 16) & 0xFFFF) * AY_GAIN_WITH_BEEPER + beeper);
-      if (state->audio_muted)
+      if (state->audio.muted)
       {
         left = right = 0;
       }
       else
       {
-        left  = left  * state->volume / 100;
-        right = right * state->volume / 100;
+        left  = left  * state->audio.volume / 100;
+        right = right * state->audio.volume / 100;
       }
       buf[i * 2 + 0] = CLAMP(left,  INT16_MIN, INT16_MAX);
       buf[i * 2 + 1] = CLAMP(right, INT16_MIN, INT16_MAX);
-      state->samples_played++;
+      state->audio.samples_played++;
     }
 
     chunkbytes = npairs * framebytes;
@@ -687,8 +725,8 @@ static int chq_game_thread(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  chq_start(state->game, state->mode_128k);
-  state->quit = 1;
+  chq_start(state->game, CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K));
+  CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
   return 0;
 }
 
@@ -698,13 +736,12 @@ static int chq_game_thread(void *opaque)
  * [offset] indexes into chq_CRT_params_t so one table drives all the controls
  * instead of one keybinding per field.
  */
-typedef struct
+typedef struct chq_crt_param_desc
 {
   const char *name;
   size_t      offset;
   float       step;
-  float       min;
-  float       max;
+  float       min, max;
 }
 chq_crt_param_desc_t;
 
@@ -722,8 +759,7 @@ static const chq_crt_param_desc_t chq_crt_param_descs[] =
   { "glitch",             offsetof(chq_CRT_params_t, glitch),             0.05f,  0.0f, 1.0f },
 };
 
-#define CHQ_CRT_PARAM_COUNT \
-  (int) (sizeof(chq_crt_param_descs) / sizeof(chq_crt_param_descs[0]))
+#define CHQ_CRT_PARAM_COUNT (int) NELEMS(chq_crt_param_descs)
 
 static float *chq_crt_param_field(chq_CRT_params_t           *params,
                                   const chq_crt_param_desc_t *desc)
@@ -739,15 +775,15 @@ static float *chq_crt_param_field(chq_CRT_params_t           *params,
 
 static void chq_renderer_destroy(chq_sdl_state_t *state)
 {
-  if (state->texture != NULL)
+  if (state->video.texture != NULL)
   {
-    SDL_DestroyTexture(state->texture);
-    state->texture = NULL;
+    SDL_DestroyTexture(state->video.texture);
+    state->video.texture = NULL;
   }
-  if (state->renderer != NULL)
+  if (state->video.renderer != NULL)
   {
-    SDL_DestroyRenderer(state->renderer);
-    state->renderer = NULL;
+    SDL_DestroyRenderer(state->video.renderer);
+    state->video.renderer = NULL;
   }
 }
 
@@ -757,14 +793,14 @@ static int chq_renderer_create(chq_sdl_state_t *state)
    * read "renderer == NULL" as "no plain renderer" without having to know
    * how far this got.
    */
-  state->renderer = SDL_CreateRenderer(state->window, NULL);
-  if (state->renderer == NULL)
+  state->video.renderer = SDL_CreateRenderer(state->video.window, NULL);
+  if (state->video.renderer == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
     return 0;
   }
 
-  SDL_SetRenderVSync(state->renderer, 1);
+  SDL_SetRenderVSync(state->video.renderer, 1);
 
   /* The screen buffer is always converted with R in the lowest memory byte
    * (zxconfig.bgr_pixels below), because that is what the CRT backend's
@@ -772,18 +808,18 @@ static int chq_renderer_create(chq_sdl_state_t *state)
    * SDL_PIXELFORMAT_ABGR8888 is the same order for this texture; SDL
    * converts on upload if the renderer would rather have something else.
    */
-  state->texture = SDL_CreateTexture(state->renderer,
-                                     SDL_PIXELFORMAT_ABGR8888,
-                                     SDL_TEXTUREACCESS_STREAMING,
-                                     GAMEWIDTH, GAMEHEIGHT);
-  if (state->texture == NULL)
+  state->video.texture = SDL_CreateTexture(state->video.renderer,
+                                           SDL_PIXELFORMAT_ABGR8888,
+                                           SDL_TEXTUREACCESS_STREAMING,
+                                           GAMEWIDTH, GAMEHEIGHT);
+  if (state->video.texture == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
     chq_renderer_destroy(state);
     return 0;
   }
 
-  if (!SDL_SetTextureBlendMode(state->texture, SDL_BLENDMODE_NONE))
+  if (!SDL_SetTextureBlendMode(state->video.texture, SDL_BLENDMODE_NONE))
   {
     fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
     chq_renderer_destroy(state);
@@ -793,7 +829,7 @@ static int chq_renderer_create(chq_sdl_state_t *state)
   /* Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
    * is scaled up; SDL3's default is linear, which blurs them.
    */
-  SDL_SetTextureScaleMode(state->texture, SDL_SCALEMODE_NEAREST);
+  SDL_SetTextureScaleMode(state->video.texture, SDL_SCALEMODE_NEAREST);
 
   return 1;
 }
@@ -804,18 +840,18 @@ static int chq_renderer_create(chq_sdl_state_t *state)
  */
 static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 {
-  if (enable == state->crt_enabled &&
-      (state->crt_enabled || state->renderer != NULL))
+  if (enable == state->video.crt_enabled &&
+      (state->video.crt_enabled || state->video.renderer != NULL))
     return 1; // already in the requested state
 
   if (enable)
   {
     chq_renderer_destroy(state);
 
-    if (chq_CRT_shader_create(&state->crt, state->window,
+    if (chq_CRT_shader_create(&state->video.crt, state->video.window,
                               GAMEWIDTH, GAMEHEIGHT))
     {
-      state->crt_enabled = 1;
+      state->video.crt_enabled = 1;
       return 1;
     }
 
@@ -824,19 +860,19 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
      * release; anything later leaves a device that must be given back before
      * the plain renderer can claim the window.
      */
-    if (state->crt.gpu != NULL)
-      chq_CRT_shader_destroy(&state->crt, state->window);
-    memset(&state->crt, 0, sizeof(state->crt));
+    if (state->video.crt.gpu != NULL)
+      chq_CRT_shader_destroy(&state->video.crt, state->video.window);
+    memset(&state->video.crt, 0, sizeof(state->video.crt));
 
     fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
   }
-  else if (state->crt_enabled)
+  else if (state->video.crt_enabled)
   {
-    chq_CRT_shader_destroy(&state->crt, state->window);
-    memset(&state->crt, 0, sizeof(state->crt));
+    chq_CRT_shader_destroy(&state->video.crt, state->video.window);
+    memset(&state->video.crt, 0, sizeof(state->video.crt));
   }
 
-  state->crt_enabled = 0;
+  state->video.crt_enabled = 0;
 
   if (!chq_renderer_create(state))
     return 0; // neither backend is up; the caller has to give up
@@ -860,7 +896,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_F1:
     if (k->down && !k->repeat)
     {
-      state->paused = !state->paused;
+      CHQ_FLAG_ASSIGN(state, CHQ_FLAG_PAUSED, !CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED));
       chq_update_window_title(state);
     }
     return;
@@ -868,21 +904,21 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_F2:
     if (k->down && !k->repeat)
     {
-      state->audio_muted = !state->audio_muted;
+      state->audio.muted = !state->audio.muted;
       chq_update_window_title(state);
     }
     return;
 
   case SDLK_F3:
     if (k->down && !k->repeat)
-      state->show_dirty_overlay = !state->show_dirty_overlay;
+      state->video.show_dirty_overlay = !state->video.show_dirty_overlay;
     return;
 
   case SDLK_F4:
     if (k->down && !k->repeat)
     {
-      chq_set_crt_enabled(state, !state->crt_enabled);
-      printf("CRT shader: %s\n", state->crt_enabled ? "on" : "off");
+      chq_set_crt_enabled(state, !state->video.crt_enabled);
+      printf("CRT shader: %s\n", state->video.crt_enabled ? "on" : "off");
     }
     return;
 
@@ -891,30 +927,29 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_F9:
     if (k->down && !k->repeat)
     {
-      static const char *names[3] = { "A", "B", "C" };
-      int                 ch      = sym - SDLK_F7;
+      int ch = sym - SDLK_F7;
 
-      state->ay_channel_muted[ch] = !state->ay_channel_muted[ch];
-      slopay_chip_enable_channel(state->ay, ch, !state->ay_channel_muted[ch]);
-      printf("AY channel %s: %s\n", names[ch],
-            state->ay_channel_muted[ch] ? "muted" : "on");
+      state->audio.ay_channel_muted[ch] = !state->audio.ay_channel_muted[ch];
+      slopay_chip_enable_channel(state->audio.ay, ch, !state->audio.ay_channel_muted[ch]);
+      printf("AY channel %c: %s\n", "ABC"[ch],
+             state->audio.ay_channel_muted[ch] ? "muted" : "on");
     }
     return;
 
   case SDLK_F10:
     if (k->down && !k->repeat)
     {
-      state->speaker_muted = !state->speaker_muted;
-      printf("Speaker: %s\n", state->speaker_muted ? "muted" : "on");
+      state->audio.speaker_muted = !state->audio.speaker_muted;
+      printf("Speaker: %s\n", state->audio.speaker_muted ? "muted" : "on");
     }
     return;
 
   case SDLK_F11:
     if (k->down && !k->repeat)
     {
-      state->fullscreen = !state->fullscreen;
-      SDL_SetWindowFullscreen(state->window, state->fullscreen);
-      printf("Fullscreen: %s\n", state->fullscreen ? "on" : "off");
+      state->video.fullscreen = !state->video.fullscreen;
+      SDL_SetWindowFullscreen(state->video.window, state->video.fullscreen);
+      printf("Fullscreen: %s\n", state->video.fullscreen ? "on" : "off");
     }
     return;
 
@@ -924,13 +959,13 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       int scale;
 
-      scale = CLAMP(state->scale + (sym == SDLK_MINUS ? -1 : 1),
+      scale = CLAMP(state->video.scale + (sym == SDLK_MINUS ? -1 : 1),
                     SCALE_MIN, SCALE_MAX);
 
-      if (scale != state->scale)
+      if (scale != state->video.scale)
       {
-        state->scale = scale;
-        SDL_SetWindowSize(state->window,
+        state->video.scale = scale;
+        SDL_SetWindowSize(state->video.window,
                           chq_window_width(scale),
                           chq_window_height(scale));
       }
@@ -962,10 +997,10 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       int volume;
 
-      volume = CLAMP(state->volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
+      volume = CLAMP(state->audio.volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
                      VOLUME_MIN, VOLUME_MAX);
 
-      state->volume = volume;
+      state->audio.volume = volume;
       chq_update_window_title(state);
       printf("Volume: %d%%\n", volume);
     }
@@ -975,7 +1010,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
    * renderer up they fall through to the game like any other key.
    */
   case SDLK_TAB:
-    if (state->crt_enabled)
+    if (state->video.crt_enabled)
     {
       if (k->down && !k->repeat)
       {
@@ -988,10 +1023,10 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
          */
         step = (k->mod & SDL_KMOD_SHIFT) ? CHQ_CRT_PARAM_COUNT - 1 : 1;
 
-        state->crt_param_index = (state->crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
-        desc = &chq_crt_param_descs[state->crt_param_index];
+        state->video.crt_param_index = (state->video.crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
+        desc = &chq_crt_param_descs[state->video.crt_param_index];
         printf("CRT param: %s = %g\n", desc->name,
-              *chq_crt_param_field(&state->crt_params, desc));
+              *chq_crt_param_field(&state->video.crt_params, desc));
       }
       return;
     }
@@ -1000,15 +1035,15 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 
   case SDLK_PAGEUP:
   case SDLK_PAGEDOWN:
-    if (state->crt_enabled)
+    if (state->video.crt_enabled)
     {
       if (k->down)
       {
         const chq_crt_param_desc_t *desc;
         float                      *field;
 
-        desc  = &chq_crt_param_descs[state->crt_param_index];
-        field = chq_crt_param_field(&state->crt_params, desc);
+        desc  = &chq_crt_param_descs[state->video.crt_param_index];
+        field = chq_crt_param_field(&state->video.crt_params, desc);
         *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
                        desc->min, desc->max);
         printf("CRT param: %s = %g\n", desc->name, *field);
@@ -1019,13 +1054,11 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     break;
 
   case SDLK_R:
-    if (state->crt_enabled)
+    if (state->video.crt_enabled)
     {
       if (k->down && !k->repeat)
       {
-        chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
-
-        state->crt_params = defaults;
+        state->video.crt_params = crt_default_params;
         printf("CRT params reset to defaults\n");
       }
       return;
@@ -1100,22 +1133,22 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
   int     scale;
   int     i;
 
-  SDL_LockMutex(state->dirty_mutex);
-  count       = state->dirty_count;
-  full_screen = state->dirty_full_screen;
+  SDL_LockMutex(state->video.dirty_mutex);
+  count       = state->video.dirty_count;
+  full_screen = state->video.dirty_full_screen;
   for (i = 0; i < count; i++)
-    rects[i] = state->dirty_rects[i];
-  state->dirty_count       = 0;
-  state->dirty_full_screen = 0;
-  SDL_UnlockMutex(state->dirty_mutex);
+    rects[i] = state->video.dirty_rects[i];
+  state->video.dirty_count       = 0;
+  state->video.dirty_full_screen = 0;
+  SDL_UnlockMutex(state->video.dirty_mutex);
 
-  if (!state->show_dirty_overlay || state->renderer == NULL)
+  if (!state->video.show_dirty_overlay || state->video.renderer == NULL)
     return;
 
   if (count > 0 || full_screen)
     fprintf(stderr, "[dirty] count=%d full_screen=%d\n", count, full_screen); // TEMP debug
 
-  scale = state->scale;
+  scale = state->video.scale;
 
   if (full_screen)
   {
@@ -1126,11 +1159,11 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
     rect.w = (float) (GAMEWIDTH  * scale);
     rect.h = (float) (GAMEHEIGHT * scale);
 
-    SDL_SetRenderDrawColor(state->renderer, 0xFF, 0x00, 0x00, 0xFF); // red: full-screen refresh
-    chq_render_thick_rect(state->renderer, &rect);
+    SDL_SetRenderDrawColor(state->video.renderer, 0xFF, 0x00, 0x00, 0xFF); // red: full-screen refresh
+    chq_render_thick_rect(state->video.renderer, &rect);
   }
 
-  SDL_SetRenderDrawColor(state->renderer, 0x00, 0xFF, 0x00, 0xFF); // green: partial refresh
+  SDL_SetRenderDrawColor(state->video.renderer, 0x00, 0xFF, 0x00, 0xFF); // green: partial refresh
   for (i = 0; i < count; i++)
   {
     const zxbox_t *box = &rects[i];
@@ -1142,7 +1175,7 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
     rect.w = (float) ((box->x1 - box->x0) * scale);
     rect.h = (float) ((box->y1 - box->y0) * scale);
 
-    chq_render_thick_rect(state->renderer, &rect);
+    chq_render_thick_rect(state->video.renderer, &rect);
   }
 }
 
@@ -1152,83 +1185,80 @@ static void chq_sdl_main_loop(void *opaque)
   chq_sdl_state_t *state = opaque;
   int              x, y, w, h; // destination rect: game view within the window
   int              ww, wh;     // actual window size (may exceed scale*game size in fullscreen)
+  SDL_Event        event;
 
-  w = GAMEWIDTH  * state->scale;
-  h = GAMEHEIGHT * state->scale;
-  SDL_GetWindowSize(state->window, &ww, &wh);
+  w = GAMEWIDTH  * state->video.scale;
+  h = GAMEHEIGHT * state->video.scale;
+  SDL_GetWindowSize(state->video.window, &ww, &wh);
   x = (ww - w) / 2; // centred; equals BORDER*scale in windowed mode, letterboxes in fullscreen
   y = (wh - h) / 2;
 
+  // Consume all pending events
+  while (SDL_PollEvent(&event))
   {
-    SDL_Event event;
-
-    // Consume all pending events
-    while (SDL_PollEvent(&event))
+    switch (event.type)
     {
-      switch (event.type)
-      {
-      case SDL_EVENT_QUIT:
-        state->quit = 1;
-        SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
-        break;
+    case SDL_EVENT_QUIT:
+      CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
+      SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
+      break;
 
-      case SDL_EVENT_KEY_DOWN:
-      case SDL_EVENT_KEY_UP:
-        chq_sdl_key_pressed(state, &event.key);
-        break;
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
+      chq_sdl_key_pressed(state, &event.key);
+      break;
 
-      case SDL_EVENT_TEXT_EDITING:
-      case SDL_EVENT_TEXT_INPUT:
-        break;
+    case SDL_EVENT_TEXT_EDITING:
+    case SDL_EVENT_TEXT_INPUT:
+      break;
 
-      case SDL_EVENT_MOUSE_MOTION:
-      case SDL_EVENT_MOUSE_BUTTON_DOWN:
-      case SDL_EVENT_MOUSE_BUTTON_UP:
-      case SDL_EVENT_MOUSE_WHEEL:
-        break;
+    case SDL_EVENT_MOUSE_MOTION:
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+    case SDL_EVENT_MOUSE_WHEEL:
+      break;
 
-      default:
-        break;
-      }
+    default:
+      break;
     }
+  }
 
-    if (state->quit)
-      return;
+  if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
+    return;
 
-    if (state->crt_enabled)
-    {
-      chq_CRT_shader_render(&state->crt, state->window, state->zx,
-                            x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
-                            &state->crt_params);
-      chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
-    }
-    else
-    {
-      /* Update the texture from the game's converted screen buffer. */
-      uint32_t  *pixels;
-      SDL_FRect  dstrect;
+  if (state->video.crt_enabled)
+  {
+    chq_CRT_shader_render(&state->video.crt, state->video.window, state->zx,
+                          x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
+                          &state->video.crt_params);
+    chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
+  }
+  else
+  {
+    /* Update the texture from the game's converted screen buffer. */
+    uint32_t  *pixels;
+    SDL_FRect  dstrect;
 
-      dstrect.x = (float) x;
-      dstrect.y = (float) y;
-      dstrect.w = (float) w;
-      dstrect.h = (float) h;
+    dstrect.x = (float) x;
+    dstrect.y = (float) y;
+    dstrect.w = (float) w;
+    dstrect.h = (float) h;
 
-      pixels = zxspectrum_claim_screen(state->zx);
-      SDL_UpdateTexture(state->texture, NULL, pixels, GAMEWIDTH * 4);
-      zxspectrum_release_screen(state->zx);
+    pixels = zxspectrum_claim_screen(state->zx);
+    SDL_UpdateTexture(state->video.texture, NULL, pixels, GAMEWIDTH * 4);
+    zxspectrum_release_screen(state->zx);
 
-      /* Clear screen */
-      // TODO: This ought to be the border colour, but CHQ's is always black.
-      SDL_SetRenderDrawColor(state->renderer, 0x00, 0x00, 0x00, 0xFF);
-      SDL_RenderClear(state->renderer);
+    /* Clear screen */
+    // TODO: This ought to be the border colour, but CHQ's is always black.
+    SDL_SetRenderDrawColor(state->video.renderer, 0x00, 0x00, 0x00, 0xFF);
+    SDL_RenderClear(state->video.renderer);
 
-      /* Offset the image */
-      // Note that this will inhibit image stretching.
+    /* Offset the image */
+    // Note that this will inhibit image stretching.
 
-      SDL_RenderTexture(state->renderer, state->texture, NULL, &dstrect);
-      chq_draw_dirty_overlay(state, x, y);
-      SDL_RenderPresent(state->renderer);
-    }
+    SDL_RenderTexture(state->video.renderer, state->video.texture, NULL, &dstrect);
+    chq_draw_dirty_overlay(state, x, y);
+    SDL_RenderPresent(state->video.renderer);
   }
 }
 
@@ -1244,10 +1274,12 @@ int main(int argc, char *argv[])
 
   for (arg = 1; arg < argc; arg++)
   {
-    if (strcmp(argv[arg], "-48k") == 0)
+    if (strcmp(argv[arg], "-48k") == 0) {
       mode_128k = 0;
-    else if (strcmp(argv[arg], "-128k") == 0)
+    }
+    else if (strcmp(argv[arg], "-128k") == 0) {
       mode_128k = 1;
+    }
     else
     {
       fprintf(stderr, "Usage: %s [-48k | -128k]\n", argv[0]);
@@ -1264,18 +1296,13 @@ int main(int argc, char *argv[])
 
   zxkeyset_clear(&state.keys);
   state.kempston  = 0;
-  state.paused    = 0;
-  state.quit      = 0;
-  state.mode_128k = mode_128k;
-  state.scale     = SCALE_DEFAULT;
-  state.speed     = SPEED_DEFAULT;
-  state.volume    = VOLUME_DEFAULT;
-  {
-    chq_CRT_params_t defaults = CHQ_CRT_PARAMS_DEFAULT;
-
-    state.crt_params = defaults;
-  }
-  state.crt_param_index = 0;
+  state.flags     = 0;
+  CHQ_FLAG_ASSIGN(&state, CHQ_FLAG_MODE_128K, mode_128k);
+  state.video.scale           = SCALE_DEFAULT;
+  state.speed                 = SPEED_DEFAULT;
+  state.audio.volume          = VOLUME_DEFAULT;
+  state.video.crt_params      = crt_default_params;
+  state.video.crt_param_index = 0;
 
 #ifdef __APPLE__
   /* Conv: disable macOS press-and-hold accent popover so held keys repeat
@@ -1294,8 +1321,8 @@ int main(int argc, char *argv[])
   }
 
   window = SDL_CreateWindow("Chase H.Q.",
-                            chq_window_width(state.scale),
-                            chq_window_height(state.scale),
+                            chq_window_width(state.video.scale),
+                            chq_window_height(state.video.scale),
                             0);
   if (window == NULL)
   {
@@ -1303,7 +1330,7 @@ int main(int argc, char *argv[])
     goto failure;
   }
 
-  state.window = window;
+  state.video.window = window;
 
   chq_update_window_title(&state);
 
@@ -1336,19 +1363,19 @@ int main(int argc, char *argv[])
   if (state.zx == NULL)
     goto failure;
 
-  state.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
-  if (state.ay == NULL)
+  state.audio.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
+  if (state.audio.ay == NULL)
     goto failure;
 
-  state.audio_queue_mutex = SDL_CreateMutex();
-  if (state.audio_queue_mutex == NULL)
+  state.audio.queue_mutex = SDL_CreateMutex();
+  if (state.audio.queue_mutex == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
     goto failure;
   }
 
-  state.dirty_mutex = SDL_CreateMutex();
-  if (state.dirty_mutex == NULL)
+  state.video.dirty_mutex = SDL_CreateMutex();
+  if (state.video.dirty_mutex == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
     goto failure;
@@ -1361,8 +1388,8 @@ int main(int argc, char *argv[])
    * sidesteps the question. Volume is turned down from the chip's own
    * default (10%) as three channels plus envelope can otherwise clip loud.
    */
-  slopay_chip_set_stereo_mode(state.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
-  slopay_chip_set_volume(state.ay, AY_VOLUME_PCT);
+  slopay_chip_set_stereo_mode(state.audio.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
+  slopay_chip_set_volume(state.audio.ay, AY_VOLUME_PCT);
 
   {
     SDL_AudioSpec desired = {0};
@@ -1371,17 +1398,17 @@ int main(int argc, char *argv[])
     desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
 
-    state.audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+    state.audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                                    &desired,
                                                    &chq_audio_callback,
                                                    &state);
-    if (state.audio_stream == NULL)
+    if (state.audio.stream == NULL)
     {
       fprintf(stderr, "Error: SDL_OpenAudioDeviceStream: %s\n", SDL_GetError());
       goto failure;
     }
 
-    SDL_ResumeAudioStreamDevice(state.audio_stream);
+    SDL_ResumeAudioStreamDevice(state.audio.stream);
   }
 
   /* Bring up the starting backend. A CRT request that cannot be met falls
@@ -1389,10 +1416,10 @@ int main(int argc, char *argv[])
    * both is fatal.
    */
   chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
-  if (!state.crt_enabled && state.renderer == NULL)
+  if (!state.video.crt_enabled && state.video.renderer == NULL)
     goto failure;
 
-  printf("CRT shader: %s (F4 toggles)\n", state.crt_enabled ? "on" : "off");
+  printf("CRT shader: %s (F4 toggles)\n", state.video.crt_enabled ? "on" : "off");
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
@@ -1405,7 +1432,7 @@ int main(int argc, char *argv[])
     goto failure;
   }
 
-  while (!state.quit)
+  while (!CHQ_FLAG_TEST(&state, CHQ_FLAG_QUIT))
     chq_sdl_main_loop(&state);
 
   // Stop the audio device before anything else. chq_stop only signals the
@@ -1413,39 +1440,28 @@ int main(int argc, char *argv[])
   // whatever tone the tune was playing; without this the callback keeps
   // sounding that tone for the whole shutdown wait below. Pause before
   // clear, or the callback refills between the two.
-  SDL_PauseAudioStreamDevice(state.audio_stream);
-  SDL_ClearAudioStream(state.audio_stream);
+  SDL_PauseAudioStreamDevice(state.audio.stream);
+  SDL_ClearAudioStream(state.audio.stream);
 
   chq_stop(state.game);
 
-#ifdef CHQ_GRACEFUL_SHUTDOWN
   SDL_WaitThread(state.game_thread, NULL);
 
   chq_destroy(state.game);
   zxspectrum_destroy(state.zx);
 
-  SDL_DestroyAudioStream(state.audio_stream);
-  slopay_chip_destroy(state.ay);
-  SDL_DestroyMutex(state.audio_queue_mutex);
-  SDL_DestroyMutex(state.dirty_mutex);
+  SDL_DestroyAudioStream(state.audio.stream);
+  slopay_chip_destroy(state.audio.ay);
+  SDL_DestroyMutex(state.audio.queue_mutex);
+  SDL_DestroyMutex(state.video.dirty_mutex);
 
-  if (state.crt_enabled)
-    chq_CRT_shader_destroy(&state.crt, window);
+  if (state.video.crt_enabled)
+    chq_CRT_shader_destroy(&state.video.crt, window);
   else
     chq_renderer_destroy(&state);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
-#else
-  /* Give the game thread 500ms to exit cleanly, then bail out. A hung game
-   * thread (translation bug in an inner loop that never calls sleep) would
-   * block SDL_WaitThread indefinitely.
-   */
-  SDL_DetachThread(state.game_thread);
-  usleep(500000);
-#endif
-
-  printf("(quit)\n");
 
   exit(EXIT_SUCCESS);
 

@@ -1463,7 +1463,7 @@ static void attract_mode_48k(chqstate_t *state)
   int       nmessages;       /* number of messages to draw (was B) */
   u8        attract_blinker; /* rotating blink pattern for the second message (was A) */
   int       style;           /* message style byte read from record (was A) */
-  
+
   carry = 0;
 
   set_up_stage(state, &state->stage->attract_data);
