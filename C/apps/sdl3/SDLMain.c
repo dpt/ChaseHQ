@@ -882,197 +882,133 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
 /* ----------------------------------------------------------------------- */
 
-static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
-                                const SDL_KeyboardEvent *k)
+static void chq_action_toggle_pause(chq_sdl_state_t *state)
 {
-  SDL_Keycode  sym;
-  int          down;
-  zxjoystick_t j;
+  CHQ_FLAG_ASSIGN(state, CHQ_FLAG_PAUSED, !CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED));
+  chq_update_window_title(state);
+}
 
-  sym = k->key;
+static void chq_action_toggle_mute(chq_sdl_state_t *state)
+{
+  state->audio.muted = !state->audio.muted;
+  chq_update_window_title(state);
+}
 
-  switch (sym)
+static void chq_action_toggle_dirty_overlay(chq_sdl_state_t *state)
+{
+  state->video.show_dirty_overlay = !state->video.show_dirty_overlay;
+}
+
+static void chq_action_toggle_crt(chq_sdl_state_t *state)
+{
+  chq_set_crt_enabled(state, !state->video.crt_enabled);
+  printf("CRT shader: %s\n", state->video.crt_enabled ? "on" : "off");
+}
+
+static void chq_action_toggle_ay_channel(chq_sdl_state_t *state, int ch)
+{
+  state->audio.ay_channel_muted[ch] = !state->audio.ay_channel_muted[ch];
+  slopay_chip_enable_channel(state->audio.ay, ch, !state->audio.ay_channel_muted[ch]);
+  printf("AY channel %c: %s\n", "ABC"[ch],
+         state->audio.ay_channel_muted[ch] ? "muted" : "on");
+}
+
+static void chq_action_toggle_speaker_mute(chq_sdl_state_t *state)
+{
+  state->audio.speaker_muted = !state->audio.speaker_muted;
+  printf("Speaker: %s\n", state->audio.speaker_muted ? "muted" : "on");
+}
+
+static void chq_action_toggle_fullscreen(chq_sdl_state_t *state)
+{
+  state->video.fullscreen = !state->video.fullscreen;
+  SDL_SetWindowFullscreen(state->video.window, state->video.fullscreen);
+  printf("Fullscreen: %s\n", state->video.fullscreen ? "on" : "off");
+}
+
+static void chq_action_adjust_scale(chq_sdl_state_t *state, SDL_Keycode sym)
+{
+  int scale;
+
+  scale = CLAMP(state->video.scale + (sym == SDLK_MINUS ? -1 : 1),
+                SCALE_MIN, SCALE_MAX);
+
+  if (scale != state->video.scale)
   {
-  case SDLK_F1:
-    if (k->down && !k->repeat)
-    {
-      CHQ_FLAG_ASSIGN(state, CHQ_FLAG_PAUSED, !CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED));
-      chq_update_window_title(state);
-    }
-    return;
-
-  case SDLK_F2:
-    if (k->down && !k->repeat)
-    {
-      state->audio.muted = !state->audio.muted;
-      chq_update_window_title(state);
-    }
-    return;
-
-  case SDLK_F3:
-    if (k->down && !k->repeat)
-      state->video.show_dirty_overlay = !state->video.show_dirty_overlay;
-    return;
-
-  case SDLK_F4:
-    if (k->down && !k->repeat)
-    {
-      chq_set_crt_enabled(state, !state->video.crt_enabled);
-      printf("CRT shader: %s\n", state->video.crt_enabled ? "on" : "off");
-    }
-    return;
-
-  case SDLK_F7:
-  case SDLK_F8:
-  case SDLK_F9:
-    if (k->down && !k->repeat)
-    {
-      int ch = sym - SDLK_F7;
-
-      state->audio.ay_channel_muted[ch] = !state->audio.ay_channel_muted[ch];
-      slopay_chip_enable_channel(state->audio.ay, ch, !state->audio.ay_channel_muted[ch]);
-      printf("AY channel %c: %s\n", "ABC"[ch],
-             state->audio.ay_channel_muted[ch] ? "muted" : "on");
-    }
-    return;
-
-  case SDLK_F10:
-    if (k->down && !k->repeat)
-    {
-      state->audio.speaker_muted = !state->audio.speaker_muted;
-      printf("Speaker: %s\n", state->audio.speaker_muted ? "muted" : "on");
-    }
-    return;
-
-  case SDLK_F11:
-    if (k->down && !k->repeat)
-    {
-      state->video.fullscreen = !state->video.fullscreen;
-      SDL_SetWindowFullscreen(state->video.window, state->video.fullscreen);
-      printf("Fullscreen: %s\n", state->video.fullscreen ? "on" : "off");
-    }
-    return;
-
-  case SDLK_MINUS:
-  case SDLK_EQUALS:
-    if (k->down && !k->repeat)
-    {
-      int scale;
-
-      scale = CLAMP(state->video.scale + (sym == SDLK_MINUS ? -1 : 1),
-                    SCALE_MIN, SCALE_MAX);
-
-      if (scale != state->video.scale)
-      {
-        state->video.scale = scale;
-        SDL_SetWindowSize(state->video.window,
-                          chq_window_width(scale),
-                          chq_window_height(scale));
-      }
-    }
-    return;
-
-  case SDLK_LEFTBRACKET:
-  case SDLK_RIGHTBRACKET:
-  case SDLK_BACKSLASH:
-    if (k->down)
-    {
-      int speed;
-
-      if (sym == SDLK_BACKSLASH)
-        speed = SPEED_DEFAULT;
-      else
-        speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
-                      SPEED_MIN, SPEED_MAX);
-
-      state->speed = speed;
-      chq_update_window_title(state);
-      printf("Speed: %d%%\n", speed);
-    }
-    return;
-
-  case SDLK_F5:
-  case SDLK_F6:
-    if (k->down && !k->repeat)
-    {
-      int volume;
-
-      volume = CLAMP(state->audio.volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
-                     VOLUME_MIN, VOLUME_MAX);
-
-      state->audio.volume = volume;
-      chq_update_window_title(state);
-      printf("Volume: %d%%\n", volume);
-    }
-    return;
-
-  /* The shader tuning keys only belong to the shader. With the plain
-   * renderer up they fall through to the game like any other key.
-   */
-  case SDLK_TAB:
-    if (state->video.crt_enabled)
-    {
-      if (k->down && !k->repeat)
-      {
-        const chq_crt_param_desc_t *desc;
-        int                         step;
-
-        /* Shift-TAB steps backwards. Adding COUNT keeps the modulus
-         * operand positive, since C's % on a negative left operand would
-         * give -1 rather than the last index.
-         */
-        step = (k->mod & SDL_KMOD_SHIFT) ? CHQ_CRT_PARAM_COUNT - 1 : 1;
-
-        state->video.crt_param_index = (state->video.crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
-        desc = &chq_crt_param_descs[state->video.crt_param_index];
-        printf("CRT param: %s = %g\n", desc->name,
-              *chq_crt_param_field(&state->video.crt_params, desc));
-      }
-      return;
-    }
-    j = zxjoystick_UNKNOWN;
-    break;
-
-  case SDLK_PAGEUP:
-  case SDLK_PAGEDOWN:
-    if (state->video.crt_enabled)
-    {
-      if (k->down)
-      {
-        const chq_crt_param_desc_t *desc;
-        float                      *field;
-
-        desc  = &chq_crt_param_descs[state->video.crt_param_index];
-        field = chq_crt_param_field(&state->video.crt_params, desc);
-        *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
-                       desc->min, desc->max);
-        printf("CRT param: %s = %g\n", desc->name, *field);
-      }
-      return;
-    }
-    j = zxjoystick_UNKNOWN;
-    break;
-
-  case SDLK_R:
-    if (state->video.crt_enabled)
-    {
-      if (k->down && !k->repeat)
-      {
-        state->video.crt_params = crt_default_params;
-        printf("CRT params reset to defaults\n");
-      }
-      return;
-    }
-    j = zxjoystick_UNKNOWN;
-    break;
-
-  case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
-  case SDLK_RIGHT: j = zxjoystick_RIGHT;   break;
-  case SDLK_UP:    j = zxjoystick_UP;      break;
-  case SDLK_DOWN:  j = zxjoystick_DOWN;    break;
-  case '.':        j = zxjoystick_FIRE;    break;
-  default:         j = zxjoystick_UNKNOWN; break;
+    state->video.scale = scale;
+    SDL_SetWindowSize(state->video.window,
+                      chq_window_width(scale),
+                      chq_window_height(scale));
   }
+}
+
+static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym)
+{
+  int speed;
+
+  if (sym == SDLK_BACKSLASH)
+    speed = SPEED_DEFAULT;
+  else
+    speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
+                  SPEED_MIN, SPEED_MAX);
+
+  state->speed = speed;
+  chq_update_window_title(state);
+  printf("Speed: %d%%\n", speed);
+}
+
+static void chq_action_adjust_volume(chq_sdl_state_t *state, SDL_Keycode sym)
+{
+  int volume;
+
+  volume = CLAMP(state->audio.volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
+                 VOLUME_MIN, VOLUME_MAX);
+
+  state->audio.volume = volume;
+  chq_update_window_title(state);
+  printf("Volume: %d%%\n", volume);
+}
+
+/* Shift-TAB steps backwards. Adding COUNT keeps the modulus operand
+ * positive, since C's % on a negative left operand would give -1 rather
+ * than the last index.
+ */
+static void chq_action_crt_param_next(chq_sdl_state_t *state, int shift)
+{
+  const chq_crt_param_desc_t *desc;
+  int                         step;
+
+  step = shift ? CHQ_CRT_PARAM_COUNT - 1 : 1;
+
+  state->video.crt_param_index = (state->video.crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
+  desc = &chq_crt_param_descs[state->video.crt_param_index];
+  printf("CRT param: %s = %g\n", desc->name,
+        *chq_crt_param_field(&state->video.crt_params, desc));
+}
+
+static void chq_action_crt_param_adjust(chq_sdl_state_t *state, SDL_Keycode sym)
+{
+  const chq_crt_param_desc_t *desc;
+  float                      *field;
+
+  desc  = &chq_crt_param_descs[state->video.crt_param_index];
+  field = chq_crt_param_field(&state->video.crt_params, desc);
+  *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
+                 desc->min, desc->max);
+  printf("CRT param: %s = %g\n", desc->name, *field);
+}
+
+static void chq_action_crt_params_reset(chq_sdl_state_t *state)
+{
+  state->video.crt_params = crt_default_params;
+  printf("CRT params reset to defaults\n");
+}
+
+static void chq_action_joystick_or_key(chq_sdl_state_t *state,
+                                       const SDL_KeyboardEvent *k,
+                                       zxjoystick_t             j)
+{
+  int down;
 
   down = k->down;
 
@@ -1090,6 +1026,117 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     else
       zxkeyset_clearchar(keys, k->key);
   }
+}
+
+static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
+                                const SDL_KeyboardEvent *k)
+{
+  SDL_Keycode  sym;
+  zxjoystick_t j;
+
+  sym = k->key;
+
+  switch (sym)
+  {
+  case SDLK_F1:
+    if (k->down && !k->repeat)
+      chq_action_toggle_pause(state);
+    return;
+
+  case SDLK_F2:
+    if (k->down && !k->repeat)
+      chq_action_toggle_mute(state);
+    return;
+
+  case SDLK_F3:
+    if (k->down && !k->repeat)
+      chq_action_toggle_dirty_overlay(state);
+    return;
+
+  case SDLK_F4:
+    if (k->down && !k->repeat)
+      chq_action_toggle_crt(state);
+    return;
+
+  case SDLK_F7:
+  case SDLK_F8:
+  case SDLK_F9:
+    if (k->down && !k->repeat)
+      chq_action_toggle_ay_channel(state, sym - SDLK_F7);
+    return;
+
+  case SDLK_F10:
+    if (k->down && !k->repeat)
+      chq_action_toggle_speaker_mute(state);
+    return;
+
+  case SDLK_F11:
+    if (k->down && !k->repeat)
+      chq_action_toggle_fullscreen(state);
+    return;
+
+  case SDLK_MINUS:
+  case SDLK_EQUALS:
+    if (k->down && !k->repeat)
+      chq_action_adjust_scale(state, sym);
+    return;
+
+  case SDLK_LEFTBRACKET:
+  case SDLK_RIGHTBRACKET:
+  case SDLK_BACKSLASH:
+    if (k->down)
+      chq_action_adjust_speed(state, sym);
+    return;
+
+  case SDLK_F5:
+  case SDLK_F6:
+    if (k->down && !k->repeat)
+      chq_action_adjust_volume(state, sym);
+    return;
+
+  /* The shader tuning keys only belong to the shader. With the plain
+   * renderer up they fall through to the game like any other key.
+   */
+  case SDLK_TAB:
+    if (state->video.crt_enabled)
+    {
+      if (k->down && !k->repeat)
+        chq_action_crt_param_next(state, k->mod & SDL_KMOD_SHIFT);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_PAGEUP:
+  case SDLK_PAGEDOWN:
+    if (state->video.crt_enabled)
+    {
+      if (k->down)
+        chq_action_crt_param_adjust(state, sym);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_R:
+    if (state->video.crt_enabled)
+    {
+      if (k->down && !k->repeat)
+        chq_action_crt_params_reset(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
+  case SDLK_RIGHT: j = zxjoystick_RIGHT;   break;
+  case SDLK_UP:    j = zxjoystick_UP;      break;
+  case SDLK_DOWN:  j = zxjoystick_DOWN;    break;
+  case '.':        j = zxjoystick_FIRE;    break;
+  default:         j = zxjoystick_UNKNOWN; break;
+  }
+
+  chq_action_joystick_or_key(state, k, j);
 }
 
 /* Outlines the screen regions chq_draw_handler reported dirty since the last
