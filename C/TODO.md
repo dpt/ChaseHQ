@@ -13,6 +13,7 @@
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - Title jingle T-state count is a guess, tune by ear (`Bank3.c:3038`)
 - Need to model RAM bank contention?
+- Audio desync when fast forwarding etc.
 
 ## P3 — Incomplete / missing content
 
