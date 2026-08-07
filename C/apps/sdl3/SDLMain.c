@@ -296,11 +296,11 @@ static void chq_update_window_title(const chq_sdl_state_t *state)
   char title[64];
 
   SDL_snprintf(title, sizeof(title),
-               "Chase H.Q. - Speed: %d%% - Volume: %d%%%s%s",
+               "Chase H.Q. - Speed: %d%%%s - Volume: %d%%%s",
                state->speed,
+               CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? " (Paused)" : "",
                state->audio.volume,
-               state->audio.muted ? " (Muted)" : "",
-               CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? " (Paused)" : "");
+               state->audio.muted ? " (Muted)" : "");
   SDL_SetWindowTitle(state->video.window, title);
 }
 
