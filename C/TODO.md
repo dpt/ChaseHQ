@@ -1,36 +1,21 @@
 # TODO
 
-## P1 — Bugs / broken behaviour
-
-- End screen
-  - the interrupt mechanism wasn't ported so the timing feels a little off
-- Test flag is still on by default
-
-## P2 — Game feel / calibration / timing
-
-- Restart bip-bow ticking twice as fast as it should
-- Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
+- fix: High score screen bugs
+  - flicker at bottom when scrolling
+  - hard to enter name
+  - characters vanish
+  - hiscore line vanishes
+  - test: non-highest score
+- check: High scores shown correctly in attract mode
+- fix: Disable test flag by default (perhaps put it on an F-key)
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
-- Title jingle T-state count is a guess, tune by ear (`Bank3.c:3038`)
-- Need to model RAM bank contention?
-- Audio desync when fast forwarding etc.
-
-## P3 — Incomplete / missing content
-
+- fix: Audio desync when fast forwarding etc.
 - Complete decoding of all stage data (via the level converter script)
-- Split the main loop up into menu/main phases (need for emscripten / RISC OS)
-
-## P4 — Polish / visual correctness
-
-- Stretchy test app produces crap output [checked - still a bit rubbish]
-- Fix all warnings pass
-
-## P5 — Clarity pass
-
-- ~~Remove much logtime()~~ done: merged every adjacent-run logtime() call
-  across Bank3.c/Main.c/Bank7.c (branch/loop/out()-boundary safe only);
-  remaining ~170 calls are each already the minimum for their branch
+- Stretchy test app produces crap output [checked - still a bit rubbish] - delete it?
 - Start backporting changes to the disasm
+- turn curvature_scroll_shadow into a var (it's in state rn)
+- Windows/Linux builds
+
 
 ### Authority sweep (comments that read as guesswork)
 
@@ -73,6 +58,7 @@ delete it.
 
 ## IDEAS (backlog)
 
+- Overlay for controls (using the same font as the game)
 - Lots more unit tests
 - Design a text format for holding stages
 - Annotate all state members to show which functions consume/mutate them
@@ -88,18 +74,4 @@ delete it.
 - Diagram generation for stretchy graphics
 - Emscripten build
 - Pull across the demo version of the game
-
-
-| Lanes+Objs     | Curve | Height | Hazards | Loop |
-| -------------- | ----- | ------ | ------- | ---- |
-| B : . . . :    |   >>  |   :    |         |  AA  |
-|   : . . . : T  |   >>  |   :    |    B    |      |
-| B : . . . :    |   >   |   :    |         |      |
-|   : . .  /  T  |   >   |   :    |         |      |
-| B : . . :      |   >   |   vv   |         |      |
-|   : . . :   T  |   >   |   v    |         |      |
-|   : . . :      |   :   |   :    |         | *AA* |
-|   : . . :   T  |   :   |   ^^   |         |      |
-| T : . . :      |   :   |   ^    |         |      |
-|   : . . :   T  |   :   |   :    |         |      |
 
