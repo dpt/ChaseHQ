@@ -339,6 +339,103 @@ struct chq_bank3_state {
    * updated in place by insert_high_score_entry.
    */
   high_score_row_t high_score_table[HIGH_SCORE_TABLE_ROWS];
+
+  /* Name-entry screen state ($C0EC-$C3AC), driven by insert_high_score_entry. */
+  struct
+  {
+    /* Row being written into (Conv: added, no Z80 field -- passed through
+     * from insert_high_score_entry's row parameter, needed by
+     * hiscore_finalise and scroll_score_rows once the row-scroll loop no
+     * longer has it on the C call stack the way the Z80 keeps it banked via
+     * EX AF,AF'). */
+    u8 row;
+
+    /* $C593/$C594: pointer into the row's name[] field for the letter
+     * currently being selected -- Conv: modelled as an index (0-2) into
+     * high_score_table[row].name rather than a raw pointer, since that
+     * array is the only thing the Z80 pointer ever points at. */
+    u8 char_index;
+
+    /* $C593-pointee: current glyph code the player is cycling through for
+     * this letter. $40 ('@') is the blank/"." marker; $41-$5A ("A"-"Z") are
+     * the letters themselves -- this is a plain ASCII byte, not a lookup
+     * index. */
+    u8 letter_code;
+
+    /* $C599: debounce flag -- set once FIRE has confirmed the current
+     * letter, cleared on the next non-confirm frame, so a held-down FIRE
+     * key does not repeatedly confirm. */
+    u8 fire_locked;
+
+    /* $C59A: first blink-phase toggle, flipped each time the 12-frame blink
+     * timer reloads; selects attribute $46/$00 on the underline cursor
+     * cell. */
+    u8 flash_phase_a;
+
+    /* $C59B: second blink-phase toggle, flipped on the alternate half of
+     * the cycle from flash_phase_a; selects which of the two cursor-cell
+     * highlight colours ($00/$42) is written back. */
+    u8 flash_phase_b;
+
+    /* $C58D: alternated each frame by redraw_score_name/redraw_name_frame;
+     * selects between drawing (rsn_char_loop) and erasing (rsn_char_loop2)
+     * a row's name text, giving the row's letters their own independent
+     * blink. */
+    u8 draw_erase_toggle;
+
+    /* $C595: 12-frame countdown reloaded by name_entry_input each time it
+     * hits zero; paces the cursor blink and the 20-position selector-cell
+     * cycle. */
+    u8 blink_timer;
+
+    /* $C596: 0-19 offset of the currently highlighted cell within the
+     * 20-cell selector row; wraps to 0 (and advances cursor_addr) once it
+     * would reach 20. Drives the "ENTER YOUR INITIALS" chase highlight at
+     * $5967+offset (see name_entry_dispatch) as well as the idle-timeout
+     * below. */
+    u8 blink_offset;
+
+    /* $C597 low byte only: climbs by one each time blink_offset wraps, from
+     * its template-copied start (10) towards 23 -- 13 row-wraps of the
+     * 20-cell selector, i.e. 3120 frames (~62s at 50Hz) of no player input,
+     * at which point name_entry_dispatch force-finalises the current letter
+     * via hiscore_finalise, matching the real hardware's idle safety net.
+     * Also the "BEST OFFICERS" highlight column (see
+     * MARQUEE_ROW_ATTR_H/HISCORE_CURSOR_ADDR_INIT in Bank3.c). Conv: the
+     * real $C597 is a full screen/attribute address pair advanced by one
+     * row each wrap; only the low-byte progression is modelled here since
+     * both marquees are painted directly from this byte, not via the
+     * pointer. */
+    u8 cursor_addr;
+
+    /* Conv: stands in for the self-modified $C2F2 RET patch (NOP -> RET)
+     * that name_entry_input writes once all 3 letters are confirmed.
+     * ihe_flash_loop and scroll_score_rows both key off this flag instead
+     * of relying on a literal self-modifying return. */
+    u8 complete;
+
+    /* $C13D: self-modified operand of ihe_flash_loop's "LD A,$A0 / DEC A /
+     * LD ($C13D),A" countdown. The skool's own static-disassembly comment
+     * calls this "always recomputes to a constant $9F" -- true only of the
+     * literal bytes on a single read; because the instruction rewrites its
+     * own operand each pass, it actually counts down from $A0 (160) once,
+     * over 160 frames. While nonzero, ihe_flash_loop calls scroll_score_rows
+     * every frame (the row scroll-in intro); once it reaches zero, control
+     * falls through to ihe_entry_loop, which never calls scroll_score_rows
+     * again -- this is what stops the row scroll for the rest of name
+     * entry. Reset to 160 each session by name_entry_setup_screen. */
+    u8 intro_timer;
+
+    /* $C401-$C528 (31-byte stride): per-row screen-address pair used by
+     * scroll_score_rows to animate each row's name field scrolling up into
+     * view. Seeded from name_entry_row_offsets (Bank3.c) at the start of
+     * each name-entry session. Conv: raw Z80 address pairs (E, D), some
+     * values transiently below $4000 (not yet scrolled into the visible
+     * screen) -- only ADDRTOSCREEN'd once a row's address has scrolled into
+     * a valid on-screen window (see scroll_score_rows's own Conv note). */
+    u8 row_addr[HIGH_SCORE_TABLE_ROWS][2];
+  }
+  hiscore;
 };
 
 /* ----------------------------------------------------------------------- */

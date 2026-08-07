@@ -493,6 +493,23 @@ void update_whole_playfield(chqstate_t *state)
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
+/**
+ * Mark the entire playfield area as dirty, including the leftmost 8-pixel
+ * column update_whole_playfield excludes. The regular driving playfield
+ * never draws into that column (it stays border), but the hiscore and
+ * name-entry screens draw text right up to the screen edge, so their own
+ * redraws -- and whatever restores the driving screen afterwards -- need
+ * the wider rectangle to avoid leaving stale pixels behind in that column.
+ */
+void update_whole_playfield_full_width(chqstate_t *state)
+{
+  static const zxbox_t playfield_box = {
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
+}
+
 /* ----------------------------------------------------------------------- */
 
 /* Road buffer macros */
@@ -1394,14 +1411,14 @@ static void attract_mode_48k(chqstate_t *state)
   static const u8 attract_messages[38] = {
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK, // zero
-    Z80BACKBUF(0xF02C),
-    Z80ATTRS(0x594C),
+    CHQBACKBUF(0xF02C),
+    ZXATTRS(0x594C),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', 'Q' | EOS,
 
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK, // zero
-    Z80BACKBUF(0xF847),
-    Z80ATTRS(0x59A7),
+    CHQBACKBUF(0xF847),
+    ZXATTRS(0x59A7),
     'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | EOS
   };
 
@@ -1411,20 +1428,20 @@ static void attract_mode_48k(chqstate_t *state)
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF086),
-    Z80ATTRS(0x5A06),
+    CHQBACKBUF(0xF086),
+    ZXATTRS(0x5A06),
     'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF0A6),
-    Z80ATTRS(0x5A46),
+    CHQBACKBUF(0xF0A6),
+    ZXATTRS(0x5A46),
     'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
     0x28, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF0C6),
-    Z80ATTRS(0x5A86),
+    CHQBACKBUF(0xF0C6),
+    ZXATTRS(0x5A86),
     'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
     3, // transition_control once done
     DRAWOVERLAY_STOP
@@ -1436,20 +1453,20 @@ static void attract_mode_48k(chqstate_t *state)
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF084),
-    Z80ATTRS(0x5A04),
+    CHQBACKBUF(0xF084),
+    ZXATTRS(0x5A04),
     '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF0A3),
-    Z80ATTRS(0x5A43),
+    CHQBACKBUF(0xF0A3),
+    ZXATTRS(0x5A43),
     '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK, // 2
-    Z80BACKBUF(0xF0C6),
-    Z80ATTRS(0x5A86),
+    CHQBACKBUF(0xF0C6),
+    ZXATTRS(0x5A86),
     'A', 'L', 'L', ' ', 'R', 'I', 'G', 'H', 'T', 'S', ' ', 'R', 'E', 'S', 'E', 'R', 'V', 'E', 'D' | EOS,
     3, // transition_control once done
     DRAWOVERLAY_STOP
@@ -2123,26 +2140,26 @@ static void draw_pregame(chqstate_t *state)
   static const u8 pregame_messages[68] = {
     0xFF, // unused
     attribute_BRIGHT_BLACK_OVER_WHITE,
-    Z80BACKBUF(0xF802),
-    Z80ATTRS(0x5922),
+    CHQBACKBUF(0xF802),
+    ZXATTRS(0x5922),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'M', 'O', 'N', 'I', 'T', 'O', 'R', 'I', 'N', 'G', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' | EOS,
 
     0xFF, // unused
     0x60, // must be attr but doesn't seem to do what it should
-    Z80BACKBUF(0xF863),
-    Z80ATTRS(0x59E3),
+    CHQBACKBUF(0xF863),
+    ZXATTRS(0x59E3),
     'T', 'U', 'N', 'E' | EOS,
 
     0xFF, // unused
     0x60,
-    Z80BACKBUF(0xF8A2),
-    Z80ATTRS(0x5A62),
+    CHQBACKBUF(0xF8A2),
+    ZXATTRS(0x5A62),
     'V', 'O', 'L', 'U', 'M', 'E' | EOS,
 
     0xFF, // unused
     0x58,
-    Z80BACKBUF(0xF077),
-    Z80ATTRS(0x59D7),
+    CHQBACKBUF(0xF077),
+    ZXATTRS(0x59D7),
     'S', 'I', 'G', 'N', 'A', 'L' | EOS
   };
 
@@ -2923,8 +2940,8 @@ static void escape_scene(chqstate_t *state)
   static const u8 game_over_message[20] = {
     0x01, 0x1E, 0x03,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF02B),
-    Z80ATTRS(0x594B),
+    CHQBACKBUF(0xF02B),
+    ZXATTRS(0x594B),
     'G', 'A', 'M', 'E', ' ', 'O', 'V', 'E', 'R' | EOS,
     3, 0
   };
@@ -4034,8 +4051,8 @@ static void fully_smashed(chqstate_t *state)
   static const u8 pull_over_message[30] = {
     0x01, 0x1E, 0x02,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF026),
-    Z80ATTRS(0x5946),
+    CHQBACKBUF(0xF026),
+    ZXATTRS(0x5946),
     'O', 'K', '!', ' ', 'P', 'U', 'L', 'L', ' ', 'O', 'V', 'E', 'R', ' ', 'C', 'R', 'E', 'E', 'P', '!' | EOS,
     0, 0
   };
@@ -7504,8 +7521,8 @@ static void check_time_up(chqstate_t *state)
   static const u8 time_up_message[20] = {
     0x01, 0x19, 0x03,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF02C),
-    Z80ATTRS(0x594C),
+    CHQBACKBUF(0xF02C),
+    ZXATTRS(0x594C),
     'T', 'I', 'M', 'E', ' ', 'U', 'P' | EOS,
     3, 0
   };
@@ -12733,8 +12750,8 @@ static void start_chase(chqstate_t *state)
   static const u8 sighting_message[36] = {
     0x01, 0x1E, 0x02,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF023),
-    Z80ATTRS(0x5943),
+    CHQBACKBUF(0xF023),
+    ZXATTRS(0x5943),
     'S', 'I', 'G', 'H', 'T', 'I', 'N', 'G', ' ', 'O', 'F', ' ', 'T', 'A', 'R', 'G', 'E', 'T', ' ', 'V', 'E', 'H', 'I', 'C', 'L', 'E' | EOS,
     0, 0
   };
@@ -19647,10 +19664,10 @@ void stop_the_tape_48k(chqstate_t *state)
   /** $E9B4: messages_stop_the_tape */
   static const u8 messages_stop_the_tape[45] = {
     attribute_GREEN_OVER_BLACK,
-    TWOBYTES(0x488A),
+    ZXSCREEN(0x488A),
     'S', 'T', 'O', 'P', ' ', 'T', 'H', 'E', ' ', 'T', 'A', 'P', 'E' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x5044),
+    ZXSCREEN(0x5044),
     'P', 'R', 'E', 'S', 'S', ' ', 'A', 'N', 'Y', ' ', 'K', 'E', 'Y', ' ', 'T', 'O', ' ', 'C', 'O', 'N', 'T', 'I', 'N', 'U', 'E' | EOS,
     0 // end marker
   };
@@ -19658,22 +19675,22 @@ void stop_the_tape_48k(chqstate_t *state)
   /** $E9E1: messages_input_methods */
   static const u8 messages_input_methods[112] = {
     attribute_GREEN_OVER_BLACK,
-    TWOBYTES(0x484B),
+    ZXSCREEN(0x484B),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x48C6),
+    ZXSCREEN(0x48C6),
     '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x5006),
+    ZXSCREEN(0x5006),
     '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x5046),
+    ZXSCREEN(0x5046),
     '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x5086),
+    ZXSCREEN(0x5086),
     '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
     attribute_CYAN_OVER_BLACK,
-    TWOBYTES(0x50C6),
+    ZXSCREEN(0x50C6),
     '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
     0 // end marker
   };
@@ -19681,19 +19698,19 @@ void stop_the_tape_48k(chqstate_t *state)
   /** $EB78: messages_cannot_be_remodified */
   static const u8 messages_cannot_be_remodified[127] = {
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0x484B),
+    ZXSCREEN(0x484B),
     'C', 'H', 'A', 'S', 'E', ' ', ' ', 'H', '.', 'Q', '.' | EOS,
-    0xC6,
-    TWOBYTES(0x48C2),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x48C2),
     'P', 'L', 'E', 'A', 'S', 'E', ' ', 'N', 'O', 'T', 'E', ' ', 'C', 'O', 'N', 'T', 'R', 'O', 'L', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS,
-    0xC6,
-    TWOBYTES(0x48E5),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x48E5),
     'C', 'A', 'N', 'N', 'O', 'T', ' ', 'B', 'E', ' ', 'R', 'E', 'M', 'O', 'D', 'I', 'F', 'I', 'E', 'D', '.' | EOS,
-    0xC5,
-    TWOBYTES(0x5041),
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
+    ZXSCREEN(0x5041),
     'A', 'R', 'E', ' ', 'Y', 'O', 'U', ' ', 'H', 'A', 'P', 'P', 'Y', ' ', 'W', 'I', 'T', 'H', ' ', 'Y', 'O', 'U', 'R', ' ', 'C', 'H', 'O', 'I', 'C', 'E', '.' | EOS,
     0x07,
-    TWOBYTES(0x5085),
+    ZXSCREEN(0x5085),
     'P', 'R', 'E', 'S', 'S', ' ', 'Y', 'E', 'S', '(', 'Y', ')', ' ', 'O', 'R', ' ', 'N', 'O', '(', 'N', ')' | EOS,
     0
   };
@@ -20090,57 +20107,57 @@ static void redefine_keys_48k(chqstate_t *state)
   /** $EA52: messages_redefine_keys */
   static const u8 messages_redefine_keys[138] = {
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0x4849),
+    ZXSCREEN(0x4849),
     'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
-    0xC6, // attribute_BRIGHT_YELLOW_OVER_BLACK + single height bit
-    TWOBYTES(0x48C9),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),  // was 0xC6
+    ZXSCREEN(0x48C9),
     'G', 'E', 'A', 'R', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC6,
-    TWOBYTES(0x48E9),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x48E9),
     'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E', '.', '.' | EOS,
-    0xC6,
-    TWOBYTES(0x5009),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5009),
     'B', 'R', 'A', 'K', 'E', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC6,
-    TWOBYTES(0x5029),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5029),
     'L', 'E', 'F', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC6,
-    TWOBYTES(0x5049),
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5049),
     'R', 'I', 'G', 'H', 'T', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x5089),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5089),
     'Q', 'U', 'I', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x50A9),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A9),
     'P', 'A', 'U', 'S', 'E', '.', '.', '.', '.', '.', '.', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x50C9),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50C9),
     'T', 'U', 'R', 'B', 'O', '.', '.', '.', '.', '.', '.', '.' | EOS,
     0 // end marker
   };
 
   /** $EAE1: messages_test_mode */
   static const u8 messages_test_mode[151] = {
-    0xC1,
-    TWOBYTES(SCREEN_START_ADDRESS),
+    (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),
+    ZXSCREEN(SCREEN_START_ADDRESS),
     'T', 'E', 'S', 'T' | EOS,
     attribute_RED_OVER_BLACK,
-    TWOBYTES(0x4824),
+    ZXSCREEN(0x4824),
     'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', ' ', ' ', ' ', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
-    0xC5,
-    TWOBYTES(0x5000),
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
+    ZXSCREEN(0x5000),
     'I', 'N', ' ', 'G', 'A', 'M', 'E', '.', '.', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x5041),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5041),
     'P', 'R', 'E', 'S', 'S', ' ', '1', '.', '.', '.', '.', '.', '.', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x5067),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5067),
     '2', '.', '.', '.', '.', '.', '.', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x5087),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5087),
     '3', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N', '.' | EOS,
-    0xC4,
-    TWOBYTES(0x50A7),
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A7),
     '4', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T', '.' | EOS,
     0
   };
@@ -21232,8 +21249,8 @@ static void attract_mode_128k(chqstate_t *state)
   static const u8 press_gear_messages[17] = {
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF84B),
-    Z80ATTRS(0x59AB),
+    CHQBACKBUF(0xF84B),
+    ZXATTRS(0x59AB),
     'P', 'R', 'E', 'S', 'S', ' ', ' ', 'G', 'E', 'A', 'R' | EOS
   };
 
@@ -21241,8 +21258,8 @@ static void attract_mode_128k(chqstate_t *state)
   static const u8 enter_for_options_messages[23] = {
     DRAWCHARSTYLE_SINGLE,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF848),
-    Z80ATTRS(0x59A8),
+    CHQBACKBUF(0xF848),
+    ZXATTRS(0x59A8),
     'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
   };
 
@@ -21252,26 +21269,26 @@ static void attract_mode_128k(chqstate_t *state)
     8, // reveal gap before this block
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF02D),
-    Z80ATTRS(0x594D),
+    CHQBACKBUF(0xF02D),
+    ZXATTRS(0x594D),
     'C', 'R', 'E', 'D', 'I', 'T', 'S' | EOS,
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF086),
-    Z80ATTRS(0x5A06),
+    CHQBACKBUF(0xF086),
+    ZXATTRS(0x5A06),
     'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | EOS,
     8, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF0A6),
-    Z80ATTRS(0x5A46),
+    CHQBACKBUF(0xF0A6),
+    ZXATTRS(0x5A46),
     'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | EOS,
     0x50, // reveal gap before this block
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF0C6),
-    Z80ATTRS(0x5A86),
+    CHQBACKBUF(0xF0C6),
+    ZXATTRS(0x5A86),
     'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | EOS,
     3, // transition_control once done
     0 // DRAWOVERLAY_STOP
@@ -21283,32 +21300,32 @@ static void attract_mode_128k(chqstate_t *state)
     8,
     DRAWCHARSTYLE_DOUBLE,
     attribute_BLACK_OVER_BLACK,
-    Z80BACKBUF(0xF02A),
-    Z80ATTRS(0x594A),
+    CHQBACKBUF(0xF02A),
+    ZXATTRS(0x594A),
     'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF082),
-    Z80ATTRS(0x5A02),
+    CHQBACKBUF(0xF082),
+    ZXATTRS(0x5A02),
     'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF0A2),
-    Z80ATTRS(0x5A42),
+    CHQBACKBUF(0xF0A2),
+    ZXATTRS(0x5A42),
     '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | EOS,
     8,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF0C2),
-    Z80ATTRS(0x5A82),
+    CHQBACKBUF(0xF0C2),
+    ZXATTRS(0x5A82),
     '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | EOS,
     0x50,
     DRAWCHARSTYLE_SINGLE,
     attribute_RED_OVER_BLACK,
-    Z80BACKBUF(0xF0E2),
-    Z80ATTRS(0x5AC2),
+    CHQBACKBUF(0xF0E2),
+    ZXATTRS(0x5AC2),
     '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | EOS,
     3,
     0

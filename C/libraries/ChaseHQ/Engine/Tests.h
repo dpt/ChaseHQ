@@ -105,6 +105,27 @@ void chq_test_stop_the_tape_48k(chqstate_t *state);
  *  services the drum/music tick and restarts tune 0 once it finishes. */
 void chq_test_run_title_tune(chqstate_t *state);
 
+/** Run insert_high_score_entry for [row], including the name-entry screen
+ *  setup and its (host-quit-bounded) input loop. */
+void chq_test_insert_high_score_entry(chqstate_t *state, int row);
+
+/** Drive one call of name_entry_dispatch with [user_input_flags] (masked to
+ *  USERINPUTFLAG_RIGHT/LEFT/FIRE), bypassing the host keyboard/joystick
+ *  read so a test can script a RIGHT/LEFT/FIRE sequence frame by frame. */
+void chq_test_hiscore_inject_input(chqstate_t *state, u8 user_input_flags);
+
+/** Run name_entry_setup_screen for [row] in isolation, without the
+ *  interactive (host-quit-bounded) input loop insert_high_score_entry
+ *  also drives. Draws the header text and seeds the per-row scroll-in
+ *  table; row contents appear later as chq_test_scroll_score_rows is
+ *  driven forward. */
+void chq_test_name_entry_setup_screen(chqstate_t *state, int row);
+
+/** Run one frame of scroll_score_rows in isolation -- advances each rank's
+ *  row-scroll animation by one pixel and redraws its row at the new
+ *  position, clipped to the visible table. */
+void chq_test_scroll_score_rows(chqstate_t *state);
+
 #endif /* CHQ_TESTS */
 
 #endif /* CHASEHQ_TESTS_H */

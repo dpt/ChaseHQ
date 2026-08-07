@@ -376,6 +376,7 @@
 void  update_screen(chqstate_t *state, int screen, int width, int height);
 void  update_attrs(chqstate_t *state, int attrs, int width, int height);
 void  update_whole_playfield(chqstate_t *state);
+void  update_whole_playfield_full_width(chqstate_t *state);
 
 /* Shared with Bank3.c */
 

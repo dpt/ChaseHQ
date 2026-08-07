@@ -140,7 +140,7 @@ R $C16A Used by the routine at #R$C06E.
 C $C16A,3 HL -> flash-timer counter
 C $C16E,2 Skip the cursor toggle until the timer hits zero
 C $C170,2 Reload the timer (12 frames)
-N $C172 Advances the blinking selector by writing attribute $46 into cell $5967+offset ($C596 holds the 0-19 offset within this row). While the advanced offset is still < 20 ($14), that is the whole effect for this call: save offset+1 back to $C596 and return via $C19B. Once the offset would wrap past 20, the selector has completed a full pass along this row: additionally nudge the row pointer held at $C597 -- clear its old highlighted cell (attribute $42), move it on by one screen line (+$20) then step it back by 31 (net +1 down and +1 right, i.e. onto the next row's first cell, attribute $02) -- and if that pointer's low byte has itself reached $17 (23), the whole multi-row cycle is complete and control passes to #R$C212 (name entry finished/row exhausted) instead of resetting the offset to 0 and continuing.
+N $C172 Advances the blinking selector by writing attribute $46 into cell $5967+offset ($C596 holds the 0-19 offset within this row). While the advanced offset is still < 20 ($14), that is the whole effect for this call: save offset+1 back to $C596 and return via $C19B. Once the offset would wrap past 20, the selector has completed a full pass along this row: additionally nudge the row pointer held at $C597 -- clear its old highlighted cell (attribute $42), move it on by one screen line (+$20) then step it back by 31 (net +1 down and +1 right, i.e. onto the next row's first cell, attribute $02) -- and if that pointer's low byte has itself reached $17 (23), the whole multi-row cycle is complete and control passes to #R$C212 (name entry finished/row exhausted) instead of resetting the offset to 0 and continuing. $C596 and $C597 start at 0 and $590A respectively (from the 13-byte template at $C580, copied by #R$C00C). $C597's low byte must climb from $0A to $17, i.e. 13 row-wraps of 20 cells at 12 frames/cell = 3120 frames (~62s at 50Hz) of elapsed time with no player input before this idle path alone forces #R$C212, independent of RIGHT/LEFT/FIRE.
 C $C19E,3 Clear the old cursor cell
 C $C1A8,5 Toggle two flash-phase flag bytes ($C59A, $C59B)
 C $C1CF,3 HL -> current position in the letter/name table
@@ -191,7 +191,7 @@ N $C278 This entry point is used by the routine at #R$C16A.
 C $C278,1 A = letter code to draw
 C $C27B,2 Blank marker?
 C $C27F,2 Map the letter code to a font-table index
-C $C282,11 Compute this glyph's offset into the font bitmap table (index * 6): not traced bit-by-bit here
+C $C282,11 Compute this glyph's offset into the font bitmap table (index * 7, matching font[]'s 7-byte stride)
 C $C28D,3 HL = font bitmap table base
 C $C290,1 HL -> this glyph's bitmap
 N $C291 This entry point is used by the routine at #R$C16A.
@@ -234,7 +234,7 @@ C $C30D,2 End of name (bit 7 set)?
 C $C310,3 No -> next character
 C $C313,3 Yes -> resume the #R$C2B1 scroll loop
 C $C316,3 Move the screen address into the shadow DE
-C $C33E,15 Compute this glyph's bitmap address in font table $800C (offset = index * 6, as in #R$C25D)
+C $C33E,15 Compute this glyph's bitmap address in font table $800C (offset = index * 7, as in #R$C25D)
 @ $C353 label=rsn_draw_row
 C $C353,9 Draw one pixel row of the glyph, handling the screen third-boundary wrap (as in #R$C25D / #R$C2B1)
 C $C35C,3 More glyph rows to draw

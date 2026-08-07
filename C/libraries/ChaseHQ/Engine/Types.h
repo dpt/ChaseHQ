@@ -22,13 +22,18 @@
 
 #define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
 
-/* Z80BACKBUF/Z80ATTRS are aliases of TWOBYTES that document, at the call
- * site, whether the address pair feeds ADDRTOBACKBUF ($F000+) or
- * ADDRTOATTRS ($5800+). */
-#define Z80BACKBUF(addr) TWOBYTES(addr)
-#define Z80ATTRS(addr)   TWOBYTES(addr)
+/* ZXSCREEN/ZXATTRS/CHQBACKBUF are aliases of TWOBYTES that document, at the
+ * call site, whether the address pair feeds ADDRTOSCREEN($4000+), ADDRTOATTRS
+ * ($5800+) or ADDRTOBACKBUF ($F000+). */
+#define ZXSCREEN(addr)  TWOBYTES(addr)
+#define ZXATTRS(addr)   TWOBYTES(addr)
+#define CHQBACKBUF(addr) TWOBYTES(addr)
 
 #define EOS (1<<7) // End of String - string terminator bit
+
+/* print_character header byte bit 7: 0 = double-height shaded glyph,
+ * 1 = single-height flat glyph. Not a hardware ZX attribute bit. */
+#define SINGLE_HEIGHT (1<<7)
 
 /* ----------------------------------------------------------------------- */
 

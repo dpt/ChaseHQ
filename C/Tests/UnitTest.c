@@ -992,6 +992,145 @@ static void test_show_end_screen_runs_script(void)
 }
 
 /*
+ * name_entry_input/hiscore_finalise ($C16A/$C212): drives 3 letters through the
+ * name-entry screen via chq_test_hiscore_inject_input, which calls
+ * name_entry_dispatch directly (bypassing the host keyboard/joystick read),
+ * and checks the confirmed row ends up with the expected initials and
+ * hiscore.complete set.
+ */
+/*
+ * draw_table_field_scrolling draws a rank's row one scanline at a time at
+ * its current, usually mid-cell, scroll position (scroll_score_rows calls
+ * it every frame for every rank), clipping each scanline against
+ * SCREEN_ROW_VISIBLE. Drives enough frames for every rank to scroll through
+ * the visible band at least once, so any regression that walks a write
+ * outside the clipped band (global-buffer-overflow on the g_speccy screen
+ * bitmap, see chq.log) is caught immediately.
+ */
+static void test_name_entry_setup_screen_draws_table(void)
+{
+  chqstate_t *state;
+  int         frame;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  chq_test_name_entry_setup_screen(state, 0);
+
+  for (frame = 0; frame < 400; frame++)
+    chq_test_scroll_score_rows(state);
+
+  chq_destroy(state);
+
+  printf("PASS  name_entry_setup_screen: draws high-score table without corrupting memory\n");
+}
+
+static void test_name_entry_confirms_three_letters(void)
+{
+  chqstate_t *state;
+  int         letter;
+  high_score_row_t *entry;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->bank3->hiscore.row          = 0;
+  state->bank3->hiscore.char_index   = 0;
+  state->bank3->hiscore.letter_code  = 0x40;
+  state->bank3->hiscore.blink_timer  = 0x0C;
+  state->bank3->hiscore.fire_locked  = 0;
+  state->bank3->hiscore.complete     = 0;
+
+  for (letter = 0; letter < 3; letter++) {
+    chq_test_hiscore_inject_input(state, USERINPUTFLAG_RIGHT); /* '@' -> 'A' */
+    chq_test_hiscore_inject_input(state, 0);                   /* release RIGHT */
+    chq_test_hiscore_inject_input(state, USERINPUTFLAG_FIRE);  /* confirm 'A' */
+    chq_test_hiscore_inject_input(state, 0);                   /* release FIRE */
+  }
+
+  entry = &state->bank3->high_score_table[0];
+  assert(entry->name[0] == 'A');
+  assert(entry->name[1] == 'A');
+  assert(entry->name[2] == 'A');
+  assert(state->bank3->hiscore.complete == 1);
+
+  chq_destroy(state);
+  printf("PASS  name_entry: RIGHT/FIRE x3 confirms \"AAA\" and completes\n");
+}
+
+/*
+ * cycle_and_draw_letter ($C25D): checks the wrap at both ends of the
+ * $41-$5A ('A'-'Z') range through the $40 ('@', blank/".") marker -- RIGHT
+ * past 'Z' lands on blank, LEFT past blank lands on 'Z'.
+ */
+/*
+ * name_entry_dispatch ($C16A, $C172-$C19B): the 20-cell selector sweeps
+ * once every 12 frames; after 13 full sweeps (3120 frames, ~62s at 50Hz)
+ * with no player input, the idle timeout force-finalises the current
+ * letter, same as the real hardware's safety net.
+ */
+static void test_name_entry_idle_timeout_finalises(void)
+{
+  chqstate_t *state;
+  int         frame;
+  high_score_row_t *entry;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->bank3->hiscore.row          = 0;
+  state->bank3->hiscore.char_index   = 0;
+  state->bank3->hiscore.letter_code  = 0x40;
+  state->bank3->hiscore.blink_timer  = 0x0C;
+  state->bank3->hiscore.blink_offset = 0;
+  state->bank3->hiscore.cursor_addr  = 10;
+  state->bank3->hiscore.fire_locked  = 0;
+  state->bank3->hiscore.complete     = 0;
+
+  for (frame = 0; frame < 3119; frame++) {
+    chq_test_hiscore_inject_input(state, 0);
+    assert(state->bank3->hiscore.complete == 0);
+  }
+  chq_test_hiscore_inject_input(state, 0);
+  assert(state->bank3->hiscore.complete == 1);
+
+  entry = &state->bank3->high_score_table[0];
+  assert(entry->name[0] == '.'); /* $40 blank marker, never confirmed by FIRE */
+
+  chq_destroy(state);
+  printf("PASS  name_entry: idle timeout force-finalises after 3120 frames\n");
+}
+
+static void test_cycle_and_draw_letter_wraps_both_ends(void)
+{
+  chqstate_t *state;
+  int         i;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->bank3->hiscore.row         = 0;
+  state->bank3->hiscore.char_index  = 0;
+  state->bank3->hiscore.letter_code = 0x40;
+  state->bank3->hiscore.blink_timer = 0x0C;
+  state->bank3->hiscore.fire_locked = 0;
+  state->bank3->hiscore.complete    = 0;
+
+  for (i = 0; i < 26; i++)
+    chq_test_hiscore_inject_input(state, USERINPUTFLAG_RIGHT); /* '@' -> ... -> 'Z' */
+  assert(state->bank3->hiscore.letter_code == 0x5A);
+
+  chq_test_hiscore_inject_input(state, USERINPUTFLAG_RIGHT); /* 'Z' -> '@' */
+  assert(state->bank3->hiscore.letter_code == 0x40);
+
+  chq_test_hiscore_inject_input(state, USERINPUTFLAG_LEFT); /* '@' -> 'Z' */
+  assert(state->bank3->hiscore.letter_code == 0x5A);
+
+  chq_destroy(state);
+  printf("PASS  cycle_and_draw_letter: wraps at both ends of 'A'-'Z' through '@'\n");
+}
+
+/*
  * run_title_tune ($FBC8): services one frame of the title-screen music/drum
  * subsystem, restarting the current tune whenever it finds no tune active.
  * Mirrors run_title_screen's own entry-time call to titlescr_start_tune
@@ -1001,11 +1140,8 @@ static void test_show_end_screen_runs_script(void)
  * loop runs without crashing or stalling for every tune, not just the one
  * the title screen happens to start.
  *
- * Tunes 0 and 1 (title tune, success jingle) have real pattern data
- * extracted (see titlescr_start_ay's own Conv note) and so must arm channel
- * 0's pattern reader; tunes 2 and 3 are deliberately not extracted and play
- * silently (pattern_ptr stays NULL by design), so only tune_active is
- * checked for those.
+ * All 4 tunes have real pattern data extracted (see titlescr_start_ay's own
+ * Conv note) and so must each arm channel 0's pattern reader.
  */
 static void test_run_title_tune_starts_and_keeps_playing(void)
 {
@@ -1019,8 +1155,7 @@ static void test_run_title_tune_starts_and_keeps_playing(void)
 
     chq_test_start_title_tune(state, tune);
     assert(state->bank3->title_music.tune_active);
-    if (tune < 2)
-      assert(state->bank3->title_music.channel[0].pattern_ptr != NULL);
+    assert(state->bank3->title_music.channel[0].pattern_ptr != NULL);
 
     for (frame = 0; frame < 150; frame++) {
       chq_test_run_title_tune(state);
@@ -1192,6 +1327,10 @@ int main(void)
   test_perp_caught_progression();
   test_advance_hazards_insert_shift_preserves_records();
   test_show_end_screen_runs_script();
+  test_name_entry_setup_screen_draws_table();
+  test_name_entry_confirms_three_letters();
+  test_name_entry_idle_timeout_finalises();
+  test_cycle_and_draw_letter_wraps_both_ends();
   test_run_title_tune_starts_and_keeps_playing();
   test_play_music_48k_paces_every_tick();
   test_stop_the_tape_48k_installs_sinclair_scheme();

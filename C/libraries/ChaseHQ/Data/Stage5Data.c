@@ -363,22 +363,22 @@ static const u8 stage5_arrest_messages_C1E6[83] = {
   6,  // delay
   DRAWCHARSTYLE_SINGLE,
   0,  // attribute
-  Z80BACKBUF(0xF802),
-  Z80ATTRS(0x5922),
+  CHQBACKBUF(0xF802),
+  ZXATTRS(0x5922),
   'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T', ' ', 'O', 'N' | EOS,
 
   6,  // delay
   DRAWCHARSTYLE_SINGLE,
   0,  // attribute
-  Z80BACKBUF(0xF023),
-  Z80ATTRS(0x5943),
+  CHQBACKBUF(0xF023),
+  ZXATTRS(0x5943),
   'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'E', 'S', 'P', 'I', 'O', 'N', 'A', 'G', 'E', ' ', 'A', 'N', 'D' | EOS,
 
   45,  // delay
   DRAWCHARSTYLE_SINGLE,
   0,  // attribute
-  Z80BACKBUF(0xF82C),
-  Z80ATTRS(0x596C),
+  CHQBACKBUF(0xF82C),
+  ZXATTRS(0x596C),
   'M', 'U', 'R', 'D', 'E', 'R' | EOS,
 
   TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
