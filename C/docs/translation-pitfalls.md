@@ -498,3 +498,19 @@ grep -E '^\$C6C7\\t' trace.log | awk -F'\\\\t' '{print $7}' | sort | uniq -c | s
 One distinct instruction means the address is unambiguous in that run. Two or more means every number derived from it is contaminated. Below `$C000` the window is unpaged and this cannot arise.
 
 **Commit:** `157f863`
+
+---
+
+## 38. High-score flash-phase bytes — wrong rotation model, and a mutation with no source instruction
+
+**Root cause:** Two independent bugs in the same feature (hiscore name-entry flicker), both found chasing one user report ("the confirmed name-row text pulses far too fast").
+
+**Bug A — `RLC` on a flag byte is a multi-frame duty cycle, not a per-frame toggle.** `RLC (HL)` rotates the whole byte and branches on the bit that rotates out (carry), not a single persistent bit. A byte with more than one bit set — e.g. seeded `0xF0` — spends several consecutive rotations with carry set, then several with carry clear, before repeating. Translating the toggle as `flag ^= 1` (bit semantics) instead of an 8-bit rotate collapses an N-consecutive-frames-on/N-off square wave into a 1-frame alternation, N times too fast.
+
+`hiscore.draw_erase_toggle` (real `$C58D`, seeded from the `$C580` ROM template = `0xF0`) is `RLC`'d once per frame in `redraw_name_frame`/`name_entry_frame`; `JR C` selects erase, fallthrough selects draw. `0xF0` rotated gives four consecutive carry-set frames then four carry-clear, an 8-frame (~6.25Hz) cycle. The C port used `draw_erase_toggle ^= 1` seeded to `0`, alternating every frame (~25Hz) — the confirmed name-row text flickered four times faster than the original, audible against Fuse's visibly slower pulse. Fix: rotate the byte (`(toggle << 1) | (toggle >> 7)`) and read bit 0 as carry, seeded `0xF0`, mirroring `flash_phase_a`'s already-correct treatment in the same file.
+
+**Bug B — a mutation with no matching Z80 instruction, contradicting the porter's own comment.** `name_entry_dispatch`'s 12-frame timer-gated block (`$C172-$C19B` in the skool) had `flash_phase_a ^= 1;` and a conditional `flash_phase_b ^= 1;` spliced in. The skool has exactly two sites touching `$C59A`/`$C59B` (`$C1A8-$C1AB`, `$C1CA-$C1CD`), both unconditional `RLC`s run every frame from a different function (`fast_blink_best_officers_cell`) — and that function's own prologue comment already says so ("$C1A8-$C1C2 also runs every frame (not gated by the blink timer)"). The extra XOR corrupted the fast-blink phase every 12 frames, glitching the "BEST OFFICERS" marquee's flicker on top of the row-text bug. Fix: delete both lines; nothing in the timer-gated block touches these fields on real hardware.
+
+**Rule:** Before translating any `RLC`/`RRC` self-toggle as a boolean flip, check its seed value — an alternating seed (`0x55`, `0xAA`) really does toggle every rotation, but any other seed produces runs of same-carry frames whose length depends on the seed's bit pattern; model the byte and rotate it, do not compress it to one bit. Separately, when a field name recurs across two functions, grep the skool for every address that writes it — a mutation with no corresponding instruction is a fabrication, and a prologue comment that already states the field's real cadence is a direct contradiction, not just a hint.
+
+**Commit:** (uncommitted)

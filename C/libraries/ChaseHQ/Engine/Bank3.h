@@ -44,6 +44,16 @@ void bank3_state_destroy(chqstate_t *state);
 
 u8 bank3_call(chqstate_t *state, int routine);
 
+/**
+ * Reads one row of the live high-score table (state->bank3->high_score_table)
+ * into a caller-supplied 15-byte buffer: score[8], stage_code[3],
+ * retry_digit[1], name[3], in that order.
+ *
+ * \param[in] row 0-based row index (0 = 1st place).
+ * \param[out] out 15-byte destination buffer.
+ */
+void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out);
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK3_H */

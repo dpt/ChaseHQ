@@ -189,6 +189,43 @@ static void chq_initialise(chqstate_t *state)
     0x9F, 0xFF, 0xEF, 0x00
   };
 
+  /** $F51B: best_officers_template */
+  static const u8 best_officers_template[163] = {
+    10,
+    8,
+    DRAWCHARSTYLE_DOUBLE,
+    attribute_BLACK_OVER_BLACK,
+    CHQBACKBUF(0xF02A),
+    ZXATTRS(0x594A),
+    'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    CHQBACKBUF(0xF082),
+    ZXATTRS(0x5A02),
+    'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    CHQBACKBUF(0xF0A2),
+    ZXATTRS(0x5A42),
+    '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | EOS,
+    8,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    CHQBACKBUF(0xF0C2),
+    ZXATTRS(0x5A82),
+    '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | EOS,
+    0x50,
+    DRAWCHARSTYLE_SINGLE,
+    attribute_RED_OVER_BLACK,
+    CHQBACKBUF(0xF0E2),
+    ZXATTRS(0x5AC2),
+    '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | EOS,
+    3,
+    0
+  };
+
   /** $F05A: drum2_template */
   static const u8 drum2_template[108] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF3, 0xF8, 0x30,
@@ -239,6 +276,8 @@ static void chq_initialise(chqstate_t *state)
     { offsetof(chqstate_t, debris_subtables[4]), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
     // $EE38
     { offsetof(chqstate_t, temp_keydefs), &temp_keydefs_template[0], sizeof(temp_keydefs_template) },
+    // $F51B
+    { offsetof(chqstate_t, attract_mode_128k.best_officers), &best_officers_template[0], sizeof(best_officers_template) },
     // $EF5E
     { offsetof(chqstate_t, music.drum1), &drum1_template[0], sizeof(drum1_template) },
     // $F05A

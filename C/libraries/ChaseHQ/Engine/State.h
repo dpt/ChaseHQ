@@ -421,6 +421,12 @@ struct chqstate {
     /* $825D: (SM in attract_mode_128k, relocated) Frames left before the attract
      * demo gives way to the title screen */
     s8        countdown;
+
+    /* $F51B: best_officers overlay message data, initialised from
+     * best_officers_template (Create.c) by chq_initialise and patched in
+     * place by refresh_best_officers so the attract-mode "BEST OFFICERS"
+     * rows track the live high-score table. */
+    u8        best_officers[163];
   } attract_mode_128k;
 
   /* $8277: (SM in attract_mode) Rotating bit pattern deciding which attract

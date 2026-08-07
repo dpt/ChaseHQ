@@ -4356,6 +4356,28 @@ static void check_high_score(chqstate_t *state)
 }
 
 /**
+ * Reads one row of the live high-score table into a caller-supplied buffer.
+ *
+ * Conv: added -- functional equivalent of titlescr_refresh_name_table
+ *       ($C69A), which on real hardware copies the top 3 rows of the live
+ *       table at $C403 into a work buffer so the attract-mode "BEST
+ *       OFFICERS" overlay reflects entries just typed in on the name-entry
+ *       screen. This port exposes the same data field-by-field instead of
+ *       replicating the byte-for-byte 15+7+6 segmented copy, since the
+ *       destination here is Main.c's best_officers overlay array, not a
+ *       literal $800A-addressed buffer.
+ */
+void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out)
+{
+  const high_score_row_t *entry = &state->bank3->high_score_table[row];
+
+  memcpy(&out[0], entry->score, 8);
+  memcpy(&out[8], entry->stage_code, 3);
+  out[11] = entry->retry_digit;
+  memcpy(&out[12], entry->name, 3);
+}
+
+/**
  * $C06E: Shift and write a new high-score table entry
  *
  * Reached from check_high_score when the new score beats or ties the row at
@@ -4722,14 +4744,24 @@ static void draw_score_row_fields(chqstate_t             *state,
  * blinking for the whole time its name is being entered, not just during
  * the scroll-in.
  *
- * \param[in] do_toggle non-zero to flip hiscore.draw_erase_toggle before
+ * hiscore.draw_erase_toggle is not a plain per-frame flip: it is the real
+ * $C58D byte, rotated left one bit per call (RLC, matching flash_phase_a's
+ * treatment elsewhere in this file) rather than XORed. Bit 0 after the
+ * rotate selects draw (0) or erase (1) for that frame. Starting from its
+ * ROM-seeded seed value 0xF0, one full 8-bit rotation gives four consecutive
+ * draw frames followed by four consecutive erase frames, an 8-frame
+ * (~6.25Hz) cycle -- not the 2-frame (~25Hz) alternation a bare toggle would
+ * produce, and slow enough to read as distinct pulses rather than a flicker.
+ *
+ * \param[in] do_toggle non-zero to rotate hiscore.draw_erase_toggle before
  *                      reading it (the intro-phase caller, scroll_score_rows,
  *                      is the only per-frame caller of the toggle at that
  *                      point); zero to read it as-is (the entry-phase caller,
  *                      ihe_flash_loop, calls this immediately after
- *                      name_entry_frame has already flipped the same shared
- *                      flag for the letter cursor -- toggling again here would
- *                      cancel that flip and freeze both blinks).
+ *                      name_entry_frame has already rotated the same shared
+ *                      flag for the letter cursor -- rotating again here would
+ *                      double up the frame's rotation and desync the two
+ *                      blinks).
  *
  * Uses hiscore.row_addr[hiscore.row] directly: scroll_score_rows keeps this
  * current while the row is moving, and simply stops advancing it once the
@@ -4753,8 +4785,10 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
   entry = &state->bank3->high_score_table[row];
 
   if (do_toggle)
-    state->bank3->hiscore.draw_erase_toggle ^= 1;
-  blink = state->bank3->hiscore.draw_erase_toggle;
+    state->bank3->hiscore.draw_erase_toggle =
+      (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
+            (state->bank3->hiscore.draw_erase_toggle >> 7));
+  blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
   draw_score_row_fields(state, D, E, row, entry, blink, TABLE_ROW_COLOUR);
 }
@@ -4877,7 +4911,14 @@ static void name_entry_setup_screen(chqstate_t *state)
                                                      * name_entry_dispatch */
   state->bank3->hiscore.flash_phase_b     = 0xEE; /* $C59B ROM-data seed,
                                                      * rotated the same way */
-  state->bank3->hiscore.draw_erase_toggle = 0;
+  state->bank3->hiscore.draw_erase_toggle = 0xF0; /* $C58D ROM-data seed
+                                                     * (copied from the $C580
+                                                     * template by
+                                                     * check_high_score) --
+                                                     * rotated left one frame
+                                                     * at a time, see
+                                                     * name_entry_frame/
+                                                     * blink_hiscore_row */
   state->bank3->hiscore.blink_timer       = 0x0C;
   state->bank3->hiscore.blink_offset      = 0;
   state->bank3->hiscore.cursor_addr       = HISCORE_CURSOR_ADDR_INIT;
@@ -4907,7 +4948,7 @@ static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
   int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
   int scan_row;   /* erase-blit row counter (Conv: rolled) */
 
-  if (state->bank3->hiscore.draw_erase_toggle) {
+  if (!(state->bank3->hiscore.draw_erase_toggle & 1)) {
     hiscore_draw_glyph(state, D_screen, E_screen);
     return;
   }
@@ -4937,8 +4978,9 @@ static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
 /**
  * $C155: Advance the currently-typed letter's blink and redraw it
  *
- * Toggles the draw/erase phase and redraws the currently-selected letter
- * cell, called once per frame from ihe_flash_loop.
+ * Rotates the draw/erase phase (see blink_hiscore_row's comment for why this
+ * is an 8-bit RLC rotation, not a per-frame flip) and redraws the
+ * currently-selected letter cell, called once per frame from ihe_flash_loop.
  *
  * Conv: the Z80 reads a live 2-byte scratch value from $C422 (statically part
  *       of row 1's template padding in ROM data) to locate the cell; its real
@@ -4953,7 +4995,9 @@ static void name_entry_frame(chqstate_t *state)
 
   cursor_cell_addr(state->bank3->hiscore.char_index, &D_screen, &E_screen);
 
-  state->bank3->hiscore.draw_erase_toggle ^= 1;
+  state->bank3->hiscore.draw_erase_toggle =
+    (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
+          (state->bank3->hiscore.draw_erase_toggle >> 7));
   redraw_name_frame(state, D_screen, E_screen);
 }
 
@@ -5155,9 +5199,6 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     u8 L_attr; /* selector cell column before advancing (was L via $C596) */
 
     state->bank3->hiscore.blink_timer = 0x0C;
-    state->bank3->hiscore.flash_phase_a ^= 1;
-    if (state->bank3->hiscore.flash_phase_a)
-      state->bank3->hiscore.flash_phase_b ^= 1;
 
     /* $C172-$C17B: restore the outgoing cell to its base colour (it was
      * blanked below on a previous call). */

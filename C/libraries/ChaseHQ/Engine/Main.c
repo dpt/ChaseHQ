@@ -21226,6 +21226,38 @@ static void reset_paging_128k(chqstate_t *state)
 }
 
 /**
+ * $C69A: Refresh the attract-mode "BEST OFFICERS" rows from the live table
+ *
+ * Patches the score, stage code, retry digit and name fields of the top 3
+ * rows of state->attract_mode_128k.best_officers (initialised from
+ * best_officers_template by chq_initialise) from the live high-score table
+ * (state->bank3->high_score_table), so a hi-score entered on the name-entry
+ * screen shows up in the attract-mode overlay. The 5-char rank suffix
+ * ("1ST  " etc) and all header/layout bytes are left untouched.
+ *
+ * Conv: models titlescr_refresh_name_table ($C69A) -- see
+ *       bank3_read_high_score_row's own Conv note for why this port reads
+ *       the live table field-by-field rather than replicating the Z80's
+ *       segmented byte copy.
+ */
+static void refresh_best_officers(chqstate_t *state)
+{
+  static const int row_offset[3] = { 63, 98, 133 };
+  int              row;
+  u8               row_data[15];
+  u8              *officers = state->attract_mode_128k.best_officers;
+
+  for (row = 0; row < 3; row++) {
+    bank3_read_high_score_row(state, row, row_data);
+    memcpy(&officers[row_offset[row] + 5], &row_data[0], 8);   /* score */
+    memcpy(&officers[row_offset[row] + 15], &row_data[8], 3);  /* stage code */
+    officers[row_offset[row] + 22] = row_data[11];             /* retry digit */
+    memcpy(&officers[row_offset[row] + 25], &row_data[12], 3); /* name */
+    officers[row_offset[row] + 27] |= EOS;                     /* terminator bit */
+  }
+}
+
+/**
  * $F41B: Attract mode 128K
  *
  * Top-level attract loop for 128K hardware. Calls the bouncy logo (bank 3),
@@ -21294,42 +21326,6 @@ static void attract_mode_128k(chqstate_t *state)
     0 // DRAWOVERLAY_STOP
   };
 
-  /** $F51B: best_officers */
-  static const u8 best_officers[163] = {
-    10,
-    8,
-    DRAWCHARSTYLE_DOUBLE,
-    attribute_BLACK_OVER_BLACK,
-    CHQBACKBUF(0xF02A),
-    ZXATTRS(0x594A),
-    'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | EOS,
-    8,
-    DRAWCHARSTYLE_SINGLE,
-    attribute_RED_OVER_BLACK,
-    CHQBACKBUF(0xF082),
-    ZXATTRS(0x5A02),
-    'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | EOS,
-    8,
-    DRAWCHARSTYLE_SINGLE,
-    attribute_RED_OVER_BLACK,
-    CHQBACKBUF(0xF0A2),
-    ZXATTRS(0x5A42),
-    '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | EOS,
-    8,
-    DRAWCHARSTYLE_SINGLE,
-    attribute_RED_OVER_BLACK,
-    CHQBACKBUF(0xF0C2),
-    ZXATTRS(0x5A82),
-    '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | EOS,
-    0x50,
-    DRAWCHARSTYLE_SINGLE,
-    attribute_RED_OVER_BLACK,
-    CHQBACKBUF(0xF0E2),
-    ZXATTRS(0x5AC2),
-    '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | EOS,
-    3,
-    0
-  };
   // clang-format on
 
   int       HL_routine;           /* bank-3 routine address constant to invoke (was HL) */
@@ -21386,8 +21382,11 @@ call_bank_3:
       state->attract_mode_128k.countdown = --A_countdown;
       if (A_countdown < 0)
         setup_transition(state, TRANSITIONSTRIDE_FORWARD);
-      else
-        setup_overlay_messages(state, (A_countdown > 0) ? &credits_messages_128[0] : &best_officers[0]);
+      else {
+        if (A_countdown == 0)
+          refresh_best_officers(state);
+        setup_overlay_messages(state, (A_countdown > 0) ? &credits_messages_128[0] : &state->attract_mode_128k.best_officers[0]);
+      }
     }
 
     transition(state);
