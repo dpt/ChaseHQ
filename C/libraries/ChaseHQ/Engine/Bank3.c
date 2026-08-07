@@ -4250,6 +4250,14 @@ static void hiscore_finalise(chqstate_t *state);
 static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits);
 static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen);
 static void scroll_score_rows(chqstate_t *state);
+static void blink_hiscore_row(chqstate_t *state, int do_toggle);
+static void draw_score_row_fields(chqstate_t             *state,
+                                  u8                      D,
+                                  u8                      E,
+                                  u8                      row,
+                                  const high_score_row_t *entry,
+                                  int                     blink,
+                                  u8                      attrs);
 static void erase_table_field_scanline(
     chqstate_t *state, int x, u8 D_row, u8 E_row, int len);
 static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen);
@@ -4286,6 +4294,30 @@ static void read_new_key_definition(chqstate_t *state,
 static u16 advance_key_label_column(u16 DE_screen);
 
 /* ----------------------------------------------------------------------- */
+
+/* Single-height BRIGHT WHITE on BLACK -- $C0F4 ("LD (HL),$47 / LDIR") fills
+ * the whole table attribute area with this colour before any row scrolls
+ * in, contrasting with the flashing yellow headers (name_entry_screen_text's
+ * 0xC6 records). Not 0x46 -- that byte belongs to a different routine
+ * ($C17B, the selector-cell highlight), not the table rows. */
+#define TABLE_ROW_COLOUR (attribute_BRIGHT_WHITE_OVER_BLACK)
+
+/* $C58C/$C58B: the selector row pointer's low byte, as copied from the
+ * $C580 template by check_high_score, and the value it must reach to
+ * force-finalise via the idle timeout (see name_entry_dispatch). Also the
+ * attribute column range of the "BEST OFFICERS" row's slow highlight sweep
+ * (see name_entry_dispatch): $590A-$5917, one column per full pass of the
+ * fast selector below. */
+#define HISCORE_CURSOR_ADDR_INIT      10
+#define HISCORE_CURSOR_ADDR_FINALISE  23
+
+/* $5967: attribute address of the first cell of "ENTER YOUR INITIALS"'
+ * 20-character row -- shared by name_entry_dispatch's fast selector chase
+ * (see hiscore.blink_offset) and, one column per full pass of it, the slow
+ * "BEST OFFICERS" highlight sweep at $590A ($59, HISCORE_CURSOR_ADDR_INIT)
+ * above. */
+#define MARQUEE_ROW_ATTR_H  (0x59)
+#define MARQUEE_ROW_ATTR_L  (0x67)
 
 /**
  * $C00C: Format the score and check the high-score table
@@ -4358,14 +4390,17 @@ static void check_high_score(chqstate_t *state)
 /**
  * Reads one row of the live high-score table into a caller-supplied buffer.
  *
- * Conv: added -- functional equivalent of titlescr_refresh_name_table
- *       ($C69A), which on real hardware copies the top 3 rows of the live
- *       table at $C403 into a work buffer so the attract-mode "BEST
- *       OFFICERS" overlay reflects entries just typed in on the name-entry
- *       screen. This port exposes the same data field-by-field instead of
- *       replicating the byte-for-byte 15+7+6 segmented copy, since the
- *       destination here is Main.c's best_officers overlay array, not a
- *       literal $800A-addressed buffer.
+ * Conv: added -- functional equivalent of titlescr_refresh_name_table ($C69A),
+ *       which on real hardware copies the top 3 rows of the live table at $C403
+ *       into a work buffer so the attract-mode "BEST OFFICERS" overlay reflects
+ *       entries just typed in on the name-entry screen. This port exposes the
+ *       same data field-by-field instead of replicating the byte-for-byte
+ *       15+7+6 segmented copy, since the destination here is Main.c's
+ *       best_officers overlay array, not a literal $800A-addressed buffer.
+ *
+ * \param[in]  row Table row to read: 0 = 1st place .. 9 = 10th place.
+ * \param[out] out Buffer receiving the row: 8 score digits, 3 stage-code bytes,
+ *                 1 retry digit, 3 name bytes (15 bytes total).
  */
 void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out)
 {
@@ -4386,6 +4421,10 @@ void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out)
  * new score digits, stage code and retry-attempt number into [row], leaving
  * a placeholder ". . ." name.
  *
+ * Falls through into name_entry_setup_screen/ihe_flash_loop ($C0EC-$C154),
+ * which handle the screen clear/setup, header text, and the joystick-driven
+ * letter-selection loop that lets the player type their 3 initials.
+ *
  * \param[in] row Table row to insert at: 0 = 1st place .. 9 = 10th place (was
  *                the row counter C, banked via EX AF,AF' across the shift).
  *
@@ -4397,10 +4436,6 @@ void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out)
  *       rank-suffix strings ("1ST ".."10TH") are fixed to their screen
  *       position, never move, and are not stored per-row at all (see
  *       high_score_rank_suffixes above).
- *
- * Falls through into name_entry_setup_screen/ihe_flash_loop ($C0EC-$C154),
- * which handle the screen clear/setup, header text, and the joystick-driven
- * letter-selection loop that lets the player type their 3 initials.
  */
 static void insert_high_score_entry(chqstate_t *state, int row)
 {
@@ -4481,391 +4516,6 @@ static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
   { 0x00, 0x48 }, { 0x40, 0x48 }, { 0x80, 0x48 }, { 0xC0, 0x48 },
 };
 
-/* Conv: added -- no Z80 equivalent. Returns the on-screen (D, E) address of
- * the [char_index]'th letter cell of the typing cursor. Anchored on the
- * ". . ." text record printed at $488E (name_entry_screen_text, third
- * record): dot 0 is drawn at E=$8E, and each subsequent char in that record
- * (space, dot, space, dot) occupies the next column, so the three dot
- * positions are E=$8E, $90, $92 -- a stride of 2 per letter cell, D=$48
- * throughout. This screen has a single fixed typing cursor shared by every
- * rank; name_entry_row_offsets (above) is unrelated to it. */
-static void cursor_cell_addr(u8 char_index, u8 *D_out, u8 *E_out)
-{
-  *D_out = 0x48;
-  *E_out = (u8) (0x8E + char_index * 2);
-}
-
-/* Conv: added -- advances a (D, E) screen-address pair by one pixel
- * scanline, correcting the carry a bare D++ would otherwise misroute into
- * D's thirds-select bits once every 8 steps. D's low 3 bits hold the pixel
- * line within the current 8-line character cell, so D++ advances the line
- * correctly for 7 out of 8 steps, but on the 8th (low 3 bits wrap 7 -> 0)
- * the carry must land in E's cell-row bits instead -- the same
- * third-boundary-wrap idiom documented in cad_draw_glyph and
- * redraw_name_frame's own draw/erase loops. Shared by scroll_score_rows
- * (one step per row per frame) and draw_table_field_scrolling (up to 8
- * steps per glyph, to walk down one character cell). */
-static void advance_screen_scanline(u8 *D, u8 *E)
-{
-  int H; /* widened copy of *D for advance_glyph_scanline (Conv: added) */
-  int L; /* widened copy of *E for advance_glyph_scanline (Conv: added) */
-
-  H = *D + 1;
-  L = *E;
-  advance_glyph_scanline(&H, &L);
-  *D = (u8) H;
-  *E = (u8) L;
-}
-
-/**
- * Whether (D, E) falls in the table's visible draw window.
- *
- * $C2D3-$C2EB. Not simply "thirds 1-2" -- the real check is asymmetric per
- * third: third 1 ($48-$4F) only draws on its bottom character-row (E >=
- * $E0); third 2 ($50-$57) draws on every character-row except its bottom one
- * (E < $E0). Together these cover one contiguous 8-character-row band
- * (third 1's last row followed by third 2's first seven), not the full 16
- * rows both thirds span. Using the wider "D in $48-$57" range instead (an
- * earlier version of this function did) starts each row drawing a full
- * character-row band too early, overlapping rows already at rest further
- * down the table.
- */
-static int table_row_visible(u8 D, u8 E)
-{
-  if (D < 0x48)
-    return 0;
-  if (D < 0x50)
-    return E >= 0xE0;
-  if (D < 0x58)
-    return E < 0xE0;
-  return 0;
-}
-
-/* Single-height BRIGHT WHITE on BLACK -- $C0F4 ("LD (HL),$47 / LDIR") fills
- * the whole table attribute area with this colour before any row scrolls
- * in, contrasting with the flashing yellow headers (name_entry_screen_text's
- * 0xC6 records). Not 0x46 -- that byte belongs to a different routine
- * ($C17B, the selector-cell highlight), not the table rows. */
-#define TABLE_ROW_COLOUR (attribute_BRIGHT_WHITE_OVER_BLACK)
-
-/* Conv: added -- the glyph classification ladder print_character's own
- * $FDDA-$FDFE uses, factored out so draw_table_field_scrolling below can
- * look up a glyph per scanline without re-running print_character's whole
- * record-unpack/blit loop (which assumes a cell-aligned start address --
- * see advance_screen_scanline's comment). Returns NULL for a literal space
- * (caller still advances the column but draws nothing). */
-static const u8 *font_glyph_for_char(u8 A_char)
-{
-  u8 A_diff;  /* char - $20; classification input (was A) */
-  u8 C_class; /* width-class index (was C) */
-
-  if (A_char == 0x20)
-    return NULL;
-
-  A_diff = (u8) (A_char - 0x20);
-
-  if (A_diff >= 0x21)
-    C_class = (u8) (A_diff - 18);
-  else if (A_diff >= 0x10)
-    C_class = (u8) (A_diff - 11);
-  else if (A_diff == 1)
-    C_class = 0;
-  else if (A_diff == 8)
-    C_class = 1;
-  else if (A_diff == 9)
-    C_class = 2;
-  else if (A_diff == 12)
-    C_class = 3;
-  else
-    C_class = 4;
-
-  return &font[C_class * 7];
-}
-
-/**
- * $C2F6: Draw [len] characters of a rank's row at its current scroll
- * position, clipped to the visible table
- *
- * Conv: the real $C2F6 (rsn_char_loop) draws from the (D, E) screen address
- *       scroll_score_rows scrolled to, via its own byte-stream glyph loop -- a
- *       near-clone of cycle_and_draw_letter's classifier -- and does not stop
- *       advancing a row's address once drawn: the row keeps scrolling (and
- *       keeps redrawing) past its first rest line, which is how all 10 ranks
- *       share the character-row slots actually free below the header (one rank
- *       is always mid-scroll, carrying the previous rank's row off past the
- *       header as it arrives). This function is that real per-scanline draw:
- *       called every frame at the row's *current* (D_row, E_row), which is
- *       mid-cell most frames, it walks each character down its own 8-scanline
- *       cell one line at a time (via advance_screen_scanline) and skips (clips)
- *       any line landing outside SCREEN_ROW_VISIBLE, rather than snapping to a
- *       fixed rest slot the way an earlier version of this port did.
- *
- * \param[in] x     Pixel column of the field's first character, 0-255.
- * \param[in] D_row Row's current screen address high byte (thirds/pixel-row).
- * \param[in] E_row Row's current screen address low byte; only its cell-row
- *                  bits (0xE0) are used -- the column comes from x/i.
- * \param[in] text  Raw ASCII bytes to draw.
- * \param[in] len   Number of characters in [text].
- * \param[in] attrs Conv: added -- no Z80 equivalent. Attribute byte written for
- *                  this field's cells, in place of the fixed TABLE_ROW_COLOUR.
- *                  Lets scroll_score_rows set the FLASH bit on the rank 1 row
- *                  so it blinks via real ZX hardware FLASH (see Screen.c's
- *                  WRITE8PIX/WRITE8PIX_16) instead of a software toggle.
- */
-static void draw_table_field_scrolling(chqstate_t *state,
-                                       int         x,
-                                       u8          D_row,
-                                       u8          E_row,
-                                       const u8   *text,
-                                       int         len,
-                                       u8          attrs)
-{
-  int       i;         /* character index within text (Conv: added) */
-  u8        D;         /* this glyph's current scanline address, high byte */
-  u8        E;         /* this glyph's current scanline address, low byte */
-  const u8 *HL_font;   /* this glyph's 7-byte font[] entry, NULL for space */
-  int       row;       /* scanline index within the 8-row cell (Conv: added) */
-  u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
-
-  for (i = 0; i < len; i++) {
-    D = D_row;
-    E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
-
-    HL_font = font_glyph_for_char(text[i]);
-
-    if (table_row_visible(D, E)) {
-      u16 attr_addr; /* this glyph's attribute address (Conv: added) */
-
-      attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
-      *ADDRTOATTRS(attr_addr) = attrs;
-      update_attrs(state, attr_addr, 8, 8);
-    }
-
-    for (row = 0; row < 8; row++) {
-      if (table_row_visible(D, E)) {
-        DE_screen  = ADDRTOSCREEN((D << 8) | E);
-        *DE_screen = (HL_font != NULL && row < 7) ? HL_font[row] : 0;
-        update_screen(state, (D << 8) | E, 8, 1);
-      }
-      advance_screen_scanline(&D, &E);
-    }
-  }
-}
-
-/**
- * Blank the single scanline a field's characters just scrolled off, at their
- * previous screen address.
- *
- * Conv: added -- no Z80 equivalent. draw_table_field_scrolling redraws all 8
- *       scanlines of each character's cell at its *current* position every
- *       frame; since the window only advances by one line per frame, the line
- *       at the *old* top of the window falls outside the new window and is
- *       never redrawn again, leaving a one-scanline trail behind the scrolling
- *       row. Called with the row's pre-advance (D_row, E_row) to clear exactly
- *       that vacated line before draw_table_field_scrolling draws the new
- *       window.
- */
-static void erase_table_field_scanline(
-    chqstate_t *state, int x, u8 D_row, u8 E_row, int len)
-{
-  int i;         /* character index within the field (Conv: added) */
-  u8  E;         /* this character's vacated-line column (Conv: added) */
-  u8 *DE_screen; /* pixel destination for the vacated line (Conv: added) */
-
-  if (!table_row_visible(D_row, E_row))
-    return;
-
-  for (i = 0; i < len; i++) {
-    E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
-    DE_screen  = ADDRTOSCREEN((D_row << 8) | E);
-    *DE_screen = 0;
-    update_screen(state, (D_row << 8) | E, 8, 1);
-  }
-}
-
-/* $C2F6-$C2F9: whichever rank is being written this session (hiscore.row)
- * does not just draw plainly like the other nine -- every frame it is
- * inside the table's visible window (table_row_visible), it alternates
- * between drawing its whole row text and blanking it, via the same
- * hiscore.draw_erase_toggle flag name_entry_frame flips for the
- * currently-typed cell (real $C58D, RLC'd at $C2FF; the CP $09 at $C2F7 is
- * self-modified by insert_high_score_entry's $C0C0 to compare against
- * whichever row counter matches hiscore.row). "Whole row" is not an
- * approximation: the real $C401 scratch table's 31-byte-per-row content
- * (copied from the 33-byte preset-row records, see the $C3AF-$C422 skool
- * comment) is rank suffix(5) + score(8) + gap(4) + stage(3) + gap(5) +
- * retry(1) + gap(2) + name(3, bit-7 terminated on its last byte) laid out
- * as ONE continuous string with no terminator before the very end --
- * rsn_char_loop walks straight through all five fields in a single pass,
- * so the whole row (suffix included -- "1ST", "2ND", ...) blinks together,
- * not just the name. This is what gives the newly-inserted row its blink
- * as it scrolls into place -- not a flat colour flash over the row's
- * attribute cells, and not on a fixed rate tied to the "BEST OFFICERS"
- * chase (see the removed flash_rank1_row, this comment's predecessor,
- * which modelled both of those incorrectly).
- *
- * The erase half below reuses draw_table_field_scrolling with an
- * all-spaces string: font_glyph_for_char(' ') is NULL, so it writes zero
- * bytes across the whole cell, matching rsn_char_loop2's blank-and-advance
- * loop.
- */
-static const u8 blank_row_text[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-
-/* Conv: added -- the five field draws below (rank suffix, score, stage code,
- * retry digit, name) are shared verbatim between blink_hiscore_row and
- * scroll_score_rows' plain-draw branch. blink is non-zero to draw this
- * frame's text, zero to blank the row (blink_hiscore_row's toggle);
- * scroll_score_rows always passes non-zero since it never blanks. */
-static void draw_score_row_fields(chqstate_t             *state,
-                                  u8                      D,
-                                  u8                      E,
-                                  u8                      row,
-                                  const high_score_row_t *entry,
-                                  int                     blink,
-                                  u8                      attrs)
-{
-  draw_table_field_scrolling(state, 0, D, E, blink ? high_score_rank_suffixes[row] : blank_row_text, 5, attrs);
-  draw_table_field_scrolling(state, 64, D, E, blink ? entry->score : blank_row_text, NELEMS(entry->score), attrs);
-  draw_table_field_scrolling(state, 120, D, E, blink ? entry->stage_code : blank_row_text, NELEMS(entry->stage_code), attrs);
-  draw_table_field_scrolling(state, 176, D, E, blink ? &entry->retry_digit : blank_row_text, 1, attrs);
-  draw_table_field_scrolling(state, 224, D, E, blink ? entry->name : blank_row_text, NELEMS(entry->name), attrs);
-}
-
-/**
- * $C2F6/$C2FB: redraw hiscore.row's whole row text, using the shared
- * draw/erase toggle
- *
- * Called once per frame for as long as name entry lasts -- both while the
- * row is still scrolling in (from scroll_score_rows, matching the real
- * $C2F6 boundary-triggered entry) and, once it has settled, every frame of
- * the interactive typing loop (from ihe_flash_loop, matching the real
- * $C155/$C2FB unconditional entry). Both real entry points share the same
- * $C58D toggle and the same row-text draw/erase loop, so the row keeps
- * blinking for the whole time its name is being entered, not just during
- * the scroll-in.
- *
- * hiscore.draw_erase_toggle is not a plain per-frame flip: it is the real
- * $C58D byte, rotated left one bit per call (RLC, matching flash_phase_a's
- * treatment elsewhere in this file) rather than XORed. Bit 0 after the
- * rotate selects draw (0) or erase (1) for that frame. Starting from its
- * ROM-seeded seed value 0xF0, one full 8-bit rotation gives four consecutive
- * draw frames followed by four consecutive erase frames, an 8-frame
- * (~6.25Hz) cycle -- not the 2-frame (~25Hz) alternation a bare toggle would
- * produce, and slow enough to read as distinct pulses rather than a flicker.
- *
- * \param[in] do_toggle non-zero to rotate hiscore.draw_erase_toggle before
- *                      reading it (the intro-phase caller, scroll_score_rows,
- *                      is the only per-frame caller of the toggle at that
- *                      point); zero to read it as-is (the entry-phase caller,
- *                      ihe_flash_loop, calls this immediately after
- *                      name_entry_frame has already rotated the same shared
- *                      flag for the letter cursor -- rotating again here would
- *                      double up the frame's rotation and desync the two
- *                      blinks).
- *
- * Uses hiscore.row_addr[hiscore.row] directly: scroll_score_rows keeps this
- * current while the row is moving, and simply stops advancing it once the
- * row is parked, so the same address is still correct after scrolling ends.
- */
-static void blink_hiscore_row(chqstate_t *state, int do_toggle)
-{
-  u8                row;   /* rank index being written this session (Conv: added) */
-  u8                D;     /* row's current screen address high byte (was D) */
-  u8                E;     /* row's current screen address low byte (was E) */
-  high_score_row_t *entry; /* this row's data (was DE) */
-  int               blink; /* non-zero draws this frame's text, zero blanks it (Conv: added) */
-
-  row = state->bank3->hiscore.row;
-  D   = state->bank3->hiscore.row_addr[row][1];
-  E   = state->bank3->hiscore.row_addr[row][0];
-
-  if (!table_row_visible(D, E))
-    return;
-
-  entry = &state->bank3->high_score_table[row];
-
-  if (do_toggle)
-    state->bank3->hiscore.draw_erase_toggle =
-      (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-            (state->bank3->hiscore.draw_erase_toggle >> 7));
-  blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
-
-  draw_score_row_fields(state, D, E, row, entry, blink, TABLE_ROW_COLOUR);
-}
-
-/**
- * $C2B1: Animate each rank's name field scrolling into view
- *
- * Advances each of the 10 ranks' screen-address entry (hiscore.row_addr) down
- * by one pixel row per frame, then redraws that row's full contents (rank
- * suffix, score, stage code, retry digit, name) at its new position. Row
- * addresses are free-running u8 counters that are never stopped or reset
- * once scrolling starts (matching the Z80), so a row cycles through the
- * whole 256-line address space and back into view periodically -- with only
- * 16 character-row slots visible for 10 ranks, more than one rank's row can
- * be scrolling through the visible band at a time, and two ranks can
- * briefly overlap the same slot exactly as the original hardware does.
- *
- * hiscore.row's name field blinks rather than drawing plainly while it is in
- * the visible window -- see redraw_score_name's comment above, just before
- * this function.
- */
-static void scroll_score_rows(chqstate_t *state)
-{
-  int                row;    /* rank index, 0-9 (was B, DJNZ 10 down to 1) */
-  u8                 E;      /* row's screen address low byte (was E) */
-  u8                 D;      /* row's screen address high byte (was D) */
-  u8                 E_old;  /* row's screen address low byte before this frame's scroll step (Conv: added) */
-  u8                 D_old;  /* row's screen address high byte before this frame's scroll step (Conv: added) */
-  high_score_row_t  *entry;  /* this row's data (was DE) */
-  u8                 attrs;  /* Conv: added -- this row's attribute byte */
-
-  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
-    attrs = TABLE_ROW_COLOUR;
-
-    E = state->bank3->hiscore.row_addr[row][0];
-    D = state->bank3->hiscore.row_addr[row][1];
-    E_old = E;
-    D_old = D;
-
-    advance_screen_scanline(&D, &E);
-
-    state->bank3->hiscore.row_addr[row][0] = E;
-    state->bank3->hiscore.row_addr[row][1] = D;
-
-    erase_table_field_scanline(state, 0, D_old, E_old, 5);
-    erase_table_field_scanline(state, 64, D_old, E_old, NELEMS(state->bank3->high_score_table[row].score));
-    erase_table_field_scanline(state, 120, D_old, E_old, NELEMS(state->bank3->high_score_table[row].stage_code));
-    erase_table_field_scanline(state, 176, D_old, E_old, 1);
-    erase_table_field_scanline(state, 224, D_old, E_old, NELEMS(state->bank3->high_score_table[row].name));
-
-    entry = &state->bank3->high_score_table[row];
-
-    if (row == state->bank3->hiscore.row) {
-      blink_hiscore_row(state, 1);
-    } else {
-      draw_score_row_fields(state, D, E, (u8) row, entry, 1, attrs);
-    }
-  }
-}
-
-/* $C58C/$C58B: the selector row pointer's low byte, as copied from the
- * $C580 template by check_high_score, and the value it must reach to
- * force-finalise via the idle timeout (see name_entry_dispatch). Also the
- * attribute column range of the "BEST OFFICERS" row's slow highlight sweep
- * (see name_entry_dispatch): $590A-$5917, one column per full pass of the
- * fast selector below. */
-#define HISCORE_CURSOR_ADDR_INIT      10
-#define HISCORE_CURSOR_ADDR_FINALISE  23
-
-/* $5967: attribute address of the first cell of "ENTER YOUR INITIALS"'
- * 20-character row -- shared by name_entry_dispatch's fast selector chase
- * (see hiscore.blink_offset) and, one column per full pass of it, the slow
- * "BEST OFFICERS" highlight sweep at $590A ($59, HISCORE_CURSOR_ADDR_INIT)
- * above. */
-#define MARQUEE_ROW_ATTR_H  (0x59)
-#define MARQUEE_ROW_ATTR_L  (0x67)
-
 /**
  * $C0EC: Set up the name-entry screen
  *
@@ -4927,52 +4577,83 @@ static void name_entry_setup_screen(chqstate_t *state)
 }
 
 /**
- * $C2FB: Draw or erase the currently-selected letter cell
+ * $C133/$C149: Per-frame driver for the name-entry screen
  *
- * Toggles hiscore.draw_erase_toggle and redraws the currently-selected letter
- * cell at (D_screen, E_screen) accordingly, giving the letter being typed
- * its blink. draw_erase_toggle is shared with scroll_score_rows/
- * redraw_score_name's own draw/erase loops in the original; this port only
- * needs it for the single cell currently being typed.
+ * Two phases, matching the two Z80 loops:
  *
- * Conv: reduced scope -- the real $C2FB is an entry point into
- *       redraw_score_name's row loop (rsn_char_loop/rsn_char_loop2), which
- *       alternates every already-confirmed name across all 10 ranks. This only
- *       drives the single cell the player is currently typing, since that is
- *       the only text this port's redraw_score_name (the full-row version,
- *       above) does not already keep in view once revealed.
+ * - ihe_flash_loop ($C133-$C142): the row scroll-in intro. Calls
+ *   scroll_score_rows every frame while hiscore.intro_timer is nonzero.
+ * - ihe_entry_loop ($C149-$C152): the interactive typing loop, entered once
+ *   the intro timer reaches zero. Calls name_entry_frame (the current
+ *   letter's blink) instead -- scroll_score_rows is never called again, so
+ *   the rows stop scrolling for the rest of name entry, but hiscore.row's
+ *   text keeps blinking via a direct blink_hiscore_row call alongside
+ *   name_entry_frame (matching the real $C155/$C2FB call, which continues
+ *   to redraw hiscore.row's text every frame after the row has parked).
+ *
+ * Both phases call name_entry_input and run until hiscore_finalise sets
+ * hiscore.complete.
+ *
+ * Conv: the Z80's $C133 loop condition ($C13C-$C142) tests a self-modified
+ *       operand ("LD A,$A0 / DEC A / LD ($C13D),A") that counts down once from
+ *       160 over 160 frames; the skool's own comment ("always recomputes to a
+ *       constant $9F, so JR NZ is always taken") only holds for a single static
+ *       read of the bytes and misses the self-modification -- see
+ *       hiscore.intro_timer's own comment (Bank3State.h). This port models the
+ *       countdown as a plain state field instead of a self-modified immediate.
+ *
+ * Conv: the Z80's phase transition and hiscore_finalise's early exit are both
+ *       stack-discarding jumps (the skool's own comment: "this loop can only
+ *       actually end via a side effect... e.g. popping this return address");
+ *       this port replaces both with the intro_timer/complete flags checked
+ *       here.
  */
-static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
+static void ihe_flash_loop(chqstate_t *state)
 {
-  u8 *DE_screen;  /* erase-blit cursor (was DE) */
-  int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
-  int scan_row;   /* erase-blit row counter (Conv: rolled) */
+  for (;;) {
+    CHECK_HOST_QUIT(state);
 
-  if (!(state->bank3->hiscore.draw_erase_toggle & 1)) {
-    hiscore_draw_glyph(state, D_screen, E_screen);
-    return;
-  }
+    titlescr_music(state); /* $F82F */
 
-  /* Conv: blanks 14 scanlines (two character rows), matching the
-   * double-height glyph hiscore_draw_glyph now draws -- see its own
-   * comment for why this cell is double-height, not single. */
-  glyph_addr = (D_screen << 8) | E_screen;
-  DE_screen  = ADDRTOSCREEN(glyph_addr);
-  for (scan_row = 0; scan_row < 4; scan_row++) {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
-  }
-  DE_screen -= 2016; /* crosses the screen-third boundary, see hiscore_draw_glyph */
-  for (scan_row = 0; scan_row < 3; scan_row++) {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
-  }
+    if (state->bank3->hiscore.intro_timer != 0) {
+      state->bank3->hiscore.intro_timer--;
+      scroll_score_rows(state);
+    } else {
+      name_entry_frame(state);
+      blink_hiscore_row(state, 0);
+    }
 
-  update_screen(state, glyph_addr, 8, 14);
+    name_entry_input(state);
+
+    if (state->bank3->hiscore.complete) {
+      /* Conv: the real $C258 parks here forever servicing tune 2, only
+       * leaving via an interrupt-driven scene change elsewhere -- it never
+       * returns to its own caller (see hiscore_finalise's prologue). This
+       * port must return normally, so instead it services the tune to
+       * completion here, using the same title_music.tune_active
+       * end-of-pattern signal titlescr_wait_loop polls for its own tune
+       * waits, then returns. */
+      while (state->bank3->title_music.tune_active) {
+        CHECK_HOST_QUIT(state);
+        titlescr_music(state);
+      }
+      return;
+    }
+  }
+}
+
+/* Conv: added -- no Z80 equivalent. Returns the on-screen (D, E) address of
+ * the [char_index]'th letter cell of the typing cursor. Anchored on the
+ * ". . ." text record printed at $488E (name_entry_screen_text, third
+ * record): dot 0 is drawn at E=$8E, and each subsequent char in that record
+ * (space, dot, space, dot) occupies the next column, so the three dot
+ * positions are E=$8E, $90, $92 -- a stride of 2 per letter cell, D=$48
+ * throughout. This screen has a single fixed typing cursor shared by every
+ * rank; name_entry_row_offsets (above) is unrelated to it. */
+static void cursor_cell_addr(u8 char_index, u8 *D_out, u8 *E_out)
+{
+  *D_out = 0x48;
+  *E_out = (u8) (0x8E + char_index * 2);
 }
 
 /**
@@ -5001,59 +4682,6 @@ static void name_entry_frame(chqstate_t *state)
   redraw_name_frame(state, D_screen, E_screen);
 }
 
-/**
- * $C291/cad_draw_glyph: Draw the current candidate letter's glyph
- *
- * Blits hiscore.letter_code's 7-byte font[] entry double-height at
- * (D_screen, E_screen), each font byte written to two consecutive pixel
- * rows: the ". . ." placeholder this overwrites was itself printed
- * double-height by print_character (name_entry_screen_text's third
- * record, style byte $07, bit 7 clear), so the candidate letter must match
- * it or the cell visibly shrinks to single height when typing starts.
- *
- * No attribute write: the real $C291-$C2B0 never touches attributes either
- * -- the placeholder's shaded bright-top/dim-bottom attrs are set once by
- * print_character and are left alone here.
- *
- * \param[in] D_screen Target cell screen address high byte (was D).
- * \param[in] E_screen Target cell screen address low byte (was E).
- */
-static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
-{
-  u8         code;       /* current candidate glyph code, $40 or $41-$5A (was A) */
-  u8         C_idx;      /* font[] entry index -- 4 for blank, else code-$32 (was C) */
-  const u8  *HL_font;    /* pointer to this glyph's 7-byte font[] entry (was HL) */
-  int        glyph_addr; /* Z80 screen address of this glyph (Conv: added) */
-  u8        *DE_screen;  /* pixel destination cursor (was DE) */
-  int        row;        /* blit row counter (Conv: rolled) */
-
-  code    = state->bank3->hiscore.letter_code;
-  C_idx   = (code == 0x40) ? 4 : (u8) (code - 0x32);
-  HL_font = &font[C_idx * 7];
-
-  glyph_addr = (D_screen << 8) | E_screen;
-  DE_screen  = ADDRTOSCREEN(glyph_addr);
-
-  for (row = 0; row < 4; row++) {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
-  }
-
-  /* Conv: crosses the screen-third boundary; see print_character's own
-   * comment on the identical -2016 correction for the reasoning. */
-  DE_screen -= 2016;
-  for (row = 0; row < 3; row++) {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
-  }
-
-  update_screen(state, glyph_addr, 8, 14);
-}
-
 /* Conv: added -- redraws whichever of the 3 cells hiscore.char_index
  * currently selects, shared by cycle_and_draw_letter and name_entry_dispatch's
  * FIRE handler (both look up the cell's screen address then draw the glyph
@@ -5068,59 +4696,20 @@ static void redraw_letter_cursor(chqstate_t *state)
 }
 
 /**
- * $C25D: Advance the current candidate letter and redraw it
+ * $C16A: Poll input and drive letter selection for the current cell
  *
- * Cycles hiscore.letter_code up or down through $41-$5A ('A'-'Z'), wrapping
- * through $40 ('@', the blank/"." marker), then redraws it.
- *
- * \param[in] C_input_bits Masked keyscan() bits; only RIGHT/LEFT are examined
- *                         here (was C).
+ * Reads keyscan() masked to RIGHT/LEFT/FIRE and hands it to
+ * name_entry_dispatch. Split out so CHQ_TESTS can drive
+ * name_entry_dispatch directly with injected input, bypassing the host
+ * keyboard/joystick read.
  */
-static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
+static void name_entry_input(chqstate_t *state)
 {
-  if (C_input_bits & USERINPUTFLAG_RIGHT) {
-    state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 0x5A) ? 0x40 : (u8) (state->bank3->hiscore.letter_code + 1);
-  } else if (C_input_bits & USERINPUTFLAG_LEFT) {
-    state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 0x40) ? 0x5A : (u8) (state->bank3->hiscore.letter_code - 1);
-  }
+  u8 A_input; /* keyscan() result, masked to RIGHT/LEFT/FIRE (was A) */
 
-  redraw_letter_cursor(state);
-}
-
-/**
- * $C212: Store the final confirmed letter and finish name entry
- *
- * Stores the current candidate letter (or '.' for the blank marker) into
- * the row's name[], marks name entry complete, plays the confirm sound,
- * redraws the confirmed cell one last time, then cues the finishing tune.
- *
- * Conv: the Z80 falls into an unbounded "service sound, loop" tail ($C258-
- *       $C25B) reached by discarding its own caller's return address
- *       (hiscore_finalise runs in name_entry_input's stack frame, not a nested
- *       CALL -- see name_entry_input's own prologue), so it never returns to
- *       ihe_flash_loop at all; the whole state stays parked servicing tune 2
- *       until the next interrupt-driven scene change. This returns normally
- *       instead, but hiscore.complete alone is not enough to reproduce the
- *       audible effect: ihe_flash_loop still has to service tune 2 to
- *       completion (see its own Conv comment) before it returns, otherwise the
- *       tune armed here never plays a single note.
- */
-static void hiscore_finalise(chqstate_t *state)
-{
-  high_score_row_t *entry; /* row being finalised (was DE) */
-  u8                code;  /* final candidate letter code (was A) */
-
-  entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
-  code  = state->bank3->hiscore.letter_code;
-  entry->name[state->bank3->hiscore.char_index] = (code == 0x40) ? '.' : code;
-
-  state->bank3->hiscore.complete = 1;
-
-  stop_music_and_silence(state); /* $ED0B -- confirm sound */
-  name_entry_frame(state);       /* final redraw of the confirmed cell */
-  titlescr_start_tune(state, 2);
+  A_input = (u8) (keyscan(state) &
+                  (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT | USERINPUTFLAG_FIRE));
+  name_entry_dispatch(state, A_input);
 }
 
 /**
@@ -5263,86 +4852,525 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 }
 
 /**
- * $C16A: Poll input and drive letter selection for the current cell
+ * $C212: Store the final confirmed letter and finish name entry
  *
- * Reads keyscan() masked to RIGHT/LEFT/FIRE and hands it to
- * name_entry_dispatch. Split out so CHQ_TESTS can drive
- * name_entry_dispatch directly with injected input, bypassing the host
- * keyboard/joystick read.
+ * Stores the current candidate letter (or '.' for the blank marker) into
+ * the row's name[], marks name entry complete, plays the confirm sound,
+ * redraws the confirmed cell one last time, then cues the finishing tune.
+ *
+ * Conv: the Z80 falls into an unbounded "service sound, loop" tail ($C258-
+ *       $C25B) reached by discarding its own caller's return address
+ *       (hiscore_finalise runs in name_entry_input's stack frame, not a nested
+ *       CALL -- see name_entry_input's own prologue), so it never returns to
+ *       ihe_flash_loop at all; the whole state stays parked servicing tune 2
+ *       until the next interrupt-driven scene change. This returns normally
+ *       instead, but hiscore.complete alone is not enough to reproduce the
+ *       audible effect: ihe_flash_loop still has to service tune 2 to
+ *       completion (see its own Conv comment) before it returns, otherwise the
+ *       tune armed here never plays a single note.
  */
-static void name_entry_input(chqstate_t *state)
+static void hiscore_finalise(chqstate_t *state)
 {
-  u8 A_input; /* keyscan() result, masked to RIGHT/LEFT/FIRE (was A) */
+  high_score_row_t *entry; /* row being finalised (was DE) */
+  u8                code;  /* final candidate letter code (was A) */
 
-  A_input = (u8) (keyscan(state) &
-                  (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT | USERINPUTFLAG_FIRE));
-  name_entry_dispatch(state, A_input);
+  entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
+  code  = state->bank3->hiscore.letter_code;
+  entry->name[state->bank3->hiscore.char_index] = (code == 0x40) ? '.' : code;
+
+  state->bank3->hiscore.complete = 1;
+
+  stop_music_and_silence(state); /* $ED0B -- confirm sound */
+  name_entry_frame(state);       /* final redraw of the confirmed cell */
+  titlescr_start_tune(state, 2);
 }
 
 /**
- * $C133/$C149: Per-frame driver for the name-entry screen
+ * $C25D: Advance the current candidate letter and redraw it
  *
- * Two phases, matching the two Z80 loops:
+ * Cycles hiscore.letter_code up or down through $41-$5A ('A'-'Z'), wrapping
+ * through $40 ('@', the blank/"." marker), then redraws it.
  *
- * - ihe_flash_loop ($C133-$C142): the row scroll-in intro. Calls
- *   scroll_score_rows every frame while hiscore.intro_timer is nonzero.
- * - ihe_entry_loop ($C149-$C152): the interactive typing loop, entered once
- *   the intro timer reaches zero. Calls name_entry_frame (the current
- *   letter's blink) instead -- scroll_score_rows is never called again, so
- *   the rows stop scrolling for the rest of name entry, but hiscore.row's
- *   text keeps blinking via a direct blink_hiscore_row call alongside
- *   name_entry_frame (matching the real $C155/$C2FB call, which continues
- *   to redraw hiscore.row's text every frame after the row has parked).
- *
- * Both phases call name_entry_input and run until hiscore_finalise sets
- * hiscore.complete.
- *
- * Conv: the Z80's $C133 loop condition ($C13C-$C142) tests a self-modified
- *       operand ("LD A,$A0 / DEC A / LD ($C13D),A") that counts down once from
- *       160 over 160 frames; the skool's own comment ("always recomputes to a
- *       constant $9F, so JR NZ is always taken") only holds for a single static
- *       read of the bytes and misses the self-modification -- see
- *       hiscore.intro_timer's own comment (Bank3State.h). This port models the
- *       countdown as a plain state field instead of a self-modified immediate.
- * Conv: the Z80's phase transition and hiscore_finalise's early exit are both
- *       stack-discarding jumps (the skool's own comment: "this loop can only
- *       actually end via a side effect... e.g. popping this return address");
- *       this port replaces both with the intro_timer/complete flags checked
- *       here.
+ * \param[in] C_input_bits Masked keyscan() bits; only RIGHT/LEFT are examined
+ *                         here (was C).
  */
-static void ihe_flash_loop(chqstate_t *state)
+static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
 {
-  for (;;) {
-    CHECK_HOST_QUIT(state);
+  if (C_input_bits & USERINPUTFLAG_RIGHT) {
+    state->bank3->hiscore.letter_code =
+      (state->bank3->hiscore.letter_code == 0x5A) ? 0x40 : (u8) (state->bank3->hiscore.letter_code + 1);
+  } else if (C_input_bits & USERINPUTFLAG_LEFT) {
+    state->bank3->hiscore.letter_code =
+      (state->bank3->hiscore.letter_code == 0x40) ? 0x5A : (u8) (state->bank3->hiscore.letter_code - 1);
+  }
 
-    titlescr_music(state); /* $F82F */
+  redraw_letter_cursor(state);
+}
 
-    if (state->bank3->hiscore.intro_timer != 0) {
-      state->bank3->hiscore.intro_timer--;
-      scroll_score_rows(state);
+/**
+ * $C291/cad_draw_glyph: Draw the current candidate letter's glyph
+ *
+ * Blits hiscore.letter_code's 7-byte font[] entry double-height at
+ * (D_screen, E_screen), each font byte written to two consecutive pixel
+ * rows: the ". . ." placeholder this overwrites was itself printed
+ * double-height by print_character (name_entry_screen_text's third
+ * record, style byte $07, bit 7 clear), so the candidate letter must match
+ * it or the cell visibly shrinks to single height when typing starts.
+ *
+ * No attribute write: the real $C291-$C2B0 never touches attributes either
+ * -- the placeholder's shaded bright-top/dim-bottom attrs are set once by
+ * print_character and are left alone here.
+ *
+ * \param[in] D_screen Target cell screen address high byte (was D).
+ * \param[in] E_screen Target cell screen address low byte (was E).
+ */
+static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
+{
+  u8         code;       /* current candidate glyph code, $40 or $41-$5A (was A) */
+  u8         C_idx;      /* font[] entry index -- 4 for blank, else code-$32 (was C) */
+  const u8  *HL_font;    /* pointer to this glyph's 7-byte font[] entry (was HL) */
+  int        glyph_addr; /* Z80 screen address of this glyph (Conv: added) */
+  u8        *DE_screen;  /* pixel destination cursor (was DE) */
+  int        row;        /* blit row counter (Conv: rolled) */
+
+  code    = state->bank3->hiscore.letter_code;
+  C_idx   = (code == 0x40) ? 4 : (u8) (code - 0x32);
+  HL_font = &font[C_idx * 7];
+
+  glyph_addr = (D_screen << 8) | E_screen;
+  DE_screen  = ADDRTOSCREEN(glyph_addr);
+
+  for (row = 0; row < 4; row++) {
+    *DE_screen = *HL_font;
+    DE_screen += 256;
+    *DE_screen = *HL_font++;
+    DE_screen += 256;
+  }
+
+  /* Conv: crosses the screen-third boundary; see print_character's own
+   * comment on the identical -2016 correction for the reasoning. */
+  DE_screen -= 2016;
+  for (row = 0; row < 3; row++) {
+    *DE_screen = *HL_font;
+    DE_screen += 256;
+    *DE_screen = *HL_font++;
+    DE_screen += 256;
+  }
+
+  update_screen(state, glyph_addr, 8, 14);
+}
+
+/* Conv: added -- advances a (D, E) screen-address pair by one pixel
+ * scanline, correcting the carry a bare D++ would otherwise misroute into
+ * D's thirds-select bits once every 8 steps. D's low 3 bits hold the pixel
+ * line within the current 8-line character cell, so D++ advances the line
+ * correctly for 7 out of 8 steps, but on the 8th (low 3 bits wrap 7 -> 0)
+ * the carry must land in E's cell-row bits instead -- the same
+ * third-boundary-wrap idiom documented in cad_draw_glyph and
+ * redraw_name_frame's own draw/erase loops. Shared by scroll_score_rows
+ * (one step per row per frame) and draw_table_field_scrolling (up to 8
+ * steps per glyph, to walk down one character cell). */
+static void advance_screen_scanline(u8 *D, u8 *E)
+{
+  int H; /* widened copy of *D for advance_glyph_scanline (Conv: added) */
+  int L; /* widened copy of *E for advance_glyph_scanline (Conv: added) */
+
+  H = *D + 1;
+  L = *E;
+  advance_glyph_scanline(&H, &L);
+  *D = (u8) H;
+  *E = (u8) L;
+}
+
+/**
+ * Whether (D, E) falls in the table's visible draw window.
+ *
+ * $C2D3-$C2EB. Not simply "thirds 1-2" -- the real check is asymmetric per
+ * third: third 1 ($48-$4F) only draws on its bottom character-row (E >=
+ * $E0); third 2 ($50-$57) draws on every character-row except its bottom one
+ * (E < $E0). Together these cover one contiguous 8-character-row band
+ * (third 1's last row followed by third 2's first seven), not the full 16
+ * rows both thirds span. Using the wider "D in $48-$57" range instead (an
+ * earlier version of this function did) starts each row drawing a full
+ * character-row band too early, overlapping rows already at rest further
+ * down the table.
+ *
+ * \param[in] D Screen address high byte.
+ * \param[in] E Screen address low byte.
+ *
+ * \return      Non-zero if (D, E) is in the visible draw window.
+ */
+static int table_row_visible(u8 D, u8 E)
+{
+  if (D < 0x48)
+    return 0;
+  if (D < 0x50)
+    return E >= 0xE0;
+  if (D < 0x58)
+    return E < 0xE0;
+  return 0;
+}
+
+/**
+ * $C2B1: Animate each rank's name field scrolling into view
+ *
+ * Advances each of the 10 ranks' screen-address entry (hiscore.row_addr) down
+ * by one pixel row per frame, then redraws that row's full contents (rank
+ * suffix, score, stage code, retry digit, name) at its new position. Row
+ * addresses are free-running u8 counters that are never stopped or reset
+ * once scrolling starts (matching the Z80), so a row cycles through the
+ * whole 256-line address space and back into view periodically -- with only
+ * 16 character-row slots visible for 10 ranks, more than one rank's row can
+ * be scrolling through the visible band at a time, and two ranks can
+ * briefly overlap the same slot exactly as the original hardware does.
+ *
+ * hiscore.row's name field blinks rather than drawing plainly while it is in
+ * the visible window -- see redraw_score_name's comment above, just before
+ * this function.
+ */
+static void scroll_score_rows(chqstate_t *state)
+{
+  int                row;    /* rank index, 0-9 (was B, DJNZ 10 down to 1) */
+  u8                 E;      /* row's screen address low byte (was E) */
+  u8                 D;      /* row's screen address high byte (was D) */
+  u8                 E_old;  /* row's screen address low byte before this frame's scroll step (Conv: added) */
+  u8                 D_old;  /* row's screen address high byte before this frame's scroll step (Conv: added) */
+  high_score_row_t  *entry;  /* this row's data (was DE) */
+  u8                 attrs;  /* Conv: added -- this row's attribute byte */
+
+  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
+    attrs = TABLE_ROW_COLOUR;
+
+    E = state->bank3->hiscore.row_addr[row][0];
+    D = state->bank3->hiscore.row_addr[row][1];
+    E_old = E;
+    D_old = D;
+
+    advance_screen_scanline(&D, &E);
+
+    state->bank3->hiscore.row_addr[row][0] = E;
+    state->bank3->hiscore.row_addr[row][1] = D;
+
+    erase_table_field_scanline(state, 0, D_old, E_old, 5);
+    erase_table_field_scanline(state, 64, D_old, E_old, NELEMS(state->bank3->high_score_table[row].score));
+    erase_table_field_scanline(state, 120, D_old, E_old, NELEMS(state->bank3->high_score_table[row].stage_code));
+    erase_table_field_scanline(state, 176, D_old, E_old, 1);
+    erase_table_field_scanline(state, 224, D_old, E_old, NELEMS(state->bank3->high_score_table[row].name));
+
+    entry = &state->bank3->high_score_table[row];
+
+    if (row == state->bank3->hiscore.row) {
+      blink_hiscore_row(state, 1);
     } else {
-      name_entry_frame(state);
-      blink_hiscore_row(state, 0);
-    }
-
-    name_entry_input(state);
-
-    if (state->bank3->hiscore.complete) {
-      /* Conv: the real $C258 parks here forever servicing tune 2, only
-       * leaving via an interrupt-driven scene change elsewhere -- it never
-       * returns to its own caller (see hiscore_finalise's prologue). This
-       * port must return normally, so instead it services the tune to
-       * completion here, using the same title_music.tune_active
-       * end-of-pattern signal titlescr_wait_loop polls for its own tune
-       * waits, then returns. */
-      while (state->bank3->title_music.tune_active) {
-        CHECK_HOST_QUIT(state);
-        titlescr_music(state);
-      }
-      return;
+      draw_score_row_fields(state, D, E, (u8) row, entry, 1, attrs);
     }
   }
 }
+
+/* Conv: added -- the glyph classification ladder print_character's own
+ * $FDDA-$FDFE uses, factored out so draw_table_field_scrolling below can
+ * look up a glyph per scanline without re-running print_character's whole
+ * record-unpack/blit loop (which assumes a cell-aligned start address --
+ * see advance_screen_scanline's comment). Returns NULL for a literal space
+ * (caller still advances the column but draws nothing). */
+static const u8 *font_glyph_for_char(u8 A_char)
+{
+  u8 A_diff;  /* char - $20; classification input (was A) */
+  u8 C_class; /* width-class index (was C) */
+
+  if (A_char == 0x20)
+    return NULL;
+
+  A_diff = (u8) (A_char - 0x20);
+
+  if (A_diff >= 0x21)
+    C_class = (u8) (A_diff - 18);
+  else if (A_diff >= 0x10)
+    C_class = (u8) (A_diff - 11);
+  else if (A_diff == 1)
+    C_class = 0;
+  else if (A_diff == 8)
+    C_class = 1;
+  else if (A_diff == 9)
+    C_class = 2;
+  else if (A_diff == 12)
+    C_class = 3;
+  else
+    C_class = 4;
+
+  return &font[C_class * 7];
+}
+
+/**
+ * $C2F6: Draw [len] characters of a rank's row at its current scroll position
+ *
+ * Clipped to the visible table.
+ *
+ * Conv: the real $C2F6 (rsn_char_loop) draws from the (D, E) screen address
+ *       scroll_score_rows scrolled to, via its own byte-stream glyph loop -- a
+ *       near-clone of cycle_and_draw_letter's classifier -- and does not stop
+ *       advancing a row's address once drawn: the row keeps scrolling (and
+ *       keeps redrawing) past its first rest line, which is how all 10 ranks
+ *       share the character-row slots actually free below the header (one rank
+ *       is always mid-scroll, carrying the previous rank's row off past the
+ *       header as it arrives). This function is that real per-scanline draw:
+ *       called every frame at the row's *current* (D_row, E_row), which is
+ *       mid-cell most frames, it walks each character down its own 8-scanline
+ *       cell one line at a time (via advance_screen_scanline) and skips (clips)
+ *       any line landing outside SCREEN_ROW_VISIBLE, rather than snapping to a
+ *       fixed rest slot the way an earlier version of this port did.
+ *
+ * \param[in] x     Pixel column of the field's first character, 0-255.
+ * \param[in] D_row Row's current screen address high byte (thirds/pixel-row).
+ * \param[in] E_row Row's current screen address low byte; only its cell-row
+ *                  bits (0xE0) are used -- the column comes from x/i.
+ * \param[in] text  Raw ASCII bytes to draw.
+ * \param[in] len   Number of characters in [text].
+ * \param[in] attrs Conv: added -- no Z80 equivalent. Attribute byte written for
+ *                  this field's cells, in place of the fixed TABLE_ROW_COLOUR.
+ *                  Lets scroll_score_rows set the FLASH bit on the rank 1 row
+ *                  so it blinks via real ZX hardware FLASH (see Screen.c's
+ *                  WRITE8PIX/WRITE8PIX_16) instead of a software toggle.
+ */
+static void draw_table_field_scrolling(chqstate_t *state,
+                                       int         x,
+                                       u8          D_row,
+                                       u8          E_row,
+                                       const u8   *text,
+                                       int         len,
+                                       u8          attrs)
+{
+  int       i;         /* character index within text (Conv: added) */
+  u8        D;         /* this glyph's current scanline address, high byte */
+  u8        E;         /* this glyph's current scanline address, low byte */
+  const u8 *HL_font;   /* this glyph's 7-byte font[] entry, NULL for space */
+  int       row;       /* scanline index within the 8-row cell (Conv: added) */
+  u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
+
+  for (i = 0; i < len; i++) {
+    D = D_row;
+    E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
+
+    HL_font = font_glyph_for_char(text[i]);
+
+    if (table_row_visible(D, E)) {
+      u16 attr_addr; /* this glyph's attribute address (Conv: added) */
+
+      attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
+      *ADDRTOATTRS(attr_addr) = attrs;
+      update_attrs(state, attr_addr, 8, 8);
+    }
+
+    for (row = 0; row < 8; row++) {
+      if (table_row_visible(D, E)) {
+        DE_screen  = ADDRTOSCREEN((D << 8) | E);
+        *DE_screen = (HL_font != NULL && row < 7) ? HL_font[row] : 0;
+        update_screen(state, (D << 8) | E, 8, 1);
+      }
+      advance_screen_scanline(&D, &E);
+    }
+  }
+}
+
+/* $C2F6-$C2F9: whichever rank is being written this session (hiscore.row)
+ * does not just draw plainly like the other nine -- every frame it is
+ * inside the table's visible window (table_row_visible), it alternates
+ * between drawing its whole row text and blanking it, via the same
+ * hiscore.draw_erase_toggle flag name_entry_frame flips for the
+ * currently-typed cell (real $C58D, RLC'd at $C2FF; the CP $09 at $C2F7 is
+ * self-modified by insert_high_score_entry's $C0C0 to compare against
+ * whichever row counter matches hiscore.row). "Whole row" is not an
+ * approximation: the real $C401 scratch table's 31-byte-per-row content
+ * (copied from the 33-byte preset-row records, see the $C3AF-$C422 skool
+ * comment) is rank suffix(5) + score(8) + gap(4) + stage(3) + gap(5) +
+ * retry(1) + gap(2) + name(3, bit-7 terminated on its last byte) laid out
+ * as ONE continuous string with no terminator before the very end --
+ * rsn_char_loop walks straight through all five fields in a single pass,
+ * so the whole row (suffix included -- "1ST", "2ND", ...) blinks together,
+ * not just the name. This is what gives the newly-inserted row its blink
+ * as it scrolls into place -- not a flat colour flash over the row's
+ * attribute cells, and not on a fixed rate tied to the "BEST OFFICERS"
+ * chase (see the removed flash_rank1_row, this comment's predecessor,
+ * which modelled both of those incorrectly).
+ *
+ * The erase half below reuses draw_table_field_scrolling with an
+ * all-spaces string: font_glyph_for_char(' ') is NULL, so it writes zero
+ * bytes across the whole cell, matching rsn_char_loop2's blank-and-advance
+ * loop.
+ */
+static const u8 blank_row_text[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+
+/* Conv: added -- the five field draws below (rank suffix, score, stage code,
+ * retry digit, name) are shared verbatim between blink_hiscore_row and
+ * scroll_score_rows' plain-draw branch. blink is non-zero to draw this
+ * frame's text, zero to blank the row (blink_hiscore_row's toggle);
+ * scroll_score_rows always passes non-zero since it never blanks. */
+static void draw_score_row_fields(chqstate_t             *state,
+                                  u8                      D,
+                                  u8                      E,
+                                  u8                      row,
+                                  const high_score_row_t *entry,
+                                  int                     blink,
+                                  u8                      attrs)
+{
+  draw_table_field_scrolling(state, 0, D, E, blink ? high_score_rank_suffixes[row] : blank_row_text, 5, attrs);
+  draw_table_field_scrolling(state, 64, D, E, blink ? entry->score : blank_row_text, NELEMS(entry->score), attrs);
+  draw_table_field_scrolling(state, 120, D, E, blink ? entry->stage_code : blank_row_text, NELEMS(entry->stage_code), attrs);
+  draw_table_field_scrolling(state, 176, D, E, blink ? &entry->retry_digit : blank_row_text, 1, attrs);
+  draw_table_field_scrolling(state, 224, D, E, blink ? entry->name : blank_row_text, NELEMS(entry->name), attrs);
+}
+
+/**
+ * Blank the single scanline a field's characters just scrolled off
+ *
+ * At their previous screen address.
+ *
+ * Conv: added -- no Z80 equivalent. draw_table_field_scrolling redraws all 8
+ *       scanlines of each character's cell at its *current* position every
+ *       frame; since the window only advances by one line per frame, the line
+ *       at the *old* top of the window falls outside the new window and is
+ *       never redrawn again, leaving a one-scanline trail behind the scrolling
+ *       row. Called with the row's pre-advance (D_row, E_row) to clear exactly
+ *       that vacated line before draw_table_field_scrolling draws the new
+ *       window.
+ *
+ * \param[in] x     Pixel column of the field's first character, 0-255.
+ * \param[in] D_row Row's pre-advance screen address high byte.
+ * \param[in] E_row Row's pre-advance screen address low byte; only its cell-row
+ *                  bits (0xE0) are used.
+ * \param[in] len   Number of characters in the field.
+ */
+static void erase_table_field_scanline(
+    chqstate_t *state, int x, u8 D_row, u8 E_row, int len)
+{
+  int i;         /* character index within the field (Conv: added) */
+  u8  E;         /* this character's vacated-line column (Conv: added) */
+  u8 *DE_screen; /* pixel destination for the vacated line (Conv: added) */
+
+  if (!table_row_visible(D_row, E_row))
+    return;
+
+  for (i = 0; i < len; i++) {
+    E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
+    DE_screen  = ADDRTOSCREEN((D_row << 8) | E);
+    *DE_screen = 0;
+    update_screen(state, (D_row << 8) | E, 8, 1);
+  }
+}
+
+/**
+ * $C2F6/$C2FB: redraw hiscore.row's whole row text, using the shared toggle
+ *
+ * Called once per frame for as long as name entry lasts -- both while the
+ * row is still scrolling in (from scroll_score_rows, matching the real
+ * $C2F6 boundary-triggered entry) and, once it has settled, every frame of
+ * the interactive typing loop (from ihe_flash_loop, matching the real
+ * $C155/$C2FB unconditional entry). Both real entry points share the same
+ * $C58D toggle and the same row-text draw/erase loop, so the row keeps
+ * blinking for the whole time its name is being entered, not just during
+ * the scroll-in.
+ *
+ * hiscore.draw_erase_toggle is not a plain per-frame flip: it is the real
+ * $C58D byte, rotated left one bit per call (RLC, matching flash_phase_a's
+ * treatment elsewhere in this file) rather than XORed. Bit 0 after the
+ * rotate selects draw (0) or erase (1) for that frame. Starting from its
+ * ROM-seeded seed value 0xF0, one full 8-bit rotation gives four consecutive
+ * draw frames followed by four consecutive erase frames, an 8-frame
+ * (~6.25Hz) cycle -- not the 2-frame (~25Hz) alternation a bare toggle would
+ * produce, and slow enough to read as distinct pulses rather than a flicker.
+ *
+ * Uses hiscore.row_addr[hiscore.row] directly: scroll_score_rows keeps this
+ * current while the row is moving, and simply stops advancing it once the
+ * row is parked, so the same address is still correct after scrolling ends.
+ *
+ * \param[in] do_toggle non-zero to rotate hiscore.draw_erase_toggle before
+ *                      reading it (the intro-phase caller, scroll_score_rows,
+ *                      is the only per-frame caller of the toggle at that
+ *                      point); zero to read it as-is (the entry-phase caller,
+ *                      ihe_flash_loop, calls this immediately after
+ *                      name_entry_frame has already rotated the same shared
+ *                      flag for the letter cursor -- rotating again here would
+ *                      double up the frame's rotation and desync the two
+ *                      blinks).
+ */
+static void blink_hiscore_row(chqstate_t *state, int do_toggle)
+{
+  u8                row;   /* rank index being written this session (Conv: added) */
+  u8                D;     /* row's current screen address high byte (was D) */
+  u8                E;     /* row's current screen address low byte (was E) */
+  high_score_row_t *entry; /* this row's data (was DE) */
+  int               blink; /* non-zero draws this frame's text, zero blanks it (Conv: added) */
+
+  row = state->bank3->hiscore.row;
+  D   = state->bank3->hiscore.row_addr[row][1];
+  E   = state->bank3->hiscore.row_addr[row][0];
+
+  if (!table_row_visible(D, E))
+    return;
+
+  entry = &state->bank3->high_score_table[row];
+
+  if (do_toggle)
+    state->bank3->hiscore.draw_erase_toggle =
+      (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
+            (state->bank3->hiscore.draw_erase_toggle >> 7));
+  blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
+
+  draw_score_row_fields(state, D, E, row, entry, blink, TABLE_ROW_COLOUR);
+}
+
+/**
+ * $C2FB: Draw or erase the currently-selected letter cell
+ *
+ * Toggles hiscore.draw_erase_toggle and redraws the currently-selected letter
+ * cell at (D_screen, E_screen) accordingly, giving the letter being typed
+ * its blink. draw_erase_toggle is shared with scroll_score_rows/
+ * redraw_score_name's own draw/erase loops in the original; this port only
+ * needs it for the single cell currently being typed.
+ *
+ * Conv: reduced scope -- the real $C2FB is an entry point into
+ *       redraw_score_name's row loop (rsn_char_loop/rsn_char_loop2), which
+ *       alternates every already-confirmed name across all 10 ranks. This only
+ *       drives the single cell the player is currently typing, since that is
+ *       the only text this port's redraw_score_name (the full-row version,
+ *       above) does not already keep in view once revealed.
+ *
+ * \param[in] D_screen Screen address high byte of the currently-selected cell.
+ * \param[in] E_screen Screen address low byte of the currently-selected cell.
+ */
+static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
+{
+  u8 *DE_screen;  /* erase-blit cursor (was DE) */
+  int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
+  int scan_row;   /* erase-blit row counter (Conv: rolled) */
+
+  if (!(state->bank3->hiscore.draw_erase_toggle & 1)) {
+    hiscore_draw_glyph(state, D_screen, E_screen);
+    return;
+  }
+
+  /* Conv: blanks 14 scanlines (two character rows), matching the
+   * double-height glyph hiscore_draw_glyph now draws -- see its own
+   * comment for why this cell is double-height, not single. */
+  glyph_addr = (D_screen << 8) | E_screen;
+  DE_screen  = ADDRTOSCREEN(glyph_addr);
+  for (scan_row = 0; scan_row < 4; scan_row++) {
+    *DE_screen = 0;
+    DE_screen += 256;
+    *DE_screen = 0;
+    DE_screen += 256;
+  }
+  DE_screen -= 2016; /* crosses the screen-third boundary, see hiscore_draw_glyph */
+  for (scan_row = 0; scan_row < 3; scan_row++) {
+    *DE_screen = 0;
+    DE_screen += 256;
+    *DE_screen = 0;
+    DE_screen += 256;
+  }
+
+  update_screen(state, glyph_addr, 8, 14);
+}
+
 
 /**
  * $C59E: Title-screen driver

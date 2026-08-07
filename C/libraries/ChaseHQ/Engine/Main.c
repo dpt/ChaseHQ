@@ -494,9 +494,10 @@ void update_whole_playfield(chqstate_t *state)
 }
 
 /**
- * Mark the entire playfield area as dirty, including the leftmost 8-pixel
- * column update_whole_playfield excludes. The regular driving playfield
- * never draws into that column (it stays border), but the hiscore and
+ * Mark the entire playfield area as dirty, including the leftmost 8-pixel column.
+ *
+ * update_whole_playfield excludes that column. The regular driving
+ * playfield never draws into it (it stays border), but the hiscore and
  * name-entry screens draw text right up to the screen edge, so their own
  * redraws -- and whatever restores the driving screen afterwards -- need
  * the wider rectangle to avoid leaving stale pixels behind in that column.
@@ -17997,6 +17998,38 @@ static void draw_road(chqstate_t *state)
 }
 
 /**
+ * $C69A: Refresh the attract-mode "BEST OFFICERS" rows from the live table
+ *
+ * Patches the score, stage code, retry digit and name fields of the top 3
+ * rows of state->attract_mode_128k.best_officers (initialised from
+ * best_officers_template by chq_initialise) from the live high-score table
+ * (state->bank3->high_score_table), so a hi-score entered on the name-entry
+ * screen shows up in the attract-mode overlay. The 5-char rank suffix
+ * ("1ST  " etc) and all header/layout bytes are left untouched.
+ *
+ * Conv: models titlescr_refresh_name_table ($C69A) -- see
+ *       bank3_read_high_score_row's own Conv note for why this port reads the
+ *       live table field-by-field rather than replicating the Z80's segmented
+ *       byte copy.
+ */
+static void refresh_best_officers(chqstate_t *state)
+{
+  static const int row_offset[3] = { 63, 98, 133 };
+  int              row;
+  u8               row_data[15];
+  u8              *officers = state->attract_mode_128k.best_officers;
+
+  for (row = 0; row < 3; row++) {
+    bank3_read_high_score_row(state, row, row_data);
+    memcpy(&officers[row_offset[row] + 5], &row_data[0], 8);   /* score */
+    memcpy(&officers[row_offset[row] + 15], &row_data[8], 3);  /* stage code */
+    officers[row_offset[row] + 22] = row_data[11];             /* retry digit */
+    memcpy(&officers[row_offset[row] + 25], &row_data[12], 3); /* name */
+    officers[row_offset[row] + 27] |= EOS;                     /* terminator bit */
+  }
+}
+
+/**
  * $C79A: Backdrop copy and sky fill
  *
  * Blits dr.sky_rows of backdrop data to the ZX screen above the road, then
@@ -21223,38 +21256,6 @@ static void reset_paging_128k(chqstate_t *state)
 {
   // Conv: Removed
   NOT_USED(state);
-}
-
-/**
- * $C69A: Refresh the attract-mode "BEST OFFICERS" rows from the live table
- *
- * Patches the score, stage code, retry digit and name fields of the top 3
- * rows of state->attract_mode_128k.best_officers (initialised from
- * best_officers_template by chq_initialise) from the live high-score table
- * (state->bank3->high_score_table), so a hi-score entered on the name-entry
- * screen shows up in the attract-mode overlay. The 5-char rank suffix
- * ("1ST  " etc) and all header/layout bytes are left untouched.
- *
- * Conv: models titlescr_refresh_name_table ($C69A) -- see
- *       bank3_read_high_score_row's own Conv note for why this port reads
- *       the live table field-by-field rather than replicating the Z80's
- *       segmented byte copy.
- */
-static void refresh_best_officers(chqstate_t *state)
-{
-  static const int row_offset[3] = { 63, 98, 133 };
-  int              row;
-  u8               row_data[15];
-  u8              *officers = state->attract_mode_128k.best_officers;
-
-  for (row = 0; row < 3; row++) {
-    bank3_read_high_score_row(state, row, row_data);
-    memcpy(&officers[row_offset[row] + 5], &row_data[0], 8);   /* score */
-    memcpy(&officers[row_offset[row] + 15], &row_data[8], 3);  /* stage code */
-    officers[row_offset[row] + 22] = row_data[11];             /* retry digit */
-    memcpy(&officers[row_offset[row] + 25], &row_data[12], 3); /* name */
-    officers[row_offset[row] + 27] |= EOS;                     /* terminator bit */
-  }
 }
 
 /**
