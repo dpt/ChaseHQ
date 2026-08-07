@@ -11,6 +11,9 @@ ColumnLimit: 80
 # Broken braces: every brace (function, control-flow, struct, etc.) on its own line
 BreakBeforeBraces: Allman
 
+# extern "C" { ... } body stays at column 0, not indented
+IndentExternBlock: NoIndent
+
 # switch case labels align with the switch, not indented
 IndentCaseLabels: false
 
