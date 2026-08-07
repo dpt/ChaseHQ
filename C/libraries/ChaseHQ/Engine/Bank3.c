@@ -4388,6 +4388,9 @@ static void check_high_score(chqstate_t *state)
 }
 
 /**
+ * Conv: added -- no direct Z80 address; backs titlescr_refresh_name_table
+ * ($C69A)'s 15-byte row copy.
+ *
  * Reads one row of the live high-score table into a caller-supplied buffer.
  *
  * Conv: added -- functional equivalent of titlescr_refresh_name_table ($C69A),
@@ -4404,7 +4407,9 @@ static void check_high_score(chqstate_t *state)
  */
 void bank3_read_high_score_row(chqstate_t *state, int row, u8 *out)
 {
-  const high_score_row_t *entry = &state->bank3->high_score_table[row];
+  const high_score_row_t *entry; /* row being read (Conv: added) */
+
+  entry = &state->bank3->high_score_table[row];
 
   memcpy(&out[0], entry->score, 8);
   memcpy(&out[8], entry->stage_code, 3);
@@ -4453,24 +4458,24 @@ static void insert_high_score_entry(chqstate_t *state, int row)
   // clang-format on
 
   int                shift_row;   /* row being overwritten by the one above it, 9 down to row+1 (Conv: rolled, no Z80 equivalent) */
-  high_score_row_t  *entry;       /* the row being written (was DE, after $C08B POP DE) */
+  high_score_row_t  *DE_entry;    /* the row being written (was DE, after $C08B POP DE) */
   u8                 A_stage_idx; /* wanted_stage_number - 1: index into high_score_stage_codes (was A/C) */
 
   for (shift_row = HIGH_SCORE_TABLE_ROWS - 1; shift_row > row; shift_row--)
     state->bank3->high_score_table[shift_row] = state->bank3->high_score_table[shift_row - 1];
 
-  entry = &state->bank3->high_score_table[row];
+  DE_entry = &state->bank3->high_score_table[row];
 
-  memcpy(entry->score, state->bank3->high_score_digits, 8);
+  memcpy(DE_entry->score, state->bank3->high_score_digits, 8);
 
   A_stage_idx = (u8) (state->wanted_stage_number - 1);
-  memcpy(entry->stage_code, high_score_stage_codes[A_stage_idx], 3);
+  memcpy(DE_entry->stage_code, high_score_stage_codes[A_stage_idx], 3);
 
-  entry->retry_digit = (u8) (state->retry_count + '1');
+  DE_entry->retry_digit = (u8) (state->retry_count + '1');
 
-  entry->name[0] = '.';
-  entry->name[1] = '.';
-  entry->name[2] = '.'; /* placeholder until the player confirms real
+  DE_entry->name[0] = '.';
+  DE_entry->name[1] = '.';
+  DE_entry->name[2] = '.'; /* placeholder until the player confirms real
                          * letters via name_entry_input/hiscore_finalise */
 
   state->bank3->hiscore.row = (u8) row;
@@ -4712,6 +4717,46 @@ static void name_entry_input(chqstate_t *state)
   name_entry_dispatch(state, A_input);
 }
 
+/* Conv: added -- writes one attribute cell of the "BEST OFFICERS" marquee row
+ * and marks it dirty, replacing the *ADDRTOATTRS(...)=value; update_attrs(...)
+ * pair repeated at every marquee attribute write below and in
+ * name_entry_dispatch. */
+static void set_marquee_attr(chqstate_t *state, u8 L_attr, u8 value)
+{
+  u16 addr; /* marquee row attribute cell address (Conv: added) */
+
+  addr = (u16) ((MARQUEE_ROW_ATTR_H << 8) | L_attr);
+
+  *ADDRTOATTRS(addr) = value;
+  update_attrs(state, addr, 8, 8);
+}
+
+/* $C1A8-$C1C2: fast-blinks the "BEST OFFICERS" cell currently being chased
+ * into (cursor_addr) between bright red and off, by rotating flash_phase_a
+ * and using the bit rotated out as the blink state. Runs every frame,
+ * unlike name_entry_dispatch's own once-per-sweep promote-to-solid step;
+ * see name_entry_dispatch's prologue for how the two combine. */
+static void fast_blink_best_officers_cell(chqstate_t *state)
+{
+  u8 carry_a;      /* MSB rotated out of flash_phase_a this frame (was Cy after RLC $C59A) */
+  u8 C_blink_attr; /* fast-blink colour for the cell in progress (was C) */
+
+  carry_a = (u8) (state->bank3->hiscore.flash_phase_a >> 7);
+  state->bank3->hiscore.flash_phase_a =
+    (u8) ((state->bank3->hiscore.flash_phase_a << 1) | carry_a);
+  C_blink_attr = carry_a ? 0x42 : 0x00;
+
+  set_marquee_attr(state, state->bank3->hiscore.cursor_addr, C_blink_attr);
+
+  /* $C1C0: the paired double-height row below shares the same blink, minus
+   * the bright bit. */
+  set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
+                    (u8) (C_blink_attr & ~0x40));
+
+  state->bank3->hiscore.flash_phase_b =
+    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
+}
+
 /**
  * $C16A: Drive letter selection for the current cell from masked input
  *
@@ -4747,41 +4792,6 @@ static void name_entry_input(chqstate_t *state)
  *       below instead, so flash_phase_b is rotated for fidelity only and has no
  *       visible effect here.
  */
-/* Conv: added -- writes one attribute cell of the "BEST OFFICERS" marquee row
- * and marks it dirty, replacing the *ADDRTOATTRS(...)=value; update_attrs(...)
- * pair repeated at every marquee attribute write below and in
- * name_entry_dispatch. */
-static void set_marquee_attr(chqstate_t *state, u8 L_attr, u8 value)
-{
-  u16 addr; /* marquee row attribute cell address (Conv: added) */
-
-  addr = (u16) ((MARQUEE_ROW_ATTR_H << 8) | L_attr);
-
-  *ADDRTOATTRS(addr) = value;
-  update_attrs(state, addr, 8, 8);
-}
-
-static void fast_blink_best_officers_cell(chqstate_t *state)
-{
-  u8 carry_a;    /* MSB rotated out of flash_phase_a this frame (was Cy after RLC $C59A) */
-  u8 blink_attr; /* fast-blink colour for the cell in progress (was C) */
-
-  carry_a = (u8) (state->bank3->hiscore.flash_phase_a >> 7);
-  state->bank3->hiscore.flash_phase_a =
-    (u8) ((state->bank3->hiscore.flash_phase_a << 1) | carry_a);
-  blink_attr = carry_a ? 0x42 : 0x00;
-
-  set_marquee_attr(state, state->bank3->hiscore.cursor_addr, blink_attr);
-
-  /* $C1C0: the paired double-height row below shares the same blink, minus
-   * the bright bit. */
-  set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
-                    (u8) (blink_attr & ~0x40));
-
-  state->bank3->hiscore.flash_phase_b =
-    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
-}
-
 static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 {
   if (--state->bank3->hiscore.blink_timer == 0) {
@@ -4820,8 +4830,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
   fast_blink_best_officers_cell(state);
 
   if (A_input & USERINPUTFLAG_FIRE) {
-    high_score_row_t *entry; /* row being written (was DE) */
-    u8                code;  /* current candidate letter code (was A) */
+    high_score_row_t *DE_entry; /* row being written (was DE) */
+    u8                A_code;   /* current candidate letter code (was A) */
 
     if (state->bank3->hiscore.fire_locked)
       return;
@@ -4829,14 +4839,14 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 
     if (state->bank3->hiscore.char_index == 2) {
       /* hiscore_finalise stores this last letter itself -- no need to write
-       * entry->name here first. */
+       * DE_entry->name here first. */
       hiscore_finalise(state);
       return;
     }
 
-    entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
-    code  = state->bank3->hiscore.letter_code;
-    entry->name[state->bank3->hiscore.char_index] = (code == 0x40) ? '.' : code;
+    DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
+    A_code   = state->bank3->hiscore.letter_code;
+    DE_entry->name[state->bank3->hiscore.char_index] = (A_code == 0x40) ? '.' : A_code;
 
     state->bank3->hiscore.char_index++;
     state->bank3->hiscore.letter_code = 0x40;
@@ -4871,12 +4881,12 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
  */
 static void hiscore_finalise(chqstate_t *state)
 {
-  high_score_row_t *entry; /* row being finalised (was DE) */
-  u8                code;  /* final candidate letter code (was A) */
+  high_score_row_t *DE_entry; /* row being finalised (was DE) */
+  u8                A_code;   /* final candidate letter code (was A) */
 
-  entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
-  code  = state->bank3->hiscore.letter_code;
-  entry->name[state->bank3->hiscore.char_index] = (code == 0x40) ? '.' : code;
+  DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
+  A_code   = state->bank3->hiscore.letter_code;
+  DE_entry->name[state->bank3->hiscore.char_index] = (A_code == 0x40) ? '.' : A_code;
 
   state->bank3->hiscore.complete = 1;
 
@@ -4926,15 +4936,15 @@ static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
  */
 static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
 {
-  u8         code;       /* current candidate glyph code, $40 or $41-$5A (was A) */
+  u8         A_code;     /* current candidate glyph code, $40 or $41-$5A (was A) */
   u8         C_idx;      /* font[] entry index -- 4 for blank, else code-$32 (was C) */
   const u8  *HL_font;    /* pointer to this glyph's 7-byte font[] entry (was HL) */
   int        glyph_addr; /* Z80 screen address of this glyph (Conv: added) */
   u8        *DE_screen;  /* pixel destination cursor (was DE) */
   int        row;        /* blit row counter (Conv: rolled) */
 
-  code    = state->bank3->hiscore.letter_code;
-  C_idx   = (code == 0x40) ? 4 : (u8) (code - 0x32);
+  A_code  = state->bank3->hiscore.letter_code;
+  C_idx   = (A_code == 0x40) ? 4 : (u8) (A_code - 0x32);
   HL_font = &font[C_idx * 7];
 
   glyph_addr = (D_screen << 8) | E_screen;
@@ -5035,7 +5045,7 @@ static void scroll_score_rows(chqstate_t *state)
   u8                 D;      /* row's screen address high byte (was D) */
   u8                 E_old;  /* row's screen address low byte before this frame's scroll step (Conv: added) */
   u8                 D_old;  /* row's screen address high byte before this frame's scroll step (Conv: added) */
-  high_score_row_t  *entry;  /* this row's data (was DE) */
+  high_score_row_t  *DE_entry; /* this row's data (was DE) */
   u8                 attrs;  /* Conv: added -- this row's attribute byte */
 
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
@@ -5057,12 +5067,12 @@ static void scroll_score_rows(chqstate_t *state)
     erase_table_field_scanline(state, 176, D_old, E_old, 1);
     erase_table_field_scanline(state, 224, D_old, E_old, NELEMS(state->bank3->high_score_table[row].name));
 
-    entry = &state->bank3->high_score_table[row];
+    DE_entry = &state->bank3->high_score_table[row];
 
     if (row == state->bank3->hiscore.row) {
       blink_hiscore_row(state, 1);
     } else {
-      draw_score_row_fields(state, D, E, (u8) row, entry, 1, attrs);
+      draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1, attrs);
     }
   }
 }
@@ -5298,7 +5308,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
   u8                row;   /* rank index being written this session (Conv: added) */
   u8                D;     /* row's current screen address high byte (was D) */
   u8                E;     /* row's current screen address low byte (was E) */
-  high_score_row_t *entry; /* this row's data (was DE) */
+  high_score_row_t *DE_entry; /* this row's data (was DE) */
   int               blink; /* non-zero draws this frame's text, zero blanks it (Conv: added) */
 
   row = state->bank3->hiscore.row;
@@ -5308,7 +5318,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
   if (!table_row_visible(D, E))
     return;
 
-  entry = &state->bank3->high_score_table[row];
+  DE_entry = &state->bank3->high_score_table[row];
 
   if (do_toggle)
     state->bank3->hiscore.draw_erase_toggle =
@@ -5316,7 +5326,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
             (state->bank3->hiscore.draw_erase_toggle >> 7));
   blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
-  draw_score_row_fields(state, D, E, row, entry, blink, TABLE_ROW_COLOUR);
+  draw_score_row_fields(state, D, E, row, DE_entry, blink, TABLE_ROW_COLOUR);
 }
 
 /**
