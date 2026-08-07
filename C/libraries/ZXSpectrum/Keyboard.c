@@ -40,7 +40,7 @@ void zxkeyset_assign(zxkeyset_t *keystate, zxkey_t index, int on_off)
   *pbits |= on_off << index;
 }
 
-static __inline uint32_t my_clz(uint32_t value)
+static inline uint32_t my_clz(uint32_t value)
 {
 #if defined(_MSC_VER)
   DWORD leading_zero = 0;
@@ -179,14 +179,18 @@ static zxkey_t char_to_key(int c)
 
 void zxkeyset_setchar(zxkeyset_t *keystate, int c)
 {
-  zxkey_t index = char_to_key(c);
+  zxkey_t index;
+
+  index = char_to_key(c);
   if (index != zxkey_UNKNOWN)
     zxkeyset_assign(keystate, index, 1);
 }
 
 void zxkeyset_clearchar(zxkeyset_t *keystate, int c)
 {
-  zxkey_t index = char_to_key(c);
+  zxkey_t index;
+
+  index = char_to_key(c);
   if (index != zxkey_UNKNOWN)
     zxkeyset_assign(keystate, index, 0);
 }

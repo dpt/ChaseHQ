@@ -2243,9 +2243,12 @@ int bank7_state_create(chqstate_t *state)
 
   /* es_playdrum_go rotates each sample byte in place during playback (RLC),
    * so bank 7 needs its own mutable copies of the drum templates, refreshed
-   * per instance exactly like chqstate_t's own music.drum1/music.drum2 (Create.c). */
-  memcpy(state->bank7->es_drum2, es_drum_sample_2_template, sizeof(es_drum_sample_2_template));
-  memcpy(state->bank7->es_drum1, es_drum_sample_1_template, sizeof(es_drum_sample_1_template));
+   * per instance exactly like chqstate_t's own music.drum1/music.drum2
+   * (Create.c). */
+  memcpy(state->bank7->es_drum2, es_drum_sample_2_template,
+         sizeof(es_drum_sample_2_template));
+  memcpy(state->bank7->es_drum1, es_drum_sample_1_template,
+         sizeof(es_drum_sample_1_template));
 
   return 0;
 }

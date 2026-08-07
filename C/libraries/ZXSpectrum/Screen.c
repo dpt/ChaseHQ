@@ -126,13 +126,15 @@ void zxscreen_convert(const void    *vscr,
   unsigned int         input;
   unsigned int         attrs;
   const unsigned int  *pal;
+#ifdef SHOW_DIRTY_RECTS
+  static int           dirtybits;
+#endif
 
   base_palette = bgr ? palette_abgr : palette_argb;
 
   assert(dirty);
 
 #ifdef SHOW_DIRTY_RECTS
-  static int dirtybits;
   dirtybits = 0x20202020 - dirtybits;
 #endif
 
@@ -519,11 +521,13 @@ void zxscreen_convert16(const void    *vscr,
   unsigned int         bg;
   unsigned int         fg;
   unsigned int         mask;
+#ifdef SHOW_DIRTY_RECTS
+  static int           foo;
+#endif
 
   assert(dirty);
 
 #ifdef SHOW_DIRTY_RECTS
-  static int foo;
   foo = 0x20202020 - foo;
 #endif
 

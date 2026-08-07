@@ -373,35 +373,35 @@
 
 /* ----------------------------------------------------------------------- */
 
-void  update_screen(chqstate_t *state, int screen, int width, int height);
-void  update_attrs(chqstate_t *state, int attrs, int width, int height);
-void  update_whole_playfield(chqstate_t *state);
-void  update_whole_playfield_full_width(chqstate_t *state);
+void update_screen(chqstate_t *state, int screen, int width, int height);
+void update_attrs(chqstate_t *state, int attrs, int width, int height);
+void update_whole_playfield(chqstate_t *state);
+void update_whole_playfield_full_width(chqstate_t *state);
 
 /* Shared with Bank3.c */
 
-void  play_start_noise(chqstate_t *state);
-u8   *z80addrtoscreen(chqstate_t *state, int addr);
-u8   *z80addrtoattrs(chqstate_t *state, int addr);
-u8   *z80addrtobackbuf(chqstate_t *state, int addr);
-u16   wordat(const u8 *addr);
-void  setwordat(u8 *addr, int value);
+void play_start_noise(chqstate_t *state);
+u8  *z80addrtoscreen(chqstate_t *state, int addr);
+u8  *z80addrtoattrs(chqstate_t *state, int addr);
+u8  *z80addrtobackbuf(chqstate_t *state, int addr);
+u16  wordat(const u8 *addr);
+void setwordat(u8 *addr, int value);
 
 /* Shared with Bank7.c */
 
-void  clear_playfield(chqstate_t *state);
-void  drive_chatter(chqstate_t *state);
-void  drive_chatter_stop(chqstate_t *state);
-u8    keyscan(chqstate_t *state);
-void  play_speech_128k(chqstate_t *state, int index);
-void  increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
+void clear_playfield(chqstate_t *state);
+void drive_chatter(chqstate_t *state);
+void drive_chatter_stop(chqstate_t *state);
+u8   keyscan(chqstate_t *state);
+void play_speech_128k(chqstate_t *state, int index);
+void increment_score(chqstate_t *state, int A_lo, int D_hi, int E_md);
 void ptad_led_digits(chqstate_t *state,
                      int         iterations,
                      const u8   *digits,
                      u8         *stored,
                      u8         *screen);
-void  sfx_bipbow(chqstate_t *state, int param1, int param2);
-void  play_noise(chqstate_t *state, int A_param);
+void sfx_bipbow(chqstate_t *state, int param1, int param2);
+void play_noise(chqstate_t *state, int A_param);
 
 /* ----------------------------------------------------------------------- */
 

@@ -333,7 +333,7 @@ static void chq_initialise(chqstate_t *state)
   state->roadbuf_start = &state->road_buffer[0];   // $EE00
   state->roadbuf_end   = &state->road_buffer[256]; // $EF00
 
-  // $A68F (SM), $A69C (SM), $A73E (SM), $A74A (SM)
+  // $A68F (SM), $A69B (SM), $A73E (SM), $A749 (SM)
   state->pb.changing_lane     = 0;
   state->pb.lane_change_timer = 20;
   state->pb.delay             = 0;
@@ -367,10 +367,10 @@ static void chq_initialise(chqstate_t *state)
 
   // $C534/$C68A: SM operands in dr_four_lane_highway / dr_fill_left_stripe
   state->dr.left_markings_page  = 0xE8; // xpos.left page
-  state->dr.left_fill_page  = 0xE8;
+  state->dr.left_fill_page      = 0xE8;
   state->dr.right_markings_page = 0xEC; // xpos.right page
-  state->dr.right_fill_page = 0xEC;
-  state->dr.neg_lane_count   = -4;   // four-lane default
+  state->dr.right_fill_page     = 0xEC;
+  state->dr.neg_lane_count      = -4;   // four-lane default
 
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
@@ -386,10 +386,13 @@ static void chq_initialise(chqstate_t *state)
   state->music.data_ptr          = &music_data[1];
   state->music.pattern_start_ptr = &music_data[1];     // $F112
 
-  /* Conv: keydefs[] is installed by the options menu ($FBE5). chq_bank3_create
-   * seeds it with the same pristine defaults the Z80 holds at $FFF7, so the
-   * stubbed BANK3_INPUT_SELECTION path still gets the original key layout.
+  /* Conv: keydefs[] is installed by the options menu ($FBE5). temp_keydefs
+   * (seeded above from temp_keydefs_template, $EE38) holds the same pristine
+   * defaults the Z80 keeps at $FFF7, so the stubbed BANK3_INPUT_SELECTION
+   * path still gets the original key layout.
    */
+
+  // $A0CC: cleared until Kempston is chosen as the control scheme
   state->kempston_flag = 0;
 }
 

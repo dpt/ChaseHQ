@@ -27,10 +27,8 @@
 /**
  * $E000: Show the end screen
  *
- * Displays the end-of-game results screen: the entry loop and script
- * dispatch skeleton are ported; the draw/glyph-plot handler bodies and
- * script_data content are not yet (see Bank7.c).
- *
+ * Displays the end-of-game results screen: entry loop, script dispatch,
+ * draw/glyph-plot handlers and script_data are all ported (see Bank7.c).
  */
 void show_end_screen(chqstate_t *state);
 
