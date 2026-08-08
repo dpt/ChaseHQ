@@ -28,6 +28,11 @@
 #define ICONBAR_CREATE_RIGHT (-1)
 #define GAME_WIDTH_OS       (512)
 #define GAME_HEIGHT_OS      (384)
+#define GAME_BORDER_OS      (16)
+#define GAME_WINDOW_WIDTH(scale) \
+    (GAME_WIDTH_OS * (scale) + GAME_BORDER_OS * 2)
+#define GAME_WINDOW_HEIGHT(scale) \
+    (GAME_HEIGHT_OS * (scale) + GAME_BORDER_OS * 2)
 #define TEMPLATE_BYTES      (4096)
 #define INFO_ITEM           (0)
 #define NEW_128K_ITEM       (1)
@@ -628,8 +633,8 @@ static os_error *create_game_window(chq_app_t *app)
     memset(&window, 0, sizeof(window));
     window.box.x0 = 128;
     window.box.y0 = 160;
-    window.box.x1 = window.box.x0 + GAME_WIDTH_OS;
-    window.box.y1 = window.box.y0 + GAME_HEIGHT_OS;
+    window.box.x1 = window.box.x0 + GAME_WINDOW_WIDTH(1);
+    window.box.y1 = window.box.y0 + GAME_WINDOW_HEIGHT(1);
     window.flags = wimp_WNEW | wimp_WMOVEABLE | wimp_WBACK |
                    wimp_WTITLE | wimp_WQUIT;
     window.colours[wimp_WCTITLEFORE] = 7;
@@ -640,8 +645,8 @@ static os_error *create_game_window(chq_app_t *app)
     window.colours[wimp_WCSCROLLINNER] = 1;
     window.colours[wimp_WCTITLEHI] = 3;
     window.ex.x0 = 0;
-    window.ex.y0 = -GAME_HEIGHT_OS;
-    window.ex.x1 = GAME_WIDTH_OS;
+    window.ex.y0 = -GAME_WINDOW_HEIGHT(1);
+    window.ex.x1 = GAME_WINDOW_WIDTH(1);
     window.ex.y1 = 0;
     window.titleflags = wimp_ITEXT | wimp_IHCENTRE | wimp_IVCENTRE |
                         wimp_IFILLED | wimp_INDIRECT;
@@ -826,6 +831,76 @@ static os_error *leave_fullscreen(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      fill_black_rectangle
+ Description:   Fill an inclusive rectangle using the current black GCOL.
+ Parameters:    x0, y0 = bottom-left corner in screen coordinates
+                x1, y1 = top-right corner in screen coordinates
+ Returns:       error returned by OS_Plot
+ ******************************************************************/
+static os_error *fill_black_rectangle(int x0, int y0, int x1, int y1)
+{
+    os_error *error;
+
+    if (x0 > x1 || y0 > y1)
+        return NULL;
+    error = _swix(OS_Plot, _INR(0, 2),
+                  4, x0, y0);
+    if (error != NULL)
+        return error;
+    return _swix(OS_Plot, _INR(0, 2),
+                 101, x1, y1);
+}
+
+/*******************************************************************
+ Function:      fill_game_border
+ Description:   Fill only the four margins around the game with black.
+ Parameters:    origin_x = screen x coordinate of the work-area origin
+                origin_y = screen y coordinate of the work-area origin
+                game_width = plotted game width in OS units
+                game_height = plotted game height in OS units
+                window_width = work-area width in OS units
+                window_height = work-area height in OS units
+ Returns:       error returned by ColourTrans or OS_Plot
+ ******************************************************************/
+static os_error *fill_game_border(int origin_x, int origin_y,
+                                  int game_width, int game_height,
+                                  int window_width, int window_height)
+{
+    os_error *error;
+    int game_x0;
+    int game_y0;
+    int game_x1;
+    int game_y1;
+
+    game_x0 = origin_x + GAME_BORDER_OS;
+    game_y0 = origin_y - GAME_BORDER_OS - game_height;
+    game_x1 = game_x0 + game_width - 1;
+    game_y1 = game_y0 + game_height - 1;
+
+    error = _swix(ColourTrans_SetGCOL, _IN(0) | _INR(3, 4),
+                  0, 0, 0);
+    if (error != NULL)
+        return error;
+
+    error = fill_black_rectangle(origin_x, game_y1 + 1,
+                                 origin_x + window_width - 1,
+                                 origin_y - 1);
+    if (error != NULL)
+        return error;
+    error = fill_black_rectangle(origin_x, origin_y - window_height,
+                                 origin_x + window_width - 1,
+                                 game_y0 - 1);
+    if (error != NULL)
+        return error;
+    error = fill_black_rectangle(origin_x, game_y0,
+                                 game_x0 - 1, game_y1);
+    if (error != NULL)
+        return error;
+    return fill_black_rectangle(game_x1 + 1, game_y0,
+                                origin_x + window_width - 1, game_y1);
+}
+
+/*******************************************************************
  Function:      redraw_game
  Description:   Render the centred integer-scaled Spectrum sprite.
  Parameters:    app = application state
@@ -841,10 +916,10 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
     BOOL more;
     int origin_x;
     int origin_y;
-    int work_width;
-    int work_height;
     int game_width;
     int game_height;
+    int window_width;
+    int window_height;
     int plot_x;
     int plot_y;
 
@@ -864,12 +939,18 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
     {
         origin_x = redraw.box.x0 - redraw.scx;
         origin_y = redraw.box.y1 - redraw.scy;
-        work_width = redraw.box.x1 - redraw.box.x0;
-        work_height = redraw.box.y1 - redraw.box.y0;
         game_width = GAME_WIDTH_OS * app->scale;
         game_height = GAME_HEIGHT_OS * app->scale;
-        plot_x = origin_x + (work_width - game_width) / 2;
-        plot_y = origin_y - (work_height + game_height) / 2;
+        window_width = GAME_WINDOW_WIDTH(app->scale);
+        window_height = GAME_WINDOW_HEIGHT(app->scale);
+        plot_x = origin_x + GAME_BORDER_OS;
+        plot_y = origin_y - GAME_BORDER_OS - game_height;
+
+        error = fill_game_border(origin_x, origin_y,
+                                 game_width, game_height,
+                                 window_width, window_height);
+        if (error != NULL)
+            return error;
 
         error = sprite_put_scaled(app->sprite_area, &app->sprite,
                                   app->sprite_plot_action,
@@ -897,8 +978,8 @@ static os_error *force_game_redraw(chq_app_t *app)
     memset(&redraw, 0, sizeof(redraw));
     redraw.w = app->game_window;
     redraw.box.x0 = 0;
-    redraw.box.y0 = -GAME_HEIGHT_OS * 4;
-    redraw.box.x1 = GAME_WIDTH_OS * 4;
+    redraw.box.y0 = -GAME_WINDOW_HEIGHT(4);
+    redraw.box.x1 = GAME_WINDOW_WIDTH(4);
     redraw.box.y1 = 0;
     return wimp_force_redraw(&redraw);
 }
@@ -1228,8 +1309,8 @@ static void refresh_scale_menu(chq_app_t *app)
     {
         scale = item - SCALE_1_ITEM + 1;
         app->menu.item[item].flags = scale == app->scale ? wimp_MTICK : 0;
-        if (GAME_WIDTH_OS * scale > screen_width ||
-            GAME_HEIGHT_OS * scale > screen_height)
+        if (GAME_WINDOW_WIDTH(scale) > screen_width ||
+            GAME_WINDOW_HEIGHT(scale) > screen_height)
             app->menu.item[item].iconflags |= wimp_INOSELECT;
         else
             app->menu.item[item].iconflags &= ~wimp_INOSELECT;
@@ -1256,14 +1337,14 @@ static os_error *set_scale(chq_app_t *app, int scale)
     memset(&extent, 0, sizeof(extent));
     extent.w = app->game_window;
     extent.box.x0 = 0;
-    extent.box.y0 = -GAME_HEIGHT_OS * scale;
-    extent.box.x1 = GAME_WIDTH_OS * scale;
+    extent.box.y0 = -GAME_WINDOW_HEIGHT(scale);
+    extent.box.x1 = GAME_WINDOW_WIDTH(scale);
     extent.box.y1 = 0;
     error = wimp_set_extent(&extent);
     if (error != NULL)
         return error;
-    state.o.box.x1 = state.o.box.x0 + GAME_WIDTH_OS * scale;
-    state.o.box.y0 = state.o.box.y1 - GAME_HEIGHT_OS * scale;
+    state.o.box.x1 = state.o.box.x0 + GAME_WINDOW_WIDTH(scale);
+    state.o.box.y0 = state.o.box.y1 - GAME_WINDOW_HEIGHT(scale);
     state.o.x = 0;
     state.o.y = 0;
     error = wimp_open_wind(&state.o);
