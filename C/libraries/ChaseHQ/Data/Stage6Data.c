@@ -121,7 +121,7 @@ const stage_t stage6 = {
   &stage6_left_hand_objects[2],
   &stage6_perp_description[0],
   &stage6_arrest_messages[0],
-  { NULL, NULL {,
+  { NULL, NULL },
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
