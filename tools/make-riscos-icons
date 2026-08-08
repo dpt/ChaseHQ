@@ -28,11 +28,11 @@ def riscos_palette(image):
 
 
 def pixel_rows(image):
-    """Pack top-origin PNG indices into bottom-origin, low-nibble-first rows."""
+    """Pack PNG indices in sprite row order, with low-nibble-first pixels."""
     stride = ((image.width * 4 + 31) // 32) * 4
     output = bytearray()
 
-    for y in range(image.height - 1, -1, -1):
+    for y in range(image.height):
         row = bytearray(stride)
         for x in range(image.width):
             value = image.getpixel((x, y))
