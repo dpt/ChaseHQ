@@ -276,7 +276,6 @@ int main(int argc, char **argv)
 
   {
     int written = 0;
-    int i;
     for (i = 0; i < BACKBUFFER_LENGTH; i++)
       if (state->backbuffer[i] != 0xFF)
         written++;
