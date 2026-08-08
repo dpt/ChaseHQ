@@ -20348,15 +20348,15 @@ rk_pressed: /* $ED5B, $ED64 */
  * $ED6D: Define a single key
  *
  * Waits until redefine_keyscan reports a key press, checks the keydef has not
- * already been assigned, records it in temp_keydefs[C_index], looks up the key
- * name from key_names[], draws it on screen at [DE_screen] and advances the
- * screen address to the next row. If [B_index] == 4 (the mid-point of the list)
- * an extra row skip is inserted.
+ * already been assigned, records it in temp_keydefs[C_index - 1], looks up
+ * the key name from key_names[], draws it on screen at [DE_screen] and
+ * advances the screen address to the next row. If [B_index] == 4 (the
+ * mid-point of the list) an extra row skip is inserted.
  *
  * \param[in] B_index   Position in the eight-key list (1..8); 4 triggers extra
  *                      gap. (was B)
- * \param[in] C_index   1-based index of the key being defined into
- *                      temp_keydefs[]. (was C)
+ * \param[in] C_index   1-based index of the key being defined; stored at
+ *                      temp_keydefs[C_index - 1]. (was C)
  * \param[in] DE_screen Z80 screen address at which the key name is drawn.
  *                      (was DE)
  * \return              Updated screen address after the drawn key name.
@@ -20412,7 +20412,9 @@ dak_loop1:
   /* POP BC -- get C_index back
    * PUSH BC -- retrieve index
    */
-  state->temp_keydefs[C_index] = A_keydef;
+  // Conv: $ED8D LD HL,$EE37 is one byte before temp_keydefs; ADD HL,BC then
+  // makes the store 1-indexed off that base, i.e. temp_keydefs[C_index - 1].
+  state->temp_keydefs[C_index - 1] = A_keydef;
   HL_keynames = &key_names[(A_keydef & 7) * 10 + (A_keydef >> 3) * 2]; // row + key
   /* POP BC,DE
    * PUSH BC,DE
