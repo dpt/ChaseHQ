@@ -9352,7 +9352,11 @@ u8 bank3_call(chqstate_t *state, int routine)
  */
 static void setup_im2_interrupt_table(chqstate_t *state)
 {
-  /* Conv: no equivalent in C — SDL owns interrupt delivery */
+  /* Conv: no equivalent in C — SDL owns interrupt delivery. Referencing
+   * frame_interrupt_handler's address mirrors the Z80's JP $F8AD vector
+   * install this function performs, keeping the symbol used without adding
+   * a fake per-frame call it never actually gets in the C port. */
+  (void) &frame_interrupt_handler;
   NOT_USED(state);
 }
 
