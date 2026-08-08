@@ -25,7 +25,7 @@
 
 #include "Host.h"
 
-#define ICONBAR_WINDOW      (-2)
+#define ICONBAR_CREATE_RIGHT (-1)
 #define ICONBAR_TOP         (96)
 #define GAME_WIDTH_OS       (512)
 #define GAME_HEIGHT_OS      (384)
@@ -1067,7 +1067,7 @@ static os_error *create_iconbar_icon(chq_app_t *app)
     wimp_icreate create;
 
     memset(&create, 0, sizeof(create));
-    create.w = ICONBAR_WINDOW;
+    create.w = ICONBAR_CREATE_RIGHT;
     create.i.box.x0 = 0;
     create.i.box.y0 = 0;
     create.i.box.x1 = 68;
@@ -1299,6 +1299,7 @@ static void run_requested_game(chq_app_t *app)
 static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
 {
     wimp_mousestr *mouse;
+    chq_iconbar_action_t iconbar_action;
 
     switch (event->e)
     {
@@ -1325,25 +1326,25 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
         mouse = &event->data.but.m;
         if (mouse->w == app->game_window)
             return claim_game_caret(app);
-        if (mouse->w == ICONBAR_WINDOW && mouse->i == app->iconbar_icon)
+        iconbar_action = chq_host_iconbar_action(mouse->w, mouse->i,
+                                                 app->iconbar_icon,
+                                                 mouse->bbits);
+        if (iconbar_action == CHQ_ICONBAR_MENU)
         {
-            if (event->data.but.b == wimp_BMID)
-            {
-                refresh_scale_menu(app);
-                return wimp_create_menu((wimp_menustr *) &app->menu,
-                                        mouse->x - 64,
-                                        ICONBAR_TOP + 6 * app->menu.hdr.height);
-            }
-            if (event->data.but.b == wimp_BLEFT)
-            {
-                os_error *error;
+            refresh_scale_menu(app);
+            return wimp_create_menu((wimp_menustr *) &app->menu,
+                                    mouse->x - 64,
+                                    ICONBAR_TOP + 6 * app->menu.hdr.height);
+        }
+        if (iconbar_action == CHQ_ICONBAR_OPEN)
+        {
+            os_error *error;
 
-                error = open_game_window(app);
-                if (error == NULL && !app->game_running)
-                    app->pending_actions = chq_host_defer(
-                        app->pending_actions, CHQ_ACTION_START_GAME);
-                return error;
-            }
+            error = open_game_window(app);
+            if (error == NULL && !app->game_running)
+                app->pending_actions = chq_host_defer(
+                    app->pending_actions, CHQ_ACTION_START_GAME);
+            return error;
         }
         break;
 

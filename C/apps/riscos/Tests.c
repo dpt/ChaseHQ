@@ -110,6 +110,14 @@ int main(int argc, char **argv)
     check(!chq_host_map_key(127, &spectrum_key, &joystick_key),
           "unmapped RISC OS key");
 
+    check(chq_host_iconbar_action(-2, 7, 7, 4) == CHQ_ICONBAR_OPEN,
+          "iconbar Select decoding");
+    check(chq_host_iconbar_action(-2, 7, 7, 2) == CHQ_ICONBAR_MENU,
+          "iconbar Menu decoding");
+    check(chq_host_iconbar_action(-2, 6, 7, 4) == CHQ_ICONBAR_NONE &&
+          chq_host_iconbar_action(1, 7, 7, 4) == CHQ_ICONBAR_NONE,
+          "iconbar source filtering");
+
     if (failures != 0)
         return EXIT_FAILURE;
 

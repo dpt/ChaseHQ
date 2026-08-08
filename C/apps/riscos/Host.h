@@ -23,6 +23,14 @@ typedef enum chq_host_action
 }
 chq_host_action_t;
 
+typedef enum chq_iconbar_action
+{
+    CHQ_ICONBAR_NONE,
+    CHQ_ICONBAR_OPEN,
+    CHQ_ICONBAR_MENU
+}
+chq_iconbar_action_t;
+
 /*******************************************************************
  Function:      chq_host_defer
  Description:   Add an action to a pending deferred-action word.
@@ -32,6 +40,19 @@ chq_host_action_t;
  ******************************************************************/
 unsigned int chq_host_defer(unsigned int pending,
                             chq_host_action_t action);
+
+/*******************************************************************
+ Function:      chq_host_iconbar_action
+ Description:   Decode an iconbar button event for the application icon.
+ Parameters:    window = source window handle
+                icon = source icon handle
+                app_icon = ChaseHQ iconbar icon handle
+                buttons = Wimp pointer-block button value
+ Returns:       decoded iconbar action
+ ******************************************************************/
+chq_iconbar_action_t chq_host_iconbar_action(int window, int icon,
+                                              int app_icon,
+                                              unsigned int buttons);
 
 /*******************************************************************
  Function:      chq_host_map_key

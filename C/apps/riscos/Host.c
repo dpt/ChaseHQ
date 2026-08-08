@@ -6,6 +6,10 @@
 
 #include "Host.h"
 
+#define ICONBAR_WINDOW       (-2)
+#define ICONBAR_MENU_BUTTON  (2U)
+#define ICONBAR_OPEN_BUTTON  (4U)
+
 /*******************************************************************
  Function:      chq_host_defer
  Description:   Add an action to a pending deferred-action word.
@@ -17,6 +21,28 @@ unsigned int chq_host_defer(unsigned int pending,
                             chq_host_action_t action)
 {
     return pending | (unsigned int) action;
+}
+
+/*******************************************************************
+ Function:      chq_host_iconbar_action
+ Description:   Decode an iconbar button event for the application icon.
+ Parameters:    window = source window handle
+                icon = source icon handle
+                app_icon = ChaseHQ iconbar icon handle
+                buttons = Wimp pointer-block button value
+ Returns:       decoded iconbar action
+ ******************************************************************/
+chq_iconbar_action_t chq_host_iconbar_action(int window, int icon,
+                                              int app_icon,
+                                              unsigned int buttons)
+{
+    if (window != ICONBAR_WINDOW || icon != app_icon)
+        return CHQ_ICONBAR_NONE;
+    if (buttons == ICONBAR_MENU_BUTTON)
+        return CHQ_ICONBAR_MENU;
+    if (buttons == ICONBAR_OPEN_BUTTON)
+        return CHQ_ICONBAR_OPEN;
+    return CHQ_ICONBAR_NONE;
 }
 
 /*******************************************************************
