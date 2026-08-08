@@ -3,11 +3,11 @@ name: RISC OS
 
 on:
   push:
-    branches: ["*"]
+    branches: ["**"]
     tags: ["v*"]
   pull_request:
     types: [opened, reopened, synchronize]
-    branches: ["*"]
+    branches: ["**"]
 
 permissions:
   contents: read
