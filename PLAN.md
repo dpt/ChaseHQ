@@ -73,13 +73,13 @@ Build and test with:
 
 ### 7. Fullscreen
 
-- [ ] Defer entry/exit, preserve the full desktop mode selector and window state,
+- [x] Defer entry/exit, preserve the full desktop mode selector and window state,
   and use `ChaseHQ$ScreenMode` or the closest suitable 4-bpp mode.
-- [ ] Centre at the largest integer scale and use documented sprite, palette,
+- [x] Centre at the largest integer scale and use documented sprite, palette,
   mode, and cursor interfaces without direct framebuffer access.
-- [ ] Escape restores the desktop; paused redraw and all error exits restore
+- [x] Escape restores the desktop; paused redraw and all error exits restore
   mode, palette, cursors, and window state.
-- [ ] Document that fullscreen is deliberately single-tasking.
+- [x] Document that fullscreen is deliberately single-tasking.
 
 ### 8. Packaging and documentation
 

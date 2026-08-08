@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 
 #include "swis.h"
@@ -46,6 +47,8 @@
 #define CLOCK_128K          (3546900U)
 #define CLOCK_TICKS_SECOND  (100U)
 #define MAX_LAG_FRAMES      (4U)
+#define MODE_SELECTOR_HEAD  (5)
+#define MODE_4BPP           (2)
 
 typedef struct chq_menu
 {
@@ -71,6 +74,10 @@ typedef struct chq_app
     int paused;
     int restart_requested;
     int fullscreen_requested;
+    int fullscreen;
+    int fullscreen_scale;
+    int escape_installed;
+    int cursors_removed;
     int have_caret;
     unsigned int pending_actions;
     unsigned int stamps[MAX_STAMPS];
@@ -82,6 +89,13 @@ typedef struct chq_app
     chqstate_t *game;
     zxkeyset_t keys;
     zxkempston_t kempston;
+    int desktop_mode;
+    int *desktop_mode_selector;
+    wimp_wstate desktop_window_state;
+    wimp_caretstr desktop_caret;
+    wimp_palettestr desktop_palette;
+    int desktop_pointer;
+    void (*desktop_escape_handler)(int);
     sprite_area *sprite_area;
     sprite_id sprite;
     unsigned char translation[TRANSLATION_BYTES];
@@ -114,6 +128,21 @@ static const unsigned int spectrum_palette[16] =
 
 static os_error *handle_event(chq_app_t *app, wimp_eventstr *event);
 static int native_sleep(int duration, void *opaque);
+static os_error *enter_fullscreen(chq_app_t *app);
+static os_error *leave_fullscreen(chq_app_t *app);
+static os_error *draw_fullscreen(chq_app_t *app);
+static void copy_frame_to_sprite(chq_app_t *app);
+static os_error *force_game_redraw(chq_app_t *app);
+
+static volatile int fullscreen_escape;
+static os_error memory_error =
+{
+    0x80801, "ChaseHQ: not enough memory"
+};
+static os_error mode_error =
+{
+    0x80802, "ChaseHQ: fullscreen mode is not suitable"
+};
 
 /*******************************************************************
  Function:      monotonic_time
@@ -313,6 +342,175 @@ static os_error *update_translation(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      fullscreen_escape_handler
+ Description:   Remember an Escape request for the next safe callback.
+ Parameters:    signal_number = delivered C signal
+ Returns:       none
+ ******************************************************************/
+static void fullscreen_escape_handler(int signal_number)
+{
+    (void) signal_number;
+    fullscreen_escape = 1;
+    signal(SIGINT, fullscreen_escape_handler);
+}
+
+/*******************************************************************
+ Function:      save_desktop_mode
+ Description:   Copy the complete current numbered mode or selector.
+ Parameters:    app = application state
+ Returns:       error returned by OS_ScreenMode
+ ******************************************************************/
+static os_error *save_desktop_mode(chq_app_t *app)
+{
+    os_error *error;
+    const int *selector;
+    int words;
+
+    free(app->desktop_mode_selector);
+    app->desktop_mode_selector = NULL;
+    error = _swix(OS_ScreenMode, _IN(0) | _OUT(1), 1,
+                  &app->desktop_mode);
+    if (error != NULL || app->desktop_mode < 256)
+        return error;
+
+    selector = (const int *) app->desktop_mode;
+    words = MODE_SELECTOR_HEAD;
+    while (words < 256 && selector[words] != -1)
+        words += 2;
+    if (words >= 256)
+        return &mode_error;
+    words++;
+
+    app->desktop_mode_selector = malloc(words * sizeof(int));
+    if (app->desktop_mode_selector == NULL)
+        return &memory_error;
+    memcpy(app->desktop_mode_selector, selector, words * sizeof(int));
+    return NULL;
+}
+
+/*******************************************************************
+ Function:      select_fullscreen_mode
+ Description:   Select the configured or closest useful 4-bpp mode.
+ Parameters:    none
+ Returns:       error from the last mode selection attempt
+ ******************************************************************/
+static os_error *select_fullscreen_mode(void)
+{
+    static const int fallback[][2] =
+    {
+        { 1024, 768 }, { 800, 600 }, { 640, 480 }, { 320, 256 }
+    };
+    const char *configured;
+    os_error *error;
+    int selector[6];
+    int xlimit;
+    int ylimit;
+    int candidates[5][2];
+    int candidate;
+
+    configured = getenv("ChaseHQ$ScreenMode");
+    error = NULL;
+    if (configured != NULL && configured[0] != '\0')
+    {
+        error = wimp_setmode((int) configured);
+        if (error == NULL)
+            return NULL;
+    }
+
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 11, &xlimit);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 12, &ylimit);
+    candidates[0][0] = xlimit + 1;
+    candidates[0][1] = ylimit + 1;
+    for (candidate = 0; candidate < 4; candidate++)
+    {
+        candidates[candidate + 1][0] = fallback[candidate][0];
+        candidates[candidate + 1][1] = fallback[candidate][1];
+    }
+
+    selector[0] = 1;
+    selector[3] = MODE_4BPP;
+    selector[4] = -1;
+    selector[5] = -1;
+    for (candidate = 0; candidate < 5; candidate++)
+    {
+        if (candidates[candidate][0] < SCREEN_WIDTH ||
+            candidates[candidate][1] < SCREEN_HEIGHT)
+            continue;
+        selector[1] = candidates[candidate][0];
+        selector[2] = candidates[candidate][1];
+        error = wimp_setmode((int) selector);
+        if (error == NULL)
+            return NULL;
+    }
+    return error;
+}
+
+/*******************************************************************
+ Function:      programme_fullscreen_palette
+ Description:   Install the Spectrum colours through documented VDU calls.
+ Parameters:    none
+ Returns:       error returned by OS_WriteN
+ ******************************************************************/
+static os_error *programme_fullscreen_palette(void)
+{
+    unsigned char commands[16 * 6];
+    unsigned char *out;
+    unsigned int colour;
+    int logical;
+
+    out = commands;
+    for (logical = 0; logical < 16; logical++)
+    {
+        colour = spectrum_palette[logical];
+        *out++ = 19;
+        *out++ = logical;
+        *out++ = 16;
+        *out++ = (colour >> 8) & 0xFF;
+        *out++ = (colour >> 16) & 0xFF;
+        *out++ = (colour >> 24) & 0xFF;
+    }
+    return _swix(OS_WriteN, _INR(0, 1), commands, sizeof(commands));
+}
+
+/*******************************************************************
+ Function:      draw_fullscreen
+ Description:   Plot the game centred at the selected whole-pixel scale.
+ Parameters:    app = application state
+ Returns:       error returned while plotting the sprite
+ ******************************************************************/
+static os_error *draw_fullscreen(chq_app_t *app)
+{
+    sprite_factors factors;
+    int xlimit;
+    int ylimit;
+    int xeig;
+    int yeig;
+    int screen_width;
+    int screen_height;
+    int plot_width;
+    int plot_height;
+
+    copy_frame_to_sprite(app);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 11, &xlimit);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 12, &ylimit);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 4, &xeig);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 5, &yeig);
+    screen_width = (xlimit + 1) << xeig;
+    screen_height = (ylimit + 1) << yeig;
+    plot_width = SCREEN_WIDTH * app->fullscreen_scale * (1 << xeig);
+    plot_height = SCREEN_HEIGHT * app->fullscreen_scale * (1 << yeig);
+    factors.xmag = app->fullscreen_scale * (1 << xeig);
+    factors.ymag = app->fullscreen_scale * (1 << yeig);
+    factors.xdiv = 2;
+    factors.ydiv = 4;
+    return sprite_put_scaled(app->sprite_area, &app->sprite, 0,
+                             (screen_width - plot_width) / 2,
+                             (screen_height - plot_height) / 2,
+                             &factors,
+                             (sprite_pixtrans *) app->translation);
+}
+
+/*******************************************************************
  Function:      create_display
  Description:   Create the converted Spectrum frame and sprite workspace.
  Parameters:    app = application state
@@ -420,6 +618,153 @@ static void copy_frame_to_sprite(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      remember_error
+ Description:   Retain the first error while completing restoration.
+ Parameters:    first = address of retained error
+                next = latest operation result
+ Returns:       none
+ ******************************************************************/
+static void remember_error(os_error **first, os_error *next)
+{
+    if (*first == NULL && next != NULL)
+        *first = next;
+}
+
+/*******************************************************************
+ Function:      enter_fullscreen
+ Description:   Save desktop state and enter single-tasking fullscreen play.
+ Parameters:    app = application state
+ Returns:       error returned during entry or restoration
+ ******************************************************************/
+static os_error *enter_fullscreen(chq_app_t *app)
+{
+    os_error *error;
+    int xlimit;
+    int ylimit;
+    int ignored;
+    int scale_x;
+    int scale_y;
+    int log2bpp;
+
+    if (app->fullscreen)
+        return NULL;
+
+    error = save_desktop_mode(app);
+    if (error != NULL)
+        return error;
+    error = wimp_get_wind_state(app->game_window,
+                                &app->desktop_window_state);
+    if (error != NULL)
+        return error;
+    error = wimp_get_caret_pos(&app->desktop_caret);
+    if (error != NULL)
+        return error;
+    error = wimp_readpalette(&app->desktop_palette);
+    if (error != NULL)
+        return error;
+    error = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
+                  106, 127, 0, &app->desktop_pointer);
+    if (error != NULL)
+        return error;
+
+    error = select_fullscreen_mode();
+    if (error != NULL)
+        return error;
+    app->fullscreen = 1;
+    fullscreen_escape = 0;
+    app->desktop_escape_handler = signal(SIGINT,
+                                          fullscreen_escape_handler);
+    app->escape_installed = 1;
+    _swix(OS_Byte, _INR(0, 2), 229, 0, 0);
+    _swix(OS_Byte, _INR(0, 2) | _OUT(1),
+          106, app->desktop_pointer & 128, 0, &ignored);
+    error = _swix(OS_RemoveCursors, 0);
+    if (error != NULL)
+        goto failure;
+    app->cursors_removed = 1;
+
+    error = _swix(OS_WriteC, _IN(0), 12);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 9, &log2bpp);
+    if (error == NULL && log2bpp == 2)
+        error = programme_fullscreen_palette();
+    if (error == NULL)
+        error = update_translation(app);
+    if (error != NULL)
+        goto failure;
+
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 11, &xlimit);
+    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 12, &ylimit);
+    scale_x = (xlimit + 1) / SCREEN_WIDTH;
+    scale_y = (ylimit + 1) / SCREEN_HEIGHT;
+    app->fullscreen_scale = scale_x < scale_y ? scale_x : scale_y;
+    if (app->fullscreen_scale < 1)
+    {
+        error = &mode_error;
+        goto failure;
+    }
+    error = draw_fullscreen(app);
+    if (error != NULL)
+        goto failure;
+    app->deadline_valid = 0;
+    return NULL;
+
+failure:
+    remember_error(&error, leave_fullscreen(app));
+    return error;
+}
+
+/*******************************************************************
+ Function:      leave_fullscreen
+ Description:   Restore desktop mode, palette, pointer, caret and window.
+ Parameters:    app = application state
+ Returns:       first error encountered while restoring state
+ ******************************************************************/
+static os_error *leave_fullscreen(chq_app_t *app)
+{
+    os_error *error;
+    os_error *next;
+    int ignored;
+
+    if (!app->fullscreen)
+        return NULL;
+
+    error = NULL;
+    app->fullscreen = 0;
+    app->fullscreen_requested = 0;
+    if (app->escape_installed)
+    {
+        _swix(OS_Byte, _INR(0, 2), 229, 1, 0);
+        signal(SIGINT, app->desktop_escape_handler);
+        app->escape_installed = 0;
+    }
+    if (app->cursors_removed)
+    {
+        remember_error(&error, _swix(OS_RestoreCursors, 0));
+        app->cursors_removed = 0;
+    }
+
+    if (app->desktop_mode_selector != NULL)
+        next = wimp_setmode((int) app->desktop_mode_selector);
+    else
+        next = wimp_setmode(app->desktop_mode);
+    remember_error(&error, next);
+    remember_error(&error, wimp_setpalette(&app->desktop_palette));
+    next = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
+                 106, app->desktop_pointer, 0, &ignored);
+    remember_error(&error, next);
+    remember_error(&error, wimp_open_wind(&app->desktop_window_state.o));
+    remember_error(&error, wimp_set_caret_pos(&app->desktop_caret));
+    remember_error(&error, update_translation(app));
+    remember_error(&error, force_game_redraw(app));
+
+    free(app->desktop_mode_selector);
+    app->desktop_mode_selector = NULL;
+    app->deadline_valid = 0;
+    fullscreen_escape = 0;
+    return error;
+}
+
+/*******************************************************************
  Function:      redraw_game
  Description:   Render the centred integer-scaled Spectrum sprite.
  Parameters:    app = application state
@@ -495,6 +840,27 @@ static os_error *force_game_redraw(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      service_fullscreen
+ Description:   Enter or leave fullscreen at a safe callback boundary.
+ Parameters:    app = application state
+ Returns:       error returned by the display transition
+ ******************************************************************/
+static os_error *service_fullscreen(chq_app_t *app)
+{
+    os_error *error;
+
+    if (app->fullscreen && fullscreen_escape)
+        return leave_fullscreen(app);
+    if (!app->fullscreen && app->fullscreen_requested)
+    {
+        app->fullscreen_requested = 0;
+        error = enter_fullscreen(app);
+        return error;
+    }
+    return NULL;
+}
+
+/*******************************************************************
  Function:      native_sleep
  Description:   Pace the engine and service Wimp events cooperatively.
  Parameters:    duration = nominal duration in Z80 T-states
@@ -543,7 +909,21 @@ static int native_sleep(int duration, void *opaque)
         while (app->running && !app->stop_requested &&
                time_is_before(now, app->deadline))
         {
-            error = wimp_pollidle(0, &event, app->deadline);
+            error = NULL;
+            if (app->fullscreen)
+            {
+                _swix(OS_Byte, _INR(0, 2), 19, 0, 0);
+            }
+            else
+            {
+                error = wimp_pollidle(0, &event, app->deadline);
+                if (error == NULL)
+                    error = handle_event(app, &event);
+                if (error == NULL)
+                    dispatch_actions(app);
+            }
+            if (error == NULL)
+                error = service_fullscreen(app);
             if (error != NULL)
             {
                 report_error(error);
@@ -551,22 +931,24 @@ static int native_sleep(int duration, void *opaque)
                 app->stop_requested = 1;
                 break;
             }
-            error = handle_event(app, &event);
-            if (error != NULL)
-            {
-                report_error(error);
-                app->fatal_error = 1;
-                app->stop_requested = 1;
-                break;
-            }
-            dispatch_actions(app);
             now = monotonic_time();
         }
     }
 
+    error = service_fullscreen(app);
+    if (error != NULL)
+    {
+        report_error(error);
+        app->fatal_error = 1;
+        app->stop_requested = 1;
+    }
+
     if (app->redraw_pending)
     {
-        error = force_game_redraw(app);
+        if (app->fullscreen)
+            error = draw_fullscreen(app);
+        else
+            error = force_game_redraw(app);
         if (error != NULL)
         {
             report_error(error);
@@ -580,7 +962,22 @@ static int native_sleep(int duration, void *opaque)
     {
         paused_waited = 1;
         now = monotonic_time();
-        error = wimp_pollidle(0, &event, now + 50);
+        if (app->fullscreen)
+        {
+            _swix(OS_Byte, _INR(0, 2), 19, 0, 0);
+            error = service_fullscreen(app);
+        }
+        else
+        {
+            error = wimp_pollidle(0, &event, now + 50);
+            if (error == NULL)
+                error = handle_event(app, &event);
+            if (error == NULL)
+            {
+                dispatch_actions(app);
+                error = service_fullscreen(app);
+            }
+        }
         if (error != NULL)
         {
             report_error(error);
@@ -588,18 +985,12 @@ static int native_sleep(int duration, void *opaque)
             app->stop_requested = 1;
             break;
         }
-        error = handle_event(app, &event);
-        if (error != NULL)
-        {
-            report_error(error);
-            app->fatal_error = 1;
-            app->stop_requested = 1;
-            break;
-        }
-        dispatch_actions(app);
         if (app->redraw_pending)
         {
-            error = force_game_redraw(app);
+            if (app->fullscreen)
+                error = draw_fullscreen(app);
+            else
+                error = force_game_redraw(app);
             app->redraw_pending = 0;
             if (error != NULL)
             {
@@ -855,6 +1246,8 @@ static os_error *open_game_window(chq_app_t *app)
  ******************************************************************/
 static void run_requested_game(chq_app_t *app)
 {
+    os_error *error;
+
     if (!app->start_requested || app->game_running)
         return;
 
@@ -874,6 +1267,12 @@ static void run_requested_game(chq_app_t *app)
     app->game_running = 1;
     chq_start(app->game, app->mode_128k);
     app->game_running = 0;
+    error = leave_fullscreen(app);
+    if (error != NULL)
+    {
+        report_error(error);
+        app->fatal_error = 1;
+    }
     chq_destroy(app->game);
     app->game = NULL;
     app->stop_requested = 0;
@@ -1050,13 +1449,16 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
  ******************************************************************/
 static void destroy_app(chq_app_t *app)
 {
+    report_error(leave_fullscreen(app));
     if (app->game != NULL)
     {
         chq_stop(app->game);
         chq_destroy(app->game);
     }
-    zxspectrum_destroy(app->zx);
+    if (app->zx != NULL)
+        zxspectrum_destroy(app->zx);
     free(app->sprite_area);
+    free(app->desktop_mode_selector);
     if (app->game_window >= 0)
         wimp_delete_wind(app->game_window);
     if (app->info_window >= 0)

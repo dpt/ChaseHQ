@@ -3,4 +3,8 @@ Chase H.Q. for RISC OS
 Select the iconbar icon to open the game window. Use the iconbar menu for
 program information or to quit the application.
 
+F11 enters fullscreen play. Escape restores the desktop. Fullscreen play is
+deliberately single-tasking: other desktop applications are not given time
+until Chase H.Q. returns to its window.
+
 This first native release is silent.
