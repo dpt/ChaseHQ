@@ -96,6 +96,22 @@ void chq_host_copy_frame(unsigned char *destination,
                          int height, int stride);
 
 /*******************************************************************
+ Function:      chq_host_fullscreen_depth
+ Description:   Return a fullscreen depth in preference order.
+ Parameters:    attempt = zero-based depth attempt
+ Returns:       mode-selector depth or -1 after the final attempt
+ ******************************************************************/
+int chq_host_fullscreen_depth(int attempt);
+
+/*******************************************************************
+ Function:      chq_host_sprite_action
+ Description:   Select SpriteExtend translation-table plot flags.
+ Parameters:    log2bpp = destination Log2BPP mode variable
+ Returns:       plot action flags for the translation-table width
+ ******************************************************************/
+int chq_host_sprite_action(int log2bpp);
+
+/*******************************************************************
  Function:      chq_host_map_key
  Description:   Map a RISC OS internal key number to emulated input.
  Parameters:    key = RISC OS internal key number

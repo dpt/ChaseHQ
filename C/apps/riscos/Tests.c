@@ -143,6 +143,16 @@ int main(int argc, char **argv)
     check(memcmp(sprite_rows, source_rows, sizeof(source_rows)) == 0,
           "sprite row order");
 
+    check(chq_host_fullscreen_depth(0) == 2 &&
+          chq_host_fullscreen_depth(1) == 3 &&
+          chq_host_fullscreen_depth(2) == 5 &&
+          chq_host_fullscreen_depth(3) == -1,
+          "fullscreen depth fallback order");
+    check(chq_host_sprite_action(2) == 0 &&
+          chq_host_sprite_action(3) == 0 &&
+          chq_host_sprite_action(5) == 32,
+          "translation-table plot action");
+
     if (failures != 0)
         return EXIT_FAILURE;
 

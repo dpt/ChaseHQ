@@ -12,6 +12,7 @@
 #define ICONBAR_MENU_BUTTON  (2U)
 #define ICONBAR_OPEN_BUTTON  (4U)
 #define ICONBAR_TOP           (96)
+#define SPRITE_WIDE_ENTRIES   (1 << 5)
 
 /*******************************************************************
  Function:      chq_host_defer
@@ -90,6 +91,33 @@ void chq_host_copy_frame(unsigned char *destination,
                          int height, int stride)
 {
     memcpy(destination, source, height * stride);
+}
+
+/*******************************************************************
+ Function:      chq_host_fullscreen_depth
+ Description:   Return a fullscreen depth in preference order.
+ Parameters:    attempt = zero-based depth attempt
+ Returns:       mode-selector depth or -1 after the final attempt
+ ******************************************************************/
+int chq_host_fullscreen_depth(int attempt)
+{
+    static const int depths[] = { 2, 3, 5 };
+
+    if (attempt < 0 ||
+        attempt >= (int) (sizeof(depths) / sizeof(depths[0])))
+        return -1;
+    return depths[attempt];
+}
+
+/*******************************************************************
+ Function:      chq_host_sprite_action
+ Description:   Select SpriteExtend translation-table plot flags.
+ Parameters:    log2bpp = destination Log2BPP mode variable
+ Returns:       plot action flags for the translation-table width
+ ******************************************************************/
+int chq_host_sprite_action(int log2bpp)
+{
+    return log2bpp > 3 ? SPRITE_WIDE_ENTRIES : 0;
 }
 
 /*******************************************************************

@@ -40,7 +40,7 @@
 #define QUIT_ITEM           (10)
 #define MENU_ITEMS          (11)
 #define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
-#define TRANSLATION_BYTES   (1024)
+#define TRANSLATION_WORDS   (256)
 #define SPRITE_MODE_4BPP    (27)
 #define MAX_STAMPS          (4)
 #define CLOCK_48K           (3500000U)
@@ -99,7 +99,8 @@ typedef struct chq_app
     void (*desktop_escape_handler)(int);
     sprite_area *sprite_area;
     sprite_id sprite;
-    unsigned char translation[TRANSLATION_BYTES];
+    unsigned int translation[TRANSLATION_WORDS];
+    int sprite_plot_action;
     chq_menu_t menu;
 }
 chq_app_t;
@@ -341,9 +342,19 @@ static int report_error(os_error *error)
  ******************************************************************/
 static os_error *update_translation(chq_app_t *app)
 {
-    return colourtran_select_table(SPRITE_MODE_4BPP,
+    os_error *error;
+    int log2bpp;
+
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 9, &log2bpp);
+    if (error != NULL)
+        return error;
+    error = colourtran_select_table(SPRITE_MODE_4BPP,
         (wimp_paletteword *) spectrum_palette, -1,
         (wimp_paletteword *) -1, app->translation);
+    if (error == NULL)
+        app->sprite_plot_action = chq_host_sprite_action(log2bpp);
+    return error;
 }
 
 /*******************************************************************
@@ -394,8 +405,34 @@ static os_error *save_desktop_mode(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      current_mode_is_suitable
+ Description:   Check the current mode can display the Spectrum frame.
+ Parameters:    none
+ Returns:       non-zero for a suitable 4, 8 or 32-bpp mode
+ ******************************************************************/
+static int current_mode_is_suitable(void)
+{
+    int xlimit;
+    int ylimit;
+    int log2bpp;
+
+    if (_swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+              -1, 11, &xlimit) != NULL ||
+        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+              -1, 12, &ylimit) != NULL ||
+        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+              -1, 9, &log2bpp) != NULL)
+        return 0;
+    return xlimit + 1 >= SCREEN_WIDTH &&
+           ylimit + 1 >= SCREEN_HEIGHT &&
+           (log2bpp == chq_host_fullscreen_depth(0) ||
+            log2bpp == chq_host_fullscreen_depth(1) ||
+            log2bpp == chq_host_fullscreen_depth(2));
+}
+
+/*******************************************************************
  Function:      select_fullscreen_mode
- Description:   Select the configured or closest useful 4-bpp mode.
+ Description:   Select the configured or closest useful screen mode.
  Parameters:    none
  Returns:       error from the last mode selection attempt
  ******************************************************************/
@@ -412,18 +449,17 @@ static os_error *select_fullscreen_mode(void)
     int ylimit;
     int candidates[5][2];
     int candidate;
+    int depth;
+    int depth_attempt;
 
-    configured = getenv("ChaseHQ$ScreenMode");
-    error = NULL;
-    if (configured != NULL && configured[0] != '\0')
-    {
-        error = wimp_setmode((int) configured);
-        if (error == NULL)
-            return NULL;
-    }
-
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 11, &xlimit);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 12, &ylimit);
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 11, &xlimit);
+    if (error != NULL)
+        return error;
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 12, &ylimit);
+    if (error != NULL)
+        return error;
     candidates[0][0] = xlimit + 1;
     candidates[0][1] = ylimit + 1;
     for (candidate = 0; candidate < 4; candidate++)
@@ -432,22 +468,36 @@ static os_error *select_fullscreen_mode(void)
         candidates[candidate + 1][1] = fallback[candidate][1];
     }
 
-    selector[0] = 1;
-    selector[3] = MODE_4BPP;
-    selector[4] = -1;
-    selector[5] = -1;
-    for (candidate = 0; candidate < 5; candidate++)
+    configured = getenv("ChaseHQ$ScreenMode");
+    error = NULL;
+    if (configured != NULL && configured[0] != '\0')
     {
-        if (candidates[candidate][0] < SCREEN_WIDTH ||
-            candidates[candidate][1] < SCREEN_HEIGHT)
-            continue;
-        selector[1] = candidates[candidate][0];
-        selector[2] = candidates[candidate][1];
-        error = wimp_setmode((int) selector);
-        if (error == NULL)
+        error = wimp_setmode((int) configured);
+        if (error == NULL && current_mode_is_suitable())
             return NULL;
     }
-    return error;
+
+    selector[0] = 1;
+    selector[4] = -1;
+    selector[5] = -1;
+    for (depth_attempt = 0;
+         (depth = chq_host_fullscreen_depth(depth_attempt)) != -1;
+         depth_attempt++)
+    {
+        selector[3] = depth;
+        for (candidate = 0; candidate < 5; candidate++)
+        {
+            if (candidates[candidate][0] < SCREEN_WIDTH ||
+                candidates[candidate][1] < SCREEN_HEIGHT)
+                continue;
+            selector[1] = candidates[candidate][0];
+            selector[2] = candidates[candidate][1];
+            error = wimp_setmode((int) selector);
+            if (error == NULL)
+                return NULL;
+        }
+    }
+    return error == NULL ? &mode_error : error;
 }
 
 /*******************************************************************
@@ -514,10 +564,12 @@ static os_error *draw_fullscreen(chq_app_t *app)
     factors.ymag = host_factors.ymag;
     factors.xdiv = host_factors.xdiv;
     factors.ydiv = host_factors.ydiv;
-    return sprite_put_scaled(app->sprite_area, &app->sprite, 0,
+    return sprite_put_scaled(app->sprite_area, &app->sprite,
+                             app->sprite_plot_action,
                              (screen_width - plot_width) / 2,
                              (screen_height - plot_height) / 2,
-                             &factors, (sprite_pixtrans *) NULL);
+                             &factors,
+                             (sprite_pixtrans *) app->translation);
 }
 
 /*******************************************************************
@@ -674,10 +726,10 @@ static os_error *enter_fullscreen(chq_app_t *app)
     if (error != NULL)
         return error;
 
+    app->fullscreen = 1;
     error = select_fullscreen_mode();
     if (error != NULL)
-        return error;
-    app->fullscreen = 1;
+        goto failure;
     fullscreen_escape = 0;
     app->desktop_escape_handler = signal(SIGINT,
                                           fullscreen_escape_handler);
@@ -691,11 +743,13 @@ static os_error *enter_fullscreen(chq_app_t *app)
     app->cursors_removed = 1;
 
     error = _swix(OS_WriteC, _IN(0), 12);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 9, &log2bpp);
-    if (error == NULL && log2bpp != MODE_4BPP)
-        error = &mode_error;
     if (error == NULL)
+        error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                      -1, 9, &log2bpp);
+    if (error == NULL && log2bpp == MODE_4BPP)
         error = programme_fullscreen_palette();
+    if (error == NULL)
+        error = update_translation(app);
     if (error != NULL)
         goto failure;
 
@@ -817,7 +871,8 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
         plot_x = origin_x + (work_width - game_width) / 2;
         plot_y = origin_y - (work_height + game_height) / 2;
 
-        error = sprite_put_scaled(app->sprite_area, &app->sprite, 0,
+        error = sprite_put_scaled(app->sprite_area, &app->sprite,
+                                  app->sprite_plot_action,
                                   plot_x, plot_y, &factors,
                                   (sprite_pixtrans *) app->translation);
         if (error != NULL)
