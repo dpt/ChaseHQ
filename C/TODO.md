@@ -15,7 +15,7 @@
 - Start backporting changes to the disasm
 - turn curvature_scroll_shadow into a var (it's in state rn)
 - Windows/Linux builds
-
+- 48K mode drum timing is off (interrupts?)
 
 ### Authority sweep (comments that read as guesswork)
 
