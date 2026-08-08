@@ -54,13 +54,13 @@ Build and test with:
 
 ### 5. Cooperative runtime
 
-- [ ] Keep the blocking `chq_start()` lifecycle and avoid threads.
-- [ ] Pace with an absolute monotonic deadline, fixed-point T-state remainder,
+- [x] Keep the blocking `chq_start()` lifecycle and avoid threads.
+- [x] Pace with an absolute monotonic deadline, fixed-point T-state remainder,
   wrap-safe clock arithmetic, and the existing four-frame lag cap.
-- [ ] Service Wimp events with `Wimp_PollIdle`, including accumulated short
+- [x] Service Wimp events with `Wimp_PollIdle`, including accumulated short
   speech delays, and defer unsafe actions to callback boundaries.
-- [ ] Use `chq_stop()` for clean unwinding and null audio callbacks.
-- [ ] Test deferred host-action dispatch.
+- [x] Use `chq_stop()` for clean unwinding and null audio callbacks.
+- [x] Test deferred host-action dispatch.
 
 ### 6. Native controls
 

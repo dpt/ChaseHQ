@@ -12,6 +12,8 @@
 #include "ZXSpectrum/Screen.h"
 #include "ZXSpectrum/Spectrum.h"
 
+#include "Host.h"
+
 static int failures;
 
 /*******************************************************************
@@ -48,6 +50,7 @@ int main(int argc, char **argv)
     unsigned char screen[SCREEN_LENGTH];
     unsigned int pixels[SCREEN_WIDTH * SCREEN_HEIGHT / 8];
     zxbox_t dirty;
+    unsigned int actions;
 
     (void) argc;
     (void) argv;
@@ -89,6 +92,12 @@ int main(int argc, char **argv)
     zxscreen_convert16(screen, pixels, &dirty);
     check(pixels[0] != 0 && pixels[1] == 0,
           "indexed 4-bpp conversion");
+
+    actions = chq_host_defer(0, CHQ_ACTION_START_GAME);
+    actions = chq_host_defer(actions, CHQ_ACTION_QUIT_APP);
+    check((actions & CHQ_ACTION_START_GAME) != 0 &&
+          (actions & CHQ_ACTION_QUIT_APP) != 0,
+          "deferred host action dispatch");
 
     if (failures != 0)
         return EXIT_FAILURE;

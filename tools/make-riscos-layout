@@ -31,6 +31,8 @@ link_header()
 
 link_source C/apps/riscos/Riscos.c riscos
 link_source C/apps/riscos/Tests.c chqtest
+link_source C/apps/riscos/Host.c host
+link_header C/apps/riscos/Host.h Host
 link_source C/libraries/ZXSpectrum/Kempston.c kempston
 link_source C/libraries/ZXSpectrum/Keyboard.c keyboard
 link_source C/libraries/ZXSpectrum/Screen.c screen

@@ -15,7 +15,10 @@
 #include "RISC_OSLib/sprite.h"
 #include "RISC_OSLib/wimp.h"
 
+#include "ChaseHQ/ChaseHQ.h"
 #include "ZXSpectrum/Spectrum.h"
+
+#include "Host.h"
 
 #define ICONBAR_WINDOW      (-2)
 #define ICONBAR_TOP         (96)
@@ -29,6 +32,11 @@
 #define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
 #define TRANSLATION_BYTES   (1024)
 #define SPRITE_MODE_4BPP    (12)
+#define MAX_STAMPS          (4)
+#define CLOCK_48K           (3500000U)
+#define CLOCK_128K          (3546900U)
+#define CLOCK_TICKS_SECOND  (100U)
+#define MAX_LAG_FRAMES      (4U)
 
 typedef struct chq_menu
 {
@@ -45,7 +53,20 @@ typedef struct chq_app
     wimp_i iconbar_icon;
     int running;
     int scale;
+    int mode_128k;
+    int game_running;
+    int start_requested;
+    int stop_requested;
+    int redraw_pending;
+    int fatal_error;
+    unsigned int pending_actions;
+    unsigned int stamps[MAX_STAMPS];
+    int nstamps;
+    unsigned int deadline;
+    unsigned int clock_remainder;
+    int deadline_valid;
     zxspectrum_t *zx;
+    chqstate_t *game;
     sprite_area *sprite_area;
     sprite_id sprite;
     unsigned char translation[TRANSLATION_BYTES];
@@ -75,6 +96,115 @@ static const unsigned int spectrum_palette[16] =
     0x00000000U, 0xFF000000U, 0x0000FF00U, 0xFF00FF00U,
     0x00FF0000U, 0xFFFF0000U, 0x00FFFF00U, 0xFFFFFF00U
 };
+
+static os_error *handle_event(chq_app_t *app, wimp_eventstr *event);
+static int native_sleep(int duration, void *opaque);
+
+/*******************************************************************
+ Function:      monotonic_time
+ Description:   Read the wrapping centisecond monotonic clock.
+ Parameters:    none
+ Returns:       current OS_ReadMonotonicTime value
+ ******************************************************************/
+static unsigned int monotonic_time(void)
+{
+    unsigned int now;
+
+    _swix(OS_ReadMonotonicTime, _OUT(0), &now);
+    return now;
+}
+
+/*******************************************************************
+ Function:      time_is_before
+ Description:   Compare two wrapping monotonic clock values.
+ Parameters:    a = candidate earlier value
+                b = candidate later value
+ Returns:       non-zero if a is before b
+ ******************************************************************/
+static int time_is_before(unsigned int a, unsigned int b)
+{
+    return (int32_t) (a - b) < 0;
+}
+
+/*******************************************************************
+ Function:      dispatch_actions
+ Description:   Apply actions at a safe engine or main-loop boundary.
+ Parameters:    app = application state
+ Returns:       none
+ ******************************************************************/
+static void dispatch_actions(chq_app_t *app)
+{
+    unsigned int actions;
+
+    actions = app->pending_actions;
+    app->pending_actions = 0;
+    if (actions & CHQ_ACTION_QUIT_APP)
+    {
+        app->running = 0;
+        app->stop_requested = 1;
+    }
+    if (actions & CHQ_ACTION_STOP_GAME)
+        app->stop_requested = 1;
+    if ((actions & CHQ_ACTION_START_GAME) && !app->game_running)
+        app->start_requested = 1;
+}
+
+/*******************************************************************
+ Function:      native_draw
+ Description:   Defer a game display update to the next safe boundary.
+ Parameters:    dirty = dirty Spectrum rectangle
+                opaque = application state
+ Returns:       none
+ ******************************************************************/
+static void native_draw(const zxbox_t *dirty, void *opaque)
+{
+    chq_app_t *app;
+
+    (void) dirty;
+    app = opaque;
+    app->redraw_pending = 1;
+}
+
+/*******************************************************************
+ Function:      native_stamp
+ Description:   Record the start of a nested timed engine segment.
+ Parameters:    opaque = application state
+ Returns:       none
+ ******************************************************************/
+static void native_stamp(void *opaque)
+{
+    chq_app_t *app;
+
+    app = opaque;
+    if (app->nstamps < MAX_STAMPS)
+        app->stamps[app->nstamps++] = monotonic_time();
+}
+
+/*******************************************************************
+ Function:      native_key
+ Description:   Supply idle keyboard and joystick ports until controls load.
+ Parameters:    port = Spectrum input port
+                opaque = application state
+ Returns:       inactive port value
+ ******************************************************************/
+static int native_key(uint16_t port, void *opaque)
+{
+    (void) opaque;
+    return port == port_KEMPSTON_JOYSTICK ? 0 : 0xFF;
+}
+
+/*******************************************************************
+ Function:      native_border
+ Description:   Ignore the fixed black ChaseHQ border.
+ Parameters:    colour = Spectrum border colour
+                opaque = application state
+ Returns:       none
+ ******************************************************************/
+static void native_border(int colour, void *opaque)
+{
+    (void) colour;
+    (void) opaque;
+}
 
 /*******************************************************************
  Function:      report_error
@@ -132,6 +262,13 @@ static os_error *create_display(chq_app_t *app)
     config.width = SCREEN_WIDTH / 8;
     config.height = SCREEN_HEIGHT / 8;
     config.opaque = app;
+    config.draw = native_draw;
+    config.stamp = native_stamp;
+    config.sleep = native_sleep;
+    config.key = native_key;
+    config.border = native_border;
+    config.speaker = NULL;
+    config.ay_out = NULL;
     config.pixel_format = ZX_PIXEL_INDEXED4;
     app->zx = zxspectrum_create(&config);
     if (app->zx == NULL)
@@ -277,6 +414,94 @@ static os_error *force_game_redraw(chq_app_t *app)
     redraw.box.x1 = GAME_WIDTH_OS * 4;
     redraw.box.y1 = 0;
     return wimp_force_redraw(&redraw);
+}
+
+/*******************************************************************
+ Function:      native_sleep
+ Description:   Pace the engine and service Wimp events cooperatively.
+ Parameters:    duration = nominal duration in Z80 T-states
+                opaque = application state
+ Returns:       non-zero when the current game must stop
+ ******************************************************************/
+static int native_sleep(int duration, void *opaque)
+{
+    chq_app_t *app;
+    wimp_eventstr event;
+    os_error *error;
+    unsigned int clock_rate;
+    unsigned int numerator;
+    unsigned int ticks;
+    unsigned int now;
+    unsigned int lag;
+
+    app = opaque;
+    if (app->nstamps > 0)
+        app->nstamps--;
+
+    clock_rate = app->mode_128k ? CLOCK_128K : CLOCK_48K;
+    numerator = (unsigned int) duration * CLOCK_TICKS_SECOND +
+                app->clock_remainder;
+    ticks = numerator / clock_rate;
+    app->clock_remainder = numerator % clock_rate;
+    now = monotonic_time();
+
+    if (ticks != 0)
+    {
+        if (!app->deadline_valid)
+        {
+            app->deadline = now + ticks;
+            app->deadline_valid = 1;
+        }
+        else
+        {
+            app->deadline += ticks;
+            lag = ticks * MAX_LAG_FRAMES;
+            if ((int32_t) (now - app->deadline) > (int32_t) lag)
+                app->deadline = now - lag;
+        }
+
+        while (app->running && !app->stop_requested &&
+               time_is_before(now, app->deadline))
+        {
+            error = wimp_pollidle(0, &event, app->deadline);
+            if (error != NULL)
+            {
+                report_error(error);
+                app->fatal_error = 1;
+                app->stop_requested = 1;
+                break;
+            }
+            error = handle_event(app, &event);
+            if (error != NULL)
+            {
+                report_error(error);
+                app->fatal_error = 1;
+                app->stop_requested = 1;
+                break;
+            }
+            dispatch_actions(app);
+            now = monotonic_time();
+        }
+    }
+
+    if (app->redraw_pending)
+    {
+        error = force_game_redraw(app);
+        if (error != NULL)
+        {
+            report_error(error);
+            app->fatal_error = 1;
+            app->stop_requested = 1;
+        }
+        app->redraw_pending = 0;
+    }
+
+    if (!app->running || app->stop_requested)
+    {
+        chq_stop(app->game);
+        return 1;
+    }
+    return 0;
 }
 
 /*******************************************************************
@@ -463,6 +688,38 @@ static os_error *open_game_window(chq_app_t *app)
 }
 
 /*******************************************************************
+ Function:      run_requested_game
+ Description:   Run one blocking engine lifecycle on the Wimp thread.
+ Parameters:    app = application state
+ Returns:       none
+ ******************************************************************/
+static void run_requested_game(chq_app_t *app)
+{
+    if (!app->start_requested || app->game_running)
+        return;
+
+    app->start_requested = 0;
+    app->stop_requested = 0;
+    app->deadline_valid = 0;
+    app->clock_remainder = 0;
+    app->nstamps = 0;
+    app->game = chq_create(app->zx);
+    if (app->game == NULL)
+    {
+        fprintf(stderr, "ChaseHQ: not enough memory to start the game\n");
+        app->fatal_error = 1;
+        return;
+    }
+
+    app->game_running = 1;
+    chq_start(app->game, app->mode_128k);
+    app->game_running = 0;
+    chq_destroy(app->game);
+    app->game = NULL;
+    app->stop_requested = 0;
+}
+
+/*******************************************************************
  Function:      handle_event
  Description:   Dispatch one desktop event.
  Parameters:    app = application state
@@ -484,6 +741,9 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
         return wimp_open_wind(&event->data.o);
 
     case wimp_ECLOSE:
+        if (event->data.o.w == app->game_window && app->game_running)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_STOP_GAME);
         return wimp_close_wind(event->data.o.w);
 
     case wimp_EBUT:
@@ -498,13 +758,24 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
                                         ICONBAR_TOP + 6 * app->menu.hdr.height);
             }
             if (event->data.but.b == wimp_BLEFT)
-                return open_game_window(app);
+            {
+                os_error *error;
+
+                error = open_game_window(app);
+                if (error == NULL && !app->game_running)
+                    app->pending_actions = chq_host_defer(
+                        app->pending_actions, CHQ_ACTION_START_GAME);
+                return error;
+            }
         }
         break;
 
     case wimp_EMENU:
         if (event->data.menu[0] == QUIT_ITEM)
-            app->running = 0;
+        {
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_QUIT_APP);
+        }
         else if (event->data.menu[0] >= SCALE_1_ITEM &&
                  event->data.menu[0] <= SCALE_4_ITEM)
             return set_scale(app, event->data.menu[0] - SCALE_1_ITEM + 1);
@@ -513,7 +784,10 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
     case wimp_ESEND:
     case wimp_ESENDWANTACK:
         if (event->data.msg.hdr.action == wimp_MCLOSEDOWN)
-            app->running = 0;
+        {
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_QUIT_APP);
+        }
         else if (event->data.msg.hdr.action == wimp_MMODECHANGE ||
                  event->data.msg.hdr.action == wimp_PALETTECHANGE)
         {
@@ -540,6 +814,11 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
  ******************************************************************/
 static void destroy_app(chq_app_t *app)
 {
+    if (app->game != NULL)
+    {
+        chq_stop(app->game);
+        chq_destroy(app->game);
+    }
     zxspectrum_destroy(app->zx);
     free(app->sprite_area);
     if (app->game_window >= 0)
@@ -573,6 +852,7 @@ int main(int argc, char **argv)
     app.iconbar_icon = -1;
     app.running = 1;
     app.scale = 1;
+    app.mode_128k = 1;
     version = 310;
     status = EXIT_FAILURE;
 
@@ -593,9 +873,13 @@ int main(int argc, char **argv)
 
     while (app.running)
     {
+        run_requested_game(&app);
+        if (app.fatal_error)
+            goto cleanup;
         error = wimp_poll(0, &event);
         if (report_error(error) || report_error(handle_event(&app, &event)))
             goto cleanup;
+        dispatch_actions(&app);
     }
     status = EXIT_SUCCESS;
 

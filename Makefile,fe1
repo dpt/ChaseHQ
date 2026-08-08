@@ -2,7 +2,7 @@
 
 COMPONENT  = ChaseHQ
 TARGET     = !ChaseHQ
-OBJS       = o.riscos \
+OBJS       = o.riscos o.host \
              o.kempston o.keyboard o.screen o.spectrum o.z80 \
              o.bank3 o.bank7 o.create o.main \
              o.commondata o.soundsamples o.stage1data o.stage2data \
@@ -27,9 +27,9 @@ clean_layout:
 ${ODIR}.chqtest: c.chqtest
 	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ .rotransform/riscos/c/chqtest
 
-${AIFDIR}.ChaseTest: ${ODIR}.chqtest ${ODIR}.screen ${ODIR}.spectrum
+${AIFDIR}.ChaseTest: ${ODIR}.chqtest ${ODIR}.host ${ODIR}.screen ${ODIR}.spectrum
 	${LD} ${LDFLAGS} -o $@ ${ODIR}.chqtest ${ODIR}.screen \
-	      ${ODIR}.spectrum ${CLIB}
+	      ${ODIR}.spectrum ${ODIR}.host ${CLIB}
 
 test: riscos_layout ${AIFDIR}.ChaseTest
 	riscos-build-run ${AIFDIR}/ChaseTest,ff8 --command ChaseTest
