@@ -6036,6 +6036,10 @@ static u8 run_title_screen(chqstate_t *state)
      * Conv: the four unrolled "LD HL,addr / RRA / JR C" checks collapse to a
      * loop over the same 4 bit tests; behaviourally identical. */
     scene_idx = 4;
+    carry     = 0; // Conv: RR reads carry-in only into the rotated value's
+                   // bit 7, never the branch below (which tests bit 0 of
+                   // the pre-rotation value); the loop's outcome does not
+                   // depend on this, but the read must be well-defined.
     for (bit = 0; bit < 4; bit++) {
       RR(A_anim);
       if (carry) {
