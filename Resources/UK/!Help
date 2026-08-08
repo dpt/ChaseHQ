@@ -45,10 +45,10 @@ Host shortcuts
 Fullscreen mode
 ---------------
 
-Fullscreen play selects the closest suitable 4-bpp screen mode and centres
-the game at the largest whole-pixel scale that fits. To override the choice,
-set ChaseHQ$ScreenMode to a RISC OS mode number or mode string before running
-the application, for example:
+Fullscreen play prefers a suitable 4-bpp screen mode, falls back to 8-bpp or
+32-bpp where necessary, and centres the game at the largest whole-pixel scale
+that fits. To override the choice, set ChaseHQ$ScreenMode to a RISC OS mode
+number or mode string before running the application, for example:
 
     *Set ChaseHQ$ScreenMode X800 Y600 C16
 
@@ -61,7 +61,9 @@ Requirements and limitations
 ----------------------------
 
 Chase H.Q. requires a 32-bit RISC OS system with the Wimp, ColourTrans and
-SpriteExtend. It does not support 26-bit or 64-bit systems. This first native
-release is intentionally silent; AY and beeper audio are deferred. Save
-games, networking, CRT effects and multiple simultaneous games are also not
-provided by this release.
+SpriteExtend. An experimental 64-bit build starts a 128K game directly in
+fullscreen mode without RISC_OSLib or the Wimp application shell; Escape exits
+the program and restores the saved desktop. Neither build supports 26-bit
+systems. This first native release is intentionally silent; AY and beeper
+audio are deferred. Save games, networking, CRT effects and multiple
+simultaneous games are also not provided by this release.

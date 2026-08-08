@@ -8,17 +8,20 @@ and all `.rotransform` content are build products and must never be committed.
 
 ## Build and assumptions
 
-The supported target is 32-bit RISC OS using AMU and RISC_OSLib. The canonical
-CMake/SDL3 source layout remains intact, although that build is not a release
-acceptance requirement. One game may run at a time. The first release is
-silent; native AY and beeper audio, save games, networking, CRT effects,
-26-bit and 64-bit builds, and multiple instances are deferred.
+The supported desktop target is 32-bit RISC OS using AMU and RISC_OSLib. An
+experimental 64-bit, fullscreen-only host is also available without
+RISC_OSLib. The canonical CMake/SDL3 source layout remains intact, although
+that build is not a release acceptance requirement. One game may run at a
+time. The first release is silent; native AY and beeper audio, save games,
+networking, CRT effects, 26-bit builds, a 64-bit Wimp host, and multiple
+instances are deferred.
 
 Build and test with:
 
     riscos-amu
     riscos-amu test
     riscos-amu install INSTDIR=install
+    riscos64-amu install INSTDIR=install64
 
 ## Staged checklist and acceptance criteria
 
@@ -87,6 +90,19 @@ Build and test with:
   silent-first-release limitation.
 - [x] Verify installation and final WimpSlot sizing.
 - [x] Complete every first-release item while retaining audio as deferred work.
+
+### 9. Experimental 64-bit fullscreen host
+
+- [x] Select `FULLSCREEN_ONLY` automatically for `BUILD64` and exclude
+  RISC_OSLib and the Wimp host from that build.
+- [x] Start silent 128K play directly, poll controls with documented OS SWIs,
+  and use Escape to stop at a safe engine callback.
+- [x] Preserve and restore the desktop mode and cursor state on normal and
+  error exits.
+- [x] Prefer 4-bpp output, fall back through 8-bpp and 32-bpp modes, and use a
+  ColourTrans pixel translation table for every selected mode.
+- [x] Build and install with `riscos64-amu install INSTDIR=install64`; keep the
+  experimental target outside CI and verify it on a real 64-bit system.
 
 Each numbered section is completed by its correspondingly numbered functional
 commit. Before each commit, files are inspected and staged explicitly.
