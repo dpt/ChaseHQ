@@ -1,6 +1,6 @@
-; Decompiled from Stage5Data.c by map_compile.py.
+; Decompiled from Stage5Data.c by stage_compile.py.
 ; One row is one slice of road, read bottom to top: the last row is
-; the start of the stage. See C/docs/map-text-format.md.
+; the start of the stage. See C/docs/stage-text-format.md.
 ; stage: 5
 ; prefix: stage5_map
 ; obj T = TUNNEL_LIGHT

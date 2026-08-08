@@ -15377,15 +15377,15 @@ static void exit_fork(chqstate_t *state)
 
   /** $ED26: forked_road_exit_rightobjs */
   static const u8 forked_road_exit_rightobjs[4] = {
-    MAP_OBJ_S1_SHORT_POLE(5),
-    MAP_OBJ_S1_NONE(13),
+    MAP_OBJ_SHORT_POLE(5),
+    MAP_OBJ_NONE(13),
     MAP_CMD_FORK_END
   };
 
   /** $E2DA: forked_road_exit_leftobjs */
   static const u8 forked_road_exit_leftobjs[4] = {
-    MAP_OBJ_S1_NONE(5),
-    MAP_OBJ_S1_NONE(13),
+    MAP_OBJ_NONE(5),
+    MAP_OBJ_NONE(13),
     MAP_CMD_FORK_END
   };
 

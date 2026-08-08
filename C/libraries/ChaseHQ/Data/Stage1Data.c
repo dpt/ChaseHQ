@@ -56,6 +56,35 @@
 
 /* ----------------------------------------------------------------------- */
 
+/* Stage 1 object type macros */
+
+#define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
+/* Code 2 selects stage1_{left,right}_hand_graphics_defs[1], which is an
+ * all-zero entry with no bitmap and no draw handler. Every stage's object
+ * table has the same hole; no map stream uses the code.
+ */
+#define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // common
+#define MAP_OBJ_S1_TREE_VAL             (4)
+#define MAP_OBJ_S1_BUSH_VAL             (5)
+#define MAP_OBJ_S1_STREET_LAMP_VAL      (6)
+#define MAP_OBJ_S1_TELEGRAPH_POLE_VAL   (7)
+#define MAP_OBJ_S1_TURN_SIGN_L_VAL      (8)
+#define MAP_OBJ_S1_TURN_SIGN_R_VAL      (9)
+
+#define MAP_OBJ_S1_NONE(D)              ((D << 4) | MAP_OBJ_NONE_VAL)
+#define MAP_OBJ_S1_TUNNEL_LIGHT(D)      ((D << 4) | MAP_OBJ_S1_TUNNEL_LIGHT_VAL)
+#define MAP_OBJ_S1_SHORT_POLE(D)        ((D << 4) | MAP_OBJ_S1_SHORT_POLE_VAL)
+#define MAP_OBJ_S1_TREE(D)              ((D << 4) | MAP_OBJ_S1_TREE_VAL)
+#define MAP_OBJ_S1_BUSH(D)              ((D << 4) | MAP_OBJ_S1_BUSH_VAL)
+#define MAP_OBJ_S1_STREET_LAMP(D)       ((D << 4) | MAP_OBJ_S1_STREET_LAMP_VAL)
+#define MAP_OBJ_S1_TELEGRAPH_POLE(D)    ((D << 4) | MAP_OBJ_S1_TELEGRAPH_POLE_VAL)
+#define MAP_OBJ_S1_TURN_SIGN_L(D)       ((D << 4) | MAP_OBJ_S1_TURN_SIGN_L_VAL)
+#define MAP_OBJ_S1_TURN_SIGN_R(D)       ((D << 4) | MAP_OBJ_S1_TURN_SIGN_R_VAL)
+
+/* ----------------------------------------------------------------------- */
+
+/* Forward declarations */
+// backdrop declared inline in stage struct
 static const u8 stage1_perp_description[7];
 static const char *stage1_chatter_strings[4];
 static const u8 stage1_arrest_messages[83];

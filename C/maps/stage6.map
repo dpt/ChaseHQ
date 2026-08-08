@@ -1,6 +1,6 @@
 ; A randomly authored test level for stage 6. Not from the original game.
 ; One row is one slice of road, read bottom to top: the last row is
-; the start of the stage. See C/docs/map-text-format.md.
+; the start of the stage. See C/docs/stage-text-format.md.
 ; stage: 6
 ; prefix: stage6_map
 ; base: 0xC65C

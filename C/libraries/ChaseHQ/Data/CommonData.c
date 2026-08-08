@@ -1617,8 +1617,8 @@ const u8 fork_hazards[8] = {
 
 /** $E2C0: fork_leftrightobjs */
 const u8 fork_leftrightobjs[6] = {
-  MAP_OBJ_S1_NONE(1),
-  MAP_OBJ_S1_SHORT_POLE(15),
+  MAP_OBJ_NONE(1),
+  MAP_OBJ_SHORT_POLE(15),
   MAP_CMD_GOTO(FORK_LEFTRIGHTOBJS_ADDR + 1) // loop (skipping)
 };
 

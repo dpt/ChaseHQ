@@ -1,12 +1,12 @@
 # The `.map` stage road format
 
-`C/scripts/map_compile.py` compiles a line-based `.map` text file into the C map arrays used by `C/libraries/ChaseHQ/Data/Stage{1-6}Data.c`, and decompiles those arrays back into `.map` text.
+`C/scripts/stage_compile.py` compiles a line-based `.map` text file into the C map arrays used by `C/libraries/ChaseHQ/Data/Stage{1-6}Data.c`, and decompiles those arrays back into `.map` text.
 
 ```bash
 # From C/scripts/
-python3 map_compile.py decompile ../libraries/ChaseHQ/Data/Stage1Data.c > ../maps/stage1.map
-python3 map_compile.py compile   ../maps/stage1.map > fragment.c
-python3 map_compile.py --selftest
+python3 stage_compile.py decompile ../libraries/ChaseHQ/Data/Stage1Data.c > ../maps/stage1.map
+python3 stage_compile.py compile   ../maps/stage1.map > fragment.c
+python3 stage_compile.py --selftest
 ```
 
 `compile` writes a C _fragment_ to stdout — `#define`s, six arrays per section and the goto-table rows. Paste it into the stage file by hand. Like `convert_stage.py`, this script never edits committed data in place, and it has no CMake target for the same reason `convert_stages` is documented as destructive.
@@ -96,7 +96,7 @@ Lines starting with `;` are directives. Lines made only of `|`, `-` and spaces a
 | `prefix: X` | array and `#define` name prefix, e.g. `stage1_map` |
 | `scale: N` | multiplies every `Dst` (default 1) |
 | `base: 0x....` | first synthetic address for `*_ADDR` defines (default `0xC000`) |
-| `obj C = NAME` | object symbol `C` means `MAP_OBJ_S{N}_NAME`; `.` is reserved for NONE |
+| `obj C = NAME` | object symbol `C` means `MAP_OBJ_S{N}_NAME`, or the plain `MAP_OBJ_NAME` for names common to all stages (`NONE`, `TUNNEL_LIGHT`, `SHORT_POLE`); `.` is reserved for NONE |
 | `addr <label> <stream> = 0x....` | pin a real address instead of synthesising one |
 
 The decompiler emits `addr` lines for every section it reads, so a decompiled file recompiles to the same addresses.
@@ -228,7 +228,7 @@ This makes compilation semantically faithful but not always textually identical.
 
 ## Self test
 
-`python3 map_compile.py --selftest` round-trips the committed data:
+`python3 stage_compile.py --selftest` round-trips the committed data:
 
 - stages 1, 2, 4 and 6 decompile, recompile and must match per-unit — between them they cover GOTO, SPLIT, FORK_END, tunnels, dirt track, objects, barriers, arrows, cars and helicopters;
 - stages 3 and 5 must be rejected by default and round-trip with `--allow-desync`.

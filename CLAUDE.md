@@ -25,10 +25,10 @@ stage data by hand.
 
 ### Road map text format
 
-`C/scripts/map_compile.py` compiles a `.map` text table (one row per slice
+`C/scripts/stage_compile.py` compiles a `.map` text table (one row per slice
 of road, the six map streams as columns) to C map arrays, and decompiles
 committed `Stage*Data.c` arrays back to that table. See
-`C/docs/map-text-format.md`; `C/maps/stage1.map` is the worked example.
+`C/docs/stage-text-format.md`; `C/maps/stage1.map` is the worked example.
 It writes a fragment to stdout for hand-pasting and has no CMake target.
 
 ### Disassembly (Speccy/ directory)
