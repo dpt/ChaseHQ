@@ -6,7 +6,6 @@
   - characters vanish
   - hiscore line vanishes
   - test: non-highest score
-- check: High scores shown correctly in attract mode
 - fix: Disable test flag by default (perhaps put it on an F-key)
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - fix: Audio desync when fast forwarding etc.
@@ -14,8 +13,8 @@
 - Stretchy test app produces crap output [checked - still a bit rubbish] - delete it?
 - Start backporting changes to the disasm
 - turn curvature_scroll_shadow into a var (it's in state rn)
-- Windows/Linux builds
 - 48K mode drum timing is off (interrupts?)
+- Quit in pause mode locks up?
 
 ### Authority sweep (comments that read as guesswork)
 

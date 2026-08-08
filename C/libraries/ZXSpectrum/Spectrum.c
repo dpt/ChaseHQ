@@ -2,7 +2,7 @@
  *
  * Interface to a logical ZX Spectrum.
  *
- * Copyright (c) David Thomas, 2013-2020. <dave@davespace.co.uk>
+ * Copyright (c) David Thomas, 2013-2026. <dave@davespace.co.uk>
  */
 
 #include <assert.h>
@@ -212,7 +212,7 @@ static void zx_out(zxspectrum_t *state, uint16_t address, uint8_t byte)
 
       if (prv->config.speaker)
       {
-        prv->tstates += 11; // OUT (n),A itself costs 11 T-states
+        prv->tstates += 11; /* OUT (n),A itself costs 11 T-states */
         prv->config.speaker(ear != 0, prv->tstates, prv->config.opaque);
       }
     }
@@ -398,15 +398,14 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
 
   zxbox_invalidate(&prv->dirty);
 
-  prv->prev_border = ~0;
-  prv->tstates     = 0;
+  prv->prev_border  = ~0;
+  prv->tstates      = 0;
   prv->frame.pixels = prv->converted;
   prv->frame.format = config->pixel_format;
-  prv->frame.width = SCREEN_WIDTH;
+  prv->frame.width  = SCREEN_WIDTH;
   prv->frame.height = SCREEN_HEIGHT;
-  prv->frame.stride = config->pixel_format == ZX_PIXEL_INDEXED4
-                    ? SCREEN_WIDTH / 2 : SCREEN_WIDTH * 4;
-
+  prv->frame.stride = (config->pixel_format == ZX_PIXEL_INDEXED4) ?
+                      SCREEN_WIDTH / 2 : SCREEN_WIDTH * 4;
 
   return &prv->pub;
 }
@@ -432,7 +431,7 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state)
   /* Check for any changes */
   if (zxbox_is_valid(&prv->dirty))
   {
-    // Convert the screen only when it's asked for
+    /* Convert the screen only when it's asked for */
     if (prv->config.pixel_format == ZX_PIXEL_INDEXED4)
       zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
     else

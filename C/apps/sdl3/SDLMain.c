@@ -417,7 +417,7 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
 
     if (state->next_deadline > nowSecs)
     {
-      double     delay = state->next_deadline - nowSecs; // seconds
+      double delay = state->next_deadline - nowSecs; // seconds
 
       SDL_DelayNS((Uint64) (delay * 1e9));
     }
