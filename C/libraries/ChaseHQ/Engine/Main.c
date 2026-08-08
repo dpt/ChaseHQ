@@ -1262,7 +1262,6 @@ static void engine_sfx_from_speed_128k(chqstate_t *state);
 static void setup_turbo_sfx_128k(chqstate_t *state);
 static void play_engine_or_turbo_sfx_128k(chqstate_t *state);
 static void handle_perp_caught_128k(chqstate_t *state);
-static void page_128k(chqstate_t *state);
 static void reset_paging_128k(chqstate_t *state);
 static void attract_mode_128k(chqstate_t *state);
 
@@ -21238,9 +21237,12 @@ static void handle_perp_caught_128k(chqstate_t *state)
  * restore the memory pager. Driven entirely by 128K hardware memory-bank
  * switching.
  *
- * Conv: Removed. C has no 128K memory-paging hardware to drive.
+ * Conv: Removed. C has no 128K memory-paging hardware to drive. Still called
+ *       from bank3_call (Bank3.c), matching call_bank_3_128k's CALL $81D6
+ *       page-in/page-out pair, so the correspondence is visible even though
+ *       the body is a no-op.
  */
-static void page_128k(chqstate_t *state)
+void page_128k(chqstate_t *state)
 {
   // Conv: Removed
   NOT_USED(state);

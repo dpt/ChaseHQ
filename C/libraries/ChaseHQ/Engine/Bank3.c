@@ -9291,7 +9291,9 @@ finalize:
  * refills $B000 from $F000.
  *
  * In C, a switch on [routine] dispatches each Z80 entry-point address constant
- * to its C implementation.
+ * to its C implementation. page_128k (relocated to $81D6) still brackets the
+ * dispatch, page in before and page out after, matching the Z80 CALL pair at
+ * $F3CE/$F3D5, even though it is a no-op in the C port.
  *
  * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
@@ -9306,22 +9308,34 @@ finalize:
  */
 u8 bank3_call(chqstate_t *state, int routine)
 {
+  u8 A_result; /* value to return to caller (was A) */
+
+  page_128k(state); /* $F3CE: page in */
+
   switch (routine) {
   default:
     assert(0);
+    A_result = 1;
     break;
   case BANK3_TITLE_SCREEN:
-    return run_title_screen(state); /* 0 when a credit started a game */
+    A_result = run_title_screen(state); /* 0 when a credit started a game */
+    break;
   case BANK3_HI_SCORE:
     check_high_score(state);
+    A_result = 1;
     break;
   case BANK3_SUCCESS_MUSIC:
     play_success_music(state);
+    A_result = 1;
     break;
   case BANK3_INPUT_SELECTION:
-    return options_menu_driver(state); /* $C009 JP $FB99; always 1 */
+    A_result = options_menu_driver(state); /* $C009 JP $FB99; always 1 */
+    break;
   }
-  return 1;
+
+  page_128k(state); /* $F3D5: page out */
+
+  return A_result;
 }
 
 /**
