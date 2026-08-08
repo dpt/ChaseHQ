@@ -1,0 +1,69 @@
+Chase H.Q. for RISC OS
+======================
+
+This is a 32-bit RISC OS build of the reconstructed ZX Spectrum Chase H.Q.
+game. It supports one game at a time and defaults to the 128K version.
+
+Starting and stopping
+---------------------
+
+Select the iconbar icon to open the game window and start playing. Closing
+the window stops the current game but leaves Chase H.Q. on the iconbar. Use
+Quit from the iconbar menu, or Ctrl-Q, to close the whole application.
+
+The iconbar menu can start a new 48K or 128K game, pause, restart, choose an
+integer window scale, enter fullscreen mode, show program information, or
+quit. Info is the first item and Quit is the last.
+
+Controls
+--------
+
+The original Spectrum keyboard is available while the game window has the
+input caret. Select inside the game window to give it the caret. The original
+default driving keys are:
+
+    K / L           steer left / right
+    A / Z           accelerate / brake
+    N               change gear
+    Space           turbo boost
+
+The arrow keys emulate a Kempston joystick. Keypad Enter is its fire button.
+The game can redefine its own Spectrum keys in the usual way.
+
+Host shortcuts
+--------------
+
+    F2              new 128K game
+    F3              new 48K game
+    F5              pause or resume
+    F6              restart
+    F7 to F10       window scale 1x to 4x
+    F11             enter fullscreen mode
+    Escape          leave fullscreen mode
+    Ctrl-Q          quit the application
+
+Fullscreen mode
+---------------
+
+Fullscreen play prefers a suitable 4-bpp screen mode, falls back to 8-bpp or
+32-bpp where necessary, and centres the game at the largest whole-pixel scale
+that fits. To override the choice, set ChaseHQ$ScreenMode to a RISC OS mode
+number or mode string before running the application, for example:
+
+    *Set ChaseHQ$ScreenMode X800 Y600 C16
+
+Escape returns to the saved desktop mode. Fullscreen play is deliberately
+single-tasking: other applications are not given time and other host
+shortcuts are not serviced until Chase H.Q. returns to its window. A game
+paused before entering fullscreen remains visible while paused.
+
+Requirements and limitations
+----------------------------
+
+Chase H.Q. requires a 32-bit RISC OS system with the Wimp, ColourTrans and
+SpriteExtend. An experimental 64-bit build starts a 128K game directly in
+fullscreen mode without RISC_OSLib or the Wimp application shell; Escape exits
+the program and restores the saved desktop. Neither build supports 26-bit
+systems. This first native release is intentionally silent; AY and beeper
+audio are deferred. Save games, networking, CRT effects and multiple
+simultaneous games are also not provided by this release.

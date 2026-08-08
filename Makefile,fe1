@@ -1,0 +1,106 @@
+# Native RISC OS ChaseHQ application.
+
+COMPONENT  = ChaseHQ
+TARGET     = !ChaseHQ
+OBJS       = o.host \
+             o.kempston o.keyboard o.screen o.spectrum o.z80 \
+             o.bank3 o.bank7 o.create o.main \
+             o.commondata o.soundsamples o.stage1data o.stage2data \
+             o.stage3data o.stage4data o.stage5data o.stages
+CDEFINES   = -D__riscos -DCHQ_SILENT
+INITTARGET = riscos_layout
+CLEANTARGET = clean_layout
+
+ifdef BUILD64
+OBJS       += o.fullscreen
+CDEFINES   += -DFULLSCREEN_ONLY
+INCLUDES   = C/apps/riscos,C/include,C/libraries,C/libraries/ZXSpectrum,C/libraries/ChaseHQ/Engine,C/libraries/ChaseHQ/Data
+else
+OBJS       += o.riscos
+LIBS       = RISC_OSLib.o.risc_oslib
+INCLUDES   = .rotransform/riscos/h
+VPATH      = .rotransform/riscos
+endif
+
+include CApp
+
+.PHONY: riscos_layout clean_layout test
+
+riscos_layout:
+	sh tools/make-riscos-layout
+
+clean_layout:
+	${WIPE} .rotransform.riscos ${WFLAGS}
+
+${ODIR}.chqtest: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ .rotransform/riscos/c/chqtest
+
+${AIFDIR}.ChaseTest: ${ODIR}.chqtest ${ODIR}.host ${ODIR}.keyboard \
+                     ${ODIR}.kempston ${ODIR}.screen ${ODIR}.spectrum
+	${LD} ${LDFLAGS} -o $@ ${ODIR}.chqtest ${ODIR}.screen \
+	      ${ODIR}.spectrum ${ODIR}.keyboard ${ODIR}.kempston \
+	      ${ODIR}.host ${CLIB}
+
+test: riscos_layout ${AIFDIR}.ChaseTest
+	riscos-build-run ${AIFDIR}/ChaseTest,ff8 --command ChaseTest
+
+ifdef BUILD64
+${ODIR}.fullscreen: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/apps/riscos/Fullscreen.c
+
+${ODIR}.host: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/apps/riscos/Host.c
+
+${ODIR}.kempston: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ZXSpectrum/Kempston.c
+
+${ODIR}.keyboard: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ZXSpectrum/Keyboard.c
+
+${ODIR}.screen: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ZXSpectrum/Screen.c
+
+${ODIR}.spectrum: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ZXSpectrum/Spectrum.c
+
+${ODIR}.z80: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ZXSpectrum/Z80.c
+
+${ODIR}.bank3: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Engine/Bank3.c
+
+${ODIR}.bank7: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Engine/Bank7.c
+
+${ODIR}.create: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Engine/Create.c
+
+${ODIR}.main: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Engine/Main.c
+
+${ODIR}.commondata: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/CommonData.c
+
+${ODIR}.soundsamples: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/SoundSamples.c
+
+${ODIR}.stage1data: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stage1Data.c
+
+${ODIR}.stage2data: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stage2Data.c
+
+${ODIR}.stage3data: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stage3Data.c
+
+${ODIR}.stage4data: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stage4Data.c
+
+${ODIR}.stage5data: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stage5Data.c
+
+${ODIR}.stages: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/Stages.c
+endif
+
+# Dynamic dependencies:

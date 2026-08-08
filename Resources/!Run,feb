@@ -1,0 +1,5 @@
+Set ChaseHQ$Dir <Obey$Dir>
+IconSprites <ChaseHQ$Dir>.!Sprites
+| Final AIF loads 234K before stack and heap; 512K leaves over 278K spare.
+WimpSlot -min 512K -max 512K
+Run <ChaseHQ$Dir>.!RunImage %*0

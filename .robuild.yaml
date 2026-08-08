@@ -1,0 +1,26 @@
+%YAML 1.0
+---
+
+# RISC OS build file executed by https://build.riscos.online/
+jobs:
+  build:
+    env:
+      "Sys$Environment": ROBuild
+      "BUILD32": 1
+      "Alias$AMU": "HostAMU %*0"
+
+    script:
+      - echo
+      - echo *** Build and run the native tests ***
+      - amu -f Makefile aif32.ChaseTest
+      - aif32.ChaseTest
+
+      - echo
+      - echo *** Build the application bundle ***
+      - amu -f Makefile install INSTDIR=Install
+
+      - echo
+      - echo *** SUCCESS ***
+
+    artifacts:
+      - path: Install

@@ -1,0 +1,10 @@
+; -*- Mode: Assembler -*-
+;* Shared RISCOS Library: static data layout
+;* Created Nov 89 - IDJ
+;
+; Copyright (C) Acorn Computers Ltd., 1988.
+;
+
+draw_transTable ExportedVariable
+
+   END

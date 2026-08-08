@@ -1,0 +1,105 @@
+#!/bin/sh
+# Build the generated RISC OS leaf-name view used by AMU.
+set -eu
+
+root=.rotransform/riscos
+
+# A build-service upload translates canonical host .c/.h names into RISC OS
+# leaf-name layout before HostAMU runs. Reuse the mirror prepared by CI when
+# those host paths are consequently no longer visible.
+if [ ! -f C/apps/riscos/Riscos.c ]
+then
+    if [ -f "$root/c/riscos" ]
+    then
+        exit 0
+    fi
+    echo "make-riscos-layout: canonical sources and prepared mirror missing" >&2
+    exit 1
+fi
+
+mkdir -p "$root/c" "$root/h/C99/h" "$root/h/ZXSpectrum/h" \
+         "$root/h/ChaseHQ/Data/h" "$root/h/ChaseHQ/Engine/h" \
+         "$root/h/ChaseHQ/h"
+
+link_source()
+{
+    source_path=$1
+    leaf=$2
+    rm -f "$root/c/$leaf"
+    cp -f "$source_path" "$root/c/$leaf"
+}
+
+link_header()
+{
+    source_path=$1
+    target_path=$2
+    case "$target_path" in
+        */*)
+            parent=${target_path%/*}
+            leaf=${target_path##*/}
+            rm -f "$root/h/$parent/h/$leaf"
+            cp -f "$source_path" "$root/h/$parent/h/$leaf"
+            ;;
+        *)
+            rm -f "$root/h/$target_path"
+            cp -f "$source_path" "$root/h/$target_path"
+            ;;
+    esac
+}
+
+link_source C/apps/riscos/Riscos.c riscos
+link_source C/apps/riscos/Fullscreen.c fullscreen
+link_source C/apps/riscos/Tests.c chqtest
+link_source C/apps/riscos/Host.c host
+link_header C/apps/riscos/Host.h Host
+link_source C/libraries/ZXSpectrum/Kempston.c kempston
+link_source C/libraries/ZXSpectrum/Keyboard.c keyboard
+link_source C/libraries/ZXSpectrum/Screen.c screen
+link_source C/libraries/ZXSpectrum/Spectrum.c spectrum
+link_source C/libraries/ZXSpectrum/Z80.c z80
+link_source C/libraries/ChaseHQ/Engine/Bank3.c bank3
+link_source C/libraries/ChaseHQ/Engine/Bank7.c bank7
+link_source C/libraries/ChaseHQ/Engine/Create.c create
+link_source C/libraries/ChaseHQ/Engine/Main.c main
+link_source C/libraries/ChaseHQ/Data/CommonData.c commondata
+link_source C/libraries/ChaseHQ/Data/SoundSamples.c soundsamples
+link_source C/libraries/ChaseHQ/Data/Stage1Data.c stage1data
+link_source C/libraries/ChaseHQ/Data/Stage2Data.c stage2data
+link_source C/libraries/ChaseHQ/Data/Stage3Data.c stage3data
+link_source C/libraries/ChaseHQ/Data/Stage4Data.c stage4data
+link_source C/libraries/ChaseHQ/Data/Stage5Data.c stage5data
+link_source C/libraries/ChaseHQ/Data/Stages.c stages
+
+for header in C/include/C99/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "C99/$leaf"
+done
+for header in C/include/ZXSpectrum/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ZXSpectrum/$leaf"
+done
+for header in C/include/ChaseHQ/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/$leaf"
+done
+for header in C/libraries/ZXSpectrum/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ZXSpectrum/$leaf"
+    link_header "$header" "$leaf"
+done
+for header in C/libraries/ChaseHQ/Engine/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/Engine/$leaf"
+    link_header "$header" "$leaf"
+done
+for header in C/libraries/ChaseHQ/Data/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/Data/$leaf"
+    link_header "$header" "$leaf"
+done

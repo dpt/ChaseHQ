@@ -1,0 +1,88 @@
+---
+name: RISC OS
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+env:
+  COMPONENT_NAME: ChaseHQ
+
+jobs:
+  build-riscos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: riscos-build-server
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      leafname: ${{ steps.version.outputs.leafname }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Obtain prerequisite build tool
+        run: |
+          curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online
+          chmod +x riscos-build-online
+
+      - name: Prepare the RISC OS source layout
+        run: sh tools/make-riscos-layout
+
+      - name: Build through build.riscos.online
+        run: |
+          zip -q9r /tmp/source-archive.zip \
+            .robuild.yaml .rotransform/riscos 'Makefile,fe1' C \
+            Resources RISC_OSLib VersionNum tools/make-riscos-layout
+          ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
+
+      - name: Give the output a versioned name
+        id: version
+        run: |
+          if [ -f VersionNum ]; then
+              version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' VersionNum)
+          else
+              version=$(git rev-parse --short HEAD)
+          fi
+          leafname="$COMPONENT_NAME-$version.zip"
+          if [ -f /tmp/built,a91 ]; then
+              cp /tmp/built,a91 "$leafname"
+          else
+              echo "No archive was built?"
+              exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "leafname=$leafname" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: RISCOS-build
+          path: ${{ steps.version.outputs.leafname }}
+          if-no-files-found: error
+
+  release:
+    needs: build-riscos
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download built RISC OS application
+        uses: actions/download-artifact@v8
+        with:
+          name: RISCOS-build
+
+      - name: Create draft release
+        uses: ncipollo/release-action@v1
+        with:
+          prerelease: false
+          draft: true
+          artifacts: ${{ needs.build-riscos.outputs.leafname }}
+          artifactContentType: application/zip

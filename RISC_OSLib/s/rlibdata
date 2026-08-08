@@ -1,0 +1,15 @@
+; This is the amount of space used for static data by the C part of the C
+; library (including some safety margin, described in s.clib.sparedata).
+; This file is used in making the C library stub.  It is important that
+; this number plus the size of data for CLib be kept constant, or relinking
+; will be forced on the shared library's clients:-
+;
+;       size-of-static-data-in-part-of-RISC_OS/C-library-written-in-C +
+;           sizeof-static-data-in-cl_spare == RlibSpace
+;
+; Copyright (C) Acorn Computers Ltd., 1988.
+;
+
+RlibSpace  Variable 608
+
+        END

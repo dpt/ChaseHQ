@@ -6,3 +6,7 @@
 C/cmake-build-*/
 __pycache__/
 build
+.rotransform/
+o32/
+aif32/
+install/

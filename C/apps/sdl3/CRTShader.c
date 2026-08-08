@@ -307,7 +307,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            const chq_CRT_params_t *params)
 {
   SDL_GPUViewport              viewport;
-  uint32_t                    *pixels;
+  const zx_frame_t            *frame;
   void                        *mapped;
   SDL_GPUCommandBuffer        *upload_cmdbuf;
   SDL_GPUCopyPass             *copy_pass;
@@ -333,9 +333,9 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   viewport.max_depth = 1.0f;
 
   /* Upload the game's converted screen buffer to the GPU texture. */
-  pixels = zxspectrum_claim_screen(zx);
+  frame = zxspectrum_claim_screen(zx);
   mapped = SDL_MapGPUTransferBuffer(shader->gpu, shader->transfer_buffer, true);
-  memcpy(mapped, pixels, game_width * game_height * 4);
+  memcpy(mapped, frame->pixels, game_width * game_height * 4);
   SDL_UnmapGPUTransferBuffer(shader->gpu, shader->transfer_buffer);
   zxspectrum_release_screen(zx);
 
