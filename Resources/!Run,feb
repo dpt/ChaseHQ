@@ -1,3 +1,4 @@
 Set ChaseHQ$Dir <Obey$Dir>
-WimpSlot -min 1024K -max 1024K
+| Final AIF loads 234K before stack and heap; 512K leaves over 278K spare.
+WimpSlot -min 512K -max 512K
 Run <ChaseHQ$Dir>.!RunImage %*0

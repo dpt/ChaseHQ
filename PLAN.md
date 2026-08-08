@@ -83,10 +83,10 @@ Build and test with:
 
 ### 8. Packaging and documentation
 
-- [ ] Complete Help, controls, build/install instructions, requirements, and the
+- [x] Complete Help, controls, build/install instructions, requirements, and the
   silent-first-release limitation.
-- [ ] Verify installation and final WimpSlot sizing.
-- [ ] Complete every first-release item while retaining audio as deferred work.
+- [x] Verify installation and final WimpSlot sizing.
+- [x] Complete every first-release item while retaining audio as deferred work.
 
 Each numbered section is completed by its correspondingly numbered functional
 commit. Before each commit, files are inspected and staged explicitly.
