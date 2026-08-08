@@ -5085,7 +5085,6 @@ dso_loop_continue:
    * B_stretchy_type = data_type - 2 (two decrements already applied).
    */
   switch (B_stretchy_type) {
-  default:                      /* data type STRETCHY_TYPE_200PC (and any higher) */
   case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_150PC */
   case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_50PC */
   case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_113PC */
@@ -5093,6 +5092,7 @@ dso_loop_continue:
   case 5: goto dso_case_75pc;   /* data type STRETCHY_TYPE_75PC */
   case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_25PC */
   case 7: goto dso_continue;    /* data type STRETCHY_TYPE_100PC */
+  default: break;                /* data type STRETCHY_TYPE_200PC (and any higher) */
   }
   A_vertical *= 2;               /* data type STRETCHY_TYPE_200PC */
   goto dso_continue;
