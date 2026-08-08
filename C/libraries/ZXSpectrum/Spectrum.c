@@ -174,7 +174,7 @@ static uint8_t zx_in(zxspectrum_t *state, uint16_t address)
     }
 
   default:
-    assert("zx_in not implemented for that port" == NULL);
+    assert(!"zx_in not implemented for that port");
     return 0x00;
   }
 }
@@ -223,7 +223,7 @@ static void zx_out(zxspectrum_t *state, uint16_t address, uint8_t byte)
     break;
 
   default:
-    assert("zx_out not implemented for that port" == NULL);
+    assert(!"zx_out not implemented for that port");
     break;
   }
 }

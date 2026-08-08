@@ -3331,6 +3331,6 @@ const void *stage4_lookup_map_goto(u16 z80)
     if (stage4_map_goto_table[mid].z80 < z80)  lo = mid + 1;
     else                          hi = mid - 1;
   }
-  assert("Unknown Z80 address (stage 4)" == NULL);
+  assert(!"Unknown Z80 address (stage 4)");
   return NULL;
 }
