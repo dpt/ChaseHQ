@@ -18,7 +18,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <SDL3/SDL.h>
@@ -36,6 +35,8 @@
 #include "ChaseHQ/ChaseHQ.h"
 
 #include "CRTShader.h"
+
+#include "ChaseHQ/Data/CommonData.h"
 
 // -----------------------------------------------------------------------------
 
@@ -113,8 +114,24 @@
 
 // -----------------------------------------------------------------------------
 
-// Defaults re-tuned by eye against this game's screen; see CRTShader.c.
+// All effects disabled: 0.0f knobs off, 1.0f leaves brightness/contrast/
+// saturation unmodified. Used by Ctrl-R to zero out the shader's look.
 static const chq_CRT_params_t crt_default_params = {
+  0.0f,
+  1.0f,
+  0.0f,
+  1.0f,
+  1.0f,
+  1.0f,
+  0.0f,
+  0.0f,
+  0.0f,
+  0.0f,
+  0.0f
+};
+
+// Defaults tuned by eye against this game's screen; see CRTShader.c.
+static const chq_CRT_params_t crt_tuned_params = {
   0.025f,
   0.5f,
   0.025f,
@@ -278,6 +295,13 @@ typedef struct chq_sdl_state
     int             crt_param_index; // which crt_params field +/- adjusts
     SDL_Renderer   *renderer;
     SDL_Texture    *texture;
+
+    /* CRT-style config-change OSD: brief bright-green status text at the
+     * bottom of the picture, e.g. "VOLUME 80 PC". osd_shown_at_ms == 0 means
+     * inactive; set by chq_osd_show, read by chq_draw_osd.
+     */
+    char            osd_text[32];
+    Uint64          osd_shown_at_ms;
   }
   video;
 
@@ -884,16 +908,251 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
 /* ----------------------------------------------------------------------- */
 
+#define CHQ_OSD_DURATION_MS (2500)
+#define CHQ_OSD_GLYPH_W        (8)
+#define CHQ_OSD_GLYPH_H        (7)
+#define CHQ_OSD_GLYPH_GAP      (1)
+
+/* Show text as a bottom-of-screen CRT-style OSD for CHQ_OSD_DURATION_MS,
+ * mirroring a real CRT TV's on-screen settings display (see reference
+ * screenshot in the feature request).
+ */
+static void chq_osd_show(chq_sdl_state_t *state, const char *text)
+{
+  SDL_strlcpy(state->video.osd_text, text, sizeof(state->video.osd_text));
+  state->video.osd_shown_at_ms = SDL_GetTicks();
+}
+
+/* Classifies an OSD character into a font[] glyph index, mirroring the
+ * width-class ladder in font_glyph_for_char (Bank3.c) / ascii_to_glyph_id
+ * (Bank7.c). Duplicated locally (rather than shared) because those are
+ * static to their own translation units and this OSD is SDL-side, not part
+ * of the translated game engine. Returns NULL for space.
+ */
+static const u8 *chq_osd_glyph(char c)
+{
+  u8 A_diff;  /* char - $20; classification input (was A) */
+  u8 C_class; /* width-class index (was C) */
+
+  if (c == ' ')
+    return NULL;
+
+  if (c >= 'a' && c <= 'z') // font[] only has uppercase; param names are lowercase
+    c = (char) (c - 'a' + 'A');
+
+  A_diff = (u8) (c - 0x20);
+
+  if (A_diff >= 0x21)
+    C_class = (u8) (A_diff - 18);
+  else if (A_diff >= 0x10)
+    C_class = (u8) (A_diff - 11);
+  else if (A_diff == 1)
+    C_class = 0;
+  else if (A_diff == 8)
+    C_class = 1;
+  else if (A_diff == 9)
+    C_class = 2;
+  else if (A_diff == 12)
+    C_class = 3;
+  else
+    C_class = 4;
+
+  if (C_class >= 41) // 41 glyphs in font[]; catches control chars (c < 0x20) wrapping A_diff
+    return NULL;
+
+  return &font[C_class * 7];
+}
+
+#define CHQ_OSD_MARGIN (4) // game pixels
+
+/* Visits every lit pixel of the active OSD text, in unscaled game-pixel
+ * space (256x192, top-down), calling plot(ctx, gx + dx, gy + dy) for each
+ * one. (dx, dy) lets the caller re-run the same glyph layout offset by a
+ * pixel, to stamp a black outline before the text itself -- see
+ * chq_osd_draw_outlined. Glyph height is doubled (each font[] row plotted
+ * twice) to read clearly at the game's native resolution. Returns 0 (and
+ * calls plot for nothing) once CHQ_OSD_DURATION_MS has elapsed since
+ * chq_osd_show, or if there is no active text -- shared by both the
+ * plain-renderer and CRT-shader draw paths so the glyph layout only lives
+ * in one place.
+ */
+static int chq_osd_visit(chq_sdl_state_t *state, int dx, int dy,
+                         void (*plot)(void *ctx, int gx, int gy),
+                         void *ctx)
+{
+  int  col;
+  const char *p;
+
+  if (state->video.osd_shown_at_ms == 0)
+    return 0;
+
+  if (SDL_GetTicks() - state->video.osd_shown_at_ms > CHQ_OSD_DURATION_MS)
+  {
+    state->video.osd_shown_at_ms = 0;
+    return 0;
+  }
+
+  col = 0;
+  for (p = state->video.osd_text; *p != '\0'; p++, col++)
+  {
+    const u8 *glyph;
+    int       row, bit;
+
+    glyph = chq_osd_glyph(*p);
+    if (glyph == NULL)
+      continue;
+
+    for (row = 0; row < CHQ_OSD_GLYPH_H; row++)
+    {
+      u8 rowbits = glyph[row];
+
+      for (bit = 0; bit < CHQ_OSD_GLYPH_W; bit++)
+      {
+        int gx, gy;
+
+        if (!(rowbits & (0x80 >> bit)))
+          continue;
+
+        gx = CHQ_OSD_MARGIN + col * (CHQ_OSD_GLYPH_W + CHQ_OSD_GLYPH_GAP) + bit;
+        gy = GAMEHEIGHT - CHQ_OSD_MARGIN - CHQ_OSD_GLYPH_H * 2 + row * 2;
+        plot(ctx, gx + dx, gy + dy);
+        plot(ctx, gx + dx, gy + 1 + dy);
+      }
+    }
+  }
+
+  return 1;
+}
+
+/* Runs chq_osd_visit for the 8 neighbouring pixel offsets then dead centre,
+ * so callers get a solid outline drawn in one colour followed by the text
+ * itself in another -- e.g. a black outline behind bright green text so it
+ * reads over any background. outline_plot/text_plot may be the same
+ * function if the caller distinguishes by colour some other way (they
+ * don't have to be separate contexts either).
+ */
+static int chq_osd_draw_outlined(chq_sdl_state_t *state,
+                                 void (*outline_plot)(void *ctx, int gx, int gy),
+                                 void             *outline_ctx,
+                                 void (*text_plot)(void *ctx, int gx, int gy),
+                                 void             *text_ctx)
+{
+  static const int offsets[8][2] =
+  {
+    {-1,-1}, {0,-1}, {1,-1},
+    {-1, 0},         {1, 0},
+    {-1, 1}, {0, 1}, {1, 1}
+  };
+  int i;
+  int active;
+
+  active = 0;
+  for (i = 0; i < 8; i++)
+    active |= chq_osd_visit(state, offsets[i][0], offsets[i][1],
+                            outline_plot, outline_ctx);
+
+  active |= chq_osd_visit(state, 0, 0, text_plot, text_ctx);
+
+  return active;
+}
+
+typedef struct
+{
+  chq_sdl_state_t *state;
+  int               x, y; // game view origin, window pixel space
+} chq_osd_render_ctx_t;
+
+static void chq_osd_plot_renderer_outline(void *vctx, int gx, int gy)
+{
+  chq_osd_render_ctx_t *ctx = vctx;
+  int                    scale = ctx->state->video.scale;
+  SDL_FRect              px;
+
+  px.x = (float) (ctx->x + gx * scale);
+  px.y = (float) (ctx->y + gy * scale);
+  px.w = (float) scale;
+  px.h = (float) scale;
+  SDL_SetRenderDrawColor(ctx->state->video.renderer, 0x00, 0x00, 0x00, 0xFF);
+  SDL_RenderFillRect(ctx->state->video.renderer, &px);
+}
+
+static void chq_osd_plot_renderer_fill(void *vctx, int gx, int gy)
+{
+  chq_osd_render_ctx_t *ctx = vctx;
+  int                    scale = ctx->state->video.scale;
+  SDL_FRect              px;
+
+  px.x = (float) (ctx->x + gx * scale);
+  px.y = (float) (ctx->y + gy * scale);
+  px.w = (float) scale;
+  px.h = (float) scale;
+  SDL_SetRenderDrawColor(ctx->state->video.renderer, 0x40, 0xFF, 0x40, 0xFF);
+  SDL_RenderFillRect(ctx->state->video.renderer, &px);
+}
+
+/* Draws the active OSD text (if any) bottom-left of the game picture, in
+ * window pixel space -- same (x, y, scale) convention as
+ * chq_draw_dirty_overlay. A black outline is stamped first so the green
+ * text reads over any background. No-op if there is no renderer (CRT
+ * shader mode composites the OSD itself, via chq_render_osd_mask below).
+ */
+static void chq_draw_osd(chq_sdl_state_t *state, int x, int y)
+{
+  chq_osd_render_ctx_t ctx;
+
+  if (state->video.renderer == NULL)
+    return;
+
+  ctx.state = state;
+  ctx.x     = x;
+  ctx.y     = y;
+
+  chq_osd_draw_outlined(state, chq_osd_plot_renderer_outline, &ctx,
+                                chq_osd_plot_renderer_fill, &ctx);
+}
+
+static void chq_osd_plot_mask_outline(void *vctx, int gx, int gy)
+{
+  u8 *mask = vctx;
+
+  if (gx >= 0 && gx < GAMEWIDTH && gy >= 0 && gy < GAMEHEIGHT && mask[gy * GAMEWIDTH + gx] == 0)
+    mask[gy * GAMEWIDTH + gx] = 2;
+}
+
+static void chq_osd_plot_mask_fill(void *vctx, int gx, int gy)
+{
+  u8 *mask = vctx;
+
+  if (gx >= 0 && gx < GAMEWIDTH && gy >= 0 && gy < GAMEHEIGHT)
+    mask[gy * GAMEWIDTH + gx] = 1;
+}
+
+/* Fills a GAMEWIDTH*GAMEHEIGHT byte mask (0 = empty, 1 = lit OSD pixel,
+ * 2 = black outline pixel, top-down, same layout as the converted screen
+ * buffer chq_CRT_shader_render uploads) for the CRT shader path to
+ * composite directly into its staging buffer, since that path has no
+ * SDL_Renderer to draw rects with. Outline is stamped before the fill so
+ * fill pixels always win where the two overlap. Returns 0 if the OSD
+ * isn't active (mask left untouched).
+ */
+static int chq_render_osd_mask(chq_sdl_state_t *state, u8 *mask)
+{
+  return chq_osd_draw_outlined(state, chq_osd_plot_mask_outline, mask,
+                                      chq_osd_plot_mask_fill, mask);
+}
+
 static void chq_action_toggle_pause(chq_sdl_state_t *state)
 {
   CHQ_FLAG_ASSIGN(state, CHQ_FLAG_PAUSED, !CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED));
   chq_update_window_title(state);
+  chq_osd_show(state, CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? "PAUSED" : "RESUMED");
 }
 
 static void chq_action_toggle_mute(chq_sdl_state_t *state)
 {
   state->audio.muted = !state->audio.muted;
   chq_update_window_title(state);
+  chq_osd_show(state, state->audio.muted ? "MUTE ON" : "MUTE OFF");
 }
 
 static void chq_action_toggle_dirty_overlay(chq_sdl_state_t *state)
@@ -904,28 +1163,31 @@ static void chq_action_toggle_dirty_overlay(chq_sdl_state_t *state)
 static void chq_action_toggle_crt(chq_sdl_state_t *state)
 {
   chq_set_crt_enabled(state, !state->video.crt_enabled);
-  printf("CRT shader: %s\n", state->video.crt_enabled ? "on" : "off");
+  chq_osd_show(state, state->video.crt_enabled ? "CRT ON" : "CRT OFF");
 }
 
 static void chq_action_toggle_ay_channel(chq_sdl_state_t *state, int ch)
 {
+  char buf[32];
+
   state->audio.ay_channel_muted[ch] = !state->audio.ay_channel_muted[ch];
   slopay_chip_enable_channel(state->audio.ay, ch, !state->audio.ay_channel_muted[ch]);
-  printf("AY channel %c: %s\n", "ABC"[ch],
-         state->audio.ay_channel_muted[ch] ? "muted" : "on");
+  SDL_snprintf(buf, sizeof(buf), "AY CHANNEL %c %s", "ABC"[ch],
+               state->audio.ay_channel_muted[ch] ? "OFF" : "ON");
+  chq_osd_show(state, buf);
 }
 
 static void chq_action_toggle_speaker_mute(chq_sdl_state_t *state)
 {
   state->audio.speaker_muted = !state->audio.speaker_muted;
-  printf("Speaker: %s\n", state->audio.speaker_muted ? "muted" : "on");
+  chq_osd_show(state, state->audio.speaker_muted ? "SPEAKER MUTE ON" : "SPEAKER MUTE OFF");
 }
 
 static void chq_action_toggle_fullscreen(chq_sdl_state_t *state)
 {
   state->video.fullscreen = !state->video.fullscreen;
   SDL_SetWindowFullscreen(state->video.window, state->video.fullscreen);
-  printf("Fullscreen: %s\n", state->video.fullscreen ? "on" : "off");
+  chq_osd_show(state, state->video.fullscreen ? "FULLSCREEN ON" : "FULLSCREEN OFF");
 }
 
 static void chq_action_adjust_scale(chq_sdl_state_t *state, SDL_Keycode sym)
@@ -946,7 +1208,8 @@ static void chq_action_adjust_scale(chq_sdl_state_t *state, SDL_Keycode sym)
 
 static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym, int shift)
 {
-  int speed;
+  int  speed;
+  char buf[32];
 
   if (sym == SDLK_BACKSLASH)
     speed = SPEED_DEFAULT;
@@ -958,19 +1221,24 @@ static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym, int
 
   state->speed = speed;
   chq_update_window_title(state);
-  printf("Speed: %d%%\n", speed);
+
+  SDL_snprintf(buf, sizeof(buf), "SPEED %d PC", speed);
+  chq_osd_show(state, buf);
 }
 
 static void chq_action_adjust_volume(chq_sdl_state_t *state, SDL_Keycode sym)
 {
-  int volume;
+  int  volume;
+  char buf[32];
 
   volume = CLAMP(state->audio.volume + (sym == SDLK_F5 ? -VOLUME_STEP : VOLUME_STEP),
                  VOLUME_MIN, VOLUME_MAX);
 
   state->audio.volume = volume;
   chq_update_window_title(state);
-  printf("Volume: %d%%\n", volume);
+
+  SDL_snprintf(buf, sizeof(buf), "VOLUME %d PC", volume);
+  chq_osd_show(state, buf);
 }
 
 /* Shift-TAB steps backwards. Adding COUNT keeps the modulus operand
@@ -981,31 +1249,41 @@ static void chq_action_crt_param_next(chq_sdl_state_t *state, int shift)
 {
   const chq_crt_param_desc_t *desc;
   int                         step;
+  char                        buf[32];
 
   step = shift ? CHQ_CRT_PARAM_COUNT - 1 : 1;
 
   state->video.crt_param_index = (state->video.crt_param_index + step) % CHQ_CRT_PARAM_COUNT;
   desc = &chq_crt_param_descs[state->video.crt_param_index];
-  printf("CRT param: %s = %g\n", desc->name,
-        *chq_crt_param_field(&state->video.crt_params, desc));
+  SDL_snprintf(buf, sizeof(buf), "%s %.2f", desc->name,
+              *chq_crt_param_field(&state->video.crt_params, desc));
+  chq_osd_show(state, buf);
 }
 
 static void chq_action_crt_param_adjust(chq_sdl_state_t *state, SDL_Keycode sym)
 {
   const chq_crt_param_desc_t *desc;
   float                      *field;
+  char                        buf[32];
 
   desc  = &chq_crt_param_descs[state->video.crt_param_index];
   field = chq_crt_param_field(&state->video.crt_params, desc);
   *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
                  desc->min, desc->max);
-  printf("CRT param: %s = %g\n", desc->name, *field);
+  SDL_snprintf(buf, sizeof(buf), "%s %.2f", desc->name, *field);
+  chq_osd_show(state, buf);
 }
 
-static void chq_action_crt_params_reset(chq_sdl_state_t *state)
+static void chq_action_crt_params_tuned(chq_sdl_state_t *state)
+{
+  state->video.crt_params = crt_tuned_params;
+  chq_osd_show(state, "CRT EFFECT TUNED");
+}
+
+static void chq_action_crt_params_default(chq_sdl_state_t *state)
 {
   state->video.crt_params = crt_default_params;
-  printf("CRT params reset to defaults\n");
+  chq_osd_show(state, "CRT EFFECT RESET");
 }
 
 static void chq_action_joystick_or_key(chq_sdl_state_t *state,
@@ -1123,10 +1401,20 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     break;
 
   case SDLK_R:
-    if (state->video.crt_enabled)
+    if (state->video.crt_enabled && (k->mod & SDL_KMOD_CTRL))
     {
       if (k->down && !k->repeat)
-        chq_action_crt_params_reset(state);
+        chq_action_crt_params_default(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_T:
+    if (state->video.crt_enabled && (k->mod & SDL_KMOD_CTRL))
+    {
+      if (k->down && !k->repeat)
+        chq_action_crt_params_tuned(state);
       return;
     }
     j = zxjoystick_UNKNOWN;
@@ -1279,9 +1567,16 @@ static void chq_sdl_main_loop(void *opaque)
 
   if (state->video.crt_enabled)
   {
+    u8  osd_mask[GAMEWIDTH * GAMEHEIGHT];
+    int osd_active;
+
+    memset(osd_mask, 0, sizeof(osd_mask));
+    osd_active = chq_render_osd_mask(state, osd_mask);
+
     chq_CRT_shader_render(&state->video.crt, state->video.window, state->zx,
                           x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
-                          &state->video.crt_params);
+                          &state->video.crt_params,
+                          osd_active ? osd_mask : NULL);
     chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
   }
   else
@@ -1309,6 +1604,7 @@ static void chq_sdl_main_loop(void *opaque)
 
     SDL_RenderTexture(state->video.renderer, state->video.texture, NULL, &dstrect);
     chq_draw_dirty_overlay(state, x, y);
+    chq_draw_osd(state, x, y);
     SDL_RenderPresent(state->video.renderer);
   }
 }
@@ -1338,11 +1634,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("CHASE H.Q.\n");
-  printf("==========\n");
-
-  printf("Initialising in %s mode...\n", mode_128k ? "128K" : "48K");
-
   memset(&state, 0, sizeof(state));
 
   zxkeyset_clear(&state.keys);
@@ -1352,7 +1643,7 @@ int main(int argc, char *argv[])
   state.video.scale           = SCALE_DEFAULT;
   state.speed                 = SPEED_DEFAULT;
   state.audio.volume          = VOLUME_DEFAULT;
-  state.video.crt_params      = crt_default_params;
+  state.video.crt_params      = crt_tuned_params;
   state.video.crt_param_index = 0;
 
 #ifdef __APPLE__
@@ -1469,8 +1760,6 @@ int main(int argc, char *argv[])
   chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
   if (!state.video.crt_enabled && state.video.renderer == NULL)
     goto failure;
-
-  printf("CRT shader: %s (F4 toggles)\n", state.video.crt_enabled ? "on" : "off");
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)

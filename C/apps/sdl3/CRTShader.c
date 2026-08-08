@@ -304,7 +304,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            int                     h,
                            int                     game_width,
                            int                     game_height,
-                           const chq_CRT_params_t *params)
+                           const chq_CRT_params_t *params,
+                           const unsigned char    *osd_mask)
 {
   SDL_GPUViewport              viewport;
   const zx_frame_t            *frame;
@@ -336,8 +337,29 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   frame = zxspectrum_claim_screen(zx);
   mapped = SDL_MapGPUTransferBuffer(shader->gpu, shader->transfer_buffer, true);
   memcpy(mapped, frame->pixels, game_width * game_height * 4);
-  SDL_UnmapGPUTransferBuffer(shader->gpu, shader->transfer_buffer);
   zxspectrum_release_screen(zx);
+
+  /* Composite the OSD mask directly into the staging buffer -- this path
+   * has no SDL_Renderer for the caller to draw an overlay rect with, so the
+   * pixels are burned in here instead. Mask value 1 = bright green text,
+   * matching the plain-renderer OSD; 2 = black outline stamped behind the
+   * text so it reads over any background. Both are packed to match
+   * ABGR8888's in-memory byte order (R,G,B,A -- see palette_abgr's comment
+   * in Screen.c); alpha is irrelevant, this texture is sampled opaquely.
+   */
+  if (osd_mask != NULL)
+  {
+    uint32_t *pixels = mapped;
+    int       i;
+
+    for (i = 0; i < game_width * game_height; i++)
+      if (osd_mask[i] == 1)
+        pixels[i] = 0x0040FF40u; /* green interior */
+      else if (osd_mask[i] == 2)
+        pixels[i] = 0xFF000000u; /* black outline */
+  }
+
+  SDL_UnmapGPUTransferBuffer(shader->gpu, shader->transfer_buffer);
 
   memset(&src, 0, sizeof(src));
   src.transfer_buffer = shader->transfer_buffer;
