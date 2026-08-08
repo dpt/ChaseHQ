@@ -2770,7 +2770,9 @@ static void draw_pregame(chqstate_t *state)
   const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
   u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
 
-  carry = 0;
+  carry   = 0;
+  cmdaddr = 0; // Conv: pregame_data[] always issues SET_ADDR before the
+               // first Plot-tile/Repeat command; this default is never read.
 
   cmds = &pregame_data[0];
 dp_get_command:
@@ -9385,7 +9387,9 @@ static void layout_objects(chqstate_t *state)
   int       laneshift;  /* right-boundary table selector, derived from lanes byte bit pattern (was A) */
   int       A;          /* remaining slots for the fork tail pass: 21 - fork_countdown (was A) */
 
-  carry = 0;
+  carry  = 0;
+  tabptr = NULL; // Conv: laneoffset is masked to 0-3 and every switch below
+                 // covers its remaining 1-3 range; this default is never read.
 
   objpos = &state->object_positions[0];
   iterations = ROAD_SLOT_COUNT; // iterations
