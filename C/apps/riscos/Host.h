@@ -31,6 +31,15 @@ typedef enum chq_iconbar_action
 }
 chq_iconbar_action_t;
 
+typedef struct chq_host_scale_factors
+{
+    int xmag;
+    int ymag;
+    int xdiv;
+    int ydiv;
+}
+chq_host_scale_factors_t;
+
 /*******************************************************************
  Function:      chq_host_defer
  Description:   Add an action to a pending deferred-action word.
@@ -53,6 +62,38 @@ unsigned int chq_host_defer(unsigned int pending,
 chq_iconbar_action_t chq_host_iconbar_action(int window, int icon,
                                               int app_icon,
                                               unsigned int buttons);
+
+/*******************************************************************
+ Function:      chq_host_iconbar_menu_y
+ Description:   Calculate the top of an iconbar menu above the iconbar.
+ Parameters:    item_height = menu item height in OS units
+                item_count = number of top-level menu entries
+ Returns:       menu top coordinate in OS units
+ ******************************************************************/
+int chq_host_iconbar_menu_y(int item_height, int item_count);
+
+/*******************************************************************
+ Function:      chq_host_scale_factors
+ Description:   Calculate SpriteExtend whole-pixel scale factors.
+ Parameters:    scale = required integer pixel scale
+                factors = returned SpriteExtend factors
+ Returns:       none
+ ******************************************************************/
+void chq_host_scale_factors(int scale,
+                            chq_host_scale_factors_t *factors);
+
+/*******************************************************************
+ Function:      chq_host_copy_frame
+ Description:   Copy a converted frame into its sprite image storage.
+ Parameters:    destination = first byte of sprite image storage
+                source = first byte of converted frame
+                height = number of rows
+                stride = bytes per row
+ Returns:       none
+ ******************************************************************/
+void chq_host_copy_frame(unsigned char *destination,
+                         const unsigned char *source,
+                         int height, int stride);
 
 /*******************************************************************
  Function:      chq_host_map_key

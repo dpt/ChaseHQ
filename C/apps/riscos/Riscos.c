@@ -26,7 +26,6 @@
 #include "Host.h"
 
 #define ICONBAR_CREATE_RIGHT (-1)
-#define ICONBAR_TOP         (96)
 #define GAME_WIDTH_OS       (512)
 #define GAME_HEIGHT_OS      (384)
 #define TEMPLATE_BYTES      (4096)
@@ -42,7 +41,7 @@
 #define MENU_ITEMS          (11)
 #define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
 #define TRANSLATION_BYTES   (1024)
-#define SPRITE_MODE_4BPP    (12)
+#define SPRITE_MODE_4BPP    (27)
 #define MAX_STAMPS          (4)
 #define CLOCK_48K           (3500000U)
 #define CLOCK_128K          (3546900U)
@@ -463,6 +462,7 @@ static os_error *programme_fullscreen_palette(void)
     unsigned char *out;
     unsigned int colour;
     int logical;
+    os_error *error;
 
     out = commands;
     for (logical = 0; logical < 16; logical++)
@@ -475,7 +475,10 @@ static os_error *programme_fullscreen_palette(void)
         *out++ = (colour >> 16) & 0xFF;
         *out++ = (colour >> 24) & 0xFF;
     }
-    return _swix(OS_WriteN, _INR(0, 1), commands, sizeof(commands));
+    error = _swix(OS_WriteN, _INR(0, 1), commands, sizeof(commands));
+    if (error != NULL)
+        return error;
+    return colourtran_invalidate_cache();
 }
 
 /*******************************************************************
@@ -487,6 +490,7 @@ static os_error *programme_fullscreen_palette(void)
 static os_error *draw_fullscreen(chq_app_t *app)
 {
     sprite_factors factors;
+    chq_host_scale_factors_t host_factors;
     int xlimit;
     int ylimit;
     int xeig;
@@ -505,15 +509,15 @@ static os_error *draw_fullscreen(chq_app_t *app)
     screen_height = (ylimit + 1) << yeig;
     plot_width = SCREEN_WIDTH * app->fullscreen_scale * (1 << xeig);
     plot_height = SCREEN_HEIGHT * app->fullscreen_scale * (1 << yeig);
-    factors.xmag = app->fullscreen_scale * (1 << xeig);
-    factors.ymag = app->fullscreen_scale * (1 << yeig);
-    factors.xdiv = 2;
-    factors.ydiv = 4;
+    chq_host_scale_factors(app->fullscreen_scale, &host_factors);
+    factors.xmag = host_factors.xmag;
+    factors.ymag = host_factors.ymag;
+    factors.xdiv = host_factors.xdiv;
+    factors.ydiv = host_factors.ydiv;
     return sprite_put_scaled(app->sprite_area, &app->sprite, 0,
                              (screen_width - plot_width) / 2,
                              (screen_height - plot_height) / 2,
-                             &factors,
-                             (sprite_pixtrans *) app->translation);
+                             &factors, (sprite_pixtrans *) NULL);
 }
 
 /*******************************************************************
@@ -579,7 +583,7 @@ static os_error *create_game_window(chq_app_t *app)
     window.colours[wimp_WCTITLEFORE] = 7;
     window.colours[wimp_WCTITLEBACK] = 2;
     window.colours[wimp_WCWKAREAFORE] = 7;
-    window.colours[wimp_WCWKAREABACK] = 0;
+    window.colours[wimp_WCWKAREABACK] = 255;
     window.colours[wimp_WCSCROLLOUTER] = 3;
     window.colours[wimp_WCSCROLLINNER] = 1;
     window.colours[wimp_WCTITLEHI] = 3;
@@ -601,7 +605,7 @@ static os_error *create_game_window(chq_app_t *app)
 
 /*******************************************************************
  Function:      copy_frame_to_sprite
- Description:   Copy the top-down frame into the bottom-up RISC OS sprite.
+ Description:   Copy the converted frame into the RISC OS sprite.
  Parameters:    app = application state
  Returns:       none
  ******************************************************************/
@@ -611,15 +615,12 @@ static void copy_frame_to_sprite(chq_app_t *app)
     sprite_header *header;
     unsigned char *destination;
     const unsigned char *source;
-    int y;
 
     frame = zxspectrum_claim_screen(app->zx);
     header = (sprite_header *) app->sprite.s.addr;
     destination = (unsigned char *) header + header->image;
     source = frame->pixels;
-    for (y = 0; y < frame->height; y++)
-        memcpy(destination + (frame->height - 1 - y) * frame->stride,
-               source + y * frame->stride, frame->stride);
+    chq_host_copy_frame(destination, source, frame->height, frame->stride);
     zxspectrum_release_screen(app->zx);
 }
 
@@ -691,10 +692,10 @@ static os_error *enter_fullscreen(chq_app_t *app)
 
     error = _swix(OS_WriteC, _IN(0), 12);
     _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 9, &log2bpp);
-    if (error == NULL && log2bpp == 2)
-        error = programme_fullscreen_palette();
+    if (error == NULL && log2bpp != MODE_4BPP)
+        error = &mode_error;
     if (error == NULL)
-        error = update_translation(app);
+        error = programme_fullscreen_palette();
     if (error != NULL)
         goto failure;
 
@@ -781,6 +782,7 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
 {
     wimp_redrawstr redraw;
     sprite_factors factors;
+    chq_host_scale_factors_t host_factors;
     os_error *error;
     BOOL more;
     int origin_x;
@@ -798,10 +800,11 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
         return error;
 
     copy_frame_to_sprite(app);
-    factors.xmag = app->scale;
-    factors.ymag = app->scale;
-    factors.xdiv = 1;
-    factors.ydiv = 2;
+    chq_host_scale_factors(app->scale, &host_factors);
+    factors.xmag = host_factors.xmag;
+    factors.ymag = host_factors.ymag;
+    factors.xdiv = host_factors.xdiv;
+    factors.ydiv = host_factors.ydiv;
 
     while (more)
     {
@@ -1334,7 +1337,8 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
             refresh_scale_menu(app);
             return wimp_create_menu((wimp_menustr *) &app->menu,
                                     mouse->x - 64,
-                                    ICONBAR_TOP + 6 * app->menu.hdr.height);
+                                    chq_host_iconbar_menu_y(
+                                        app->menu.hdr.height, MENU_ITEMS));
         }
         if (iconbar_action == CHQ_ICONBAR_OPEN)
         {

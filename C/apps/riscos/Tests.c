@@ -53,6 +53,9 @@ int main(int argc, char **argv)
     unsigned int actions;
     zxkey_t spectrum_key;
     zxjoystick_t joystick_key;
+    unsigned char source_rows[6];
+    unsigned char sprite_rows[6];
+    chq_host_scale_factors_t factors;
 
     (void) argc;
     (void) argv;
@@ -117,6 +120,28 @@ int main(int argc, char **argv)
     check(chq_host_iconbar_action(-2, 6, 7, 4) == CHQ_ICONBAR_NONE &&
           chq_host_iconbar_action(1, 7, 7, 4) == CHQ_ICONBAR_NONE,
           "iconbar source filtering");
+    check(chq_host_iconbar_menu_y(44, 11) == 580,
+          "iconbar menu positioning");
+
+    chq_host_scale_factors(1, &factors);
+    check(factors.xmag == 1 && factors.ymag == 1 &&
+          factors.xdiv == 1 && factors.ydiv == 1,
+          "one-to-one sprite scale factors");
+    chq_host_scale_factors(3, &factors);
+    check(factors.xmag == 3 && factors.ymag == 3 &&
+          factors.xdiv == 1 && factors.ydiv == 1,
+          "integer sprite scale factors");
+
+    source_rows[0] = 1;
+    source_rows[1] = 2;
+    source_rows[2] = 3;
+    source_rows[3] = 4;
+    source_rows[4] = 5;
+    source_rows[5] = 6;
+    memset(sprite_rows, 0, sizeof(sprite_rows));
+    chq_host_copy_frame(sprite_rows, source_rows, 3, 2);
+    check(memcmp(sprite_rows, source_rows, sizeof(source_rows)) == 0,
+          "sprite row order");
 
     if (failures != 0)
         return EXIT_FAILURE;
