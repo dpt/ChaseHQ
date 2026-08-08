@@ -12,8 +12,12 @@ set(CMAKE_C_STANDARD 90)
 # initialized definition (the C89 idiom used throughout Data/*.c) are flagged
 # as uninitialized const objects; the later definition always supplies the
 # initializer, so this is noise, not a bug.
+# /wd4245: negative int literals stored into "const u8" script byte-code
+# tables (Bank3.c OSS_OP_* macros encode signed deltas as bytes) and the
+# ~0 all-bits-set sentinel in Spectrum.c trip the signed/unsigned mismatch
+# check; both are deliberate.
 if(MSVC)
-  add_compile_options(/W4 /wd4132)
+  add_compile_options(/W4 /wd4132 /wd4245)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
