@@ -91,6 +91,12 @@ if(SDL3_FOUND)
     target_link_libraries(ChaseHQ "-framework CoreFoundation")
     target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
   endif()
+  if(WIN32)
+    add_custom_command(TARGET ChaseHQ POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:ChaseHQ>
+      VERBATIM)
+  endif()
 endif()
 
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
