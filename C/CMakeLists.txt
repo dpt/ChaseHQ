@@ -8,8 +8,12 @@ set(CMAKE_C_STANDARD 90)
 # -Wunterminated-string-initialization fires on key_names (CommonData.c):
 # a packed row-major char table sized to its exact content, never treated
 # as a NUL-terminated string.
+# /wd4132: forward "static const T x[N];" declarations ahead of their
+# initialized definition (the C89 idiom used throughout Data/*.c) are flagged
+# as uninitialized const objects; the later definition always supplies the
+# initializer, so this is noise, not a bug.
 if(MSVC)
-  add_compile_options(/W4)
+  add_compile_options(/W4 /wd4132)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
