@@ -27,8 +27,9 @@ clean_layout:
 ${ODIR}.chqtest: c.chqtest
 	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ .rotransform/riscos/c/chqtest
 
-${AIFDIR}.ChaseTest: ${ODIR}.chqtest
-	${LD} ${LDFLAGS} -o $@ ${ODIR}.chqtest ${CLIB}
+${AIFDIR}.ChaseTest: ${ODIR}.chqtest ${ODIR}.screen ${ODIR}.spectrum
+	${LD} ${LDFLAGS} -o $@ ${ODIR}.chqtest ${ODIR}.screen \
+	      ${ODIR}.spectrum ${CLIB}
 
 test: riscos_layout ${AIFDIR}.ChaseTest
 	riscos-build-run ${AIFDIR}/ChaseTest,ff8 --command ChaseTest

@@ -45,12 +45,12 @@ Build and test with:
 
 ### 4. Windowed graphics
 
-- [ ] Describe claimed frames with pixels, format, dimensions, and byte stride.
-- [ ] Preserve ARGB/ABGR output and expose packed indexed 4-bpp output.
-- [ ] Update and plot a 256 by 192 16-colour sprite through `OS_SpriteOp`.
-- [ ] Honour Wimp clipping, rebuild ColourTrans tables after display changes,
+- [x] Describe claimed frames with pixels, format, dimensions, and byte stride.
+- [x] Preserve ARGB/ABGR output and expose packed indexed 4-bpp output.
+- [x] Update and plot a 256 by 192 16-colour sprite through `OS_SpriteOp`.
+- [x] Honour Wimp clipping, rebuild ColourTrans tables after display changes,
   centre the image, shade sizes that do not fit, and scale 1x through 4x.
-- [ ] Test indexed conversion and stride.
+- [x] Test indexed conversion and stride.
 
 ### 5. Cooperative runtime
 

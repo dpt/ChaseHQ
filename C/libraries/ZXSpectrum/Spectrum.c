@@ -57,11 +57,10 @@
 
 #endif
 
+typedef uint32_t outputpixel_t;
 #ifdef __riscos
-typedef uint32_t outputpixel_t;
-#define OUTPUT_SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 8) // 4bpp
+#define OUTPUT_SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 8)
 #else
-typedef uint32_t outputpixel_t;
 #define OUTPUT_SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT)
 #endif
 
@@ -140,6 +139,7 @@ typedef struct zxspectrum_private
   zxbox_t         dirty;
   zxscreen_t      screen_copy; // most recent 'complete' screen
   outputpixel_t   converted[OUTPUT_SCREEN_SIZE];
+  zx_frame_t      frame;
 }
 zxspectrum_private_t;
 
@@ -400,6 +400,12 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
 
   prv->prev_border = ~0;
   prv->tstates     = 0;
+  prv->frame.pixels = prv->converted;
+  prv->frame.format = config->pixel_format;
+  prv->frame.width = SCREEN_WIDTH;
+  prv->frame.height = SCREEN_HEIGHT;
+  prv->frame.stride = config->pixel_format == ZX_PIXEL_INDEXED4
+                    ? SCREEN_WIDTH / 2 : SCREEN_WIDTH * 4;
 
 
   return &prv->pub;
@@ -417,7 +423,7 @@ void zxspectrum_destroy(zxspectrum_t *doomed)
   free(prv);
 }
 
-uint32_t *zxspectrum_claim_screen(zxspectrum_t *state)
+const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state)
 {
   zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
 
@@ -427,18 +433,17 @@ uint32_t *zxspectrum_claim_screen(zxspectrum_t *state)
   if (zxbox_is_valid(&prv->dirty))
   {
     // Convert the screen only when it's asked for
-#ifdef __riscos
-    zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
-#else
-    zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
-                     prv->config.bgr_pixels);
-#endif
+    if (prv->config.pixel_format == ZX_PIXEL_INDEXED4)
+      zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
+    else
+      zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
+                       prv->config.pixel_format == ZX_PIXEL_ABGR8888);
 
     /* Invalidate the dirty region once complete */
     zxbox_invalidate(&prv->dirty);
   }
 
-  return prv->converted;
+  return &prv->frame;
 }
 
 void zxspectrum_release_screen(zxspectrum_t *state)

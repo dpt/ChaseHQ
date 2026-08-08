@@ -149,6 +149,26 @@ typedef struct zxbox
 }
 zxbox_t;
 
+/** Pixel layouts exposed by the Spectrum display converter. */
+typedef enum zx_pixel_format
+{
+  ZX_PIXEL_ARGB8888,
+  ZX_PIXEL_ABGR8888,
+  ZX_PIXEL_INDEXED4
+}
+zx_pixel_format_t;
+
+/** A claimed, top-to-bottom converted frame. */
+typedef struct zx_frame
+{
+  void              *pixels;
+  zx_pixel_format_t  format;
+  int                width;
+  int                height;
+  int                stride;
+}
+zx_frame_t;
+
 /**
  * Screen pixels and attributes.
  */
@@ -256,8 +276,8 @@ typedef struct zxconfig
    *  or the two audio streams are ordered against clocks that disagree. */
   void (*ay_out)(uint16_t port, uint8_t byte, zxclock_t tstates, void *opaque);
 
-  /** Non-zero to output 0x00BBGGRR pixels (ABGR8888); zero for 0x00RRGGBB (ARGB8888). */
-  int bgr_pixels;
+  /** Converted pixel layout required by the host. */
+  zx_pixel_format_t pixel_format;
 }
 zxconfig_t;
 
@@ -282,9 +302,9 @@ void zxspectrum_destroy(zxspectrum_t *doomed);
  *
  * \param[in] state ZXSpectrum state.
  *
- * \return Pixels.
+ * \return Frame description, valid until the matching release.
  */
-uint32_t *zxspectrum_claim_screen(zxspectrum_t *state);
+const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state);
 
 /**
  * Unlock the screen.

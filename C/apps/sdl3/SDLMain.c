@@ -473,7 +473,7 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 // would otherwise mis-pace the game thread, and this is the function that
 // actually drives it, not the pacing loop. Game thread only; see the anchor
 // comment in chq_sdl_state_t.
-static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
+static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
 {
   const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
   const double nsPerTstate   = 1.0e9 / tstatesPerSec;
@@ -499,7 +499,7 @@ static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
   return event_ns;
 }
 
-static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
+static void chq_speaker_handler(int on_off, zxclock_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
@@ -514,7 +514,7 @@ static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 
 static void chq_ay_out_handler(uint16_t port,
                                uint8_t  byte,
-                               uint64_t tstates,
+                               zxclock_t tstates,
                                void    *opaque)
 {
   chq_sdl_state_t *state = opaque;
@@ -801,7 +801,7 @@ static int chq_renderer_create(chq_sdl_state_t *state)
   SDL_SetRenderVSync(state->video.renderer, 1);
 
   /* The screen buffer is always converted with R in the lowest memory byte
-   * (zxconfig.bgr_pixels below), because that is what the CRT backend's
+   * (zxconfig.pixel_format below), because that is what the CRT backend's
    * R8G8B8A8 GPU texture requires and the backend can change at any time.
    * SDL_PIXELFORMAT_ABGR8888 is the same order for this texture; SDL
    * converts on upload if the renderer would rather have something else.
@@ -1283,7 +1283,7 @@ static void chq_sdl_main_loop(void *opaque)
   else
   {
     /* Update the texture from the game's converted screen buffer. */
-    uint32_t  *pixels;
+    const zx_frame_t *frame;
     SDL_FRect  dstrect;
 
     dstrect.x = (float) x;
@@ -1291,8 +1291,8 @@ static void chq_sdl_main_loop(void *opaque)
     dstrect.w = (float) w;
     dstrect.h = (float) h;
 
-    pixels = zxspectrum_claim_screen(state->zx);
-    SDL_UpdateTexture(state->video.texture, NULL, pixels, GAMEWIDTH * 4);
+    frame = zxspectrum_claim_screen(state->zx);
+    SDL_UpdateTexture(state->video.texture, NULL, frame->pixels, frame->stride);
     zxspectrum_release_screen(state->zx);
 
     /* Clear screen */
@@ -1383,7 +1383,7 @@ int main(int argc, char *argv[])
 
   /* The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
    * lowest memory byte), which is what Screen.c's palette_abgr table packs
-   * when bgr_pixels is true - despite the name, "bgr_pixels" selects which
+   * when ZX_PIXEL_ABGR8888 is selected - the format selects which
    * palette table to use, not which byte order it produces. See the
    * 0x00RRGGBB/0x00BBGGRR comments in Screen.c.
    *
@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[])
   zxconfig.border     = &chq_border_handler;
   zxconfig.speaker    = &chq_speaker_handler;
   zxconfig.ay_out     = &chq_ay_out_handler;
-  zxconfig.bgr_pixels = true; /* R in lower byte */
+  zxconfig.pixel_format = ZX_PIXEL_ABGR8888; /* R in lower byte */
 
   state.zx = zxspectrum_create(&zxconfig);
   if (state.zx == NULL)
