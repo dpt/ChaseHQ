@@ -77,9 +77,7 @@ typedef struct chq_fullscreen
     chq_host_pointer_t pointer;
     int escape_installed;
     void (*desktop_escape_handler)(int);
-    uintptr_t desktop_mode;
-    int32_t *desktop_mode_selector;
-    int desktop_mode_saved;
+    chq_host_saved_mode_t desktop_mode;
 }
 chq_fullscreen_t;
 
@@ -159,29 +157,9 @@ static void native_stamp(void *opaque)
 static int native_key(uint16_t port, void *opaque)
 {
     chq_fullscreen_t *app;
-    int key_in;
-    int key_out;
-    zxkey_t spectrum;
-    zxjoystick_t joystick;
 
     app = opaque;
-    zxkeyset_clear(&app->keys);
-    app->kempston = 0;
-    for (key_in = 0; ; key_in = key_out + 1)
-    {
-        key_out = 0xFF;
-        _swix(OS_Byte, _INR(0, 2) | _OUT(1), 129,
-              key_in ^ 0x7F, 0xFF, &key_out);
-        if (key_out == 0xFF || key_out == 1)
-            break;
-        if (chq_host_map_key(key_out, &spectrum, &joystick))
-        {
-            if (spectrum != zxkey_UNKNOWN)
-                zxkeyset_assign(&app->keys, spectrum, 1);
-            if (joystick != zxjoystick_UNKNOWN)
-                zxkempston_assign(&app->kempston, joystick, 1);
-        }
-    }
+    chq_host_poll_keys(&app->keys, &app->kempston);
     if (port == port_KEMPSTON_JOYSTICK)
         return app->kempston;
     return zxkeyset_for_port(port, &app->keys);
@@ -212,41 +190,6 @@ static _kernel_oserror *set_screen_mode(const void *mode, int text_mode)
     if (text_mode)
         return _swix(OS_ScreenMode, _INR(0, 1), 15, mode);
     return _swix(OS_ScreenMode, _INR(0, 1), 0, mode);
-}
-
-/*******************************************************************
- Function:      save_desktop_mode
- Description:   Copy the complete current numbered mode or selector.
- Parameters:    app = fullscreen state
- Returns:       error returned by OS_ScreenMode
- ******************************************************************/
-static _kernel_oserror *save_desktop_mode(chq_fullscreen_t *app)
-{
-    _kernel_oserror *error;
-    const int32_t *selector;
-    int words;
-
-    app->desktop_mode = 0;
-    error = _swix(OS_ScreenMode, _IN(0) | _OUT(1), 1,
-                  &app->desktop_mode);
-    if (error != NULL)
-        return error;
-    app->desktop_mode_saved = 1;
-    if (app->desktop_mode < 256)
-        return NULL;
-    selector = (const int32_t *) app->desktop_mode;
-    words = CHQ_MODE_SELECTOR_HEAD;
-    while (words < 256 && selector[words] != -1)
-        words += 2;
-    if (words >= 256)
-        return &mode_error;
-    words++;
-    app->desktop_mode_selector = malloc(words * sizeof(int32_t));
-    if (app->desktop_mode_selector == NULL)
-        return &memory_error;
-    memcpy(app->desktop_mode_selector, selector,
-           words * sizeof(int32_t));
-    return NULL;
 }
 
 /*******************************************************************
@@ -346,36 +289,22 @@ static void copy_frame_to_sprite(chq_fullscreen_t *app)
 static _kernel_oserror *draw_fullscreen(chq_fullscreen_t *app)
 {
     chq_scale_factors_t factors;
-    int xlimit;
-    int ylimit;
-    int xeig;
-    int yeig;
-    int screen_width;
-    int screen_height;
-    int plot_width;
-    int plot_height;
+    chq_host_fullscreen_geometry_t geometry;
+    _kernel_oserror *error;
 
     copy_frame_to_sprite(app);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-          -1, 11, &xlimit);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-          -1, 12, &ylimit);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-          -1, 4, &xeig);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-          -1, 5, &yeig);
-    screen_width = (xlimit + 1) << xeig;
-    screen_height = (ylimit + 1) << yeig;
-    plot_width = SCREEN_WIDTH * app->fullscreen_scale * (1 << xeig);
-    plot_height = SCREEN_HEIGHT * app->fullscreen_scale * (1 << yeig);
+    error = chq_host_fullscreen_geometry(app->fullscreen_scale,
+                                         &geometry);
+    if (error != NULL)
+        return error;
     factors.xmag = app->fullscreen_scale;
     factors.ymag = app->fullscreen_scale;
     factors.xdiv = 1;
     factors.ydiv = 1;
     return _swix(OS_SpriteOp, _INR(0, 7),
                  SPRITE_REASON_SCALE, app->sprite_area, app->sprite,
-                 (screen_width - plot_width) / 2,
-                 (screen_height - plot_height) / 2,
+                 (geometry.screen_width - geometry.plot_width) / 2,
+                 (geometry.screen_height - geometry.plot_height) / 2,
                  app->sprite_plot_action, &factors, app->translation);
 }
 
@@ -466,7 +395,7 @@ static _kernel_oserror *enter_fullscreen(chq_fullscreen_t *app)
     int scale_y;
     int log2bpp;
 
-    error = save_desktop_mode(app);
+    error = chq_host_save_mode(&app->desktop_mode);
     if (error != NULL)
         return error;
     error = select_fullscreen_mode();
@@ -533,18 +462,9 @@ static _kernel_oserror *leave_fullscreen(chq_fullscreen_t *app)
         app->escape_installed = 0;
     }
     error = chq_host_restore_cursors(&app->pointer);
-    if (app->desktop_mode_saved)
-    {
-        if (app->desktop_mode_selector != NULL)
-            next = _swix(OS_ScreenMode, _INR(0, 1), 0,
-                         app->desktop_mode_selector);
-        else
-            next = _swix(OS_ScreenMode, _INR(0, 1), 0,
-                         app->desktop_mode);
-        if (error == NULL)
-            error = next;
-        app->desktop_mode_saved = 0;
-    }
+    next = chq_host_restore_mode(&app->desktop_mode, set_screen_mode);
+    if (error == NULL)
+        error = next;
     next = chq_host_restore_pointer(&app->pointer);
     if (error == NULL)
         error = next;
@@ -567,7 +487,7 @@ static void destroy_app(chq_fullscreen_t *app)
     if (app->zx != NULL)
         zxspectrum_destroy(app->zx);
     report_error(leave_fullscreen(app));
-    free(app->desktop_mode_selector);
+    chq_host_release_mode(&app->desktop_mode);
     free(app->sprite_area);
 }
 

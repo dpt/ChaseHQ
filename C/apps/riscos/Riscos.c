@@ -81,8 +81,7 @@ typedef struct chq_app
     chqstate_t *game;
     zxkeyset_t keys;
     zxkempston_t kempston;
-    int desktop_mode;
-    int *desktop_mode_selector;
+    chq_host_saved_mode_t desktop_mode;
     wimp_wstate desktop_window_state;
     wimp_caretstr desktop_caret;
     wimp_palettestr desktop_palette;
@@ -120,10 +119,6 @@ static void copy_frame_to_sprite(chq_app_t *app);
 static os_error *force_game_redraw(chq_app_t *app);
 
 static volatile int fullscreen_escape;
-static os_error memory_error =
-{
-    0x80801, "ChaseHQ: not enough memory"
-};
 static os_error mode_error =
 {
     0x80802, "ChaseHQ: fullscreen mode is not suitable"
@@ -231,31 +226,13 @@ static void native_stamp(void *opaque)
 static int native_key(uint16_t port, void *opaque)
 {
     chq_app_t *app;
-    int key_in;
-    int key_out;
-    zxkey_t spectrum;
-    zxjoystick_t joystick;
 
     app = opaque;
     zxkeyset_clear(&app->keys);
     app->kempston = 0;
     if (!app->have_caret)
         goto result;
-
-    for (key_in = 0; ; key_in = key_out + 1)
-    {
-        _swix(OS_Byte, _INR(0, 2) | _OUT(1), 129,
-              key_in ^ 0x7F, 0xFF, &key_out);
-        if (key_out == 0xFF || key_out == 1)
-            break;
-        if (chq_host_map_key(key_out, &spectrum, &joystick))
-        {
-            if (spectrum != zxkey_UNKNOWN)
-                zxkeyset_assign(&app->keys, spectrum, 1);
-            if (joystick != zxjoystick_UNKNOWN)
-                zxkempston_assign(&app->kempston, joystick, 1);
-        }
-    }
+    chq_host_poll_keys(&app->keys, &app->kempston);
 
 result:
     if (port == port_KEMPSTON_JOYSTICK)
@@ -317,40 +294,6 @@ static void fullscreen_escape_handler(int signal_number)
 }
 
 /*******************************************************************
- Function:      save_desktop_mode
- Description:   Copy the complete current numbered mode or selector.
- Parameters:    app = application state
- Returns:       error returned by OS_ScreenMode
- ******************************************************************/
-static os_error *save_desktop_mode(chq_app_t *app)
-{
-    os_error *error;
-    const int *selector;
-    int words;
-
-    free(app->desktop_mode_selector);
-    app->desktop_mode_selector = NULL;
-    error = _swix(OS_ScreenMode, _IN(0) | _OUT(1), 1,
-                  &app->desktop_mode);
-    if (error != NULL || app->desktop_mode < 256)
-        return error;
-
-    selector = (const int *) app->desktop_mode;
-    words = CHQ_MODE_SELECTOR_HEAD;
-    while (words < 256 && selector[words] != -1)
-        words += 2;
-    if (words >= 256)
-        return &mode_error;
-    words++;
-
-    app->desktop_mode_selector = malloc(words * sizeof(int));
-    if (app->desktop_mode_selector == NULL)
-        return &memory_error;
-    memcpy(app->desktop_mode_selector, selector, words * sizeof(int));
-    return NULL;
-}
-
-/*******************************************************************
  Function:      set_wimp_mode
  Description:   Select a mode while keeping the Wimp informed.
  Parameters:    mode = mode string or selector
@@ -359,7 +302,8 @@ static os_error *save_desktop_mode(chq_app_t *app)
  ******************************************************************/
 static os_error *set_wimp_mode(const void *mode, int text_mode)
 {
-    (void) text_mode;
+    if (text_mode)
+        return _swix(OS_ScreenMode, _INR(0, 1), 15, mode);
     return wimp_setmode((int) mode);
 }
 
@@ -395,24 +339,14 @@ static os_error *draw_fullscreen(chq_app_t *app)
 {
     sprite_factors factors;
     chq_host_scale_factors_t host_factors;
-    int xlimit;
-    int ylimit;
-    int xeig;
-    int yeig;
-    int screen_width;
-    int screen_height;
-    int plot_width;
-    int plot_height;
+    chq_host_fullscreen_geometry_t geometry;
+    os_error *error;
 
     copy_frame_to_sprite(app);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 11, &xlimit);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 12, &ylimit);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 4, &xeig);
-    _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 5, &yeig);
-    screen_width = (xlimit + 1) << xeig;
-    screen_height = (ylimit + 1) << yeig;
-    plot_width = SCREEN_WIDTH * app->fullscreen_scale * (1 << xeig);
-    plot_height = SCREEN_HEIGHT * app->fullscreen_scale * (1 << yeig);
+    error = chq_host_fullscreen_geometry(app->fullscreen_scale,
+                                         &geometry);
+    if (error != NULL)
+        return error;
     chq_host_scale_factors(app->fullscreen_scale, &host_factors);
     factors.xmag = host_factors.xmag;
     factors.ymag = host_factors.ymag;
@@ -420,8 +354,8 @@ static os_error *draw_fullscreen(chq_app_t *app)
     factors.ydiv = host_factors.ydiv;
     return sprite_put_scaled(app->sprite_area, &app->sprite,
                              app->sprite_plot_action,
-                             (screen_width - plot_width) / 2,
-                             (screen_height - plot_height) / 2,
+                             (geometry.screen_width - geometry.plot_width) / 2,
+                             (geometry.screen_height - geometry.plot_height) / 2,
                              &factors,
                              (sprite_pixtrans *) app->translation);
 }
@@ -561,7 +495,7 @@ static os_error *enter_fullscreen(chq_app_t *app)
     if (app->fullscreen)
         return NULL;
 
-    error = save_desktop_mode(app);
+    error = chq_host_save_mode(&app->desktop_mode);
     if (error != NULL)
         return error;
     error = wimp_get_wind_state(app->game_window,
@@ -648,10 +582,7 @@ static os_error *leave_fullscreen(chq_app_t *app)
     }
     remember_error(&error, chq_host_restore_cursors(&app->pointer));
 
-    if (app->desktop_mode_selector != NULL)
-        next = wimp_setmode((int) app->desktop_mode_selector);
-    else
-        next = wimp_setmode(app->desktop_mode);
+    next = chq_host_restore_mode(&app->desktop_mode, set_wimp_mode);
     remember_error(&error, next);
     remember_error(&error, wimp_setpalette(&app->desktop_palette));
     next = chq_host_restore_pointer(&app->pointer);
@@ -661,8 +592,7 @@ static os_error *leave_fullscreen(chq_app_t *app)
     remember_error(&error, update_translation(app));
     remember_error(&error, force_game_redraw(app));
 
-    free(app->desktop_mode_selector);
-    app->desktop_mode_selector = NULL;
+    chq_host_release_mode(&app->desktop_mode);
     app->clock.valid = 0;
     fullscreen_escape = 0;
     return error;
@@ -1438,7 +1368,7 @@ static void destroy_app(chq_app_t *app)
     if (app->zx != NULL)
         zxspectrum_destroy(app->zx);
     free(app->sprite_area);
-    free(app->desktop_mode_selector);
+    chq_host_release_mode(&app->desktop_mode);
     if (app->game_window >= 0)
         wimp_delete_wind(app->game_window);
     if (app->info_window >= 0)

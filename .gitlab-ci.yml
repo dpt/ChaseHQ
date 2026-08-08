@@ -5,7 +5,10 @@ riscos:
     - curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online
     - chmod +x riscos-build-online
     - sh tools/make-riscos-layout
-    - zip -q9r /tmp/source-archive.zip * .robuild.yaml .rotransform/riscos
+    - >-
+      zip -q9r /tmp/source-archive.zip
+      .robuild.yaml .rotransform/riscos 'Makefile,fe1' C
+      Resources RISC_OSLib VersionNum tools/make-riscos-layout
     - ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
     - |
       if [ -f VersionNum ]; then

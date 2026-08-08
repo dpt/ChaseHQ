@@ -38,7 +38,9 @@ jobs:
 
       - name: Build through build.riscos.online
         run: |
-          zip -q9r /tmp/source-archive.zip * .robuild.yaml .rotransform/riscos
+          zip -q9r /tmp/source-archive.zip \
+            .robuild.yaml .rotransform/riscos 'Makefile,fe1' C \
+            Resources RISC_OSLib VersionNum tools/make-riscos-layout
           ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
 
       - name: Give the output a versioned name

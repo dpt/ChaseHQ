@@ -30,6 +30,11 @@ static _kernel_oserror mode_error =
     0x80802, "ChaseHQ: no suitable fullscreen mode"
 };
 
+static _kernel_oserror memory_error =
+{
+    0x80801, "ChaseHQ: not enough memory"
+};
+
 /*******************************************************************
  Function:      chq_host_defer
  Description:   Add an action to a pending deferred-action word.
@@ -110,6 +115,39 @@ void chq_host_copy_frame(unsigned char *destination,
 }
 
 /*******************************************************************
+ Function:      chq_host_poll_keys
+ Description:   Poll held physical keys into Spectrum and Kempston state.
+ Parameters:    keys = Spectrum key state to replace
+                kempston = Kempston state to replace
+ Returns:       none
+ ******************************************************************/
+void chq_host_poll_keys(zxkeyset_t *keys, zxkempston_t *kempston)
+{
+    int key_in;
+    int key_out;
+    zxkey_t spectrum;
+    zxjoystick_t joystick;
+
+    zxkeyset_clear(keys);
+    *kempston = 0;
+    for (key_in = 0; ; key_in = key_out + 1)
+    {
+        key_out = 0xFF;
+        _swix(OS_Byte, _INR(0, 2) | _OUT(1), 129,
+              key_in ^ 0x7F, 0xFF, &key_out);
+        if (key_out == 0xFF || key_out == 1)
+            break;
+        if (chq_host_map_key(key_out, &spectrum, &joystick))
+        {
+            if (spectrum != zxkey_UNKNOWN)
+                zxkeyset_assign(keys, spectrum, 1);
+            if (joystick != zxjoystick_UNKNOWN)
+                zxkempston_assign(kempston, joystick, 1);
+        }
+    }
+}
+
+/*******************************************************************
  Function:      chq_host_fullscreen_depth
  Description:   Return a fullscreen depth in preference order.
  Parameters:    attempt = zero-based depth attempt
@@ -184,7 +222,12 @@ uint32_t chq_host_advance_clock(chq_host_clock_t *clock,
     uint32_t ticks;
     uint32_t lag;
 
+#ifdef __riscos64
+    numerator = (uint64_t) duration * CHQ_CLOCK_TICKS_SECOND +
+                clock->remainder;
+#else
     numerator = duration * CHQ_CLOCK_TICKS_SECOND + clock->remainder;
+#endif
     ticks = (uint32_t) (numerator / clock_rate);
     clock->remainder = (uint32_t) (numerator % clock_rate);
     if (ticks == 0)
@@ -301,6 +344,81 @@ _kernel_oserror *chq_host_select_fullscreen_mode(
 }
 
 /*******************************************************************
+ Function:      chq_host_save_mode
+ Description:   Save a stable copy of the current desktop mode.
+ Parameters:    saved = saved-mode state to populate
+ Returns:       error returned by OS_ScreenMode or allocation
+ ******************************************************************/
+_kernel_oserror *chq_host_save_mode(chq_host_saved_mode_t *saved)
+{
+    _kernel_oserror *error;
+    const int32_t *selector;
+    int words;
+
+    chq_host_release_mode(saved);
+    saved->mode = 0;
+    error = _swix(OS_ScreenMode, _IN(0) | _OUT(1), 1, &saved->mode);
+    if (error != NULL)
+        return error;
+    if (saved->mode < 256)
+    {
+        saved->saved = 1;
+        return NULL;
+    }
+
+    selector = (const int32_t *) saved->mode;
+    words = CHQ_MODE_SELECTOR_HEAD;
+    while (words < 256 && selector[words] != -1)
+        words += 2;
+    if (words >= 256)
+        return &mode_error;
+    words++;
+    saved->selector = malloc(words * sizeof(int32_t));
+    if (saved->selector == NULL)
+        return &memory_error;
+    memcpy(saved->selector, selector, words * sizeof(int32_t));
+    saved->saved = 1;
+    return NULL;
+}
+
+/*******************************************************************
+ Function:      chq_host_restore_mode
+ Description:   Restore a previously saved desktop mode.
+ Parameters:    saved = saved-mode state
+                set_mode = host-specific mode-selection callback
+ Returns:       error returned by the mode-selection callback
+ ******************************************************************/
+_kernel_oserror *chq_host_restore_mode(chq_host_saved_mode_t *saved,
+                                        chq_host_set_mode_fn set_mode)
+{
+    _kernel_oserror *error;
+    const void *mode;
+
+    if (!saved->saved)
+        return NULL;
+    if (saved->selector != NULL)
+        mode = saved->selector;
+    else
+        mode = (const void *) saved->mode;
+    error = set_mode(mode, 0);
+    saved->saved = 0;
+    return error;
+}
+
+/*******************************************************************
+ Function:      chq_host_release_mode
+ Description:   Release storage owned by a saved desktop mode.
+ Parameters:    saved = saved-mode state to clear
+ Returns:       none
+ ******************************************************************/
+void chq_host_release_mode(chq_host_saved_mode_t *saved)
+{
+    free(saved->selector);
+    saved->selector = NULL;
+    saved->saved = 0;
+}
+
+/*******************************************************************
  Function:      chq_host_programme_palette
  Description:   Install the Spectrum palette through documented VDU calls.
  Parameters:    none
@@ -355,6 +473,45 @@ _kernel_oserror *chq_host_build_translation(uint32_t *translation,
     if (error == NULL)
         *sprite_action = chq_host_sprite_action(log2bpp);
     return error;
+}
+
+/*******************************************************************
+ Function:      chq_host_fullscreen_geometry
+ Description:   Calculate centred fullscreen sprite geometry.
+ Parameters:    scale = whole-pixel sprite scale
+                geometry = returned OS-unit dimensions
+ Returns:       error returned by OS_ReadModeVariable
+ ******************************************************************/
+_kernel_oserror *chq_host_fullscreen_geometry(
+    int scale, chq_host_fullscreen_geometry_t *geometry)
+{
+    _kernel_oserror *error;
+    int xlimit;
+    int ylimit;
+    int xeig;
+    int yeig;
+
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 11, &xlimit);
+    if (error != NULL)
+        return error;
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 12, &ylimit);
+    if (error != NULL)
+        return error;
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 4, &xeig);
+    if (error != NULL)
+        return error;
+    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
+                  -1, 5, &yeig);
+    if (error != NULL)
+        return error;
+    geometry->screen_width = (xlimit + 1) << xeig;
+    geometry->screen_height = (ylimit + 1) << yeig;
+    geometry->plot_width = SCREEN_WIDTH * scale * (1 << xeig);
+    geometry->plot_height = SCREEN_HEIGHT * scale * (1 << yeig);
+    return NULL;
 }
 
 /*******************************************************************

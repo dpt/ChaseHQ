@@ -47,6 +47,14 @@ typedef struct chq_host_pointer
 }
 chq_host_pointer_t;
 
+typedef struct chq_host_saved_mode
+{
+    uintptr_t mode;
+    int32_t *selector;
+    int saved;
+}
+chq_host_saved_mode_t;
+
 typedef _kernel_oserror *(*chq_host_set_mode_fn)(const void *mode,
                                                   int text_mode);
 
@@ -81,6 +89,15 @@ typedef struct chq_host_scale_factors
     int ydiv;
 }
 chq_host_scale_factors_t;
+
+typedef struct chq_host_fullscreen_geometry
+{
+    int screen_width;
+    int screen_height;
+    int plot_width;
+    int plot_height;
+}
+chq_host_fullscreen_geometry_t;
 
 /*******************************************************************
  Function:      chq_host_defer
@@ -136,6 +153,15 @@ void chq_host_scale_factors(int scale,
 void chq_host_copy_frame(unsigned char *destination,
                          const unsigned char *source,
                          int height, int stride);
+
+/*******************************************************************
+ Function:      chq_host_poll_keys
+ Description:   Poll held physical keys into Spectrum and Kempston state.
+ Parameters:    keys = Spectrum key state to replace
+                kempston = Kempston state to replace
+ Returns:       none
+ ******************************************************************/
+void chq_host_poll_keys(zxkeyset_t *keys, zxkempston_t *kempston);
 
 /*******************************************************************
  Function:      chq_host_fullscreen_depth
@@ -201,6 +227,32 @@ _kernel_oserror *chq_host_select_fullscreen_mode(
     chq_host_set_mode_fn set_mode);
 
 /*******************************************************************
+ Function:      chq_host_save_mode
+ Description:   Save a stable copy of the current desktop mode.
+ Parameters:    saved = saved-mode state to populate
+ Returns:       error returned by OS_ScreenMode or allocation
+ ******************************************************************/
+_kernel_oserror *chq_host_save_mode(chq_host_saved_mode_t *saved);
+
+/*******************************************************************
+ Function:      chq_host_restore_mode
+ Description:   Restore a previously saved desktop mode.
+ Parameters:    saved = saved-mode state
+                set_mode = host-specific mode-selection callback
+ Returns:       error returned by the mode-selection callback
+ ******************************************************************/
+_kernel_oserror *chq_host_restore_mode(chq_host_saved_mode_t *saved,
+                                        chq_host_set_mode_fn set_mode);
+
+/*******************************************************************
+ Function:      chq_host_release_mode
+ Description:   Release storage owned by a saved desktop mode.
+ Parameters:    saved = saved-mode state to clear
+ Returns:       none
+ ******************************************************************/
+void chq_host_release_mode(chq_host_saved_mode_t *saved);
+
+/*******************************************************************
  Function:      chq_host_programme_palette
  Description:   Install the Spectrum palette through documented VDU calls.
  Parameters:    none
@@ -217,6 +269,16 @@ _kernel_oserror *chq_host_programme_palette(void);
  ******************************************************************/
 _kernel_oserror *chq_host_build_translation(uint32_t *translation,
                                              int *sprite_action);
+
+/*******************************************************************
+ Function:      chq_host_fullscreen_geometry
+ Description:   Calculate centred fullscreen sprite geometry.
+ Parameters:    scale = whole-pixel sprite scale
+                geometry = returned OS-unit dimensions
+ Returns:       error returned by OS_ReadModeVariable
+ ******************************************************************/
+_kernel_oserror *chq_host_fullscreen_geometry(
+    int scale, chq_host_fullscreen_geometry_t *geometry);
 
 /*******************************************************************
  Function:      chq_host_save_pointer
