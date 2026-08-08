@@ -113,7 +113,7 @@ static char info_purpose[] = "ZX Spectrum arcade conversion";
 static char info_author[] = "David Thomas / Gerph";
 static char info_version[] = "0.10 (RISC OS)";
 static char game_title[] = "Chase H.Q.";
-static char icon_sprite[] = "application";
+static char icon_sprite[] = "!chasehq";
 static char screen_sprite[] = "chqscreen";
 static const char *scale_labels[] =
 {
@@ -630,8 +630,8 @@ static os_error *create_game_window(chq_app_t *app)
     window.box.y0 = 160;
     window.box.x1 = window.box.x0 + GAME_WIDTH_OS;
     window.box.y1 = window.box.y0 + GAME_HEIGHT_OS;
-    window.flags = wimp_WNEW | wimp_WMOVEABLE | wimp_WTITLE | wimp_WQUIT |
-                   wimp_WTOGGLE | wimp_WSIZE;
+    window.flags = wimp_WNEW | wimp_WMOVEABLE | wimp_WBACK |
+                   wimp_WTITLE | wimp_WQUIT;
     window.colours[wimp_WCTITLEFORE] = 7;
     window.colours[wimp_WCTITLEBACK] = 2;
     window.colours[wimp_WCWKAREAFORE] = 7;
@@ -1246,14 +1246,26 @@ static void refresh_scale_menu(chq_app_t *app)
 static os_error *set_scale(chq_app_t *app, int scale)
 {
     wimp_wstate state;
+    wimp_redrawstr extent;
     os_error *error;
 
     app->scale = scale;
     error = wimp_get_wind_state(app->game_window, &state);
     if (error != NULL)
         return error;
+    memset(&extent, 0, sizeof(extent));
+    extent.w = app->game_window;
+    extent.box.x0 = 0;
+    extent.box.y0 = -GAME_HEIGHT_OS * scale;
+    extent.box.x1 = GAME_WIDTH_OS * scale;
+    extent.box.y1 = 0;
+    error = wimp_set_extent(&extent);
+    if (error != NULL)
+        return error;
     state.o.box.x1 = state.o.box.x0 + GAME_WIDTH_OS * scale;
     state.o.box.y0 = state.o.box.y1 - GAME_HEIGHT_OS * scale;
+    state.o.x = 0;
+    state.o.y = 0;
     error = wimp_open_wind(&state.o);
     if (error != NULL)
         return error;

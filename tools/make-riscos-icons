@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Convert the ChaseHQ PNG icon into low- and high-resolution sprites."""
+
+import struct
+import sys
+
+from PIL import Image
+
+
+SPRITE_NAME = b"!chasehq"
+ICON_WIDTH = 34
+HIGH_HEIGHT = 34
+LOW_HEIGHT = 17
+MODE_4BPP_LOW = 12
+MODE_4BPP_HIGH = 27
+
+
+def riscos_palette(image):
+    """Return the duplicated RISC OS palette words for indices 0 through 15."""
+    source = image.getpalette()
+    output = bytearray()
+
+    for index in range(16):
+        red, green, blue = source[index * 3:index * 3 + 3]
+        word = (blue << 24) | (green << 16) | (red << 8)
+        output.extend(struct.pack("<II", word, word))
+    return bytes(output)
+
+
+def pixel_rows(image):
+    """Pack top-origin PNG indices into bottom-origin, low-nibble-first rows."""
+    stride = ((image.width * 4 + 31) // 32) * 4
+    output = bytearray()
+
+    for y in range(image.height - 1, -1, -1):
+        row = bytearray(stride)
+        for x in range(image.width):
+            value = image.getpixel((x, y))
+            if x & 1:
+                row[x // 2] |= value << 4
+            else:
+                row[x // 2] = value
+        output.extend(row)
+    return bytes(output)
+
+
+def sprite_file(image, mode):
+    """Build a one-sprite saved sprite area with an opaque old-format mask."""
+    palette = riscos_palette(image)
+    pixels = pixel_rows(image)
+    mask = bytes([0xFF]) * len(pixels)
+    image_offset = 44 + len(palette)
+    mask_offset = image_offset + len(pixels)
+    sprite_size = mask_offset + len(mask)
+    name = SPRITE_NAME.ljust(12, b"\0")
+    width_words = ((image.width * 4 + 31) // 32) - 1
+    last_bit = (image.width * 4 - 1) & 31
+    header = struct.pack(
+        "<I12s7I",
+        sprite_size,
+        name,
+        width_words,
+        image.height - 1,
+        0,
+        last_bit,
+        image_offset,
+        mask_offset,
+        mode,
+    )
+    area = struct.pack("<III", 1, 16, sprite_size + 16)
+    return area + header + palette + pixels + mask
+
+
+def main():
+    if len(sys.argv) != 4:
+        raise SystemExit(
+            "usage: make-riscos-icons PNG !Sprites,ff9 !Sprites22,ff9"
+        )
+
+    source = Image.open(sys.argv[1])
+    if source.mode != "P" or source.size != (ICON_WIDTH, HIGH_HEIGHT):
+        raise SystemExit("icon must be a 34x34 paletted PNG")
+    colours = {value for _count, value in source.getcolors(maxcolors=256)}
+    if not colours or max(colours) >= 16:
+        raise SystemExit("icon must use palette indices 0 through 15 only")
+
+    low = source.resize((ICON_WIDTH, LOW_HEIGHT), Image.Resampling.NEAREST)
+    with open(sys.argv[2], "wb") as output:
+        output.write(sprite_file(low, MODE_4BPP_LOW))
+    with open(sys.argv[3], "wb") as output:
+        output.write(sprite_file(source, MODE_4BPP_HIGH))
+
+
+if __name__ == "__main__":
+    main()
