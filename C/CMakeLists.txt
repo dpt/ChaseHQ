@@ -21,8 +21,11 @@ set(CMAKE_C_STANDARD 90)
 # Main.c) are sized exactly to their string literal's content with no room
 # for a NUL -- the same packed layout -Wunterminated-string-initialization
 # accepts for key_names on Clang, above.
+# /wd4324: chqstate embeds a jmp_buf, which MSVC x64 aligns to 16 bytes for
+# its SSE register save area; the containing struct gets padded to match.
+# Nothing in our code to fix -- it's an artefact of jmp_buf's own alignment.
 if(MSVC)
-  add_compile_options(/W4 /wd4132 /wd4245 /wd4295)
+  add_compile_options(/W4 /wd4132 /wd4245 /wd4295 /wd4324)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
