@@ -11,11 +11,14 @@
 #include "swis.h"
 
 #include "RISC_OSLib/os.h"
+#include "RISC_OSLib/akbd.h"
 #include "RISC_OSLib/colourtran.h"
 #include "RISC_OSLib/sprite.h"
 #include "RISC_OSLib/wimp.h"
 
 #include "ChaseHQ/ChaseHQ.h"
+#include "ZXSpectrum/Keyboard.h"
+#include "ZXSpectrum/Kempston.h"
 #include "ZXSpectrum/Spectrum.h"
 
 #include "Host.h"
@@ -26,9 +29,15 @@
 #define GAME_HEIGHT_OS      (384)
 #define TEMPLATE_BYTES      (4096)
 #define INFO_ITEM           (0)
-#define SCALE_1_ITEM        (1)
-#define SCALE_4_ITEM        (4)
-#define QUIT_ITEM           (5)
+#define NEW_128K_ITEM       (1)
+#define NEW_48K_ITEM        (2)
+#define PAUSE_ITEM          (3)
+#define RESTART_ITEM        (4)
+#define SCALE_1_ITEM        (5)
+#define SCALE_4_ITEM        (8)
+#define FULLSCREEN_ITEM     (9)
+#define QUIT_ITEM           (10)
+#define MENU_ITEMS          (11)
 #define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
 #define TRANSLATION_BYTES   (1024)
 #define SPRITE_MODE_4BPP    (12)
@@ -41,7 +50,7 @@
 typedef struct chq_menu
 {
     wimp_menuhdr hdr;
-    wimp_menuitem item[6];
+    wimp_menuitem item[MENU_ITEMS];
 }
 chq_menu_t;
 
@@ -59,6 +68,10 @@ typedef struct chq_app
     int stop_requested;
     int redraw_pending;
     int fatal_error;
+    int paused;
+    int restart_requested;
+    int fullscreen_requested;
+    int have_caret;
     unsigned int pending_actions;
     unsigned int stamps[MAX_STAMPS];
     int nstamps;
@@ -67,6 +80,8 @@ typedef struct chq_app
     int deadline_valid;
     zxspectrum_t *zx;
     chqstate_t *game;
+    zxkeyset_t keys;
+    zxkempston_t kempston;
     sprite_area *sprite_area;
     sprite_id sprite;
     unsigned char translation[TRANSLATION_BYTES];
@@ -147,6 +162,40 @@ static void dispatch_actions(chq_app_t *app)
         app->stop_requested = 1;
     if ((actions & CHQ_ACTION_START_GAME) && !app->game_running)
         app->start_requested = 1;
+    if ((actions & CHQ_ACTION_PAUSE) && app->game_running)
+        app->paused = !app->paused;
+    if (actions & CHQ_ACTION_RESTART)
+    {
+        app->paused = 0;
+        if (app->game_running)
+        {
+            app->restart_requested = 1;
+            app->stop_requested = 1;
+        }
+        else
+        {
+            app->restart_requested = 0;
+            app->start_requested = 1;
+        }
+    }
+    if (actions & CHQ_ACTION_NEW_48K)
+    {
+        app->mode_128k = 0;
+        app->paused = 0;
+        app->restart_requested = app->game_running;
+        app->stop_requested = app->game_running;
+        app->start_requested = !app->game_running;
+    }
+    if (actions & CHQ_ACTION_NEW_128K)
+    {
+        app->mode_128k = 1;
+        app->paused = 0;
+        app->restart_requested = app->game_running;
+        app->stop_requested = app->game_running;
+        app->start_requested = !app->game_running;
+    }
+    if ((actions & CHQ_ACTION_FULLSCREEN) && app->game_running)
+        app->fullscreen_requested = 1;
 }
 
 /*******************************************************************
@@ -189,8 +238,37 @@ static void native_stamp(void *opaque)
  ******************************************************************/
 static int native_key(uint16_t port, void *opaque)
 {
-    (void) opaque;
-    return port == port_KEMPSTON_JOYSTICK ? 0 : 0xFF;
+    chq_app_t *app;
+    int key_in;
+    int key_out;
+    zxkey_t spectrum;
+    zxjoystick_t joystick;
+
+    app = opaque;
+    zxkeyset_clear(&app->keys);
+    app->kempston = 0;
+    if (!app->have_caret)
+        goto result;
+
+    for (key_in = 0; ; key_in = key_out + 1)
+    {
+        _swix(OS_Byte, _INR(0, 2) | _OUT(1), 129,
+              key_in ^ 0x7F, 0xFF, &key_out);
+        if (key_out == 0xFF || key_out == 1)
+            break;
+        if (chq_host_map_key(key_out, &spectrum, &joystick))
+        {
+            if (spectrum != zxkey_UNKNOWN)
+                zxkeyset_assign(&app->keys, spectrum, 1);
+            if (joystick != zxjoystick_UNKNOWN)
+                zxkempston_assign(&app->kempston, joystick, 1);
+        }
+    }
+
+result:
+    if (port == port_KEMPSTON_JOYSTICK)
+        return app->kempston;
+    return zxkeyset_for_port(port, &app->keys);
 }
 
 /*******************************************************************
@@ -433,8 +511,10 @@ static int native_sleep(int duration, void *opaque)
     unsigned int ticks;
     unsigned int now;
     unsigned int lag;
+    int paused_waited;
 
     app = opaque;
+    paused_waited = 0;
     if (app->nstamps > 0)
         app->nstamps--;
 
@@ -495,6 +575,42 @@ static int native_sleep(int duration, void *opaque)
         }
         app->redraw_pending = 0;
     }
+
+    while (app->paused && app->running && !app->stop_requested)
+    {
+        paused_waited = 1;
+        now = monotonic_time();
+        error = wimp_pollidle(0, &event, now + 50);
+        if (error != NULL)
+        {
+            report_error(error);
+            app->fatal_error = 1;
+            app->stop_requested = 1;
+            break;
+        }
+        error = handle_event(app, &event);
+        if (error != NULL)
+        {
+            report_error(error);
+            app->fatal_error = 1;
+            app->stop_requested = 1;
+            break;
+        }
+        dispatch_actions(app);
+        if (app->redraw_pending)
+        {
+            error = force_game_redraw(app);
+            app->redraw_pending = 0;
+            if (error != NULL)
+            {
+                report_error(error);
+                app->fatal_error = 1;
+                app->stop_requested = 1;
+            }
+        }
+    }
+    if (paused_waited && !app->paused)
+        app->deadline_valid = 0;
 
     if (!app->running || app->stop_requested)
     {
@@ -586,7 +702,7 @@ static void create_menu(chq_app_t *app)
     app->menu.hdr.tit_bcol = 2;
     app->menu.hdr.work_fcol = 7;
     app->menu.hdr.work_bcol = 0;
-    app->menu.hdr.width = 160;
+    app->menu.hdr.width = 192;
     app->menu.hdr.height = 44;
     flags = wimp_ITEXT | wimp_IFILLED | (wimp_iconflags) (7 << 24);
 
@@ -595,6 +711,19 @@ static void create_menu(chq_app_t *app)
     app->menu.item[INFO_ITEM].iconflags = flags;
     strcpy(app->menu.item[INFO_ITEM].data.text, "Info");
 
+    app->menu.item[NEW_128K_ITEM].submenu = (wimp_menuptr) -1;
+    app->menu.item[NEW_128K_ITEM].iconflags = flags;
+    strcpy(app->menu.item[NEW_128K_ITEM].data.text, "New 128K");
+    app->menu.item[NEW_48K_ITEM].submenu = (wimp_menuptr) -1;
+    app->menu.item[NEW_48K_ITEM].iconflags = flags;
+    strcpy(app->menu.item[NEW_48K_ITEM].data.text, "New 48K");
+    app->menu.item[PAUSE_ITEM].submenu = (wimp_menuptr) -1;
+    app->menu.item[PAUSE_ITEM].iconflags = flags;
+    strcpy(app->menu.item[PAUSE_ITEM].data.text, "Pause");
+    app->menu.item[RESTART_ITEM].submenu = (wimp_menuptr) -1;
+    app->menu.item[RESTART_ITEM].iconflags = flags;
+    strcpy(app->menu.item[RESTART_ITEM].data.text, "Restart");
+
     for (item = SCALE_1_ITEM; item <= SCALE_4_ITEM; item++)
     {
         app->menu.item[item].submenu = (wimp_menuptr) -1;
@@ -602,6 +731,10 @@ static void create_menu(chq_app_t *app)
         strcpy(app->menu.item[item].data.text,
                scale_labels[item - SCALE_1_ITEM]);
     }
+
+    app->menu.item[FULLSCREEN_ITEM].submenu = (wimp_menuptr) -1;
+    app->menu.item[FULLSCREEN_ITEM].iconflags = flags;
+    strcpy(app->menu.item[FULLSCREEN_ITEM].data.text, "Fullscreen");
 
     app->menu.item[QUIT_ITEM].flags = wimp_MLAST;
     app->menu.item[QUIT_ITEM].submenu = (wimp_menuptr) -1;
@@ -632,6 +765,9 @@ static void refresh_scale_menu(chq_app_t *app)
     _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2), -1, 5, &yeig);
     screen_width = (xlimit + 1) << xeig;
     screen_height = (ylimit + 1) << yeig;
+    app->menu.item[NEW_128K_ITEM].flags = app->mode_128k ? wimp_MTICK : 0;
+    app->menu.item[NEW_48K_ITEM].flags = app->mode_128k ? 0 : wimp_MTICK;
+    app->menu.item[PAUSE_ITEM].flags = app->paused ? wimp_MTICK : 0;
 
     for (item = SCALE_1_ITEM; item <= SCALE_4_ITEM; item++)
     {
@@ -670,6 +806,27 @@ static os_error *set_scale(chq_app_t *app, int scale)
 }
 
 /*******************************************************************
+ Function:      claim_game_caret
+ Description:   Give gameplay focus to the display without showing a caret.
+ Parameters:    app = application state
+ Returns:       error returned by the Wimp
+ ******************************************************************/
+static os_error *claim_game_caret(chq_app_t *app)
+{
+    wimp_caretstr caret;
+    os_error *error;
+
+    memset(&caret, 0, sizeof(caret));
+    caret.w = app->game_window;
+    caret.i = -1;
+    caret.height = 1 << 25;
+    error = wimp_set_caret_pos(&caret);
+    if (error == NULL)
+        app->have_caret = 1;
+    return error;
+}
+
+/*******************************************************************
  Function:      open_game_window
  Description:   Open the display window at its last requested position.
  Parameters:    app = application state
@@ -684,7 +841,10 @@ static os_error *open_game_window(chq_app_t *app)
     if (error != NULL)
         return error;
     state.o.behind = -1;
-    return wimp_open_wind(&state.o);
+    error = wimp_open_wind(&state.o);
+    if (error != NULL)
+        return error;
+    return claim_game_caret(app);
 }
 
 /*******************************************************************
@@ -717,6 +877,11 @@ static void run_requested_game(chq_app_t *app)
     chq_destroy(app->game);
     app->game = NULL;
     app->stop_requested = 0;
+    if (app->restart_requested && app->running)
+    {
+        app->restart_requested = 0;
+        app->start_requested = 1;
+    }
 }
 
 /*******************************************************************
@@ -741,13 +906,20 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
         return wimp_open_wind(&event->data.o);
 
     case wimp_ECLOSE:
-        if (event->data.o.w == app->game_window && app->game_running)
-            app->pending_actions = chq_host_defer(app->pending_actions,
-                                                  CHQ_ACTION_STOP_GAME);
+        if (event->data.o.w == app->game_window)
+        {
+            app->have_caret = 0;
+            app->paused = 0;
+            if (app->game_running)
+                app->pending_actions = chq_host_defer(
+                    app->pending_actions, CHQ_ACTION_STOP_GAME);
+        }
         return wimp_close_wind(event->data.o.w);
 
     case wimp_EBUT:
         mouse = &event->data.but.m;
+        if (mouse->w == app->game_window)
+            return claim_game_caret(app);
         if (mouse->w == ICONBAR_WINDOW && mouse->i == app->iconbar_icon)
         {
             if (event->data.but.b == wimp_BMID)
@@ -771,7 +943,22 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
         break;
 
     case wimp_EMENU:
-        if (event->data.menu[0] == QUIT_ITEM)
+        if (event->data.menu[0] == NEW_128K_ITEM)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_NEW_128K);
+        else if (event->data.menu[0] == NEW_48K_ITEM)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_NEW_48K);
+        else if (event->data.menu[0] == PAUSE_ITEM)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_PAUSE);
+        else if (event->data.menu[0] == RESTART_ITEM)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_RESTART);
+        else if (event->data.menu[0] == FULLSCREEN_ITEM)
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_FULLSCREEN);
+        else if (event->data.menu[0] == QUIT_ITEM)
         {
             app->pending_actions = chq_host_defer(app->pending_actions,
                                                   CHQ_ACTION_QUIT_APP);
@@ -779,6 +966,55 @@ static os_error *handle_event(chq_app_t *app, wimp_eventstr *event)
         else if (event->data.menu[0] >= SCALE_1_ITEM &&
                  event->data.menu[0] <= SCALE_4_ITEM)
             return set_scale(app, event->data.menu[0] - SCALE_1_ITEM + 1);
+        break;
+
+    case wimp_EKEY:
+        switch (event->data.key.chcode)
+        {
+        case akbd_Fn + 2:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_NEW_128K);
+            break;
+        case akbd_Fn + 3:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_NEW_48K);
+            break;
+        case akbd_Fn + 5:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_PAUSE);
+            break;
+        case akbd_Fn + 6:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_RESTART);
+            break;
+        case akbd_Fn + 7:
+            return set_scale(app, 1);
+        case akbd_Fn + 8:
+            return set_scale(app, 2);
+        case akbd_Fn + 9:
+            return set_scale(app, 3);
+        case akbd_Fn10:
+            return set_scale(app, 4);
+        case akbd_Fn11:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_FULLSCREEN);
+            break;
+        case 17:
+            app->pending_actions = chq_host_defer(app->pending_actions,
+                                                  CHQ_ACTION_QUIT_APP);
+            break;
+        default:
+            return wimp_processkey(event->data.key.chcode);
+        }
+        break;
+
+    case wimp_EGAINCARET:
+        app->have_caret = event->data.c.w == app->game_window;
+        break;
+
+    case wimp_ELOSECARET:
+        if (event->data.c.w == app->game_window)
+            app->have_caret = 0;
         break;
 
     case wimp_ESEND:

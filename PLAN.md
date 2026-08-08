@@ -64,12 +64,12 @@ Build and test with:
 
 ### 6. Native controls
 
-- [ ] Poll held keys through `OS_Byte IN_KEY` and populate ZX/Kempston input.
-- [ ] Limit gameplay input to the game window while preserving host shortcuts.
-- [ ] Provide pause, restart, scale, fullscreen, and 48K/128K new-game actions;
+- [x] Poll held keys through `OS_Byte IN_KEY` and populate ZX/Kempston input.
+- [x] Limit gameplay input to the game window while preserving host shortcuts.
+- [x] Provide pause, restart, scale, fullscreen, and 48K/128K new-game actions;
   default to 128K.
-- [ ] Closing the window stops only the game; application Quit exits the task.
-- [ ] Test key mapping.
+- [x] Closing the window stops only the game; application Quit exits the task.
+- [x] Test key mapping.
 
 ### 7. Fullscreen
 

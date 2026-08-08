@@ -51,6 +51,8 @@ int main(int argc, char **argv)
     unsigned int pixels[SCREEN_WIDTH * SCREEN_HEIGHT / 8];
     zxbox_t dirty;
     unsigned int actions;
+    zxkey_t spectrum_key;
+    zxjoystick_t joystick_key;
 
     (void) argc;
     (void) argv;
@@ -98,6 +100,15 @@ int main(int argc, char **argv)
     check((actions & CHQ_ACTION_START_GAME) != 0 &&
           (actions & CHQ_ACTION_QUIT_APP) != 0,
           "deferred host action dispatch");
+
+    check(chq_host_map_key(48, &spectrum_key, &joystick_key) &&
+          spectrum_key == zxkey_1 && joystick_key == zxjoystick_UNKNOWN,
+          "Spectrum key mapping");
+    check(chq_host_map_key(121, &spectrum_key, &joystick_key) &&
+          spectrum_key == zxkey_UNKNOWN && joystick_key == zxjoystick_RIGHT,
+          "Kempston key mapping");
+    check(!chq_host_map_key(127, &spectrum_key, &joystick_key),
+          "unmapped RISC OS key");
 
     if (failures != 0)
         return EXIT_FAILURE;
