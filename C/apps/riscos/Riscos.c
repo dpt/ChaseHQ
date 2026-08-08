@@ -16,6 +16,7 @@
 #include "RISC_OSLib/colourtran.h"
 #include "RISC_OSLib/sprite.h"
 #include "RISC_OSLib/wimp.h"
+#include "RISC_OSLib/wimpt.h"
 
 #include "ChaseHQ/ChaseHQ.h"
 #include "ZXSpectrum/Keyboard.h"
@@ -49,6 +50,7 @@
 #define MAX_LAG_FRAMES      (4U)
 #define MODE_SELECTOR_HEAD  (5)
 #define MODE_4BPP           (2)
+#define WIMP_MIN_VERSION    (310)
 
 typedef struct chq_menu
 {
@@ -142,6 +144,10 @@ static os_error memory_error =
 static os_error mode_error =
 {
     0x80802, "ChaseHQ: fullscreen mode is not suitable"
+};
+static os_error wimp_version_error =
+{
+    0x80803, "ChaseHQ: Wimp 3.10 or later is required"
 };
 
 /*******************************************************************
@@ -1463,8 +1469,6 @@ static void destroy_app(chq_app_t *app)
         wimp_delete_wind(app->game_window);
     if (app->info_window >= 0)
         wimp_delete_wind(app->info_window);
-    if (app->task != 0)
-        wimp_taskclose(app->task);
 }
 
 /*******************************************************************
@@ -1476,6 +1480,12 @@ static void destroy_app(chq_app_t *app)
  ******************************************************************/
 int main(int argc, char **argv)
 {
+    static wimp_msgaction messages[] =
+    {
+        wimp_MMODECHANGE,
+        wimp_PALETTECHANGE,
+        wimp_MCLOSEDOWN
+    };
     chq_app_t app;
     wimp_eventstr event;
     os_error *error;
@@ -1491,14 +1501,17 @@ int main(int argc, char **argv)
     app.running = 1;
     app.scale = 1;
     app.mode_128k = 1;
-    version = 310;
     status = EXIT_FAILURE;
 
-    error = wimp_taskinit("ChaseHQ", &version, &app.task,
-                          wimp_MMODECHANGE, wimp_PALETTECHANGE,
-                          wimp_MCLOSEDOWN);
-    if (report_error(error))
+    wimpt_wimpversion(WIMP_MIN_VERSION);
+    wimpt_messages(messages);
+    version = wimpt_init("ChaseHQ");
+    if (version < WIMP_MIN_VERSION)
+    {
+        report_error(&wimp_version_error);
         goto cleanup;
+    }
+    app.task = wimpt_task();
     if (report_error(create_display(&app)) || app.zx == NULL)
         goto cleanup;
     if (report_error(create_game_window(&app)))
@@ -1514,7 +1527,7 @@ int main(int argc, char **argv)
         run_requested_game(&app);
         if (app.fatal_error)
             goto cleanup;
-        error = wimp_poll(0, &event);
+        error = wimpt_poll(0, &event);
         if (report_error(error) || report_error(handle_event(&app, &event)))
             goto cleanup;
         dispatch_actions(&app);
