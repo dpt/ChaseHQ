@@ -350,12 +350,16 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
   paused = CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED);
   if (paused)
   {
-    // If paused, sit in this loop, checking twice per second for unpausing
+    // If paused, sit in this loop, checking twice per second for unpausing or
+    // quitting
     for (;;)
     {
       paused = CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED);
       if (!paused)
         break;
+
+      if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
+        return 1;
 
       SDL_Delay(500); // 0.5s
     }
