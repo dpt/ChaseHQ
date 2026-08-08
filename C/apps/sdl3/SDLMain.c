@@ -473,7 +473,7 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 // would otherwise mis-pace the game thread, and this is the function that
 // actually drives it, not the pacing loop. Game thread only; see the anchor
 // comment in chq_sdl_state_t.
-static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
+static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
 {
   const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
   const double nsPerTstate   = 1.0e9 / tstatesPerSec;
@@ -499,7 +499,7 @@ static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, uint64_t tstates)
   return event_ns;
 }
 
-static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
+static void chq_speaker_handler(int on_off, zxclock_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
@@ -512,10 +512,10 @@ static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
                        CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
 }
 
-static void chq_ay_out_handler(uint16_t port,
-                               uint8_t  byte,
-                               uint64_t tstates,
-                               void    *opaque)
+static void chq_ay_out_handler(uint16_t  port,
+                               uint8_t   byte,
+                               zxclock_t tstates,
+                               void     *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
