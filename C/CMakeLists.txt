@@ -16,8 +16,13 @@ set(CMAKE_C_STANDARD 90)
 # tables (Bank3.c OSS_OP_* macros encode signed deltas as bytes) and the
 # ~0 all-bits-set sentinel in Spectrum.c trip the signed/unsigned mismatch
 # check; both are deliberate.
+# /wd4295: fixed-width ASCII fields (high_score_row_t's score/stage_code/name,
+# high_score_rank_suffixes, high_score_stage_codes in Bank3.c; key_names in
+# Main.c) are sized exactly to their string literal's content with no room
+# for a NUL -- the same packed layout -Wunterminated-string-initialization
+# accepts for key_names on Clang, above.
 if(MSVC)
-  add_compile_options(/W4 /wd4132 /wd4245)
+  add_compile_options(/W4 /wd4132 /wd4245 /wd4295)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
