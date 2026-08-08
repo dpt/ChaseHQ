@@ -1,8 +1,21 @@
 #!/bin/sh
-# Build the RISC OS leaf-name view used by AMU without moving canonical files.
+# Build the generated RISC OS leaf-name view used by AMU.
 set -eu
 
 root=.rotransform/riscos
+
+# A build-service upload translates canonical host .c/.h names into RISC OS
+# leaf-name layout before HostAMU runs. Reuse the mirror prepared by CI when
+# those host paths are consequently no longer visible.
+if [ ! -f C/apps/riscos/Riscos.c ]
+then
+    if [ -f "$root/c/riscos" ]
+    then
+        exit 0
+    fi
+    echo "make-riscos-layout: canonical sources and prepared mirror missing" >&2
+    exit 1
+fi
 
 mkdir -p "$root/c" "$root/h/C99/h" "$root/h/ZXSpectrum/h" \
          "$root/h/ChaseHQ/Data/h" "$root/h/ChaseHQ/Engine/h" \
@@ -12,7 +25,8 @@ link_source()
 {
     source_path=$1
     leaf=$2
-    ln -sfn "$(pwd)/$source_path" "$root/c/$leaf"
+    rm -f "$root/c/$leaf"
+    cp -f "$source_path" "$root/c/$leaf"
 }
 
 link_header()
@@ -23,9 +37,13 @@ link_header()
         */*)
             parent=${target_path%/*}
             leaf=${target_path##*/}
-            ln -sfn "$(pwd)/$source_path" "$root/h/$parent/h/$leaf"
+            rm -f "$root/h/$parent/h/$leaf"
+            cp -f "$source_path" "$root/h/$parent/h/$leaf"
             ;;
-        *) ln -sfn "$(pwd)/$source_path" "$root/h/$target_path" ;;
+        *)
+            rm -f "$root/h/$target_path"
+            cp -f "$source_path" "$root/h/$target_path"
+            ;;
     esac
 }
 

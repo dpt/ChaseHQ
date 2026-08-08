@@ -7,7 +7,7 @@ OBJS       = o.riscos o.host \
              o.bank3 o.bank7 o.create o.main \
              o.commondata o.soundsamples o.stage1data o.stage2data \
              o.stage3data o.stage4data o.stage5data o.stages
-LIBS       = ${RLIB}
+LIBS       = RISC_OSLib.o.risc_oslib
 INCLUDES   = .rotransform/riscos/h
 CDEFINES   = -D__riscos -DCHQ_SILENT
 VPATH      = .rotransform/riscos
@@ -19,7 +19,7 @@ include CApp
 .PHONY: riscos_layout clean_layout test
 
 riscos_layout:
-	tools/make-riscos-layout
+	sh tools/make-riscos-layout
 
 clean_layout:
 	${WIPE} .rotransform.riscos ${WFLAGS}

@@ -1,0 +1,30 @@
+---
+riscos:
+  stage: build
+  script:
+    - curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online
+    - chmod +x riscos-build-online
+    - sh tools/make-riscos-layout
+    - zip -q9r /tmp/source-archive.zip * .robuild.yaml .rotransform/riscos
+    - ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
+    - |
+      if [ -f VersionNum ]; then
+          version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' VersionNum)
+      else
+          version=$(git rev-parse --short HEAD)
+      fi
+      if [ -f /tmp/built,a91 ]; then
+          cp /tmp/built,a91 "ChaseHQ-$version.zip"
+      else
+          echo "No archive was built?"
+          exit 1
+      fi
+  artifacts:
+    when: always
+    paths:
+      - ChaseHQ-*.zip
+  tags:
+    - linux
+
+stages:
+  - build
