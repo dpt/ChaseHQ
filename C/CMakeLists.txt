@@ -24,8 +24,11 @@ set(CMAKE_C_STANDARD 90)
 # /wd4324: chqstate embeds a jmp_buf, which MSVC x64 aligns to 16 bytes for
 # its SSE register save area; the containing struct gets padded to match.
 # Nothing in our code to fix -- it's an artefact of jmp_buf's own alignment.
+# /wd4996: Tests/ uses portable fopen/getenv; fopen_s/_dupenv_s are MSVC-only
+# extensions with no C89 equivalent, not viable in code the other platforms
+# also build.
 if(MSVC)
-  add_compile_options(/W4 /wd4132 /wd4245 /wd4295 /wd4324)
+  add_compile_options(/W4 /wd4132 /wd4245 /wd4295 /wd4324 /wd4996)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
