@@ -19,8 +19,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/time.h>
-#include <unistd.h>
 
 #include <SDL3/SDL.h>
 
@@ -182,13 +180,13 @@ typedef struct chq_sdl_state
 
   int               speed;      // game speed, percent, SPEED_MIN..SPEED_MAX
 
-  struct timeval    stamps[MAXSTAMPS];
+  Uint64            stamps[MAXSTAMPS]; // SDL_GetTicksNS() values
   int               nstamps;
 
-  /* Absolute wall-clock deadline for the next sleep, advanced by each call's
-   * nominal duration rather than re-anchored from "now" -- see
+  /* Absolute monotonic-clock deadline for the next sleep, advanced by each
+   * call's nominal duration rather than re-anchored from "now" -- see
    * chq_sleep_handler for why. */
-  double            next_deadline;  // seconds, gettimeofday-epoch
+  double            next_deadline;  // seconds, SDL_GetTicksNS()-epoch
   int               deadline_valid; // bool
 
   struct
@@ -330,7 +328,7 @@ static void chq_stamp_handler(void *opaque)
   assert(state->nstamps < MAXSTAMPS);
   if (state->nstamps >= MAXSTAMPS)
     return;
-  gettimeofday(&state->stamps[state->nstamps++], NULL);
+  state->stamps[state->nstamps++] = SDL_GetTicksNS();
 }
 
 static int chq_sleep_handler(int durationTStates, void *opaque)
@@ -358,7 +356,7 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
       if (!paused)
         break;
 
-      usleep(500000); // 0.5s
+      SDL_Delay(500); // 0.5s
     }
   }
   else
@@ -374,12 +372,12 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
     const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
     const double   maxLagFrames  = 4.0; // cap catch-up burst after a stall/pause
 
-    struct timeval now;
+    Uint64         nowNs;
     double         nowSecs;
     double         duration; // seconds
 
-    gettimeofday(&now, NULL); // get time now before anything else
-    nowSecs = now.tv_sec + now.tv_usec / 1e6;
+    nowNs   = SDL_GetTicksNS(); // get time now before anything else
+    nowSecs = nowNs / 1e9;
 
     /* 'duration' tells us how long the operation should take. Turn T-state
      * duration into seconds. */
@@ -388,8 +386,8 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
     duration = duration * 100 / state->speed;
 
     /* Pace off an absolute deadline that advances by 'duration' every call,
-     * rather than re-anchoring from 'now' each time. usleep() on this host
-     * routinely overshoots its requested delay by a few ms (OS scheduler
+     * rather than re-anchoring from 'now' each time. The delay call on this
+     * host routinely overshoots its requested delay by a few ms (OS scheduler
      * granularity); re-anchoring from 'now' every call bakes that overshoot
      * into every single frame with nothing to claw it back, producing a
      * steady-state frame rate well under 50Hz (measured ~42fps) even though
@@ -415,9 +413,8 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
     if (state->next_deadline > nowSecs)
     {
       double     delay = state->next_deadline - nowSecs; // seconds
-      useconds_t udelay = (useconds_t) (delay * 1e6);
 
-      usleep(udelay);
+      SDL_DelayNS((Uint64) (delay * 1e9));
     }
   }
 
