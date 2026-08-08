@@ -140,9 +140,6 @@ enum
  */
 typedef struct zxspectrum zxspectrum_t;
 
-/** Virtual Z80 T-state clock. */
-typedef uint64_t zxclock_t;
-
 /**
  * Bounding box.
  */
@@ -182,6 +179,18 @@ typedef struct zxscreen
   attribute_t attributes[SCREEN_ATTRIBUTES_LENGTH];
 }
 zxscreen_t;
+
+/**
+ * Virtual Z80 T-state clock.
+ *
+ * RISC OS: Norcroft's 32-bit library has no native 64-bit integer type. Virtual
+ * clock users perform modular subtraction on RISC OS, where this wraps safely.
+ */
+#ifdef __riscos
+typedef uint32_t zxclock_t;
+#else
+typedef uint64_t zxclock_t;
+#endif
 
 /**
  * The current state of the machine.
