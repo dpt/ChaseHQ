@@ -1,0 +1,84 @@
+#!/bin/sh
+# Build the RISC OS leaf-name view used by AMU without moving canonical files.
+set -eu
+
+root=.rotransform/riscos
+
+mkdir -p "$root/c" "$root/h/C99/h" "$root/h/ZXSpectrum/h" \
+         "$root/h/ChaseHQ/Data/h" "$root/h/ChaseHQ/Engine/h" \
+         "$root/h/ChaseHQ/h"
+
+link_source()
+{
+    source_path=$1
+    leaf=$2
+    ln -sfn "$(pwd)/$source_path" "$root/c/$leaf"
+}
+
+link_header()
+{
+    source_path=$1
+    target_path=$2
+    case "$target_path" in
+        */*)
+            parent=${target_path%/*}
+            leaf=${target_path##*/}
+            ln -sfn "$(pwd)/$source_path" "$root/h/$parent/h/$leaf"
+            ;;
+        *) ln -sfn "$(pwd)/$source_path" "$root/h/$target_path" ;;
+    esac
+}
+
+link_source C/apps/riscos/Riscos.c riscos
+link_source C/apps/riscos/Tests.c chqtest
+link_source C/libraries/ZXSpectrum/Kempston.c kempston
+link_source C/libraries/ZXSpectrum/Keyboard.c keyboard
+link_source C/libraries/ZXSpectrum/Screen.c screen
+link_source C/libraries/ZXSpectrum/Spectrum.c spectrum
+link_source C/libraries/ZXSpectrum/Z80.c z80
+link_source C/libraries/ChaseHQ/Engine/Bank3.c bank3
+link_source C/libraries/ChaseHQ/Engine/Bank7.c bank7
+link_source C/libraries/ChaseHQ/Engine/Create.c create
+link_source C/libraries/ChaseHQ/Engine/Main.c main
+link_source C/libraries/ChaseHQ/Data/CommonData.c commondata
+link_source C/libraries/ChaseHQ/Data/SoundSamples.c soundsamples
+link_source C/libraries/ChaseHQ/Data/Stage1Data.c stage1data
+link_source C/libraries/ChaseHQ/Data/Stage2Data.c stage2data
+link_source C/libraries/ChaseHQ/Data/Stage3Data.c stage3data
+link_source C/libraries/ChaseHQ/Data/Stage4Data.c stage4data
+link_source C/libraries/ChaseHQ/Data/Stage5Data.c stage5data
+link_source C/libraries/ChaseHQ/Data/Stages.c stages
+
+for header in C/include/C99/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "C99/$leaf"
+done
+for header in C/include/ZXSpectrum/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ZXSpectrum/$leaf"
+done
+for header in C/include/ChaseHQ/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/$leaf"
+done
+for header in C/libraries/ZXSpectrum/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ZXSpectrum/$leaf"
+    link_header "$header" "$leaf"
+done
+for header in C/libraries/ChaseHQ/Engine/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/Engine/$leaf"
+    link_header "$header" "$leaf"
+done
+for header in C/libraries/ChaseHQ/Data/*.h
+do
+    leaf=$(basename "$header" .h)
+    link_header "$header" "ChaseHQ/Data/$leaf"
+    link_header "$header" "$leaf"
+done

@@ -29,12 +29,12 @@ Build and test with:
 
 ### 2. Native build
 
-- [ ] Add a `CApp` AMU build with an explicit source manifest and RISC_OSLib.
-- [ ] Generate an ignored `.rotransform/riscos` filename-layout mirror.
-- [ ] Build shared engine/data/Spectrum code and the native host only; exclude
+- [x] Add a `CApp` AMU build with an explicit source manifest and RISC_OSLib.
+- [x] Generate an ignored `.rotransform/riscos` filename-layout mirror.
+- [x] Build shared engine/data/Spectrum code and the native host only; exclude
   SDL, the CRT shader, and `slopay-chip.c`.
-- [ ] Apply only Norcroft-required C89 and fixed-width portability changes.
-- [ ] Provide native tests for data sizes and modular clock arithmetic.
+- [x] Apply only Norcroft-required C89 and fixed-width portability changes.
+- [x] Provide native tests for data sizes and modular clock arithmetic.
 
 ### 3. Desktop application shell
 

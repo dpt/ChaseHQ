@@ -19,6 +19,14 @@ typedef int8_t s8;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
+/* Norcroft's 32-bit library has no native 64-bit integer type. Virtual clock
+ * users perform modular subtraction on RISC OS, where this wraps safely. */
+#ifdef __riscos
+typedef uint32_t zxclock_t;
+#else
+typedef uint64_t zxclock_t;
+#endif
+
 #endif /* C99_TYPES_H */
 
 // vim: ts=8 sts=2 sw=2 et

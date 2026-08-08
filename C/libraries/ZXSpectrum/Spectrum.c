@@ -91,6 +91,16 @@ static void zxbox_maximise(zxbox_t *b)
   b->y1 = INT_MAX;
 }
 
+/* Return true if a is later than b on the virtual clock. */
+static int zxclock_is_after(zxclock_t a, zxclock_t b)
+{
+#ifdef __riscos
+  return (zxclock_t) (a - b) < (zxclock_t) 0x80000000U;
+#else
+  return a > b;
+#endif
+}
+
 /* Return true if box can hold (width,height) at (0,0). */
 static int zxbox_exceeds(const zxbox_t *b, int width, int height)
 {
@@ -122,8 +132,8 @@ typedef struct zxspectrum_private
 
   unsigned int    prev_border;
 
-  uint64_t        tstates; // virtual Z80 clock; game thread only (see logtime)
-  uint64_t        stamp_tstates[MAXSTAMPS]; // clock at each open stamp()
+  zxclock_t       tstates; // virtual Z80 clock; game thread only (see logtime)
+  zxclock_t       stamp_tstates[MAXSTAMPS]; // clock at each open stamp()
   int             nstamps;
 
   mutex_t         lock;
@@ -337,7 +347,7 @@ static void zx_stamp(zxspectrum_t *state)
 static int zx_sleep(zxspectrum_t *state, int duration)
 {
   zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
-  uint64_t              segment_end;
+  zxclock_t             segment_end;
 
   /* A real Z80 spends the whole interrupt period either working or waiting
    * on the frame flag; either way the clock has moved on by the segment's
@@ -348,8 +358,8 @@ static int zx_sleep(zxspectrum_t *state, int duration)
   assert(prv->nstamps > 0);
   if (prv->nstamps > 0)
   {
-    segment_end = prv->stamp_tstates[--prv->nstamps] + (uint64_t) duration;
-    if (segment_end > prv->tstates)
+    segment_end = prv->stamp_tstates[--prv->nstamps] + (zxclock_t) duration;
+    if (zxclock_is_after(segment_end, prv->tstates))
       prv->tstates = segment_end;
   }
 

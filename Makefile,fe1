@@ -1,0 +1,36 @@
+# Native 32-bit RISC OS ChaseHQ application.
+
+COMPONENT  = ChaseHQ
+TARGET     = !ChaseHQ
+OBJS       = o.riscos \
+             o.kempston o.keyboard o.screen o.spectrum o.z80 \
+             o.bank3 o.bank7 o.create o.main \
+             o.commondata o.soundsamples o.stage1data o.stage2data \
+             o.stage3data o.stage4data o.stage5data o.stages
+LIBS       = ${RLIB}
+INCLUDES   = .rotransform/riscos/h
+CDEFINES   = -D__riscos -DCHQ_SILENT
+VPATH      = .rotransform/riscos
+INITTARGET = riscos_layout
+CLEANTARGET = clean_layout
+
+include CApp
+
+.PHONY: riscos_layout clean_layout test
+
+riscos_layout:
+	tools/make-riscos-layout
+
+clean_layout:
+	${WIPE} .rotransform.riscos ${WFLAGS}
+
+${ODIR}.chqtest: c.chqtest
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ .rotransform/riscos/c/chqtest
+
+${AIFDIR}.ChaseTest: ${ODIR}.chqtest
+	${LD} ${LDFLAGS} -o $@ ${ODIR}.chqtest ${CLIB}
+
+test: riscos_layout ${AIFDIR}.ChaseTest
+	riscos-build-run ${AIFDIR}/ChaseTest,ff8 --command ChaseTest
+
+# Dynamic dependencies:
