@@ -51,6 +51,7 @@
 /* ----------------------------------------------------------------------- */
 
 /* Stage 4 object type macros */
+
 #define MAP_OBJ_S4_NEAR_COLUMN_VAL              (4)
 #define MAP_OBJ_S4_FAR_COLUMN_VAL               (5)
 #define MAP_OBJ_S4_PILE_OF_ROCKS_VAL            (6)
@@ -68,7 +69,7 @@
 /* ----------------------------------------------------------------------- */
 
 /* Forward declarations */
-// backdrop declared inline in stage struct
+
 static const u8 stage4_perp_description[7];
 static const char *stage4_chatter_strings[4];
 static const u8 stage4_arrest_messages_E1D5[67];
@@ -251,7 +252,7 @@ const stage_t stage4 = {
   /* $E0F0 perstage */
   &stage4_perp_face[FACEBITMAPBYTES],
   &stage4_pilot_mugshot[0],
-  0x3838,
+  attribute_BLACK_OVER_WHITE * 0x0101,
   &stage4_hittable_objects_E218[0],  /* addrof_hittable_objects */
   &stage4_right_obj_defs_E21E[-1].arg,  /* addrof_right_hand_handlers */
   &stage4_right_obj_defs_E21E[-1],  /* addrof_right_hand_objects */
@@ -266,7 +267,12 @@ const stage_t stage4 = {
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
   &stage4_lods_E7F2[0],  /* bitmaps_perp_car */
-  { &stage4_lods_E846[0], &stage4_lods_E81C[0], &stage4_lods_E846[0], &stage4_lods_E7F2[0] },  /* bitmaps_vehicles */
+  {
+    &stage4_lods_E846[0],
+    &stage4_lods_E81C[0],
+    &stage4_lods_E846[0],
+    &stage4_lods_E7F2[0]
+  },  /* bitmaps_vehicles */
 
   /* $E11A difficulty */
   10,  /* car_spawn_delay */
@@ -319,6 +325,8 @@ static const char *stage4_chatter_strings[4] = {
   "IN A BLUE TWO SEATER... OVER\xAE",
 };
 
+/* ----------------------------------------------------------------------- */
+
 /**
  * $E1D5: stage4_arrest_messages_E1D5
  */
@@ -339,9 +347,11 @@ static const u8 stage4_arrest_messages_E1D5[67] = {
   ZXATTRS(0x5944),
   'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'K', 'I', 'D', 'N', 'A', 'P', 'P', 'I', 'N', 'G' | EOS,
 
-  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,
   DRAWOVERLAY_STOP
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $E218: stage4_hittable_objects_E218 */
 static const hittable_t stage4_hittable_objects_E218[2] = {
@@ -374,6 +384,8 @@ static const obj_t stage4_left_obj_defs_E25D[9] = {
   { 129, 200, 70, &stage4_depthset_F815, draw_object_left },
   { 129, 200, 70, &stage4_depthset_F7FF, draw_object_left },
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $E29C: stage4_map_curv_E29C */
 static const u8 stage4_map_curv_E29C[] = {

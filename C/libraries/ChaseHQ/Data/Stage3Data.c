@@ -71,7 +71,7 @@
 /* ----------------------------------------------------------------------- */
 
 /* Forward declarations */
-// backdrop declared inline in stage struct
+
 static const u8 stage3_perp_description[7];
 static const char *stage3_chatter_strings[4];
 static const u8 stage3_arrest_messages_C1E8[70];
@@ -264,7 +264,7 @@ const stage_t stage3 = {
   /* $C0F0 perstage */
   &stage3_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
-  0x7070,
+  attribute_BRIGHT_BLACK_OVER_YELLOW * 0x0101,
   &stage3_hittable_objects_C22E[0],  /* addrof_hittable_objects */
   &stage3_right_obj_defs_C234[-1].arg,  /* addrof_right_hand_handlers */
   &stage3_right_obj_defs_C234[-1],  /* addrof_right_hand_objects */
@@ -279,7 +279,12 @@ const stage_t stage3 = {
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[0],  /* bitmaps_stones */
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CE1B[0],  /* bitmaps_dust */
   &stage3_lods_C8E0[0],  /* bitmaps_perp_car */
-  { &stage3_lods_C934[0], &stage3_lods_C90A[0], &stage3_lods_C934[0], &stage3_lods_C8E0[0] },  /* bitmaps_vehicles */
+  {
+    &stage3_lods_C934[0],
+    &stage3_lods_C90A[0],
+    &stage3_lods_C934[0],
+    &stage3_lods_C8E0[0]
+  },  /* bitmaps_vehicles */
 
   /* $C11A difficulty */
   15,  /* car_spawn_delay */
@@ -332,6 +337,8 @@ static const char *stage3_chatter_strings[4] = {
   "VEHICLE IS A GERMAN SPORTS CAR... OVER\xAE",
 };
 
+/* ----------------------------------------------------------------------- */
+
 /**
  * $C1E8: stage3_arrest_messages_C1E8
  */
@@ -352,9 +359,11 @@ static const u8 stage3_arrest_messages_C1E8[70] = {
   ZXATTRS(0x5943),
   'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'S', 'E', 'L', 'L', 'I', 'N', 'G', ' ', 'D', 'R', 'U', 'G', 'S' | EOS,
 
-  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,
   DRAWOVERLAY_STOP
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C22E: stage3_hittable_objects_C22E */
 static const hittable_t stage3_hittable_objects_C22E[2] = {
@@ -381,6 +390,8 @@ static const obj_t stage3_left_obj_defs_C25E[6] = {
   { 132, 182, 80, &stage3_stretchy_D7A8[0], draw_stretchy_object_left },
   { 132, 182, 80, &stage3_stretchy_D9E0[0], draw_stretchy_object_left },
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C288: stage3_map_curv_C288 */
 static const u8 stage3_map_curv_C288[] = {
@@ -2208,8 +2219,9 @@ static const u8 stage3_bitmap_CDBB[3 * 2 * 9] = {
   XXXXXX__, ______X_, _XXXX_X_, X____X_X, __XXXXXX, _X______,
   XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
 };
+
 /** $CDF1: stage3_lods_CDF1 */
-static const bitmap_t stage3_lods_CDF1[6] = {
+static const bitmap_t stage3_lods_CDF1[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 5, &stage3_bitmap_CE45[0], &stage3_bitmap_CE45[0] },  // [0]
   { 2, BITMAPFLAG_MASKED, 4, &stage3_bitmap_CE59[0], &stage3_bitmap_CE69[0] },  // [1]
   { 2, BITMAPFLAG_MASKED, 3, &stage3_bitmap_CE79[0], &stage3_bitmap_CE85[0] },  // [2]
@@ -2219,7 +2231,7 @@ static const bitmap_t stage3_lods_CDF1[6] = {
 };
 
 /** $CE1B: stage3_lods_CE1B */
-static const bitmap_t stage3_lods_CE1B[6] = {
+static const bitmap_t stage3_lods_CE1B[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage3_bitmap_CE9D[0], &stage3_bitmap_CE9F[0] },  // [0]
   { 1, BITMAPFLAG_MASKED, 1, &stage3_bitmap_CE9D[0], &stage3_bitmap_CE9F[0] },  // [1]
   { 1, BITMAPFLAG_MASKED, 1, &stage3_bitmap_CE9D[0], &stage3_bitmap_CE9F[0] },  // [2]

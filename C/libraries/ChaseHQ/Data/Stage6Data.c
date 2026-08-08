@@ -29,21 +29,21 @@
 
 /* Z80 addresses of the map sections, as referenced by the map
  * GOTO/SPLIT commands and stage6_lookup_map_goto(). */
-#define STAGE6_MAP_START_CURVATURE_ADDR          (0xC65C)
-#define STAGE6_MAP_START_HEIGHT_ADDR             (0xC65D)
-#define STAGE6_MAP_START_LANES_ADDR              (0xC65E)
-#define STAGE6_MAP_START_HAZARDS_ADDR            (0xC65F)
-#define STAGE6_MAP_START_LEFTOBJS_ADDR           (0xC660)
-#define STAGE6_MAP_START_RIGHTOBJS_ADDR          (0xC661)
+#define STAGE6_MAP_START_CURVATURE_ADDR (0xC65C)
+#define STAGE6_MAP_START_HEIGHT_ADDR    (0xC65D)
+#define STAGE6_MAP_START_LANES_ADDR     (0xC65E)
+#define STAGE6_MAP_START_HAZARDS_ADDR   (0xC65F)
+#define STAGE6_MAP_START_LEFTOBJS_ADDR  (0xC660)
+#define STAGE6_MAP_START_RIGHTOBJS_ADDR (0xC661)
 
 /* ----------------------------------------------------------------------- */
 
 /* Stage 6 object type macros */
 
-
 /* ----------------------------------------------------------------------- */
 
 /* Forward declarations */
+
 static const u8 stage6_perp_description[7];
 static const char *stage6_chatter_strings[4];
 static const u8 stage6_arrest_messages[83];
@@ -121,12 +121,17 @@ const stage_t stage6 = {
   &stage6_left_hand_objects[2],
   &stage6_perp_description[0],
   &stage6_arrest_messages[0],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  &stage6_veh3[0],
-  { &stage6_veh1[0], &stage6_veh2[0], &stage6_veh1[0], &stage6_veh3[0] },
+  { NULL, NULL {,
+
+  NULL,  /* bitmaps_stones */
+  NULL,  /* bitmaps_dust */
+  &stage6_veh3[0],  /* bitmaps_perp_car */
+  {
+    &stage6_veh1[0],
+    &stage6_veh2[0],
+    &stage6_veh1[0],
+    &stage6_veh3[0]
+  },  /* bitmaps_vehicles */
 
   /* $C11A difficulty */
   20,  /* car_spawn_delay */
@@ -177,6 +182,8 @@ static const char *stage6_chatter_strings[4] = {
   "THIS IS A TEST LEVEL\xAE",
 };
 
+/* ----------------------------------------------------------------------- */
+
 /**
  * $C1E6: stage6_arrest_messages
  */
@@ -190,9 +197,11 @@ static const u8 stage6_arrest_messages[83] = {
   ZXATTRS(0x5922),
   'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T' | EOS,
 
-  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,
   DRAWOVERLAY_STOP
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C239: stage6_hittable_objects */
 static const hittable_t stage6_hittable_objects[2] = {
@@ -209,6 +218,8 @@ static const obj_t stage6_right_hand_objects[7] = {
 static const obj_t stage6_left_hand_objects[7] = {
   { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C65C: stage6_map_start_curvature */
 static const u8 stage6_map_start_curvature[28] = {

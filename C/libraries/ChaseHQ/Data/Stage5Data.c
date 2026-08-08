@@ -57,22 +57,23 @@
 /* ----------------------------------------------------------------------- */
 
 /* Stage 5 object type macros */
-#define MAP_OBJ_S5_OVERHEAD_BRIDGE_VAL      (2)
-#define MAP_OBJ_S5_CACTUS_VAL               (4)
-#define MAP_OBJ_S5_DOUBLE_STREET_LAMP_VAL   (5)
-#define MAP_OBJ_S5_HUGE_ROCK_VAL            (6)
-#define MAP_OBJ_S5_TELEGRAPH_POLE_VAL       (7)
 
-#define MAP_OBJ_S5_OVERHEAD_BRIDGE(D)       (((D) << 4) | MAP_OBJ_S5_OVERHEAD_BRIDGE_VAL)
-#define MAP_OBJ_S5_CACTUS(D)                (((D) << 4) | MAP_OBJ_S5_CACTUS_VAL)
-#define MAP_OBJ_S5_DOUBLE_STREET_LAMP(D)    (((D) << 4) | MAP_OBJ_S5_DOUBLE_STREET_LAMP_VAL)
-#define MAP_OBJ_S5_HUGE_ROCK(D)             (((D) << 4) | MAP_OBJ_S5_HUGE_ROCK_VAL)
-#define MAP_OBJ_S5_TELEGRAPH_POLE(D)        (((D) << 4) | MAP_OBJ_S5_TELEGRAPH_POLE_VAL)
+#define MAP_OBJ_S5_OVERHEAD_BRIDGE_VAL    (2)
+#define MAP_OBJ_S5_CACTUS_VAL             (4)
+#define MAP_OBJ_S5_DOUBLE_STREET_LAMP_VAL (5)
+#define MAP_OBJ_S5_HUGE_ROCK_VAL          (6)
+#define MAP_OBJ_S5_TELEGRAPH_POLE_VAL     (7)
+
+#define MAP_OBJ_S5_OVERHEAD_BRIDGE(D)     (((D) << 4) | MAP_OBJ_S5_OVERHEAD_BRIDGE_VAL)
+#define MAP_OBJ_S5_CACTUS(D)              (((D) << 4) | MAP_OBJ_S5_CACTUS_VAL)
+#define MAP_OBJ_S5_DOUBLE_STREET_LAMP(D)  (((D) << 4) | MAP_OBJ_S5_DOUBLE_STREET_LAMP_VAL)
+#define MAP_OBJ_S5_HUGE_ROCK(D)           (((D) << 4) | MAP_OBJ_S5_HUGE_ROCK_VAL)
+#define MAP_OBJ_S5_TELEGRAPH_POLE(D)      (((D) << 4) | MAP_OBJ_S5_TELEGRAPH_POLE_VAL)
 
 /* ----------------------------------------------------------------------- */
 
 /* Forward declarations */
-// backdrop declared inline in stage struct
+
 static const u8 stage5_perp_description[7];
 static const char *stage5_chatter_strings[4];
 static const u8 stage5_arrest_messages_C1E6[83];
@@ -292,7 +293,7 @@ const stage_t stage5 = {
   /* $C0F0 perstage */
   &stage5_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
-  0x7070,
+  attribute_BRIGHT_BLACK_OVER_YELLOW * 0x0101,
   &stage5_hittable_objects_C239[0],  /* addrof_hittable_objects */
   &stage5_right_obj_defs_C23F[-1].arg,  /* addrof_right_hand_handlers */
   &stage5_right_obj_defs_C23F[-1],  /* addrof_right_hand_objects */
@@ -307,7 +308,12 @@ const stage_t stage5 = {
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
   &stage5_lods_C8E2[0],  /* bitmaps_perp_car */
-  { &stage5_lods_C936[0], &stage5_lods_C90C[0], &stage5_lods_C936[0], &stage5_lods_C8E2[0] },  /* bitmaps_vehicles */
+  {
+    &stage5_lods_C936[0],
+    &stage5_lods_C90C[0],
+    &stage5_lods_C936[0],
+    &stage5_lods_C8E2[0]
+  },  /* bitmaps_vehicles */
 
   /* $C11A difficulty */
   20,  /* car_spawn_delay */
@@ -360,6 +366,8 @@ static const char *stage5_chatter_strings[4] = {
   "THE TARGET VEHICLE IS UNKNOWN... OVER\xAE",
 };
 
+/* ----------------------------------------------------------------------- */
+
 /**
  * $C1E6: stage5_arrest_messages_C1E6
  */
@@ -387,9 +395,11 @@ static const u8 stage5_arrest_messages_C1E6[83] = {
   ZXATTRS(0x596C),
   'M', 'U', 'R', 'D', 'E', 'R' | EOS,
 
-  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,
   DRAWOVERLAY_STOP
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C239: stage5_hittable_objects_C239 */
 static const hittable_t stage5_hittable_objects_C239[2] = {
@@ -418,6 +428,8 @@ static const obj_t stage5_left_obj_defs_C270[7] = {
   { 112, 224, 50, &stage5_stretchy_CEF6[0], draw_stretchy_object_left },
   { 132, 182, 70, &stage5_stretchy_D9D9[0], draw_stretchy_object_left },
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C2A1: stage5_map_curv_C2A1 */
 static const u8 stage5_map_curv_C2A1[] = {

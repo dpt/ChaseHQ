@@ -58,21 +58,20 @@
 
 /* Stage 2 object type macros */
 
-#define MAP_OBJ_S2_HUGE_ROCK_VAL     (4)
-#define MAP_OBJ_S2_PALM_TREE_VAL     (5)
-#define MAP_OBJ_S2_LEAVES_VAL        (6)
-#define MAP_OBJ_S2_DOUBLE_LAMP_VAL   (7)
+#define MAP_OBJ_S2_HUGE_ROCK_VAL   (4)
+#define MAP_OBJ_S2_PALM_TREE_VAL   (5)
+#define MAP_OBJ_S2_LEAVES_VAL      (6)
+#define MAP_OBJ_S2_DOUBLE_LAMP_VAL (7)
 
-// remove this - use common
-#define MAP_OBJ_S2_HUGE_ROCK(D)      (((D) << 4) | MAP_OBJ_S2_HUGE_ROCK_VAL)
-#define MAP_OBJ_S2_PALM_TREE(D)      (((D) << 4) | MAP_OBJ_S2_PALM_TREE_VAL)
-#define MAP_OBJ_S2_LEAVES(D)         (((D) << 4) | MAP_OBJ_S2_LEAVES_VAL)
-#define MAP_OBJ_S2_DOUBLE_LAMP(D)    (((D) << 4) | MAP_OBJ_S2_DOUBLE_LAMP_VAL)
+#define MAP_OBJ_S2_HUGE_ROCK(D)    (((D) << 4) | MAP_OBJ_S2_HUGE_ROCK_VAL)
+#define MAP_OBJ_S2_PALM_TREE(D)    (((D) << 4) | MAP_OBJ_S2_PALM_TREE_VAL)
+#define MAP_OBJ_S2_LEAVES(D)       (((D) << 4) | MAP_OBJ_S2_LEAVES_VAL)
+#define MAP_OBJ_S2_DOUBLE_LAMP(D)  (((D) << 4) | MAP_OBJ_S2_DOUBLE_LAMP_VAL)
 
 /* ----------------------------------------------------------------------- */
 
 /* Forward declarations */
-// backdrop declared inline in stage struct
+
 static const u8 stage2_perp_description[7];
 static const char *stage2_chatter_strings[4];
 static const u8 stage2_arrest_messages_E1DD[71];
@@ -282,7 +281,7 @@ const stage_t stage2 = {
   /* $E0F0 perstage */
   &stage2_perp_face[FACEBITMAPBYTES],
   &stage2_pilot_mugshot[0],
-  0x3838,
+  attribute_BLACK_OVER_WHITE * 0x0101,
   &stage2_hittable_objects_E224[0],  /* addrof_hittable_objects */
   &stage2_right_obj_defs_E22A[-1].arg,  /* addrof_right_hand_handlers */
   &stage2_right_obj_defs_E22A[-1],  /* addrof_right_hand_objects */
@@ -297,7 +296,12 @@ const stage_t stage2 = {
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
   &stage2_lods_E8FF[0],  /* bitmaps_perp_car */
-  { &stage2_lods_E953[0], &stage2_lods_E929[0], &stage2_lods_E953[0], &stage2_lods_E8FF[0] },  /* bitmaps_vehicles */
+  {
+    &stage2_lods_E953[0],
+    &stage2_lods_E929[0],
+    &stage2_lods_E953[0],
+    &stage2_lods_E8FF[0]
+  },  /* bitmaps_vehicles */
 
   /* $E11A difficulty */
   15,  /* car_spawn_delay */
@@ -350,6 +354,8 @@ static const char *stage2_chatter_strings[4] = {
   "YELLOW SPORTS CAR ON THE FREEWAY... OVER\xAE",
 };
 
+/* ----------------------------------------------------------------------- */
+
 /**
  * $E1DD: stage2_arrest_messages_E1DD
  */
@@ -370,9 +376,11 @@ static const u8 stage2_arrest_messages_E1DD[71] = {
   ZXATTRS(0x5942),
   'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'A', 'R', 'M', 'E', 'D', ' ', 'R', 'O', 'B', 'B', 'E', 'R', 'Y', '.' | EOS,
 
-  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,
   DRAWOVERLAY_STOP
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $E224: stage2_hittable_objects_E224 */
 static const hittable_t stage2_hittable_objects_E224[2] = {
@@ -401,6 +409,8 @@ static const obj_t stage2_left_obj_defs_E25B[7] = {
   { 124, 200, 80, &stage2_stretchy_F54B[0], draw_stretchy_object_left },
   { 132, 182, 80, &stage2_stretchy_F91F[0], draw_stretchy_object_left },
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $E28C: stage2_map_curv_E28C */
 static const u8 stage2_map_curv_E28C[] = {
