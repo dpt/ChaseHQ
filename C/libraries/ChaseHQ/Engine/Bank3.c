@@ -4258,8 +4258,6 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   const high_score_row_t *entry,
                                   int                     blink,
                                   u8                      attrs);
-static void erase_table_field_scanline(
-    chqstate_t *state, int x, u8 D_row, u8 E_row, int len);
 static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 tune_no);
@@ -5034,46 +5032,55 @@ static int table_row_visible(u8 D, u8 E)
  * be scrolling through the visible band at a time, and two ranks can
  * briefly overlap the same slot exactly as the original hardware does.
  *
- * hiscore.row's name field blinks rather than drawing plainly while it is in
- * the visible window -- see redraw_score_name's comment above, just before
- * this function.
+ * The real $C2D3-$C2EB gate (table_row_visible) fires once per row per
+ * frame, on the row's just-advanced address -- not an 8-frame throttle (an
+ * earlier version of this comment claimed that; it was wrong, confused with
+ * the unrelated `AND $07` third-wrap test inside advance_screen_scanline).
+ * Every frame a row's address is inside the visible band, $C2F6 redraws it;
+ * outside the band nothing touches that row's pixels at all -- no draw, no
+ * erase. rsn_char_loop's blit is unclamped (see draw_table_field_scrolling)
+ * and leads with its own one-scanline erase ($C350-$C352) before each
+ * character's 7-row glyph, one row below the erase point. Because the
+ * trigger fires every frame the address is in-band, not just once, the net
+ * visual is a "comet": a blank leading edge advancing one scanline per
+ * frame with the glyph's 7 rows trailing behind it, each frame re-erasing
+ * the row the previous frame's glyph occupied. Only once scrolling stops
+ * (the row parks) does the trailing glyph settle into a normal, static
+ * character cell.
+ *
+ * hiscore.row is not exempt from this and does not draw plainly: $C2F7's
+ * self-modified `CP $09` (patched by insert_high_score_entry's $C0C0) picks
+ * out that one row and routes it through the blink toggle at $C2FB
+ * (blink_hiscore_row) instead of a plain draw, every trigger frame -- so it
+ * blinks throughout the scroll-in, not just once parked.
  */
 static void scroll_score_rows(chqstate_t *state)
 {
   int                row;    /* rank index, 0-9 (was B, DJNZ 10 down to 1) */
   u8                 E;      /* row's screen address low byte (was E) */
   u8                 D;      /* row's screen address high byte (was D) */
-  u8                 E_old;  /* row's screen address low byte before this frame's scroll step (Conv: added) */
-  u8                 D_old;  /* row's screen address high byte before this frame's scroll step (Conv: added) */
   high_score_row_t  *DE_entry; /* this row's data (was DE) */
-  u8                 attrs;  /* Conv: added -- this row's attribute byte */
 
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
-    attrs = TABLE_ROW_COLOUR;
-
     E = state->bank3->hiscore.row_addr[row][0];
     D = state->bank3->hiscore.row_addr[row][1];
-    E_old = E;
-    D_old = D;
 
     advance_screen_scanline(&D, &E);
 
     state->bank3->hiscore.row_addr[row][0] = E;
     state->bank3->hiscore.row_addr[row][1] = D;
 
-    erase_table_field_scanline(state, 0, D_old, E_old, 5);
-    erase_table_field_scanline(state, 64, D_old, E_old, NELEMS(state->bank3->high_score_table[row].score));
-    erase_table_field_scanline(state, 120, D_old, E_old, NELEMS(state->bank3->high_score_table[row].stage_code));
-    erase_table_field_scanline(state, 176, D_old, E_old, 1);
-    erase_table_field_scanline(state, 224, D_old, E_old, NELEMS(state->bank3->high_score_table[row].name));
-
-    DE_entry = &state->bank3->high_score_table[row];
+    if (!table_row_visible(D, E))
+      continue;
 
     if (row == state->bank3->hiscore.row) {
       blink_hiscore_row(state, 1);
-    } else {
-      draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1, attrs);
+      continue;
     }
+
+    DE_entry = &state->bank3->high_score_table[row];
+
+    draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1, TABLE_ROW_COLOUR);
   }
 }
 
@@ -5114,8 +5121,6 @@ static const u8 *font_glyph_for_char(u8 A_char)
 /**
  * $C2F6: Draw [len] characters of a rank's row at its current scroll position
  *
- * Clipped to the visible table.
- *
  * Conv: the real $C2F6 (rsn_char_loop) draws from the (D, E) screen address
  *       scroll_score_rows scrolled to, via its own byte-stream glyph loop -- a
  *       near-clone of cycle_and_draw_letter's classifier -- and does not stop
@@ -5123,12 +5128,26 @@ static const u8 *font_glyph_for_char(u8 A_char)
  *       keeps redrawing) past its first rest line, which is how all 10 ranks
  *       share the character-row slots actually free below the header (one rank
  *       is always mid-scroll, carrying the previous rank's row off past the
- *       header as it arrives). This function is that real per-scanline draw:
- *       called every frame at the row's *current* (D_row, E_row), which is
- *       mid-cell most frames, it walks each character down its own 8-scanline
- *       cell one line at a time (via advance_screen_scanline) and skips (clips)
- *       any line landing outside SCREEN_ROW_VISIBLE, rather than snapping to a
- *       fixed rest slot the way an earlier version of this port did.
+ *       header as it arrives). Only called (by scroll_score_rows/
+ *       blink_hiscore_row) once the row's starting address has already been
+ *       checked against table_row_visible; from there the blit is unclamped.
+ *       Each character starts with $C350-$C352's own leading write: a zero
+ *       byte at the character's un-advanced (D, E), before any glyph pixels.
+ *       Only then does the 7-row glyph loop run, and $C353 (INC D) executes
+ *       *before* each row's write, so the glyph's own 7 rows land one
+ *       scanline below the just-erased one -- font[0] at D+1, ..., font[6] at
+ *       D+7, matching rsn_draw_row's pre-increment order exactly (translated
+ *       here via advance_screen_scanline, which already increments before
+ *       wrapping). Because the trigger fires every frame a row's address sits
+ *       in the visible band (not just once), this leading erase plus
+ *       1-row-offset glyph is what makes each row look like a comet: the
+ *       blank edge is always one scanline ahead of the glyph trailing it, so
+ *       scanlines the window has already passed are actively blanked, not
+ *       merely left alone. A version without the leading erase (an earlier
+ *       revision of this function) instead leaves every prior frame's glyph
+ *       rows in place, which smears the character downward across the whole
+ *       transit -- the real hardware never does that; only the final frozen
+ *       frame (once scrolling stops) shows a normal, fully-formed glyph.
  *
  * \param[in] x     Pixel column of the field's first character, 0-255.
  * \param[in] D_row Row's current screen address high byte (thirds/pixel-row).
@@ -5141,6 +5160,11 @@ static const u8 *font_glyph_for_char(u8 A_char)
  *                  Lets scroll_score_rows set the FLASH bit on the rank 1 row
  *                  so it blinks via real ZX hardware FLASH (see Screen.c's
  *                  WRITE8PIX/WRITE8PIX_16) instead of a software toggle.
+ * \param[in] erase Zero to draw (rsn_char_loop, $C304): a leading 1-row erase
+ *                  then a 7-row glyph blit, offset one row below it. Non-zero
+ *                  to erase (rsn_char_loop2, $C37B): 8 rows of zero at the
+ *                  character's own row, no offset. Both skip space characters
+ *                  entirely (column still advances, nothing is written).
  */
 static void draw_table_field_scrolling(chqstate_t *state,
                                        int         x,
@@ -5148,14 +5172,16 @@ static void draw_table_field_scrolling(chqstate_t *state,
                                        u8          E_row,
                                        const u8   *text,
                                        int         len,
-                                       u8          attrs)
+                                       u8          attrs,
+                                       int         erase)
 {
   int       i;         /* character index within text (Conv: added) */
   u8        D;         /* this glyph's current scanline address, high byte */
   u8        E;         /* this glyph's current scanline address, low byte */
   const u8 *HL_font;   /* this glyph's 7-byte font[] entry, NULL for space */
-  int       row;       /* scanline index within the 8-row cell (Conv: added) */
+  int       row;       /* scanline index within the glyph's rows (Conv: added) */
   u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
+  u16       attr_addr; /* this glyph's attribute address (Conv: added) */
 
   for (i = 0; i < len; i++) {
     D = D_row;
@@ -5163,21 +5189,38 @@ static void draw_table_field_scrolling(chqstate_t *state,
 
     HL_font = font_glyph_for_char(text[i]);
 
-    if (table_row_visible(D, E)) {
-      u16 attr_addr; /* this glyph's attribute address (Conv: added) */
+    attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
+    *ADDRTOATTRS(attr_addr) = attrs;
+    update_attrs(state, attr_addr, 8, 8);
 
-      attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
-      *ADDRTOATTRS(attr_addr) = attrs;
-      update_attrs(state, attr_addr, 8, 8);
+    if (HL_font == NULL)
+      continue;
+
+    if (erase) {
+      /* $C390-$C3A9 (rsn_char_loop2): 8 rows of zero, write-then-advance,
+       * starting at the character's own (D, E) -- no leading byte, no
+       * 1-row offset. */
+      for (row = 0; row < 8; row++) {
+        DE_screen  = ADDRTOSCREEN((D << 8) | E);
+        *DE_screen = 0;
+        update_screen(state, (D << 8) | E, 8, 1);
+        advance_screen_scanline(&D, &E);
+      }
+      continue;
     }
 
-    for (row = 0; row < 8; row++) {
-      if (table_row_visible(D, E)) {
-        DE_screen  = ADDRTOSCREEN((D << 8) | E);
-        *DE_screen = (HL_font != NULL && row < 7) ? HL_font[row] : 0;
-        update_screen(state, (D << 8) | E, 8, 1);
-      }
+    /* $C350-$C352: leading erase at the un-advanced (D, E), before any
+     * glyph row is drawn. */
+    DE_screen  = ADDRTOSCREEN((D << 8) | E);
+    *DE_screen = 0;
+    update_screen(state, (D << 8) | E, 8, 1);
+
+    for (row = 0; row < 7; row++) {
+      /* $C353: INC D (+ wrap) runs before the row's write, not after. */
       advance_screen_scanline(&D, &E);
+      DE_screen  = ADDRTOSCREEN((D << 8) | E);
+      *DE_screen = HL_font[row];
+      update_screen(state, (D << 8) | E, 8, 1);
     }
   }
 }
@@ -5203,13 +5246,11 @@ static void draw_table_field_scrolling(chqstate_t *state,
  * chase (see the removed flash_rank1_row, this comment's predecessor,
  * which modelled both of those incorrectly).
  *
- * The erase half below reuses draw_table_field_scrolling with an
- * all-spaces string: font_glyph_for_char(' ') is NULL, so it writes zero
- * bytes across the whole cell, matching rsn_char_loop2's blank-and-advance
- * loop.
+ * The erase half below passes the row's own text to draw_table_field_scrolling
+ * with erase set, matching rsn_char_loop2: it walks the same characters as
+ * the draw pass (so its own space-skip lines up), but for each non-space
+ * character it blanks all 8 rows instead of blitting a glyph.
  */
-static const u8 blank_row_text[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-
 /* Conv: added -- the five field draws below (rank suffix, score, stage code,
  * retry digit, name) are shared verbatim between blink_hiscore_row and
  * scroll_score_rows' plain-draw branch. blink is non-zero to draw this
@@ -5223,49 +5264,11 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   int                     blink,
                                   u8                      attrs)
 {
-  draw_table_field_scrolling(state, 0, D, E, blink ? high_score_rank_suffixes[row] : blank_row_text, 5, attrs);
-  draw_table_field_scrolling(state, 64, D, E, blink ? entry->score : blank_row_text, NELEMS(entry->score), attrs);
-  draw_table_field_scrolling(state, 120, D, E, blink ? entry->stage_code : blank_row_text, NELEMS(entry->stage_code), attrs);
-  draw_table_field_scrolling(state, 176, D, E, blink ? &entry->retry_digit : blank_row_text, 1, attrs);
-  draw_table_field_scrolling(state, 224, D, E, blink ? entry->name : blank_row_text, NELEMS(entry->name), attrs);
-}
-
-/**
- * Blank the single scanline a field's characters just scrolled off
- *
- * At their previous screen address.
- *
- * Conv: added -- no Z80 equivalent. draw_table_field_scrolling redraws all 8
- *       scanlines of each character's cell at its *current* position every
- *       frame; since the window only advances by one line per frame, the line
- *       at the *old* top of the window falls outside the new window and is
- *       never redrawn again, leaving a one-scanline trail behind the scrolling
- *       row. Called with the row's pre-advance (D_row, E_row) to clear exactly
- *       that vacated line before draw_table_field_scrolling draws the new
- *       window.
- *
- * \param[in] x     Pixel column of the field's first character, 0-255.
- * \param[in] D_row Row's pre-advance screen address high byte.
- * \param[in] E_row Row's pre-advance screen address low byte; only its cell-row
- *                  bits (0xE0) are used.
- * \param[in] len   Number of characters in the field.
- */
-static void erase_table_field_scanline(
-    chqstate_t *state, int x, u8 D_row, u8 E_row, int len)
-{
-  int i;         /* character index within the field (Conv: added) */
-  u8  E;         /* this character's vacated-line column (Conv: added) */
-  u8 *DE_screen; /* pixel destination for the vacated line (Conv: added) */
-
-  if (!table_row_visible(D_row, E_row))
-    return;
-
-  for (i = 0; i < len; i++) {
-    E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
-    DE_screen  = ADDRTOSCREEN((D_row << 8) | E);
-    *DE_screen = 0;
-    update_screen(state, (D_row << 8) | E, 8, 1);
-  }
+  draw_table_field_scrolling(state, 0, D, E, high_score_rank_suffixes[row], 5, attrs, !blink);
+  draw_table_field_scrolling(state, 64, D, E, entry->score, NELEMS(entry->score), attrs, !blink);
+  draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
+  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1, attrs, !blink);
+  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name), attrs, !blink);
 }
 
 /**
