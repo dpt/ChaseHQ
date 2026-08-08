@@ -56,6 +56,7 @@ int main(int argc, char **argv)
     unsigned char source_rows[6];
     unsigned char sprite_rows[6];
     chq_host_scale_factors_t factors;
+    chq_host_clock_t host_clock;
 
     (void) argc;
     (void) argv;
@@ -152,6 +153,19 @@ int main(int argc, char **argv)
           chq_host_sprite_action(3) == 0 &&
           chq_host_sprite_action(5) == 32,
           "translation-table plot action");
+
+    memset(&host_clock, 0, sizeof(host_clock));
+    check(chq_host_advance_clock(&host_clock, CHQ_CLOCK_128K / 100,
+                                 CHQ_CLOCK_128K, 1000) == 1 &&
+          host_clock.valid && host_clock.deadline == 1001,
+          "host clock first deadline");
+    host_clock.deadline = 900;
+    check(chq_host_advance_clock(&host_clock, CHQ_CLOCK_128K / 100,
+                                 CHQ_CLOCK_128K, 1000) == 1 &&
+          host_clock.deadline == 996,
+          "host clock lag cap");
+    check(chq_host_time_is_before(0xFFFFFFF0U, 0x00000020U),
+          "host clock wrap comparison");
 
     if (failures != 0)
         return EXIT_FAILURE;

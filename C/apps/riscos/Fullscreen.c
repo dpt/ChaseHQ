@@ -24,17 +24,7 @@
 
 #include "Host.h"
 
-#define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
-#define SPRITE_MODE_4BPP    (27)
 #define SPRITE_REASON_SCALE (52 + 512)
-#define TRANSLATION_WORDS   (256)
-#define CLOCK_128K          (3546900U)
-#define CLOCK_TICKS_SECOND  (100U)
-#define MAX_LAG_FRAMES      (4U)
-#define MODE_SELECTOR_HEAD  (5)
-#define MODE_DEPTH_4BPP     (2)
-#define MODE_DEPTH_8BPP     (3)
-#define MODE_DEPTH_32BPP    (5)
 #define SPRITE_NAME_BYTES   (12)
 
 typedef struct chq_sprite_area
@@ -75,20 +65,16 @@ typedef struct chq_fullscreen
     chqstate_t *game;
     chq_sprite_area_t *sprite_area;
     chq_sprite_header_t *sprite;
-    uint32_t translation[TRANSLATION_WORDS];
+    uint32_t translation[CHQ_TRANSLATION_WORDS];
     zxkeyset_t keys;
     zxkempston_t kempston;
-    uint32_t deadline;
-    uint32_t clock_remainder;
-    int deadline_valid;
+    chq_host_clock_t clock;
     int redraw_pending;
     int stop_requested;
     int fatal_error;
     int fullscreen_scale;
     int sprite_plot_action;
-    int pointer_state;
-    int pointer_saved;
-    int cursors_removed;
+    chq_host_pointer_t pointer;
     int escape_installed;
     void (*desktop_escape_handler)(int);
     uintptr_t desktop_mode;
@@ -99,14 +85,6 @@ chq_fullscreen_t;
 
 static volatile int fullscreen_escape;
 
-static const uint32_t spectrum_palette[16] =
-{
-    0x00000000U, 0xCD000000U, 0x0000CD00U, 0xCD00CD00U,
-    0x00CD0000U, 0xCDCD0000U, 0x00CDCD00U, 0xCDCDCD00U,
-    0x00000000U, 0xFF000000U, 0x0000FF00U, 0xFF00FF00U,
-    0x00FF0000U, 0xFFFF0000U, 0x00FFFF00U, 0xFFFFFF00U
-};
-
 static _kernel_oserror memory_error =
 {
     0x80801, "ChaseHQ: not enough memory"
@@ -116,33 +94,6 @@ static _kernel_oserror mode_error =
 {
     0x80802, "ChaseHQ: no suitable fullscreen mode"
 };
-
-/*******************************************************************
- Function:      monotonic_time
- Description:   Read the wrapping centisecond monotonic clock.
- Parameters:    none
- Returns:       current OS_ReadMonotonicTime value
- ******************************************************************/
-static uint32_t monotonic_time(void)
-{
-    uint32_t now;
-
-    now = 0;
-    _swix(OS_ReadMonotonicTime, _OUT(0), &now);
-    return now;
-}
-
-/*******************************************************************
- Function:      time_is_before
- Description:   Compare two wrapping monotonic clock values.
- Parameters:    a = candidate earlier value
-                b = candidate later value
- Returns:       non-zero if a is before b
- ******************************************************************/
-static int time_is_before(uint32_t a, uint32_t b)
-{
-    return (int32_t) (a - b) < 0;
-}
 
 /*******************************************************************
  Function:      report_error
@@ -250,29 +201,17 @@ static void native_border(int colour, void *opaque)
 }
 
 /*******************************************************************
- Function:      current_mode_is_suitable
- Description:   Check that the current mode can display the game.
- Parameters:    none
- Returns:       non-zero for a suitable 4, 8 or 32-bpp mode
+ Function:      set_screen_mode
+ Description:   Select a mode without requiring the Wimp.
+ Parameters:    mode = mode string or selector
+                text_mode = non-zero for a mode string
+ Returns:       error returned by OS_ScreenMode
  ******************************************************************/
-static int current_mode_is_suitable(void)
+static _kernel_oserror *set_screen_mode(const void *mode, int text_mode)
 {
-    int xlimit;
-    int ylimit;
-    int log2bpp;
-
-    if (_swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 11, &xlimit) != NULL ||
-        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 12, &ylimit) != NULL ||
-        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 9, &log2bpp) != NULL)
-        return 0;
-    return xlimit + 1 >= SCREEN_WIDTH &&
-           ylimit + 1 >= SCREEN_HEIGHT &&
-           (log2bpp == MODE_DEPTH_4BPP ||
-            log2bpp == MODE_DEPTH_8BPP ||
-            log2bpp == MODE_DEPTH_32BPP);
+    if (text_mode)
+        return _swix(OS_ScreenMode, _INR(0, 1), 15, mode);
+    return _swix(OS_ScreenMode, _INR(0, 1), 0, mode);
 }
 
 /*******************************************************************
@@ -296,7 +235,7 @@ static _kernel_oserror *save_desktop_mode(chq_fullscreen_t *app)
     if (app->desktop_mode < 256)
         return NULL;
     selector = (const int32_t *) app->desktop_mode;
-    words = MODE_SELECTOR_HEAD;
+    words = CHQ_MODE_SELECTOR_HEAD;
     while (words < 256 && selector[words] != -1)
         words += 2;
     if (words >= 256)
@@ -318,70 +257,7 @@ static _kernel_oserror *save_desktop_mode(chq_fullscreen_t *app)
  ******************************************************************/
 static _kernel_oserror *select_fullscreen_mode(void)
 {
-    static const int fallback[][2] =
-    {
-        { 1024, 768 }, { 800, 600 }, { 640, 480 }, { 320, 256 }
-    };
-    static const int depths[] =
-    {
-        MODE_DEPTH_4BPP, MODE_DEPTH_8BPP, MODE_DEPTH_32BPP
-    };
-    const char *configured;
-    _kernel_oserror *error;
-    int32_t selector[6];
-    int candidates[5][2];
-    int xlimit;
-    int ylimit;
-    int candidate;
-    int depth;
-
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 11, &xlimit);
-    if (error != NULL)
-        return error;
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 12, &ylimit);
-    if (error != NULL)
-        return error;
-    candidates[0][0] = xlimit + 1;
-    candidates[0][1] = ylimit + 1;
-    for (candidate = 0; candidate < 4; candidate++)
-    {
-        candidates[candidate + 1][0] = fallback[candidate][0];
-        candidates[candidate + 1][1] = fallback[candidate][1];
-    }
-
-    configured = getenv("ChaseHQ$ScreenMode");
-    if (configured != NULL && configured[0] != '\0')
-    {
-        error = _swix(OS_ScreenMode, _INR(0, 1), 15, configured);
-        if (error == NULL && current_mode_is_suitable())
-            return NULL;
-    }
-    selector[0] = 1;
-    selector[4] = -1;
-    selector[5] = -1;
-    for (depth = 0;
-         depth < (int) (sizeof(depths) / sizeof(depths[0]));
-         depth++)
-    {
-        selector[3] = depths[depth];
-        for (candidate = 0;
-             candidate < (int) (sizeof(candidates) /
-                                sizeof(candidates[0]));
-             candidate++)
-        {
-            if (candidates[candidate][0] < SCREEN_WIDTH ||
-                candidates[candidate][1] < SCREEN_HEIGHT)
-                continue;
-            selector[1] = candidates[candidate][0];
-            selector[2] = candidates[candidate][1];
-            error = _swix(OS_ScreenMode, _INR(0, 1), 0, selector);
-            if (error == NULL && current_mode_is_suitable())
-                return NULL;
-        }
-    }
-    return error == NULL ? &mode_error : error;
+    return chq_host_select_fullscreen_mode(set_screen_mode);
 }
 
 /*******************************************************************
@@ -392,27 +268,7 @@ static _kernel_oserror *select_fullscreen_mode(void)
  ******************************************************************/
 static _kernel_oserror *programme_fullscreen_palette(void)
 {
-    unsigned char commands[16 * 6];
-    unsigned char *out;
-    unsigned int colour;
-    int logical;
-    _kernel_oserror *error;
-
-    out = commands;
-    for (logical = 0; logical < 16; logical++)
-    {
-        colour = spectrum_palette[logical];
-        *out++ = 19;
-        *out++ = logical;
-        *out++ = 16;
-        *out++ = (colour >> 8) & 0xFF;
-        *out++ = (colour >> 16) & 0xFF;
-        *out++ = (colour >> 24) & 0xFF;
-    }
-    error = _swix(OS_WriteN, _INR(0, 1), commands, sizeof(commands));
-    if (error != NULL)
-        return error;
-    return _swix(ColourTrans_InvalidateCache, 0);
+    return chq_host_programme_palette();
 }
 
 /*******************************************************************
@@ -426,13 +282,13 @@ static int create_sprite(chq_fullscreen_t *app)
     unsigned int image_bytes;
     unsigned int sprite_bytes;
 
-    app->sprite_area = malloc(SPRITE_AREA_BYTES);
+    app->sprite_area = malloc(CHQ_SPRITE_AREA_BYTES);
     if (app->sprite_area == NULL)
         return 0;
-    memset(app->sprite_area, 0, SPRITE_AREA_BYTES);
+    memset(app->sprite_area, 0, CHQ_SPRITE_AREA_BYTES);
     image_bytes = SCREEN_WIDTH * SCREEN_HEIGHT / 2;
     sprite_bytes = sizeof(chq_sprite_header_t) + image_bytes;
-    app->sprite_area->size = SPRITE_AREA_BYTES;
+    app->sprite_area->size = CHQ_SPRITE_AREA_BYTES;
     app->sprite_area->count = 1;
     app->sprite_area->first = sizeof(chq_sprite_area_t);
     app->sprite_area->used = sizeof(chq_sprite_area_t) + sprite_bytes;
@@ -447,7 +303,7 @@ static int create_sprite(chq_fullscreen_t *app)
     app->sprite->right_bit = 31;
     app->sprite->image = sizeof(chq_sprite_header_t);
     app->sprite->mask = sizeof(chq_sprite_header_t);
-    app->sprite->mode = SPRITE_MODE_4BPP;
+    app->sprite->mode = CHQ_SPRITE_MODE_INDEXED4;
     return 1;
 }
 
@@ -459,19 +315,8 @@ static int create_sprite(chq_fullscreen_t *app)
  ******************************************************************/
 static _kernel_oserror *update_translation(chq_fullscreen_t *app)
 {
-    _kernel_oserror *error;
-    int log2bpp;
-
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 9, &log2bpp);
-    if (error != NULL)
-        return error;
-    error = _swix(ColourTrans_SelectTable, _INR(0, 5),
-                  SPRITE_MODE_4BPP, spectrum_palette, -1, -1,
-                  app->translation, 0);
-    if (error == NULL)
-        app->sprite_plot_action = chq_host_sprite_action(log2bpp);
-    return error;
+    return chq_host_build_translation(app->translation,
+                                      &app->sprite_plot_action);
 }
 
 /*******************************************************************
@@ -545,36 +390,21 @@ static int native_sleep(int duration, void *opaque)
 {
     chq_fullscreen_t *app;
     _kernel_oserror *error;
-    uint64_t numerator;
     uint32_t ticks;
     uint32_t now;
-    uint32_t lag;
 
     app = opaque;
-    numerator = (uint64_t) (unsigned int) duration * CLOCK_TICKS_SECOND +
-                app->clock_remainder;
-    ticks = (uint32_t) (numerator / CLOCK_128K);
-    app->clock_remainder = (uint32_t) (numerator % CLOCK_128K);
-    now = monotonic_time();
+    now = chq_host_monotonic_time();
+    ticks = chq_host_advance_clock(&app->clock,
+                                   (uint32_t) duration,
+                                   CHQ_CLOCK_128K, now);
     if (ticks != 0)
     {
-        if (!app->deadline_valid)
-        {
-            app->deadline = now + ticks;
-            app->deadline_valid = 1;
-        }
-        else
-        {
-            app->deadline += ticks;
-            lag = ticks * MAX_LAG_FRAMES;
-            if ((int32_t) (now - app->deadline) > (int32_t) lag)
-                app->deadline = now - lag;
-        }
         while (!fullscreen_escape &&
-               time_is_before(now, app->deadline))
+               chq_host_time_is_before(now, app->clock.deadline))
         {
             _swix(OS_Byte, _INR(0, 2), 19, 0, 0);
-            now = monotonic_time();
+            now = chq_host_monotonic_time();
         }
     }
     error = NULL;
@@ -635,7 +465,6 @@ static _kernel_oserror *enter_fullscreen(chq_fullscreen_t *app)
     int scale_x;
     int scale_y;
     int log2bpp;
-    int ignored;
 
     error = save_desktop_mode(app);
     if (error != NULL)
@@ -647,17 +476,12 @@ static _kernel_oserror *enter_fullscreen(chq_fullscreen_t *app)
                                           fullscreen_escape_handler);
     app->escape_installed = 1;
     _swix(OS_Byte, _INR(0, 2), 229, 0, 0);
-    error = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-                  106, 127, 0, &app->pointer_state);
+    error = chq_host_save_pointer(&app->pointer);
     if (error != NULL)
         return error;
-    app->pointer_saved = 1;
-    _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-          106, app->pointer_state & 128, 0, &ignored);
-    error = _swix(OS_RemoveCursors, 0);
+    error = chq_host_hide_pointer(&app->pointer);
     if (error != NULL)
         return error;
-    app->cursors_removed = 1;
     error = _swix(OS_WriteC, _IN(0), 12);
     if (error != NULL)
         return error;
@@ -665,7 +489,7 @@ static _kernel_oserror *enter_fullscreen(chq_fullscreen_t *app)
                   -1, 9, &log2bpp);
     if (error != NULL)
         return error;
-    if (log2bpp == MODE_DEPTH_4BPP)
+    if (log2bpp == CHQ_MODE_DEPTH_4BPP)
     {
         error = programme_fullscreen_palette();
         if (error != NULL)
@@ -700,7 +524,6 @@ static _kernel_oserror *leave_fullscreen(chq_fullscreen_t *app)
 {
     _kernel_oserror *error;
     _kernel_oserror *next;
-    int ignored;
 
     error = NULL;
     if (app->escape_installed)
@@ -709,11 +532,7 @@ static _kernel_oserror *leave_fullscreen(chq_fullscreen_t *app)
         signal(SIGINT, app->desktop_escape_handler);
         app->escape_installed = 0;
     }
-    if (app->cursors_removed)
-    {
-        error = _swix(OS_RestoreCursors, 0);
-        app->cursors_removed = 0;
-    }
+    error = chq_host_restore_cursors(&app->pointer);
     if (app->desktop_mode_saved)
     {
         if (app->desktop_mode_selector != NULL)
@@ -726,14 +545,9 @@ static _kernel_oserror *leave_fullscreen(chq_fullscreen_t *app)
             error = next;
         app->desktop_mode_saved = 0;
     }
-    if (app->pointer_saved)
-    {
-        next = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-                     106, app->pointer_state, 0, &ignored);
-        if (error == NULL)
-            error = next;
-        app->pointer_saved = 0;
-    }
+    next = chq_host_restore_pointer(&app->pointer);
+    if (error == NULL)
+        error = next;
     return error;
 }
 

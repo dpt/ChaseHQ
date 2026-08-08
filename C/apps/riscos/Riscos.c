@@ -26,13 +26,11 @@
 #include "Host.h"
 
 #define ICONBAR_CREATE_RIGHT (-1)
-#define GAME_WIDTH_OS       (512)
-#define GAME_HEIGHT_OS      (384)
 #define GAME_BORDER_OS      (16)
 #define GAME_WINDOW_WIDTH(scale) \
-    (GAME_WIDTH_OS * (scale) + GAME_BORDER_OS * 2)
+    (CHQ_GAME_WIDTH_OS * (scale) + GAME_BORDER_OS * 2)
 #define GAME_WINDOW_HEIGHT(scale) \
-    (GAME_HEIGHT_OS * (scale) + GAME_BORDER_OS * 2)
+    (CHQ_GAME_HEIGHT_OS * (scale) + GAME_BORDER_OS * 2)
 #define TEMPLATE_BYTES      (4096)
 #define INFO_ITEM           (0)
 #define NEW_128K_ITEM       (1)
@@ -44,16 +42,7 @@
 #define FULLSCREEN_ITEM     (9)
 #define QUIT_ITEM           (10)
 #define MENU_ITEMS          (11)
-#define SPRITE_AREA_BYTES   (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
-#define TRANSLATION_WORDS   (256)
-#define SPRITE_MODE_4BPP    (27)
 #define MAX_STAMPS          (4)
-#define CLOCK_48K           (3500000U)
-#define CLOCK_128K          (3546900U)
-#define CLOCK_TICKS_SECOND  (100U)
-#define MAX_LAG_FRAMES      (4U)
-#define MODE_SELECTOR_HEAD  (5)
-#define MODE_4BPP           (2)
 #define WIMP_MIN_VERSION    (310)
 
 typedef struct chq_menu
@@ -83,14 +72,11 @@ typedef struct chq_app
     int fullscreen;
     int fullscreen_scale;
     int escape_installed;
-    int cursors_removed;
     int have_caret;
     unsigned int pending_actions;
     unsigned int stamps[MAX_STAMPS];
     int nstamps;
-    unsigned int deadline;
-    unsigned int clock_remainder;
-    int deadline_valid;
+    chq_host_clock_t clock;
     zxspectrum_t *zx;
     chqstate_t *game;
     zxkeyset_t keys;
@@ -100,11 +86,11 @@ typedef struct chq_app
     wimp_wstate desktop_window_state;
     wimp_caretstr desktop_caret;
     wimp_palettestr desktop_palette;
-    int desktop_pointer;
+    chq_host_pointer_t pointer;
     void (*desktop_escape_handler)(int);
     sprite_area *sprite_area;
     sprite_id sprite;
-    unsigned int translation[TRANSLATION_WORDS];
+    unsigned int translation[CHQ_TRANSLATION_WORDS];
     int sprite_plot_action;
     chq_menu_t menu;
 }
@@ -123,14 +109,6 @@ static char screen_sprite[] = "chqscreen";
 static const char *scale_labels[] =
 {
     "Scale 1x", "Scale 2x", "Scale 3x", "Scale 4x"
-};
-
-static const unsigned int spectrum_palette[16] =
-{
-    0x00000000U, 0xCD000000U, 0x0000CD00U, 0xCD00CD00U,
-    0x00CD0000U, 0xCDCD0000U, 0x00CDCD00U, 0xCDCDCD00U,
-    0x00000000U, 0xFF000000U, 0x0000FF00U, 0xFF00FF00U,
-    0x00FF0000U, 0xFFFF0000U, 0x00FFFF00U, 0xFFFFFF00U
 };
 
 static os_error *handle_event(chq_app_t *app, wimp_eventstr *event);
@@ -154,32 +132,6 @@ static os_error wimp_version_error =
 {
     0x80803, "ChaseHQ: Wimp 3.10 or later is required"
 };
-
-/*******************************************************************
- Function:      monotonic_time
- Description:   Read the wrapping centisecond monotonic clock.
- Parameters:    none
- Returns:       current OS_ReadMonotonicTime value
- ******************************************************************/
-static unsigned int monotonic_time(void)
-{
-    unsigned int now;
-
-    _swix(OS_ReadMonotonicTime, _OUT(0), &now);
-    return now;
-}
-
-/*******************************************************************
- Function:      time_is_before
- Description:   Compare two wrapping monotonic clock values.
- Parameters:    a = candidate earlier value
-                b = candidate later value
- Returns:       non-zero if a is before b
- ******************************************************************/
-static int time_is_before(unsigned int a, unsigned int b)
-{
-    return (int32_t) (a - b) < 0;
-}
 
 /*******************************************************************
  Function:      dispatch_actions
@@ -266,7 +218,7 @@ static void native_stamp(void *opaque)
 
     app = opaque;
     if (app->nstamps < MAX_STAMPS)
-        app->stamps[app->nstamps++] = monotonic_time();
+        app->stamps[app->nstamps++] = chq_host_monotonic_time();
 }
 
 /*******************************************************************
@@ -347,19 +299,8 @@ static int report_error(os_error *error)
  ******************************************************************/
 static os_error *update_translation(chq_app_t *app)
 {
-    os_error *error;
-    int log2bpp;
-
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 9, &log2bpp);
-    if (error != NULL)
-        return error;
-    error = colourtran_select_table(SPRITE_MODE_4BPP,
-        (wimp_paletteword *) spectrum_palette, -1,
-        (wimp_paletteword *) -1, app->translation);
-    if (error == NULL)
-        app->sprite_plot_action = chq_host_sprite_action(log2bpp);
-    return error;
+    return chq_host_build_translation(app->translation,
+                                      &app->sprite_plot_action);
 }
 
 /*******************************************************************
@@ -395,7 +336,7 @@ static os_error *save_desktop_mode(chq_app_t *app)
         return error;
 
     selector = (const int *) app->desktop_mode;
-    words = MODE_SELECTOR_HEAD;
+    words = CHQ_MODE_SELECTOR_HEAD;
     while (words < 256 && selector[words] != -1)
         words += 2;
     if (words >= 256)
@@ -410,29 +351,16 @@ static os_error *save_desktop_mode(chq_app_t *app)
 }
 
 /*******************************************************************
- Function:      current_mode_is_suitable
- Description:   Check the current mode can display the Spectrum frame.
- Parameters:    none
- Returns:       non-zero for a suitable 4, 8 or 32-bpp mode
+ Function:      set_wimp_mode
+ Description:   Select a mode while keeping the Wimp informed.
+ Parameters:    mode = mode string or selector
+                text_mode = non-zero for a mode string
+ Returns:       error returned by the Wimp
  ******************************************************************/
-static int current_mode_is_suitable(void)
+static os_error *set_wimp_mode(const void *mode, int text_mode)
 {
-    int xlimit;
-    int ylimit;
-    int log2bpp;
-
-    if (_swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 11, &xlimit) != NULL ||
-        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 12, &ylimit) != NULL ||
-        _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-              -1, 9, &log2bpp) != NULL)
-        return 0;
-    return xlimit + 1 >= SCREEN_WIDTH &&
-           ylimit + 1 >= SCREEN_HEIGHT &&
-           (log2bpp == chq_host_fullscreen_depth(0) ||
-            log2bpp == chq_host_fullscreen_depth(1) ||
-            log2bpp == chq_host_fullscreen_depth(2));
+    (void) text_mode;
+    return wimp_setmode((int) mode);
 }
 
 /*******************************************************************
@@ -443,66 +371,7 @@ static int current_mode_is_suitable(void)
  ******************************************************************/
 static os_error *select_fullscreen_mode(void)
 {
-    static const int fallback[][2] =
-    {
-        { 1024, 768 }, { 800, 600 }, { 640, 480 }, { 320, 256 }
-    };
-    const char *configured;
-    os_error *error;
-    int selector[6];
-    int xlimit;
-    int ylimit;
-    int candidates[5][2];
-    int candidate;
-    int depth;
-    int depth_attempt;
-
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 11, &xlimit);
-    if (error != NULL)
-        return error;
-    error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
-                  -1, 12, &ylimit);
-    if (error != NULL)
-        return error;
-    candidates[0][0] = xlimit + 1;
-    candidates[0][1] = ylimit + 1;
-    for (candidate = 0; candidate < 4; candidate++)
-    {
-        candidates[candidate + 1][0] = fallback[candidate][0];
-        candidates[candidate + 1][1] = fallback[candidate][1];
-    }
-
-    configured = getenv("ChaseHQ$ScreenMode");
-    error = NULL;
-    if (configured != NULL && configured[0] != '\0')
-    {
-        error = wimp_setmode((int) configured);
-        if (error == NULL && current_mode_is_suitable())
-            return NULL;
-    }
-
-    selector[0] = 1;
-    selector[4] = -1;
-    selector[5] = -1;
-    for (depth_attempt = 0;
-         (depth = chq_host_fullscreen_depth(depth_attempt)) != -1;
-         depth_attempt++)
-    {
-        selector[3] = depth;
-        for (candidate = 0; candidate < 5; candidate++)
-        {
-            if (candidates[candidate][0] < SCREEN_WIDTH ||
-                candidates[candidate][1] < SCREEN_HEIGHT)
-                continue;
-            selector[1] = candidates[candidate][0];
-            selector[2] = candidates[candidate][1];
-            error = wimp_setmode((int) selector);
-            if (error == NULL)
-                return NULL;
-        }
-    }
-    return error == NULL ? &mode_error : error;
+    return chq_host_select_fullscreen_mode(set_wimp_mode);
 }
 
 /*******************************************************************
@@ -513,27 +382,7 @@ static os_error *select_fullscreen_mode(void)
  ******************************************************************/
 static os_error *programme_fullscreen_palette(void)
 {
-    unsigned char commands[16 * 6];
-    unsigned char *out;
-    unsigned int colour;
-    int logical;
-    os_error *error;
-
-    out = commands;
-    for (logical = 0; logical < 16; logical++)
-    {
-        colour = spectrum_palette[logical];
-        *out++ = 19;
-        *out++ = logical;
-        *out++ = 16;
-        *out++ = (colour >> 8) & 0xFF;
-        *out++ = (colour >> 16) & 0xFF;
-        *out++ = (colour >> 24) & 0xFF;
-    }
-    error = _swix(OS_WriteN, _INR(0, 1), commands, sizeof(commands));
-    if (error != NULL)
-        return error;
-    return colourtran_invalidate_cache();
+    return chq_host_programme_palette();
 }
 
 /*******************************************************************
@@ -589,13 +438,13 @@ static os_error *create_display(chq_app_t *app)
     sprite_ptr sprite_pointer;
     os_error *error;
 
-    app->sprite_area = malloc(SPRITE_AREA_BYTES);
+    app->sprite_area = malloc(CHQ_SPRITE_AREA_BYTES);
     if (app->sprite_area == NULL)
         return (os_error *) NULL;
-    sprite_area_initialise(app->sprite_area, SPRITE_AREA_BYTES);
+    sprite_area_initialise(app->sprite_area, CHQ_SPRITE_AREA_BYTES);
     error = sprite_create_rp(app->sprite_area, screen_sprite,
                              sprite_nopalette, SCREEN_WIDTH, SCREEN_HEIGHT,
-                             SPRITE_MODE_4BPP, &sprite_pointer);
+                             CHQ_SPRITE_MODE_INDEXED4, &sprite_pointer);
     if (error != NULL)
         return error;
     app->sprite.s.addr = sprite_pointer;
@@ -705,7 +554,6 @@ static os_error *enter_fullscreen(chq_app_t *app)
     os_error *error;
     int xlimit;
     int ylimit;
-    int ignored;
     int scale_x;
     int scale_y;
     int log2bpp;
@@ -726,8 +574,7 @@ static os_error *enter_fullscreen(chq_app_t *app)
     error = wimp_readpalette(&app->desktop_palette);
     if (error != NULL)
         return error;
-    error = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-                  106, 127, 0, &app->desktop_pointer);
+    error = chq_host_save_pointer(&app->pointer);
     if (error != NULL)
         return error;
 
@@ -740,18 +587,15 @@ static os_error *enter_fullscreen(chq_app_t *app)
                                           fullscreen_escape_handler);
     app->escape_installed = 1;
     _swix(OS_Byte, _INR(0, 2), 229, 0, 0);
-    _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-          106, app->desktop_pointer & 128, 0, &ignored);
-    error = _swix(OS_RemoveCursors, 0);
+    error = chq_host_hide_pointer(&app->pointer);
     if (error != NULL)
         goto failure;
-    app->cursors_removed = 1;
 
     error = _swix(OS_WriteC, _IN(0), 12);
     if (error == NULL)
         error = _swix(OS_ReadModeVariable, _INR(0, 1) | _OUT(2),
                       -1, 9, &log2bpp);
-    if (error == NULL && log2bpp == MODE_4BPP)
+    if (error == NULL && log2bpp == CHQ_MODE_DEPTH_4BPP)
         error = programme_fullscreen_palette();
     if (error == NULL)
         error = update_translation(app);
@@ -771,7 +615,7 @@ static os_error *enter_fullscreen(chq_app_t *app)
     error = draw_fullscreen(app);
     if (error != NULL)
         goto failure;
-    app->deadline_valid = 0;
+    app->clock.valid = 0;
     return NULL;
 
 failure:
@@ -789,7 +633,6 @@ static os_error *leave_fullscreen(chq_app_t *app)
 {
     os_error *error;
     os_error *next;
-    int ignored;
 
     if (!app->fullscreen)
         return NULL;
@@ -803,11 +646,7 @@ static os_error *leave_fullscreen(chq_app_t *app)
         signal(SIGINT, app->desktop_escape_handler);
         app->escape_installed = 0;
     }
-    if (app->cursors_removed)
-    {
-        remember_error(&error, _swix(OS_RestoreCursors, 0));
-        app->cursors_removed = 0;
-    }
+    remember_error(&error, chq_host_restore_cursors(&app->pointer));
 
     if (app->desktop_mode_selector != NULL)
         next = wimp_setmode((int) app->desktop_mode_selector);
@@ -815,8 +654,7 @@ static os_error *leave_fullscreen(chq_app_t *app)
         next = wimp_setmode(app->desktop_mode);
     remember_error(&error, next);
     remember_error(&error, wimp_setpalette(&app->desktop_palette));
-    next = _swix(OS_Byte, _INR(0, 2) | _OUT(1),
-                 106, app->desktop_pointer, 0, &ignored);
+    next = chq_host_restore_pointer(&app->pointer);
     remember_error(&error, next);
     remember_error(&error, wimp_open_wind(&app->desktop_window_state.o));
     remember_error(&error, wimp_set_caret_pos(&app->desktop_caret));
@@ -825,7 +663,7 @@ static os_error *leave_fullscreen(chq_app_t *app)
 
     free(app->desktop_mode_selector);
     app->desktop_mode_selector = NULL;
-    app->deadline_valid = 0;
+    app->clock.valid = 0;
     fullscreen_escape = 0;
     return error;
 }
@@ -939,8 +777,8 @@ static os_error *redraw_game(chq_app_t *app, wimp_eventstr *event)
     {
         origin_x = redraw.box.x0 - redraw.scx;
         origin_y = redraw.box.y1 - redraw.scy;
-        game_width = GAME_WIDTH_OS * app->scale;
-        game_height = GAME_HEIGHT_OS * app->scale;
+        game_width = CHQ_GAME_WIDTH_OS * app->scale;
+        game_height = CHQ_GAME_HEIGHT_OS * app->scale;
         window_width = GAME_WINDOW_WIDTH(app->scale);
         window_height = GAME_WINDOW_HEIGHT(app->scale);
         plot_x = origin_x + GAME_BORDER_OS;
@@ -1018,10 +856,8 @@ static int native_sleep(int duration, void *opaque)
     wimp_eventstr event;
     os_error *error;
     unsigned int clock_rate;
-    unsigned int numerator;
     unsigned int ticks;
     unsigned int now;
-    unsigned int lag;
     int paused_waited;
 
     app = opaque;
@@ -1029,30 +865,16 @@ static int native_sleep(int duration, void *opaque)
     if (app->nstamps > 0)
         app->nstamps--;
 
-    clock_rate = app->mode_128k ? CLOCK_128K : CLOCK_48K;
-    numerator = (unsigned int) duration * CLOCK_TICKS_SECOND +
-                app->clock_remainder;
-    ticks = numerator / clock_rate;
-    app->clock_remainder = numerator % clock_rate;
-    now = monotonic_time();
+    clock_rate = app->mode_128k ? CHQ_CLOCK_128K : CHQ_CLOCK_48K;
+    now = chq_host_monotonic_time();
+    ticks = chq_host_advance_clock(&app->clock,
+                                   (unsigned int) duration,
+                                   clock_rate, now);
 
     if (ticks != 0)
     {
-        if (!app->deadline_valid)
-        {
-            app->deadline = now + ticks;
-            app->deadline_valid = 1;
-        }
-        else
-        {
-            app->deadline += ticks;
-            lag = ticks * MAX_LAG_FRAMES;
-            if ((int32_t) (now - app->deadline) > (int32_t) lag)
-                app->deadline = now - lag;
-        }
-
         while (app->running && !app->stop_requested &&
-               time_is_before(now, app->deadline))
+               chq_host_time_is_before(now, app->clock.deadline))
         {
             error = NULL;
             if (app->fullscreen)
@@ -1061,7 +883,7 @@ static int native_sleep(int duration, void *opaque)
             }
             else
             {
-                error = wimp_pollidle(0, &event, app->deadline);
+                error = wimp_pollidle(0, &event, app->clock.deadline);
                 if (error == NULL)
                     error = handle_event(app, &event);
                 if (error == NULL)
@@ -1076,7 +898,7 @@ static int native_sleep(int duration, void *opaque)
                 app->stop_requested = 1;
                 break;
             }
-            now = monotonic_time();
+            now = chq_host_monotonic_time();
         }
     }
 
@@ -1106,7 +928,7 @@ static int native_sleep(int duration, void *opaque)
     while (app->paused && app->running && !app->stop_requested)
     {
         paused_waited = 1;
-        now = monotonic_time();
+        now = chq_host_monotonic_time();
         if (app->fullscreen)
         {
             _swix(OS_Byte, _INR(0, 2), 19, 0, 0);
@@ -1146,7 +968,7 @@ static int native_sleep(int duration, void *opaque)
         }
     }
     if (paused_waited && !app->paused)
-        app->deadline_valid = 0;
+        app->clock.valid = 0;
 
     if (!app->running || app->stop_requested)
     {
@@ -1410,8 +1232,7 @@ static void run_requested_game(chq_app_t *app)
 
     app->start_requested = 0;
     app->stop_requested = 0;
-    app->deadline_valid = 0;
-    app->clock_remainder = 0;
+    memset(&app->clock, 0, sizeof(app->clock));
     app->nstamps = 0;
     app->game = chq_create(app->zx);
     if (app->game == NULL)
