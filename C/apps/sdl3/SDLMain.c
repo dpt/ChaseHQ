@@ -512,10 +512,10 @@ static void chq_speaker_handler(int on_off, zxclock_t tstates, void *opaque)
                        CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
 }
 
-static void chq_ay_out_handler(uint16_t port,
-                               uint8_t  byte,
+static void chq_ay_out_handler(uint16_t  port,
+                               uint8_t   byte,
                                zxclock_t tstates,
-                               void    *opaque)
+                               void     *opaque)
 {
   chq_sdl_state_t *state = opaque;
 

@@ -1262,7 +1262,6 @@ static void engine_sfx_from_speed_128k(chqstate_t *state);
 static void setup_turbo_sfx_128k(chqstate_t *state);
 static void play_engine_or_turbo_sfx_128k(chqstate_t *state);
 static void handle_perp_caught_128k(chqstate_t *state);
-static void page_128k(chqstate_t *state);
 static void reset_paging_128k(chqstate_t *state);
 static void attract_mode_128k(chqstate_t *state);
 
@@ -2771,7 +2770,9 @@ static void draw_pregame(chqstate_t *state)
   const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
   u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
 
-  carry = 0;
+  carry   = 0;
+  cmdaddr = 0; // Conv: pregame_data[] always issues SET_ADDR before the
+               // first Plot-tile/Repeat command; this default is never read.
 
   cmds = &pregame_data[0];
 dp_get_command:
@@ -5084,7 +5085,6 @@ dso_loop_continue:
    * B_stretchy_type = data_type - 2 (two decrements already applied).
    */
   switch (B_stretchy_type) {
-  default:                      /* data type STRETCHY_TYPE_200PC (and any higher) */
   case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_150PC */
   case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_50PC */
   case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_113PC */
@@ -5092,6 +5092,7 @@ dso_loop_continue:
   case 5: goto dso_case_75pc;   /* data type STRETCHY_TYPE_75PC */
   case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_25PC */
   case 7: goto dso_continue;    /* data type STRETCHY_TYPE_100PC */
+  default: break;                /* data type STRETCHY_TYPE_200PC (and any higher) */
   }
   A_vertical *= 2;               /* data type STRETCHY_TYPE_200PC */
   goto dso_continue;
@@ -9386,7 +9387,9 @@ static void layout_objects(chqstate_t *state)
   int       laneshift;  /* right-boundary table selector, derived from lanes byte bit pattern (was A) */
   int       A;          /* remaining slots for the fork tail pass: 21 - fork_countdown (was A) */
 
-  carry = 0;
+  carry  = 0;
+  tabptr = NULL; // Conv: laneoffset is masked to 0-3 and every switch below
+                 // covers its remaining 1-3 range; this default is never read.
 
   objpos = &state->object_positions[0];
   iterations = ROAD_SLOT_COUNT; // iterations
@@ -21238,9 +21241,12 @@ static void handle_perp_caught_128k(chqstate_t *state)
  * restore the memory pager. Driven entirely by 128K hardware memory-bank
  * switching.
  *
- * Conv: Removed. C has no 128K memory-paging hardware to drive.
+ * Conv: Removed. C has no 128K memory-paging hardware to drive. Still called
+ *       from bank3_call (Bank3.c), matching call_bank_3_128k's CALL $81D6
+ *       page-in/page-out pair, so the correspondence is visible even though
+ *       the body is a no-op.
  */
-static void page_128k(chqstate_t *state)
+void page_128k(chqstate_t *state)
 {
   // Conv: Removed
   NOT_USED(state);

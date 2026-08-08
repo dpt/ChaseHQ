@@ -140,6 +140,9 @@ enum
  */
 typedef struct zxspectrum zxspectrum_t;
 
+/** Virtual Z80 T-state clock. */
+typedef uint64_t zxclock_t;
+
 /**
  * Bounding box.
  */

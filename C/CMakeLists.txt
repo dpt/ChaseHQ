@@ -8,8 +8,27 @@ set(CMAKE_C_STANDARD 90)
 # -Wunterminated-string-initialization fires on key_names (CommonData.c):
 # a packed row-major char table sized to its exact content, never treated
 # as a NUL-terminated string.
+# /wd4132: forward "static const T x[N];" declarations ahead of their
+# initialized definition (the C89 idiom used throughout Data/*.c) are flagged
+# as uninitialized const objects; the later definition always supplies the
+# initializer, so this is noise, not a bug.
+# /wd4245: negative int literals stored into "const u8" script byte-code
+# tables (Bank3.c OSS_OP_* macros encode signed deltas as bytes) and the
+# ~0 all-bits-set sentinel in Spectrum.c trip the signed/unsigned mismatch
+# check; both are deliberate.
+# /wd4295: fixed-width ASCII fields (high_score_row_t's score/stage_code/name,
+# high_score_rank_suffixes, high_score_stage_codes in Bank3.c; key_names in
+# Main.c) are sized exactly to their string literal's content with no room
+# for a NUL -- the same packed layout -Wunterminated-string-initialization
+# accepts for key_names on Clang, above.
+# /wd4324: chqstate embeds a jmp_buf, which MSVC x64 aligns to 16 bytes for
+# its SSE register save area; the containing struct gets padded to match.
+# Nothing in our code to fix -- it's an artefact of jmp_buf's own alignment.
+# /wd4996: Tests/ uses portable fopen/getenv; fopen_s/_dupenv_s are MSVC-only
+# extensions with no C89 equivalent, not viable in code the other platforms
+# also build.
 if(MSVC)
-  add_compile_options(/W4)
+  add_compile_options(/W4 /wd4132 /wd4245 /wd4295 /wd4324 /wd4996)
 else()
   add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers)
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
