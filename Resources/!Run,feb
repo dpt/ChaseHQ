@@ -1,0 +1,3 @@
+Set ChaseHQ$Dir <Obey$Dir>
+WimpSlot -min 1024K -max 1024K
+Run <ChaseHQ$Dir>.!RunImage %*0

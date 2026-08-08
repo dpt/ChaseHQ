@@ -38,10 +38,10 @@ Build and test with:
 
 ### 3. Desktop application shell
 
-- [ ] Package `!Boot`, `!Run`, sprites, Messages, Help, and Templates.
-- [ ] Initialise one Wimp task, a right-side iconbar icon, game and Info windows.
-- [ ] Put Info first and Quit last in the iconbar menu and unwind errors cleanly.
-- [ ] Size WimpSlot at least 32K above the completed `!RunImage`.
+- [x] Package `!Boot`, `!Run`, sprites, Messages, Help, and Templates.
+- [x] Initialise one Wimp task, a right-side iconbar icon, game and Info windows.
+- [x] Put Info first and Quit last in the iconbar menu and unwind errors cleanly.
+- [x] Size WimpSlot at least 32K above the completed `!RunImage`.
 
 ### 4. Windowed graphics
 
