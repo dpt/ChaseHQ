@@ -33,3 +33,23 @@ jobs:
 
     - name: Run tests
       run: ./build/ChaseHQ_Tests
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: C
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install SDL3 (vcpkg)
+      run: vcpkg install sdl3:x64-windows
+
+    - name: Configure
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+
+    - name: Build
+      run: cmake --build build --config Debug
+
+    - name: Run tests
+      run: build\Debug\ChaseHQ_Tests.exe
