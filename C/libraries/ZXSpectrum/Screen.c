@@ -69,6 +69,28 @@ static const unsigned int palette_abgr[66 + 65] = {
     0x0000FF00, 0x00FFFF00, 0x0000FFFF, 0x00FFFFFF)
 };
 
+/* "Mellow" palette: same layout as palette_argb/palette_abgr, but dimmed and
+ * slightly desaturated to approximate how the game looked on a 1980s CRT
+ * rather than the harsher, brighter rendering a modern LCD/IPS panel gives
+ * the raw ZX RGB values. Each component is scaled to ~82% brightness and
+ * blended ~18% towards the colour's Rec.601 luma (see palette_mono below). */
+static const unsigned int palette_mellow_argb[66 + 65] = {
+  PALETTE_ENTRIES(
+    0x00000000, 0x0003038D, 0x00930909, 0x00960D96,
+    0x00129C12, 0x00159F9F, 0x00A5A51B, 0x00A8A8A8,
+    0x00000000, 0x000404B0, 0x00B70B0B, 0x00BB10BB,
+    0x0016C216, 0x001AC6C6, 0x00CDCD21, 0x00D1D1D1)
+};
+
+/* 0x00BBGGRR variant of palette_mellow_argb, for ABGR8888-style formats. */
+static const unsigned int palette_mellow_abgr[66 + 65] = {
+  PALETTE_ENTRIES(
+    0x00000000, 0x008D0303, 0x00090993, 0x00960D96,
+    0x00129C12, 0x009F9F15, 0x001BA5A5, 0x00A8A8A8,
+    0x00000000, 0x00B00404, 0x000B0BB7, 0x00BB10BB,
+    0x0016C216, 0x00C6C61A, 0x0021CDCD, 0x00D1D1D1)
+};
+
 /* Monochrome (greyscale) palette: same layout as palette_argb and
  * palette_abgr, but every ZX colour is collapsed to its Rec. 601 luma
  * (Y = 0.299R + 0.587G + 0.114B) rather than a flat per-brightness step,
@@ -134,7 +156,8 @@ void zxscreen_convert(const void    *vscr,
                       unsigned int  *poutput,
                       const zxbox_t *dirty,
                       int            bgr,
-                      int            mono)
+                      int            mono,
+                      int            mellow)
 {
   const unsigned int  *base_palette;
   zxbox_t              box;
@@ -150,7 +173,9 @@ void zxscreen_convert(const void    *vscr,
   static int           dirtybits;
 #endif
 
-  base_palette = mono ? palette_mono : (bgr ? palette_abgr : palette_argb);
+  base_palette = mono ? palette_mono
+               : mellow ? (bgr ? palette_mellow_abgr : palette_mellow_argb)
+               : (bgr ? palette_abgr : palette_argb);
 
   assert(dirty);
 

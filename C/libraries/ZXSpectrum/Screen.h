@@ -25,12 +25,16 @@ extern "C"
  *                   zero to output 0x00RRGGBB (e.g. ARGB8888).
  * \param[in] mono   Non-zero to output a monochrome (green phosphor-style)
  *                   palette instead of the normal ZX Spectrum colours.
+ * \param[in] mellow Non-zero to output a dimmed, desaturated CRT-style
+ *                   palette instead of the normal ZX Spectrum colours.
+ *                   Ignored if mono is non-zero.
  */
 void zxscreen_convert(const void    *screen,
                       unsigned int  *output,
                       const zxbox_t *dirty,
                       int            bgr,
-                      int            mono);
+                      int            mono,
+                      int            mellow);
 
 // 4bpp variant
 void zxscreen_convert16(const void    *vscr,

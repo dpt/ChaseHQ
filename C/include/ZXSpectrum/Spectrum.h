@@ -336,6 +336,19 @@ void zxspectrum_release_screen(zxspectrum_t *state);
 void zxspectrum_set_monochrome(zxspectrum_t *state, int mono);
 
 /**
+ * Switch the converted screen between normal colour output and a dimmed,
+ * desaturated "mellow" palette that approximates how the game looked on a
+ * 1980s CRT rather than the harsher rendering raw ZX RGB values give on a
+ * modern LCD/IPS panel. Forces a full redraw so the switch takes effect on
+ * the next zxspectrum_claim_screen. Has no effect while monochrome output is
+ * also enabled.
+ *
+ * \param[in] state  ZXSpectrum state.
+ * \param[in] mellow Non-zero for mellow output, zero for normal colour.
+ */
+void zxspectrum_set_mellow(zxspectrum_t *state, int mellow);
+
+/**
  * One-shot glitch: fill the screen's bitmap and attributes bytes with
  * random values, then force a redraw. The game overwrites this on its next
  * draw() call, so the effect lasts a single frame.
