@@ -81,6 +81,7 @@ The host adds its own keys, which never reach the game:
 | `F11`                 | Toggle fullscreen                                              |
 | `F12`                 | Toggle raw backbuffer ($F000) debug view                       |
 | `Ctrl-M`              | Toggle monochrome (greyscale) display                          |
+| `Ctrl-N`              | Toggle mellow (dimmed, desaturated CRT-style) palette          |
 | `Ctrl-Y`              | One-shot glitch: fill the screen with random noise for a frame |
 | `-` / `=`             | Window scale down / up                                         |
 | `[` / `]`             | Emulation speed down / up (5% steps)                           |

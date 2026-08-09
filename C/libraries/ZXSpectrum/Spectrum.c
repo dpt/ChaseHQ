@@ -136,6 +136,7 @@ typedef struct zxspectrum_private
   int             nstamps;
 
   int             monochrome;
+  int             mellow;
 
   mutex_t         lock;
   zxbox_t         dirty;
@@ -438,8 +439,9 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state)
       zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
     else
       zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
-                       prv->config.pixel_format == ZX_PIXEL_ABGR8888,
-                       prv->monochrome);
+                       (prv->config.pixel_format == ZX_PIXEL_ABGR8888 ? ZXSCREEN_BGR    : 0) |
+                       (prv->monochrome                               ? ZXSCREEN_MONO   : 0) |
+                       (prv->mellow                                   ? ZXSCREEN_MELLOW : 0));
 
     /* Invalidate the dirty region once complete */
     zxbox_invalidate(&prv->dirty);
@@ -454,6 +456,16 @@ void zxspectrum_set_monochrome(zxspectrum_t *state, int mono)
 
   mutex_lock(prv->lock);
   prv->monochrome = mono;
+  zxbox_maximise(&prv->dirty); /* force a full reconvert on the next claim */
+  mutex_unlock(prv->lock);
+}
+
+void zxspectrum_set_mellow(zxspectrum_t *state, int mellow)
+{
+  zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
+
+  mutex_lock(prv->lock);
+  prv->mellow = mellow;
   zxbox_maximise(&prv->dirty); /* force a full reconvert on the next claim */
   mutex_unlock(prv->lock);
 }
