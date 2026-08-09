@@ -64,6 +64,8 @@ set(SOURCE_FILES
         include/ZXSpectrum/slopay-chip.h
         libraries/ChaseHQ/Data/CommonData.c
         libraries/ChaseHQ/Data/CommonData.h
+        libraries/ChaseHQ/Data/LoadingScreen.c
+        libraries/ChaseHQ/Data/LoadingScreen.h
         libraries/ChaseHQ/Data/SoundSamples.c
         libraries/ChaseHQ/Data/SoundSamples.h
         libraries/ChaseHQ/Data/Stage1Data.c

@@ -37,6 +37,7 @@
 #include "CRTShader.h"
 
 #include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/LoadingScreen.h"
 
 // -----------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@
 #define SCALE_MAX            (4)
 
 #define SPEED_DEFAULT      (100) // percent
+
+#define LOADING_SCREEN_DURATION_MS (2000) // how long the tape loading screen splash shows
 #define SPEED_MIN           (25)
 #define SPEED_MAX         (1000)
 #define SPEED_STEP           (5)
@@ -1800,6 +1803,26 @@ int main(int argc, char *argv[])
   chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
   if (!state.video.crt_enabled && state.video.renderer == NULL)
     goto failure;
+
+  /* Show the cassette loading screen before the game starts. On real
+   * hardware this isn't drawn by the game at all: the tape loader blits it
+   * straight into screen memory before the BASIC loader runs the machine
+   * code, so we do the same here, ahead of chq_create/chq_start.
+   */
+  memcpy(state.zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
+  memcpy(state.zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
+  state.zx->draw(state.zx, NULL);
+
+  {
+    Uint64 splash_start_ms = SDL_GetTicks();
+
+    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS &&
+           !CHQ_FLAG_TEST(&state, CHQ_FLAG_QUIT))
+    {
+      chq_sdl_main_loop(&state);
+      SDL_Delay(16);
+    }
+  }
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
