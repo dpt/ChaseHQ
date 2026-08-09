@@ -285,7 +285,7 @@ typedef struct chq_sdl_state
     int             dirty_count;
     int             dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
     int             show_dirty_overlay; // bool; toggled with F3, off by default
-    int             monochrome; // bool; toggled with F12, off by default
+    int             monochrome; // bool; toggled with Ctrl-M, off by default
 
     SDL_Window     *window;
 
