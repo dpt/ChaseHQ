@@ -674,28 +674,30 @@ static u16 prev_buf_row(int backbuf)
  */
 static const void *stage_lookup_map_goto(int current_stage_number, u16 z80)
 {
-  static const struct {
+  static const struct stage_map_goto_table {
     const map_goto_entry_t *table;
-    int                      count;
+    size_t                   count;
   } stage_tables[] = {
-    { stage1_map_goto_table, (int)NELEMS(stage1_map_goto_table) },
-    { stage2_map_goto_table, (int)NELEMS(stage2_map_goto_table) },
-    { stage3_map_goto_table, (int)NELEMS(stage3_map_goto_table) },
-    { stage4_map_goto_table, (int)NELEMS(stage4_map_goto_table) },
-    { stage5_map_goto_table, (int)NELEMS(stage5_map_goto_table) },
+    { stage1_map_goto_table, NELEMS(stage1_map_goto_table) },
+    { stage2_map_goto_table, NELEMS(stage2_map_goto_table) },
+    { stage3_map_goto_table, NELEMS(stage3_map_goto_table) },
+    { stage4_map_goto_table, NELEMS(stage4_map_goto_table) },
+    { stage5_map_goto_table, NELEMS(stage5_map_goto_table) },
 #ifdef CHQ_ENABLE_TEST_STAGE
-    { stage6_map_goto_table, (int)NELEMS(stage6_map_goto_table) },
+    { stage6_map_goto_table, NELEMS(stage6_map_goto_table) },
 #endif
   };
-  const map_goto_entry_t *table;
-  int                      lo, hi, mid;
+  const struct stage_map_goto_table *stage;
+  const map_goto_entry_t            *table;
+  int                                 lo, hi, mid;
 
   assert(current_stage_number >= 1 &&
          current_stage_number <= (int)NELEMS(stage_tables));
-  table = stage_tables[current_stage_number - 1].table;
 
-  lo = 0;
-  hi = stage_tables[current_stage_number - 1].count - 1;
+  stage = &stage_tables[current_stage_number - 1];
+  table = stage->table;
+  lo    = 0;
+  hi    = (int)stage->count - 1;
   while (lo <= hi) {
     mid = lo + (hi - lo) / 2;
     if (table[mid].z80 == z80) return table[mid].ptr;

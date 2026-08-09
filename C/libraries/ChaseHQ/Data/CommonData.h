@@ -172,6 +172,8 @@ typedef struct {
   const u8 *frames;  // points to the frame before/after the base
 } transition_t;
 
+/* Entries in every stageN_map_goto_table[] must be sorted ascending by z80:
+ * stage_lookup_map_goto() in Main.c binary-searches over them. */
 typedef struct {
   u16         z80; // original Z80 address
   const void *ptr; // corresponding C data pointer
