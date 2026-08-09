@@ -2,6 +2,7 @@
 
 COMPONENT  = ChaseHQ
 TARGET     = !ChaseHQ
+RESDIR     = C.apps.riscos.Resources
 OBJS       = o.host \
              o.kempston o.keyboard o.screen o.spectrum o.z80 \
              o.bank3 o.bank7 o.create o.main \
