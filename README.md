@@ -5,7 +5,7 @@ by David Thomas, 2023-2026
 This is an in-progress disassembly and rebuild of the [ZX Spectrum conversion of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ).
 
 <p align="center">
-  <img src="./static-images/loading.png" alt="Loading screen by Harbonaut"/>
+  <img src="./static-images/loading.jpeg" alt="Loading screen by Harbonaut"/>
 </p>
 
 ## [`Speccy/`](Speccy/README.md) — the disassembly
