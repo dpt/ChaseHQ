@@ -23,11 +23,14 @@ extern "C"
  * \param[in] dirty  Dirty rectangle in cartesian space - (0,0) is bottom left.
  * \param[in] bgr    Non-zero to output 0x00BBGGRR (e.g. ABGR8888),
  *                   zero to output 0x00RRGGBB (e.g. ARGB8888).
+ * \param[in] mono   Non-zero to output a monochrome (green phosphor-style)
+ *                   palette instead of the normal ZX Spectrum colours.
  */
 void zxscreen_convert(const void    *screen,
                       unsigned int  *output,
                       const zxbox_t *dirty,
-                      int            bgr);
+                      int            bgr,
+                      int            mono);
 
 // 4bpp variant
 void zxscreen_convert16(const void    *vscr,

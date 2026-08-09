@@ -69,6 +69,25 @@ static const unsigned int palette_abgr[66 + 65] = {
     0x0000FF00, 0x00FFFF00, 0x0000FFFF, 0x00FFFFFF)
 };
 
+/* Monochrome (greyscale) palette: same layout as palette_argb and
+ * palette_abgr, but every ZX colour is collapsed to its Rec. 601 luma
+ * (Y = 0.299R + 0.587G + 0.114B) rather than a flat per-brightness step,
+ * so e.g. green reads visibly lighter than red or blue. Byte order doesn't
+ * matter for R==G==B, so one table serves both ARGB and ABGR cases.
+ *
+ * ZX component values: dim = 0xCD (205), bright = 0xFF (255).
+ * Per-colour luma (dim / bright):
+ *   black 0/0, blue 23/29, red 61/76, magenta 85/105,
+ *   green 120/150, cyan 144/179, yellow 182/226, white 205/255.
+ */
+static const unsigned int palette_mono[66 + 65] = {
+  PALETTE_ENTRIES(
+    0x00000000, 0x00171717, 0x003D3D3D, 0x00555555,
+    0x00787878, 0x00909090, 0x00B6B6B6, 0x00CDCDCD,
+    0x00000000, 0x001D1D1D, 0x004C4C4C, 0x00696969,
+    0x00969696, 0x00B3B3B3, 0x00E2E2E2, 0x00FFFFFF)
+};
+
 static const unsigned char offsets[66 + 65] =
 {
     0,   1,   3,   5,   7,   9,  11,  13,
@@ -114,7 +133,8 @@ do {                                                       \
 void zxscreen_convert(const void    *vscr,
                       unsigned int  *poutput,
                       const zxbox_t *dirty,
-                      int            bgr)
+                      int            bgr,
+                      int            mono)
 {
   const unsigned int  *base_palette;
   zxbox_t              box;
@@ -130,7 +150,7 @@ void zxscreen_convert(const void    *vscr,
   static int           dirtybits;
 #endif
 
-  base_palette = bgr ? palette_abgr : palette_argb;
+  base_palette = mono ? palette_mono : (bgr ? palette_abgr : palette_argb);
 
   assert(dirty);
 

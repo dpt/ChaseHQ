@@ -325,6 +325,25 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state);
  */
 void zxspectrum_release_screen(zxspectrum_t *state);
 
+/**
+ * Switch the converted screen between colour and monochrome (green
+ * phosphor-style) output. Forces a full redraw so the switch takes effect
+ * on the next zxspectrum_claim_screen.
+ *
+ * \param[in] state ZXSpectrum state.
+ * \param[in] mono  Non-zero for monochrome output, zero for colour.
+ */
+void zxspectrum_set_monochrome(zxspectrum_t *state, int mono);
+
+/**
+ * One-shot glitch: fill the screen's bitmap and attributes bytes with
+ * random values, then force a redraw. The game overwrites this on its next
+ * draw() call, so the effect lasts a single frame.
+ *
+ * \param[in] state ZXSpectrum state.
+ */
+void zxspectrum_randomise_screen(zxspectrum_t *state);
+
 #ifdef __cplusplus
 }
 #endif

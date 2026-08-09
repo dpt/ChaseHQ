@@ -37,6 +37,7 @@
 #include "CRTShader.h"
 
 #include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/LoadingScreen.h"
 
 // -----------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@
 #define SCALE_MAX            (4)
 
 #define SPEED_DEFAULT      (100) // percent
+
+#define LOADING_SCREEN_DURATION_MS (2000) // how long the tape loading screen splash shows
 #define SPEED_MIN           (25)
 #define SPEED_MAX         (1000)
 #define SPEED_STEP           (5)
@@ -282,6 +285,7 @@ typedef struct chq_sdl_state
     int             dirty_count;
     int             dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
     int             show_dirty_overlay; // bool; toggled with F3, off by default
+    int             monochrome; // bool; toggled with Ctrl-M, off by default
 
     SDL_Window     *window;
 
@@ -1174,6 +1178,19 @@ static void chq_action_toggle_crt(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.crt_enabled ? "CRT ON" : "CRT OFF");
 }
 
+static void chq_action_toggle_monochrome(chq_sdl_state_t *state)
+{
+  state->video.monochrome = !state->video.monochrome;
+  zxspectrum_set_monochrome(state->zx, state->video.monochrome);
+  chq_osd_show(state, state->video.monochrome ? "MONOCHROME ON" : "MONOCHROME OFF");
+}
+
+static void chq_action_randomise_screen(chq_sdl_state_t *state)
+{
+  zxspectrum_randomise_screen(state->zx);
+  chq_osd_show(state, "GLITCH");
+}
+
 static void chq_action_toggle_ay_channel(chq_sdl_state_t *state, int ch)
 {
   char buf[32];
@@ -1364,6 +1381,26 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     if (k->down && !k->repeat)
       chq_action_toggle_fullscreen(state);
     return;
+
+  case SDLK_M:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_monochrome(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_Y:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_randomise_screen(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
 
   case SDLK_MINUS:
   case SDLK_EQUALS:
@@ -1766,6 +1803,26 @@ int main(int argc, char *argv[])
   chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
   if (!state.video.crt_enabled && state.video.renderer == NULL)
     goto failure;
+
+  /* Show the cassette loading screen before the game starts. On real
+   * hardware this isn't drawn by the game at all: the tape loader blits it
+   * straight into screen memory before the BASIC loader runs the machine
+   * code, so we do the same here, ahead of chq_create/chq_start.
+   */
+  memcpy(state.zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
+  memcpy(state.zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
+  state.zx->draw(state.zx, NULL);
+
+  {
+    Uint64 splash_start_ms = SDL_GetTicks();
+
+    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS &&
+           !CHQ_FLAG_TEST(&state, CHQ_FLAG_QUIT))
+    {
+      chq_sdl_main_loop(&state);
+      SDL_Delay(16);
+    }
+  }
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
