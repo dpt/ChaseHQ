@@ -42,6 +42,23 @@ make ctl         # Rebuild control file from skool
 make commit      # Commit changes back to control file
 ```
 
+### RISC OS native app (C/apps/riscos/)
+Self-contained 32-bit `!ChaseHQ` desktop app — Wimp window or single-tasking
+fullscreen, one 48K/128K game, deliberately silent (no AY/beeper audio yet).
+Requires a RISC OS cross-build environment (AMU, Norcroft C, RISC_OSLib,
+`riscos-build-run`); build from the repository root, not from `C/`:
+
+```bash
+riscos-amu -f C/apps/riscos/Makefile test
+riscos-amu -f C/apps/riscos/Makefile install INSTDIR=install
+```
+
+An experimental 64-bit build (`riscos64-amu`) skips RISC_OSLib/Wimp and
+starts fullscreen directly; exercised on real hardware but outside CI.
+Generated `o32`, `aif32`, `install*` and `.rotransform` content is disposable,
+never commit it. See `C/apps/riscos/README.md` for shortcuts and layout, and
+`C/apps/riscos/PLAN.md` for the port's status/roadmap.
+
 ### C implementation (C/ directory)
 CMake is the canonical build system. SDL3 is required for the `ChaseHQ` app
 target; configuring without it still builds `ChaseHQ_Tests` and
@@ -78,7 +95,7 @@ Tests live in `C/Tests/` (`UnitTest.c`, `RenderStretchyObject.c`). They are buil
   - `libraries/ZXSpectrum/`: ZX facade implementation, plus `Screen.h` (internal)
   - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Bank3.h`, `Bank3State.h`, `Bank7.c`, `Bank7.h`, `Create.c`, `State.h`, `Internal.h`, `Tests.h`, `Types.h`)
   - `libraries/ChaseHQ/Data/`: read-only stage/sound/bank-3/bank-7 tables (`Stages.*`, `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `Bank3Data.*`, `Bank7Data.*`)
-- `C/apps/sdl3/` and `C/Tests/`: the app entry point and test driver, not modules themselves
+- `C/apps/sdl3/`, `C/apps/riscos/` and `C/Tests/`: app entry points (SDL3 host, native RISC OS host) and the test driver, not modules themselves
 
 ### Entry point and lifecycle
 `C/apps/sdl3/SDLMain.c` owns the SDL window and a dedicated game thread. The runtime lifecycle is:
