@@ -67,6 +67,7 @@ The host adds its own keys, which never reach the game:
 | `F7` / `F8` / `F9` | Mute AY channel A / B / C |
 | `F10` | Mute the beeper/speaker |
 | `F11` | Toggle fullscreen |
+| `Ctrl-M` | Toggle monochrome (greyscale) display |
 | `-` / `=` | Window scale down / up |
 | `[` / `]` | Emulation speed down / up |
 
