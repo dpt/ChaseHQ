@@ -12426,7 +12426,7 @@ mhc_handle_speed:
       }
 
       // EX AF,AF' - bank BC_count_scaled for scroll_horizon ($B854) to read
-      state->curvature_scroll_shadow = (u8) BC_count_scaled;
+      state->shadow.curvature_scroll = (u8) BC_count_scaled;
       state->horizon_scroll_sub = A_horizon_scroll_sub;
     }
   }
@@ -14851,14 +14851,14 @@ static void scroll_horizon(chqstate_t *state)
      * never read back — it is immediately overwritten by LD A,C at $B873.
      * The RLA sequence instead operates on the old A' value (Adash), which
      * the Z80 carries in from move_hero_car ($B296): the last BC_count_scaled
-     * it banked into shadow. state->curvature_scroll_shadow models that
+     * it banked into shadow. state->shadow.curvature_scroll models that
      * shadow slot (see State.h) — none of the calls between $B296 and $B854
      * (spawn_cars, cycle_counters, play_engine_or_siren_sfx_hook,
      * build_height_table) execute EX AF,AF', so it survives unclobbered.
      * Conv: $B854: EX AF,AF' banks current_curvature; $B855: RR H gives carry
      */
     /* RL Adash x3; AND 6: top two bits of speed, scaled up by 2 */
-    Adash = ((state->curvature_scroll_shadow >> 6) & 2) | (((speed >> 8) & 1) << 2);
+    Adash = ((state->shadow.curvature_scroll >> 6) & 2) | (((speed >> 8) & 1) << 2);
     B_horizon_table_value = horizon_table[state->horizon_curve_index + Adash];
     C_horizon_x_delta     = horizon_table[state->horizon_curve_index + Adash + 1];
 

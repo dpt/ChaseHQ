@@ -585,7 +585,7 @@ byte is stored in `chqstate_t`. `move_hero_car` banks `BCcount_scaled` at
 `$B296`; `scroll_horizon` unbanks it at `$B854` to pick one of four
 `horizon_table` rows for the curve x-scroll rate. The C treated the value as
 unknowable (`Adash = 0`), reaching only two of the four rows and producing a
-periodic stutter on curves. Fix: `state->curvature_scroll_shadow`, written at
+periodic stutter on curves. Fix: `state->shadow.curvature_scroll`, written at
 the bank site and read at the unbank site — after confirming from the skool that
 nothing on the path between them (`spawn_cars`, `cycle_counters`,
 `play_engine_or_siren_sfx_hook`, `build_height_table`) executes `EX AF,AF'`

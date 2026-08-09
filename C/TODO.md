@@ -1,7 +1,5 @@
 # TODO
 
-- fix: Audio desync when fast forwarding etc.
-
 - fix: High score screen bugs
   - flicker at bottom when scrolling
   - hard to enter name
@@ -14,7 +12,6 @@
 - Stretchy test app produces crap output [checked - still a bit rubbish] -
   delete it?
 - Start backporting changes to the disasm
-- turn curvature_scroll_shadow into a var (it's in state rn)
 - 48K mode drum timing is off (interrupts?)
 - Quit in pause mode locks up?
 
