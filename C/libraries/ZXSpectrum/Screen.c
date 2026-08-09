@@ -155,9 +155,7 @@ do {                                                       \
 void zxscreen_convert(const void    *vscr,
                       unsigned int  *poutput,
                       const zxbox_t *dirty,
-                      int            bgr,
-                      int            mono,
-                      int            mellow)
+                      unsigned int   flags)
 {
   const unsigned int  *base_palette;
   zxbox_t              box;
@@ -173,9 +171,9 @@ void zxscreen_convert(const void    *vscr,
   static int           dirtybits;
 #endif
 
-  base_palette = mono ? palette_mono
-               : mellow ? (bgr ? palette_mellow_abgr : palette_mellow_argb)
-               : (bgr ? palette_abgr : palette_argb);
+  base_palette = (flags & ZXSCREEN_MONO) ? palette_mono
+               : (flags & ZXSCREEN_MELLOW) ? ((flags & ZXSCREEN_BGR) ? palette_mellow_abgr : palette_mellow_argb)
+               : ((flags & ZXSCREEN_BGR) ? palette_abgr : palette_argb);
 
   assert(dirty);
 

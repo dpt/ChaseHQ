@@ -15,26 +15,23 @@ extern "C"
 {
 #endif
 
+#define ZXSCREEN_BGR    (1u << 0) /* output 0x00BBGGRR instead of 0x00RRGGBB */
+#define ZXSCREEN_MONO   (1u << 1) /* monochrome (greyscale) palette */
+#define ZXSCREEN_MELLOW (1u << 2) /* dimmed, desaturated CRT-style palette;
+                                   * ignored if ZXSCREEN_MONO is also set */
+
 /**
  * Convert the given ZX Spectrum format screen into output pixels.
  *
  * \param[in] screen ZX Spectrum screen data.
  * \param[in] output Output screen pixels.
  * \param[in] dirty  Dirty rectangle in cartesian space - (0,0) is bottom left.
- * \param[in] bgr    Non-zero to output 0x00BBGGRR (e.g. ABGR8888),
- *                   zero to output 0x00RRGGBB (e.g. ARGB8888).
- * \param[in] mono   Non-zero to output a monochrome (green phosphor-style)
- *                   palette instead of the normal ZX Spectrum colours.
- * \param[in] mellow Non-zero to output a dimmed, desaturated CRT-style
- *                   palette instead of the normal ZX Spectrum colours.
- *                   Ignored if mono is non-zero.
+ * \param[in] flags  Bitwise OR of ZXSCREEN_BGR, ZXSCREEN_MONO, ZXSCREEN_MELLOW.
  */
 void zxscreen_convert(const void    *screen,
                       unsigned int  *output,
                       const zxbox_t *dirty,
-                      int            bgr,
-                      int            mono,
-                      int            mellow);
+                      unsigned int   flags);
 
 // 4bpp variant
 void zxscreen_convert16(const void    *vscr,

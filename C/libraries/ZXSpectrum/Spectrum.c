@@ -439,9 +439,9 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state)
       zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
     else
       zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
-                       prv->config.pixel_format == ZX_PIXEL_ABGR8888,
-                       prv->monochrome,
-                       prv->mellow);
+                       (prv->config.pixel_format == ZX_PIXEL_ABGR8888 ? ZXSCREEN_BGR    : 0) |
+                       (prv->monochrome                               ? ZXSCREEN_MONO   : 0) |
+                       (prv->mellow                                   ? ZXSCREEN_MELLOW : 0));
 
     /* Invalidate the dirty region once complete */
     zxbox_invalidate(&prv->dirty);

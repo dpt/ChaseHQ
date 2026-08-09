@@ -326,9 +326,9 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state);
 void zxspectrum_release_screen(zxspectrum_t *state);
 
 /**
- * Switch the converted screen between colour and monochrome (green
- * phosphor-style) output. Forces a full redraw so the switch takes effect
- * on the next zxspectrum_claim_screen.
+ * Switch the converted screen between colour and monochrome (greyscale)
+ * output. Forces a full redraw so the switch takes effect on the next
+ * zxspectrum_claim_screen.
  *
  * \param[in] state ZXSpectrum state.
  * \param[in] mono  Non-zero for monochrome output, zero for colour.
