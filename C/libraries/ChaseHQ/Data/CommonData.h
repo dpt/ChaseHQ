@@ -172,6 +172,11 @@ typedef struct {
   const u8 *frames;  // points to the frame before/after the base
 } transition_t;
 
+typedef struct {
+  u16         z80; // original Z80 address
+  const void *ptr; // corresponding C data pointer
+} map_goto_entry_t;
+
 extern const transition_t transitions[8];
 
 extern const u8 square_transition_frames[5 * 8];

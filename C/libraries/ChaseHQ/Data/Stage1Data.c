@@ -15,7 +15,6 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
-#include <assert.h>
 #include <stddef.h>
 
 #include "C99/Types.h"
@@ -28,7 +27,7 @@
 #include "Stage1Data.h"
 
 /* Z80 addresses of the map sections, as referenced by the map
- * GOTO/SPLIT commands and stage1_lookup_map_goto(). */
+ * GOTO/SPLIT commands and stage1_map_goto_table[]. */
 #define STAGE1_MAP_LEFT_CURVATURE_ADDR   (0x5FD2)
 #define STAGE1_MAP_LEFT_HEIGHT_ADDR      (0x5FE6)
 #define STAGE1_MAP_LEFT_LANES_ADDR       (0x6003)
@@ -1650,6 +1649,7 @@ static const u8 stage1_perp_face[FACEBYTES] = {
   X__XX___, _X_X_XXX, XXXXXXXX, __X__X_X,
   XX_XX___, ____X_X_, XXX_X_XX, X_X_X_XX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
   attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
@@ -3181,7 +3181,7 @@ static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
 
 /* ----------------------------------------------------------------------- */
 
-static const struct { u16 z80; const void *ptr; } stage1_map_goto_table[] = {
+const map_goto_entry_t stage1_map_goto_table[24] = {
   { STAGE1_MAP_LEFT_CURVATURE_ADDR,   &stage1_map_left_curvature[0]   },
   { STAGE1_MAP_LEFT_HEIGHT_ADDR,      &stage1_map_left_height[0]      },
   { STAGE1_MAP_LEFT_LANES_ADDR,       &stage1_map_left_lanes[0]       },
@@ -3209,19 +3209,3 @@ static const struct { u16 z80; const void *ptr; } stage1_map_goto_table[] = {
 };
 
 // clang-format on
-
-const void *stage1_lookup_map_goto(u16 z80)
-{
-  int lo, hi, mid;
-
-  lo  = 0;
-  hi  = (int)(NELEMS(stage1_map_goto_table)) - 1;
-  while (lo <= hi) {
-    mid = lo + (hi - lo) / 2;
-    if (stage1_map_goto_table[mid].z80 == z80) return stage1_map_goto_table[mid].ptr;
-    if (stage1_map_goto_table[mid].z80 < z80)  lo = mid + 1;
-    else                                        hi = mid - 1;
-  }
-  assert(!"Unknown Z80 address (stage 1)");
-  return NULL;
-}

@@ -672,19 +672,42 @@ static u16 prev_buf_row(int backbuf)
  *
  * \return                         Pointer to the equivalent C data.
  */
-static const void *lookup_map_goto(int current_stage_number, int z80)
+static const void *stage_lookup_map_goto(int current_stage_number, u16 z80)
 {
-  static const void *(*const stage_lookup_fns[])(u16) = {
-    stage1_lookup_map_goto,
-    stage2_lookup_map_goto,
-    stage3_lookup_map_goto,
-    stage4_lookup_map_goto,
-    stage5_lookup_map_goto,
+  static const struct {
+    const map_goto_entry_t *table;
+    int                      count;
+  } stage_tables[] = {
+    { stage1_map_goto_table, (int)NELEMS(stage1_map_goto_table) },
+    { stage2_map_goto_table, (int)NELEMS(stage2_map_goto_table) },
+    { stage3_map_goto_table, (int)NELEMS(stage3_map_goto_table) },
+    { stage4_map_goto_table, (int)NELEMS(stage4_map_goto_table) },
+    { stage5_map_goto_table, (int)NELEMS(stage5_map_goto_table) },
 #ifdef CHQ_ENABLE_TEST_STAGE
-    stage6_lookup_map_goto,
+    { stage6_map_goto_table, (int)NELEMS(stage6_map_goto_table) },
 #endif
   };
+  const map_goto_entry_t *table;
+  int                      lo, hi, mid;
 
+  assert(current_stage_number >= 1 &&
+         current_stage_number <= (int)NELEMS(stage_tables));
+  table = stage_tables[current_stage_number - 1].table;
+
+  lo = 0;
+  hi = stage_tables[current_stage_number - 1].count - 1;
+  while (lo <= hi) {
+    mid = lo + (hi - lo) / 2;
+    if (table[mid].z80 == z80) return table[mid].ptr;
+    if (table[mid].z80 < z80)  lo = mid + 1;
+    else                        hi = mid - 1;
+  }
+  assert(!"Unknown Z80 address (stage map goto)");
+  return NULL;
+}
+
+static const void *lookup_map_goto(int current_stage_number, int z80)
+{
   switch (z80) {
   case PERP_ESCAPE_CURVATURE_ADDR:     return &perp_escape_curvature[0];
   case PERP_ESCAPE_HEIGHT_ADDR:        return &perp_escape_height[0];
@@ -696,9 +719,7 @@ static const void *lookup_map_goto(int current_stage_number, int z80)
   case FORKED_ROAD_HEIGHT_ADDR:        return &forked_road_height[0];
   case FORKED_ROAD_LANES_ADDR:         return &forked_road_lanes[0];
   default:
-    assert(current_stage_number >= 1 &&
-           current_stage_number <= (int)NELEMS(stage_lookup_fns));
-    return stage_lookup_fns[current_stage_number - 1](z80);
+    return stage_lookup_map_goto(current_stage_number, (u16)z80);
   }
 }
 

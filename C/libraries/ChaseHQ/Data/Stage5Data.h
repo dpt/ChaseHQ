@@ -18,9 +18,10 @@
 #ifndef CHASEHQ_STAGE5DATA_H
 #define CHASEHQ_STAGE5DATA_H
 
+#include "CommonData.h"
 #include "Stages.h"
 
 extern const stage_t stage5;
-const void *stage5_lookup_map_goto(u16 z80);
+extern const map_goto_entry_t stage5_map_goto_table[24];
 
 #endif /* CHASEHQ_STAGE5DATA_H */

@@ -15,7 +15,6 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
-#include <assert.h>
 #include <stddef.h>
 
 #include "C99/Types.h"
@@ -28,7 +27,7 @@
 #include "Stage3Data.h"
 
 /* Z80 addresses of the map sections, as referenced by the map
- * GOTO/SPLIT commands and stage3_lookup_map_goto(). */
+ * GOTO/SPLIT commands and stage3_map_goto_table[]. */
 #define STAGE3_MAP_CURV_C3F4_ADDR    (0x5FF4)
 #define STAGE3_MAP_HEIGHT_C409_ADDR  (0x6009)
 #define STAGE3_MAP_LANES_C44B_ADDR   (0x604B)
@@ -1808,7 +1807,7 @@ static const u8 stage3_map_robjs_C7AD[] = {
 /**
  * $C82C: stage3_perp_face
  */
-static const u8 stage3_perp_face[180] = {
+static const u8 stage3_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X_XXXXX_, XXX_XXX_, XXX__XXX,
   XXXXXXXX, X_XX_XX_, XX__XX_X, XX_XXXXX,
@@ -1856,6 +1855,9 @@ static const u8 stage3_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
+
+/* ----------------------------------------------------------------------- */
+
 /** $C8E0: stage3_lods_C8E0 */
 static const bitmap_t stage3_lods_C8E0[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage3_bitmap_C95E[0], &stage3_bitmap_C95E[0] },  // [0]
@@ -2332,6 +2334,7 @@ static const u8 stage3_bitmap_CE9D[1 * 2 * 1] = {
 static const u8 stage3_bitmap_CE9F[1 * 2 * 1] = {
   XXXX___X, _____X__,
 };
+
 /** $CEA1: stage3_stretchy_CEA1 */
 static const stretchy_t stage3_stretchy_CEA1[4] = {
   { STRETCHY_TYPE_FIXED, &stage3_depthset_CEAB },
@@ -2673,6 +2676,7 @@ static const u8 stage3_bitmap_D2AB[2 * 2] = {
   X_______, _______X,
   _XXXXXXX, XXXXXXX_,
 };
+
 /** $D2BB: stage3_stretchy_D2BB */
 static const stretchy_t stage3_stretchy_D2BB[3] = {
   { STRETCHY_TYPE_150PC, &stage3_depthset_D2C2 },
@@ -3132,6 +3136,7 @@ static const u8 stage3_bitmap_D641[1 * 6] = {
   _X___XX_,
   XXXXXX__,
 };
+
 /** $D64F: stage3_lods_D64F */
 static const bitmap_t stage3_lods_D64F[6] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_D679[0], &stage3_bitmap_D679[0] },  // [0]
@@ -3208,6 +3213,7 @@ static const u8 stage3_bitmap_D6B8[1 * 7] = {
   __XX_X__,
   ___XX___,
 };
+
 /** $D6BF: stage3_lods_D6BF */
 static const bitmap_t stage3_lods_D6BF[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage3_bitmap_D6E9[0], &stage3_bitmap_D6E9[0] },  // [0]
@@ -3300,6 +3306,7 @@ static const u8 stage3_bitmap_D782[2 * 2 * 7] = {
   XXXX____, ____XXXX, ________, XXXXXXXX,
   XXXXXXXX, ________, ____XXXX, XXXX____,
 };
+
 /** $D79E: stage3_stretchy_D79E */
 static const stretchy_t stage3_stretchy_D79E[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -3529,6 +3536,7 @@ static const u8 stage3_bitmap_D9B2[2 * 2 * 9] = {
   XXXXXXXX, ________, X_______, _XX_X_XX,
   XXXXXXXX, ________, X_______, _XXXXXXX,
 };
+
 /** $D9D6: stage3_stretchy_D9D6 */
 static const stretchy_t stage3_stretchy_D9D6[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -3694,7 +3702,8 @@ static const u8 stage3_bitmap_DAE0[2 * 2 * 4] = {
   XXXXXXXX, ________, X_______, _XXX_XXX,
   XXXXXXXX, ________, X_______, _X_X__XX,
 };
-static const struct { u16 z80; const void *ptr; } stage3_map_goto_table[] = {
+
+const map_goto_entry_t stage3_map_goto_table[24] = {
   { STAGE3_MAP_CURV_C3F4_ADDR,    &stage3_map_curv_C3F4[0]    },
   { STAGE3_MAP_HEIGHT_C409_ADDR,  &stage3_map_height_C409[0]  },
   { STAGE3_MAP_LANES_C44B_ADDR,   &stage3_map_lanes_C44B[0]   },
@@ -3722,19 +3731,3 @@ static const struct { u16 z80; const void *ptr; } stage3_map_goto_table[] = {
 };
 
 // clang-format on
-
-const void *stage3_lookup_map_goto(u16 z80)
-{
-  int lo, hi, mid;
-
-  lo  = 0;
-  hi  = (int)NELEMS(stage3_map_goto_table) - 1;
-  while (lo <= hi) {
-    mid = lo + (hi - lo) / 2;
-    if (stage3_map_goto_table[mid].z80 == z80) return stage3_map_goto_table[mid].ptr;
-    if (stage3_map_goto_table[mid].z80 < z80)  lo = mid + 1;
-    else                          hi = mid - 1;
-  }
-  assert(!"Unknown Z80 address (stage 3)");
-  return NULL;
-}
