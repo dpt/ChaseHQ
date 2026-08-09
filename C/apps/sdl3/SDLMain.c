@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <SDL3/SDL.h>
@@ -66,14 +67,16 @@
 
 /* Whether the CRT post-effect starts switched on. Both display backends are
  * always built: the plain SDL_Renderer blit (any GPU backend,
- * nearest-neighbour scaling) and the SDL3 GPU/Metal CRT post-effect pipeline
- * (Metal only). F4 switches between them at runtime, so this only chooses
- * which one comes up first. Override with -DCHQ_CRT_SHADER=1.
+ * nearest-neighbour scaling) and the SDL3 GPU CRT post-effect pipeline
+ * (Metal on macOS, Vulkan/SPIR-V on Linux -- see CRTShader.c). F4 switches
+ * between them at runtime, so this only chooses which one comes up first.
+ * Set by CMake (CHQ_CRT_SHADER=1) when a shader backend is available for the
+ * target platform; override with -DCHQ_CRT_SHADER=1/0.
  *
  * They cannot both be live at once -- SDL_CreateRenderer and
  * SDL_ClaimWindowForGPUDevice each want the window's swapchain -- so
  * switching tears one down and builds the other. If the CRT backend will not
- * start (no Metal), chq_set_crt_enabled falls back to the plain renderer.
+ * start, chq_set_crt_enabled falls back to the plain renderer.
  */
 #ifndef CHQ_CRT_SHADER
 #define CHQ_CRT_SHADER       (0)
@@ -867,9 +870,47 @@ static int chq_renderer_create(chq_sdl_state_t *state)
   return 1;
 }
 
+/* Conv: on Linux (Wayland/X11), claiming a GPU swapchain on a window that
+ * already had a swapchain of any kind (SDL_Renderer's or a previous GPU
+ * claim) torn down on it presents every frame without error but the
+ * compositor never shows the new frames -- it sticks on the backend that
+ * was live before the teardown. Destroying and recreating the SDL_Window
+ * itself gives the new GPU claim a surface the compositor has never seen
+ * before, which does update normally. Metal/macOS doesn't hit this, but the
+ * recreation is harmless there too -- it isn't gated to Linux only.
+ */
+static int chq_video_recreate_window(chq_sdl_state_t *state)
+{
+  char        title[128];
+  int         x;
+  int         y;
+  int         w;
+  int         h;
+  SDL_WindowFlags flags;
+  SDL_Window *window;
+
+  SDL_strlcpy(title, SDL_GetWindowTitle(state->video.window), sizeof(title));
+  SDL_GetWindowPosition(state->video.window, &x, &y);
+  SDL_GetWindowSize(state->video.window, &w, &h);
+  flags = SDL_GetWindowFlags(state->video.window);
+
+  window = SDL_CreateWindow(title, w, h, flags);
+  if (window == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateWindow (recreate): %s\n", SDL_GetError());
+    return 0;
+  }
+  SDL_SetWindowPosition(window, x, y);
+
+  SDL_DestroyWindow(state->video.window);
+  state->video.window = window;
+  return 1;
+}
+
 /* Switches the display backend. Returns 1 if the requested backend is now
  * live, 0 if it could not be created and the other one was restored instead
- * (the CRT backend needs Metal, so this is the normal result elsewhere).
+ * (the CRT backend needs Metal on macOS or Vulkan/SPIR-V on Linux, so this
+ * is the normal result on a platform without a shader backend).
  */
 static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 {
@@ -879,7 +920,18 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
   if (enable)
   {
+    /* Only the very first claim (nothing live yet at startup) gets a window
+     * the compositor has never presented anything on; every later re-enable
+     * needs a fresh window to avoid the stuck-frame bug above. Must be
+     * checked before chq_renderer_destroy clears video.renderer below.
+     */
+    int window_already_used = state->video.renderer != NULL ||
+                              state->video.crt.gpu != NULL;
+
     chq_renderer_destroy(state);
+
+    if (window_already_used && !chq_video_recreate_window(state))
+      goto crt_unavailable;
 
     if (chq_CRT_shader_create(&state->video.crt, state->video.window,
                               GAMEWIDTH, GAMEHEIGHT))
@@ -897,6 +949,7 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
       chq_CRT_shader_destroy(&state->video.crt, state->video.window);
     memset(&state->video.crt, 0, sizeof(state->video.crt));
 
+crt_unavailable:
     fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
   }
   else if (state->video.crt_enabled)
@@ -1947,10 +2000,10 @@ int main(int argc, char *argv[])
   SDL_DestroyMutex(state.video.dirty_mutex);
 
   if (state.video.crt_enabled)
-    chq_CRT_shader_destroy(&state.video.crt, window);
+    chq_CRT_shader_destroy(&state.video.crt, state.video.window);
   else
     chq_renderer_destroy(&state);
-  SDL_DestroyWindow(window);
+  SDL_DestroyWindow(state.video.window);
 
   SDL_Quit();
 
