@@ -4,15 +4,15 @@ riscos:
   script:
     - curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online
     - chmod +x riscos-build-online
-    - sh tools/make-riscos-layout
+    - sh C/apps/riscos/make-riscos-layout
     - >-
       zip -q9r /tmp/source-archive.zip
-      .robuild.yaml .rotransform/riscos 'Makefile,fe1' C
-      Resources VersionNum tools/make-riscos-layout
+      .rotransform/riscos C
+    - (cd C/apps/riscos && zip -q9 /tmp/source-archive.zip .robuild.yaml)
     - ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
     - |
-      if [ -f VersionNum ]; then
-          version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' VersionNum)
+      if [ -f C/apps/riscos/VersionNum ]; then
+          version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' C/apps/riscos/VersionNum)
       else
           version=$(git rev-parse --short HEAD)
       fi

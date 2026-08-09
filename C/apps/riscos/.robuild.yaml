@@ -12,12 +12,12 @@ jobs:
     script:
       - echo
       - echo *** Build and run the native tests ***
-      - amu -f Makefile aif32.ChaseTest
+      - amu -f C/apps/riscos/Makefile aif32.ChaseTest
       - aif32.ChaseTest
 
       - echo
       - echo *** Build the application bundle ***
-      - amu -f Makefile install INSTDIR=Install
+      - amu -f C/apps/riscos/Makefile install INSTDIR=Install
 
       - echo
       - echo *** SUCCESS ***

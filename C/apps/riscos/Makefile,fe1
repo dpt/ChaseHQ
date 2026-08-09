@@ -29,7 +29,7 @@ include CApp
 .PHONY: riscos_layout clean_layout test
 
 riscos_layout:
-	sh tools/make-riscos-layout
+	sh C/apps/riscos/make-riscos-layout
 
 clean_layout:
 	${WIPE} .rotransform.riscos ${WFLAGS}
