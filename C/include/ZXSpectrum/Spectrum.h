@@ -335,6 +335,15 @@ void zxspectrum_release_screen(zxspectrum_t *state);
  */
 void zxspectrum_set_monochrome(zxspectrum_t *state, int mono);
 
+/**
+ * One-shot glitch: fill the converted screen's backing bitmap and
+ * attributes with random bytes, then force a redraw. The game overwrites
+ * this on its next draw() call, so the effect lasts a single frame.
+ *
+ * \param[in] state ZXSpectrum state.
+ */
+void zxspectrum_randomise_screen(zxspectrum_t *state);
+
 #ifdef __cplusplus
 }
 #endif

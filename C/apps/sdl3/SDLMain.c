@@ -1182,6 +1182,12 @@ static void chq_action_toggle_monochrome(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.monochrome ? "MONOCHROME ON" : "MONOCHROME OFF");
 }
 
+static void chq_action_randomise_screen(chq_sdl_state_t *state)
+{
+  zxspectrum_randomise_screen(state->zx);
+  chq_osd_show(state, "GLITCH");
+}
+
 static void chq_action_toggle_ay_channel(chq_sdl_state_t *state, int ch)
 {
   char buf[32];
@@ -1378,6 +1384,16 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       if (k->down && !k->repeat)
         chq_action_toggle_monochrome(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_Y:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_randomise_screen(state);
       return;
     }
     j = zxjoystick_UNKNOWN;

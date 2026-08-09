@@ -458,6 +458,20 @@ void zxspectrum_set_monochrome(zxspectrum_t *state, int mono)
   mutex_unlock(prv->lock);
 }
 
+void zxspectrum_randomise_screen(zxspectrum_t *state)
+{
+  zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
+  int                    i;
+
+  mutex_lock(prv->lock);
+  for (i = 0; i < (int) sizeof(prv->screen_copy.pixels); i++)
+    prv->screen_copy.pixels[i] = rand();
+  for (i = 0; i < (int) sizeof(prv->screen_copy.attributes); i++)
+    prv->screen_copy.attributes[i] = rand();
+  zxbox_maximise(&prv->dirty);
+  mutex_unlock(prv->lock);
+}
+
 void zxspectrum_release_screen(zxspectrum_t *state)
 {
   zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
