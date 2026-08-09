@@ -892,9 +892,7 @@ static int chq_video_recreate_window(chq_sdl_state_t *state)
   SDL_strlcpy(title, SDL_GetWindowTitle(state->video.window), sizeof(title));
   SDL_GetWindowPosition(state->video.window, &x, &y);
   SDL_GetWindowSize(state->video.window, &w, &h);
-  flags = SDL_GetWindowFlags(state->video.window) & SDL_WINDOW_FULLSCREEN;
-
-  SDL_DestroyWindow(state->video.window);
+  flags = SDL_GetWindowFlags(state->video.window);
 
   window = SDL_CreateWindow(title, w, h, flags);
   if (window == NULL)
@@ -904,6 +902,7 @@ static int chq_video_recreate_window(chq_sdl_state_t *state)
   }
   SDL_SetWindowPosition(window, x, y);
 
+  SDL_DestroyWindow(state->video.window);
   state->video.window = window;
   return 1;
 }
@@ -931,8 +930,8 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
     chq_renderer_destroy(state);
 
-    if (window_already_used)
-      chq_video_recreate_window(state);
+    if (window_already_used && !chq_video_recreate_window(state))
+      goto crt_unavailable;
 
     if (chq_CRT_shader_create(&state->video.crt, state->video.window,
                               GAMEWIDTH, GAMEHEIGHT))
@@ -950,6 +949,7 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
       chq_CRT_shader_destroy(&state->video.crt, state->video.window);
     memset(&state->video.crt, 0, sizeof(state->video.crt));
 
+crt_unavailable:
     fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
   }
   else if (state->video.crt_enabled)

@@ -210,6 +210,8 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   if (!SDL_ClaimWindowForGPUDevice(shader->gpu, window))
   {
     fprintf(stderr, "Error: SDL_ClaimWindowForGPUDevice: %s\n", SDL_GetError());
+    SDL_DestroyGPUDevice(shader->gpu);
+    shader->gpu = NULL;
     return 0;
   }
 
@@ -227,6 +229,9 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                                      SDL_GPU_PRESENTMODE_VSYNC))
   {
     fprintf(stderr, "Error: SDL_SetGPUSwapchainParameters: %s\n", SDL_GetError());
+    SDL_ReleaseWindowFromGPUDevice(shader->gpu, window);
+    SDL_DestroyGPUDevice(shader->gpu);
+    shader->gpu = NULL;
     return 0;
   }
 
