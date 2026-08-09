@@ -457,3 +457,20 @@ CHQ_API void chq_destroy(chqstate_t *state)
 
   free(state);
 }
+
+/**
+ * Fetch the raw $F000 backbuffer for debug display.
+ *
+ * Conv: host-facing accessor; has no Z80 address. The buffer is mono
+ * (1bpp, BACKBUFFER_ROWBYTES bytes per row), mutated by the game thread with
+ * no locking of its own -- callers reading it from another thread (e.g. the
+ * SDL frontend) get a torn/tearing snapshot, which is acceptable for a debug
+ * view.
+ */
+CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state, int *width, int *height)
+{
+  *width  = BACKBUFFER_WIDTH;
+  *height = BACKBUFFER_HEIGHT;
+
+  return state->backbuffer;
+}

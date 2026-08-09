@@ -53,9 +53,7 @@
 #define SCALE_MAX            (4)
 
 #define SPEED_DEFAULT      (100) // percent
-
-#define LOADING_SCREEN_DURATION_MS (2000) // how long the tape loading screen splash shows
-#define SPEED_MIN           (25)
+#define SPEED_MIN            (1)
 #define SPEED_MAX         (1000)
 #define SPEED_STEP           (5)
 
@@ -63,6 +61,8 @@
 #define VOLUME_MIN           (0)
 #define VOLUME_MAX         (100)
 #define VOLUME_STEP         (10)
+
+#define LOADING_SCREEN_DURATION_MS (2000) // how long the tape loading screen splash shows
 
 /* Whether the CRT post-effect starts switched on. Both display backends are
  * always built: the plain SDL_Renderer blit (any GPU backend,
@@ -286,6 +286,7 @@ typedef struct chq_sdl_state
     int             dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
     int             show_dirty_overlay; // bool; toggled with F3, off by default
     int             monochrome; // bool; toggled with Ctrl-M, off by default
+    int             show_backbuffer; // bool; toggled with F12, off by default
 
     SDL_Window     *window;
 
@@ -1153,6 +1154,47 @@ static int chq_render_osd_mask(chq_sdl_state_t *state)
                                       chq_osd_plot_mask_fill, mask);
 }
 
+/* Builds a GAMEWIDTH*GAMEHEIGHT ABGR8888 debug view of the game's raw $F000
+ * backbuffer for the F12 toggle. Its address format is not the hardware
+ * screen's interleave; per draw_object_clipped's comment (Main.c, DE_backbuf
+ * assembly), backbuffer addresses pack as 0b1111LLLLRRRCCCCC -- scanline
+ * low nibble (L) in bits 8-11, row-group (R) in bits 5-7, column byte (C) in
+ * bits 0-4. So the native storage row for logical row y is
+ * (y&0x0F)*8 + ((y>>4)&0x07), not a linear row index.
+ *
+ * ponytail: debug view only, tears against the game thread (no lock on
+ * chqstate_t::backbuffer); good enough to eyeball the buffer.
+ */
+static const uint32_t *chq_build_backbuffer_pixels(chq_sdl_state_t *state)
+{
+  static uint32_t pixels[GAMEWIDTH * GAMEHEIGHT];
+  const u8  *backbuf;
+  int        bbwidth, bbheight, rowbytes, linear_y, col;
+
+  backbuf  = chq_get_backbuffer(state->game, &bbwidth, &bbheight);
+  rowbytes = bbwidth / 8;
+
+  /* The buffer is shorter than the screen (128 rows vs 192) and covers the
+   * playfield, which sits at the bottom of the screen -- so top-align its
+   * row 0 to display row (GAMEHEIGHT - bbheight), not display row 0. */
+  for (linear_y = 0; linear_y < GAMEHEIGHT; linear_y++)
+  {
+    int buf_y = linear_y - (GAMEHEIGHT - bbheight);
+    int y     = (buf_y & 0x0F) * 8 + ((buf_y >> 4) & 0x07);
+
+    for (col = 0; col < GAMEWIDTH; col++)
+    {
+      int on;
+
+      on = buf_y >= 0 && buf_y < bbheight &&
+           (backbuf[y * rowbytes + col / 8] & (0x80 >> (col % 8))) != 0;
+      pixels[linear_y * GAMEWIDTH + col] = on ? 0xFF000000u : 0xFFFFFFFFu;
+    }
+  }
+
+  return pixels;
+}
+
 static void chq_action_toggle_pause(chq_sdl_state_t *state)
 {
   CHQ_FLAG_ASSIGN(state, CHQ_FLAG_PAUSED, !CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED));
@@ -1183,6 +1225,12 @@ static void chq_action_toggle_monochrome(chq_sdl_state_t *state)
   state->video.monochrome = !state->video.monochrome;
   zxspectrum_set_monochrome(state->zx, state->video.monochrome);
   chq_osd_show(state, state->video.monochrome ? "MONOCHROME ON" : "MONOCHROME OFF");
+}
+
+static void chq_action_toggle_backbuffer(chq_sdl_state_t *state)
+{
+  state->video.show_backbuffer = !state->video.show_backbuffer;
+  chq_osd_show(state, state->video.show_backbuffer ? "BACKBUFFER ON" : "BACKBUFFER OFF");
 }
 
 static void chq_action_randomise_screen(chq_sdl_state_t *state)
@@ -1231,18 +1279,22 @@ static void chq_action_adjust_scale(chq_sdl_state_t *state, SDL_Keycode sym)
   }
 }
 
-static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym, int shift)
+static void chq_action_adjust_speed(chq_sdl_state_t *state, SDL_Keycode sym, int shift, int ctrl)
 {
   int  speed;
   char buf[32];
+  int  step;
 
   if (sym == SDLK_BACKSLASH)
     speed = SPEED_DEFAULT;
-  else if (shift)
+  else if (ctrl)
     speed = sym == SDLK_LEFTBRACKET ? SPEED_MIN : SPEED_MAX;
   else
-    speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -SPEED_STEP : SPEED_STEP),
+  {
+    step  = shift ? 1 : SPEED_STEP;
+    speed = CLAMP(state->speed + (sym == SDLK_LEFTBRACKET ? -step : step),
                   SPEED_MIN, SPEED_MAX);
+  }
 
   state->speed = speed;
   chq_update_window_title(state);
@@ -1382,6 +1434,11 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
       chq_action_toggle_fullscreen(state);
     return;
 
+  case SDLK_F12:
+    if (k->down && !k->repeat)
+      chq_action_toggle_backbuffer(state);
+    return;
+
   case SDLK_M:
     if (k->mod & SDL_KMOD_CTRL)
     {
@@ -1412,7 +1469,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   case SDLK_RIGHTBRACKET:
   case SDLK_BACKSLASH:
     if (k->down)
-      chq_action_adjust_speed(state, sym, k->mod & SDL_KMOD_SHIFT);
+      chq_action_adjust_speed(state, sym, k->mod & SDL_KMOD_SHIFT, k->mod & SDL_KMOD_CTRL);
     return;
 
   case SDLK_F5:
@@ -1612,14 +1669,18 @@ static void chq_sdl_main_loop(void *opaque)
 
   if (state->video.crt_enabled)
   {
-    int osd_active;
+    int             osd_active;
+    const uint32_t *override_pixels;
 
-    osd_active = chq_render_osd_mask(state);
+    osd_active      = chq_render_osd_mask(state);
+    override_pixels = state->video.show_backbuffer ?
+                       chq_build_backbuffer_pixels(state) : NULL;
 
     chq_CRT_shader_render(&state->video.crt, state->video.window, state->zx,
                           x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
                           &state->video.crt_params,
-                          osd_active ? state->video.osd_mask : NULL);
+                          osd_active ? state->video.osd_mask : NULL,
+                          override_pixels);
     chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
   }
   else
@@ -1633,9 +1694,18 @@ static void chq_sdl_main_loop(void *opaque)
     dstrect.w = (float) w;
     dstrect.h = (float) h;
 
-    frame = zxspectrum_claim_screen(state->zx);
-    SDL_UpdateTexture(state->video.texture, NULL, frame->pixels, frame->stride);
-    zxspectrum_release_screen(state->zx);
+    if (state->video.show_backbuffer)
+    {
+      const uint32_t *pixels = chq_build_backbuffer_pixels(state);
+
+      SDL_UpdateTexture(state->video.texture, NULL, pixels, GAMEWIDTH * (int) sizeof(uint32_t));
+    }
+    else
+    {
+      frame = zxspectrum_claim_screen(state->zx);
+      SDL_UpdateTexture(state->video.texture, NULL, frame->pixels, frame->stride);
+      zxspectrum_release_screen(state->zx);
+    }
 
     /* Clear screen */
     // TODO: This ought to be the border colour, but CHQ's is always black.

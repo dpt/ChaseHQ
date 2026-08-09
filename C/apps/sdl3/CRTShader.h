@@ -92,6 +92,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
  *                            is no SDL_Renderer in this path for the caller
  *                            to draw an OSD with itself, so this is how it
  *                            gets composited.
+ * \param[in]     override_pixels Optional game_width*game_height ABGR8888
+ *                            pixel buffer to upload instead of the game's
+ *                            screen buffer (e.g. the backbuffer debug view).
+ *                            NULL to use zx's screen as normal.
  */
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            SDL_Window             *window,
@@ -103,7 +107,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            int                     game_width,
                            int                     game_height,
                            const chq_CRT_params_t *params,
-                           const unsigned char    *osd_mask);
+                           const unsigned char    *osd_mask,
+                           const uint32_t         *override_pixels);
 
 /**
  * Releases everything created by chq_CRT_shader_create.

@@ -305,7 +305,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            int                     game_width,
                            int                     game_height,
                            const chq_CRT_params_t *params,
-                           const unsigned char    *osd_mask)
+                           const unsigned char    *osd_mask,
+                           const uint32_t         *override_pixels)
 {
   SDL_GPUViewport              viewport;
   const zx_frame_t            *frame;
@@ -333,11 +334,19 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   viewport.min_depth = 0.0f;
   viewport.max_depth = 1.0f;
 
-  /* Upload the game's converted screen buffer to the GPU texture. */
-  frame = zxspectrum_claim_screen(zx);
+  /* Upload the game's converted screen buffer to the GPU texture, or the
+   * caller's override buffer (the backbuffer debug view) if given. */
   mapped = SDL_MapGPUTransferBuffer(shader->gpu, shader->transfer_buffer, true);
-  memcpy(mapped, frame->pixels, game_width * game_height * 4);
-  zxspectrum_release_screen(zx);
+  if (override_pixels != NULL)
+  {
+    memcpy(mapped, override_pixels, game_width * game_height * 4);
+  }
+  else
+  {
+    frame = zxspectrum_claim_screen(zx);
+    memcpy(mapped, frame->pixels, game_width * game_height * 4);
+    zxspectrum_release_screen(zx);
+  }
 
   /* Composite the OSD mask directly into the staging buffer -- this path
    * has no SDL_Renderer for the caller to draw an overlay rect with, so the
