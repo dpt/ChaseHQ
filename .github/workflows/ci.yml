@@ -34,20 +34,20 @@ jobs:
           chmod +x riscos-build-online
 
       - name: Prepare the RISC OS source layout
-        run: sh tools/make-riscos-layout
+        run: sh C/apps/riscos/make-riscos-layout
 
       - name: Build through build.riscos.online
         run: |
           zip -q9r /tmp/source-archive.zip \
-            .robuild.yaml .rotransform/riscos 'Makefile,fe1' C \
-            Resources VersionNum tools/make-riscos-layout
+            .rotransform/riscos C
+          (cd C/apps/riscos && zip -q9 /tmp/source-archive.zip .robuild.yaml)
           ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
 
       - name: Give the output a versioned name
         id: version
         run: |
-          if [ -f VersionNum ]; then
-              version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' VersionNum)
+          if [ -f C/apps/riscos/VersionNum ]; then
+              version=$(sed '/Module_FullVersion / ! d ; s/.*Module_FullVersion *"\(.*\)"/\1/' C/apps/riscos/VersionNum)
           else
               version=$(git rev-parse --short HEAD)
           fi
