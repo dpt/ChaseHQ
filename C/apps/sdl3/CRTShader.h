@@ -22,10 +22,10 @@
 
 #include "ZXSpectrum/Spectrum.h"
 
-/* CRT post-effect prototype: renders the game's converted screen buffer
- * through a Metal fragment shader (scanlines/bloom/vignette) via SDL's GPU
- * API, instead of the plain SDL_Renderer blit. See CRTShader.c for the
- * SDL3/Metal-only caveat.
+/* CRT post-effect: renders the game's converted screen buffer through a
+ * fragment shader (scanlines/bloom/vignette) via SDL's GPU API, instead of
+ * the plain SDL_Renderer blit. Metal (MSL) on macOS, Vulkan (SPIR-V) on
+ * Linux -- see CRTShader.c's platform gating.
  */
 typedef struct
 {

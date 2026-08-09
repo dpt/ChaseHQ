@@ -70,7 +70,11 @@ See `C/apps/riscos/README.md` for shortcuts and layout, and
 
 CMake is the canonical build system. SDL3 is required for the `ChaseHQ` app
 target; configuring without it still builds `ChaseHQ_Tests` and
-`StretchyRenderer`.
+`StretchyRenderer`. On Linux, `glslangValidator` (package `glslang-tools` on
+Debian/Ubuntu) is needed to build the CRT shader (compiles
+`apps/sdl3/shaders/crt.{vert,frag}` to SPIR-V at build time); without it the
+`ChaseHQ` target still builds, just falls back to the plain renderer (see
+`CRTShader.c`).
 
 ```bash
 # From C/

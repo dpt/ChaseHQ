@@ -48,6 +48,17 @@ if(NOT SDL3_FOUND)
   message(STATUS "SDL3 not found - skipping the ChaseHQ app target")
 endif()
 
+# ponytail: CRT shader needs SPIR-V on Linux (Vulkan backend, no MSL).
+# glslangValidator is the common Vulkan SDK / glslang-tools compiler; if it's
+# missing the app still builds, just without the CRT shader, same as the
+# existing APPLE-only gate.
+if(UNIX AND NOT APPLE)
+  find_program(GLSLANG_VALIDATOR glslangValidator)
+  if(NOT GLSLANG_VALIDATOR)
+    message(STATUS "glslangValidator not found - skipping the CRT shader on this platform")
+  endif()
+endif()
+
 set(INCLUDE_DIRS include libraries)
 
 set(SOURCE_FILES
@@ -111,6 +122,25 @@ if(SDL3_FOUND)
   if(APPLE)
     target_link_libraries(ChaseHQ "-framework CoreFoundation")
     target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
+  endif()
+  if(UNIX AND NOT APPLE AND GLSLANG_VALIDATOR)
+    set(CRT_SHADER_DIR ${CMAKE_SOURCE_DIR}/apps/sdl3/shaders)
+    set(CRT_SPIRV_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
+    set(CRT_SPIRV_HEADER ${CRT_SPIRV_GEN_DIR}/CRTShaderSPIRV.h)
+    file(MAKE_DIRECTORY ${CRT_SPIRV_GEN_DIR})
+    add_custom_command(
+      OUTPUT ${CRT_SPIRV_HEADER}
+      COMMAND ${GLSLANG_VALIDATOR} -V ${CRT_SHADER_DIR}/crt.vert -o ${CRT_SPIRV_GEN_DIR}/crt.vert.spv
+      COMMAND ${GLSLANG_VALIDATOR} -V ${CRT_SHADER_DIR}/crt.frag -o ${CRT_SPIRV_GEN_DIR}/crt.frag.spv
+      COMMAND ${CMAKE_COMMAND} -DINPUT=${CRT_SPIRV_GEN_DIR}/crt.vert.spv -DOUTPUT=${CRT_SPIRV_GEN_DIR}/crt_vert_spirv.h -DVARNAME=chq_crt_vertex_spirv -P ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
+      COMMAND ${CMAKE_COMMAND} -DINPUT=${CRT_SPIRV_GEN_DIR}/crt.frag.spv -DOUTPUT=${CRT_SPIRV_GEN_DIR}/crt_frag_spirv.h -DVARNAME=chq_crt_fragment_spirv -P ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
+      COMMAND ${CMAKE_COMMAND} -E cat ${CRT_SPIRV_GEN_DIR}/crt_vert_spirv.h ${CRT_SPIRV_GEN_DIR}/crt_frag_spirv.h > ${CRT_SPIRV_HEADER}
+      DEPENDS ${CRT_SHADER_DIR}/crt.vert ${CRT_SHADER_DIR}/crt.frag ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
+      VERBATIM)
+    add_custom_target(crt_shader_spirv DEPENDS ${CRT_SPIRV_HEADER})
+    add_dependencies(ChaseHQ crt_shader_spirv)
+    target_include_directories(ChaseHQ PRIVATE ${CRT_SPIRV_GEN_DIR})
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1 CHQ_CRT_SHADER_SPIRV=1)
   endif()
   if(WIN32)
     add_custom_command(TARGET ChaseHQ POST_BUILD

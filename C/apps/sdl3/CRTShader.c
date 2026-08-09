@@ -20,14 +20,33 @@
 
 #include "CRTShader.h"
 
+#if defined(CHQ_CRT_SHADER_SPIRV)
+
+/* Linux/Vulkan build: shader bytecode is precompiled from
+ * apps/sdl3/shaders/crt.{vert,frag} by glslangValidator at build time and
+ * embedded as byte arrays (see CMakeLists.txt's crt_shader_spirv target and
+ * cmake/EmbedSPIRV.cmake). Keep the GLSL sources in sync with the MSL below
+ * if the effect changes.
+ */
+#include "CRTShaderSPIRV.h"
+
+#define CHQ_GPU_SHADER_FORMAT SDL_GPU_SHADERFORMAT_SPIRV
+#define CHQ_GPU_ENTRYPOINT_VS "main"
+#define CHQ_GPU_ENTRYPOINT_FS "main"
+
+#else
+
 /* MSL source is handed to SDL_CreateGPUShader() as SDL_GPU_SHADERFORMAT_MSL
  * and compiled at runtime by Metal; no offline .metallib build step. This
- * is macOS/iOS-only (Metal backend only) - fine for a prototype, would need
- * SPIR-V/DXIL variants to run elsewhere.
+ * is macOS/iOS-only (Metal backend only).
  *
  * Fullscreen triangle is generated in the vertex shader from vertex_id, so
  * no vertex buffer is needed.
  */
+
+#define CHQ_GPU_SHADER_FORMAT SDL_GPU_SHADERFORMAT_MSL
+#define CHQ_GPU_ENTRYPOINT_VS "vs_main"
+#define CHQ_GPU_ENTRYPOINT_FS "fs_main"
 static const char *const chq_crt_vertex_msl =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
@@ -163,6 +182,8 @@ static const char *const chq_crt_fragment_msl =
     "  return c;\n"
     "}\n";
 
+#endif /* CHQ_CRT_SHADER_SPIRV */
+
 int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                           SDL_Window       *window,
                           int               game_width,
@@ -179,7 +200,7 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
 
   memset(shader, 0, sizeof(*shader));
 
-  shader->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL, false, NULL);
+  shader->gpu = SDL_CreateGPUDevice(CHQ_GPU_SHADER_FORMAT, false, NULL);
   if (shader->gpu == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateGPUDevice: %s\n", SDL_GetError());
@@ -189,6 +210,23 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   if (!SDL_ClaimWindowForGPUDevice(shader->gpu, window))
   {
     fprintf(stderr, "Error: SDL_ClaimWindowForGPUDevice: %s\n", SDL_GetError());
+    return 0;
+  }
+
+  /* Conv: on Linux (Wayland/X11), re-claiming this window for a new GPU
+   * swapchain right after the SDL_Renderer swapchain that previously owned
+   * it was torn down (F4 toggling back to the CRT backend) presents
+   * successfully every frame but the compositor keeps showing the old
+   * surface's last frame -- nothing on screen updates. Explicitly
+   * (re)configuring the swapchain rather than relying on whatever it
+   * defaulted to on this claim forces the compositor to pick up the new
+   * surface. Metal/macOS doesn't need this, but it's harmless there too.
+   */
+  if (!SDL_SetGPUSwapchainParameters(shader->gpu, window,
+                                     SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+                                     SDL_GPU_PRESENTMODE_VSYNC))
+  {
+    fprintf(stderr, "Error: SDL_SetGPUSwapchainParameters: %s\n", SDL_GetError());
     return 0;
   }
 
@@ -237,12 +275,21 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
     return 0;
   }
 
+#if defined(CHQ_CRT_SHADER_SPIRV)
+  memset(&shader_info, 0, sizeof(shader_info));
+  shader_info.code       = (const Uint8 *) chq_crt_vertex_spirv;
+  shader_info.code_size  = chq_crt_vertex_spirv_len;
+  shader_info.entrypoint = CHQ_GPU_ENTRYPOINT_VS;
+  shader_info.format     = CHQ_GPU_SHADER_FORMAT;
+  shader_info.stage      = SDL_GPU_SHADERSTAGE_VERTEX;
+#else
   memset(&shader_info, 0, sizeof(shader_info));
   shader_info.code       = (const Uint8 *) chq_crt_vertex_msl;
   shader_info.code_size  = strlen(chq_crt_vertex_msl);
-  shader_info.entrypoint = "vs_main";
-  shader_info.format     = SDL_GPU_SHADERFORMAT_MSL;
+  shader_info.entrypoint = CHQ_GPU_ENTRYPOINT_VS;
+  shader_info.format     = CHQ_GPU_SHADER_FORMAT;
   shader_info.stage      = SDL_GPU_SHADERSTAGE_VERTEX;
+#endif
 
   vertex_shader = SDL_CreateGPUShader(shader->gpu, &shader_info);
   if (vertex_shader == NULL)
@@ -251,14 +298,25 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
     return 0;
   }
 
+#if defined(CHQ_CRT_SHADER_SPIRV)
   memset(&shader_info, 0, sizeof(shader_info));
-  shader_info.code                = (const Uint8 *) chq_crt_fragment_msl;
-  shader_info.code_size           = strlen(chq_crt_fragment_msl);
-  shader_info.entrypoint          = "fs_main";
-  shader_info.format              = SDL_GPU_SHADERFORMAT_MSL;
+  shader_info.code                = (const Uint8 *) chq_crt_fragment_spirv;
+  shader_info.code_size           = chq_crt_fragment_spirv_len;
+  shader_info.entrypoint          = CHQ_GPU_ENTRYPOINT_FS;
+  shader_info.format              = CHQ_GPU_SHADER_FORMAT;
   shader_info.stage               = SDL_GPU_SHADERSTAGE_FRAGMENT;
   shader_info.num_samplers        = 1;
   shader_info.num_uniform_buffers = 1;
+#else
+  memset(&shader_info, 0, sizeof(shader_info));
+  shader_info.code                = (const Uint8 *) chq_crt_fragment_msl;
+  shader_info.code_size           = strlen(chq_crt_fragment_msl);
+  shader_info.entrypoint          = CHQ_GPU_ENTRYPOINT_FS;
+  shader_info.format              = CHQ_GPU_SHADER_FORMAT;
+  shader_info.stage               = SDL_GPU_SHADERSTAGE_FRAGMENT;
+  shader_info.num_samplers        = 1;
+  shader_info.num_uniform_buffers = 1;
+#endif
 
   fragment_shader = SDL_CreateGPUShader(shader->gpu, &shader_info);
   if (fragment_shader == NULL)
@@ -414,6 +472,11 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
     SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
 
     SDL_EndGPURenderPass(render_pass);
+  }
+  else
+  {
+    fprintf(stderr, "Error: SDL_WaitAndAcquireGPUSwapchainTexture: %s\n",
+           SDL_GetError());
   }
 
   SDL_SubmitGPUCommandBuffer(upload_cmdbuf);
