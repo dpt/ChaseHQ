@@ -67,10 +67,14 @@ The host adds its own keys, which never reach the game:
 | `F7` / `F8` / `F9` | Mute AY channel A / B / C |
 | `F10` | Mute the beeper/speaker |
 | `F11` | Toggle fullscreen |
+| `F12` | Toggle raw backbuffer ($F000) debug view |
 | `Ctrl-M` | Toggle monochrome (greyscale) display |
 | `Ctrl-Y` | One-shot glitch: fill the screen with random noise for a frame |
 | `-` / `=` | Window scale down / up |
-| `[` / `]` | Emulation speed down / up |
+| `[` / `]` | Emulation speed down / up (5% steps) |
+| `Shift-[` / `Shift-]` | Emulation speed down / up (1% steps) |
+| `Ctrl-[` / `Ctrl-]` | Jump to minimum / maximum emulation speed |
+| `\` | Reset emulation speed to 100% |
 
 Test mode is always on (`test_mode` in `Create.c`), so while a level is running `1` restarts it, `2` loads the next one and `3` jumps to the end screen.
 

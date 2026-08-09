@@ -18,6 +18,7 @@
 #ifndef CHASEHQ_H
 #define CHASEHQ_H
 
+#include "C99/Types.h"
 #include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */
@@ -55,6 +56,19 @@ CHQ_API void chq_stop(chqstate_t *state);
  * \param mode_128k Non-zero to start the game in 128K mode.
  */
 CHQ_API void chq_start(chqstate_t *state, int mode_128k);
+
+/**
+ * Fetch the raw $F000 backbuffer, for debug display.
+ *
+ * The buffer is monochrome, one bit per pixel, packed 8 pixels per byte
+ * left-to-right, *width / 8 bytes per row, top-to-bottom.
+ *
+ * \param state  Game instance.
+ * \param width  (out) Backbuffer width in pixels.
+ * \param height (out) Backbuffer height in pixels.
+ * \return Pointer to the backbuffer. Owned by \p state; do not free.
+ */
+CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state, int *width, int *height);
 
 /* ----------------------------------------------------------------------- */
 
