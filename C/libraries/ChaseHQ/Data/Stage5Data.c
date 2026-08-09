@@ -15,7 +15,6 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
-#include <assert.h>
 #include <stddef.h>
 
 #include "C99/Types.h"
@@ -28,7 +27,7 @@
 #include "Stage5Data.h"
 
 /* Z80 addresses of the map sections, as referenced by the map
- * GOTO/SPLIT commands and stage5_lookup_map_goto(). */
+ * GOTO/SPLIT commands and stage5_map_goto_table[]. */
 #define STAGE5_MAP_CURV_C455_ADDR    (0x6055)
 #define STAGE5_MAP_HEIGHT_C468_ADDR  (0x6068)
 #define STAGE5_MAP_LANES_C47A_ADDR   (0x607A)
@@ -1812,7 +1811,7 @@ static const u8 stage5_map_robjs_C7A5[] = {
 /**
  * $C82E: stage5_perp_face
  */
-static const u8 stage5_perp_face[180] = {
+static const u8 stage5_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X_XXXXX_, XXX_XXX_, X_X_X__X,
   XXXXXXXX, X_XX_XX_, XX__XX_X, XXXX_X_X,
@@ -1860,6 +1859,9 @@ static const u8 stage5_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
+
+/* ----------------------------------------------------------------------- */
+
 /** $C8E2: stage5_lods_C8E2 */
 static const bitmap_t stage5_lods_C8E2[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[0], &stage5_bitmap_C960[0] },  // [0]
@@ -2253,6 +2255,7 @@ static const u8 stage5_bitmap_CE71[2 * 2 * 8] = {
   XXXX____, ____XX_X, _______X, _X_X_XX_,
   XXXXX___, _____XXX, _____XXX, XXXXX___,
 };
+
 /** $CE91: stage5_stretchy_CE91 */
 static const stretchy_t stage5_stretchy_CE91[5] = {
   { STRETCHY_TYPE_FIXED, &stage5_depthset_CE9E },
@@ -2743,6 +2746,7 @@ static const u8 stage5_bitmap_D280[3 * 2 * 2] = {
   XXXX____, ____XX_X, ________, XXXXXX_X, __XXXXXX, _X______,
   XXXX____, ____XXXX, ________, XXX_X_X_, _XXXXXXX, X_______,
 };
+
 /** $D28C: stage5_stretchy_D28C */
 static const stretchy_t stage5_stretchy_D28C[3] = {
   { STRETCHY_TYPE_150PC, &stage5_depthset_D293 },
@@ -3202,6 +3206,7 @@ static const u8 stage5_bitmap_D612[1 * 6] = {
   _X___XX_,
   XXXXXX__,
 };
+
 /** $D620: stage5_lods_D620 */
 static const bitmap_t stage5_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [0]
@@ -3294,6 +3299,7 @@ static const u8 stage5_bitmap_D6E3[2 * 2 * 7] = {
   XXXX____, ____XXXX, ________, XXXXXXXX,
   XXXXXXXX, ________, ____XXXX, XXXX____,
 };
+
 /** $D6FF: stage5_stretchy_D6FF */
 static const stretchy_t stage5_stretchy_D6FF[5] = {
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D719 },
@@ -3634,6 +3640,7 @@ static const u8 stage5_bitmap_D8C6[1 * 2 * 6] = {
   XXXXX__X, _____XX_,
   XXXXX__X, _____XX_,
 };
+
 /** $D8D2: stage5_stretchy_D8D2 */
 static const stretchy_t stage5_stretchy_D8D2[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -3782,6 +3789,7 @@ static const u8 stage5_bitmap_D9C3[2 * 2 * 2 + 4] = {
   // $D9CB: 4 further bytes, not reached by any LOD entry
   XXXX___X, ____XXX_, XXXXXX__, ______XX,
 };
+
 /** $D9CF: stage5_stretchy_D9CF */
 static const stretchy_t stage5_stretchy_D9CF[4] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -3949,7 +3957,8 @@ static const u8 stage5_bitmap_DAD9[2 * 2 * 4 + 7] = {
   // $DAE9: 7 further bytes, not reached by any LOD entry
   ________, X_______, _XXX_XXX, XXXXXXXX, ________, X_______, _X_X__XX,
 };
-static const struct { u16 z80; const void *ptr; } stage5_map_goto_table[] = {
+
+const map_goto_entry_t stage5_map_goto_table[24] = {
   { STAGE5_MAP_CURV_C455_ADDR,    &stage5_map_curv_C455[0]    },
   { STAGE5_MAP_HEIGHT_C468_ADDR,  &stage5_map_height_C468[0]  },
   { STAGE5_MAP_LANES_C47A_ADDR,   &stage5_map_lanes_C47A[0]   },
@@ -3977,19 +3986,3 @@ static const struct { u16 z80; const void *ptr; } stage5_map_goto_table[] = {
 };
 
 // clang-format on
-
-const void *stage5_lookup_map_goto(u16 z80)
-{
-  int lo, hi, mid;
-
-  lo  = 0;
-  hi  = (int)NELEMS(stage5_map_goto_table) - 1;
-  while (lo <= hi) {
-    mid = lo + (hi - lo) / 2;
-    if (stage5_map_goto_table[mid].z80 == z80) return stage5_map_goto_table[mid].ptr;
-    if (stage5_map_goto_table[mid].z80 < z80)  lo = mid + 1;
-    else                          hi = mid - 1;
-  }
-  assert(!"Unknown Z80 address (stage 5)");
-  return NULL;
-}

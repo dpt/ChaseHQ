@@ -15,7 +15,6 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
-#include <assert.h>
 #include <stddef.h>
 
 #include "C99/Types.h"
@@ -28,7 +27,7 @@
 #include "Stage4Data.h"
 
 /* Z80 addresses of the map sections, as referenced by the map
- * GOTO/SPLIT commands and stage4_lookup_map_goto(). */
+ * GOTO/SPLIT commands and stage4_map_goto_table[]. */
 #define STAGE4_MAP_CURV_E442_ADDR    (0x6042)
 #define STAGE4_MAP_HEIGHT_E45A_ADDR  (0x605A)
 #define STAGE4_MAP_LANES_E46C_ADDR   (0x606C)
@@ -1525,7 +1524,7 @@ static const u8 stage4_map_robjs_E6B7[] = {
 /**
  * $E73E: stage4_perp_face
  */
-static const u8 stage4_perp_face[180] = {
+static const u8 stage4_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X_XXXXXX, ___XXXXX, XXXXX__X, _XXXXXXX,
   X_XXXX__, ________, ______X_, XXXXXXXX,
@@ -1573,6 +1572,9 @@ static const u8 stage4_perp_face[180] = {
   attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_CYAN,
   attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_CYAN, attribute_BLACK_OVER_CYAN,
 };
+
+/* ----------------------------------------------------------------------- */
+
 /** $E7F2: stage4_lods_E7F2 */
 static const bitmap_t stage4_lods_E7F2[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage4_bitmap_E870[0], &stage4_bitmap_E870[0] },  // [0]
@@ -1895,6 +1897,7 @@ static const u8 stage4_bitmap_EC2E[2 * 2 * 8 + 32] = {
   XXX_____, ___XXXXX, ________, XXXXXXXX, XXX_____, ___X_X_X, ________, _X_X_X_X,
   XXXX____, ____X___, _______X, XXX___X_, XXXXX___, _____XXX, ______XX, XXXXXX__,
 };
+
 /**
  * $EF35: stage4_pilot_mugshot
  */
@@ -1946,6 +1949,7 @@ static const u8 stage4_pilot_mugshot[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_CYAN,
 };
+
 /** $EFE9: stage4_stretchy_EFE9 */
 static const stretchy_t stage4_stretchy_EFE9[4] = {
   { STRETCHY_TYPE_FIXED, &stage4_depthset_EFF3 },
@@ -2268,6 +2272,7 @@ static const u8 stage4_bitmap_F252[2 * 2 * 2] = {
   XXXX____, ____XXX_, ________, X_X__X_X,
   XXXXX___, _____XXX, _______X, XXXXXXX_,
 };
+
 /** $F25A: stage4_stretchy_F25A */
 static const stretchy_t stage4_stretchy_F25A[5] = {
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F274 },
@@ -2663,6 +2668,7 @@ static const u8 stage4_bitmap_F4CC[3 * 2 * 2] = {
   XXXXXXXX, ________, _______X, XX_XXXX_, XXXXXXXX, ________,
   XXXXXXXX, ________, X_____XX, _XXXXX__, XXXXXXXX, ________,
 };
+
 /** $F4D8: stage4_lods_F4D8 */
 static const bitmap_t stage4_lods_F4D8[6] = {
   { 3, BITMAPFLAG_DEFAULT, 21, &stage4_bitmap_F502[0], &stage4_bitmap_F502[0] },  // [0]
@@ -2807,6 +2813,7 @@ static const u8 stage4_bitmap_F60B[1 * 2 * 5] = {
   XXX_____, ___XX__X,
   XXXX___X, ____XXX_,
 };
+
 /** $F615: stage4_lods_F615 */
 static const bitmap_t stage4_lods_F615[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage4_bitmap_F63F[0], &stage4_bitmap_F63F[0] },  // [0]
@@ -2899,6 +2906,7 @@ static const u8 stage4_bitmap_F6D8[2 * 2 * 7] = {
   XXXX____, ____XXXX, ________, XXXXXXXX,
   XXXXXXXX, ________, ____XXXX, XXXX____,
 };
+
 /** $F6F4: stage4_stretchy_F6F4 */
 static const stretchy_t stage4_stretchy_F6F4[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
@@ -3055,6 +3063,7 @@ static const u8 stage4_bitmap_F7F3[2 * 2 * 3] = {
   XXXX____, ____X___, _____XXX, XXXXX___,
   XXXX____, ____XXXX, XXXXXXXX, ________,
 };
+
 /** $F7FF: stage4_depthset_F7FF */
 static const depthset_t stage4_depthset_F7FF = {
   &stage4_lods_F82B[0],
@@ -3296,7 +3305,8 @@ static const u8 stage4_bitmap_FA07[2 * 2 * 13 + 181] = {
   __XXXXX_, XXXXXXXX, ________, XX_____X, __XX__X_, XXXXXXXX, ________, X_______,
   _XXX_XXX, XXXXXXXX, ________, X_______, _X_X__XX,
 };
-static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
+
+const map_goto_entry_t stage4_map_goto_table[18] = {
   { STAGE4_MAP_CURV_E442_ADDR,    &stage4_map_curv_E442[0]    },
   { STAGE4_MAP_HEIGHT_E45A_ADDR,  &stage4_map_height_E45A[0]  },
   { STAGE4_MAP_LANES_E46C_ADDR,   &stage4_map_lanes_E46C[0]   },
@@ -3318,19 +3328,3 @@ static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
 };
 
 // clang-format on
-
-const void *stage4_lookup_map_goto(u16 z80)
-{
-  int lo, hi, mid;
-
-  lo  = 0;
-  hi  = (int)NELEMS(stage4_map_goto_table) - 1;
-  while (lo <= hi) {
-    mid = lo + (hi - lo) / 2;
-    if (stage4_map_goto_table[mid].z80 == z80) return stage4_map_goto_table[mid].ptr;
-    if (stage4_map_goto_table[mid].z80 < z80)  lo = mid + 1;
-    else                          hi = mid - 1;
-  }
-  assert(!"Unknown Z80 address (stage 4)");
-  return NULL;
-}

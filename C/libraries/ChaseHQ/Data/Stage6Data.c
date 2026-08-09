@@ -15,7 +15,6 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
-#include <assert.h>
 #include <stddef.h>
 
 #include "C99/Types.h"
@@ -28,7 +27,7 @@
 #include "Stage6Data.h"
 
 /* Z80 addresses of the map sections, as referenced by the map
- * GOTO/SPLIT commands and stage6_lookup_map_goto(). */
+ * GOTO/SPLIT commands and stage6_map_goto_table[]. */
 #define STAGE6_MAP_START_CURVATURE_ADDR (0xC65C)
 #define STAGE6_MAP_START_HEIGHT_ADDR    (0xC65D)
 #define STAGE6_MAP_START_LANES_ADDR     (0xC65E)
@@ -359,7 +358,7 @@ static const u8 stage6_map_start_rightobjs[13] = {
 /**
  * $C82E: stage6_perp_face
  */
-static const u8 stage6_perp_face[180] = {
+static const u8 stage6_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X_XXXXX_, XXX_XXX_, X_X_X__X,
   XXXXXXXX, X_XX_XX_, XX__XX_X, XXXX_X_X,
@@ -407,6 +406,8 @@ static const u8 stage6_perp_face[180] = {
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
   attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
+
+/* ----------------------------------------------------------------------- */
 
 /** $C8E2: stage6_veh3 */
 static const bitmap_t stage6_veh3[6] = {
@@ -610,6 +611,7 @@ static const u8 stage6_bitmap_C960[1329] = {
   _______X, XXXX____, ____XX_X, _______X, _X_X_XX_, XXXXX___, _____XXX, _____XXX,
   XXXXX___,
 };
+
 /** $D620: stage6_lods_D620 */
 static const bitmap_t stage6_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage6_bitmap_D64A[0], &stage6_bitmap_D64A[0] },  // [0]
@@ -650,29 +652,13 @@ static const u8 stage6_bitmap_D64A[181] = {
 };
 
 
-static const struct { u16 z80; const void *ptr; } stage6_map_goto_table[] = {
+const map_goto_entry_t stage6_map_goto_table[6] = {
   { STAGE6_MAP_START_CURVATURE_ADDR, &stage6_map_start_curvature[0] },
-  { STAGE6_MAP_START_HEIGHT_ADDR,    &stage6_map_start_height[0] },
-  { STAGE6_MAP_START_LANES_ADDR,     &stage6_map_start_lanes[0] },
-  { STAGE6_MAP_START_HAZARDS_ADDR,   &stage6_map_start_hazards[0] },
-  { STAGE6_MAP_START_LEFTOBJS_ADDR,  &stage6_map_start_leftobjs[0] },
+  { STAGE6_MAP_START_HEIGHT_ADDR,    &stage6_map_start_height[0]    },
+  { STAGE6_MAP_START_LANES_ADDR,     &stage6_map_start_lanes[0]     },
+  { STAGE6_MAP_START_HAZARDS_ADDR,   &stage6_map_start_hazards[0]   },
+  { STAGE6_MAP_START_LEFTOBJS_ADDR,  &stage6_map_start_leftobjs[0]  },
   { STAGE6_MAP_START_RIGHTOBJS_ADDR, &stage6_map_start_rightobjs[0] },
 };
 
 // clang-format on
-
-const void *stage6_lookup_map_goto(u16 z80)
-{
-  int lo, hi, mid;
-
-  lo  = 0;
-  hi  = (int)NELEMS(stage6_map_goto_table) - 1;
-  while (lo <= hi) {
-    mid = lo + (hi - lo) / 2;
-    if (stage6_map_goto_table[mid].z80 == z80) return stage6_map_goto_table[mid].ptr;
-    if (stage6_map_goto_table[mid].z80 < z80)  lo = mid + 1;
-    else                          hi = mid - 1;
-  }
-  assert("Unknown Z80 address (stage 6)" == NULL);
-  return NULL;
-}
