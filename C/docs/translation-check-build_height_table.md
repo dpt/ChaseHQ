@@ -2,102 +2,91 @@
 
 ## Function Overview
 
-The `build_height_table` function in Main.c is responsible for building a perspective height lookup table used in road rendering. It translates Z80 assembly code that processes road buffer data to generate height values based on distance and perspective scaling.
+`build_height_table` (`$CD3A`, in `Main.c`) builds the per-frame perspective
+height lookup table used by `draw_road`. It reads height bytes from the road
+buffer, scales each one by a perspective factor for the current distance slot,
+and writes the results into `height_table[1..21]`. It also derives
+`clamped_heights[]` (a running-minimum clamp of the same 21 entries) and updates
+`horizon_attr[0..1]` for the sky/ground boundary scroll (see CLAUDE.md's
+"$E34B–$E34D horizon attribute scroll" section).
 
 ## Key Components
 
-### 1. Variable Declarations
+### 1. Variable declarations
 
-All registers are properly mapped:
+Locals follow the project's `RegisterName_description` convention (see
+CLAUDE.md), one per line, ordered by first use:
 
-- `proadbuf_height` (IY) - pointer to current road buffer position
-- `heightbyte` (C) - current height value from road buffer
-- `orig_counter` (A) - fast counter masked for multiply operation
-- `pvtab` (HL) - perspective scaling table pointer
-- `C` (C) - accumulator for multiply operation
-- `iterations` (B') - loop counter
-- `phtab` (DE') - height table destination pointer
-- `v` (DE) - intermediate value
-- `result` (HL) - result of multiply operation
-- `A` (A) - current byte value
-- `pdst` (HL) - clamped heights destination pointer
-- `htab2` (DE) - source for clamping operation
+- `IY_roadbuf` (was IY) — road buffer height-channel pointer
+- `C_heightbyte` (was C) — height byte read on entry; input to the initial scale
+  call
+- `A_counter` (was A/B) — `fast_counter & 0xE0`; perspective row selector and
+  scale-call argument
+- `HL_pvtab` (was HL) — pointer into the perspective Y-scale table
+  `persp_y_scale` (Z80 `$E6xx`)
+- `C_min` (was C) — incline accumulator in phase 1; becomes the running minimum
+  in phase 2
+- `Bdash_iters` (was B') — phase 1 loop counter, 21 iterations
+- `DE_phtab` (was DE') — pointer walking `height_table[1..21]`
+- `DE_v` (was DE) — perspective scale entry × 2; input to the per-slot
+  shift-multiply
+- `A_height` (was A) — scaled pixel-row height written to `height_table`
+- `HL_dst` (was HL) — walks `clamped_heights[0..20]` then `horizon_attr[0..1]`
+  in phases 2–3
+- `DE_src` (was DE) — source pointer walking `height_table` in phase 2
+- `B_iters` (was B) — phase 2 loop counter, 21 iterations
 
-### 2. Algorithm Steps
+### 2. Algorithm steps
 
-#### Phase 1: Height Table Construction (lines 13780-13827)
+#### Phase 1: height table construction (`bht_loop`, $CD63–$CDB6)
 
-1. Initialize pointers to road buffer and perspective table based on fast counter
-2. Read initial height byte from road buffer
-3. Calculate multiply parameter using `COUNTER_TO_PERSP_Y_ROW` macro with masking
-4. Loop through 21 iterations building height table:
-   - Multiply perspective scale by height value using custom `multiply()` function
-   - Handle sign bit and bit shifting operations
-   - Apply the result to build height values
-   - Update pointers with wrapping
+1. Read the initial height byte from the road buffer and call
+   `scale_curvature_or_height(A_counter, C_heightbyte)` once to seed `C_min`.
+2. Loop 21 times (`Bdash_iters`), each iteration:
+   - Read the next perspective scale entry (`*HL_pvtab`) and double it into
+     `DE_v`.
+   - Accumulate the next road-buffer height byte into `C_min`.
+   - If non-zero, negate as needed and apply an inline shift-multiply —
+     `A_height = ((A_height & 0x7F) * DE_v) >> 7` — the direct C equivalent of
+     the Z80 shift-and-add sequence at `$CD84-$CDA9`.
+   - Add the perspective baseline (`*HL_pvtab`) and store into `height_table`.
+3. Write the `0xA0` sentinel one past the last entry.
 
-#### Phase 2: Clamping Operation (lines 13831-13851)
+#### Phase 2: clamping (`bht_loop2`, $CDB7–$CDCA)
 
-1. Copy height table to clamped heights while setting minimum value of 96
-2. Perform final adjustments to ensure proper boundary conditions
+Copies `height_table[1..21]` into `clamped_heights[0..20]`, tracking a running
+minimum seeded at 96.
 
-### 3. Critical Functions
+#### Phase 3: horizon delta ($CDCB onward)
 
-#### multiply() function (lines 13860-13886)
+Rounds the running minimum to a multiple of 8 and writes it to
+`horizon_attr[0]`; the difference from the previous frame's value goes to
+`horizon_attr[1]`.
 
-This is a complex implementation that replicates Z80 bit-shifting multiplication:
+### 3. `scale_curvature_or_height` ($CDD6)
 
-- Uses a loop with bit operations and carry handling
-- Processes 3 bits of the multiplier (the `b` variable starts at 3)
-- Handles sign extension and final bit manipulation
-- The second branch (lines 13882-13885) is marked as "theoretically equivalent but needs further testing" - this suggests it may be an alternative implementation that was considered but not used
+A separate helper, used here only for the phase-1 seed value (not in the
+per-slot loop, which now does its shift-multiply inline). It replicates the
+Z80's hardware-free multiply: three iterations of `RL E` / conditional `ADD A,C`
+/ `ADD A,A` extract the top three bits of the multiplier and accumulate their
+contribution, followed by four rounding right shifts. Only the top three bits of
+the multiplier are examined, which is sufficient because callers always pass a
+multiple of `$20`.
 
-### 4. Addressing and Memory Operations
+### 4. Addressing and memory operations
 
-- Uses `ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET)` to access road buffer
-- Implements proper wrapping with `WRAP_INCREMENT_ASSIGN` macro for circular buffers
-- Correctly handles the Z80 memory layout for height table at $E3xx
-- Uses `FAST_COUNTER_PERSP_ROW` macro to map fast counter to perspective table row
+- Uses `ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET)` to access the road buffer.
+- Uses `WRAP_INCREMENT_ASSIGN` for the road buffer's circular wrap.
+- Uses `FAST_COUNTER_PERSP_ROW` to map `fast_counter` to a `persp_y_scale` row.
 
-### 5. SM Field Usage
+### 5. SM field usage
 
-The function correctly uses SM (self-modifying) fields in chqstate_t:
+`fast_counter` is an SM field modified elsewhere at runtime; this function only
+reads it. `height_table` and `clamped_heights` are plain data arrays, not
+self-modified instructions.
 
-- References `fast_counter` which is an SM field that gets modified at runtime
-- Uses `height_table` array directly as a data structure, not as a self-modified instruction
-- The SM fields are properly initialized in `chq_initialise()` function
+## Correctness assessment
 
-## Correctness Assessment
-
-### ✅ Positive Aspects
-
-1. **Register Mapping**: All Z80 registers have appropriate C variable names with comments indicating source register
-2. **Memory Access**: Proper use of macros for addressing and wrapping operations
-3. **Algorithm Implementation**: The core algorithm correctly implements the height table building logic
-4. **Type Safety**: Uses appropriate signed/unsigned types (`s8`, `u8`) where needed
-5. **Test Coverage**: All existing tests pass, indicating correctness
-
-### ⚠️ Potential Issues
-
-1. **multiply() Complexity**: The multiply function is quite complex and could benefit from additional documentation or comments explaining the bit-shifting algorithm
-2. **Magic Numbers**: Several magic numbers (0xE0, 0xA0, 96) appear without extensive explanation
-3. **Bit Manipulation**: Complex bit operations in multiply() function require careful verification
-
-## Recommendations
-
-1. **Documentation**: Add more detailed comments explaining the bit-shifting multiplication algorithm in `multiply()`
-2. **Constants**: Consider defining magic numbers as named constants for better readability
-3. **Verification**: Compare against known Z80 disassembly to ensure bit-level accuracy of multiply function
-4. **Testing**: The existing tests cover basic functionality, but could be expanded to test edge cases
-
-## Conclusion
-
-The `build_height_table` translation appears to be largely correct and faithful to the original Z80 implementation. The function properly:
-
-- Handles all registers and variables as expected
-- Implements the correct algorithm for building perspective height tables
-- Uses proper memory addressing and wrapping operations
-- Correctly manages SM fields in chqstate_t structure
-- Passes all existing tests
-
-The most complex part is the `multiply()` function which correctly implements a bit-shifting multiplication algorithm that's characteristic of Z80 code. The function produces correct results as demonstrated by passing tests.
+The translation matches the Z80 shift-and-add multiply exactly (verified against
+the disassembly at `$CD84-$CDA9`), uses `s8`/`u8` correctly for the signed
+height-delta arithmetic, and all existing tests pass.

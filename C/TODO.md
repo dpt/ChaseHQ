@@ -7,10 +7,12 @@
   - hiscore line vanishes
   - test: non-highest score
 - fix: Disable test flag by default (perhaps put it on an F-key)
-- timing: Properly calibrate the game against the original (needs emulator T-state recording)
+- timing: Properly calibrate the game against the original (needs emulator
+  T-state recording)
 - fix: Audio desync when fast forwarding etc.
 - Complete decoding of all stage data (via the level converter script)
-- Stretchy test app produces crap output [checked - still a bit rubbish] - delete it?
+- Stretchy test app produces crap output [checked - still a bit rubbish] -
+  delete it?
 - Start backporting changes to the disasm
 - turn curvature_scroll_shadow into a var (it's in state rn)
 - 48K mode drum timing is off (interrupts?)
@@ -18,13 +20,12 @@
 
 ### Authority sweep (comments that read as guesswork)
 
-Each item below is a comment that admits doubt, talks about the porting
-process rather than the code, or leaves skool markup in place. Resolve the
-question against the skool then rewrite the comment as a statement — or
-delete it.
+Each item below is a comment that admits doubt, talks about the porting process
+rather than the code, or leaves skool markup in place. Resolve the question
+against the skool then rewrite the comment as a statement — or delete it.
 
-- Meta comments about the port rather than the game: `Bank3.c:4303` ("Delete
-  all of this zero init and Claude verbiage")
+- Meta comments about the port rather than the game: `Bank3.c:4303` ("Delete all
+  of this zero init and Claude verbiage")
 - Outstanding `TODO:` markers not already tracked above: `Bank3.c:642`,
   `Bank7.c:185` (48K sound code in bank 7 not ported), `Main.c:17339` ("the
   call-return setup needs analysing"), `SDLMain.c:345` and `SDLMain.c:1073`
@@ -35,9 +36,9 @@ delete it.
 - Big reformat pass once happy with code
 - Name the numbered `chqstate` SM field groups after what distinguishes them,
   the way `dr_{left,right}_{markings,fill}_page` now are: `dr_backbuf_1/_2`,
-  `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each
-  numbers genuinely parallel SM sites, so this needs the consumers traced
-  first — the rest of the naming pass is done
+  `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each numbers
+  genuinely parallel SM sites, so this needs the consumers traced first — the
+  rest of the naming pass is done
 
 ## P7 — Investigation / meta
 
@@ -47,8 +48,10 @@ delete it.
 ## FOR WRITEUP / NOTES
 
 - Document the game from start until first frame built
-- Explain that it's "Actual C code" designed to be read by humans - not machine generated grot
-- Also it omits unneeded ops - it should be efficient (but nowhere near the original)
+- Explain that it's "Actual C code" designed to be read by humans - not machine
+  generated grot
+- Also it omits unneeded ops - it should be efficient (but nowhere near the
+  original)
 - Document how functions are created from source Z80
 - Add deep dives for each area of the game
 - Discuss black screen edges and overdraw
@@ -73,4 +76,3 @@ delete it.
 - Diagram generation for stretchy graphics
 - Emscripten build
 - Pull across the demo version of the game
-
