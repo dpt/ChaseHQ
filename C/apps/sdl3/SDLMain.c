@@ -282,6 +282,7 @@ typedef struct chq_sdl_state
     int             dirty_count;
     int             dirty_full_screen; // bool; a NULL dirty box was reported (whole screen)
     int             show_dirty_overlay; // bool; toggled with F3, off by default
+    int             monochrome; // bool; toggled with F12, off by default
 
     SDL_Window     *window;
 
@@ -1174,6 +1175,13 @@ static void chq_action_toggle_crt(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.crt_enabled ? "CRT ON" : "CRT OFF");
 }
 
+static void chq_action_toggle_monochrome(chq_sdl_state_t *state)
+{
+  state->video.monochrome = !state->video.monochrome;
+  zxspectrum_set_monochrome(state->zx, state->video.monochrome);
+  chq_osd_show(state, state->video.monochrome ? "MONOCHROME ON" : "MONOCHROME OFF");
+}
+
 static void chq_action_toggle_ay_channel(chq_sdl_state_t *state, int ch)
 {
   char buf[32];
@@ -1364,6 +1372,16 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     if (k->down && !k->repeat)
       chq_action_toggle_fullscreen(state);
     return;
+
+  case SDLK_M:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_monochrome(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
 
   case SDLK_MINUS:
   case SDLK_EQUALS:

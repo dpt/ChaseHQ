@@ -135,6 +135,8 @@ typedef struct zxspectrum_private
   zxclock_t       stamp_tstates[MAXSTAMPS]; // clock at each open stamp()
   int             nstamps;
 
+  int             monochrome;
+
   mutex_t         lock;
   zxbox_t         dirty;
   zxscreen_t      screen_copy; // most recent 'complete' screen
@@ -436,13 +438,24 @@ const zx_frame_t *zxspectrum_claim_screen(zxspectrum_t *state)
       zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
     else
       zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
-                       prv->config.pixel_format == ZX_PIXEL_ABGR8888);
+                       prv->config.pixel_format == ZX_PIXEL_ABGR8888,
+                       prv->monochrome);
 
     /* Invalidate the dirty region once complete */
     zxbox_invalidate(&prv->dirty);
   }
 
   return &prv->frame;
+}
+
+void zxspectrum_set_monochrome(zxspectrum_t *state, int mono)
+{
+  zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
+
+  mutex_lock(prv->lock);
+  prv->monochrome = mono;
+  zxbox_maximise(&prv->dirty); /* force a full reconvert on the next claim */
+  mutex_unlock(prv->lock);
 }
 
 void zxspectrum_release_screen(zxspectrum_t *state)
