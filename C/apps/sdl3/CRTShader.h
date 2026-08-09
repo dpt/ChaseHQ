@@ -84,12 +84,14 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
  * \param[in]     game_width  Width in pixels of the game's screen buffer.
  * \param[in]     game_height Height in pixels of the game's screen buffer.
  * \param[in]     params      Shader tuning parameters for this frame.
- * \param[in]     osd_mask    Optional game_width*game_height byte mask (1 =
- *                            lit pixel, top-down); composited bright green
- *                            over the uploaded frame before the shader
- *                            pass. NULL to skip -- there is no SDL_Renderer
- *                            in this path for the caller to draw an OSD
- *                            with itself, so this is how it gets composited.
+ * \param[in]     osd_mask    Optional game_width*game_height byte mask,
+ *                            top-down: 0 = untouched, 1 = bright green OSD
+ *                            text, 2 = black outline stamped behind the
+ *                            text. Composited over the uploaded frame
+ *                            before the shader pass. NULL to skip -- there
+ *                            is no SDL_Renderer in this path for the caller
+ *                            to draw an OSD with itself, so this is how it
+ *                            gets composited.
  */
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            SDL_Window             *window,

@@ -302,6 +302,7 @@ typedef struct chq_sdl_state
      */
     char            osd_text[32];
     Uint64          osd_shown_at_ms;
+    u8              osd_mask[GAMEWIDTH * GAMEHEIGHT]; // scratch buffer for chq_render_osd_mask
   }
   video;
 
@@ -1127,16 +1128,23 @@ static void chq_osd_plot_mask_fill(void *vctx, int gx, int gy)
     mask[gy * GAMEWIDTH + gx] = 1;
 }
 
-/* Fills a GAMEWIDTH*GAMEHEIGHT byte mask (0 = empty, 1 = lit OSD pixel,
- * 2 = black outline pixel, top-down, same layout as the converted screen
- * buffer chq_CRT_shader_render uploads) for the CRT shader path to
- * composite directly into its staging buffer, since that path has no
- * SDL_Renderer to draw rects with. Outline is stamped before the fill so
- * fill pixels always win where the two overlap. Returns 0 if the OSD
- * isn't active (mask left untouched).
+/* Fills state->video.osd_mask, a GAMEWIDTH*GAMEHEIGHT byte mask (0 = empty,
+ * 1 = lit OSD pixel, 2 = black outline pixel, top-down, same layout as the
+ * converted screen buffer chq_CRT_shader_render uploads) for the CRT
+ * shader path to composite directly into its staging buffer, since that
+ * path has no SDL_Renderer to draw rects with. The mask lives in
+ * chq_sdl_state_t rather than as a per-call stack buffer -- at
+ * GAMEWIDTH*GAMEHEIGHT bytes (~49KB) that's substantial to put on the
+ * stack of chq_sdl_main_loop every frame. Outline is stamped before the
+ * fill so fill pixels always win where the two overlap. Returns 0 if the
+ * OSD isn't active (mask left untouched).
  */
-static int chq_render_osd_mask(chq_sdl_state_t *state, u8 *mask)
+static int chq_render_osd_mask(chq_sdl_state_t *state)
 {
+  u8 *mask = state->video.osd_mask;
+
+  memset(mask, 0, sizeof(state->video.osd_mask));
+
   return chq_osd_draw_outlined(state, chq_osd_plot_mask_outline, mask,
                                       chq_osd_plot_mask_fill, mask);
 }
@@ -1567,16 +1575,14 @@ static void chq_sdl_main_loop(void *opaque)
 
   if (state->video.crt_enabled)
   {
-    u8  osd_mask[GAMEWIDTH * GAMEHEIGHT];
     int osd_active;
 
-    memset(osd_mask, 0, sizeof(osd_mask));
-    osd_active = chq_render_osd_mask(state, osd_mask);
+    osd_active = chq_render_osd_mask(state);
 
     chq_CRT_shader_render(&state->video.crt, state->video.window, state->zx,
                           x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
                           &state->video.crt_params,
-                          osd_active ? osd_mask : NULL);
+                          osd_active ? state->video.osd_mask : NULL);
     chq_draw_dirty_overlay(state, x, y); // drains the list; draws nothing
   }
   else
