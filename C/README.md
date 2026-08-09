@@ -64,6 +64,9 @@ The host adds its own keys, which never reach the game:
 | `F3` | Show the dirty-rectangle overlay |
 | `F4` | Toggle the CRT shader |
 | `F5` / `F6` | Volume down / up |
+| `F7` / `F8` / `F9` | Mute AY channel A / B / C |
+| `F10` | Mute the beeper/speaker |
+| `F11` | Toggle fullscreen |
 | `-` / `=` | Window scale down / up |
 | `[` / `]` | Emulation speed down / up |
 
@@ -81,9 +84,10 @@ With the shader up, its parameters can be tuned live:
 | --- | --- |
 | `TAB` | Select the next parameter (`Shift-TAB` for the previous) |
 | `PAGEUP` / `PAGEDOWN` | Increase / decrease the selected parameter |
-| `R` | Reset every parameter to its default |
+| `Ctrl-R` | Turn every parameter off (flat 0.0/1.0 — the effect vanishes) |
+| `Ctrl-T` | Reset every parameter to its tuned defaults |
 
-The selected parameter and its value are printed to the terminal on each change. Nothing is saved between runs — settings that are worth keeping go into `CHQ_CRT_PARAMS_DEFAULT` in `apps/sdl3/CRTShader.h`.
+The selected parameter and its value are shown as an on-screen status flash on each change. Nothing is saved between runs — settings that are worth keeping go into `crt_tuned_params` in `apps/sdl3/SDLMain.c`.
 
 ## Layout
 
