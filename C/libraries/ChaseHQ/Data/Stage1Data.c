@@ -2170,7 +2170,7 @@ static const bitmap_t stage1_turn_sign_bitmaps[] = {
   { 4, BITMAPFLAG_FLIPPED,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
   { 3, BITMAPFLAG_FLIPPED,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
   { 2, BITMAPFLAG_FLIPPED,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
-  { 2, BITMAPFLAG_FLIPPED,                  16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
+  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
   { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
 };
 
