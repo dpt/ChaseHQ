@@ -14,10 +14,12 @@ CLEANTARGET = clean_layout
 ifdef BUILD64
 OBJS       += o.fullscreen
 CDEFINES   += -DFULLSCREEN_ONLY
-INCLUDES   = C/apps/riscos,C/include,C/libraries,C/libraries/ZXSpectrum,C/libraries/ChaseHQ/Engine,C/libraries/ChaseHQ/Data
+INCLUDES   = C:,C/apps/riscos,C/include,C/libraries,C/libraries/ZXSpectrum,C/libraries/ChaseHQ/Engine,C/libraries/ChaseHQ/Data
 else
 OBJS       += o.riscos
-LIBS       = RISC_OSLib.o.risc_oslib
+# Use the RISC_OSLib exported under C: by the build environment.  No local
+# RISC_OSLib headers or objects are required.
+LIBS       = C:RISC_OSLib.o.risc_oslib
 INCLUDES   = .rotransform/riscos/h
 VPATH      = .rotransform/riscos
 endif
