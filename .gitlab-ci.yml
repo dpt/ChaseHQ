@@ -8,7 +8,7 @@ riscos:
     - >-
       zip -q9r /tmp/source-archive.zip
       .robuild.yaml .rotransform/riscos 'Makefile,fe1' C
-      Resources RISC_OSLib VersionNum tools/make-riscos-layout
+      Resources VersionNum tools/make-riscos-layout
     - ./riscos-build-online -i /tmp/source-archive.zip -a off -t 180 -o /tmp/built
     - |
       if [ -f VersionNum ]; then
