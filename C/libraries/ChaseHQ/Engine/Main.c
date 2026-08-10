@@ -242,7 +242,8 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
   if (addr < 0x0020)
   {
     ptr = ADDRTOBACKBUF_M(0x10000 + addr);
-  } else
+  }
+  else
   {
     //assert(addr >= BACKBUFFER_START_ADDRESS && addr < BACKBUFFER_END_ADDRESS);
     ptr = ADDRTOBACKBUF_M(addr);
@@ -1876,7 +1877,8 @@ static void main_loop(chqstate_t *state)
           start_speech   = *pstart_speech;
           *pstart_speech = 0;
           play_speech_hook(state, start_speech);
-        } else
+        }
+        else
         {
           quit_state = state->quit_state;
           if (quit_state > 0)
@@ -2035,7 +2037,8 @@ static int run_pregame_screen_loop(chqstate_t *state)
         rc = 0;                  // stop
         goto exit;
       }
-    } else
+    }
+    else
     {
       setup_transition(state, TRANSITIONSTRIDE_FORWARD);
     }
@@ -2861,8 +2864,9 @@ dp_repeat_or_plot_tile:
     tile_count = 1;
     if (cmd < PREGAMECMD_REPEAT) { // Multiple tiles
       tile_count = cmd;
-      tileidx = *cmds++;
-    } else
+      tileidx    = *cmds++;
+    }
+    else
     {
       tileidx = cmd;
     }
@@ -2910,7 +2914,8 @@ dp_repeat_or_plot_tile:
           bufoffset = (bufoffset & 0xFF00) | (((bufoffset & 0xFF) + 0x20) &
                                               0xFF); // L += 32
         }
-      } else
+      }
+      else
       {
         // horizontal
         bufoffset++;
@@ -3344,7 +3349,8 @@ static void check_user_input(chqstate_t *state)
 
     start_chatter(state, 2, &chatterblk_turbo[0]);
     setup_engine_sfx_hook(state); /* tail call */
-  } else
+  }
+  else
   {
     // Conv: check_user_input_quit_key hoisted out from here.
 
@@ -3672,7 +3678,8 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
         speccy->logtime(speccy, 16);
-      } else
+      }
+      else
       {
         /* $8A1D: JR Z taken; DEC C; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
@@ -4325,7 +4332,10 @@ static void fill_attributes(chqstate_t *state)
   {
     DE_dst      = HL_src + 1;
     BC_columns = 28;
-    do { *DE_dst++ = *HL_src++; } while (--BC_columns > 0);
+    do
+    {
+      *DE_dst++ = *HL_src++;
+    } while (--BC_columns > 0);
     HL_src += SCREEN_ATTRIBUTES_WIDTH - 28;
   } while (--A_rows > 0);
 
@@ -4801,8 +4811,9 @@ continue_after_left_hand_done:
   if (A_floating_arrow == 1)
   {
     HL_arrow_defn = &floating_arrow_left_defn;
-    E_x = 120;
-  } else
+    E_x           = 120;
+  }
+  else
   {
     HL_arrow_defn = &floating_arrow_right_defn;
     E_x           = 128;
@@ -5516,7 +5527,8 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
 
     B_height  = 1;
     C_padding = 1;
-  } else
+  }
+  else
   {
     E_bitmap_stride         = HL_bitmap->width_bytes;
     A_width_bytes           = ((u8)A_width_bytes & 0xFC) >> 2;
@@ -5546,7 +5558,8 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
                         E_bitmap_stride,
                         HL_bitmap,
                         IY_height); /* tail call */
-  } else
+  }
+  else
   {
     B_height--;      /* $92D9 */
     A_width_bytes++; /* $92DA */
@@ -5669,8 +5682,9 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
   A_width_bytes = IX_xpos[0];
   if ((s8) B_depth < 0)
   {
-    A_width_bytes += B_depth;         /* negative B_depth, no carry check */
-  } else
+    A_width_bytes += B_depth; /* negative B_depth, no carry check */
+  }
+  else
   {
     A_width_bytes += B_depth;
     if (A_width_bytes > 255) return;
@@ -5757,7 +5771,8 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
                         E_bitmap_stride,
                         HL_bitmap,
                         IY_height);
-  } else
+  }
+  else
   {
     C_width_bytes = A_width_bytes;
     Adash_width_bytes = A_width_bytes; Fdash_zero = Zflipped;
@@ -6077,7 +6092,8 @@ doc_compute_bitmap:
                                   DE_bitmap_stride,
                                   HL_bitmap_data); /* tail call */
       return;
-    } else
+    }
+    else
     {
       goto unmasked_inverted;
     }
@@ -6094,7 +6110,8 @@ doc_compute_bitmap:
                                   B_height,
                                   DE_bitmap_stride & 0xFF, /* Conv: Original only used E' */
                                   HL_bitmap_data); /* tail call */
-    } else
+    }
+    else
     {
       plot_sprite(state,
                   A_width_bytes,
@@ -6103,7 +6120,8 @@ doc_compute_bitmap:
                   DE_bitmap_stride,
                   HL_bitmap_data); /* tail call */
     }
-  } else
+  }
+  else
   {
     if (carry_masked_flag)
     {
@@ -6113,7 +6131,8 @@ doc_compute_bitmap:
                                  B_height,
                                  DE_bitmap_stride,
                                  HL_bitmap_data); /* tail call */
-    } else
+    }
+    else
     {
       plot_sprite_flipped(state,
                           A_width_bytes,
@@ -6235,8 +6254,9 @@ doc_masked_rows:
                                                HLdash_backbuf_addr);
 
       HL_bitmap_data = state->doc.mask_bitmap_ptr;
-      B_height = state->doc.mask_rows_2nd;
-    } else
+      B_height       = state->doc.mask_rows_2nd;
+    }
+    else
     {
       B_height += A_y_remaining;
       plot_masked_sprite(state,
@@ -7006,7 +7026,8 @@ static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
   if (string_index < CHATTERSTR_PERP_DESC_1)
   {
     DE_string = common_chatter_strings[string_index];
-  } else
+  }
+  else
   {
     assert(string_index < CHATTERSTR__LIMIT);
     DE_string = state->stage->chatter_strings[string_index - CHATTERSTR_PERP_DESC_1];
@@ -7546,8 +7567,9 @@ static void plot_mini_font_char(
   if (x == 0xFF)
   {
     screen = 0xBF; // low byte of screen addr
-    A = MFWIDTH;
-  } else
+    A      = MFWIDTH;
+  }
+  else
   {
     A      = x * MFWIDTH + 2;
     screen = 0xC0; // low byte of screen addr
@@ -7611,7 +7633,8 @@ pmf_have_ascii:
       case 7: SRL(bm1); RR(bm2);
       case 8: break;
       }
-    } else
+    }
+    else
     {
       // Conv: "modern" version
       bm    = (bm1 << 8) | bm2;
@@ -7776,7 +7799,8 @@ check_credits:
   if (state->credits == 0)
   {
     check_user_input_quit_key(state); /* tail call */
-  } else
+  }
+  else
   {
     // Display the pre-decrement count: Z80 loads A before DEC (HL) ($9C39/$9C3E)
     state->continue_messages[CONTINUE_MESSAGES_CREDIT_N] = (state->credits + '0') | EOS;
@@ -7836,7 +7860,8 @@ check_restart:
   {
     hidigit = '1'; // ASCII
     lodigit = 0;   // integer
-  } else
+  }
+  else
   {
     lodigit = seconds; // integer
     hidigit = ' ';     // ASCII
@@ -8142,7 +8167,8 @@ static void update_scoreboard(chqstate_t *state)
                        ADDRTOSCREEN(0x4168),
                        state->score_digits_start);
     A_counter = 8;
-  } else
+  }
+  else
   {
     /* $9DA5 us_bonus_countdown — decrement bonus flash counter */
     A_counter = state->bonus_counter;
@@ -8757,10 +8783,19 @@ static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 
   src         = &ledfont[ord * LEDFONT_HEIGHT];
   orig_screen = screen;
-  for (i = 0; i < 7; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
+  for (i = 0; i < 7; i++)
+  {
+    *screen  = *src++;
+    screen  += 256;
+  } /* Conv: rolled */
   screen = orig_screen - 256 + 32;
-  for (i = 0; i < 8; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
-  update_screen(state, SCREENTOADDR(orig_screen), 8, LEDFONT_HEIGHT); /* Conv: added */
+  for (i = 0; i < 8; i++)
+  {
+    *screen  = *src++;
+    screen  += 256;
+  } /* Conv: rolled */
+  update_screen(
+      state, SCREENTOADDR(orig_screen), 8, LEDFONT_HEIGHT); /* Conv: added */
   return orig_screen + 1;
 }
 
@@ -9095,7 +9130,8 @@ u8 keyscan(chqstate_t *state)
     A_keys = (A_keys & 0x07) << 5;
     // POP DE
     E_keys = A_keys | A_kempston;
-  } else
+  }
+  else
   {
     E_keys = A_keys = keyscan_keydefs(state, 0x01, &state->keydefs[0]); // 8 bits max
   }
@@ -9547,7 +9583,8 @@ set_off_road:
     pos2 = state->xpos.centre[127];
     if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)
       csc_hit_scenery(state, 0 /* no flip */, 0x8C); /* tail call */
-  } else
+  }
+  else
   {
     // Right fork was taken, short pole object is on left hand of road.
     shortpoleobj = state->stage->addrof_left_hand_short_pole_object;
@@ -9677,7 +9714,8 @@ set_right_hand:
           goto set_right_hand; // dirt track or fork
         // Otherwise it's a tunnel piece.
         laneshift = 3;
-      } else
+      }
+      else
       {
         // Normal road
         laneshift = 3;
@@ -9876,7 +9914,8 @@ pb_ensure_vehicle:
     // Otherwise hazard-car is behind perp...
     carry = A_distancediff > (u8) (0xFF - 2); // carry out of ADD A,2
     A_distancediff += 2;
-  } else
+  }
+  else
   {
     carry           = A_distancediff < 3; // borrow out of SUB A,3
     A_distancediff -= 3;
@@ -10327,7 +10366,8 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
       return 0x0204;
     else
       return 0x0103;
-  } else
+  }
+  else
   {
     if (lanes == 0) // note: swapped vs above
       return 0x0102;
@@ -10402,7 +10442,8 @@ void hazard_handler(chqstate_t *state, hazard_t *IX_hazard)
         horz_pos                        = *phazard_pos_speed;
         IX_hazard->lane_or_perp_dist_hi = current_lane;
       }
-    } else
+    }
+    else
     {
       horz_pos += 5;
       if (horz_pos >= *phazard_pos_speed)
@@ -10662,7 +10703,8 @@ ddas_bitmaps:
       draw_object_left_width_entrypt(state, A_width_bytes, HL_bitmap,
                                      IY_height); /* tail call */
     }
-  } else
+  }
+  else
   {
     if (A_x + E_width <= 255) /* fully off-screen when the add doesn't overflow */
       return;
@@ -10852,7 +10894,8 @@ static void draw_helicopter_part(chqstate_t                *state,
       draw_object_left_width_entrypt(state, A_width_bytes, HL_bitmap,
                                           IY_height); /* tail call */
     }
-  } else
+  }
+  else
   {
     carry         = (A_bot + B_width) > 255;
     A_width_bytes = A_bot + B_width; /* Conv: wraps as the Z80 ADD does */
@@ -10931,7 +10974,8 @@ static void move_helicopter(chqstate_t *state)
 set_centre:
       newhelipos = centre;
     }
-  } else
+  }
+  else
   {
     newhelipos = helipos; // Conv: added
   }
@@ -11281,7 +11325,8 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX_hazard)
     start_sfx(state, EFFECT_HAZARD_HIT, 3);
 
     IX_hazard->hazard_flags = 2;
-  } else if (A_hazard_flags == 1)
+  }
+  else if (A_hazard_flags == 1)
   {
     /* was DEC A */
     return;
@@ -11437,7 +11482,8 @@ static u8 check_collision(chqstate_t *state,
     /* at distance 1, only hit if fast_counter is negative */
     if ((s8) A_fast_cnt < 0)
       E_hit_timer = 1;
-  } else
+  }
+  else
   {
     /* at distance > 1, skip collision if fast_counter >= 0 */
     if ((s8) A_fast_cnt >= 0)
@@ -12063,11 +12109,13 @@ static void draw_hazard_sprites(chqstate_t *state,
       A_sum = A_horz_pos + E_width_bits;
       if (A_sum < 0x100) // no carry
         goto dafs_draw_done_1;
-      A_width_bytes = (u8) A_sum;
-    } else if (A_horz_clip != 0)
+      A_width_bytes = (u8)A_sum;
+    }
+    else if (A_horz_clip != 0)
     {
       goto dafs_draw_done_1;
-    } else
+    }
+    else
     {
       if (A_horz_pos >= 128)
         goto dafs_draw_right_1;
@@ -12108,11 +12156,13 @@ dafs_af50:
     A_sum = A_horz_pos + E_width_bits;
     if (A_sum < 0x100) // no carry
       goto dafs_draw_done_1;
-    A_horz_pos = (u8) A_sum;
-  } else if (A_horz_clip != 0)
+    A_horz_pos = (u8)A_sum;
+  }
+  else if (A_horz_clip != 0)
   {
     goto dafs_draw_done_1;
-  } else
+  }
+  else
   {
     if (A_horz_pos >= 128)
       goto dafs_draw_right_2;
@@ -12386,7 +12436,8 @@ dhs_exit_1:
       draw_object_left_width_entrypt(state, A_width_bytes, HL_bitmap,
                                           IY_height); /* tail call */
     }
-  } else
+  }
+  else
   {
     A_horz_pos += C_y;
     if (A_horz_pos < C_y) // carried
@@ -12558,8 +12609,10 @@ mhc_low_gear_slowing:
     if (speed < BC_max_speed)
       BC_speed_diff = (((BC_max_speed - speed) >> 4) & 0x3F) | 1;
     else
-      BC_speed_diff = -((((speed - BC_max_speed) >> 4) & 0x1F) | 1); /* $B15A: excess over cap */
-  } else
+      BC_speed_diff = -((((speed - BC_max_speed) >> 4) & 0x1F) |
+                        1); /* $B15A: excess over cap */
+  }
+  else
   {
     if (speed < SpeedHighGearMin) { // mhc_high_gear_slowing
       BC_max_speed = SpeedBoosted;
@@ -12569,7 +12622,8 @@ mhc_low_gear_slowing:
         BC_speed_diff = ((speed >> 4) | 1) & 0x1F; // $B18C JR $B19A (skip accel/decel check)
         goto mhc_check_brake;
       }
-    } else
+    }
+    else
     {
       BC_max_speed = SpeedHighGearBoosted;
       // EX AF,AF' (unbank boost+flags)
@@ -12603,7 +12657,8 @@ mhc_check_brake:
        * instead sets 3 and skips the following two.
        */
       A_inclined = 0;
-    } else
+    }
+    else
     {
       // New speed is non-zero
       BC_pitch_speed_delta  = (A_pitch - 5) | 1; // 0/3/6 in Cpitch => -5/-1/1
@@ -12756,7 +12811,8 @@ mhc_handle_speed:
       if ((s16) DE_adjust < 0)
         goto mhc_set_cornering;
       // Conv: Removed duplicated test from here.
-    } else
+    }
+    else
     {
       if ((s16) DE_adjust >= 0 || (s16) HL_horizontal_adjust < 0)
         goto mhc_set_cornering;
@@ -12840,8 +12896,9 @@ static void animate_hero_car(chqstate_t *state)
     {
 ahc_speed_less_or_eq:
       state->ahc.crashed_flag = 0;
-      A_turn_speed = 1; // normal turning
-    } else
+      A_turn_speed            = 1; // normal turning
+    }
+    else
     {
       state->speed = HL_speed - DE_quartered_speed;
     }
@@ -12862,7 +12919,8 @@ ahc_speed_less_or_eq:
     {
       if (C_flip_flag != 2)
         HL_road_pos += DE_b356; // presumably zero
-    } else
+    }
+    else
     {
       HL_road_pos -= DE_b356; // case 1
     }
@@ -12906,7 +12964,8 @@ ahc_b3b0:
       // EX DE,HL_road_pos
       HL_road_pos = DE_other_road_pos;
     }
-  } else
+  }
+  else
   {
     // JP M: high byte negative → clamp to lower bound ($B39A EX DE,HL with DE=ahc.road_pos_min)
     HL_road_pos = DE_other_road_pos;
@@ -13070,7 +13129,8 @@ static void ahc_check_hand_flag(chqstate_t *state)
     // A < 4
     A_hand_flag = ++C_hand_frame;
     draw_crash_unflipped(state, A_hand_flag); /* tail call */
-  } else
+  }
+  else
   {
     state->cherry_light = 1;
   }
@@ -14193,7 +14253,8 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
                 Bdash_height,
                 DE_bitmap_stride,
                 HL_bitmap_data);
-  } else
+  }
+  else
   {
     // EX AF,AF'  -- unbank widthbytes
     HLdash_backbuf_addr--; // Adjust back buffer plot address to be a byte earlier
@@ -14444,7 +14505,9 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
     Cdash = 0;
     // EXX Unbank
     A_x = E_unflipped_x;
-  } else { // if flipped
+  }
+  else
+  { // if flipped
     // EXX Unbank
     A_x = D_flipped_x;
   }
@@ -15431,8 +15494,9 @@ static void update_road_level(chqstate_t *state)
       goto url_B9C5;
 
     A_x_scroll = horizon_table[((state->speed >> 6) & 6) +
-                              (B_curv_idx & 0xFF)]; // use of BC removed
-  } else
+                               (B_curv_idx & 0xFF)]; // use of BC removed
+  }
+  else
   {
     A_x_scroll = A_curvature_byte; // Conv: added
   }
@@ -15599,10 +15663,13 @@ lr_forked_road:
   if (D_side & 0x80)
   {
     // Right fork: A_iterations stays 1
-  } else if (D_side != 0)
+  }
+  else if (D_side != 0)
   {
     A_iterations--; // 1 → 0: left fork
-  } else if ((DE_roadpos & 0xFF) >= 12) { // E >= 12: not close to centre
+  }
+  else if ((DE_roadpos & 0xFF) >= 12)
+  {                 // E >= 12: not close to centre
     A_iterations--; // 1 → 0: left fork
   }
 
@@ -15614,7 +15681,8 @@ lr_forked_road:
   {
     // Correct fork taken
     HL_chatterblk = &chatterblk_tony_lets_go[0];
-  } else
+  }
+  else
   {
     // Incorrect fork taken
     state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
@@ -15667,7 +15735,8 @@ lr_badf:
     HL_roadpos += DE_forkdistance;
     state->scenedata.road_pos = HL_roadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/1);
-  } else
+  }
+  else
   {
     build_curve_table(state, /*forked=*/1);
     DE_forkdistance = HL_forkdistance; /* was POP DE_forkdistance */
@@ -15828,7 +15897,8 @@ static void exit_fork(chqstate_t *state)
       state->rm.rightfork_leftside);
     // Conv: Z80 $BBCA LD A,$20; maps to ROADBUF_LANES_OFFSET + 32 = ROADBUF_RIGHTOBJS_OFFSET
     C_obj_offset = 32;
-  } else
+  }
+  else
   {
     /* $BB74: ef_left */
     D_curve_type                        = 0xFC;
@@ -16009,13 +16079,15 @@ static void send_playfield(chqstate_t *state)
       if (!overflow)
       {
         screen_off = SCREENTOOFFSET_M(HL_scr) - 0x07EE;
-        HL_scr = OFFSETTOSCREEN(screen_off);
-      } else
+        HL_scr     = OFFSETTOSCREEN(screen_off);
+      }
+      else
       {
         // 64-row midpoint: jump to the ZX screen's bottom third
         HL_scr = ADDRTOSCREEN(0x5011); // (136, 128)
       }
-    } else
+    }
+    else
     {
       screen_off  = SCREENTOOFFSET_M(HL_scr) - 0x07EE;
       HL_scr      = OFFSETTOSCREEN(screen_off);
@@ -16298,13 +16370,15 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
           // $BE58 - Split command (2)
           state->rm.leftfork_curve  = wordat(DE_curve_ptr + 0);
           state->rm.rightfork_curve = wordat(DE_curve_ptr + 2);
-          DE_curve_ptr = &forked_road_curvature[0];
-        } else
+          DE_curve_ptr              = &forked_road_curvature[0];
+        }
+        else
         {
           // $BE6C - Fork end command (1)
           DE_curve_ptr = state->rm.curvature_fork_end_ptr;
         }
-      } else
+      }
+      else
       {
         // $BE71 - Goto command (0)
         DE_curve_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_curve_ptr));
@@ -16352,13 +16426,15 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
           // $BEAA - Split command (2)
           state->rm.leftfork_height  = wordat(DE_height_ptr + 0);
           state->rm.rightfork_height = wordat(DE_height_ptr + 2);
-          DE_height_ptr = &forked_road_height[0];
-        } else
+          DE_height_ptr              = &forked_road_height[0];
+        }
+        else
         {
           // $BEBE - Fork end command (1)
           DE_height_ptr = state->rm.height_fork_end_ptr;
         }
-      } else
+      }
+      else
       {
         // $BEC3 - Goto command (0)
         DE_height_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_height_ptr));
@@ -16456,7 +16532,8 @@ default:
     HL_hazards_ptr = state->roadbuf_start + ROADBUF_PTR2IDX(HL_leftside_ptr + 32);
     *HL_hazards_ptr = 0; // hazards slot
     state->session.no_objects_flag = 1;
-  } else
+  }
+  else
   {
     /* ------------------------- *
      * $BF55: RIGHT-SIDE OBJECTS *
@@ -16482,13 +16559,15 @@ default:
             // $BF6F - Split command (2)
             state->rm.leftfork_rightside  = wordat(DE_rightside_ptr + 0);
             state->rm.rightfork_rightside = wordat(DE_rightside_ptr + 2);
-            DE_rightside_ptr = &fork_leftrightobjs[1]; // $E2C1
-          } else
+            DE_rightside_ptr              = &fork_leftrightobjs[1]; // $E2C1
+          }
+          else
           {
             // $BF83 - Fork end command (1)
             DE_rightside_ptr = state->rm.rightside_fork_end_ptr;
           }
-        } else
+        }
+        else
         {
           // $BF88 - Goto command (0)
           DE_rightside_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_rightside_ptr));
@@ -16533,13 +16612,15 @@ default:
             // $BFB8 - Split command (2)
             state->rm.leftfork_leftside  = wordat(DE_leftside_ptr + 0);
             state->rm.rightfork_leftside = wordat(DE_leftside_ptr + 2);
-            DE_leftside_ptr = &fork_leftrightobjs[0]; // $E2C0
-          } else
+            DE_leftside_ptr              = &fork_leftrightobjs[0]; // $E2C0
+          }
+          else
           {
             // $BFCC - Fork end command (1)
             DE_leftside_ptr = state->rm.leftside_fork_end_ptr;
           }
-        } else
+        }
+        else
         {
           // $BFD1 - Goto command (0)
           DE_leftside_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_leftside_ptr));
@@ -16609,7 +16690,8 @@ rm_restart_hazards_read: // $BFF3
                    * DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
                    */
                   goto rm_restart_hazards_read;
-                } else
+                }
+                else
                 {
                   // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
                   A_hazards_byte -= 7; // floating_arrow = A - 7 (from A = cmd-3)
@@ -16621,24 +16703,28 @@ rm_restart_hazards_read: // $BFF3
                    */
                   goto rm_restart_hazards_read;
                 }
-              } else
+              }
+              else
               {
                 // $C02C: cmd 3..9 → rm.hazard_byte = cmd - 3
                 state->rm.hazard_byte = A_hazards_byte;
               }
-            } else
+            }
+            else
             {
               // $C031 - Split command (2)
               state->rm.leftfork_hazards  = wordat(DE_hazards_ptr + 0);
               state->rm.rightfork_hazards = wordat(DE_hazards_ptr + 2);
               DE_hazards_ptr              = &fork_hazards[0];
             }
-          } else
+          }
+          else
           {
             // $C045 - Fork end command (1)
             DE_hazards_ptr = state->rm.hazards_fork_end_ptr;
           }
-        } else
+        }
+        else
         {
           // $C04A - Goto command (0)
           DE_hazards_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_hazards_ptr));
@@ -17033,7 +17119,8 @@ dt_clamp_rows:
        * $C233 SUB C and second LD SP,HL. One combined 30-byte fill. */
       SP_output -= 15 * 2;
       memset(SP_output, (u8)DE_fill, 15 * 2);
-    } else
+    }
+    else
     {
       /* Conv: Z80 JR jump table indexed 0-16 where entry N executes (16-N)
        * PUSHes backward from SP. C computes the count and uses memset. */
@@ -17279,7 +17366,8 @@ static void draw_road_lanes_change(chqstate_t *state,
           /* bit 7 SET */
           // {4TO3L, 3TO4L, FORKED}
           H_left_hand_table_hi = 0xEC;
-        } else
+        }
+        else
           // {2TO3L}
           H_left_hand_table_hi = 0xEB; // was DEC H
       }
@@ -17305,7 +17393,8 @@ static void draw_road_lanes_change(chqstate_t *state,
             // {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT}
             A_curve_step = 0x20;
             C_ref_height = (*IY_heightptr)[1];
-          } else
+          }
+          else
           {
             /* Empty: masked_lane_flags == 4 comes only from 3LTO2M ($06) and
              * TUNNEL_ENTRY ($45), and both have bit 4 clear, so no shipped lane
@@ -17343,7 +17432,8 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C347-$C350: DE = road_pos - anim  ($C34E: SBC HL,DE; $C350: EX DE,HL)
           DE_roadpos -= A_anim_offset;
-        } else
+        }
+        else
         {
           /* $C357: bit4=1, dist>=2 (must be 4): far-boundary setup, no animation offset */
 
@@ -17368,7 +17458,9 @@ static void draw_road_lanes_change(chqstate_t *state,
           H_left_hand_table_hi--;
           HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
         }
-      } else { /* bit 4 CLEAR */
+      }
+      else
+      { /* bit 4 CLEAR */
         // {4TO3R, 3TO4L, 3TO2L, 3TO2R, 2TO3L, TUNNEL_ENTRY, FORKED}
 
         /* $C37E: bit4=0 entry: dispatch to far-boundary or fall through to near-boundary */
@@ -17385,7 +17477,8 @@ static void draw_road_lanes_change(chqstate_t *state,
             // {4TO3R, 3TO4L, 3TO2R, 2TO3L, FORKED}
             A_curve_step = 0x20;
             C_ref_height = (*IY_heightptr)[1];
-          } else
+          }
+          else
           {
             // {3TO2L, TUNNEL_ENTRY}
             A_curve_step = 0x00;
@@ -17424,7 +17517,8 @@ static void draw_road_lanes_change(chqstate_t *state,
            * (Z80: SBC HL,DE) — mirror-image treatment of the two road edges.
            */
           DE_roadpos += A_anim_offset;
-        } else
+        }
+        else
         {
           /* $C3CA: bit4=0, dist>=2 (must be 4): far-boundary setup, no animation offset */
 
@@ -17484,7 +17578,8 @@ static void draw_road_lanes_change(chqstate_t *state,
         A_direction = -1;
         if (B_range < L_step) /* Conv: removed A shuffle */
           goto drlc_steep_step;
-      } else
+      }
+      else
       {
         A_direction = +1;
         if (A_range < L_step)
@@ -17557,8 +17652,16 @@ static void draw_road(chqstate_t *state)
    * direct mutation) and each helper's locals are hoisted below.  The two
    * self-modified JP/CALL operands become the enum selectors below. ---- */
 
-  enum { CB_FOUR_LANE, CB_DISPATCH };   /* was self-modified CALL $C4B2 target */
-  enum { FILL_UNFILLED, FILL_FILLED };  /* was self-modified JP NZ $C6AD target */
+  enum
+  {
+    CB_FOUR_LANE,
+    CB_DISPATCH
+  }; /* was self-modified CALL $C4B2 target */
+  enum
+  {
+    FILL_UNFILLED,
+    FILL_FILLED
+  }; /* was self-modified JP NZ $C6AD target */
 
   /* spine: threaded across sections (were the dr_* parameters) */
   int        B_fill_pattern;      /* road fill pattern (was B) */
@@ -17734,8 +17837,9 @@ static void draw_road(chqstate_t *state)
       {
         /* If bit 7 was set then it's a 3-lane, 3-to-4 lane or 4-to-3 lane section. */
         A_left_hand_table_hi += 3; // $E8..$EA becomes $EB..$ED
-        Cdash_neg_lane_count = -3;
-      } else
+        Cdash_neg_lane_count  = -3;
+      }
+      else
       {
         /* If bit 7 was clear then it's a 2-lane, 2-to-3 lane or 3-to-2 lane section. */
         A_left_hand_table_hi += 2; // $E8..$EA becomes $EA..$EC
@@ -17756,7 +17860,8 @@ static void draw_road(chqstate_t *state)
                              &IY_heightptr);
       callback_sel = CB_FOUR_LANE;
       goto dr_dispatch;
-    } else
+    }
+    else
     {
       /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
       if (carry == 0)
@@ -17789,7 +17894,8 @@ static void draw_road(chqstate_t *state)
 
         B_fill_pattern = Cdash_fill_pattern; /* tunnel fill override */
         goto dr_dispatch;
-      } else
+      }
+      else
       {
         /* If bit 7 was set then it's a dirt track or forked road. */
 
@@ -17801,7 +17907,8 @@ static void draw_road(chqstate_t *state)
           draw_forked_road(state, B_fill_pattern, C_counter, DE_backbuf, L_row,
                            IX_lanesptr, IY_heightptr); /* terminal */
           return;
-        } else
+        }
+        else
         {
           /* If bit 5 was clear then it's a dirt track section. */
           state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0; /* bits 2 or 3 clear => dirt track */
@@ -18081,8 +18188,9 @@ dr_fill:
     A_leftval = *HLdash_ptr;
     if (A_leftval)
     {
-      A_left_stripe_width = ((s8) A_leftval < 0) ? 0 : 15;
-    } else
+      A_left_stripe_width = ((s8)A_leftval < 0) ? 0 : 15;
+    }
+    else
     {
       A_left_stripe_width = (HLdash_ptr[-1] & Cdash_mask) >> 3;
       RR(A_left_stripe_width);
@@ -18102,8 +18210,9 @@ dr_fill:
     A_rightval = *HLdash_ptr;
     if (A_rightval)
     {
-      A_right_stripe_width = ((s8) A_rightval < 0) ? 0 : 15;
-    } else
+      A_right_stripe_width = ((s8)A_rightval < 0) ? 0 : 15;
+    }
+    else
     {
       A_right_stripe_width = (HLdash_ptr[-1] & Cdash_mask) >> 3;
       A_right_stripe_width >>= 1; /* was RR with carry forced to 0 above; carry-out unused */
@@ -18975,7 +19084,8 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   if (A_zone != 0)
   {
     pos_E8 = (A_zone & 0x80) ? 0 : 15;
-  } else
+  }
+  else
   {
     /* dfr_c984: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
@@ -18990,7 +19100,8 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   if (A_zone != 0)
   {
     pos_EA = (A_zone & 0x80) ? 0 : 15;
-  } else
+  }
+  else
   {
     /* dfr_c9aa: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
@@ -19003,7 +19114,8 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   if (A_zone != 0)
   {
     pos_EB = (A_zone & 0x80) ? 0 : 15;
-  } else
+  }
+  else
   {
     /* dfr_c9c9: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
@@ -19018,7 +19130,8 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   if (A_zone != 0)
   {
     pos_ED = (A_zone & 0x80) ? 0 : 15;
-  } else
+  }
+  else
   {
     /* dfr_c9f0: DEC L; A=HL[-1] (no INC L -- L' stays decremented, but only
      * on the banked side; main L must not change or every following row's
@@ -19523,7 +19636,8 @@ static void build_curve_table(chqstate_t *state, int forked)
   {
     H_righttab_end = &state->xpos.fork_right[128];   /* was $EE00 */
     L_lefttab_end  = &state->xpos.centre_right[128]; /* was $EC00 */
-  } else
+  }
+  else
   {
     H_righttab_end = &state->xpos.right[128]; /* was $ED00 - right table */
     L_lefttab_end  = &state->xpos.left[128];  /* was $E900 - left table */
@@ -19730,8 +19844,10 @@ static void build_curve_table_fill(chqstate_t *state,
       Ldash    = -Ldash & 0xFF;
       A        = Bdash_iterations;
       A_opcode = Z80_DEC_DE;
-      if (A < Ldash) goto bct_endbit_A;
-    } else
+      if (A < Ldash)
+        goto bct_endbit_A;
+    }
+    else
     {
       A_opcode = Z80_INC_DE;
       if (A < Ldash) goto bct_endbit_A;
@@ -19811,7 +19927,10 @@ bct_endbit_negative:
   HLdash     += DE_roadpos;
   DE_roadpos  = HLdash; /* was EX */
   if (SP_output > HL_tableend - 128)
-    { SP_output--; *SP_output = DE_roadpos; } // PUSH to output table
+  {
+    SP_output--;
+    *SP_output = DE_roadpos;
+  } // PUSH to output table
   goto bct_continue;
 }
 
@@ -20612,7 +20731,8 @@ mdc_have_glyph:
     *HLdash       = Cdash;
     HLdash        = HLdash_saved + 1;
     // EXX
-  } else
+  }
+  else
   {
     // single height
     for (row = 0; row < 7; row++) { // Conv: rolled
@@ -21093,7 +21213,8 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
       state->music.note_delay_reload = state->music.note_delay = *HL_data++;
       state->music.pattern_start_ptr                           = HL_data;
       return;
-    } else
+    }
+    else
     {
       // Restart
       HL_pataddr = &music_patterns[wordat(HL_pataddr) - 0xF0FE];
@@ -21152,7 +21273,8 @@ static void play_music_48k(chqstate_t *state)
   if (A_delay)
   {
     state->music.note_delay = A_delay;
-  } else
+  }
+  else
   {
     state->music.note_delay = state->music.note_delay_reload;
     HL                      = state->music.data_ptr;
@@ -21413,7 +21535,8 @@ void play_noise(chqstate_t *state, int A_param)
         state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
 
         state->speccy->logtime(state->speccy, 16);
-      } else
+      }
+      else
       {
         /* $F0DE: JR Z taken; DEC D; JR NZ (12+4+12) */
         state->speccy->logtime(state->speccy, 28);
@@ -21481,7 +21604,8 @@ static void play_siren_sfx_128k(chqstate_t *state)
     pitch -= 3;
     if (pitch >= 90)
       goto set_regs;
-  } else
+  }
+  else
   {
     /* Increasing */
     pitch += 3;
@@ -21572,7 +21696,8 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
   {
     base_pitch = 400; /* non-tunnel base divisor (~277 Hz) */
     volume     = 15;
-  } else
+  }
+  else
   {
     base_pitch = 600; /* in-tunnel base divisor (~185 Hz) */
     volume     = 12;
@@ -21924,7 +22049,8 @@ call_bank_3:
     if (state->controls_selected == 0)
     {
       DE_messages = &enter_for_options_messages[0];
-    } else
+    }
+    else
     {
       if (keyscan(state) & USERINPUTFLAG_FIRE)
       {

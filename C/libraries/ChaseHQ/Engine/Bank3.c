@@ -4373,7 +4373,8 @@ static void check_high_score(chqstate_t *state)
       if (A_digit == 0 && !C_seen)
       {
         *HL_digit++ = ' '; /* suppressed leading zero */
-      } else
+      }
+      else
       {
         C_seen      = 1;
         *HL_digit++ = (u8) (A_digit + '0');
@@ -4633,7 +4634,8 @@ static void ihe_flash_loop(chqstate_t *state)
     {
       state->bank3->hiscore.intro_timer--;
       scroll_score_rows(state);
-    } else
+    }
+    else
     {
       name_entry_frame(state);
       blink_hiscore_row(state, 0);
@@ -4927,8 +4929,11 @@ static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
   if (C_input_bits & USERINPUTFLAG_RIGHT)
   {
     state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 'Z') ? '@' : (u8) (state->bank3->hiscore.letter_code + 1);
-  } else if (C_input_bits & USERINPUTFLAG_LEFT)
+        (state->bank3->hiscore.letter_code == 'Z')
+            ? '@'
+            : (u8)(state->bank3->hiscore.letter_code + 1);
+  }
+  else if (C_input_bits & USERINPUTFLAG_LEFT)
   {
     state->bank3->hiscore.letter_code =
       (state->bank3->hiscore.letter_code == '@') ? 'Z' : (u8) (state->bank3->hiscore.letter_code - 1);
@@ -6479,7 +6484,8 @@ static u8 titlescr_animate_frame(chqstate_t *state)
   {
     /* Conv: the frame's remaining work is abandoned, but the sleep still runs. */
     return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
-  } else
+  }
+  else
   {
     return 1;
   }
@@ -7435,7 +7441,8 @@ static void blit_glyph_rows(chqstate_t *state,
         dst = ADDRTOSCREEN(addr);
         for (i = 0; i < row_bytes; i++)
           dst[i] |= *src++;
-      } else
+      }
+      else
       {
         src += row_bytes; /* Conv: off-screen scanline, see note above */
       }
@@ -8336,7 +8343,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       /* $EE3E-$EE44: RLA/JR NC not taken/INC (IX+$12)/RET (4+7+23+10=44). */
       state->speccy->logtime(state->speccy, 44);
       IX_channel->note_index++;
-    } else
+    }
+    else
     {
       /* $EE3E-$EE48: RLA/JR NC taken/DEC (IX+$12)/RET (4+12+23+10=49). */
       state->speccy->logtime(state->speccy, 49);
@@ -8375,7 +8383,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         /* $EDF4: JR Z not taken (7); $EDF6: LD ($EC79),A (13). Total 20. */
         state->speccy->logtime(state->speccy, 20);
         state->bank3->title_music.shared_note_value = A_note; /* $EC79 (SM) */
-      } else
+      }
+      else
       {
         /* $EDF4: JR Z taken (12). */
         state->speccy->logtime(state->speccy, 12);
@@ -8580,7 +8589,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         state->speccy->logtime(state->speccy, 35);
         continue;
       }
-    } else if (A_byte < PCMD_PITCH_OFFSET_BASE)
+    }
+    else if (A_byte < PCMD_PITCH_OFFSET_BASE)
     {
       /* $EE49-$EE74: CP $B0/JR C not taken/ADD A,$20/JR C not taken/
        * ADD A,$10/JR C not taken/ADD A,$18/JR NC taken (cascade,
@@ -8590,7 +8600,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       /* $EE6F: set the tune tempo/speed byte. */
       state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
       continue;
-    } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE)
+    }
+    else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE)
     {
       /* $EE49-$EE57 cascade (7+7+7+7+7+7+7+7=56); $EE59-$EE6C: LD C,A/
        * LD HL,$F07C/ADD HL,BC/LD C,(HL)/ADD HL,BC/LD (IX+$0B),L/
@@ -8605,7 +8616,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
       IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
       continue;
-    } else if (A_byte < PCMD_ROW_WAIT_BASE)
+    }
+    else if (A_byte < PCMD_ROW_WAIT_BASE)
     {
       /* $EE49-$EE53 cascade (7+7+7+7+7+12=47); $EE7E-$EE93: LD HL,$F123/
        * ADD A,A/LD C,A/ADD HL,BC/LD A,(HL)/INC HL/LD H,(HL)/LD L,A/
@@ -8619,7 +8631,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
       IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
       continue;
-    } else
+    }
+    else
     {
       /* $EE49-$EE4F cascade (7+7+7+12=33); $EE77-$EE7B: INC A/LD (IX+$11),A/
        * JP $EDE4 (4+19+10=33). Total 33+33=66. */
@@ -8882,13 +8895,15 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
         /* Not an end-of-table marker: commit the advance. */
         IX_channel->envelope_shape_ptr = HL_env_shape;
         IX_channel->envelope_amplitude = A_env_byte;
-      } else
+      }
+      else
       {
         /* $EEBE: JP M taken (10). */
         state->speccy->logtime(state->speccy, 10);
       }
       /* Else: halt the pointer, keep the previous amplitude. */
-    } else
+    }
+    else
     {
       /* $EEAD: JR NC taken (12). */
       state->speccy->logtime(state->speccy, 12);
@@ -8897,7 +8912,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EECA-$EECD: LD A,(IX+$18)/LD (IX+$13),A (19+19=38). */
     state->speccy->logtime(state->speccy, 38);
     IX_channel->volume = IX_channel->envelope_amplitude;
-  } else
+  }
+  else
   {
     /* $EEA3: JR Z taken (12) -- envelope not active, phase 1 skipped
      * entirely. */
@@ -8968,10 +8984,12 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE))
     {
       state->speccy->logtime(state->speccy, 12);
-    } else if (!(C_status & CHSTATUS_TOGGLE))
+    }
+    else if (!(C_status & CHSTATUS_TOGGLE))
     {
       state->speccy->logtime(state->speccy, 22);
-    } else
+    }
+    else
     {
       state->speccy->logtime(state->speccy, 27);
     }
@@ -8990,7 +9008,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
           /* $EF18-$EF1B: SUB (IX+$1B)/JR NC taken (19+12=31). */
           state->speccy->logtime(state->speccy, 31);
           A_vib_phase -= IX_channel->vibrato_increment;
-        } else
+        }
+        else
         {
           /* $EF18-$EF22: SUB (IX+$1B)/JR NC not taken/SET 5,(IX+$1D)/SUB A/JR
            * (19+7+23+4+12=65). */
@@ -8998,7 +9017,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
           IX_channel->flags |= CHFLAGS_VIBRATO_ASCENDING; // flip to ascending
           A_vib_phase        = 0;
         }
-      } else
+      }
+      else
       {
         /* $EF14-$EF16: BIT 5,L/JR NZ taken (8+12=20). */
         state->speccy->logtime(state->speccy, 20);
@@ -9010,8 +9030,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
            * LD A,B (19+4+7+23+4=57). */
           state->speccy->logtime(state->speccy, 57);
           IX_channel->flags &= ~CHFLAGS_VIBRATO_ASCENDING; // flip to descending
-          A_vib_phase = B_vib_range;
-        } else
+          A_vib_phase        = B_vib_range;
+        }
+        else
         {
           /* $EF24-$EF28: ADD A,(IX+$1B)/CP B/JR C taken (19+4+12=35). */
           state->speccy->logtime(state->speccy, 35);
@@ -9033,7 +9054,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     if (DE_vib_offset >= 0)
     {
       state->speccy->logtime(state->speccy, 12);
-    } else
+    }
+    else
     {
       state->speccy->logtime(state->speccy, 11);
     }
@@ -9056,7 +9078,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
         else
           state->speccy->logtime(state->speccy, 23 + 7);
       } while (A_shift_test <= 0xFF);
-    } else
+    }
+    else
     {
       /* $EF3F: JR C taken (12) -- loop skipped entirely. */
       state->speccy->logtime(state->speccy, 12);
@@ -9065,7 +9088,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EF49-$EF4A: ADD HL,DE/EX DE,HL (Conv folded) (11+4=15). */
     state->speccy->logtime(state->speccy, 15);
     DE_period += DE_vib_offset;
-  } else
+  }
+  else
   {
     /* $EF01: JR Z taken (12) -- vibrato disabled, phase 3 skipped entirely. */
     state->speccy->logtime(state->speccy, 12);
@@ -9090,7 +9114,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       /* $EF58: DJNZ taken (13); $EF73: LD (IX+$0E),B (19). Total 32. */
       state->speccy->logtime(state->speccy, 32);
       IX_channel->slide_countdown = B_slide_countdown;
-    } else
+    }
+    else
     {
       /* $EF58: DJNZ not taken (8); $EF5A-$EF5D: LD C,(IX+$0D)/BIT 7,C
        * (19+8=27). Total 35. */
@@ -9103,7 +9128,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       if ((s8) C_slide_step >= 0)
       {
         state->speccy->logtime(state->speccy, 12);
-      } else
+      }
+      else
       {
         state->speccy->logtime(state->speccy, 11);
       }
@@ -9118,7 +9144,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 27);
       DE_period += HL_slide_accum;
     }
-  } else
+  }
+  else
   {
     /* $EF53: JR Z taken (12). */
     state->speccy->logtime(state->speccy, 12);
@@ -9141,7 +9168,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     A_shared = state->bank3->title_music.shared_note_value ^ 0x08; // $EC79
     state->bank3->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = CHMIXER_TONE_MASK;
-  } else
+  }
+  else
   {
     /* $EF7B: JR NZ taken (12). */
     state->speccy->logtime(state->speccy, 12);
@@ -9178,7 +9206,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * (7+7=14); LD A,$41/LD ($ECC6),A (7+13=20). Total 103. */
     state->speccy->logtime(state->speccy, 103);
     state->bank3->title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
-  } else
+  }
+  else
   {
     /* $EF94: JP P taken (10). */
     state->speccy->logtime(state->speccy, 10);
@@ -10222,7 +10251,8 @@ sfx2_tick_countdown:
     state->speccy->logtime(state->speccy, 7 + 42);
     state->bank3->drums.slot1_countdown--;
     state->bank3->drums.slot2_busy--;
-  } else
+  }
+  else
   {
     /* $F897 JR Z,$F8A1 taken (12). */
     state->speccy->logtime(state->speccy, 12);
@@ -10536,7 +10566,8 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
         speccy->logtime(speccy, 16);
-      } else
+      }
+      else
       {
         /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
@@ -10859,7 +10890,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       /* $FDD1-$FDD9: space */
       E_screen++;
       L_attr++;
-    } else
+    }
+    else
     {
       A_diff = (u8) (A_char - ' ');
 
@@ -10918,7 +10950,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         L_attr++;
 
         glyph_height = 16; /* two character rows (Conv: added) */
-      } else
+      }
+      else
       {
         /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
         for (row = 0; row < 7; row++) { /* Conv: rolled */

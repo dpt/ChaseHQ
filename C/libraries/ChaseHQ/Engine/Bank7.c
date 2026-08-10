@@ -574,7 +574,8 @@ static void es_handler_draw_score(chqstate_t *state)
     {
       C_seen    = 0xFF;
       *HL_dst++ = '0' + A_nibble;
-    } else
+    }
+    else
     {
       *HL_dst++ = ' ';
     }
@@ -584,7 +585,8 @@ static void es_handler_draw_score(chqstate_t *state)
     {
       C_seen    = 0xFF;
       *HL_dst++ = '0' + A_nibble;
-    } else
+    }
+    else
     {
       *HL_dst++ = ' ';
     }
@@ -1982,7 +1984,8 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
       state->bank7->es_music.note_delay_reload = state->bank7->es_music.note_delay = *HL_data++;
       state->bank7->es_music.pattern_start_ptr = HL_data;
       return;
-    } else
+    }
+    else
     {
       // Restart
       HL_pataddr = &es_music_patterns[wordat(HL_pataddr) - 0xF53C];
@@ -2039,7 +2042,8 @@ static void es_play_music_48k(chqstate_t *state)
   if (A_delay)
   {
     state->bank7->es_music.note_delay = A_delay;
-  } else
+  }
+  else
   {
     state->bank7->es_music.note_delay = state->bank7->es_music.note_delay_reload;
     HL_data = state->bank7->es_music.data_ptr;

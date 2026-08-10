@@ -576,7 +576,8 @@ static void test_fork_progression(void)
                fork_frames);
         assert(fork_frames < 5000);
       }
-    } else if (fork_frames)
+    }
+    else if (fork_frames)
     {
       printf("  fork %d completed after %d active frames (frame %d)\n",
              saw_fork, fork_frames, frame);
@@ -1240,19 +1241,35 @@ static uint8_t stt_scripted_in(zxspectrum_t *s, uint16_t addr)
   switch (g_stt_phase)
   {
   case 0: /* $E90F: a key goes down, ending the "press any key" wait */
-    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 1; return 0xFE; }
+    if (addr == port_BORDER_EAR_MIC)
+    {
+      g_stt_phase = 1;
+      return 0xFE;
+    }
     break;
 
   case 1: /* $E91A: released again, ending the debounce */
-    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 2; return 0xFF; }
+    if (addr == port_BORDER_EAR_MIC)
+    {
+      g_stt_phase = 2;
+      return 0xFF;
+    }
     break;
 
   case 2: /* $E92E: "1" chooses SINCLAIR JOYSTICK */
-    if (addr == port_KEYBOARD_12345) { g_stt_phase = 3; return 0xFE; }
+    if (addr == port_KEYBOARD_12345)
+    {
+      g_stt_phase = 3;
+      return 0xFE;
+    }
     break;
 
   case 3: /* $E979: released again, ending the second debounce */
-    if (addr == port_BORDER_EAR_MIC) { g_stt_phase = 4; return 0xFF; }
+    if (addr == port_BORDER_EAR_MIC)
+    {
+      g_stt_phase = 4;
+      return 0xFF;
+    }
     break;
 
   case 4: /* $E984: Y confirms the choice */
