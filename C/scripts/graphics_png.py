@@ -43,7 +43,7 @@ CELL_GAP = 2
 COLS = 20
 MAX_ROW_BYTES = 32  # cap on width_bytes for reshaping oversized/flat blobs
 INK = (0, 0, 0, 255)
-TRANSPARENT = (128, 128, 128, 255)  # masked-out pixel; flat canvas grey, opaque (no viewer checkerboarding)
+TRANSPARENT = (255, 0, 255, 255)  # masked-out pixel; opaque magenta, distinct from canvas grey/ink/paper
 PAPER = (255, 255, 255, 255)
 SECTION_GAP_ROWS = 1
 
@@ -74,14 +74,15 @@ def default_colour_fn(px_row, px_col):
 
 def load_attribute_table():
     """Maps ATTR_* names to 0-7 and attribute_* enum names to (bright, paper_idx, ink_idx)."""
+    text = SPECTRUM_H.read_text()
     attr_idx = {
         name: int(value)
-        for name, value in re.findall(r"#define\s+(ATTR_\w+)\s+\((\d+)\)", SPECTRUM_H.read_text())
+        for name, value in re.findall(r"#define\s+(ATTR_\w+)\s+\((\d+)\)", text)
     }
     attributes = {}
     for name, f, b, paper, ink in re.findall(
         r"(attribute_\w+)\s*=\s*MKATTR\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\w+)\s*,\s*(\w+)\s*\)",
-        SPECTRUM_H.read_text(),
+        text,
     ):
         attributes[name] = (int(b), attr_idx.get(paper, _try_int(paper)), attr_idx.get(ink, _try_int(ink)))
     return attr_idx, attributes
@@ -105,7 +106,7 @@ def attr_expr_to_ink_paper(expr, attr_idx, attributes):
     else:
         m = re.search(r"attribute_\w+", expr)
         if not m or m.group(0) not in attributes:
-            return INK, PAPER
+            sys.exit(f"unrecognised attribute expression: {expr!r}")
         bright, paper_idx, ink_idx = attributes[m.group(0)]
     palette = BRIGHT_PALETTE if bright else NORMAL_PALETTE
     ink_rgb = palette[ink_idx] + (255,)

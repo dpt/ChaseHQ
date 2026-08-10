@@ -47,10 +47,12 @@ stored top-to-bottom already and are not flipped.
 Some `bitmap_t` sprites carry `BITMAPFLAG_MASKED` data: instead of one plain
 pixel byte per column, the source array interleaves a mask byte and a data byte
 per column (`AND mask, OR data` against the back buffer). These render with mask
-bit 1 (see-through) drawn as flat canvas grey, and mask bit 0 as an opaque
-ink/paper pixel from the data byte. Import reverses this: a pixel matching the
-canvas grey exactly is read back as masked out (mask=1), everything else is
-thresholded into the data bit as normal.
+bit 1 (see-through) drawn as opaque magenta (`255, 0, 255`), and mask bit 0 as
+an opaque ink/paper pixel from the data byte. Magenta is deliberately distinct
+from the canvas grey, ink and paper, so a genuine edit can't be mistaken for a
+transparent pixel. Import reverses this: a pixel matching that magenta exactly
+is read back as masked out (mask=1), everything else is thresholded into the
+data bit as normal.
 
 Only arrays wholly dedicated to masked data (every `BITMAPFLAG_MASKED` reference
 to them starts at offset 0) get this treatment. A handful of arrays — e.g.
