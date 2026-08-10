@@ -16,6 +16,11 @@ jobs:
       - aif32.ChaseTest
 
       - echo
+      - echo *** Ensure that we have resources ***
+      - copy C.apps.riscos.Resources Resources ~CFVR
+      - copy C.apps.riscos.VersionNum VersionNum ~CFVR
+
+      - echo
       - echo *** Build the application bundle ***
       - amu -f C/apps/riscos/Makefile install INSTDIR=Install
 
