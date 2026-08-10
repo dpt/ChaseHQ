@@ -68,7 +68,9 @@ CHQ_API void chq_start(chqstate_t *state, int mode_128k);
  * \param height (out) Backbuffer height in pixels.
  * \return Pointer to the backbuffer. Owned by \p state; do not free.
  */
-CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state, int *width, int *height);
+CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state,
+                                     int        *width,
+                                     int        *height);
 
 /* ----------------------------------------------------------------------- */
 

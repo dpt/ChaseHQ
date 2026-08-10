@@ -39,18 +39,22 @@
 
 static uint8_t fake_in(zxspectrum_t *s, uint16_t addr)
 {
-  NOT_USED(s); NOT_USED(addr);
+  NOT_USED(s);
+  NOT_USED(addr);
   return 0xFF; /* all keys unpressed */
 }
 
 static void fake_out(zxspectrum_t *s, uint16_t addr, uint8_t byte)
 {
-  NOT_USED(s); NOT_USED(addr); NOT_USED(byte);
+  NOT_USED(s);
+  NOT_USED(addr);
+  NOT_USED(byte);
 }
 
 static void fake_draw(zxspectrum_t *s, const zxbox_t *dirty)
 {
-  NOT_USED(s); NOT_USED(dirty);
+  NOT_USED(s);
+  NOT_USED(dirty);
 }
 
 /* Mirrors the host's fixed-depth timestamp stack (MAXSTAMPS in SDLMain.c): the
@@ -73,7 +77,8 @@ static int g_sleep_count;
 
 static int fake_sleep(zxspectrum_t *s, int ticks)
 {
-  NOT_USED(s); NOT_USED(ticks);
+  NOT_USED(s);
+  NOT_USED(ticks);
   assert(g_stamp_depth > 0);
   g_stamp_depth--;
   g_sleep_count++;
@@ -82,7 +87,8 @@ static int fake_sleep(zxspectrum_t *s, int ticks)
 
 static void fake_logtime(zxspectrum_t *s, int duration)
 {
-  NOT_USED(s); NOT_USED(duration);
+  NOT_USED(s);
+  NOT_USED(duration);
 }
 
 static zxspectrum_t g_speccy;
@@ -175,7 +181,6 @@ static void test_build_height_table_writes_table(void)
 
   chq_destroy(state);
   printf("PASS  build_height_table writes height_table\n");
-
 }
 
 /*
@@ -204,7 +209,6 @@ static void test_layout_road_populates_tables(void)
 
   chq_destroy(state);
   printf("PASS  layout_road: populates centre tables with road geometry\n");
-
 }
 
 /*
