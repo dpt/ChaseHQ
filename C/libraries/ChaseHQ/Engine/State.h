@@ -905,18 +905,6 @@ struct chqstate {
   /* $A261: Fractional part of the horizon's horizontal scroll */
   u8        horizon_scroll_sub;
 
-  /* Curvature scroll amount banked in the AF' shadow register
-   *
-   * Models the Z80 AF' shadow register as banked by move_hero_car's
-   * EX AF,AF' at $B296 (holding BC_count_scaled) and read back by
-   * scroll_horizon's EX AF,AF' at $B854. Only written when move_hero_car
-   * actually reaches $B296 (current_curvature != 0 and ticks elapsed).
-   *
-   * Conv: port-added -- not a memory address. The C port has no shadow
-   *       register bank, so the value is carried in state instead.
-   */
-  u8        curvature_scroll_shadow;
-
   /* $A262: Frames elapsed on the current curve, paces the horizon scroll */
   u8        curvature_ticks;
 
@@ -1493,6 +1481,22 @@ struct chqstate {
    * bank7_state_create/bank7_state_destroy (Bank7.h), called from Create.c.
    */
   struct chq_bank7_state *bank7;
+
+  /* Port-added Z80 shadow-register state
+   *
+   * The C port has no shadow register bank; values the original code carries
+   * across calls via EX AF,AF' / EXX are modelled here instead.
+   */
+  struct {
+    /* Curvature scroll amount banked in the AF' shadow register.
+     *
+     * Models the Z80 AF' shadow register as banked by move_hero_car's
+     * EX AF,AF' at $B296 (holding BC_count_scaled) and read back by
+     * scroll_horizon's EX AF,AF' at $B854. Only written when move_hero_car
+     * actually reaches $B296 (current_curvature != 0 and ticks elapsed).
+     */
+    u8        curvature_scroll;
+  } shadow;
 };
 
 #endif /* CHASEHQ_STATE_H */

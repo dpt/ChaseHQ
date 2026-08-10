@@ -524,15 +524,22 @@ static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
   // its sleep: at 200% the game emits two frames of T-states in one frame of
   // wall time, so a fixed rate would date every event further into the
   // future than the last and the anchor would never catch up.
+  //
+  // The anchor is advanced to this event every call (below), not left fixed
+  // across the whole queue's lifetime: state->speed can change between
+  // calls, and scaling a long-lived (tstates - anchor_tstates) span by
+  // whatever speed happens to be current would retroactively rescale every
+  // event's already-elapsed history in one jump, producing an audible pop.
+  // Advancing the anchor each call means the speed scaling only ever applies
+  // to the small delta since the previous event.
   event_ns = state->audio.anchor_ns +
              (Uint64) ((tstates - state->audio.anchor_tstates) * nsPerTstate *
                        100 / state->speed);
   if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
-  {
-    state->audio.anchor_ns      = now_ns;
-    state->audio.anchor_tstates = tstates;
     event_ns = now_ns;
-  }
+
+  state->audio.anchor_ns      = event_ns;
+  state->audio.anchor_tstates = tstates;
 
   return event_ns;
 }
