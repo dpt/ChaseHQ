@@ -36,7 +36,8 @@
  * chqstate_t only holds a pointer to this (see State.h); the fields below
  * are reachable only from within Bank7.c.
  */
-struct chq_bank7_state {
+struct chq_bank7_state
+{
   /* Per-instance copy of Bank7.c's static const script_data, made at
    * show_end_screen entry so es_handler_draw_score's in-place score patch
    * (offset 0xFD) cannot trample, or be trampled by, another concurrently
@@ -95,7 +96,8 @@ struct chq_bank7_state {
    * (State.h) -- a separate instance because bank 7 pages in its own copy of
    * the engine rather than sharing the in-game one.
    */
-  struct {
+  struct
+  {
     u8        pattern_repeats; // (SM) $F311: pattern repeat counter
     const u8 *pattern_addr;    // (SM) $F318: current pattern address
     u8        started;         // (SM) $F34B

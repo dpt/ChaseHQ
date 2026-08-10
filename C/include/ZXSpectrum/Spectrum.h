@@ -46,7 +46,8 @@ extern "C"
 /**
  * Identifiers of screen attributes.
  */
-enum {
+enum
+{
   attribute_BLACK_OVER_BLACK          = MKATTR(0, 0, ATTR_BLACK, ATTR_BLACK),
 
   attribute_BLUE_OVER_BLACK           = MKATTR(0, 0, ATTR_BLACK, ATTR_BLUE),

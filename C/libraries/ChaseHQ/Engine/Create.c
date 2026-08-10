@@ -245,7 +245,8 @@ static void chq_initialise(chqstate_t *state)
   };
   // clang-format on
 
-  static const struct {
+  static const struct
+  {
     size_t      dstoff;
     const void *src;
     size_t      n;

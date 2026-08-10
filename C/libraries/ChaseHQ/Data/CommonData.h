@@ -167,14 +167,16 @@ extern const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410
 
 extern const u8 persp_y_scale[8][PERSP_TABLE_COLS];
 
-typedef struct {
+typedef struct
+{
   u8        nframes; // stores nframes+1
   const u8 *frames;  // points to the frame before/after the base
 } transition_t;
 
 /* Entries in every stageN_map_goto_table[] must be sorted ascending by z80:
  * stage_lookup_map_goto() in Main.c binary-searches over them. */
-typedef struct {
+typedef struct
+{
   u16         z80; // original Z80 address
   const void *ptr; // corresponding C data pointer
 } map_goto_entry_t;

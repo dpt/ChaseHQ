@@ -73,7 +73,8 @@ static const uint16_t ay_dac[16] = {
 
 /* A wave generator
  * This toggles its phase bit once per complete period. */
-typedef struct {
+typedef struct
+{
   int           counter; /* state */
   int           period;  /* input */
   int           phase;   /* output */
@@ -86,7 +87,8 @@ typedef aywave_t aytone_t;
 /* A noise generator
  * Uses a wave generator clock plus a 17-bit LFSR and exposes the
  * current noise output bit directly. */
-typedef struct {
+typedef struct
+{
   aywave_t      wave;
   unsigned int  lfsr; /* state, shift register */
   int           output;
@@ -95,14 +97,16 @@ typedef struct {
 /* An envelope generator
  * Uses a wave generator and outputs a volume modulated by an
  * attack/decay shape */
-typedef struct {
+typedef struct
+{
   aywave_t      wave;
   int           shape;  /* input */
   int           volume; /* output */
 } ayenv_t;
 
 /* A mixer */
-typedef struct {
+typedef struct
+{
   int                       master_volume; /* 0..AY_MASTER_VOLUME_MAX */
   slopay_chip_stereo_mode_t stereo_mode;
   ay_q15_t                  dc_prev_in_l_q15;
@@ -112,7 +116,8 @@ typedef struct {
 } aymixer_t;
 
 /* AY state */
-struct slopay_chip {
+struct slopay_chip
+{
   uint_least8_t regs[AY_REG_COUNT]; /* AY registers */
 
   /* Timing */
@@ -190,7 +195,8 @@ void slopay_chip_write_register(slopay_chip_t *ay, slopay_chip_reg_t reg, uint8_
   ay->regs[reg] = value & reg_masks[reg];
 
   /* Update internal state based on register changes */
-  switch (reg) {
+  switch (reg)
+  {
   case AY_REG_CHANNEL_A_FINE_PITCH:
   case AY_REG_CHANNEL_A_COARSE_PITCH:
   case AY_REG_CHANNEL_B_FINE_PITCH:
@@ -231,7 +237,8 @@ uint8_t slopay_chip_read_register(slopay_chip_t *ay, slopay_chip_reg_t reg)
 /* Update tone channel output */
 static void ay_tone_halfclock(aytone_t *t)
 {
-  if (++t->counter >= t->period) {
+  if (++t->counter >= t->period)
+  {
     t->counter = 0;
     t->phase++;
   }
@@ -242,7 +249,8 @@ static void ay_noise_halfclock(aynoise_t *n)
 {
   unsigned int lfsr;
 
-  if (++n->wave.counter >= n->wave.period) {
+  if (++n->wave.counter >= n->wave.period)
+  {
     n->wave.counter = 0;
 
     /* 17-bit Fibonacci LFSR with taps on bits 0 and 3 */
@@ -306,7 +314,8 @@ static void ay_env_halfclock(ayenv_t *env)
     { ay_env_attack, ay_env_off    }, /* 15 */
   };
 
-  if (++env->wave.counter >= env->wave.period) {
+  if (++env->wave.counter >= env->wave.period)
+  {
     env->wave.counter = 0;
 
     envfn[env->shape][env->wave.phase & 1](env);
@@ -315,7 +324,8 @@ static void ay_env_halfclock(ayenv_t *env)
 
 static void ay_fixup_tone(aytone_t *l, const aytone_t *r)
 {
-  if (l->period == r->period && l->counter != r->counter) {
+  if (l->period == r->period && l->counter != r->counter)
+  {
     l->counter = r->counter;
     l->phase   = r->phase;
   }
@@ -353,15 +363,18 @@ slopay_chip_sample_t slopay_chip_get_sample(slopay_chip_t *ay)
    * The mixer register and volume registers gate the *output* only; stopping
    * a generator here would corrupt phase continuity and LFSR state when a
    * channel is re-enabled. */
-  for (t = 0; t < whole_clocks; t++) {
-    if (AY_ENABLE_FIXUP) {
+  for (t = 0; t < whole_clocks; t++)
+  {
+    if (AY_ENABLE_FIXUP)
+    {
       /* If two tone generators have the same period, but different counter and phase, then synchronise them. */
       ay_fixup_tone(&ay->tone[0], &ay->tone[1]);
       ay_fixup_tone(&ay->tone[0], &ay->tone[2]);
       ay_fixup_tone(&ay->tone[1], &ay->tone[2]);
     }
 
-    for (ch = 0; ch < AY_CHANNELS; ch++) {
+    for (ch = 0; ch < AY_CHANNELS; ch++)
+    {
       ay_tone_halfclock(&ay->tone[ch]);
       ay_tone_halfclock(&ay->tone[ch]);
     }
@@ -373,7 +386,8 @@ slopay_chip_sample_t slopay_chip_get_sample(slopay_chip_t *ay)
 
   mixer_reg = ay->regs[AY_REG_MIXER];
 
-  for (ch = 0; ch < AY_CHANNELS; ch++) {
+  for (ch = 0; ch < AY_CHANNELS; ch++)
+  {
     /*
      * AY mixer bits are active-low masks. A disabled tone/noise source does
      * not mute the channel; it forces that gate high. This matters for
@@ -402,24 +416,28 @@ slopay_chip_sample_t slopay_chip_get_sample(slopay_chip_t *ay)
     mixed[ch] = (output > 0 && !(ay->mute_flags & (1u << ch))) ? amplitude : 0;
   }
 
-  if (ay->mixer.stereo_mode != SLOPAY_CHIP_STEREO_MODE_MONO) {
+  if (ay->mixer.stereo_mode != SLOPAY_CHIP_STEREO_MODE_MONO)
+  {
     int left_sum;
     int right_sum;
 
     /* Right channel is always B + C in both stereo modes. */
     right_sum = mixed[1] + mixed[2];
 
-    if (ay->mixer.stereo_mode == SLOPAY_CHIP_STEREO_MODE_ACB) {
+    if (ay->mixer.stereo_mode == SLOPAY_CHIP_STEREO_MODE_ACB)
+    {
       /* ACB: left = A + C */
       left_sum = mixed[0] + mixed[2];
-    } else {
+    } else
+    {
       /* ABC: left = A + B */
       left_sum = mixed[0] + mixed[1];
     }
 
     output_l = left_sum / 2;
     output_r = right_sum / 2;
-  } else {
+  } else
+  {
     const int mono_sum = mixed[0] + mixed[1] + mixed[2];
     output_l = output_r = mono_sum / 3;
   }

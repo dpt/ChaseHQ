@@ -13,7 +13,8 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /* AY constants */
@@ -58,7 +59,8 @@ typedef struct slopay_chip slopay_chip_t;
 typedef uint8_t slopay_chip_reg_t;
 typedef uint32_t slopay_chip_sample_t; /* 0xRRRRLLLL */
 
-typedef enum {
+typedef enum
+{
   SLOPAY_CHIP_STEREO_MODE_MONO = 0,
   SLOPAY_CHIP_STEREO_MODE_ABC,
   SLOPAY_CHIP_STEREO_MODE_ACB

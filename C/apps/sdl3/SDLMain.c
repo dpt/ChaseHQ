@@ -1812,10 +1812,12 @@ int main(int argc, char *argv[])
 
   for (arg = 1; arg < argc; arg++)
   {
-    if (strcmp(argv[arg], "-48k") == 0) {
+    if (strcmp(argv[arg], "-48k") == 0)
+    {
       mode_128k = 0;
     }
-    else if (strcmp(argv[arg], "-128k") == 0) {
+    else if (strcmp(argv[arg], "-128k") == 0)
+    {
       mode_128k = 1;
     }
     else

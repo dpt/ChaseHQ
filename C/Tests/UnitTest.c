@@ -465,11 +465,13 @@ static void test_drlc_writes_xpos_entries(void)
   chq_test_draw_road_lanes_change(state, MAP_LANES_4TO3L_VAL, 1);
 
   changed = 0;
-  for (i = 0; i < 128; i++) {
+  for (i = 0; i < 128; i++)
+  {
     if (state->xpos.centre_right[i] != baseline[i])
       changed++;
   }
-  if (changed == 0) {
+  if (changed == 0)
+  {
     printf("  FAIL: no xpos entries changed — Bresenham did not run\n");
     assert(changed > 0);
   }
@@ -507,11 +509,13 @@ static void test_drlc_3lto2l_runs_bresenham(void)
   chq_test_draw_road_lanes_change(state, MAP_LANES_3LTO2L_VAL, 1);
 
   changed = 0;
-  for (i = 0; i < 128; i++) {
+  for (i = 0; i < 128; i++)
+  {
     if (state->xpos.centre[i] != baseline[i])
       changed++;
   }
-  if (changed == 0) {
+  if (changed == 0)
+  {
     printf("  FAIL: 0x3D wrote no xpos entries — treated as a steady state\n");
     assert(changed > 0);
   }
@@ -539,7 +543,8 @@ static void test_fork_progression(void)
   saw_fork = 0;
   fork_frames = 0;
 
-  for (frame = 0; frame < 30000; frame++) {
+  for (frame = 0; frame < 30000; frame++)
+  {
     state->allow_spawning = 0; /* read_map does this each frame */
     chq_test_prime_road(state, 1);
     chq_test_build_height_table(state);
@@ -547,7 +552,8 @@ static void test_fork_progression(void)
     chq_test_exit_fork(state);
 
     max_obj = chq_test_max_side_object(state);
-    if (max_obj > 9) {
+    if (max_obj > 9)
+    {
       printf("  FAIL: side object byte %d (> 9) at frame %d "
              "(vis=%u prog=%u taken=%u dist=%d)\n",
              max_obj, frame, state->fork_visible, state->fork_in_progress,
@@ -555,16 +561,19 @@ static void test_fork_progression(void)
       assert(max_obj <= 9);
     }
 
-    if (state->fork_visible) {
+    if (state->fork_visible)
+    {
       if (fork_frames == 0)
         saw_fork++;
       fork_frames++;
-      if (fork_frames >= 5000) {
+      if (fork_frames >= 5000)
+      {
         printf("  FAIL: fork still active after %d frames — seized\n",
                fork_frames);
         assert(fork_frames < 5000);
       }
-    } else if (fork_frames) {
+    } else if (fork_frames)
+    {
       printf("  fork %d completed after %d active frames (frame %d)\n",
              saw_fork, fork_frames, frame);
       fork_frames = 0;
@@ -593,7 +602,8 @@ static void test_full_frame_no_corruption(void)
   saw_fork = 0;
   state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
 
-  for (frame = 0; frame < 30000; frame++) {
+  for (frame = 0; frame < 30000; frame++)
+  {
     state->speed = 0x0180;    /* keep the car moving at speed */
     state->session.time_bcd = 0x60; /* top up the clock: never expires */
     chq_test_game_frame(state);
@@ -602,7 +612,8 @@ static void test_full_frame_no_corruption(void)
       saw_fork = 1;
 
     max_obj = chq_test_max_side_object(state);
-    if (max_obj > 9) {
+    if (max_obj > 9)
+    {
       printf("  FAIL: side object byte %d (> 9) at frame %d "
              "(vis=%u prog=%u taken=%u dist=%d)\n",
              max_obj, frame, state->fork_visible, state->fork_in_progress,
@@ -614,13 +625,15 @@ static void test_full_frame_no_corruption(void)
      * post-draw_road backbuffers (.bbuf) around the first fork for visual
      * inspection (see scr2png-style converters in the session notes). */
     if (getenv("CHQ_DUMP_DIR") != NULL &&
-        ((frame >= 180 && frame <= 260) || frame == 100)) {
+        ((frame >= 180 && frame <= 260) || frame == 100))
+        {
       char  fname[256];
       FILE *fp;
       snprintf(fname, sizeof(fname), "%s/screen-%05d.scr",
                getenv("CHQ_DUMP_DIR"), frame);
       fp = fopen(fname, "wb");
-      if (fp) {
+      if (fp)
+      {
         fwrite(g_speccy.screen.pixels, 1, sizeof(g_speccy.screen.pixels), fp);
         fclose(fp);
       }
@@ -629,7 +642,8 @@ static void test_full_frame_no_corruption(void)
         snprintf(fname, sizeof(fname), "%s/road-%05d.bbuf",
                  getenv("CHQ_DUMP_DIR"), frame);
         fp = fopen(fname, "wb");
-        if (fp) {
+        if (fp)
+        {
           fwrite(chq_test_backbuf_snapshot, 1, BACKBUFFER_LENGTH, fp);
           fclose(fp);
         }
@@ -664,7 +678,8 @@ static void test_perp_caught_progression(void)
   max_phase = 0;
 
   /* Warm up: drive normally for a while so hazard/perp state is live. */
-  for (frame = 0; frame < 400; frame++) {
+  for (frame = 0; frame < 400; frame++)
+  {
     state->speed = 0x0180;
     state->session.time_bcd = 0x60;
     chq_test_game_frame(state);
@@ -680,7 +695,8 @@ static void test_perp_caught_progression(void)
   state->hazards[0].distance = 5;
   state->speed = 0x0180;
 
-  for (frame = 0; frame < 2000; frame++) {
+  for (frame = 0; frame < 2000; frame++)
+  {
     state->session.time_bcd = 0x60;
     /* chq_test_game_frame omits keyscan/check_user_input, so nothing
      * resets user_input to the real no-keys-pressed baseline each frame
@@ -697,11 +713,13 @@ static void test_perp_caught_progression(void)
       break;
   }
 
-  if (!saw_accel) {
+  if (!saw_accel)
+  {
     printf("  FAIL: synthesised input never accelerated the hero\n");
     assert(saw_accel);
   }
-  if (max_phase < 4) {
+  if (max_phase < 4)
+  {
     printf("  FAIL: stuck in phase %d after %d frames "
            "(speed=%d input=%02x perp dist=%d speed=%d)\n",
            max_phase, frame, (int)state->speed, state->user_input,
@@ -749,7 +767,8 @@ static void test_helicopter_draws(void)
 
   saw_draw = 0;
 
-  for (frame = 0; frame < 500; frame++) {
+  for (frame = 0; frame < 500; frame++)
+  {
     state->speed = 0x0180;
     state->session.time_bcd = 0x60;
     chq_test_game_frame(state);
@@ -758,7 +777,8 @@ static void test_helicopter_draws(void)
       saw_draw = 1;
 
     max_obj = chq_test_max_side_object(state);
-    if (max_obj > 9) {
+    if (max_obj > 9)
+    {
       printf("  FAIL: side object byte %d (> 9) at frame %d "
              "(dee.draw_helicopter=%u)\n",
              max_obj, frame, state->dee.draw_helicopter);
@@ -767,13 +787,15 @@ static void test_helicopter_draws(void)
 
     /* Debug aid: set CHQ_DUMP_DIR to dump raw ZX screens (.scr) for visual
      * inspection of the rendered helicopter sprite. */
-    if (getenv("CHQ_DUMP_DIR") != NULL && frame < 100) {
+    if (getenv("CHQ_DUMP_DIR") != NULL && frame < 100)
+    {
       char  fname[256];
       FILE *fp;
       snprintf(fname, sizeof(fname), "%s/heli-%05d.scr",
                getenv("CHQ_DUMP_DIR"), frame);
       fp = fopen(fname, "wb");
-      if (fp) {
+      if (fp)
+      {
         fwrite(g_speccy.screen.pixels, 1, sizeof(g_speccy.screen.pixels), fp);
         fclose(fp);
       }
@@ -1041,7 +1063,8 @@ static void test_name_entry_confirms_three_letters(void)
   state->bank3->hiscore.fire_locked  = 0;
   state->bank3->hiscore.complete     = 0;
 
-  for (letter = 0; letter < 3; letter++) {
+  for (letter = 0; letter < 3; letter++)
+  {
     chq_test_hiscore_inject_input(state, USERINPUTFLAG_RIGHT); /* '@' -> 'A' */
     chq_test_hiscore_inject_input(state, 0);                   /* release RIGHT */
     chq_test_hiscore_inject_input(state, USERINPUTFLAG_FIRE);  /* confirm 'A' */
@@ -1087,7 +1110,8 @@ static void test_name_entry_idle_timeout_finalises(void)
   state->bank3->hiscore.fire_locked  = 0;
   state->bank3->hiscore.complete     = 0;
 
-  for (frame = 0; frame < 3119; frame++) {
+  for (frame = 0; frame < 3119; frame++)
+  {
     chq_test_hiscore_inject_input(state, 0);
     assert(state->bank3->hiscore.complete == 0);
   }
@@ -1149,7 +1173,8 @@ static void test_run_title_tune_starts_and_keeps_playing(void)
   u8          tune;
   int         frame;
 
-  for (tune = 0; tune < 4; tune++) {
+  for (tune = 0; tune < 4; tune++)
+  {
     state = chq_create(&g_speccy);
     assert(state != NULL);
 
@@ -1157,7 +1182,8 @@ static void test_run_title_tune_starts_and_keeps_playing(void)
     assert(state->bank3->title_music.tune_active);
     assert(state->bank3->title_music.channel[0].pattern_ptr != NULL);
 
-    for (frame = 0; frame < 150; frame++) {
+    for (frame = 0; frame < 150; frame++)
+    {
       chq_test_run_title_tune(state);
       assert(state->bank3->title_music.tune_active);
     }
@@ -1287,11 +1313,13 @@ static void test_all_stages_draw_frames(void)
   last = 5;
 #endif
 
-  for (stage = MINSTAGE; stage <= last; stage++) {
+  for (stage = MINSTAGE; stage <= last; stage++)
+  {
     state = make_stage_state(stage);
     state->hazards[0].used = HAZARD_USED; /* keep the perp spawned */
 
-    for (frame = 0; frame < 2000; frame++) {
+    for (frame = 0; frame < 2000; frame++)
+    {
       state->speed = 0x0180;          /* keep the car moving at speed */
       state->session.time_bcd = 0x60; /* top up the clock: never expires */
       chq_test_game_frame(state);
