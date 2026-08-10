@@ -90,12 +90,12 @@ static zxspectrum_t g_speccy;
 static void speccy_init(void)
 {
   memset(&g_speccy, 0, sizeof(g_speccy));
-  g_speccy.in      = fake_in;
-  g_speccy.out     = fake_out;
-  g_speccy.draw    = fake_draw;
-  g_speccy.stamp   = fake_stamp;
-  g_speccy.sleep   = fake_sleep;
-  g_speccy.logtime = fake_logtime;
+  g_speccy.in            = fake_in;
+  g_speccy.out           = fake_out;
+  g_speccy.draw          = fake_draw;
+  g_speccy.stamp         = fake_stamp;
+  g_speccy.sleep         = fake_sleep;
+  g_speccy.logtime       = fake_logtime;
   g_speccy.screen.width  = SCREEN_WIDTH;
   g_speccy.screen.height = SCREEN_HEIGHT;
 }
@@ -155,7 +155,7 @@ static int backbuf_was_written(const chqstate_t *state)
  */
 static void test_build_height_table_writes_table(void)
 {
-  chqstate_t *state = make_road_state();
+  chqstate_t *state   = make_road_state();
   int         changed = 0;
   int         i;
 
@@ -189,7 +189,7 @@ static void test_build_height_table_writes_table(void)
  */
 static void test_layout_road_populates_tables(void)
 {
-  chqstate_t *state = make_road_state();
+  chqstate_t *state   = make_road_state();
   int         nonzero = 0;
   int         i;
 
@@ -253,11 +253,11 @@ static void test_draw_road_writes_backbuffer(void)
 static void test_drlc_exits_when_dist_too_far(void)
 {
   chqstate_t *state;
-  u16 snap_left[128];
-  u16 snap_centre_left[128];
-  u16 snap_centre[128];
-  u16 snap_centre_right[128];
-  u16 snap_right[128];
+  u16         snap_left[128];
+  u16         snap_centre_left[128];
+  u16         snap_centre[128];
+  u16         snap_centre_right[128];
+  u16         snap_right[128];
 
   state = make_road_state();
   chq_test_build_height_table(state);
@@ -296,11 +296,11 @@ static void test_drlc_exits_when_dist_too_far(void)
 static void test_drlc_exits_on_straight_track(void)
 {
   chqstate_t *state;
-  u16 snap_left[128];
-  u16 snap_centre_left[128];
-  u16 snap_centre[128];
-  u16 snap_centre_right[128];
-  u16 snap_right[128];
+  u16         snap_left[128];
+  u16         snap_centre_left[128];
+  u16         snap_centre[128];
+  u16         snap_centre_right[128];
+  u16         snap_right[128];
 
   state = make_road_state();
   chq_test_build_height_table(state);
@@ -451,9 +451,9 @@ static void test_set_up_stage_resets_lane_data(void)
 static void test_drlc_writes_xpos_entries(void)
 {
   chqstate_t *state;
-  u16 baseline[128];
-  int i;
-  int changed;
+  u16         baseline[128];
+  int         i;
+  int         changed;
 
   state = make_road_state();
   chq_test_build_height_table(state);
@@ -495,9 +495,9 @@ static void test_drlc_writes_xpos_entries(void)
 static void test_drlc_3lto2l_runs_bresenham(void)
 {
   chqstate_t *state;
-  u16 baseline[128];
-  int i;
-  int changed;
+  u16         baseline[128];
+  int         i;
+  int         changed;
 
   state = make_road_state();
   chq_test_build_height_table(state);
@@ -539,8 +539,8 @@ static void test_fork_progression(void)
   int         fork_frames; /* frames spent with the fork active */
   int         max_obj;     /* largest side-object byte this frame */
 
-  state = make_road_state();
-  saw_fork = 0;
+  state       = make_road_state();
+  saw_fork    = 0;
   fork_frames = 0;
 
   for (frame = 0; frame < 30000; frame++)
@@ -598,14 +598,14 @@ static void test_full_frame_no_corruption(void)
   int         saw_fork; /* set once fork_visible goes non-zero */
   int         max_obj;  /* largest side-object byte this frame */
 
-  state = make_road_state();
-  saw_fork = 0;
+  state                  = make_road_state();
+  saw_fork               = 0;
   state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
 
   for (frame = 0; frame < 30000; frame++)
   {
     state->speed = 0x0180;    /* keep the car moving at speed */
-    state->session.time_bcd = 0x60; /* top up the clock: never expires */
+    state->session.time_bcd = 0x60;   /* top up the clock: never expires */
     chq_test_game_frame(state);
 
     if (state->fork_visible)
@@ -667,33 +667,33 @@ static void test_full_frame_no_corruption(void)
  */
 static void test_perp_caught_progression(void)
 {
-  chqstate_t *state;        /* game state under test */
-  int         frame;        /* frame counter */
-  int         saw_accel;    /* set once the synthesised input includes UP */
-  int         max_phase;    /* highest perp_caught_phase reached */
+  chqstate_t *state;     /* game state under test */
+  int         frame;     /* frame counter */
+  int         saw_accel; /* set once the synthesised input includes UP */
+  int         max_phase; /* highest perp_caught_phase reached */
 
-  state = make_road_state();
+  state                  = make_road_state();
   state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
-  saw_accel = 0;
-  max_phase = 0;
+  saw_accel              = 0;
+  max_phase              = 0;
 
   /* Warm up: drive normally for a while so hazard/perp state is live. */
   for (frame = 0; frame < 400; frame++)
   {
-    state->speed = 0x0180;
+    state->speed            = 0x0180;
     state->session.time_bcd = 0x60;
     chq_test_game_frame(state);
   }
 
   /* Mimic fully_smashed ($8C3A): phase 1, stop hand, input masked to
    * pause/quit only, perp scripted to speed 400. */
-  state->perp_caught_phase = 1;
-  state->hand_flag = 2;
-  state->smash_counter = 20;
+  state->perp_caught_phase       = 1;
+  state->hand_flag               = 2;
+  state->smash_counter           = 20;
   state->session.user_input_mask = 0xC0;
-  state->hazards[0].speed = 400;
-  state->hazards[0].distance = 5;
-  state->speed = 0x0180;
+  state->hazards[0].speed        = 400;
+  state->hazards[0].distance     = 5;
+  state->speed                   = 0x0180;
 
   for (frame = 0; frame < 2000; frame++)
   {
@@ -748,10 +748,10 @@ static void test_perp_caught_progression(void)
  */
 static void test_helicopter_draws(void)
 {
-  chqstate_t *state;   /* game state under test */
-  int         frame;   /* frame counter */
+  chqstate_t *state;    /* game state under test */
+  int         frame;    /* frame counter */
   int         saw_draw; /* set once dee.draw_helicopter goes non-zero */
-  int         max_obj; /* largest side-object byte this frame */
+  int         max_obj;  /* largest side-object byte this frame */
 
   state = chq_create(&g_speccy);
   assert(state != NULL);
@@ -762,14 +762,14 @@ static void test_helicopter_draws(void)
   assert(state->stage != NULL);
   chq_test_set_up_stage(state);
 
-  state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
+  state->hazards[0].used    = HAZARD_USED; /* keep perp spawned, as run_game */
   state->helicopter_control = 3; /* dispatch straight to turn-left sequence */
 
   saw_draw = 0;
 
   for (frame = 0; frame < 500; frame++)
   {
-    state->speed = 0x0180;
+    state->speed            = 0x0180;
     state->session.time_bcd = 0x60;
     chq_test_game_frame(state);
 
@@ -824,27 +824,27 @@ static void test_helicopter_draws(void)
  */
 static void test_draw_overhead_stops_at_right_edge(void)
 {
-  chqstate_t      *state;
-  overhead_span_t  span;
-  u8               fill_byte;
-  depthset_t       set;
-  stretchy_t       obj;
-  s16              xpos[4];
-  u8               height[0x36];
-  const u8        *row;
-  int              expected_off;
-  int              expected_row;
-  int              expected_col;
-  int              expected_writes;
-  int              i;
+  chqstate_t     *state;
+  overhead_span_t span;
+  u8              fill_byte;
+  depthset_t      set;
+  stretchy_t      obj;
+  s16             xpos[4];
+  u8              height[0x36];
+  const u8       *row;
+  int             expected_off;
+  int             expected_row;
+  int             expected_col;
+  int             expected_writes;
+  int             i;
 
   state = chq_create(&g_speccy);
   assert(state != NULL);
 
   memset(state->backbuffer, 0xFF, sizeof(state->backbuffer));
 
-  fill_byte = 0xAA;
-  span.nrows = 1;
+  fill_byte       = 0xAA;
+  span.nrows      = 1;
   span.fill_bytes = &fill_byte;
 
   memset(&set, 0, sizeof(set));
@@ -1000,7 +1000,7 @@ static void test_show_end_screen_runs_script(void)
 
   s_end_screen_state    = state;
   s_end_screen_in_count = 0;
-  g_speccy.in            = end_screen_in;
+  g_speccy.in           = end_screen_in;
 
   if (setjmp(state->host_quit_jmp) == 0)
     show_end_screen(state);
@@ -1049,8 +1049,8 @@ static void test_name_entry_setup_screen_draws_table(void)
 
 static void test_name_entry_confirms_three_letters(void)
 {
-  chqstate_t *state;
-  int         letter;
+  chqstate_t       *state;
+  int               letter;
   high_score_row_t *entry;
 
   state = chq_create(&g_speccy);
@@ -1094,8 +1094,8 @@ static void test_name_entry_confirms_three_letters(void)
  */
 static void test_name_entry_idle_timeout_finalises(void)
 {
-  chqstate_t *state;
-  int         frame;
+  chqstate_t       *state;
+  int               frame;
   high_score_row_t *entry;
 
   state = chq_create(&g_speccy);
@@ -1315,13 +1315,13 @@ static void test_all_stages_draw_frames(void)
 
   for (stage = MINSTAGE; stage <= last; stage++)
   {
-    state = make_stage_state(stage);
+    state                  = make_stage_state(stage);
     state->hazards[0].used = HAZARD_USED; /* keep the perp spawned */
 
     for (frame = 0; frame < 2000; frame++)
     {
       state->speed = 0x0180;          /* keep the car moving at speed */
-      state->session.time_bcd = 0x60; /* top up the clock: never expires */
+      state->session.time_bcd = 0x60;   /* top up the clock: never expires */
       chq_test_game_frame(state);
       assert(chq_test_max_side_object(state) <= 9);
     }

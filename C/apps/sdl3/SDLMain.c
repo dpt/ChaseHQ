@@ -90,7 +90,7 @@
 #define AY_VOLUME_PCT       (20) // 0..AY_MASTER_VOLUME_MAX
 
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
-#define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
+#define BEEPER_AMPLITUDE  (32767 * BEEPER_VOLUME_PCT / 100)
 
 /* SlopAY-style beeper/AY mix: the beeper is a hard on/off level, so summing
  * it straight into the AY signal biases the waveform upward whenever it is
@@ -224,10 +224,10 @@ typedef struct chq_sdl_state
      * changes): game thread produces, audio thread consumes. queue_mutex
      * guards head/tail and the slots between them.
      */
-    SDL_Mutex      *queue_mutex;
+    SDL_Mutex        *queue_mutex;
     chq_audio_event_t queue[AY_QUEUE_CAPACITY];
-    int             queue_head;
-    int             queue_tail;
+    int               queue_head;
+    int               queue_tail;
 
     /* Audio clock anchor, mapping the facade's virtual T-state clock onto
      * wall-clock ns. The game thread emits a frame's worth of audio in a
@@ -298,10 +298,10 @@ typedef struct chq_sdl_state
      * crt_enabled and swapped by chq_set_crt_enabled: crt when enabled,
      * renderer/texture when not. The other's handles are NULL.
      */
-    int             crt_enabled; // bool; toggled with F4
+    int              crt_enabled; // bool; toggled with F4
     chq_CRT_shader_t crt;
     chq_CRT_params_t crt_params;
-    int             crt_param_index; // which crt_params field +/- adjusts
+    int              crt_param_index; // which crt_params field +/- adjusts
     SDL_Renderer   *renderer;
     SDL_Texture    *texture;
 
@@ -632,7 +632,7 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
         (head_time_ns > AY_REPLAY_CUSHION_NS) ?
           head_time_ns - AY_REPLAY_CUSHION_NS : 0;
       state->audio.replay_anchor_sample = state->audio.samples_played;
-      state->audio.replay_anchored = 1;
+      state->audio.replay_anchored      = 1;
     }
 
     /* Computed fresh from the anchor rather than accumulated, so truncation
@@ -667,7 +667,7 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
           edge_ns = start_ns;
         if (state->audio.speaker_level)
           high_ns += edge_ns - level_ns;
-        level_ns = edge_ns;
+        level_ns                   = edge_ns;
         state->audio.speaker_level = ev->value;
       }
 
@@ -888,11 +888,11 @@ static int chq_renderer_create(chq_sdl_state_t *state)
  */
 static int chq_video_recreate_window(chq_sdl_state_t *state)
 {
-  char        title[128];
-  int         x;
-  int         y;
-  int         w;
-  int         h;
+  char            title[128];
+  int             x;
+  int             y;
+  int             w;
+  int             h;
   SDL_WindowFlags flags;
   SDL_Window *window;
 
@@ -1047,7 +1047,7 @@ static int chq_osd_visit(chq_sdl_state_t *state, int dx, int dy,
                          void (*plot)(void *ctx, int gx, int gy),
                          void *ctx)
 {
-  int  col;
+  int         col;
   const char *p;
 
   if (state->video.osd_shown_at_ms == 0)
@@ -1131,7 +1131,7 @@ typedef struct
 
 static void chq_osd_plot_renderer_outline(void *vctx, int gx, int gy)
 {
-  chq_osd_render_ctx_t *ctx = vctx;
+  chq_osd_render_ctx_t *ctx   = vctx;
   int                    scale = ctx->state->video.scale;
   SDL_FRect              px;
 
@@ -1145,7 +1145,7 @@ static void chq_osd_plot_renderer_outline(void *vctx, int gx, int gy)
 
 static void chq_osd_plot_renderer_fill(void *vctx, int gx, int gy)
 {
-  chq_osd_render_ctx_t *ctx = vctx;
+  chq_osd_render_ctx_t *ctx   = vctx;
   int                    scale = ctx->state->video.scale;
   SDL_FRect              px;
 
@@ -1229,8 +1229,8 @@ static int chq_render_osd_mask(chq_sdl_state_t *state)
 static const uint32_t *chq_build_backbuffer_pixels(chq_sdl_state_t *state)
 {
   static uint32_t pixels[GAMEWIDTH * GAMEHEIGHT];
-  const u8  *backbuf;
-  int        bbwidth, bbheight, rowbytes, linear_y, col;
+  const u8       *backbuf;
+  int             bbwidth, bbheight, rowbytes, linear_y, col;
 
   backbuf  = chq_get_backbuffer(state->game, &bbwidth, &bbheight);
   rowbytes = bbwidth / 8;
@@ -1411,8 +1411,8 @@ static void chq_action_crt_param_adjust(chq_sdl_state_t *state, SDL_Keycode sym)
   float                      *field;
   char                        buf[32];
 
-  desc  = &chq_crt_param_descs[state->video.crt_param_index];
-  field = chq_crt_param_field(&state->video.crt_params, desc);
+  desc   = &chq_crt_param_descs[state->video.crt_param_index];
+  field  = chq_crt_param_field(&state->video.crt_params, desc);
   *field = CLAMP(*field + (sym == SDLK_PAGEDOWN ? -desc->step : desc->step),
                  desc->min, desc->max);
   SDL_snprintf(buf, sizeof(buf), "%s %.2f", desc->name, *field);
@@ -1765,7 +1765,7 @@ static void chq_sdl_main_loop(void *opaque)
   {
     /* Update the texture from the game's converted screen buffer. */
     const zx_frame_t *frame;
-    SDL_FRect  dstrect;
+    SDL_FRect         dstrect;
 
     dstrect.x = (float) x;
     dstrect.y = (float) y;
@@ -1830,8 +1830,8 @@ int main(int argc, char *argv[])
   memset(&state, 0, sizeof(state));
 
   zxkeyset_clear(&state.keys);
-  state.kempston  = 0;
-  state.flags     = 0;
+  state.kempston = 0;
+  state.flags    = 0;
   CHQ_FLAG_ASSIGN(&state, CHQ_FLAG_MODE_128K, mode_128k);
   state.video.scale           = SCALE_DEFAULT;
   state.speed                 = SPEED_DEFAULT;
@@ -1882,16 +1882,16 @@ int main(int argc, char *argv[])
    * the plain renderer takes an ABGR8888 texture to suit (see
    * chq_renderer_create).
    */
-  zxconfig.width      = GAMEWIDTH / 8;
-  zxconfig.height     = GAMEHEIGHT / 8;
-  zxconfig.opaque     = &state;
-  zxconfig.draw       = &chq_draw_handler;
-  zxconfig.stamp      = &chq_stamp_handler;
-  zxconfig.sleep      = &chq_sleep_handler;
-  zxconfig.key        = &chq_key_handler;
-  zxconfig.border     = &chq_border_handler;
-  zxconfig.speaker    = &chq_speaker_handler;
-  zxconfig.ay_out     = &chq_ay_out_handler;
+  zxconfig.width        = GAMEWIDTH / 8;
+  zxconfig.height       = GAMEHEIGHT / 8;
+  zxconfig.opaque       = &state;
+  zxconfig.draw         = &chq_draw_handler;
+  zxconfig.stamp        = &chq_stamp_handler;
+  zxconfig.sleep        = &chq_sleep_handler;
+  zxconfig.key          = &chq_key_handler;
+  zxconfig.border       = &chq_border_handler;
+  zxconfig.speaker      = &chq_speaker_handler;
+  zxconfig.ay_out       = &chq_ay_out_handler;
   zxconfig.pixel_format = ZX_PIXEL_ABGR8888; /* R in lower byte */
 
   state.zx = zxspectrum_create(&zxconfig);

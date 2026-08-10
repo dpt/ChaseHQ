@@ -60,7 +60,7 @@ typedef struct title_glyph
 {
   u8        height_pairs; /* number of scanline-pairs to blit */
   u8        width_bytes;  /* glyph width in screen bytes (1-7) */
-  const u8 *bitmap;      /* source pixel bytes, OR-blitted verbatim */
+  const u8 *bitmap;       /* source pixel bytes, OR-blitted verbatim */
 } title_glyph_t;
 
 /* Object animation script opcodes (title_object::opcode / script byte-code
@@ -4491,7 +4491,7 @@ static void insert_high_score_entry(chqstate_t *state, int row)
 
   clear_playfield_and_attrs(state); /* Conv: added -- clear hiscore table
                                       * before returning to the title screen */
-  update_whole_playfield(state); /* Conv: added */
+  update_whole_playfield(state);    /* Conv: added */
 }
 
 /* $C3AF-$C400: static header/label text for the name-entry screen, packed in
@@ -4696,7 +4696,7 @@ static void name_entry_frame(chqstate_t *state)
 
   state->bank3->hiscore.draw_erase_toggle =
     (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-          (state->bank3->hiscore.draw_erase_toggle >> 7));
+           (state->bank3->hiscore.draw_erase_toggle >> 7));
   redraw_name_frame(state, D_screen, E_screen);
 }
 
@@ -4972,10 +4972,10 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
 
   for (row = 0; row < 4; row++)
   {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
+    *DE_screen  = *HL_font;
+    DE_screen  += 256;
+    *DE_screen  = *HL_font++;
+    DE_screen  += 256;
   }
 
   /* Conv: crosses the screen-third boundary; see print_character's own
@@ -4983,10 +4983,10 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
   DE_screen -= 2016;
   for (row = 0; row < 3; row++)
   {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
+    *DE_screen  = *HL_font;
+    DE_screen  += 256;
+    *DE_screen  = *HL_font++;
+    DE_screen  += 256;
   }
 
   update_screen(state, glyph_addr, 8, 14);
@@ -5356,7 +5356,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
   if (do_toggle)
     state->bank3->hiscore.draw_erase_toggle =
       (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-            (state->bank3->hiscore.draw_erase_toggle >> 7));
+             (state->bank3->hiscore.draw_erase_toggle >> 7));
   blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
   draw_score_row_fields(state, D, E, row, DE_entry, blink, TABLE_ROW_COLOUR);
@@ -5400,18 +5400,18 @@ static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
   DE_screen  = ADDRTOSCREEN(glyph_addr);
   for (scan_row = 0; scan_row < 4; scan_row++)
   {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
   }
   DE_screen -= 2016; /* crosses the screen-third boundary, see hiscore_draw_glyph */
   for (scan_row = 0; scan_row < 3; scan_row++)
   {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
   }
 
   update_screen(state, glyph_addr, 8, 14);
@@ -6284,12 +6284,12 @@ static u8 titlescr_wait_loop(chqstate_t *state)
     {
       /* $C65F-$C67B: seed a placeholder score of $87654321, stage 6,
        * 3 retries, check it against the high-score table, then restart. */
-      state->score_bcd[0] = 0x21;
-      state->score_bcd[1] = 0x43;
-      state->score_bcd[2] = 0x65;
-      state->score_bcd[3] = 0x87;
+      state->score_bcd[0]        = 0x21;
+      state->score_bcd[1]        = 0x43;
+      state->score_bcd[2]        = 0x65;
+      state->score_bcd[3]        = 0x87;
       state->wanted_stage_number = 6; // MAX?
-      state->retry_count = 3;
+      state->retry_count         = 3;
 
       stop_music_and_silence(state);
 
@@ -6753,8 +6753,8 @@ static void oss_op_decel_x(struct title_object *rec)
   oss_apply_x_step(rec);
 
   C_idx   = (u8) rec->y_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->y -= A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->y      -= A_speed;
   rec->y_step = (s8) (C_idx + 1);
 }
 
@@ -6853,8 +6853,8 @@ static void oss_op_decel_y(struct title_object *rec)
   oss_apply_x_step(rec);
 
   C_idx   = (u8) rec->y_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->y += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->y      += A_speed;
   rec->y_step = (s8) (C_idx - 1);
 }
 
@@ -6878,8 +6878,8 @@ static void oss_op_accel_x_a(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x -= A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      -= A_speed;
   rec->x_step = (s8) (C_idx - 1);
 }
 
@@ -6898,8 +6898,8 @@ static void oss_op_accel_x_b(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      += A_speed;
   rec->x_step = (s8) (C_idx - 1);
 }
 
@@ -6919,8 +6919,8 @@ static void oss_op_accel_x_c(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      += A_speed;
   rec->x_step = (s8) (C_idx + 1);
 }
 
@@ -6962,7 +6962,7 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
   clear_playfield_and_attrs(state);
 
   attrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  c = PLAYFIELD_HEIGHT / 8;
+  c     = PLAYFIELD_HEIGHT / 8;
   do
   {
     *attrs++ = attribute_BLACK_OVER_BLACK;
@@ -7227,7 +7227,7 @@ static void compute_glyph_geometry(u8                     B_y,
   A ^= B_screen_rows;
   A &= 0xF8;
   A ^= B_screen_rows;
-  D = A;
+  D  = A;
 
   /* $C8DD-$C8E7 / $C967-$C971: E = destination screen address low byte. */
   A = C_x;
@@ -7247,7 +7247,7 @@ static void compute_glyph_geometry(u8                     B_y,
   glyph_index = L_row + ((C_x >> 1) & 0x03);
   assert(glyph_index >= 0 && glyph_index < TITLE_GLYPH_COUNT);
 
-  glyph = &title_glyph_table[glyph_index];
+  glyph               = &title_glyph_table[glyph_index];
   out->B_height_pairs = glyph->height_pairs;
   out->C_width_select = glyph->width_bytes;
   out->HL_src          = glyph->bitmap;
@@ -7642,11 +7642,11 @@ static void clear_playfield_buffer(chqstate_t *state)
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
     } while (--B_scanline);
-    H = 0x48;
+    H  = 0x48;
     L += 0x20;
   } while (L <= 0xFF);
   L &= 0xFF;
-  H = 0x50;
+  H  = 0x50;
 
   do { /* $CC2E-$CC49: screen third 3, top 5 character rows only */
     B_scanline = 8;
@@ -7655,7 +7655,7 @@ static void clear_playfield_buffer(chqstate_t *state)
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
     } while (--B_scanline);
-    H = 0x50;
+    H  = 0x50;
     L += 0x20;
   } while (L < 0xA0);
 }
@@ -8104,7 +8104,7 @@ static void titlescr_write_ay_registers(chqstate_t *state)
   /* $ECCF-$ECD4: LD HL,$EFBA / LD A,$0B / LD C,$FD (10+7+7=24). */
   speccy->logtime(speccy, 24);
   values = &state->bank3->title_ay_regs.env_fine;
-  reg  = AY_REG_ENVELOPE_FINE_DURATION;
+  reg    = AY_REG_ENVELOPE_FINE_DURATION;
   do
   {
     /* $ECD6-$ECDF: LD B,$FF / OUT (C),A / LD B,$BF / OUTD / DEC A / JP P
@@ -8134,7 +8134,7 @@ static void titlescr_silence_ay(chqstate_t *state)
   int           reg;    /* AY register index, 13 down to 0 (was D) */
 
   speccy = state->speccy;
-  reg = AY_REG_ENVELOPE_SHAPE;
+  reg    = AY_REG_ENVELOPE_SHAPE;
   do
   {
     speccy->out(speccy, port_AY_REGISTER, reg);
@@ -8351,7 +8351,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
    * bytes. */
   IX_channel->status = 0;
-  DE_pattern = IX_channel->pattern_ptr;
+  DE_pattern         = IX_channel->pattern_ptr;
 
   for (;;)
   {
@@ -8393,7 +8393,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       HL_ptr = IX_channel->envelope_shape_default;  /* +$14/$15 */
       IX_channel->envelope_shape_ptr = HL_ptr;      /* +$16/$17: reset envelope pointer */
 
-      A_env_byte = *HL_ptr;
+      A_env_byte                     = *HL_ptr;
       IX_channel->envelope_amplitude = A_env_byte;  /* +$18 */
       IX_channel->volume             = A_env_byte;  /* +$13 */
 
@@ -8420,7 +8420,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       case PCMD_RESET_ROW_COUNTER_CLEAR_ENV:
         /* $EDBC-$EDC3: LD (IX+$13),B/RES 5,(IX+$00)/JR $EE22 (19+23+12=54). */
         state->speccy->logtime(state->speccy, 54);
-        IX_channel->volume = 0;
+        IX_channel->volume  = 0;
         IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
         goto reset_row_counter;
 
@@ -8500,7 +8500,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = 0;
+        IX_channel->slide_update_flag                = 0;
         continue;
 
       case PCMD_SET_MIXER_BITS_LOW3:
@@ -8513,7 +8513,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
+        IX_channel->slide_update_flag                = CHSLIDE_ECHO_NOTE;
         continue;
 
       case PCMD_CLEAR_MIXER_BITS:
@@ -8867,7 +8867,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 7);
       /* Underflow: reload the counter and try to advance the envelope shape
        * pointer. */
-      A_env_step = IX_channel->envelope_speed;
+      A_env_step                        = IX_channel->envelope_speed;
       IX_channel->envelope_step_counter = A_env_step;
 
       /* $EEAF-$EEBD: LD A,(IX+$0F)/LD (IX+$19),A/LD L,(IX+$16)/
@@ -8944,8 +8944,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
    * real memory is zero, so DE_period comes out as 0 on real hardware.
    * Reproduce that rather than reading past note_periods' bounds in C. */
   DE_period = ((A_note_lookup >> 1) < NELEMS(note_periods))
-                ? note_periods[A_note_lookup >> 1]
-                : 0;
+                  ? note_periods[A_note_lookup >> 1]
+                  : 0;
 
   /* $EEFC-$EF4B: phase 3, vibrato. */
   /* $EEFC-$EEFF: LD L,(IX+$1D)/BIT 6,L (19+8=27). */
@@ -8955,7 +8955,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EF01: JR Z not taken (7); $EF03-$EF0B: LD H,A/LD B,(IX+$1A)/SLA B/
      * BIT 7,L/LD A,(IX+$1C) (4+19+8+8+19=58). Total 7+58=65. */
     state->speccy->logtime(state->speccy, 65);
-    B_vib_range = IX_channel->vibrato_depth;
+    B_vib_range   = IX_channel->vibrato_depth;
     B_vib_range <<= 1;
 
     A_vib_phase = IX_channel->vibrato_phase;
@@ -8996,7 +8996,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
            * (19+7+23+4+12=65). */
           state->speccy->logtime(state->speccy, 65);
           IX_channel->flags |= CHFLAGS_VIBRATO_ASCENDING; // flip to ascending
-          A_vib_phase = 0;
+          A_vib_phase        = 0;
         }
       } else
       {
@@ -9048,7 +9048,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       do
       {
         DE_vib_offset <<= 1;
-        A_shift_test = (A_shift_test & 0xFF) + 0x18;
+        A_shift_test    = (A_shift_test & 0xFF) + 0x18;
         /* $EF41-$EF47: SLA E/RL D/ADD A,$18/JR NC (8+8+7=23, +12 taken/+7 not
          * taken depending on whether the loop continues). */
         if (A_shift_test <= 0xFF)
@@ -9074,7 +9074,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   /* $EF4B-$EF76: phase 4, portamento/slide. */
   /* $EF4B-$EF4E: LD A,C/XOR $01/LD (IX+$00),A (4+7+19=30). */
   state->speccy->logtime(state->speccy, 30);
-  A_status_new = C_status ^ CHSTATUS_TOGGLE;
+  A_status_new       = C_status ^ CHSTATUS_TOGGLE;
   IX_channel->status = A_status_new;
 
   /* $EF51: BIT 2,C (8). */
@@ -9156,10 +9156,10 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
 
   /* Replace-bits-under-mask: merge this channel's tone-enable bits into the
    * shared mixer cache without disturbing the other channels' bits. */
-  A_mixer_val ^= state->bank3->title_ay_regs.mixer;
-  A_mixer_val &= IX_channel->mixer_mask;
-  A_mixer_val ^= state->bank3->title_ay_regs.mixer;
-  state->bank3->title_ay_regs.mixer = A_mixer_val;
+  A_mixer_val                       ^= state->bank3->title_ay_regs.mixer;
+  A_mixer_val                       &= IX_channel->mixer_mask;
+  A_mixer_val                       ^= state->bank3->title_ay_regs.mixer;
+  state->bank3->title_ay_regs.mixer  = A_mixer_val;
 
   /* $EF87-$EF93: LD HL,$EFB6/XOR (HL)/AND (IX+$24)/XOR (HL)/LD (HL),A
    * (10+7+19+7+7=50); LD A,(IX+$1F)/AND A (19+4=23). Total 73. */
@@ -9169,7 +9169,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   {
     /* One-shot mute transition. */
     A_mute_flag &= (u8) ~CHMUTE_GATE_BIT;
-    IX_channel->mute_pending = A_mute_flag;
+    IX_channel->mute_pending  = A_mute_flag;
     A_noise_mask = (u8) ~(IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
     state->bank3->title_ay_regs.mixer &= A_noise_mask;
 
@@ -9391,7 +9391,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       IX_channel->phrase_ptr          = resolve_phrase_addr(DE_new_ptr);
 
       BC_table_offset += 3;
-      *DE_pattern = IX_channel->phrase_ptr;
+      *DE_pattern      = IX_channel->phrase_ptr;
       goto finalize;
 
     default:
@@ -9402,7 +9402,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 100);
       /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
       BC_table_offset += 2;
-      *DE_pattern = resolve_phrase_addr(DE_word);
+      *DE_pattern      = resolve_phrase_addr(DE_word);
       goto finalize;
     }
   }
@@ -10004,7 +10004,7 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
 
     state->bank3->drums.script_delay = A;
 
-    C_offset = *HL++;
+    C_offset                       = *HL++;
     state->bank3->drums.script_ptr = HL;
 
     entry = resolve_drum_script_addr(0xFAA4 + C_offset);
@@ -10131,7 +10131,7 @@ static void titlescr_music(chqstate_t *state)
    * trigger-table pacing intends.
    */
   state->bank3->drums.slot1_countdown = state->bank3->drums.slot1_selector_dup;
-  HL_stream = state->bank3->drums.stream_ptr;
+  HL_stream                           = state->bank3->drums.stream_ptr;
   goto drum_read_stream_byte;
 
 sfx1_reload_pointer:
@@ -10177,8 +10177,8 @@ drum_dispatch_entry:
 
   /* $F87B LD D,A / $F87C AND $07 (4+7=11). */
   state->speccy->logtime(state->speccy, 11);
-  D_entry = A;
-  A &= 0x07;
+  D_entry  = A;
+  A       &= 0x07;
   if (A == 0)
   {
     /* $F87E JR Z,$F894 taken (12) -- nothing to trigger this frame. */
@@ -10413,8 +10413,8 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
   {
     /* Conv: DJNZ with B = 0 loops 256 times */
     i = state->bank3->drums.sample_pitch_param
-          ? state->bank3->drums.sample_pitch_param
-          : 256;
+            ? state->bank3->drums.sample_pitch_param
+            : 256;
     do
     {
       bits = port_MASK_EAR; // speaker bit
@@ -10506,8 +10506,8 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
   int           B_phase;    /* phase byte read after the +3 advance (was B) */
   u8            A;          /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
 
-  speccy    = state->speccy;
-  carry     = 0;
+  speccy     = state->speccy;
+  carry      = 0;
   E_duration = E_pitch_param;
 
   do
@@ -10516,14 +10516,14 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
     do
     {
       state->bank3->drums.noise_phase += 3;
-      B_phase = state->bank3->drums.noise_phase;
-      A       = state->bank3->drums.noise_accum - 0x8D;
-      state->bank3->drums.noise_accum = A;
-      A += B_phase;
+      B_phase                          = state->bank3->drums.noise_phase;
+      A                                = state->bank3->drums.noise_accum - 0x8D;
+      state->bank3->drums.noise_accum  = A;
+      A                               += B_phase;
       RLC(A);
       RRC(state->bank3->drums.noise_rotate);
-      A += state->bank3->drums.noise_rotate;
-      state->bank3->drums.noise_rotate = A;
+      A                                += state->bank3->drums.noise_rotate;
+      state->bank3->drums.noise_rotate  = A;
       /* $FA3D-$FA50: phase/accumulator/rotate advance + AND $10 (127 T-states) */
       speccy->logtime(speccy, 127);
       if (A & (1 << 4))
@@ -10841,8 +10841,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   C_attrs     = C_byte0 & ~SINGLE_HEIGHT;
   A_style_bit = (C_byte0 >> 7) & 1;
 
-  E_screen = HL_record[1];
-  D_screen = HL_record[2];
+  E_screen   = HL_record[1];
+  D_screen   = HL_record[2];
   HL_record += 3;
 
   H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03));
@@ -11187,8 +11187,8 @@ rescan:
   state->bank3->control_keys[C_control_index - 1] = A_key_code;
 
   index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3);
-  char0 = control_key_names[index_bytes];
-  char1 = control_key_names[index_bytes + 1] | EOS;
+  char0       = control_key_names[index_bytes];
+  char1       = control_key_names[index_bytes + 1] | EOS;
 
   state->bank3->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
                                                * $FD97; never rewritten by this

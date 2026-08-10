@@ -162,13 +162,12 @@ zx_pixel_format_t;
 /** A claimed, top-to-bottom converted frame. */
 typedef struct zx_frame
 {
-  void              *pixels;
-  zx_pixel_format_t  format;
-  int                width;
-  int                height;
-  int                stride;
-}
-zx_frame_t;
+  void             *pixels;
+  zx_pixel_format_t format;
+  int               width;
+  int               height;
+  int               stride;
+} zx_frame_t;
 
 /**
  * Screen pixels and attributes.

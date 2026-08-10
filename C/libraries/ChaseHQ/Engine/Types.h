@@ -25,8 +25,8 @@
 /* ZXSCREEN/ZXATTRS/CHQBACKBUF are aliases of TWOBYTES that document, at the
  * call site, whether the address pair feeds ADDRTOSCREEN($4000+), ADDRTOATTRS
  * ($5800+) or ADDRTOBACKBUF ($F000+). */
-#define ZXSCREEN(addr)  TWOBYTES(addr)
-#define ZXATTRS(addr)   TWOBYTES(addr)
+#define ZXSCREEN(addr)   TWOBYTES(addr)
+#define ZXATTRS(addr)    TWOBYTES(addr)
 #define CHQBACKBUF(addr) TWOBYTES(addr)
 
 #define EOS (1<<7) // End of String - string terminator bit

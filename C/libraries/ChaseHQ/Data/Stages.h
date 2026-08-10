@@ -350,7 +350,7 @@ typedef union heli_part_ptr
  * (7 is original game sizeof(bitmap_t))
  * M is a bodge factor since the streetlamp values seem to be +2.
  */
-#define DEPTHSET_OFFSET(N,M) ((N) * 7 + (M))
+#define DEPTHSET_OFFSET(N, M) ((N) * 7 + (M))
 
 #define DEPTHSET_MAX (10)
 
@@ -374,7 +374,7 @@ typedef struct overhead_span
 
 typedef struct depthset
 {
-  const bitmap_t        *bitmaps; // -> array of bitmaps
+  const bitmap_t        *bitmaps;             // -> array of bitmaps
   depthset_pair_t        pairs[DEPTHSET_MAX]; // maps depths to offsets
   const overhead_span_t *spans; // overhead-bridge span table, or NULL
 } depthset_t;
@@ -438,19 +438,19 @@ typedef struct scenedata
 
 typedef struct stage
 {
-  u8                backdrop[BACKDROP_LENGTH];
-  const u8         *addrof_perp_mugshot_attributes;
-  const u8         *addrof_perp_mugshot_bitmap;
-  u16               ground_colour;
-  const hittable_t *addrof_hittable_objects;
-  const void       *addrof_right_hand_handlers;
-  const obj_t      *addrof_right_hand_objects;
-  const obj_t      *addrof_right_hand_short_pole_object;
-  const void       *addrof_left_hand_handlers;
-  const obj_t      *addrof_left_hand_objects;
-  const obj_t      *addrof_left_hand_short_pole_object;
-  const u8         *addrof_perp_description;
-  const u8         *addrof_arrest_messages;
+  u8                     backdrop[BACKDROP_LENGTH];
+  const u8              *addrof_perp_mugshot_attributes;
+  const u8              *addrof_perp_mugshot_bitmap;
+  u16                    ground_colour;
+  const hittable_t      *addrof_hittable_objects;
+  const void            *addrof_right_hand_handlers;
+  const obj_t           *addrof_right_hand_objects;
+  const obj_t           *addrof_right_hand_short_pole_object;
+  const void            *addrof_left_hand_handlers;
+  const obj_t           *addrof_left_hand_objects;
+  const obj_t           *addrof_left_hand_short_pole_object;
+  const u8              *addrof_perp_description;
+  const u8              *addrof_arrest_messages;
   const heli_part_ptr_t *addrof_helicopter_frames[2];
 
   const bitmap_t  (*bitmaps_stones)[SPRITE_FRAMES];
