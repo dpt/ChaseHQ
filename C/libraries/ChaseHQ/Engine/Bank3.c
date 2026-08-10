@@ -4493,15 +4493,15 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  * print_character's own unpack order at $FDA4). */
 // clang-format off
 static const u8 name_entry_screen_text[] = {
-  0x02, ZXSCREEN(0x480A), 'B','E','S','T',' ','O','F','F','I','C','E','R', (u8) ('S' | EOS),
-  0xC6, ZXSCREEN(0x4867), 'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', (u8) ('S' | EOS),
-  0x07, ZXSCREEN(0x488E), '.',' ','.',' ', (u8) ('.' | EOS),
+  0x02, ZXSCREEN(0x480A), 'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
+  0xC6, ZXSCREEN(0x4867), 'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
+  0x07, ZXSCREEN(0x488E), '.',' ','.',' ', '.' | EOS,
   0xC6, ZXSCREEN(0x48C0),
     'R','A','N','K',' ',' ',' ',' ',
     'S','C','O','R','E',' ',' ',
     'S','T','A','G','E',' ',' ',
     'P','L','A','Y',' ',' ',
-    'N','A','M', (u8) ('E' | EOS),
+    'N','A','M', 'E' | EOS,
   0
 };
 // clang-format on
@@ -4556,7 +4556,7 @@ static void name_entry_setup_screen(chqstate_t *state)
   titlescr_start_tune(state, 3);
 
   state->bank3->hiscore.char_index        = 0;
-  state->bank3->hiscore.letter_code       = 0x40; /* '@': blank/"." marker */
+  state->bank3->hiscore.letter_code       = '@'; /* blank/"." marker */
   state->bank3->hiscore.fire_locked       = 0;
   state->bank3->hiscore.flash_phase_a     = 0xF0; /* $C59A ROM-data seed --
                                                      * rotated left one frame
@@ -4844,10 +4844,10 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 
     DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
     A_code   = state->bank3->hiscore.letter_code;
-    DE_entry->name[state->bank3->hiscore.char_index] = (A_code == 0x40) ? '.' : A_code;
+    DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
 
     state->bank3->hiscore.char_index++;
-    state->bank3->hiscore.letter_code = 0x40;
+    state->bank3->hiscore.letter_code = '@';
 
     redraw_letter_cursor(state);
     return;
@@ -4884,7 +4884,7 @@ static void hiscore_finalise(chqstate_t *state)
 
   DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
   A_code   = state->bank3->hiscore.letter_code;
-  DE_entry->name[state->bank3->hiscore.char_index] = (A_code == 0x40) ? '.' : A_code;
+  DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
 
   state->bank3->hiscore.complete = 1;
 
@@ -4906,10 +4906,10 @@ static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
 {
   if (C_input_bits & USERINPUTFLAG_RIGHT) {
     state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 0x5A) ? 0x40 : (u8) (state->bank3->hiscore.letter_code + 1);
+      (state->bank3->hiscore.letter_code == 'Z') ? '@' : (u8) (state->bank3->hiscore.letter_code + 1);
   } else if (C_input_bits & USERINPUTFLAG_LEFT) {
     state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 0x40) ? 0x5A : (u8) (state->bank3->hiscore.letter_code - 1);
+      (state->bank3->hiscore.letter_code == '@') ? 'Z' : (u8) (state->bank3->hiscore.letter_code - 1);
   }
 
   redraw_letter_cursor(state);
@@ -4942,7 +4942,7 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
   int        row;        /* blit row counter (Conv: rolled) */
 
   A_code  = state->bank3->hiscore.letter_code;
-  C_idx   = (A_code == 0x40) ? 4 : (u8) (A_code - 0x32);
+  C_idx   = (A_code == '@') ? 4 : (u8) (A_code - 0x32);
   HL_font = &font[C_idx * 7];
 
   glyph_addr = (D_screen << 8) | E_screen;
@@ -5095,10 +5095,10 @@ static const u8 *font_glyph_for_char(u8 A_char)
   u8 A_diff;  /* char - $20; classification input (was A) */
   u8 C_class; /* width-class index (was C) */
 
-  if (A_char == 0x20)
+  if (A_char == ' ')
     return NULL;
 
-  A_diff = (u8) (A_char - 0x20);
+  A_diff = (u8) (A_char - ' ');
 
   if (A_diff >= 0x21)
     C_class = (u8) (A_diff - 18);

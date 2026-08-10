@@ -13,7 +13,6 @@
   delete it?
 - Start backporting changes to the disasm
 - 48K mode drum timing is off (interrupts?)
-- Quit in pause mode locks up?
 
 ### Authority sweep (comments that read as guesswork)
 
@@ -57,11 +56,9 @@ against the skool then rewrite the comment as a statement — or delete it.
 
 ## IDEAS (backlog)
 
-- Overlay for controls (using the same font as the game)
 - Lots more unit tests
 - Design a text format for holding stages
 - Annotate all state members to show which functions consume/mutate them
-- Is fixing the keypress thread race important?
 - Add new level(s) - actual good one, not just test
 - Fix all the rough masks to improve the look
 - Arcade machine based on this code

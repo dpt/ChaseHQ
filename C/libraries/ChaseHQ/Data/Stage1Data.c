@@ -377,7 +377,7 @@ static const hittable_t stage1_hittable_object_defs[2] = {
 /** $5E46: stage1_right_hand_graphics_defs */
 static const obj_t stage1_right_hand_graphics_defs[9] = {
   { 111, 41, 80, &tunnellight,                         draw_tunnel_light_right    },
-  {   0,  0,  0, NULL,                                 NULL },
+  {   0,  0,  0, NULL,                                 NULL                       },
   { 144, 92, 40, &stretchy_shortpole,                  draw_stretchy_object_right },
   {  94, 36, 60, &stage1_stretchy_tree,                draw_stretchy_object_right },
   { 110, 49, 80, &stage1_stretchy_bush,                draw_stretchy_object_right },
@@ -390,7 +390,7 @@ static const obj_t stage1_right_hand_graphics_defs[9] = {
 /** $5E85: stage1_left_hand_graphics_defs */
 static const obj_t stage1_left_hand_graphics_defs[9] = {
   { 126, 188, 80, &tunnellight,                        draw_tunnel_light_left    },
-  {   0,  0,  0,  NULL,                                NULL },
+  {   0,  0,  0,  NULL,                                NULL                      },
   {  96, 144, 40, &stretchy_shortpole,                 draw_stretchy_object_left },
   { 140, 196, 60, &stage1_stretchy_tree,               draw_stretchy_object_left },
   { 124, 208, 80, &stage1_stretchy_bush,               draw_stretchy_object_left },

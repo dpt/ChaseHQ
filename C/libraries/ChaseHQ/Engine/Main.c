@@ -676,7 +676,7 @@ static const void *stage_lookup_map_goto(int current_stage_number, u16 z80)
 {
   static const struct stage_map_goto_table {
     const map_goto_entry_t *table;
-    size_t                   count;
+    size_t                  count;
   } stage_tables[] = {
     { stage1_map_goto_table, NELEMS(stage1_map_goto_table) },
     { stage2_map_goto_table, NELEMS(stage2_map_goto_table) },
@@ -687,9 +687,10 @@ static const void *stage_lookup_map_goto(int current_stage_number, u16 z80)
     { stage6_map_goto_table, NELEMS(stage6_map_goto_table) },
 #endif
   };
+
   const struct stage_map_goto_table *stage;
   const map_goto_entry_t            *table;
-  int                                 lo, hi, mid;
+  int                                lo, hi, mid;
 
   assert(current_stage_number >= 1 &&
          current_stage_number <= (int)NELEMS(stage_tables));
@@ -701,8 +702,8 @@ static const void *stage_lookup_map_goto(int current_stage_number, u16 z80)
   while (lo <= hi) {
     mid = lo + (hi - lo) / 2;
     if (table[mid].z80 == z80) return table[mid].ptr;
-    if (table[mid].z80 < z80)  lo = mid + 1;
-    else                        hi = mid - 1;
+    if (table[mid].z80 < z80) lo = mid + 1;
+    else                      hi = mid - 1;
   }
   assert(!"Unknown Z80 address (stage map goto)");
   return NULL;
