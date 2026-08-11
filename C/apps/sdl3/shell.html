@@ -20,7 +20,7 @@
     canvas.emscripten {
       border: 0;
       image-rendering: pixelated;
-      max-width: 70vw;
+      max-width: 90vw;
       max-height: 90vh;
     }
     #status {
@@ -64,9 +64,27 @@
     #controls summary:hover {
       color: #fff;
     }
+    #controls summary:focus-visible {
+      outline: 2px solid #7ab8ff;
+      outline-offset: 2px;
+    }
     #controls details > span {
       display: block;
       margin: 0.35em 0;
+    }
+    @media (max-width: 900px), (max-height: 500px) {
+      #controls {
+        position: static;
+        transform: none;
+        margin: 0.75em 1em 0;
+      }
+      #stage {
+        flex-direction: column;
+        align-items: center;
+      }
+      canvas.emscripten {
+        max-width: 95vw;
+      }
     }
     #about {
       color: #999;
