@@ -27,7 +27,7 @@
 /* Bitmap bytes, in ZX Spectrum screen memory order (interleaved thirds,
  * lines and rows -- not linear top-to-bottom pixel rows), 32 bytes per
  * line to match one scanline-slice of screen memory. */
-const u8 loading_screen_bitmap[SCREEN_BITMAP_LENGTH] = {
+const pixel_t loading_screen_bitmap[SCREEN_BITMAP_LENGTH] = {
   XXXXXXXX, XXXXXXXX, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
   ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXX___XX, XXXXXXXX, X__XXXXX, XXXXXX__, _______X, XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX, XXXXXX__, _XXXXXXX, XXXXXXXX, XXXXXXXX, X_______, ________, XXXXXXXX, XXX__XXX, XXXXXXXX, ________, ________, _____XXX, XXXXXXXX, XXXXXXXX, XXXXX___, ________, ________,
   ________, ________, XXXXXXXX, XXX__XXX, XXXXXXXX, ___XXXXX, XXXXXXXX, XXXXXXXX, XXX_____, ___XXXXX, XX__XXXX, XXX_____, ____XXXX, XXXXXX__, ________, ______XX, XXXXXXXX, XXXXXXXX, XXXXXX__, ________, _____XXX, XXXXXXXX, XXXXXXXX, XXXXX___, ________, ________, __XXXXXX, XXXXX__X, XXXXXXXX, XX______, ________, ________,

@@ -5,8 +5,8 @@ TARGET     = !ChaseHQ
 OBJS       = o.host \
              o.kempston o.keyboard o.screen o.spectrum o.z80 \
              o.bank3 o.bank7 o.create o.main \
-             o.commondata o.soundsamples o.stage1data o.stage2data \
-             o.stage3data o.stage4data o.stage5data o.stages
+             o.commondata o.loadingscreen o.soundsamples o.stage1data \
+             o.stage2data o.stage3data o.stage4data o.stage5data o.stages
 CDEFINES   = -D__riscos -DCHQ_SILENT
 INITTARGET = riscos_layout
 CLEANTARGET = clean_layout
@@ -82,6 +82,9 @@ ${ODIR}.main: riscos_layout
 
 ${ODIR}.commondata: riscos_layout
 	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/CommonData.c
+
+${ODIR}.loadingscreen: riscos_layout
+	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/LoadingScreen.c
 
 ${ODIR}.soundsamples: riscos_layout
 	${CC} ${BUILD_CFLAGS} ${CDEFINES} ${INCLUDES} -o $@ C/libraries/ChaseHQ/Data/SoundSamples.c

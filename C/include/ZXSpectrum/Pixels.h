@@ -1,6 +1,11 @@
 #ifndef PIXELS_H
 #define PIXELS_H
 
+#include "C99/Types.h"
+
+/* One byte of pixel-row data: eight pixels, one bit each. */
+typedef u8 pixel_t;
+
 #define ________   (0)
 #define _______X   (1)
 #define ______X_   (2)

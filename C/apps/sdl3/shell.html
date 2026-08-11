@@ -76,7 +76,10 @@
       #controls {
         position: static;
         transform: none;
+        width: 90vw;
+        max-width: 28em;
         margin: 0.75em 1em 0;
+        order: 1;
       }
       #stage {
         flex-direction: column;
@@ -84,6 +87,19 @@
       }
       canvas.emscripten {
         max-width: 95vw;
+        order: 0;
+      }
+    }
+    @media (max-width: 480px) {
+      #controls {
+        font: 12px monospace;
+        gap: 0.2em 0;
+      }
+      #controls details > span {
+        margin: 0.2em 0;
+      }
+      #controls kbd {
+        padding: 0 0.2em;
       }
     }
     #about {
@@ -105,8 +121,14 @@
     <div id="controls">
       <details open>
         <summary>Drive</summary>
-        <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive+gear (kempston)</span>
-        <span><kbd>F1</kbd> pause</span>
+        <span><kbd>K</kbd>/<kbd>L</kbd> left/right</span>
+        <span><kbd>A</kbd>/<kbd>Z</kbd> accel/brake</span>
+        <span><kbd>N</kbd> gear</span>
+        <span><kbd>Space</kbd> turbo</span>
+        <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd> drive (kempston)</span>
+        <span><kbd>.</kbd> gear (kempston)</span>
+        <span><kbd>Q</kbd> quit, <kbd>P</kbd> pause</span>
+        <span><kbd>F1</kbd> pause (SDL)</span>
         <span><kbd>F11</kbd> fullscreen</span>
         <span><kbd>-</kbd>/<kbd>=</kbd> set window scale</span>
       </details>
@@ -128,7 +150,7 @@
         <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette (less harsh)</span>
       </details>
       <details>
-        <summary>Shader / CRT</summary>
+        <summary>CRT Shader</summary>
         <span><kbd>F4</kbd> toggle CRT shader</span>
         <span><kbd>Tab</kbd>/<kbd>Shift</kbd>+<kbd>Tab</kbd> select shader param</span>
         <span><kbd>PgUp</kbd>/<kbd>PgDn</kbd> adjust shader param</span>
@@ -140,6 +162,8 @@
         <span><kbd>F3</kbd> dirty-rect overlay (not CRT)</span>
         <span><kbd>F12</kbd> show game backbuffer</span>
         <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen bytes</span>
+        <span>Redefine Keys menu: set 8 keys to SHOCKED+ENTER to unlock test mode</span>
+        <span>Test mode (in-game): <kbd>1</kbd> restart level, <kbd>2</kbd> next level, <kbd>3</kbd> end screen, <kbd>4</kbd>/<kbd>5</kbd> add credit</span>
       </details>
     </div>
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>

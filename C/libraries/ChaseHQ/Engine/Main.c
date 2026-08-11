@@ -86,6 +86,7 @@
 #include "ZXSpectrum/slopay-chip.h"
 
 #include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/LoadingScreen.h"
 #include "ChaseHQ/Data/SoundSamples.h"
 #include "ChaseHQ/Data/Stage1Data.h"
 #include "ChaseHQ/Data/Stage2Data.h"
@@ -766,6 +767,7 @@ static void play_engine_sfx_hook(chqstate_t *state);
 static void play_speech_hook(chqstate_t *state, int A_sample);
 static void attract_mode_hook(chqstate_t *state);
 
+static void show_loading_screen(chqstate_t *state);
 static void bootstrap(chqstate_t *state);
 static void main_loop(chqstate_t *state);
 
@@ -2405,7 +2407,7 @@ static void draw_pregame(chqstate_t *state)
    *
    * 45 tiles used to draw the pre-game screen.
    */
-  static const u8 pregame_tiles[45 * 8] = {
+  static const pixel_t pregame_tiles[45 * 8] = {
     ________,
     _X_X_X_X,
     __XXXXXX,
@@ -7319,7 +7321,7 @@ static void plot_mini_font_char(
 {
   // clang-format off
   /** $DFF8: minifont */
-  static const u8 minifont[31 * MINIFONT_HEIGHT] = {
+  static const pixel_t minifont[31 * MINIFONT_HEIGHT] = {
     _XX_____,
     X__X____,
     X__X____,
@@ -8280,7 +8282,7 @@ static void plot_turbos_and_digits(chqstate_t *state)
   // clang-format off
   /** $76F0: bitmap_turbospin */
   // clang-format off
-  static const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
+  static const pixel_t bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
     ________, ________, ___XXXXX, ________,
     ________, _XXXXXXX, ____XXXX, XXX_____,
     ________, _XXXXXXX, _____XXX, XXXX____,
@@ -8612,7 +8614,7 @@ static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
   // clang-format off
   /** $DF62: ledfont */
-  static const u8 ledfont[10 * LEDFONT_HEIGHT] = {
+  static const pixel_t ledfont[10 * LEDFONT_HEIGHT] = {
     _XXXXX__,
     X_XXX_X_,
     XX___XX_,
@@ -11847,7 +11849,7 @@ static void draw_hazard_sprites(chqstate_t *state,
 {
   // clang-format off
   /** $7AB1: bitmap_fire1 */
-  static const u8 bitmap_fire1[4 * 16] = {
+  static const pixel_t bitmap_fire1[4 * 16] = {
     ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
     _______X, ________, ________, _X_XXX__,
     __X_____, ________, ________, ____X___,
@@ -11867,7 +11869,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7AF1: bitmap_fire2 */
-  static const u8 bitmap_fire2[4 * 16] = {
+  static const pixel_t bitmap_fire2[4 * 16] = {
     ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
     __X____X, ________, ________, _X_XXX__,
     _X______, ________, ________, ____X_X_,
@@ -11887,7 +11889,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7B31: bitmap_fire3 */
-  static const u8 bitmap_fire3[6 * 8] = {
+  static const pixel_t bitmap_fire3[6 * 8] = {
     XX______, __XXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
     X_______, _X______, ________, ________, ____XXXX, ___X____,
     ________, X_______, ________, ________, _____XXX, ____X___,
@@ -11899,7 +11901,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7B61: bitmap_fire4 */
-  static const u8 bitmap_fire4[6 * 8] = {
+  static const pixel_t bitmap_fire4[6 * 8] = {
     XX____X_, __XXXX_X, ________, XXXXXXXX, ___XXXXX, XXX_____,
     X_______, _X____X_, ________, ________, ____XXXX, __XX____,
     ________, X_______, ________, ________, _____XXX, ____X___,
@@ -11911,7 +11913,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7B91: bitmap_fire5 */
-  static const u8 bitmap_fire5[4 * 5] = {
+  static const pixel_t bitmap_fire5[4 * 5] = {
     X_______, _XXXXXXX, ___XXXXX, XXX_____,
     ________, X_______, ____XXXX, ___X____,
     ________, ___X____, ____XXXX, X__X____,
@@ -11920,7 +11922,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7BA5: bitmap_fire5s */
-  static const u8 bitmap_fire5s[4 * 5] = {
+  static const pixel_t bitmap_fire5s[4 * 5] = {
     XXXXX___, _____XXX, _______X, XXXXXXX_,
     XXXX____, ____X___, ________, _______X,
     XXXX____, _______X, ________, ____X__X,
@@ -11929,7 +11931,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7BB9: bitmap_fire6 */
-  static const u8 bitmap_fire6[4 * 6] = {
+  static const pixel_t bitmap_fire6[4 * 6] = {
     X_______, _XXXXXXX, __XXXXXX, XX______,
     ________, X_______, ___XXXXX, __X_____,
     ________, X_____X_, ____XXXX, _X_X____,
@@ -11939,7 +11941,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   };
 
   /** $7BD1: bitmap_fire6s */
-  static const u8 bitmap_fire6s[4 * 6] = {
+  static const pixel_t bitmap_fire6s[4 * 6] = {
     XXXXX___, _____XXX, ______XX, XXXXXX__,
     XXXX____, ____X___, _______X, ______X_,
     XXXX____, ____X___, ________, __X__X_X,
@@ -12255,7 +12257,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
 {
   // clang-format off
   /** $7A0F: bitmap_smoke1 */
-  static const u8 bitmap_smoke1[4 * 13] = {
+  static const pixel_t bitmap_smoke1[4 * 13] = {
     XXXX____, ____XXXX, __XXXXXX, XX______,
     XX______, __XXXXXX, _____XXX, XXXXX___,
     X_______, _XXXXX_X, ______XX, _XXXXX__,
@@ -12272,7 +12274,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
   };
 
   /** $7A43: bitmap_smoke2 */
-  static const u8 bitmap_smoke2[4 * 11] = {
+  static const pixel_t bitmap_smoke2[4 * 11] = {
     XXXXX___, _____XXX, _XXXXXXX, X_______,
     XXX_____, ___XXXXX, ____XXXX, XXXX____,
     XX______, __XX_XXX, _____XXX, XXXXX___,
@@ -12287,7 +12289,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
   };
 
   /** $7A6F: bitmap_smoke3 */
-  static const u8 bitmap_smoke3[4 * 9] = {
+  static const pixel_t bitmap_smoke3[4 * 9] = {
     XXXX____, ____XXXX, __XXXXXX, XX______,
     XXX_____, ___XXXXX, ____XXXX, XXXX____,
     XX______, __XXX_XX, _____XXX, XXXXX___,
@@ -12300,7 +12302,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
   };
 
   /** $7A93: bitmap_smoke4 */
-  static const u8 bitmap_smoke4[2 * 7] = {
+  static const pixel_t bitmap_smoke4[2 * 7] = {
     X_____XX, _XXXXX__,
     ________, XXXXXXXX,
     ________, X_X_X_XX,
@@ -12311,7 +12313,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
   };
 
   /** $7AA1: bitmap_smoke5 */
-  static const u8 bitmap_smoke5[2 * 5] = {
+  static const pixel_t bitmap_smoke5[2 * 5] = {
     XX_____X, __XXXXX_,
     X______X, _XX_XXX_,
     X______X, _X___X__,
@@ -12320,7 +12322,7 @@ static void dhs_smoke(chqstate_t *state, u8 *HL_smoke, const u8 *IY_height)
   };
 
   /** $7AAB: bitmap_smoke6 */
-  static const u8 bitmap_smoke6[2 * 3] = {
+  static const pixel_t bitmap_smoke6[2 * 3] = {
     XX____XX, __XXXX__,
     XX____XX, __X__X__,
     XX____XX, __X_X___
@@ -13249,7 +13251,7 @@ static void draw_debris(chqstate_t *state)
    * a single array; C does not guarantee the relative placement of four
    * separate globals.
    */
-  static const u8 bitmap_debris[4][2 * 6] = {
+  static const pixel_t bitmap_debris[4][2 * 6] = {
     { // $CEAA
       XXXX___X, ____XXX_,
       _______X, XXXX__X_,
@@ -13373,7 +13375,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
 {
   // clang-format off
   /** $D40D: bitmap_hero_centre_straight */
-  static const u8 bitmap_hero_centre_straight[5 * 14] = {
+  static const pixel_t bitmap_hero_centre_straight[5 * 14] = {
     XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
@@ -13391,7 +13393,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D453: bitmap_hero_centre_straight_right */
-  static const u8 bitmap_hero_centre_straight_right[5 * 17] = {
+  static const pixel_t bitmap_hero_centre_straight_right[5 * 17] = {
     XXXXXXX_, XX__XXXX, XXXXXXXX, XX_XX__X, XXXXXXXX,
     XXXXXXXX, ___XX___, ________, XXX___XX, XXXXXXXX,
     XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
@@ -13412,7 +13414,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D4A8: bitmap_hero_centre_straight_right_hard */
-  static const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
+  static const pixel_t bitmap_hero_centre_straight_right_hard[5 * 16] = {
     XXXX_XX_, _XXXXXXX, XXXXXXX_, XX___XXX, XXXXXXXX,
     XXXXX___, XXX_____, ______XX, ____XXXX, XXXXXXXX,
     XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
@@ -13432,7 +13434,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D4F8: bitmap_hero_centre_up */
-  static const u8 bitmap_hero_centre_up[5 * 14] = {
+  static const pixel_t bitmap_hero_centre_up[5 * 14] = {
     XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -13450,7 +13452,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D53E: bitmap_hero_centre_up_right */
-  static const u8 bitmap_hero_centre_up_right[5 * 17] = {
+  static const pixel_t bitmap_hero_centre_up_right[5 * 17] = {
     XXXXXXXX, X__XX___, ________, XXXX__XX, XXXXXXXX,
     XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
@@ -13471,7 +13473,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D593: bitmap_hero_centre_up_right_hard */
-  static const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
+  static const pixel_t bitmap_hero_centre_up_right_hard[5 * 15] = {
     XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -13490,7 +13492,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D5DE: bitmap_hero_centre_down */
-  static const u8 bitmap_hero_centre_down[5 * 14] = {
+  static const pixel_t bitmap_hero_centre_down[5 * 14] = {
     XXXXXXXX, X____XXX, XXXXXXXX, XXXX____, XXXXXXXX,
     XXXXXXXX, X_XX_XX_, ________, __XX_XX_, XXXXXXXX,
     XXXXXXXX, XX__XXX_, ________, __XXX__X, XXXXXXXX,
@@ -13508,7 +13510,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D624: bitmap_hero_centre_down_right */
-  static const u8 bitmap_hero_centre_down_right[5 * 16] = {
+  static const pixel_t bitmap_hero_centre_down_right[5 * 16] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, X__XXXXX, XXXXXXXX, XXXX__XX, XXXXXXXX,
     XXXXXXXX, ____XXXX, XXXXXXXX, XXX____X, XXXXXXXX,
@@ -13528,7 +13530,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D674: bitmap_hero_centre_down_right_hard */
-  static const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
+  static const pixel_t bitmap_hero_centre_down_right_hard[5 * 16] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXX_, _XXXXXXX, XXXXXXXX, XX__XXXX, XXXXXXXX,
     XXXXX___, __XXXXXX, XXXXXXXX, _____XXX, XXXXXXXX,
@@ -13548,7 +13550,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D6C4: bitmap_hero_top_straight */
-  static const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
+  static const pixel_t bitmap_hero_top_straight[5 * 2 * 9] = {
     XX__XX__, ___X__XX, XX______, __XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, X__XX__X, _XX__X__,
     XXX__X__, ____X_XX, XXX_____, ___XXXXX, XXXXXXXX, ________, X_____XX, _XXXXX__, X__X__XX, _XX_X___,
     XXX__XX_, ____X__X, _XX_____, X__XXXXX, _XXXXXXX, X_______, ______XX, XXXXXX__, __XX__XX, XX__X___,
@@ -13561,7 +13563,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D71E: bitmap_hero_bottom_straight */
-  static const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
+  static const pixel_t bitmap_hero_bottom_straight[5 * 2 * 6] = {
     XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
     XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
     X_______, _X_X_X_X, ____XXXX, _XXX____, XXXXXXXX, ________, XXXXX___, _____XXX, ________, _X_X_X_X,
@@ -13571,7 +13573,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D75A: bitmap_hero_left_straight */
-  static const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
+  static const pixel_t bitmap_hero_left_straight[1 * 2 * 14] = {
     XXXXXXX_, ________,
     XXXXXXX_, ________,
     XXXXXX__, _______X,
@@ -13589,7 +13591,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D776: bitmap_hero_right_straight */
-  static const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
+  static const pixel_t bitmap_hero_right_straight[1 * 2 * 14] = {
     __XXXXXX, X_______,
     __XXXXXX, X_______,
     ___XXXXX, XX______,
@@ -13607,7 +13609,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D792: bitmap_hero_top_straight_right */
-  static const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
+  static const pixel_t bitmap_hero_top_straight_right[5 * 2 * 8] = {
     XXX___XX, ____XX__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XXX__XXX, ___X____,
     XXXX__XX, _____X__, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX___XXX, __XX____,
     XXXXX__X, ______X_, XXXX____, ____XXXX, __XX____, XX__XXXX, _______X, XXXXXXX_, XX__XXXX, __X_____,
@@ -13619,7 +13621,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D7E2: bitmap_hero_bottom_straight_right */
-  static const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
+  static const pixel_t bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
     XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
     X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
     ________, X_X_X_XX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXX_, _______X, X_X_XXX_,
@@ -13627,7 +13629,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D80A: bitmap_hero_left_straight_left */
-  static const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_left_straight_left[1 * 2 * 13] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, _______X,
@@ -13644,7 +13646,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D824: bitmap_hero_right_straight_right */
-  static const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_right_straight_right[1 * 2 * 13] = {
     __XXXXXX, X_______,
     ___XXXXX, XX______,
     ____XXXX, XXX_____,
@@ -13661,7 +13663,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D83E: bitmap_hero_top_straight_right_hard */
-  static const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
+  static const pixel_t bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
     X_______, ___XXXXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, ___XX___, XXX__XX_,
     XXX____X, _____XX_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, __XXX__X, XX___X__,
     XXXXX__X, ______X_, X_XXXXX_, _X_____X, ____XXXX, XXXX____, XXXXX___, _____XXX, __XX__XX, XX__X___,
@@ -13674,7 +13676,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D898: bitmap_hero_bottom_straight_right_hard */
-  static const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
+  static const pixel_t bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
     XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
     X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
     ________, X_X_XXXX, XXXXXXXX, ________, XXXXXXXX, ________, ____X___, XXXX_X_X, ______XX, _X_XXX__,
@@ -13682,7 +13684,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D8C0: bitmap_hero_left_straight_right_hard */
-  static const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
+  static const pixel_t bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, _______X,
@@ -13698,7 +13700,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D8D8: bitmap_hero_right_straight_right_hard */
-  static const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
+  static const pixel_t bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
     _XXXXXXX, X_______,
     ___XXXXX, XX______,
     ____XXXX, XXX_____,
@@ -13717,7 +13719,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D8F6: bitmap_hero_top_up */
-  static const u8 bitmap_hero_top_up[5 * 2 * 10] = {
+  static const pixel_t bitmap_hero_top_up[5 * 2 * 10] = {
     XX___XX_, ___XX__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XX___X, XX__XX__,
     XXX___X_, _____X_X, _X______, X_XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, __X___XX, XX_X____,
     XXXX__X_, _____X_X, _X______, X_XXXXXX, XXXXXXXX, ________, X_____X_, _XXXXX_X, _XX__XXX, X__X____,
@@ -13731,7 +13733,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D95A: bitmap_hero_bottom_up */
-  static const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
+  static const pixel_t bitmap_hero_bottom_up[5 * 2 * 6] = {
     XXX_____, ___XXXXX, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXX__X, _____XX_, ______XX, XXXXXX__,
     XX______, __X_____, ______XX, XX__XX__, XXXXXXXX, ________, XXXX____, ____X__X, _______X, X_____X_,
     X_______, _X_X_X_X, ________, X_XX_XXX, ________, XXXXXXXX, ________, XXXX_XX_, ________, XX_X_X_X,
@@ -13741,7 +13743,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D996: bitmap_hero_left_up */
-  static const u8 bitmap_hero_left_up[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_left_up[1 * 2 * 13] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, _______X,
@@ -13758,7 +13760,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D9B0: bitmap_hero_right_up */
-  static const u8 bitmap_hero_right_up[1 * 2 * 14] = {
+  static const pixel_t bitmap_hero_right_up[1 * 2 * 14] = {
     __XXXXXX, X_______,
     ___XXXXX, XX______,
     ___XXXXX, XX______,
@@ -13776,7 +13778,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $D9CC: bitmap_hero_top_right */
-  static const u8 bitmap_hero_top_right[5 * 2 * 9] = {
+  static const pixel_t bitmap_hero_top_right[5 * 2 * 9] = {
     XXX_____, _____XXX, ________, XXXXXXXX, ____X_X_, XXXX_X_X, X_______, _XXXXXXX, XXX___XX, ___X____,
     XXXX__XX, _____X__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XX__XXXX, __X_____,
     XXXXX__X, ______X_, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX__XXXX, __X_____,
@@ -13789,7 +13791,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DA26: bitmap_hero_bottom_right */
-  static const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
+  static const pixel_t bitmap_hero_bottom_right[5 * 2 * 4] = {
     XX______, __XXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXXX, _____XXX, XXXXX___,
     X_______, _X_____X, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, ______XX, _____X__,
     ________, X_X_X_X_, ________, XX__XXXX, ________, XXXXXXXX, ________, XX_XX__X, _______X, X_X_XXX_,
@@ -13797,7 +13799,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DA4E: bitmap_hero_left_right */
-  static const u8 bitmap_hero_left_right[1 * 2 * 12] = {
+  static const pixel_t bitmap_hero_left_right[1 * 2 * 12] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, ________,
@@ -13813,7 +13815,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DA66: bitmap_hero_right_right */
-  static const u8 bitmap_hero_right_right[1 * 2 * 14] = {
+  static const pixel_t bitmap_hero_right_right[1 * 2 * 14] = {
     __XXXXXX, X_______,
     ___XXXXX, XX______,
     ____XXXX, XXX_____,
@@ -13831,7 +13833,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DA82: bitmap_hero_up_right_hard */
-  static const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
+  static const pixel_t bitmap_hero_up_right_hard[5 * 2 * 9] = {
     XXXX____, _____XXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, _XXX___X, X___X___,
     XXXXX__X, ______X_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, _XXX__XX, X___X___,
     XXXXXX__, _______X, X_XXXXX_, _X_____X, ____XXXX, XXXX____, XXXXX___, _____XXX, _XX__XXX, X__X____,
@@ -13844,7 +13846,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DADC: bitmap_hero_bottom_right_hard */
-  static const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
+  static const pixel_t bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
     XX__X___, __XX_XXX, XXXXXXXX, ________, XXXXXXXX, ________, ___XXXX_, XXX____X, ____XXXX, XXXX____,
     X_______, _X__X___, __XXXXXX, XX______, XXXXXXX_, _______X, ________, ___XXXX_, _____XXX, ____X___,
     ________, X_XX_XX_, ________, __XXXXXX, ________, XXXXXXX_, ________, XX___X_X, ______XX, _X_XXX__,
@@ -13854,7 +13856,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DB18: bitmap_hero_left_right_hard */
-  static const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
+  static const pixel_t bitmap_hero_left_right_hard[1 * 2 * 11] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, ________,
@@ -13869,7 +13871,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DB2E: bitmap_hero_right_right_hard */
-  static const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
+  static const pixel_t bitmap_hero_right_right_hard[1 * 2 * 15] = {
     ___XXXXX, XX______,
     ____XXXX, XXX_____,
     _____XXX, XXXX____,
@@ -13888,7 +13890,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DB4C: bitmap_hero_top_down */
-  static const u8 bitmap_hero_top_down[5 * 2 * 8] = {
+  static const pixel_t bitmap_hero_top_down[5 * 2 * 8] = {
     XX______, ___XXX__, ________, ________, ________, ________, ________, ________, _______X, __XXXX__,
     XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXX___,
     XXXX__X_, _____X_X, _XX_____, X__XXXXX, _X_____X, X_XXXXX_, _____XXX, XXXXX___, __X__XXX, XX_X____,
@@ -13900,7 +13902,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DB9C: bitmap_hero_bottom_down */
-  static const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
+  static const pixel_t bitmap_hero_bottom_down[5 * 2 * 6] = {
     XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
     XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
     X_______, _X_X_X_X, __XXXXXX, _X______, XXXXXXXX, ________, XXXXXXX_, _______X, ________, _X_X_X_X,
@@ -13910,7 +13912,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DBD8: bitmap_hero_left_down */
-  static const u8 bitmap_hero_left_down[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_left_down[1 * 2 * 13] = {
     XXXXXXX_, ________,
     XXXXXXX_, ________,
     XXXXXX__, _______X,
@@ -13927,7 +13929,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DBF2: bitmap_hero_right_down */
-  static const u8 bitmap_hero_right_down[1 * 2 * 14] = {
+  static const pixel_t bitmap_hero_right_down[1 * 2 * 14] = {
     __XXXXXX, X_______,
     __XXXXXX, X_______,
     ___XXXXX, XX______,
@@ -13945,7 +13947,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DC0E: bitmap_hero_top_down_right */
-  static const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
+  static const pixel_t bitmap_hero_top_down_right[5 * 2 * 8] = {
     X_______, ___X____, ________, ________, ________, ________, ________, ________, ______XX, __XXX___,
     XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXX_____,
     XXXX___X, ______X_, XXXX____, ____XXXX, __XX____, XX__XXXX, ________, XXXXXXXX, XX__XXXX, __X_____,
@@ -13957,7 +13959,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DC5E: bitmap_hero_bottom_down_right */
-  static const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
+  static const pixel_t bitmap_hero_bottom_down_right[5 * 2 * 4] = {
     XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
     X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
     ________, X_X_X_XX, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXX__, ______X_, _______X, X_X_XXX_,
@@ -13965,7 +13967,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DC86: bitmap_hero_left_down_right */
-  static const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_left_down_right[1 * 2 * 13] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, _______X,
@@ -13982,7 +13984,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DCA0: bitmap_hero_right_down_right */
-  static const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_right_down_right[1 * 2 * 13] = {
     __XXXXXX, ________,
     ___XXXXX, XX______,
     ____XXXX, XXX_____,
@@ -13999,7 +14001,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DCBA: bitmap_hero_top_down_right_hard */
-  static const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
+  static const pixel_t bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
     ________, X_______, ________, ________, ________, ________, ________, ________, ___XX___, XXX__XX_,
     ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XX__X, XXX__X__,
     X______X, ______X_, X_XXXXX_, _X_____X, _____XX_, XXXXX__X, ________, XXXXXXXX, _XXX__XX, X___X___,
@@ -14011,7 +14013,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DD0A: bitmap_hero_bottom_down_right_hard */
-  static const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
+  static const pixel_t bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
     XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
     X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
     _______X, X_X_XXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX___, _____X_X, ______XX, _X_XXX__,
@@ -14019,7 +14021,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DD32: bitmap_hero_left_down_right_hard */
-  static const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
+  static const pixel_t bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
     XXXXXXX_, ________,
     XXXXXX__, _______X,
     XXXXXX__, _______X,
@@ -14036,7 +14038,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DD4C: bitmap_hero_right_down_right_hard */
-  static const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
+  static const pixel_t bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
     __XXXXXX, XX______,
     ____XXXX, XXX_____,
     _____XXX, XXXX____,
@@ -14055,7 +14057,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DD6A: bitmap_shadow_straight */
-  static const u8 bitmap_shadow_straight[7 * 2 * 12] = {
+  static const pixel_t bitmap_shadow_straight[7 * 2 * 12] = {
     XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
     XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
     XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
@@ -14071,7 +14073,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DE12: bitmap_shadow_turn_right */
-  static const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
+  static const pixel_t bitmap_shadow_turn_right[7 * 2 * 12] = {
     XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
     XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
     XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
@@ -14087,7 +14089,7 @@ static void draw_hero_car(chqstate_t *state, int A_turn_speed, int B_wobble)
   };
 
   /** $DEBA: bitmap_shadow_turn_right_hard */
-  static const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
+  static const pixel_t bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
     XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
     XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,
     XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
@@ -14365,7 +14367,7 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
 {
   // clang-format off
   /** $D20D: bitmap_turbo_1 */
-  static const u8 bitmap_turbo_1[4 * 2 * 16] = {
+  static const pixel_t bitmap_turbo_1[4 * 2 * 16] = {
     XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
     X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
     ________, X______X, ______XX, _XXXXX__, ____XX__, XXXX__XX, _XXXXXXX, X_______,
@@ -14385,7 +14387,7 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
   };
 
   /** $D28D: bitmap_turbo_2 */
-  static const u8 bitmap_turbo_2[4 * 2 * 16] = {
+  static const pixel_t bitmap_turbo_2[4 * 2 * 16] = {
     XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
     X_______, _X___XXX, X__XXXXX, _XX_____, XXXX____, ____XXXX, XXXXXXXX, ________,
     ________, X_______, ______XX, X__XXX__, ________, XXXX___X, ____XXXX, XXXX____,
@@ -14405,7 +14407,7 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
   };
 
   /** $D30D: bitmap_turbo_3 */
-  static const u8 bitmap_turbo_3[4 * 2 * 16] = {
+  static const pixel_t bitmap_turbo_3[4 * 2 * 16] = {
     XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
     X______X, _X___XX_, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXXXXX, ________,
     ________, X______X, ______XX, XXXXXX__, ___X___X, XXX_XXX_, ___XXXXX, XXX_____,
@@ -14425,7 +14427,7 @@ static void draw_smoke(chqstate_t *state, int A_anim_frame, int Adash_flip_flag)
   };
 
   /** $D38D: bitmap_turbo_4 */
-  static const u8 bitmap_turbo_4[4 * 2 * 16] = {
+  static const pixel_t bitmap_turbo_4[4 * 2 * 16] = {
     XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
     X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
     ________, X______X, ______XX, _XXXXX__, ____XX__, XXXX__XX, __XXXXXX, XX______,
@@ -14597,7 +14599,7 @@ static void draw_crash(chqstate_t *state,
 {
   // clang-format off
   /** $D0E7: bitmap_cherry_light */
-  static const u8 bitmap_cherry_light[1 * 2 * 7] = {
+  static const pixel_t bitmap_cherry_light[1 * 2 * 7] = {
     ________, _X____X_,
     ________, _XXXXXX_,
     ________, _XX_X_X_,
@@ -14608,7 +14610,7 @@ static void draw_crash(chqstate_t *state,
   };
 
   /** $D0F5: bitmap_cherry_light_lit */
-  static const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
+  static const pixel_t bitmap_cherry_light_lit[3 * 2 * 14] = {
     XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________,
     XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
     XXXXXXXX, ________, XX____XX, __XX_X__, XXXXXXXX, ________,
@@ -14626,7 +14628,7 @@ static void draw_crash(chqstate_t *state,
   };
 
   /** $D149: bitmap_spark */
-  static const u8 bitmap_spark[3 * 2 * 20] = {
+  static const pixel_t bitmap_spark[3 * 2 * 20] = {
     XXXXXXX_, _______X, XXX___XX, ___X_X__, XX_XXXXX, __X_____,
     XXXXXX__, ______X_, __X___X_, XX_XXX_X, X___XXXX, _X_X____,
     XXXXX_X_, _____X_X, ________, X_X_X_X_, _X_XXXXX, X_X_____,
@@ -14650,7 +14652,7 @@ static void draw_crash(chqstate_t *state,
   };
 
   /** $D1C1: bitmap_cherryout_1 */
-  static const u8 bitmap_cherryout_1[2 * 2 * 4] = {
+  static const pixel_t bitmap_cherryout_1[2 * 2 * 4] = {
     XXXXXX__, ______XX, ___XXXXX, XXX_____,
     XXXXXXX_, _______X, X___XXXX, _XXX____,
     XXXXXXXX, ________, ____XXXX, XXXX____,
@@ -14658,7 +14660,7 @@ static void draw_crash(chqstate_t *state,
   };
 
   /** $D1D1: bitmap_cherryout_2 */
-  static const u8 bitmap_cherryout_2[2 * 2 * 9] = {
+  static const pixel_t bitmap_cherryout_2[2 * 2 * 9] = {
     XXXXXXX_, _______X, ___X_XXX, XXX_____,
     XXXXXX_X, ______X_, ______XX, XXXXX___,
     XXXXXXX_, _______X, ______XX, XXXXX___,
@@ -14671,7 +14673,7 @@ static void draw_crash(chqstate_t *state,
   };
 
   /** $D1F5: bitmap_cherryout_3 */
-  static const u8 bitmap_cherryout_3[1 * 2 * 12] = {
+  static const pixel_t bitmap_cherryout_3[1 * 2 * 12] = {
     _____XXX, XXXXX___,
     ______XX, XXXXX___,
     XX_____X, __XXXX__,
@@ -20124,6 +20126,27 @@ static void entry_128k(chqstate_t *state)
 }
 
 /**
+ * Show the cassette loading screen and hold it briefly.
+ *
+ * Conv: port-added; has no Z80 counterpart. On real hardware the tape loader
+ * blits this bitmap into screen memory before the BASIC loader hands control
+ * to the machine code, so the player sees it before any game logic runs. The
+ * port reproduces that ordering here, at the very start of entry_common,
+ * instead of leaving it to the host to draw and hold before the game starts.
+ */
+static void show_loading_screen(chqstate_t *state)
+{
+  memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), loading_screen_bitmap,
+         sizeof(loading_screen_bitmap));
+  memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), loading_screen_attributes,
+         sizeof(loading_screen_attributes));
+  update_screen(state, SCREEN_START_ADDRESS, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  state->speccy->stamp(state->speccy);
+  state->speccy->sleep(state->speccy, LOADING_SCREEN_TSTATES);
+}
+
+/**
  * $E81D: Entry common
  *
  * Shared entry point reached from both entry_48k and entry_128k. Records the
@@ -20145,7 +20168,7 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
 {
   // clang-format off
   /** $F5BE: marquee_initial */
-  static const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
+  static const pixel_t marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
     ________, ________, ________, ________, ________, ______XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX______, ________, ________, ________, ________, ________,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, __XXX_XX, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, _____XX_, ________, ________, ________, ________, _XX_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, _____X_X, ________, ________, XXXXXXXX, _XXX_X__, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, ________, X_XXX_X_, X_XXX_X_, X_XXX_X_, _____XX_, ________, ________, ________, ________, _XX_XXX_, XXXXXXXX, _____X_X, ________, ________, XXXXXXXX,
@@ -20271,6 +20294,8 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
   NOT_USED(B_nrelocs);
 
   state->mode_128k = A_mode_128k;
+
+  show_loading_screen(state);
 
   memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
          sizeof(marquee_initial));

@@ -20,6 +20,8 @@
 
 #include <setjmp.h>
 
+#include "ZXSpectrum/Pixels.h"
+
 #include "ChaseHQ/ChaseHQ.h"
 
 /* ----------------------------------------------------------------------- */
@@ -78,6 +80,11 @@
 #define ATTRACT_TSTATES         (348173)
 #define PREGAME_TSTATES         (288192)
 #define ESCAPE_SCENE_TSTATES    (283239)
+
+/* Conv: port-added; no Z80 timing to calibrate against, as a real tape's
+ * load time depends on the cassette. Held for a fixed ~2s (100 frames at
+ * 50Hz), matching the fixed hold the host previously used. */
+#define LOADING_SCREEN_TSTATES  (FRAME_TSTATES * 100)
 
 /* $F82F titlescr_music ends by spinning on the IM2 frame flag ($F8A7), so one
  * call is exactly one frame. Trace: 8096 calls, median entry-to-entry delta
@@ -425,18 +432,18 @@ typedef struct session session_t;
 
 typedef struct carpart
 {
-  u8        y;
-  u8        rows;
-  const u8 *bitmap;
+  u8             y;
+  u8             rows;
+  const pixel_t *bitmap;
 } carpart_t;
 
 typedef struct carsmokeframe
 {
-  u8        height;
-  u8        width;
-  u8        unflipped_x;
-  u8        flipped_x;
-  const u8 *bitmap;
+  u8             height;
+  u8             width;
+  u8             unflipped_x;
+  u8             flipped_x;
+  const pixel_t *bitmap;
 } carsmokeframe_t;
 
 typedef struct carframe
@@ -448,9 +455,9 @@ typedef struct carframe
 
 typedef struct caradornment
 {
-  u8        height;
-  u8        width;
-  const u8 *bitmap;
+  u8             height;
+  u8             width;
+  const pixel_t *bitmap;
 } caradornment_t;
 
 /* ----------------------------------------------------------------------- */

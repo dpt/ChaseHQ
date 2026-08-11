@@ -111,85 +111,85 @@ static const u8 stage1_map_loop_lanes[26];
 static const u8 stage1_map_loop_hazards[29];
 static const u8 stage1_map_loop_leftobjs[128];
 static const u8 stage1_map_loop_rightobjs[118];
-static const u8 stage1_perp_face[FACEBYTES];
+static const pixel_t stage1_perp_face[FACEBYTES];
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES];
-static const u8 stage1_bitmap_lambo_1[6 * 30];
-static const u8 stage1_bitmap_lambo_2[5 * 22];
-static const u8 stage1_bitmap_lambo_3[3 * 15];
-static const u8 stage1_bitmap_truck_1[6 * 39];
-static const u8 stage1_bitmap_truck_2[5 * 29];
-static const u8 stage1_bitmap_truck_3[3 * 20];
-static const u8 stage1_bitmap_car_1[6 * 31];
-static const u8 stage1_bitmap_car_2[5 * 22];
-static const u8 stage1_bitmap_car_3[3 * 16];
-static const u8 stage1_bitmap_lambo_4[3 * 2 * 8];
-static const u8 stage1_bitmap_lambo_4s[3 * 2 * 8];
-static const u8 stage1_bitmap_truck_4[2 * 2 * 12];
-static const u8 stage1_bitmap_truck_4s[2 * 2 * 12];
-static const u8 stage1_bitmap_car_4[3 * 2 * 9];
-static const u8 stage1_bitmap_car_4s[3 * 2 * 9];
+static const pixel_t stage1_bitmap_lambo_1[6 * 30];
+static const pixel_t stage1_bitmap_lambo_2[5 * 22];
+static const pixel_t stage1_bitmap_lambo_3[3 * 15];
+static const pixel_t stage1_bitmap_truck_1[6 * 39];
+static const pixel_t stage1_bitmap_truck_2[5 * 29];
+static const pixel_t stage1_bitmap_truck_3[3 * 20];
+static const pixel_t stage1_bitmap_car_1[6 * 31];
+static const pixel_t stage1_bitmap_car_2[5 * 22];
+static const pixel_t stage1_bitmap_car_3[3 * 16];
+static const pixel_t stage1_bitmap_lambo_4[3 * 2 * 8];
+static const pixel_t stage1_bitmap_lambo_4s[3 * 2 * 8];
+static const pixel_t stage1_bitmap_truck_4[2 * 2 * 12];
+static const pixel_t stage1_bitmap_truck_4s[2 * 2 * 12];
+static const pixel_t stage1_bitmap_car_4[3 * 2 * 9];
+static const pixel_t stage1_bitmap_car_4s[3 * 2 * 9];
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES];
-static const u8 stage1_bitmap_stones_1[2 * 2 * 5];
-static const u8 stage1_bitmap_stones_2[2 * 2 * 4];
-static const u8 stage1_bitmap_stones_2s[2 * 2 * 4];
-static const u8 stage1_bitmap_stones_3[2 * 2 * 3];
-static const u8 stage1_bitmap_stones_3s[2 * 2 * 3];
-static const u8 stage1_bitmap_stones_4[1 * 2 * 2];
-static const u8 stage1_bitmap_stones_4s[1 * 2 * 2];
-static const u8 stage1_bitmap_stones_5[1 * 2 * 1];
-static const u8 stage1_bitmap_stones_5s[1 * 2 * 1];
-static const u8 stage1_bitmap_dust_1[1 * 2 * 1];
-static const u8 stage1_bitmap_dust_1s[1 * 2 * 1];
+static const pixel_t stage1_bitmap_stones_1[2 * 2 * 5];
+static const pixel_t stage1_bitmap_stones_2[2 * 2 * 4];
+static const pixel_t stage1_bitmap_stones_2s[2 * 2 * 4];
+static const pixel_t stage1_bitmap_stones_3[2 * 2 * 3];
+static const pixel_t stage1_bitmap_stones_3s[2 * 2 * 3];
+static const pixel_t stage1_bitmap_stones_4[1 * 2 * 2];
+static const pixel_t stage1_bitmap_stones_4s[1 * 2 * 2];
+static const pixel_t stage1_bitmap_stones_5[1 * 2 * 1];
+static const pixel_t stage1_bitmap_stones_5s[1 * 2 * 1];
+static const pixel_t stage1_bitmap_dust_1[1 * 2 * 1];
+static const pixel_t stage1_bitmap_dust_1s[1 * 2 * 1];
 static const depthset_t stage1_turn_sign_right;
 static const depthset_t stage1_turn_sign_left;
 static const bitmap_t stage1_turn_sign_bitmaps[10];
-static const u8 stage1_bitmap_turnsign_1[4 * 40];
-static const u8 stage1_bitmap_turnsign_2[3 * 30];
-static const u8 stage1_bitmap_turnsign_3[2 * 20];
-static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16];
-static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13];
-static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13];
+static const pixel_t stage1_bitmap_turnsign_1[4 * 40];
+static const pixel_t stage1_bitmap_turnsign_2[3 * 30];
+static const pixel_t stage1_bitmap_turnsign_3[2 * 20];
+static const pixel_t stage1_bitmap_turnsign_4[2 * 2 * 16];
+static const pixel_t stage1_bitmap_turnsign_5[2 * 2 * 13];
+static const pixel_t stage1_bitmap_turnsign_5s[2 * 2 * 13];
 static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES];
-static const u8 stage1_bitmap_tumbleweed_1[2 * 16];
-static const u8 stage1_bitmap_tumbleweed_2[2 * 11];
-static const u8 stage1_bitmap_tumbleweed_3[1 * 9];
-static const u8 stage1_bitmap_tumbleweed_4[1 * 7];
+static const pixel_t stage1_bitmap_tumbleweed_1[2 * 16];
+static const pixel_t stage1_bitmap_tumbleweed_2[2 * 11];
+static const pixel_t stage1_bitmap_tumbleweed_3[1 * 9];
+static const pixel_t stage1_bitmap_tumbleweed_4[1 * 7];
 static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES];
-static const u8 stage1_bitmap_barrier_1[4 * 17];
-static const u8 stage1_bitmap_barrier_2[3 * 13];
-static const u8 stage1_bitmap_barrier_3[2 * 9];
-static const u8 stage1_bitmap_barrier_4[2 * 2 * 7];
-static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7];
+static const pixel_t stage1_bitmap_barrier_1[4 * 17];
+static const pixel_t stage1_bitmap_barrier_2[3 * 13];
+static const pixel_t stage1_bitmap_barrier_3[2 * 9];
+static const pixel_t stage1_bitmap_barrier_4[2 * 2 * 7];
+static const pixel_t stage1_bitmap_barrier_4s[2 * 2 * 7];
 static const stretchy_t stage1_stretchy_streetlamp_right[5];
 static const stretchy_t stage1_stretchy_streetlamp_left[5];
 static const depthset_t stage1_streetlamptop_right;
 static const depthset_t stage1_streetlamptop_left;
 static const bitmap_t stage1_streetlamptop_bitmaps[5];
 static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5];
-static const u8 stage1_bitmap_streetlamptop_1[4 * 8];
-static const u8 stage1_bitmap_streetlamptop_2[3 * 5];
-static const u8 stage1_bitmap_streetlamptop_3[3 * 4];
-static const u8 stage1_bitmap_streetlamptop_3s[3 * 4];
-static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4];
-static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4];
-static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 3];
-static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3];
+static const pixel_t stage1_bitmap_streetlamptop_1[4 * 8];
+static const pixel_t stage1_bitmap_streetlamptop_2[3 * 5];
+static const pixel_t stage1_bitmap_streetlamptop_3[3 * 4];
+static const pixel_t stage1_bitmap_streetlamptop_3s[3 * 4];
+static const pixel_t stage1_bitmap_streetlamptop_4[2 * 2 * 4];
+static const pixel_t stage1_bitmap_streetlamptop_4s[2 * 2 * 4];
+static const pixel_t stage1_bitmap_streetlamptop_5[2 * 2 * 3];
+static const pixel_t stage1_bitmap_streetlamptop_5s[2 * 2 * 3];
 static const stretchy_t stage1_stretchy_telegraphpole_right[5];
 static const stretchy_t stage1_stretchy_telegraphpole_left[5];
 static const depthset_t stage1_telegraphpoletop_left;
 static const depthset_t stage1_telegraphpoletop_right;
 static const bitmap_t stage1_telegraphpoletop_bitmaps[5];
-static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13];
-static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10];
-static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7];
-static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7];
-static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5];
-static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5];
-static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
-static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
+static const pixel_t stage1_bitmap_telegraphpoletop_1[3 * 13];
+static const pixel_t stage1_bitmap_telegraphpoletop_2[3 * 10];
+static const pixel_t stage1_bitmap_telegraphpoletop_3[3 * 7];
+static const pixel_t stage1_bitmap_telegraphpoletop_3s[3 * 7];
+static const pixel_t stage1_bitmap_telegraphpoletop_4[2 * 2 * 5];
+static const pixel_t stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5];
+static const pixel_t stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
+static const pixel_t stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
 static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES];
 static const stretchy_t stage1_stretchy_bush[4];
 static const depthset_t stage1_tree_bottom;
@@ -198,36 +198,36 @@ static const depthset_t stage1_tree_middle;
 static const depthset_t stage1_tree_topmiddle;
 static const depthset_t stage1_tree_top;
 static const bitmap_t stage1_tree_bitmaps[25];
-static const u8 stage1_bitmap_tree_middle_64x16[8 * 16];
-static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5];
-static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8];
-static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5];
-static const u8 stage1_bitmap_tree_middle_48x12[6 * 12];
-static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4];
-static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4];
-static const u8 stage1_bitmap_tree_middle_32x8[4 * 8];
-static const u8 stage1_bitmap_tree_bottom_32x3[4 * 3];
-static const u8 stage1_bitmap_tree_shadow_32x2[4 * 2];
-static const u8 stage1_bitmap_tree_middle_24x7[3 * 7];
-static const u8 stage1_bitmap_tree_bottom_24x2[3 * 2];
-static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4];
-static const u8 stage1_bitmap_tree_shadow_24x2[3 * 2];
-static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13];
-static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10];
-static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5];
-static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4];
-static const u8 stage1_bitmap_tree_top_24x3[3 * 2 * 3];
-static const u8 stage1_bitmap_tree_top_24x3s[3 * 2 * 3];
-static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6];
-static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4];
-static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5];
-static const u8 stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2];
-static const u8 stage1_bitmap_tree_trunk_24x3[3 * 2 * 3];
-static const u8 stage1_bitmap_tree_shadow_24x1[3 * 2 * 1];
-static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5];
-static const u8 stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2];
-static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3];
-static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
+static const pixel_t stage1_bitmap_tree_middle_64x16[8 * 16];
+static const pixel_t stage1_bitmap_tree_bottom_64x5[8 * 5];
+static const pixel_t stage1_bitmap_tree_trunk_16x8[2 * 8];
+static const pixel_t stage1_bitmap_tree_shadow_64x5[8 * 5];
+static const pixel_t stage1_bitmap_tree_middle_48x12[6 * 12];
+static const pixel_t stage1_bitmap_tree_bottom_48x4[6 * 4];
+static const pixel_t stage1_bitmap_tree_shadow_48x4[6 * 4];
+static const pixel_t stage1_bitmap_tree_middle_32x8[4 * 8];
+static const pixel_t stage1_bitmap_tree_bottom_32x3[4 * 3];
+static const pixel_t stage1_bitmap_tree_shadow_32x2[4 * 2];
+static const pixel_t stage1_bitmap_tree_middle_24x7[3 * 7];
+static const pixel_t stage1_bitmap_tree_bottom_24x2[3 * 2];
+static const pixel_t stage1_bitmap_tree_trunk_8x4[1 * 4];
+static const pixel_t stage1_bitmap_tree_shadow_24x2[3 * 2];
+static const pixel_t stage1_bitmap_tree_top_64x13[8 * 2 * 13];
+static const pixel_t stage1_bitmap_tree_top_48x10[6 * 2 * 10];
+static const pixel_t stage1_bitmap_tree_top_32x5[4 * 2 * 5];
+static const pixel_t stage1_bitmap_tree_top_24x4[3 * 2 * 4];
+static const pixel_t stage1_bitmap_tree_top_24x3[3 * 2 * 3];
+static const pixel_t stage1_bitmap_tree_top_24x3s[3 * 2 * 3];
+static const pixel_t stage1_bitmap_tree_trunk_16x6[2 * 2 * 6];
+static const pixel_t stage1_bitmap_tree_trunk_16x4[2 * 2 * 4];
+static const pixel_t stage1_bitmap_tree_middle_24x5[3 * 2 * 5];
+static const pixel_t stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2];
+static const pixel_t stage1_bitmap_tree_trunk_24x3[3 * 2 * 3];
+static const pixel_t stage1_bitmap_tree_shadow_24x1[3 * 2 * 1];
+static const pixel_t stage1_bitmap_tree_middle_24x5s[3 * 2 * 5];
+static const pixel_t stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2];
+static const pixel_t stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3];
+static const pixel_t stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
 
 /* ----------------------------------------------------------------------- */
 
@@ -1608,7 +1608,7 @@ static const u8 stage1_map_loop_rightobjs[] = {
 /* ----------------------------------------------------------------------- */
 
 /** $642A: stage1_perp_face */
-static const u8 stage1_perp_face[FACEBYTES] = {
+static const pixel_t stage1_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XXXXX, X__XXXX_, __XXX___, ___XXX_X,
   X__XXXXX, XXX___XX, XXX_____, ____XX_X,
@@ -1690,7 +1690,7 @@ static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $64BC: stage1_bitmap_lambo_1 */
-static const u8 stage1_bitmap_lambo_1[6 * 30] = {
+static const pixel_t stage1_bitmap_lambo_1[6 * 30] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -1724,7 +1724,7 @@ static const u8 stage1_bitmap_lambo_1[6 * 30] = {
 };
 
 /** $6570: stage1_bitmap_lambo_2 */
-static const u8 stage1_bitmap_lambo_2[5 * 22] = {
+static const pixel_t stage1_bitmap_lambo_2[5 * 22] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1750,7 +1750,7 @@ static const u8 stage1_bitmap_lambo_2[5 * 22] = {
 };
 
 /** $65DE: stage1_bitmap_lambo_3 */
-static const u8 stage1_bitmap_lambo_3[3 * 15] = {
+static const pixel_t stage1_bitmap_lambo_3[3 * 15] = {
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX__XXX, XXXXXXXX, XXX__XXX,
   XX_XXXXX, XXXXXXXX, XXXXX_XX,
@@ -1769,7 +1769,7 @@ static const u8 stage1_bitmap_lambo_3[3 * 15] = {
 };
 
 /** $660B: stage1_bitmap_truck_1 */
-static const u8 stage1_bitmap_truck_1[6 * 39] = {
+static const pixel_t stage1_bitmap_truck_1[6 * 39] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
@@ -1812,7 +1812,7 @@ static const u8 stage1_bitmap_truck_1[6 * 39] = {
 };
 
 /** $66F5: stage1_bitmap_truck_2 */
-static const u8 stage1_bitmap_truck_2[5 * 29] = {
+static const pixel_t stage1_bitmap_truck_2[5 * 29] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1845,7 +1845,7 @@ static const u8 stage1_bitmap_truck_2[5 * 29] = {
 };
 
 /** $6786: stage1_bitmap_truck_3 */
-static const u8 stage1_bitmap_truck_3[3 * 20] = {
+static const pixel_t stage1_bitmap_truck_3[3 * 20] = {
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX_XXXX, XXXXXXXX, XXXX_XXX,
   XX_XXXXX, X______X, XXXXX_XX,
@@ -1869,7 +1869,7 @@ static const u8 stage1_bitmap_truck_3[3 * 20] = {
 };
 
 /** $67C2: stage1_bitmap_car_1 */
-static const u8 stage1_bitmap_car_1[6 * 31] = {
+static const pixel_t stage1_bitmap_car_1[6 * 31] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1904,7 +1904,7 @@ static const u8 stage1_bitmap_car_1[6 * 31] = {
 };
 
 /** $687C: stage1_bitmap_car_2 */
-static const u8 stage1_bitmap_car_2[5 * 22] = {
+static const pixel_t stage1_bitmap_car_2[5 * 22] = {
   ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   __XXXX__, X_XXXXXX, XXXXXXXX, XXXXX_X_, _XXXX___,
@@ -1930,7 +1930,7 @@ static const u8 stage1_bitmap_car_2[5 * 22] = {
 };
 
 /** $68EA: stage1_bitmap_car_3 */
-static const u8 stage1_bitmap_car_3[3 * 16] = {
+static const pixel_t stage1_bitmap_car_3[3 * 16] = {
   _____XXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX__XXX, XXXXXXXX, XXX__XXX,
@@ -1950,7 +1950,7 @@ static const u8 stage1_bitmap_car_3[3 * 16] = {
 };
 
 /** $691A: stage1_bitmap_lambo_4 */
-static const u8 stage1_bitmap_lambo_4[3 * 2 * 8] = {
+static const pixel_t stage1_bitmap_lambo_4[3 * 2 * 8] = {
   ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
   ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
@@ -1962,7 +1962,7 @@ static const u8 stage1_bitmap_lambo_4[3 * 2 * 8] = {
 };
 
 /** $694A: stage1_bitmap_lambo_4s */
-static const u8 stage1_bitmap_lambo_4s[3 * 2 * 8] = {
+static const pixel_t stage1_bitmap_lambo_4s[3 * 2 * 8] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
   XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
@@ -1974,7 +1974,7 @@ static const u8 stage1_bitmap_lambo_4s[3 * 2 * 8] = {
 };
 
 /** $697A: stage1_bitmap_truck_4 */
-static const u8 stage1_bitmap_truck_4[2 * 2 * 12] = {
+static const pixel_t stage1_bitmap_truck_4[2 * 2 * 12] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
   ________, XX_XXXXX, _____XXX, XX_XX___,
   ________, XXXXX___, _____XXX, XXXXX___,
@@ -1990,7 +1990,7 @@ static const u8 stage1_bitmap_truck_4[2 * 2 * 12] = {
 };
 
 /** $69AA: stage1_bitmap_truck_4s */
-static const u8 stage1_bitmap_truck_4s[2 * 2 * 12] = {
+static const pixel_t stage1_bitmap_truck_4s[2 * 2 * 12] = {
   XXX_____, ___XXXXX, ________, XXXXXXXX,
   XXX_____, ___XX_XX, ________, XXXXX_XX,
   XXX_____, ___XXXXX, ________, ___XXXXX,
@@ -2006,7 +2006,7 @@ static const u8 stage1_bitmap_truck_4s[2 * 2 * 12] = {
 };
 
 /** $69DA: stage1_bitmap_car_4 */
-static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
+static const pixel_t stage1_bitmap_car_4[3 * 2 * 9] = {
   X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   ________, XXX_XXXX, ________, XXXX_XXX, XXXXXXXX, ________,
   ________, XX_X_X_X, ________, _X_X__XX, XXXXXXXX, ________,
@@ -2019,7 +2019,7 @@ static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
 };
 
 /** $6A10: stage1_bitmap_car_4s */
-static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
+static const pixel_t stage1_bitmap_car_4s[3 * 2 * 9] = {
   XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXX____, ____XXX_, ________, XXXXXXXX, ____XXXX, _XXX____,
   XXXX____, ____XX_X, ________, _X_X_X_X, ____XXXX, __XX____,
@@ -2054,7 +2054,7 @@ static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $6A9A: stage1_bitmap_stones_1 */
-static const u8 stage1_bitmap_stones_1[2 * 2 * 5] = {
+static const pixel_t stage1_bitmap_stones_1[2 * 2 * 5] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____,
   ________, X_____X_, ____XXXX, XXXX____,
   ________, X______X, ___XXXXX, _XX_____,
@@ -2063,7 +2063,7 @@ static const u8 stage1_bitmap_stones_1[2 * 2 * 5] = {
 };
 
 /** $6AAE: stage1_bitmap_stones_2 */
-static const u8 stage1_bitmap_stones_2[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_stones_2[2 * 2 * 4] = {
   ________, XXXXXXXX, XXXXXXXX, ________,
   ________, X____XXX, _XXXXXXX, X_______,
   X_______, _X____XX, XXXXXXXX, ________,
@@ -2071,7 +2071,7 @@ static const u8 stage1_bitmap_stones_2[2 * 2 * 4] = {
 };
 
 /** $6ABE: stage1_bitmap_stones_2s */
-static const u8 stage1_bitmap_stones_2s[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_stones_2s[2 * 2 * 4] = {
   XXXX____, ____XXXX, ____XXXX, XXXX____,
   XXXX____, ____X___, _____XXX, _XXXX___,
   XXXXX___, _____X__, ____XXXX, __XX____,
@@ -2079,48 +2079,48 @@ static const u8 stage1_bitmap_stones_2s[2 * 2 * 4] = {
 };
 
 /** $6ACE: stage1_bitmap_stones_3 */
-static const u8 stage1_bitmap_stones_3[2 * 2 * 3] = {
+static const pixel_t stage1_bitmap_stones_3[2 * 2 * 3] = {
   _____XXX, XXXXX___, XXXXXXXX, ________,
   ______XX, X__X_X__, XXXXXXXX, ________,
   X____XXX, _X_XX___, XXXXXXXX, ________,
 };
 
 /** $6ADA: stage1_bitmap_stones_3s */
-static const u8 stage1_bitmap_stones_3s[2 * 2 * 3] = {
+static const pixel_t stage1_bitmap_stones_3s[2 * 2 * 3] = {
   XXXX____, ____XXXX, _XXXXXXX, X_______,
   XXXX____, ____X__X, __XXXXXX, _X______,
   XXXXX___, _____X_X, _XXXXXXX, X_______,
 };
 
 /** $6AE6: stage1_bitmap_stones_4 */
-static const u8 stage1_bitmap_stones_4[1 * 2 * 2] = {
+static const pixel_t stage1_bitmap_stones_4[1 * 2 * 2] = {
   ____XXXX, XXXX____,
   ___XXXXX, X_X_____,
 };
 
 /** $6AEA: stage1_bitmap_stones_4s */
-static const u8 stage1_bitmap_stones_4s[1 * 2 * 2] = {
+static const pixel_t stage1_bitmap_stones_4s[1 * 2 * 2] = {
   XXXX____, ____XXXX,
   XXXX___X, ____X_X_,
 };
 
 /** $6AEE: stage1_bitmap_stones_5 */
-static const u8 stage1_bitmap_stones_5[1 * 2 * 1] = {
+static const pixel_t stage1_bitmap_stones_5[1 * 2 * 1] = {
   __XXXXXX, XX______,
 };
 
 /** $6AF0: stage1_bitmap_stones_5s */
-static const u8 stage1_bitmap_stones_5s[1 * 2 * 1] = {
+static const pixel_t stage1_bitmap_stones_5s[1 * 2 * 1] = {
   XXXX__XX, ____XX__,
 };
 
 /** $6AF2: stage1_bitmap_dust_1 */
-static const u8 stage1_bitmap_dust_1[1 * 2 * 1] = {
+static const pixel_t stage1_bitmap_dust_1[1 * 2 * 1] = {
   ___XXXXX, _X______,
 };
 
 /** $6AF4: stage1_bitmap_dust_1s */
-static const u8 stage1_bitmap_dust_1s[1 * 2 * 1] = {
+static const pixel_t stage1_bitmap_dust_1s[1 * 2 * 1] = {
   XXXX___X, _____X__,
 };
 
@@ -2175,7 +2175,7 @@ static const bitmap_t stage1_turn_sign_bitmaps[] = {
 };
 
 /** $6B68: stage1_bitmap_turnsign_1 */
-static const u8 stage1_bitmap_turnsign_1[4 * 40] = {
+static const pixel_t stage1_bitmap_turnsign_1[4 * 40] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXX____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2219,7 +2219,7 @@ static const u8 stage1_bitmap_turnsign_1[4 * 40] = {
 };
 
 /** $6C08: stage1_bitmap_turnsign_2 */
-static const u8 stage1_bitmap_turnsign_2[3 * 30] = {
+static const pixel_t stage1_bitmap_turnsign_2[3 * 30] = {
   __XXXXXX, XXXXXXXX, XXXXXX__,
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2253,7 +2253,7 @@ static const u8 stage1_bitmap_turnsign_2[3 * 30] = {
 };
 
 /** $6C62: stage1_bitmap_turnsign_3 */
-static const u8 stage1_bitmap_turnsign_3[2 * 20] = {
+static const pixel_t stage1_bitmap_turnsign_3[2 * 20] = {
   _XXXXXXX, XXXXXXX_,
   XXXXXXXX, XXXXXXXX,
   _X__XXXX, XXXXX_X_,
@@ -2277,7 +2277,7 @@ static const u8 stage1_bitmap_turnsign_3[2 * 20] = {
 };
 
 /** $6C8A: stage1_bitmap_turnsign_4 */
-static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16] = {
+static const pixel_t stage1_bitmap_turnsign_4[2 * 2 * 16] = {
   X_______, _XXXXXXX, ____XXXX, XXXX____,
   ________, XXXXXXXX, _____XXX, XXXXX___,
   ________, X_XXXXXX, _____XXX, XXXXX___,
@@ -2297,7 +2297,7 @@ static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16] = {
 };
 
 /** $6CCA: stage1_bitmap_turnsign_5 */
-static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13] = {
+static const pixel_t stage1_bitmap_turnsign_5[2 * 2 * 13] = {
   X_______, _XXXXXXX, _XXXXXXX, X_______,
   ________, XXXXXXXX, __XXXXXX, XX______,
   ________, XXXXXXXX, __XXXXXX, XX______,
@@ -2314,7 +2314,7 @@ static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13] = {
 };
 
 /** $6CFE: stage1_bitmap_turnsign_5s */
-static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
+static const pixel_t stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
   XXXXX___, _____XXX, _____XXX, XXXXX___,
   XXXX____, ____XXXX, ______XX, XXXXXX__,
   XXXX____, ____XXXX, ______XX, XXXXXX__,
@@ -2343,7 +2343,7 @@ static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $6DAC: stage1_bitmap_tumbleweed_1 */
-static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
+static const pixel_t stage1_bitmap_tumbleweed_1[2 * 16] = {
   ___XX___, _X_XX___,
   ____XXXX, XXXX____,
   ___XXXXX, XXXXX___,
@@ -2363,7 +2363,7 @@ static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
 };
 
 /** $6DCC: stage1_bitmap_tumbleweed_2 */
-static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
+static const pixel_t stage1_bitmap_tumbleweed_2[2 * 11] = {
   ____X__X, __XX____,
   _____XXX, XXX_____,
   ____XXXX, XXXX____,
@@ -2378,7 +2378,7 @@ static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
 };
 
 /** $6DE2: stage1_bitmap_tumbleweed_3 */
-static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
+static const pixel_t stage1_bitmap_tumbleweed_3[1 * 9] = {
   __XXXXX_,
   _XXXXXXX,
   XXXXXXXX,
@@ -2391,7 +2391,7 @@ static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
 };
 
 /** $6DEB: stage1_bitmap_tumbleweed_4 */
-static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
+static const pixel_t stage1_bitmap_tumbleweed_4[1 * 7] = {
   __XXXX__,
   _XXXXXX_,
   _XXX_XX_,
@@ -2414,7 +2414,7 @@ static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $6E1C: stage1_bitmap_barrier_1 */
-static const u8 stage1_bitmap_barrier_1[4 * 17] = {
+static const pixel_t stage1_bitmap_barrier_1[4 * 17] = {
   ___XXXXX, XX______, ______XX, XXXXX___,
   ___XXXX_, _X____XX, XX____XX, _X__X___,
   ____XX_X, __X___XX, _X___XX_, X__X____,
@@ -2435,7 +2435,7 @@ static const u8 stage1_bitmap_barrier_1[4 * 17] = {
 };
 
 /** $6E60: stage1_bitmap_barrier_2 */
-static const u8 stage1_bitmap_barrier_2[3 * 13] = {
+static const pixel_t stage1_bitmap_barrier_2[3 * 13] = {
   __XXXXXX, ________, XXXXXX__,
   __XXX_XX, ___XXX__, XX_X_X__,
   ___XXX_X, X__X_X_X, X_X_X___,
@@ -2452,7 +2452,7 @@ static const u8 stage1_bitmap_barrier_2[3 * 13] = {
 };
 
 /** $6E87: stage1_bitmap_barrier_3 */
-static const u8 stage1_bitmap_barrier_3[2 * 9] = {
+static const pixel_t stage1_bitmap_barrier_3[2 * 9] = {
   _XXXX___, ___XXXX_,
   _XX_X__X, X__XX_X_,
   __XX_X_X, X_XX_X__,
@@ -2465,7 +2465,7 @@ static const u8 stage1_bitmap_barrier_3[2 * 9] = {
 };
 
 /** $6E99: stage1_bitmap_barrier_4 */
-static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
+static const pixel_t stage1_bitmap_barrier_4[2 * 2 * 7] = {
   X__XXXXX, _XX_____, X__XXXXX, _XX_____,
   X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
   XX______, __XXXXXX, __XXXXXX, XX______,
@@ -2476,7 +2476,7 @@ static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
 };
 
 /** $6EB5: stage1_bitmap_barrier_4s */
-static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
+static const pixel_t stage1_bitmap_barrier_4s[2 * 2 * 7] = {
   XXXXX__X, _____XX_, XXXXX__X, _____XX_,
   XXXXX___, _____XXX, X__X___X, _XX_XXX_,
   XXXXXX__, ______XX, ______XX, XXXXXX__,
@@ -2559,7 +2559,7 @@ static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5] = {
 };
 
 /** $6F5D: stage1_bitmap_streetlamptop_1 */
-static const u8 stage1_bitmap_streetlamptop_1[4 * 8] = {
+static const pixel_t stage1_bitmap_streetlamptop_1[4 * 8] = {
   ________, ________, ________, XXX__X__,
   ___XXXXX, XXXXXXX_, _______X, X_X__X__,
   __X_____, _______X, _____XXX, __X__X__,
@@ -2571,7 +2571,7 @@ static const u8 stage1_bitmap_streetlamptop_1[4 * 8] = {
 };
 
 /** $6F7D: stage1_bitmap_streetlamptop_2 */
-static const u8 stage1_bitmap_streetlamptop_2[3 * 5] = {
+static const pixel_t stage1_bitmap_streetlamptop_2[3 * 5] = {
   _XXXXXXX, XX_____X, X_X_X___,
   X_______, __X__XX_, _X__X___,
   X_______, _XXXX__X, XX__X___,
@@ -2580,7 +2580,7 @@ static const u8 stage1_bitmap_streetlamptop_2[3 * 5] = {
 };
 
 /** $6F8C: stage1_bitmap_streetlamptop_3 */
-static const u8 stage1_bitmap_streetlamptop_3[3 * 4] = {
+static const pixel_t stage1_bitmap_streetlamptop_3[3 * 4] = {
   ______XX, XXXX___X, _XX_____,
   _____X__, ____XXX_, X_X_____,
   ____X_X_, _____X_X, _XX_____,
@@ -2588,7 +2588,7 @@ static const u8 stage1_bitmap_streetlamptop_3[3 * 4] = {
 };
 
 /** $6F98: stage1_bitmap_streetlamptop_3s */
-static const u8 stage1_bitmap_streetlamptop_3s[3 * 4] = {
+static const pixel_t stage1_bitmap_streetlamptop_3s[3 * 4] = {
   ________, __XXXXXX, ___X_XX_,
   ________, _X______, XXX_X_X_,
   ________, X_X_____, _X_X_XX_,
@@ -2596,7 +2596,7 @@ static const u8 stage1_bitmap_streetlamptop_3s[3 * 4] = {
 };
 
 /** $6FA4: stage1_bitmap_streetlamptop_4 */
-static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
   XXXXXXXX, ________, X___XXXX, _XXX____,
   ______X_, XX_XXX_X, ____XXXX, X_XX____,
   ________, X____XX_, _X__XXXX, X_XX____,
@@ -2604,7 +2604,7 @@ static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
 };
 
 /** $6FB4: stage1_bitmap_streetlamptop_4s */
-static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
   XXXXXXXX, ________, XXX___XX, ___XXX__,
   XX______, __XX_XXX, X_____XX, _XX_XX__,
   XX______, __X____X, ___X__XX, X_X_XX__,
@@ -2612,14 +2612,14 @@ static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
 };
 
 /** $6FC4: stage1_bitmap_streetlamptop_5 */
-static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 3] = {
+static const pixel_t stage1_bitmap_streetlamptop_5[2 * 2 * 3] = {
   XXXXXXX_, _______X, _XXXXXXX, X_______,
   ________, X___XXXX, _XXXXXXX, X_______,
   ____XXXX, XXXX____, XXXXXXXX, ________
 };
 
 /** $6FD0: stage1_bitmap_streetlamptop_5s */
-static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
+static const pixel_t stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
   XXXXXXXX, ________, XXX__XXX, ___XX___,
   XXXX____, ____X___, _____XXX, XXXXX___,
   XXXX____, ____XXXX, XXXXXXXX, ________
@@ -2687,7 +2687,7 @@ static const bitmap_t stage1_telegraphpoletop_bitmaps[5] = {
 };
 
 /** $703F: stage1_bitmap_telegraphpoletop_1 */
-static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_1[3 * 13] = {
   ____XXXX, XXX__XXX, XXX_____,
   ___X____, ___X_XX_, ___X____,
   ___XXXXX, XXX__XXX, XXXX____,
@@ -2704,7 +2704,7 @@ static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13] = {
 };
 
 /** $7066: stage1_bitmap_telegraphpoletop_2 */
-static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_2[3 * 10] = {
   ______XX, XX__XXXX, X_______,
   _____X__, __X_XX__, X_______,
   _____X_X, XX__XXX_, X_______,
@@ -2718,7 +2718,7 @@ static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10] = {
 };
 
 /** $7084: stage1_bitmap_telegraphpoletop_3 */
-static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_3[3 * 7] = {
   ______XX, XXXXXX__, ________,
   _____X__, __X__X__, ________,
   _____X_X, X_XX_X__, ________,
@@ -2729,7 +2729,7 @@ static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7] = {
 };
 
 /** $7099: stage1_bitmap_telegraphpoletop_3s */
-static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
   ________, __XXXXXX, XX______,
   ________, _X____X_, _X______,
   ________, _X_XX_XX, _X______,
@@ -2740,7 +2740,7 @@ static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
 };
 
 /** $70AE: stage1_bitmap_telegraphpoletop_4 */
-static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
   XXXXXXX_, _______X, ______XX, XX_XXX__,
   XXXXXXX_, _______X, ______XX, _X_X_X__,
   XXXXXXXX, ________, XX__XXXX, ___X____,
@@ -2749,7 +2749,7 @@ static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
 };
 
 /** $70C2: stage1_bitmap_telegraphpoletop_4s */
-static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
   XXXXXXXX, ________, X_______, _XXX_XXX,
   XXXXXXXX, ________, X_______, _X_X_X_X,
   XXXXXXXX, ________, XXXX__XX, _____X__,
@@ -2758,7 +2758,7 @@ static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
 };
 
 /** $70D6: stage1_bitmap_telegraphpoletop_5 */
-static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
   XXXXXX__, ______XX, ___XXXXX, XXX_____,
   XXXXXX__, ______XX, ___XXXXX, __X_____,
   XXXXX___, _____XXX, ____XXXX, _XXX____,
@@ -2766,7 +2766,7 @@ static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
 };
 
 /** $70E6: stage1_bitmap_telegraphpoletop_5s */
-static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
   XXXXXXXX, ________, XX_____X, __XXXXX_,
   XXXXXXXX, ________, XX_____X, __XX__X_,
   XXXXXXXX, ________, X_______, _XXX_XXX,
@@ -2908,7 +2908,7 @@ static const bitmap_t stage1_tree_bitmaps[25] = {
 };
 
 /** $722D: stage1_bitmap_tree_middle_64x16 */
-static const u8 stage1_bitmap_tree_middle_64x16[8 * 16] = {
+static const pixel_t stage1_bitmap_tree_middle_64x16[8 * 16] = {
   _XXXXXX_, X_XXXXXX, XXXXXXXX, XXX_X_XX, XX__X_XX, _X_XXXX_, X_X_XXXX, XXXXXX__,
   XXXX_XXX, XXX_XXXX, _X_XXX_X, XX_X_X_X, X____XX_, X_X_X_XX, _X_XXXXX, X_XXX___,
   _XX_XXX_, XX_X_XX_, X_X_XXXX, _XX___XX, XXX_XXXX, _X_XXXXX, XXXX_XXX, XX_XXXX_,
@@ -2928,7 +2928,7 @@ static const u8 stage1_bitmap_tree_middle_64x16[8 * 16] = {
 };
 
 /** $72AD: stage1_bitmap_tree_bottom_64x5 */
-static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5] = {
+static const pixel_t stage1_bitmap_tree_bottom_64x5[8 * 5] = {
   ________, ____X__X, __X__X_X, XXX_X_X_, X_X____X, _X___X__, X___X__X, ________,
   ______XX, X_XXXX_X, _XX__XXX, XXXX_XXX, _XX_X___, X__X___X, _X_XX_X_, X_X_____,
   ____X_X_, XXXX_XX_, XX_XX_X_, XXXXXXXX, X_XXXXX_, _XX_XXXX, _XXX_XXX, X__X____,
@@ -2937,7 +2937,7 @@ static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5] = {
 };
 
 /** $72D5: stage1_bitmap_tree_trunk_16x8 */
-static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8] = {
+static const pixel_t stage1_bitmap_tree_trunk_16x8[2 * 8] = {
   X_X__X_X, _X_XX__X,
   XX__XX_X, __X__X_X,
   _XX__X__, X_X_X__X,
@@ -2949,7 +2949,7 @@ static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8] = {
 };
 
 /** $72E5: stage1_bitmap_tree_shadow_64x5 */
-static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5] = {
+static const pixel_t stage1_bitmap_tree_shadow_64x5[8 * 5] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______,
   __XXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX, XXXX__XX, XXXXXXXX, XXXXXXXX, XXXXX___,
   XXXXXXXX, XXXXXXXX, XXXXX__X, XX__XXX_, X_X__X_X, X_XXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2958,7 +2958,7 @@ static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5] = {
 };
 
 /** $730D: stage1_bitmap_tree_middle_48x12 */
-static const u8 stage1_bitmap_tree_middle_48x12[6 * 12] = {
+static const pixel_t stage1_bitmap_tree_middle_48x12[6 * 12] = {
   _XXXX_XX, XXXXXXXX, XXXX_XXX, XX_XXX__, XXX_XX_X, XXXXXX__,
   XXX_XXX_, XX_X__XX, _XX____X, X___X_XX, _XXX__XX, XXX_XX__,
   XX_X_XXX, __XXX_XX, XXX_X_XX, X_X_XXXX, XXX_X_XX, _XXXXXX_,
@@ -2974,7 +2974,7 @@ static const u8 stage1_bitmap_tree_middle_48x12[6 * 12] = {
 };
 
 /** $7355: stage1_bitmap_tree_bottom_48x4 */
-static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4] = {
+static const pixel_t stage1_bitmap_tree_bottom_48x4[6 * 4] = {
   ______X_, _X_X_X__, _XXX_X__, X____X__, __X____X, _X______,
   ____XXXX, XX_XXX__, XXXXX_XX, _XXX__X_, X__X__XX, X_XX____,
   ___XX_XX, X_XXX_XX, X_XXXXXX, XXXXX__X, _XXX_XX_, XXXXX___,
@@ -2982,7 +2982,7 @@ static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4] = {
 };
 
 /** $736D: stage1_bitmap_tree_shadow_48x4 */
-static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4] = {
+static const pixel_t stage1_bitmap_tree_shadow_48x4[6 * 4] = {
   _______X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXX_XXXX, XXX_XXXX, XXXXXXXX, XXXXXX__,
   ____XXXX, XXXXXXXX, ___X__X_, ___XX__X, XXXXXXXX, XXXX____,
@@ -2990,7 +2990,7 @@ static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4] = {
 };
 
 /** $7385: stage1_bitmap_tree_middle_32x8 */
-static const u8 stage1_bitmap_tree_middle_32x8[4 * 8] = {
+static const pixel_t stage1_bitmap_tree_middle_32x8[4 * 8] = {
   XXXXXXXX, __X_XX__, X__X_XXX, XXXX_XXX,
   XXX_X_XX, X_XXX__X, X_XXXXXX, X_XXXXX_,
   XXXXXXXX, _XXXXXX_, XXXX_X_X, XXX_XXXX,
@@ -3002,20 +3002,20 @@ static const u8 stage1_bitmap_tree_middle_32x8[4 * 8] = {
 };
 
 /** $73A5: stage1_bitmap_tree_bottom_32x3 */
-static const u8 stage1_bitmap_tree_bottom_32x3[4 * 3] = {
+static const pixel_t stage1_bitmap_tree_bottom_32x3[4 * 3] = {
   _X_X__X_, _X__XX_X, XX_XX___, X_X_____,
   __XXXX_X, X_XXXXXX, XXXX_XX_, XX_XX___,
   _XXXX__X, XXXXXXXX, XX_XXXXX, XXXXX_XX,
 };
 
 /** $73B1: stage1_bitmap_tree_shadow_32x2 */
-static const u8 stage1_bitmap_tree_shadow_32x2[4 * 2] = {
+static const pixel_t stage1_bitmap_tree_shadow_32x2[4 * 2] = {
   _XXXXXXX, XXXXX_XX, XXX_XXXX, XXXXXXX_,
   ___XXXXX, XXX_XX_X, _X_X_XXX, XXXXXX__,
 };
 
 /** $73B9: stage1_bitmap_tree_middle_24x7 */
-static const u8 stage1_bitmap_tree_middle_24x7[3 * 7] = {
+static const pixel_t stage1_bitmap_tree_middle_24x7[3 * 7] = {
   _XXXXXX_, XXXXX__X, XX_XXXX_,
   XXX_X_XX, XX_XX_XX, _XXX_XXX,
   _XXXXXXX, X_XXXXX_, _XXXXX_X,
@@ -3026,13 +3026,13 @@ static const u8 stage1_bitmap_tree_middle_24x7[3 * 7] = {
 };
 
 /** $73CE: stage1_bitmap_tree_bottom_24x2 */
-static const u8 stage1_bitmap_tree_bottom_24x2[3 * 2] = {
+static const pixel_t stage1_bitmap_tree_bottom_24x2[3 * 2] = {
   ___X_XX_, XX_X__XX, __X_XX__,
   _XXXXXXX, X_X_XXX_, XXXXX_X_,
 };
 
 /** $73D4: stage1_bitmap_tree_trunk_8x4 */
-static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4] = {
+static const pixel_t stage1_bitmap_tree_trunk_8x4[1 * 4] = {
   _X_X_XX_,
   _XX_X_X_,
   _X__X_X_,
@@ -3040,13 +3040,13 @@ static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4] = {
 };
 
 /** $73D8: stage1_bitmap_tree_shadow_24x2 */
-static const u8 stage1_bitmap_tree_shadow_24x2[3 * 2] = {
+static const pixel_t stage1_bitmap_tree_shadow_24x2[3 * 2] = {
   XXXXXXXX, X_XXXX_X, XXXXXXXX,
   __XXXXXX, _X_X__X_, XXXXXXX_,
 };
 
 /** $73DE: stage1_bitmap_tree_top_64x13 */
-static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
+static const pixel_t stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
   XXXX____, ____XX_X, ________, X___XXXX, ________, XX_XXXXX, ________, XX_X_XXX, ________, XX_X_XXX, ________, XXXXX_X_, ________, XX_XXX_X, _____XXX, XXXXX___,
   XXXX____, ____XXXX, ________, XX_X_X_X, ________, XXXXXX_X, ________, XXXXXX_X, ________, XXXXXX_X, ________, XXX_XX_X, ________, XXXXX_X_, ____XXXX, XXXX____,
   XXXXX___, _____XXX, ________, X_X_XXXX, ________, _XX_X_X_, ________, X_X_XXXX, ________, XX_XXXXX, ________, _X_X__X_, ________, XXX_XX_X, ___XXXXX, X_X_____,
@@ -3063,7 +3063,7 @@ static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
 };
 
 /** $74AE: stage1_bitmap_tree_top_48x10 */
-static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
+static const pixel_t stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
   XXX_____, ___XXXXX, ________, __X_X__X, ________, XXXX__XX, ________, __X_XXXX, ________, XXX_X_XX, ______XX, _XXXXX__,
   XXX_____, ___XX_X_, ________, X__XXXXX, ________, _XX_XX_X, ________, XXXX_XXX, ________, _X_XXXXX, _____XXX, X_X_X___,
   XXXX____, ____XXXX, ________, _XXX_X_X, ________, X_XXXXXX, ________, X_XXXX_X, ________, __X_XX_X, ____XXXX, _XXX____,
@@ -3077,7 +3077,7 @@ static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
 };
 
 /** $7526: stage1_bitmap_tree_top_32x5 */
-static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
+static const pixel_t stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
   XXXXX___, _____X_X, ________, _XXXXX_X, ________, XXXX_X_X, ____XXXX, X_XX____,
   XXXXX___, _____XX_, ________, X_X_XXXX, ________, X_XXXXXX, __XXXXXX, XX______,
   XXXXXX__, ______XX, ________, XXXX_X_X, ________, XX_X___X, _XXXXXXX, X_______,
@@ -3086,7 +3086,7 @@ static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
 };
 
 /** $754E: stage1_bitmap_tree_top_24x4 */
-static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
+static const pixel_t stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
   XX______, __XXXXXX, ________, _XXX_XXX, _______X, XXXXX_X_,
   XXXX____, ____X_X_, ________, XXXXXX_X, ______XX, _XX_XX__,
   XXXXX___, _____XXX, ________, X_X_XX__, ____XXXX, XXXX____,
@@ -3094,21 +3094,21 @@ static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
 };
 
 /** $7566: stage1_bitmap_tree_top_24x3 */
-static const u8 stage1_bitmap_tree_top_24x3[3 * 2 * 3] = {
+static const pixel_t stage1_bitmap_tree_top_24x3[3 * 2 * 3] = {
   XXX_____, ___XX_XX, ________, _XXX_XXX, XXXXXXXX, ________,
   XXXX____, ____XXXX, _______X, XX_XXXX_, XXXXXXXX, ________,
   XXXXXX__, ______XX, XX___XXX, __XXX___, XXXXXXXX, ________,
 };
 
 /** $7578: stage1_bitmap_tree_top_24x3s */
-static const u8 stage1_bitmap_tree_top_24x3s[3 * 2 * 3] = {
+static const pixel_t stage1_bitmap_tree_top_24x3s[3 * 2 * 3] = {
   XXXXXXX_, _______X, ________, X_XX_XXX, ____XXXX, _XXX____,
   XXXXXXXX, ________, ________, XXXXXX_X, ___XXXXX, XXX_____,
   XXXXXXXX, ________, XX__XX__, __XX__XX, _XXXXXXX, X_______,
 };
 
 /** $758A: stage1_bitmap_tree_trunk_16x6 */
-static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
+static const pixel_t stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
   XXX_____, ___X___X, _____XXX, __XXX___,
   XXX_____, ___X_X_X, _____XXX, _X__X___,
   XXX_____, ___XX_X_, ____XXXX, _X_X____,
@@ -3118,7 +3118,7 @@ static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
 };
 
 /** $75A2: stage1_bitmap_tree_trunk_16x4 */
-static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
+static const pixel_t stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
   XXXX____, ____XX_X, ____XXXX, _X_X____,
   XXXX____, ____XX_X, ____XXXX, ___X____,
   XXXX____, ____X___, ____XXXX, _X_X____,
@@ -3126,7 +3126,7 @@ static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
 };
 
 /** $75B2: stage1_bitmap_tree_middle_24x5 */
-static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
+static const pixel_t stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
   X_______, _XX_XXXX, ________, X_XXXXXX, ___XXXXX, _XX_____,
   ________, XX_XX_X_, ________, XXX_XX_X, __XXXXXX, XX______,
   ________, XXXXXX_X, ________, X_XXXXXX, ___XXXXX, XXX_____,
@@ -3135,25 +3135,25 @@ static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
 };
 
 /** $75D0: stage1_bitmap_tree_bottom_24x2_another */
-static const u8 stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2] = {
+static const pixel_t stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2] = {
   XX_X_XX_, __X_X__X, ____XX_X, XX_X__X_, _XXXXXXX, X_______,
   X_______, _X_XXXX_, ________, XXXX_XXX, __XXXXXX, _X______,
 };
 
 /** $75DC: stage1_bitmap_tree_trunk_24x3 */
-static const u8 stage1_bitmap_tree_trunk_24x3[3 * 2 * 3] = {
+static const pixel_t stage1_bitmap_tree_trunk_24x3[3 * 2 * 3] = {
   XXXXXXXX, ________, ____XXXX, X__X____, XXXXXXXX, ________,
   XXXXXXX_, _______X, ____XXXX, X_XX____, XXXXXXXX, ________,
   XXXXXXX_, _______X, ____XXXX, _X_X____, XXXXXXXX, ________,
 };
 
 /** $75EE: stage1_bitmap_tree_shadow_24x1 */
-static const u8 stage1_bitmap_tree_shadow_24x1[3 * 2 * 1] = {
+static const pixel_t stage1_bitmap_tree_shadow_24x1[3 * 2 * 1] = {
   ________, XXXXXXX_, ________, _XX_XXXX, ____XXXX, XXXX____,
 };
 
 /** $75F4: stage1_bitmap_tree_middle_24x5s */
-static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
+static const pixel_t stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
   XXXXX___, _____XX_, ________, XXXXX_XX, _______X, XXXX_XX_,
   XXXX____, ____XX_X, ________, X_X_XXX_, ______XX, XX_XXX__,
   XXXX____, ____XXXX, ________, XX_XX_XX, _______X, XXXXXXX_,
@@ -3162,20 +3162,20 @@ static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
 };
 
 /** $7612: stage1_bitmap_tree_bottom_24x2s */
-static const u8 stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2] = {
+static const pixel_t stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2] = {
   XXXXXX_X, ______X_, _XX_____, X__XXX_X, XX_X_XXX, __X_X___,
   XXXXX___, _____X_X, ________, XXX_XXXX, ______XX, _XXX_X__,
 };
 
 /** $761E: stage1_bitmap_tree_trunk_24x3s */
-static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
+static const pixel_t stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
   XXXXXXXX, ________, XXXX____, ____X__X, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX_____, ___XX_XX, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX_____, ___X_X_X, XXXXXXXX, ________,
 };
 
 /** $7630: stage1_bitmap_tree_shadow_24x1s */
-static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
+static const pixel_t stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
   XXXX____, ____XXXX, ________, XXX__XX_, ________, XXXXXXXX,
 };
 

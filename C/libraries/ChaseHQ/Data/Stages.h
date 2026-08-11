@@ -19,6 +19,7 @@
 #define CHASEHQ_STAGES_H
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Pixels.h"
 #include "ChaseHQ/Engine/Internal.h"
 
 /* ----------------------------------------------------------------------- */
@@ -308,11 +309,11 @@
  */
 typedef struct bitmap
 {
-  u8        width_bytes;
-  u8        flags;
-  u8        height;
-  const u8 *data;
-  const u8 *shifted;
+  u8              width_bytes;
+  u8              flags;
+  u8              height;
+  const pixel_t  *data;
+  const pixel_t  *shifted;
 } bitmap_t;
 
 typedef struct hittable
@@ -440,7 +441,7 @@ typedef struct stage
 {
   u8                     backdrop[BACKDROP_LENGTH];
   const u8              *addrof_perp_mugshot_attributes;
-  const u8              *addrof_perp_mugshot_bitmap;
+  const pixel_t         *addrof_perp_mugshot_bitmap;
   u16                    ground_colour;
   const hittable_t      *addrof_hittable_objects;
   const void            *addrof_right_hand_handlers;

@@ -1038,7 +1038,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
    * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
    * from skool label boundaries. */
   /** $F381: bitmap_handshake_1 */
-  static const u8 bitmap_handshake_1[296] = {
+  static const pixel_t bitmap_handshake_1[296] = {
     XX______, ________, ________, ________, ________, ________, ________, ________,
     XXXX____, ________, ________, ________, ________, ________, ________, ________,
     XXXXXX__, ________, ________, ________, ________, ________, ________, _______X,
@@ -1079,7 +1079,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F4A9: bitmap_handshake_2 */
-  static const u8 bitmap_handshake_2[280] = {
+  static const pixel_t bitmap_handshake_2[280] = {
     XX______, ________, ________, ________, ________, ________, ________, _______X,
     XXXXX___, ________, ________, ________, ________, ________, ________, _____XXX,
     XXXXXXXX, ________, ________, ________, ________, ________, ________, ____XXXX,
@@ -1118,7 +1118,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F5C1: bitmap_handshake_3 */
-  static const u8 bitmap_handshake_3[272] = {
+  static const pixel_t bitmap_handshake_3[272] = {
     XX______, ________, ________, ________, ________, ________, ________, _____XXX,
     XXXXX___, ________, ________, ________, ________, ________, ________, ____XXXX,
     XXXXXXXX, X_______, ________, ________, ________, ________, ________, ___XXXXX,
@@ -1156,7 +1156,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F6D1: bitmap_handshake_4 */
-  static const u8 bitmap_handshake_4[256] = {
+  static const pixel_t bitmap_handshake_4[256] = {
     XXXXX___, ________, ________, ________, ________, ________, ________, ___XXXXX,
     XXXXXXXX, XX______, ________, ________, ________, ________, ________, __XXXXXX,
     XXXXXXXX, XXXXXX__, ________, ________, ________, ________, ________, XXXXXXXX,
@@ -1505,7 +1505,7 @@ static const u8 *z80addrtoendshot(u16 addr)
    * skool's label boundaries, not recomputed from the nominal 104x64
    * dimensions. */
   /** $60E1: bitmap_endshot_1 */
-  static const u8 bitmap_endshot_1[936] = {
+  static const pixel_t bitmap_endshot_1[936] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X___, _______X, ___X_X_X, _XXXXXXX, XXXXXXXX,
     X_X_X_XX, _X_X_XXX, XXX__XX_, XXX_XXXX, _X_X__XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X__, ________, X_X_X_XX, XXXXXXXX, XXXXXXXX,
     X__X_XX_, X_XX_XXX, ___XXXXX, ___XXXXX, _X_X__X_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX_X_, X______X, _X_X_XXX, XXXXXX_X, _XXXXXXX,
@@ -1581,7 +1581,7 @@ static const u8 *z80addrtoendshot(u16 addr)
   };
 
   /** $6489: bitmap_endshot_2 */
-  static const u8 bitmap_endshot_2[936] = {
+  static const pixel_t bitmap_endshot_2[936] = {
     XXXXXXXX, XXX_X_X_, X_X_____, X_X_____, ________, ________, ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X______, ___X____,
     XXXXXXXX, XX_X_X_X, _X______, _X_X____, ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_____, X____X_X,
     XXXXXXXX, XXX_XXXX, X_X_X___, X_XX____, ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX____X_, ____X_X_,
@@ -1657,7 +1657,7 @@ static const u8 *z80addrtoendshot(u16 addr)
   };
 
   /** $6831: bitmap_endshot_3 */
-  static const u8 bitmap_endshot_3[936] = {
+  static const pixel_t bitmap_endshot_3[936] = {
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
@@ -1742,7 +1742,7 @@ static const u8 *z80addrtoendshot(u16 addr)
    *       label (handshake_1, $F381: $C0,$00,$00,$00,$00,$00,$00,$00).
    *       Reproduced verbatim below rather than zero-padding.
    */
-  static const u8 bitmap_endshot_4[936] = {
+  static const pixel_t bitmap_endshot_4[936] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, XXXXX_XX, _X_X____, XX_XXXXX, XXXXXXXX, __XXXXXX, _XXXX___, _____XXX, XXXX____, ____X___,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_XXXX, XXXXX_XX, __XX____, X_X_X_X_, X_X_X_XX, ___X_X_X, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,

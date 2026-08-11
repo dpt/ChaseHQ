@@ -19,6 +19,7 @@
 #define CHASEHQ_COMMONDATA_H
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Pixels.h"
 #include "ChaseHQ/Engine/State.h"
 
 /* ----------------------------------------------------------------------- */
@@ -27,7 +28,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-extern const u8 bitmap_faces[FACEBYTES * NFACES];
+extern const pixel_t bitmap_faces[FACEBYTES * NFACES];
 
 extern const depthset_t shortpole_bottom;
 extern const depthset_t shortpole_middle;
@@ -39,27 +40,27 @@ extern const depthset_t streetlampmiddle2_right;
 extern const depthset_t streetlampmiddle_left;
 extern const depthset_t streetlampmiddle_right;
 extern const bitmap_t streetlampbody_bitmaps[15];
-extern const u8 bitmap_streetlampbody_1[4];
-extern const u8 bitmap_streetlampbody_2[4];
-extern const u8 bitmap_streetlampbody_3[4];
-extern const u8 bitmap_streetlampbody_4[4];
-extern const u8 bitmap_streetlampbody_5[4];
-extern const u8 bitmap_streetlampbody_6[4];
-extern const u8 bitmap_streetlampbody_7[2];
-extern const u8 bitmap_streetlampbody_8[4];
-extern const u8 bitmap_streetlampbody_9[4];
-extern const u8 bitmap_streetlampbody_7s[2];
-extern const u8 bitmap_streetlampbody_8s[4];
-extern const u8 bitmap_streetlampbody_9s[4];
-extern const u8 bitmap_streetlampbody_10[2];
-extern const u8 bitmap_streetlampbody_11[4];
-extern const u8 bitmap_streetlampbody_12[4];
-extern const u8 bitmap_streetlampbody_10s[2];
-extern const u8 bitmap_streetlampbody_11s[4];
-extern const u8 bitmap_streetlampbody_12s[4];
-extern const u8 bitmap_streetlampbody_13[4];
-extern const u8 bitmap_streetlampbody_14[8];
-extern const u8 bitmap_streetlampbody_15[8];
+extern const pixel_t bitmap_streetlampbody_1[4];
+extern const pixel_t bitmap_streetlampbody_2[4];
+extern const pixel_t bitmap_streetlampbody_3[4];
+extern const pixel_t bitmap_streetlampbody_4[4];
+extern const pixel_t bitmap_streetlampbody_5[4];
+extern const pixel_t bitmap_streetlampbody_6[4];
+extern const pixel_t bitmap_streetlampbody_7[2];
+extern const pixel_t bitmap_streetlampbody_8[4];
+extern const pixel_t bitmap_streetlampbody_9[4];
+extern const pixel_t bitmap_streetlampbody_7s[2];
+extern const pixel_t bitmap_streetlampbody_8s[4];
+extern const pixel_t bitmap_streetlampbody_9s[4];
+extern const pixel_t bitmap_streetlampbody_10[2];
+extern const pixel_t bitmap_streetlampbody_11[4];
+extern const pixel_t bitmap_streetlampbody_12[4];
+extern const pixel_t bitmap_streetlampbody_10s[2];
+extern const pixel_t bitmap_streetlampbody_11s[4];
+extern const pixel_t bitmap_streetlampbody_12s[4];
+extern const pixel_t bitmap_streetlampbody_13[4];
+extern const pixel_t bitmap_streetlampbody_14[8];
+extern const pixel_t bitmap_streetlampbody_15[8];
 
 extern const u8 chatterblk_start_stage[4];
 extern const u8 chatterblk_tony_giddy_up[3];
@@ -101,32 +102,32 @@ extern const u8 chatterblk_tony_lets_go[3];
 
 extern const u8 *chatter_blocks[CHATTERBLK__LIMIT];
 
-extern const u8 font[41 * 7];
+extern const pixel_t font[41 * 7];
 
 extern const u8 hazard_pos_speed[3 * 4];
 
 extern const u8 hero_car_jump_table[10 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
 
-extern const u8 bitmap_arrow[3 * 2 * 28];
+extern const pixel_t bitmap_arrow[3 * 2 * 28];
 
 #define LEDFONT_HEIGHT (15) // 15 rows/char
 #define MINIFONT_HEIGHT (6) // 6 rows/char
 
 extern const depthset_t tunnellight;
 extern const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES];
-extern const u8 bitmap_tunnellight_1[2 * 16];
-extern const u8 bitmap_tunnellight_2[2 * 12];
-extern const u8 bitmap_tunnellight_3[1 * 8];
-extern const u8 bitmap_tunnellight_4[1 * 6];
-extern const u8 bitmap_tunnellight_5[1 * 5];
-extern const u8 bitmap_tunnellight_6[2 * 2 * 6];
-extern const u8 bitmap_tunnellight_6s[2 * 2 * 6];
+extern const pixel_t bitmap_tunnellight_1[2 * 16];
+extern const pixel_t bitmap_tunnellight_2[2 * 12];
+extern const pixel_t bitmap_tunnellight_3[1 * 8];
+extern const pixel_t bitmap_tunnellight_4[1 * 6];
+extern const pixel_t bitmap_tunnellight_5[1 * 5];
+extern const pixel_t bitmap_tunnellight_6[2 * 2 * 6];
+extern const pixel_t bitmap_tunnellight_6s[2 * 2 * 6];
 
 /* Helicopter sprite (stages 2 and 4 share identical part data; only the
  * per-stage bank addresses of the two frame tables differ in the original).
  */
-extern const u8 bitmap_helicopter[590];
+extern const pixel_t bitmap_helicopter[590];
 extern const heli_bitmap_t heli_part0;
 extern const heli_bitmap_t heli_part1_frame0;
 extern const heli_bitmap_t heli_part1_frame1;
@@ -160,10 +161,10 @@ extern const u8 forked_road_lanes[2];
 #define FORKED_ROAD_HEIGHT_ADDR    (0xE2CC)
 #define FORKED_ROAD_LANES_ADDR     (0xE2D1)
 
-extern const u8 spiral_transition_frames[11 * 8];
-extern const u8 circle_transition_frames[7 * 8];
+extern const pixel_t spiral_transition_frames[11 * 8];
+extern const pixel_t circle_transition_frames[7 * 8];
 
-extern const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
+extern const pixel_t edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
 
 extern const u8 persp_y_scale[8][PERSP_TABLE_COLS];
 
@@ -183,8 +184,8 @@ typedef struct
 
 extern const transition_t transitions[8];
 
-extern const u8 square_transition_frames[5 * 8];
-extern const u8 diamond_transition_frames[6 * 8];
+extern const pixel_t square_transition_frames[5 * 8];
+extern const pixel_t diamond_transition_frames[6 * 8];
 
 extern const u8 music_patterns[19];
 extern const u8 music_data[271];

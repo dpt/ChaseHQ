@@ -19,6 +19,7 @@
 #define CHASEHQ_LOADINGSCREEN_H
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Pixels.h"
 #include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */
@@ -31,7 +32,7 @@
  * (the second data block, flag byte $FF, length 6912).
  */
 
-extern const u8 loading_screen_bitmap[SCREEN_BITMAP_LENGTH];
+extern const pixel_t loading_screen_bitmap[SCREEN_BITMAP_LENGTH];
 extern const u8 loading_screen_attributes[SCREEN_ATTRIBUTES_LENGTH];
 
 #endif /* CHASEHQ_LOADINGSCREEN_H */

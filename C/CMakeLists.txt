@@ -191,6 +191,7 @@ set(TEST_SOURCE_FILES
         libraries/ChaseHQ/Engine/Create.c
         libraries/ChaseHQ/Data/Stages.c
         libraries/ChaseHQ/Data/CommonData.c
+        libraries/ChaseHQ/Data/LoadingScreen.c
         libraries/ChaseHQ/Data/SoundSamples.c
         libraries/ChaseHQ/Data/Stage1Data.c
         libraries/ChaseHQ/Data/Stage2Data.c
