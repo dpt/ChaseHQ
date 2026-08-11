@@ -13,6 +13,8 @@
   delete it?
 - Start backporting changes to the disasm
 - 48K mode drum timing is off (interrupts?)
+- Audit "Conv: added" vars
+- Investigate Claude fixes in case they've made the C diverge from the asm
 
 ### Authority sweep (comments that read as guesswork)
 
@@ -27,18 +29,11 @@ against the skool then rewrite the comment as a statement — or delete it.
   `TODO: Calibrate` cluster in `Internal.h` is covered under P2, and the
   `Bank3.c` SFX gaps under P3
 
-- Audit "Conv: added" vars
-- Big reformat pass once happy with code
 - Name the numbered `chqstate` SM field groups after what distinguishes them,
   the way `dr_{left,right}_{markings,fill}_page` now are: `dr_backbuf_1/_2`,
   `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each numbers
   genuinely parallel SM sites, so this needs the consumers traced first — the
   rest of the naming pass is done
-
-## P7 — Investigation / meta
-
-- Investigate Claude fixes in case they've made the C diverge from the asm
-- Why don't watchpoints work in CLion?
 
 ## FOR WRITEUP / NOTES
 
@@ -55,17 +50,6 @@ against the skool then rewrite the comment as a statement — or delete it.
 
 ## IDEAS (backlog)
 
-- Lots more unit tests
-- Design a text format for holding stages
-- Annotate all state members to show which functions consume/mutate them
+- Annotate all state members to show which functions consume/mutate them (messy)
 - Add new level(s) - actual good one, not just test
-- Fix all the rough masks to improve the look
-- Arcade machine based on this code
-- Just Tony and Raymond having a chat
-- Random level generator
-- Extra bumpy roads
-- Improved AI driver
-- Lua/Python integration
-- Diagram generation for stretchy graphics
-- Emscripten build
 - Pull across the demo version of the game

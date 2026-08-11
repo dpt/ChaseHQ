@@ -43,9 +43,13 @@ option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in norma
 # ponytail: SDL3 is only needed by the ChaseHQ app target. Configuring
 # without it still gets you ChaseHQ_Tests and StretchyRenderer, which is all
 # CI builds.
-find_package(SDL3 QUIET)
-if(NOT SDL3_FOUND)
-  message(STATUS "SDL3 not found - skipping the ChaseHQ app target")
+if(EMSCRIPTEN)
+  set(SDL3_FOUND TRUE)
+else()
+  find_package(SDL3 QUIET)
+  if(NOT SDL3_FOUND)
+    message(STATUS "SDL3 not found - skipping the ChaseHQ app target")
+  endif()
 endif()
 
 # ponytail: CRT shader needs SPIR-V on Linux (Vulkan backend, no MSL).
@@ -118,7 +122,16 @@ if(SDL3_FOUND)
     target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
     target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
   endif()
-  target_link_libraries(ChaseHQ SDL3::SDL3)
+  if(EMSCRIPTEN)
+    set_target_properties(ChaseHQ PROPERTIES SUFFIX ".html")
+    target_compile_options(ChaseHQ PRIVATE "-sUSE_SDL=3" "-pthread")
+    target_link_options(ChaseHQ PRIVATE
+      "-sUSE_SDL=3" "-pthread" "-sPTHREAD_POOL_SIZE=4"
+      "-sINITIAL_MEMORY=67108864" "-sEXIT_RUNTIME=0"
+      "-sAUDIO_WORKLET=1" "-sWASM_WORKERS=1")
+  else()
+    target_link_libraries(ChaseHQ SDL3::SDL3)
+  endif()
   if(APPLE)
     target_link_libraries(ChaseHQ "-framework CoreFoundation")
     target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)

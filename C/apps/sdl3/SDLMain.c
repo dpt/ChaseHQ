@@ -27,6 +27,10 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
 #include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Keyboard.h"
@@ -111,12 +115,23 @@
  * The same queue carries 48K beeper level changes, timestamped from the
  * game's virtual T-state clock (see chq_speaker_handler).
  */
-#define AY_QUEUE_CAPACITY (16384) // ~1.9s of nibble writes at ~8.4KHz; ample headroom
+#define AY_QUEUE_CAPACITY (65536) // play_speech_128k queues 3 AY writes/nibble
+                                  // (channels A/B/C), not 1 -- the longest
+                                  // speech sample (0x14E6 bytes) needs ~32000
+                                  // slots; this leaves headroom above that
 
 /* Replay cursor anchor cushion; see the replay cursor comment in
- * chq_sdl_state_t.
+ * chq_sdl_state_t. Emscripten's game thread falls behind wall-clock more
+ * often (pthread scheduling jitter, no realtime priority), so it needs more
+ * lead time before playback catches up to avoid repeated re-anchors -- each
+ * one is an audible stutter, and it happens often enough during dense speech
+ * playback to sound like scratchiness.
  */
+#ifdef __EMSCRIPTEN__
+#define AY_REPLAY_CUSHION_NS (120000000ULL)
+#else
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -539,8 +554,22 @@ static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
   event_ns = state->audio.anchor_ns +
              (Uint64) ((tstates - state->audio.anchor_tstates) * nsPerTstate *
                        100 / state->speed);
+#ifdef __EMSCRIPTEN__
+  /* Conv: snapping straight to now_ns the instant the T-state clock falls
+   * behind wall clock collapses every subsequent event onto "now", discarding
+   * the spacing between them. Under Emscripten's thread scheduling the game
+   * thread routinely runs a few ms behind during a dense write burst (e.g.
+   * play_speech_128k's nibble loop), so this branch fires almost every call
+   * and the "sample-accurate" DAC replay loses its accuracy. Bound the
+   * catch-up instead of snapping it, so relative spacing survives a bounded
+   * lag; only clamp harder once genuinely far behind (a stall, not jitter).
+   */
+  if (event_ns + 200000000ULL < now_ns)
+    event_ns = now_ns - 200000000ULL;
+#else
   if (event_ns < now_ns) // T-state clock fell behind wall clock: re-anchor
     event_ns = now_ns;
+#endif
 
   state->audio.anchor_ns      = event_ns;
   state->audio.anchor_tstates = tstates;
@@ -2015,6 +2044,16 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
     desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
 
+#ifdef __EMSCRIPTEN__
+    /* Conv: Emscripten's default audio callback buffer (2048 samples, ~46ms)
+     * is larger than the game thread can reliably stay queued ahead of, so
+     * chq_apply_due_audio_events runs the event queue dry mid-buffer and
+     * re-anchors (with its 30ms cushion) several times a second -- audible as
+     * scratchiness. Ask for a smaller buffer so each callback pull is small
+     * enough for the producer to keep up with. */
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "256");
+#endif
+
     state->audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                                    &desired,
                                                    &chq_audio_callback,
@@ -2143,10 +2182,100 @@ static void chq_shutdown_all(chq_sdl_state_t *instances, int created)
   SDL_Quit();
 }
 
+#ifdef __EMSCRIPTEN__
+/* Conv: native builds pump the loading splash and the game loop with a
+ * blocking do/while + SDL_Delay on the calling thread. That's fine on
+ * desktop, where the OS keeps compositing the window regardless. Under
+ * Emscripten the browser only ever repaints between yields back to its own
+ * event loop -- a thread that blocks in a loop, even one that calls
+ * SDL_Delay, never yields, so the canvas stays black and the tab looks
+ * wedged. emscripten_set_main_loop schedules each iteration via
+ * requestAnimationFrame instead, which yields naturally.
+ */
+typedef struct
+{
+  chq_sdl_state_t *instances;
+  int               count;
+  Uint64            splash_start_ms;
+} chq_web_ctx_t;
+
+static void chq_web_main_loop(void *opaque)
+{
+  chq_web_ctx_t *ctx;
+  int             n, quit_count;
+
+  ctx        = (chq_web_ctx_t *) opaque;
+  quit_count = 0;
+
+  chq_dispatch_events(ctx->instances, ctx->count);
+  for (n = 0; n < ctx->count; n++)
+  {
+    if (!CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_QUIT))
+    {
+      chq_sdl_main_loop(&ctx->instances[n]);
+    }
+    else
+    {
+      if (!CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_CLOSED))
+      {
+        chq_instance_destroy(&ctx->instances[n]);
+        CHQ_FLAG_SET(&ctx->instances[n], CHQ_FLAG_CLOSED);
+      }
+      quit_count++;
+    }
+  }
+
+  if (quit_count >= ctx->count)
+  {
+    emscripten_cancel_main_loop();
+    chq_shutdown_all(ctx->instances, ctx->count);
+    free(ctx);
+  }
+}
+
+static void chq_web_splash_loop(void *opaque)
+{
+  chq_web_ctx_t *ctx;
+  int             n, any_quit;
+
+  ctx      = (chq_web_ctx_t *) opaque;
+  any_quit = 0;
+
+  chq_dispatch_events(ctx->instances, ctx->count);
+  for (n = 0; n < ctx->count; n++)
+  {
+    chq_sdl_main_loop(&ctx->instances[n]);
+    any_quit |= CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_QUIT);
+  }
+
+  if (any_quit || SDL_GetTicks() - ctx->splash_start_ms >= LOADING_SCREEN_DURATION_MS)
+  {
+    emscripten_cancel_main_loop();
+
+    for (n = 0; n < ctx->count; n++)
+    {
+      if (!CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_QUIT) &&
+          !chq_instance_launch_game(&ctx->instances[n]))
+      {
+        fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
+        chq_shutdown_all(ctx->instances, ctx->count);
+        free(ctx);
+        return;
+      }
+    }
+
+    emscripten_set_main_loop_arg(chq_web_main_loop, ctx, 0, 1);
+  }
+}
+#endif
+
 int main(int argc, char *argv[])
 {
   chq_sdl_state_t *instances;
-  int              n, count, arg, mode_128k, quit_count, quiet, scale;
+  int              n, count, arg, mode_128k, quiet, scale;
+#ifndef __EMSCRIPTEN__
+  int              quit_count;
+#endif
 
   count     = 1;
   mode_128k = 1;
@@ -2236,6 +2365,27 @@ int main(int argc, char *argv[])
     }
   }
 
+#ifdef __EMSCRIPTEN__
+  // Conv: browser build hands both the splash hold and the game loop to
+  // emscripten_set_main_loop (see chq_web_splash_loop / chq_web_main_loop
+  // above) instead of blocking this thread -- a blocking loop never yields
+  // to the browser's compositor, which would leave the canvas black.
+  {
+    chq_web_ctx_t *ctx = malloc(sizeof(*ctx));
+    if (ctx == NULL)
+    {
+      fprintf(stderr, "Error: out of memory\n");
+      chq_shutdown_all(instances, count);
+      return EXIT_FAILURE;
+    }
+    ctx->instances       = instances;
+    ctx->count           = count;
+    ctx->splash_start_ms = SDL_GetTicks();
+    emscripten_set_main_loop_arg(chq_web_splash_loop, ctx, 0, 1);
+  }
+
+  return EXIT_SUCCESS;
+#else
   // Hold the loading screen for every instance at once -- one
   // LOADING_SCREEN_DURATION_MS wait total, not one per instance.
   {
@@ -2302,4 +2452,5 @@ int main(int argc, char *argv[])
   chq_shutdown_all(instances, count);
 
   return EXIT_SUCCESS;
+#endif
 }
