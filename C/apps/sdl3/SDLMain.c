@@ -1874,8 +1874,16 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
 
   // ponytail: naive cascade so N windows don't stack exactly on top of each
   // other; a real layout manager is unwarranted for a test harness.
-  SDL_SetWindowPosition(window, SDL_WINDOWPOS_UNDEFINED + index * 40,
-                                 SDL_WINDOWPOS_UNDEFINED + index * 40);
+  // SDL_WINDOWPOS_UNDEFINED/CENTERED are magic encoded values, not
+  // coordinates -- arithmetic on them corrupts the encoding rather than
+  // offsetting the position, so the real screen position is read back after
+  // SDL's own initial (centred) placement and the stagger is added to that.
+  {
+    int cx, cy;
+
+    SDL_GetWindowPosition(window, &cx, &cy);
+    SDL_SetWindowPosition(window, cx + index * 40, cy + index * 40);
+  }
 
   state->video.window = window;
 
