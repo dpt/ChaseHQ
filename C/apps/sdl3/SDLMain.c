@@ -1843,7 +1843,7 @@ static void chq_sdl_main_loop(void *opaque)
 // Instances are otherwise independent -- each owns its own chq_sdl_state_t,
 // so this exists purely to let two-up mode spin up N of them without
 // duplicating the whole of main().
-static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int quiet, int scale)
+static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale)
 {
   zxconfig_t  zxconfig;
   SDL_Window *window;
@@ -1872,17 +1872,23 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
     return 0;
   }
 
-  // ponytail: naive cascade so N windows don't stack exactly on top of each
-  // other; a real layout manager is unwarranted for a test harness.
-  // SDL_WINDOWPOS_UNDEFINED/CENTERED are magic encoded values, not
-  // coordinates -- arithmetic on them corrupts the encoding rather than
-  // offsetting the position, so the real screen position is read back after
-  // SDL's own initial (centred) placement and the stagger is added to that.
+  // With more than one instance, tile windows in a grid instead of leaving
+  // them all centred on top of each other; a single instance keeps SDL's
+  // default centred placement. SDL_WINDOWPOS_UNDEFINED/CENTERED are magic
+  // encoded values, not coordinates -- arithmetic on them corrupts the
+  // encoding rather than offsetting the position, so real usable-desktop
+  // bounds are read via SDL_GetDisplayUsableBounds and tiled from there.
+  if (count > 1)
   {
-    int cx, cy;
+    SDL_Rect bounds = {0};
+    int      cols   = (int) SDL_ceil(SDL_sqrt((double) count));
+    int      col    = index % cols;
+    int      row    = index / cols;
 
-    SDL_GetWindowPosition(window, &cx, &cy);
-    SDL_SetWindowPosition(window, cx + index * 40, cy + index * 40);
+    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds);
+    SDL_SetWindowPosition(window,
+                          bounds.x + col * chq_window_width(state->video.scale),
+                          bounds.y + row * chq_window_height(state->video.scale));
   }
 
   state->video.window = window;
@@ -2119,7 +2125,7 @@ int main(int argc, char *argv[])
 
   for (n = 0; n < count; n++)
   {
-    if (!chq_instance_create(&instances[n], mode_128k, n, quiet, scale))
+    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, scale))
     {
       fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
       return EXIT_FAILURE;
