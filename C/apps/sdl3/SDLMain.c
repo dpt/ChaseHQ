@@ -926,6 +926,7 @@ static int chq_renderer_create(chq_sdl_state_t *state)
  * before, which does update normally. Metal/macOS doesn't hit this, but the
  * recreation is harmless there too -- it isn't gated to Linux only.
  */
+#if !defined(CHQ_CRT_SHADER_GLES)
 static int chq_video_recreate_window(chq_sdl_state_t *state)
 {
   char            title[128];
@@ -953,6 +954,7 @@ static int chq_video_recreate_window(chq_sdl_state_t *state)
   state->video.window = window;
   return 1;
 }
+#endif /* !CHQ_CRT_SHADER_GLES */
 
 /* Switches the display backend. Returns 1 if the requested backend is now
  * live, 0 if it could not be created and the other one was restored instead
@@ -967,6 +969,33 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
   if (enable)
   {
+#if defined(CHQ_CRT_SHADER_GLES)
+    /* Conv: Emscripten's SDL video driver backs every SDL_Window with the
+     * same single <canvas> element -- SDL_CreateWindow does not hand back a
+     * fresh compositor surface the way it does on Linux/macOS, so the
+     * recreate-window workaround below (needed to dodge the stuck-swapchain
+     * bug on those platforms) instead leaves the canvas with no live GL
+     * context: chq_CRT_shader_create "succeeds" but nothing ever draws.
+     * Reusing the existing window and just creating a new GL context on it
+     * is both correct and simpler here.
+     */
+    chq_renderer_destroy(state);
+    if (chq_CRT_shader_create(&state->video.crt, state->video.window,
+                              GAMEWIDTH, GAMEHEIGHT))
+    {
+      state->video.crt_enabled = 1;
+      return 1;
+    }
+
+    /* chq_CRT_shader_create zeroes the struct before it starts, so a NULL
+     * context means it failed on the very first step and there is nothing to
+     * release.
+     */
+    if (state->video.crt.gl_context != NULL)
+      chq_CRT_shader_destroy(&state->video.crt, state->video.window);
+    memset(&state->video.crt, 0, sizeof(state->video.crt));
+    fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
+#else
     /* Only the very first claim (nothing live yet at startup) gets a window
      * the compositor has never presented anything on; every later re-enable
      * needs a fresh window to avoid the stuck-frame bug above. Must be
@@ -998,6 +1027,7 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
 
 crt_unavailable:
     fprintf(stderr, "CRT shader unavailable; using the plain renderer\n");
+#endif
   }
   else if (state->video.crt_enabled)
   {
@@ -1958,7 +1988,15 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   window = SDL_CreateWindow("Chase H.Q.",
                             chq_window_width(state->video.scale),
                             chq_window_height(state->video.scale),
-                            0);
+#if defined(CHQ_CRT_SHADER_GLES)
+                            /* The GLES CRT backend renders via
+                             * SDL_GL_CreateContext, which requires the
+                             * window to have been created with this flag. */
+                            SDL_WINDOW_OPENGL
+#else
+                            0
+#endif
+                            );
   if (window == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateWindow: %s\n", SDL_GetError());

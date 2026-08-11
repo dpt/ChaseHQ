@@ -20,7 +20,102 @@
 
 #include "CRTShader.h"
 
-#if defined(CHQ_CRT_SHADER_SPIRV)
+#if defined(CHQ_CRT_SHADER_GLES)
+#include <SDL3/SDL_opengles2.h>
+#endif
+
+#if defined(CHQ_CRT_SHADER_GLES)
+
+/* Emscripten build: WebGL1 (GLES2) via a raw GL context, not SDL's GPU API --
+ * SDL3 GPU has no stable WebGPU backend yet. Shader source compiled at
+ * runtime by the browser's GL driver, same as the MSL path below; no offline
+ * compile step. Fullscreen triangle uses a real VBO -- GLES2 has no
+ * gl_VertexID equivalent to build it in-shader like the MSL/SPIR-V paths do.
+ */
+
+static const char *const chq_crt_vertex_gles =
+    "attribute vec2 a_pos;\n"
+    "attribute vec2 a_uv;\n"
+    "varying vec2 v_uv;\n"
+    "void main() {\n"
+    "  v_uv = a_uv;\n"
+    "  gl_Position = vec4(a_pos, 0.0, 1.0);\n"
+    "}\n";
+
+/* Direct GLSL ES 100 port of the MSL fragment shader below -- same effect,
+ * same uniform order (kept parallel here for review, not loaded from
+ * chq_CRT_params_t directly: GLES2 has no uniform buffer objects, so each
+ * field is its own uniform, set by name in chq_CRT_shader_render).
+ */
+static const char *const chq_crt_fragment_gles =
+    "precision mediump float;\n"
+    "varying vec2 v_uv;\n"
+    "uniform sampler2D u_tex;\n"
+    "uniform vec2 u_texel;\n"
+    "uniform float u_curvature;\n"
+    "uniform float u_bloomThreshold;\n"
+    "uniform float u_bloomIntensity;\n"
+    "uniform float u_brightness;\n"
+    "uniform float u_contrast;\n"
+    "uniform float u_saturation;\n"
+    "uniform float u_scanlineIntensity;\n"
+    "uniform float u_vignetteStrength;\n"
+    "uniform float u_chromaBleed;\n"
+    "uniform float u_glitch;\n"
+    "uniform float u_time;\n"
+    "float chq_hash(float x) {\n"
+    "  return fract(sin(x * 12.9898) * 43758.5453);\n"
+    "}\n"
+    "void main() {\n"
+    "  vec2 coord = v_uv * 2.0 - 1.0;\n"
+    "  coord *= 1.0 + dot(coord, coord) * u_curvature;\n"
+    "  vec2 uv = coord * 0.5 + 0.5;\n"
+    "  float band = floor(uv.y / u_texel.y);\n"
+    "  float seed = chq_hash(band * 78.233 + floor(u_time * 50.0) * 37.719);\n"
+    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * u_glitch *\n"
+    "          step(0.9, seed);\n"
+    "  vec2 edge = smoothstep(vec2(0.0), vec2(0.005), uv) *\n"
+    "              smoothstep(vec2(0.0), vec2(0.005), 1.0 - uv);\n"
+    "  float edgeMask = edge.x * edge.y;\n"
+    "  vec2 uvc = clamp(uv, 0.0, 1.0);\n"
+    "  vec4 c = texture2D(u_tex, uvc);\n"
+    "  vec3 W = vec3(0.299, 0.587, 0.114);\n"
+    "  vec3 bleed = c.rgb * 0.4;\n"
+    "  bleed += texture2D(u_tex, clamp(uvc - vec2(u_texel.x, 0.0), 0.0, 1.0)).rgb * 0.3;\n"
+    "  bleed += texture2D(u_tex, clamp(uvc - vec2(u_texel.x * 2.0, 0.0), 0.0, 1.0)).rgb * 0.2;\n"
+    "  bleed += texture2D(u_tex, clamp(uvc - vec2(u_texel.x * 3.0, 0.0), 0.0, 1.0)).rgb * 0.1;\n"
+    "  float ylum = dot(c.rgb, W);\n"
+    "  vec3 chroma = mix(c.rgb - ylum, bleed - dot(bleed, W), u_chromaBleed);\n"
+    "  c.rgb = ylum + chroma;\n"
+    "  c *= edgeMask;\n"
+    "  vec3 bloom = vec3(0.0);\n"
+    "  vec3 bc = c.rgb;\n"
+    "  vec3 bn = texture2D(u_tex, clamp(uvc + vec2(0.0, u_texel.y), 0.0, 1.0)).rgb;\n"
+    "  vec3 bs = texture2D(u_tex, clamp(uvc - vec2(0.0, u_texel.y), 0.0, 1.0)).rgb;\n"
+    "  vec3 be = texture2D(u_tex, clamp(uvc + vec2(u_texel.x, 0.0), 0.0, 1.0)).rgb;\n"
+    "  vec3 bw = texture2D(u_tex, clamp(uvc - vec2(u_texel.x, 0.0), 0.0, 1.0)).rgb;\n"
+    "  if (max(bc.r, max(bc.g, bc.b)) > u_bloomThreshold) bloom += bc;\n"
+    "  if (max(bn.r, max(bn.g, bn.b)) > u_bloomThreshold) bloom += bn;\n"
+    "  if (max(bs.r, max(bs.g, bs.b)) > u_bloomThreshold) bloom += bs;\n"
+    "  if (max(be.r, max(be.g, be.b)) > u_bloomThreshold) bloom += be;\n"
+    "  if (max(bw.r, max(bw.g, bw.b)) > u_bloomThreshold) bloom += bw;\n"
+    "  c.rgb += bloom * u_bloomIntensity;\n"
+    "  c.rgb = (c.rgb - 0.5) * u_contrast + 0.5;\n"
+    "  float flicker = 1.0 + (chq_hash(floor(u_time * 50.0) * 91.7) - 0.5) *\n"
+    "                        0.06 * u_glitch;\n"
+    "  c.rgb *= u_brightness * flicker;\n"
+    "  float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
+    "  c.rgb = mix(vec3(lum), c.rgb, u_saturation);\n"
+    "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
+    "  float adaptive = mix(u_scanlineIntensity, u_scanlineIntensity * (1.0 - lum), 0.5);\n"
+    "  c.rgb *= 1.0 - adaptive * scan;\n"
+    "  vec2 d = abs(uv - 0.5) * 2.0;\n"
+    "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * u_vignetteStrength;\n"
+    "  c.rgb *= vignette;\n"
+    "  gl_FragColor = c;\n"
+    "}\n";
+
+#elif defined(CHQ_CRT_SHADER_SPIRV)
 
 /* Linux/Vulkan build: shader bytecode is precompiled from
  * apps/sdl3/shaders/crt.{vert,frag} by glslangValidator at build time and
@@ -183,6 +278,207 @@ static const char *const chq_crt_fragment_msl =
     "}\n";
 
 #endif /* CHQ_CRT_SHADER_SPIRV */
+
+#if defined(CHQ_CRT_SHADER_GLES)
+
+/* Compiles one shader stage and checks the compile log; returns 0 (and
+ * prints the log) on failure, matching the SDL_GPU paths' error handling.
+ */
+static unsigned int chq_gles_compile(unsigned int stage, const char *source)
+{
+  unsigned int shader;
+  int          compiled;
+
+  shader = glCreateShader(stage);
+  glShaderSource(shader, 1, &source, NULL);
+  glCompileShader(shader);
+
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+  if (!compiled)
+  {
+    char log[512];
+    glGetShaderInfoLog(shader, sizeof(log), NULL, log);
+    fprintf(stderr, "Error: GLES shader compile: %s\n", log);
+    glDeleteShader(shader);
+    return 0;
+  }
+
+  return shader;
+}
+
+int chq_CRT_shader_create(chq_CRT_shader_t *shader,
+                          SDL_Window       *window,
+                          int               game_width,
+                          int               game_height)
+{
+  unsigned int vertex_shader;
+  unsigned int fragment_shader;
+  int          linked;
+  /* Fullscreen triangle: positions [-1,-1]..[3,3] extend past the clip
+   * volume on two corners, which is fine -- the rasteriser clips it back to
+   * the screen and the third corner lands exactly at the far edges, same
+   * trick as the vertex_id-generated triangle in the MSL/SPIR-V paths.
+   */
+  static const float vertices[] = {
+    -1.0f, -1.0f, 0.0f, 1.0f,
+     3.0f, -1.0f, 2.0f, 1.0f,
+    -1.0f,  3.0f, 0.0f, -1.0f,
+  };
+
+  (void) game_width;
+  (void) game_height;
+
+  memset(shader, 0, sizeof(*shader));
+
+  shader->gl_context = SDL_GL_CreateContext(window);
+  if (shader->gl_context == NULL)
+  {
+    fprintf(stderr, "Error: SDL_GL_CreateContext: %s\n", SDL_GetError());
+    return 0;
+  }
+
+  vertex_shader = chq_gles_compile(GL_VERTEX_SHADER, chq_crt_vertex_gles);
+  if (vertex_shader == 0)
+    return 0;
+
+  fragment_shader = chq_gles_compile(GL_FRAGMENT_SHADER, chq_crt_fragment_gles);
+  if (fragment_shader == 0)
+  {
+    glDeleteShader(vertex_shader);
+    return 0;
+  }
+
+  shader->program = glCreateProgram();
+  glAttachShader(shader->program, vertex_shader);
+  glAttachShader(shader->program, fragment_shader);
+  glBindAttribLocation(shader->program, 0, "a_pos");
+  glBindAttribLocation(shader->program, 1, "a_uv");
+  glLinkProgram(shader->program);
+
+  glDeleteShader(vertex_shader);
+  glDeleteShader(fragment_shader);
+
+  glGetProgramiv(shader->program, GL_LINK_STATUS, &linked);
+  if (!linked)
+  {
+    char log[512];
+    glGetProgramInfoLog(shader->program, sizeof(log), NULL, log);
+    fprintf(stderr, "Error: GLES program link: %s\n", log);
+    return 0;
+  }
+
+  glGenBuffers(1, &shader->vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, shader->vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  glGenTextures(1, &shader->texture);
+  glBindTexture(GL_TEXTURE_2D, shader->texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  return 1;
+}
+
+void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
+                           SDL_Window             *window,
+                           zxspectrum_t           *zx,
+                           int                     x,
+                           int                     y,
+                           int                     w,
+                           int                     h,
+                           int                     game_width,
+                           int                     game_height,
+                           const chq_CRT_params_t *params,
+                           const unsigned char    *osd_mask,
+                           const uint32_t         *override_pixels)
+{
+  const zx_frame_t *frame;
+  const uint32_t   *pixels;
+  uint32_t         *composited = NULL;
+
+  /* Composite the OSD mask on the CPU before upload, same as the SDL_GPU
+   * path -- there is no SDL_Renderer here for the caller to draw an overlay
+   * rect with. Needs a scratch copy since, unlike the GPU transfer buffer,
+   * the game's screen buffer and the caller's override buffer are not ours
+   * to write into.
+   */
+  if (override_pixels != NULL)
+    pixels = override_pixels;
+  else
+  {
+    frame  = zxspectrum_claim_screen(zx);
+    pixels = frame->pixels;
+  }
+
+  if (osd_mask != NULL)
+  {
+    int i;
+
+    composited = SDL_malloc((size_t) game_width * (size_t) game_height * 4);
+    memcpy(composited, pixels, (size_t) game_width * (size_t) game_height * 4);
+    for (i = 0; i < game_width * game_height; i++)
+      if (osd_mask[i] == 1)
+        composited[i] = 0xFF40FF40u; /* green interior */
+      else if (osd_mask[i] == 2)
+        composited[i] = 0xFF000000u; /* black outline */
+    pixels = composited;
+  }
+
+  glBindTexture(GL_TEXTURE_2D, shader->texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0, GL_RGBA,
+              GL_UNSIGNED_BYTE, pixels);
+
+  if (override_pixels == NULL)
+    zxspectrum_release_screen(zx);
+  if (composited != NULL)
+    SDL_free(composited);
+
+  glViewport(x, y, w, h);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glUseProgram(shader->program);
+
+  glUniform1i(glGetUniformLocation(shader->program, "u_tex"), 0);
+  glUniform2f(glGetUniformLocation(shader->program, "u_texel"),
+             1.0f / (float) game_width, 1.0f / (float) game_height);
+  glUniform1f(glGetUniformLocation(shader->program, "u_curvature"), params->curvature);
+  glUniform1f(glGetUniformLocation(shader->program, "u_bloomThreshold"), params->bloom_threshold);
+  glUniform1f(glGetUniformLocation(shader->program, "u_bloomIntensity"), params->bloom_intensity);
+  glUniform1f(glGetUniformLocation(shader->program, "u_brightness"), params->brightness);
+  glUniform1f(glGetUniformLocation(shader->program, "u_contrast"), params->contrast);
+  glUniform1f(glGetUniformLocation(shader->program, "u_saturation"), params->saturation);
+  glUniform1f(glGetUniformLocation(shader->program, "u_scanlineIntensity"), params->scanline_intensity);
+  glUniform1f(glGetUniformLocation(shader->program, "u_vignetteStrength"), params->vignette_strength);
+  glUniform1f(glGetUniformLocation(shader->program, "u_chromaBleed"), params->chroma_bleed);
+  glUniform1f(glGetUniformLocation(shader->program, "u_glitch"), params->glitch);
+  glUniform1f(glGetUniformLocation(shader->program, "u_time"), SDL_GetTicks() * 0.001f);
+
+  glBindBuffer(GL_ARRAY_BUFFER, shader->vbo);
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        (void *) (2 * sizeof(float)));
+
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+
+  SDL_GL_SwapWindow(window);
+}
+
+void chq_CRT_shader_destroy(chq_CRT_shader_t *shader, SDL_Window *window)
+{
+  (void) window;
+
+  glDeleteTextures(1, &shader->texture);
+  glDeleteBuffers(1, &shader->vbo);
+  glDeleteProgram(shader->program);
+  SDL_GL_DestroyContext(shader->gl_context);
+}
+
+#else
 
 int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                           SDL_Window       *window,
@@ -426,7 +722,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
     for (i = 0; i < game_width * game_height; i++)
       if (osd_mask[i] == 1)
-        pixels[i] = 0x0040FF40u; /* green interior */
+        pixels[i] = 0xFF40FF40u; /* green interior */
       else if (osd_mask[i] == 2)
         pixels[i] = 0xFF000000u; /* black outline */
   }
@@ -496,3 +792,5 @@ void chq_CRT_shader_destroy(chq_CRT_shader_t *shader, SDL_Window *window)
   SDL_ReleaseWindowFromGPUDevice(shader->gpu, window);
   SDL_DestroyGPUDevice(shader->gpu);
 }
+
+#endif /* CHQ_CRT_SHADER_GLES */

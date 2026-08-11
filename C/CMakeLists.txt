@@ -136,6 +136,11 @@ if(SDL3_FOUND)
       COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_SOURCE_DIR}/apps/sdl3/coi-serviceworker.js"
         "$<TARGET_FILE_DIR:ChaseHQ>/coi-serviceworker.js")
+    # ponytail: CRT shader on the web build is GLSL ES over a raw GL context
+    # (WebGL1/GLES2), not SDL_GPU -- SDL3 has no stable WebGPU backend yet.
+    # Compiled at runtime by the browser, same as the macOS MSL path, so no
+    # extra build step is needed beyond this define.
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1 CHQ_CRT_SHADER_GLES=1)
   else()
     target_link_libraries(ChaseHQ SDL3::SDL3)
   endif()
