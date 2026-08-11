@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chase H.Q.</title>
+  <style>
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas.emscripten {
+      border: 0;
+      image-rendering: pixelated;
+      max-width: 100vw;
+      max-height: 80vh;
+    }
+    #status {
+      position: fixed;
+      top: 0;
+      color: #999;
+      font: 14px monospace;
+    }
+    #controls {
+      color: #999;
+      font: 13px monospace;
+      margin: 0.75em 0;
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 0.35em 2em;
+    }
+    #controls span {
+      white-space: nowrap;
+    }
+    #controls kbd {
+      color: #ddd;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 0 0.3em;
+    }
+    #links {
+      color: #999;
+      font: 13px monospace;
+      margin-bottom: 0.75em;
+    }
+    #links a {
+      color: #7ab8ff;
+    }
+    #links span {
+      margin: 0 0.75em;
+    }
+    #about {
+      color: #999;
+      font: 13px sans-serif;
+      max-width: 48em;
+      text-align: center;
+      margin: 0 1em 0.75em;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Loading...</div>
+  <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <p id="about">
+    This is a disassembly and portable C reimplementation of the ZX Spectrum
+    128K version of Ocean Software's <em>Chase H.Q.</em>, built by reverse
+    engineering the original cassette-loaded game and translating its Z80
+    machine code into readable, heavily-commented C. This page runs that C
+    port compiled to WebAssembly, playing directly from the original game's
+    graphics, level and sound data.
+  </p>
+  <div id="controls">
+    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive (kempston)</span>
+    <span><kbd>F1</kbd> pause</span>
+    <span><kbd>F2</kbd> mute all</span>
+    <span><kbd>F3</kbd> dirty-rect overlay</span>
+    <span><kbd>F5</kbd>/<kbd>F6</kbd> volume down/up</span>
+    <span><kbd>F7</kbd>/<kbd>F8</kbd>/<kbd>F9</kbd> mute AY channel A/B/C</span>
+    <span><kbd>F10</kbd> mute beeper sfx</span>
+    <span><kbd>F11</kbd> fullscreen</span>
+    <span><kbd>F12</kbd> show backbuffer</span>
+    <span><kbd>-</kbd>/<kbd>=</kbd> window scale</span>
+    <span><kbd>[</kbd>/<kbd>]</kbd> speed down/up</span>
+    <span><kbd>\</kbd> reset speed to 100%</span>
+    <span><kbd>Ctrl</kbd>+<kbd>[</kbd>/<kbd>]</kbd> speed min/max</span>
+    <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome</span>
+    <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen</span>
+  </div>
+  <div id="links">
+    <span><a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">GitHub project</a></span>
+    <span><a href="https://en.wikipedia.org/wiki/Chase_H.Q." target="_blank" rel="noopener">Chase H.Q. on Wikipedia</a></span>
+  </div>
+  <script>
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      setStatus: function (text) {
+        var el = document.getElementById('status');
+        if (!text) { el.remove(); return; }
+        el.textContent = text;
+      }
+    };
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>

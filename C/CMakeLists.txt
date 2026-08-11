@@ -128,7 +128,10 @@ if(SDL3_FOUND)
     target_link_options(ChaseHQ PRIVATE
       "-sUSE_SDL=3" "-pthread" "-sPTHREAD_POOL_SIZE=4"
       "-sINITIAL_MEMORY=67108864" "-sEXIT_RUNTIME=0"
-      "-sAUDIO_WORKLET=1" "-sWASM_WORKERS=1")
+      "-sAUDIO_WORKLET=1" "-sWASM_WORKERS=1"
+      "--shell-file=${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
+    set_target_properties(ChaseHQ PROPERTIES LINK_DEPENDS
+      "${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
   else()
     target_link_libraries(ChaseHQ SDL3::SDL3)
   endif()

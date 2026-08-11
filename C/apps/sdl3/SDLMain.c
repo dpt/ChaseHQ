@@ -216,7 +216,8 @@ typedef struct chq_sdl_state
   zxkeyset_t        keys;
   zxkempston_t      kempston;
 
-  int               instance;   // 0-based index; only used to label the window title in two-up mode
+  int               instance;   // 0-based index; only used to label the window title in n-up mode
+  int               instance_count; // total instances launched; >1 shows the instance number in the title
 
   unsigned int      flags;      // CHQ_FLAG_* bits: quit, paused, mode_128k
 
@@ -345,10 +346,16 @@ chq_sdl_state_t;
 static void chq_update_window_title(const chq_sdl_state_t *state)
 {
   char title[64];
+  char label[16];
+
+  if (state->instance_count > 1)
+    SDL_snprintf(label, sizeof(label), "Chase H.Q. #%d", state->instance + 1);
+  else
+    SDL_snprintf(label, sizeof(label), "Chase H.Q.");
 
   SDL_snprintf(title, sizeof(title),
-               "Chase H.Q. #%d - Speed: %d%%%s - Volume: %d%%%s",
-               state->instance + 1,
+               "%s - Speed: %d%%%s - Volume: %d%%%s",
+               label,
                state->speed,
                CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? " (Paused)" : "",
                state->audio.volume,
@@ -1934,7 +1941,8 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   SDL_Window *window;
 
   memset(state, 0, sizeof(*state));
-  state->instance = index;
+  state->instance       = index;
+  state->instance_count = count;
 
   zxkeyset_clear(&state->keys);
   state->kempston = 0;
