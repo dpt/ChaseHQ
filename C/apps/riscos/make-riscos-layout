@@ -62,6 +62,7 @@ link_source C/libraries/ChaseHQ/Engine/Bank7.c bank7
 link_source C/libraries/ChaseHQ/Engine/Create.c create
 link_source C/libraries/ChaseHQ/Engine/Main.c main
 link_source C/libraries/ChaseHQ/Data/CommonData.c commondata
+link_source C/libraries/ChaseHQ/Data/LoadingScreen.c loadingscreen
 link_source C/libraries/ChaseHQ/Data/SoundSamples.c soundsamples
 link_source C/libraries/ChaseHQ/Data/Stage1Data.c stage1data
 link_source C/libraries/ChaseHQ/Data/Stage2Data.c stage2data
