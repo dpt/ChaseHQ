@@ -185,6 +185,7 @@ chq_audio_event_t;
 #define CHQ_FLAG_QUIT      (1u << 0)
 #define CHQ_FLAG_PAUSED    (1u << 1)
 #define CHQ_FLAG_MODE_128K (1u << 2) // 0 selects the 48K entry point
+#define CHQ_FLAG_CLOSED    (1u << 3) // instance already torn down (two-up mode)
 
 #define CHQ_FLAG_TEST(state, flag)   (((state)->flags & (flag)) != 0)
 #define CHQ_FLAG_SET(state, flag)    ((state)->flags |= (flag))
@@ -199,6 +200,8 @@ typedef struct chq_sdl_state
 
   zxkeyset_t        keys;
   zxkempston_t      kempston;
+
+  int               instance;   // 0-based index; only used to label the window title in two-up mode
 
   unsigned int      flags;      // CHQ_FLAG_* bits: quit, paused, mode_128k
 
@@ -329,7 +332,8 @@ static void chq_update_window_title(const chq_sdl_state_t *state)
   char title[64];
 
   SDL_snprintf(title, sizeof(title),
-               "Chase H.Q. - Speed: %d%%%s - Volume: %d%%%s",
+               "Chase H.Q. #%d - Speed: %d%%%s - Volume: %d%%%s",
+               state->instance + 1,
                state->speed,
                CHQ_FLAG_TEST(state, CHQ_FLAG_PAUSED) ? " (Paused)" : "",
                state->audio.volume,
@@ -1698,52 +1702,143 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
   }
 }
 
+// Applies one SDL event to the instance that owns its window. Split out of
+// chq_sdl_main_loop because SDL_PollEvent drains one process-wide queue --
+// with multiple instances, every event (regardless of which window it's for)
+// must be dispatched to the right chq_sdl_state_t rather than each instance
+// polling (and starving its siblings of input).
+static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
+{
+  switch (event->type)
+  {
+  case SDL_EVENT_QUIT:
+    CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
+    SDL_Log("Quitting after %llu ns", (unsigned long long) event->quit.timestamp);
+    break;
+
+  case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+    CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
+    break;
+
+  case SDL_EVENT_KEY_DOWN:
+  case SDL_EVENT_KEY_UP:
+    chq_sdl_key_pressed(state, &event->key);
+    break;
+
+  case SDL_EVENT_TEXT_EDITING:
+  case SDL_EVENT_TEXT_INPUT:
+    break;
+
+  case SDL_EVENT_MOUSE_MOTION:
+  case SDL_EVENT_MOUSE_BUTTON_DOWN:
+  case SDL_EVENT_MOUSE_BUTTON_UP:
+  case SDL_EVENT_MOUSE_WHEEL:
+    break;
+
+  default:
+    break;
+  }
+}
+
+// Dispatches every pending SDL event (single process-wide queue) to the
+// instance whose window it belongs to. SDL_EVENT_QUIT has no window ID (it's
+// not tied to any one window), so it is broadcast to all instances.
+static void chq_dispatch_events(chq_sdl_state_t *instances, int count)
+{
+  SDL_Event  event;
+  int        n;
+  int        have_windowID;
+  Uint32     windowID;
+
+  while (SDL_PollEvent(&event))
+  {
+    if (event.type == SDL_EVENT_QUIT)
+    {
+      for (n = 0; n < count; n++)
+        chq_handle_event(&instances[n], &event);
+      continue;
+    }
+
+    // SDL_Event is a tagged union -- only read the member that matches
+    // event.type, rather than assuming every event carries a window.window
+    // field at the same offset.
+    have_windowID = 1;
+    switch (event.type)
+    {
+    case SDL_EVENT_WINDOW_SHOWN:
+    case SDL_EVENT_WINDOW_HIDDEN:
+    case SDL_EVENT_WINDOW_EXPOSED:
+    case SDL_EVENT_WINDOW_MOVED:
+    case SDL_EVENT_WINDOW_RESIZED:
+    case SDL_EVENT_WINDOW_MINIMIZED:
+    case SDL_EVENT_WINDOW_MAXIMIZED:
+    case SDL_EVENT_WINDOW_RESTORED:
+    case SDL_EVENT_WINDOW_MOUSE_ENTER:
+    case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+      windowID = event.window.windowID;
+      break;
+
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
+      windowID = event.key.windowID;
+      break;
+
+    case SDL_EVENT_TEXT_EDITING:
+    case SDL_EVENT_TEXT_INPUT:
+      windowID = event.text.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_MOTION:
+      windowID = event.motion.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+      windowID = event.button.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_WHEEL:
+      windowID = event.wheel.windowID;
+      break;
+
+    default:
+      have_windowID = 0;
+      windowID      = 0;
+      break;
+    }
+
+    if (!have_windowID)
+      continue;
+
+    for (n = 0; n < count; n++)
+    {
+      if (SDL_GetWindowID(instances[n].video.window) == windowID)
+      {
+        chq_handle_event(&instances[n], &event);
+        break;
+      }
+    }
+  }
+}
+
 // type: em_arg_callback_func
 static void chq_sdl_main_loop(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
   int              x, y, w, h; // destination rect: game view within the window
   int              ww, wh;     // actual window size (may exceed scale*game size in fullscreen)
-  SDL_Event        event;
+
+  if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
+    return;
 
   w = GAMEWIDTH  * state->video.scale;
   h = GAMEHEIGHT * state->video.scale;
   SDL_GetWindowSize(state->video.window, &ww, &wh);
   x = (ww - w) / 2; // centred; equals BORDER*scale in windowed mode, letterboxes in fullscreen
   y = (wh - h) / 2;
-
-  // Consume all pending events
-  while (SDL_PollEvent(&event))
-  {
-    switch (event.type)
-    {
-    case SDL_EVENT_QUIT:
-      CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
-      SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
-      break;
-
-    case SDL_EVENT_KEY_DOWN:
-    case SDL_EVENT_KEY_UP:
-      chq_sdl_key_pressed(state, &event.key);
-      break;
-
-    case SDL_EVENT_TEXT_EDITING:
-    case SDL_EVENT_TEXT_INPUT:
-      break;
-
-    case SDL_EVENT_MOUSE_MOTION:
-    case SDL_EVENT_MOUSE_BUTTON_DOWN:
-    case SDL_EVENT_MOUSE_BUTTON_UP:
-    case SDL_EVENT_MOUSE_WHEEL:
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
-    return;
 
   if (state->video.crt_enabled)
   {
@@ -1800,74 +1895,61 @@ static void chq_sdl_main_loop(void *opaque)
   }
 }
 
-int main(int argc, char *argv[])
+// Brings up one game instance: window, renderer, audio device, game thread.
+// Instances are otherwise independent -- each owns its own chq_sdl_state_t,
+// so this exists purely to let two-up mode spin up N of them without
+// duplicating the whole of main().
+static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale)
 {
-  chq_sdl_state_t state;
-  zxconfig_t      zxconfig;
-  SDL_Window     *window;
-  int             arg;
-  int             mode_128k;
+  zxconfig_t  zxconfig;
+  SDL_Window *window;
 
-  mode_128k = 1;
+  memset(state, 0, sizeof(*state));
+  state->instance = index;
 
-  for (arg = 1; arg < argc; arg++)
-  {
-    if (strcmp(argv[arg], "-48k") == 0)
-    {
-      mode_128k = 0;
-    }
-    else if (strcmp(argv[arg], "-128k") == 0)
-    {
-      mode_128k = 1;
-    }
-    else
-    {
-      fprintf(stderr, "Usage: %s [-48k | -128k]\n", argv[0]);
-      return EXIT_FAILURE;
-    }
-  }
-
-  memset(&state, 0, sizeof(state));
-
-  zxkeyset_clear(&state.keys);
-  state.kempston = 0;
-  state.flags    = 0;
-  CHQ_FLAG_ASSIGN(&state, CHQ_FLAG_MODE_128K, mode_128k);
-  state.video.scale           = SCALE_DEFAULT;
-  state.speed                 = SPEED_DEFAULT;
-  state.audio.volume          = VOLUME_DEFAULT;
-  state.video.crt_params      = crt_tuned_params;
-  state.video.crt_param_index = 0;
-
-#ifdef __APPLE__
-  /* Conv: disable macOS press-and-hold accent popover so held keys repeat
-   * instead of opening the accent picker.
-   */
-  CFPreferencesSetAppValue(CFSTR("ApplePressAndHoldEnabled"),
-                            kCFBooleanFalse,
-                            kCFPreferencesCurrentApplication);
-  CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
-#endif
-
-  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
-  {
-    fprintf(stderr, "Error: SDL_Init: %s\n", SDL_GetError());
-    goto failure;
-  }
+  zxkeyset_clear(&state->keys);
+  state->kempston = 0;
+  state->flags    = 0;
+  CHQ_FLAG_ASSIGN(state, CHQ_FLAG_MODE_128K, mode_128k);
+  state->video.scale           = scale;
+  state->speed                 = SPEED_DEFAULT;
+  state->audio.volume          = VOLUME_DEFAULT;
+  state->video.crt_params      = crt_tuned_params;
+  state->video.crt_param_index = 0;
+  state->audio.muted           = quiet;
 
   window = SDL_CreateWindow("Chase H.Q.",
-                            chq_window_width(state.video.scale),
-                            chq_window_height(state.video.scale),
+                            chq_window_width(state->video.scale),
+                            chq_window_height(state->video.scale),
                             0);
   if (window == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateWindow: %s\n", SDL_GetError());
-    goto failure;
+    return 0;
   }
 
-  state.video.window = window;
+  // With more than one instance, tile windows in a grid instead of leaving
+  // them all centred on top of each other; a single instance keeps SDL's
+  // default centred placement. SDL_WINDOWPOS_UNDEFINED/CENTERED are magic
+  // encoded values, not coordinates -- arithmetic on them corrupts the
+  // encoding rather than offsetting the position, so real usable-desktop
+  // bounds are read via SDL_GetDisplayUsableBounds and tiled from there.
+  if (count > 1)
+  {
+    SDL_Rect bounds = {0};
+    int      cols   = (int) SDL_ceil(SDL_sqrt((double) count));
+    int      col    = index % cols;
+    int      row    = index / cols;
 
-  chq_update_window_title(&state);
+    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds);
+    SDL_SetWindowPosition(window,
+                          bounds.x + col * chq_window_width(state->video.scale),
+                          bounds.y + row * chq_window_height(state->video.scale));
+  }
+
+  state->video.window = window;
+
+  chq_update_window_title(state);
 
   /* The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
    * lowest memory byte), which is what Screen.c's palette_abgr table packs
@@ -1884,7 +1966,7 @@ int main(int argc, char *argv[])
    */
   zxconfig.width        = GAMEWIDTH / 8;
   zxconfig.height       = GAMEHEIGHT / 8;
-  zxconfig.opaque       = &state;
+  zxconfig.opaque       = state;
   zxconfig.draw         = &chq_draw_handler;
   zxconfig.stamp        = &chq_stamp_handler;
   zxconfig.sleep        = &chq_sleep_handler;
@@ -1894,26 +1976,26 @@ int main(int argc, char *argv[])
   zxconfig.ay_out       = &chq_ay_out_handler;
   zxconfig.pixel_format = ZX_PIXEL_ABGR8888; /* R in lower byte */
 
-  state.zx = zxspectrum_create(&zxconfig);
-  if (state.zx == NULL)
-    goto failure;
+  state->zx = zxspectrum_create(&zxconfig);
+  if (state->zx == NULL)
+    return 0;
 
-  state.audio.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
-  if (state.audio.ay == NULL)
-    goto failure;
+  state->audio.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
+  if (state->audio.ay == NULL)
+    return 0;
 
-  state.audio.queue_mutex = SDL_CreateMutex();
-  if (state.audio.queue_mutex == NULL)
+  state->audio.queue_mutex = SDL_CreateMutex();
+  if (state->audio.queue_mutex == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
-    goto failure;
+    return 0;
   }
 
-  state.video.dirty_mutex = SDL_CreateMutex();
-  if (state.video.dirty_mutex == NULL)
+  state->video.dirty_mutex = SDL_CreateMutex();
+  if (state->video.dirty_mutex == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
-    goto failure;
+    return 0;
   }
 
   /* Conv: force mono output. The chip defaults to ABC stereo separation
@@ -1923,8 +2005,8 @@ int main(int argc, char *argv[])
    * sidesteps the question. Volume is turned down from the chip's own
    * default (10%) as three channels plus envelope can otherwise clip loud.
    */
-  slopay_chip_set_stereo_mode(state.audio.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
-  slopay_chip_set_volume(state.audio.ay, AY_VOLUME_PCT);
+  slopay_chip_set_stereo_mode(state->audio.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
+  slopay_chip_set_volume(state->audio.ay, AY_VOLUME_PCT);
 
   {
     SDL_AudioSpec desired = {0};
@@ -1933,93 +2015,291 @@ int main(int argc, char *argv[])
     desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
 
-    state.audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+    state->audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                                    &desired,
                                                    &chq_audio_callback,
-                                                   &state);
-    if (state.audio.stream == NULL)
+                                                   state);
+    if (state->audio.stream == NULL)
     {
       fprintf(stderr, "Error: SDL_OpenAudioDeviceStream: %s\n", SDL_GetError());
-      goto failure;
+      return 0;
     }
 
-    SDL_ResumeAudioStreamDevice(state.audio.stream);
+    SDL_ResumeAudioStreamDevice(state->audio.stream);
   }
 
   /* Bring up the starting backend. A CRT request that cannot be met falls
    * back to the plain renderer rather than failing to start; only losing
    * both is fatal.
    */
-  chq_set_crt_enabled(&state, CHQ_CRT_SHADER);
-  if (!state.video.crt_enabled && state.video.renderer == NULL)
-    goto failure;
+  chq_set_crt_enabled(state, CHQ_CRT_SHADER);
+  if (!state->video.crt_enabled && state->video.renderer == NULL)
+    return 0;
 
   /* Show the cassette loading screen before the game starts. On real
    * hardware this isn't drawn by the game at all: the tape loader blits it
    * straight into screen memory before the BASIC loader runs the machine
-   * code, so we do the same here, ahead of chq_create/chq_start.
+   * code, so we do the same here, ahead of chq_create/chq_start. The hold
+   * itself happens once, across every instance, in main() -- not here --
+   * so N instances share one LOADING_SCREEN_DURATION_MS wait instead of
+   * paying it N times serially.
    */
-  memcpy(state.zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
-  memcpy(state.zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
-  state.zx->draw(state.zx, NULL);
+  memcpy(state->zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
+  memcpy(state->zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
+  state->zx->draw(state->zx, NULL);
 
-  {
-    Uint64 splash_start_ms = SDL_GetTicks();
+  return 1;
+}
 
-    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS &&
-           !CHQ_FLAG_TEST(&state, CHQ_FLAG_QUIT))
-    {
-      chq_sdl_main_loop(&state);
-      SDL_Delay(16);
-    }
-  }
+// Starts the game thread for an instance that chq_instance_create has
+// already brought a window up for. Split out so main() can hold the loading
+// screen for every instance at once before any of them start playing.
+static int chq_instance_launch_game(chq_sdl_state_t *state)
+{
+  state->game = chq_create(state->zx);
+  if (state->game == NULL)
+    return 0;
 
-  state.game = chq_create(state.zx);
-  if (state.game == NULL)
-    goto failure;
-
-  state.game_thread = SDL_CreateThread(chq_game_thread, "game", &state);
-  if (state.game_thread == NULL)
+  state->game_thread = SDL_CreateThread(chq_game_thread, "game", state);
+  if (state->game_thread == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateThread: %s\n", SDL_GetError());
-    goto failure;
+    return 0;
   }
 
-  while (!CHQ_FLAG_TEST(&state, CHQ_FLAG_QUIT))
-    chq_sdl_main_loop(&state);
+  return 1;
+}
 
+// Tears down one instance created by chq_instance_create. Mirrors main()'s
+// old single-instance shutdown sequence.
+static void chq_instance_destroy(chq_sdl_state_t *state)
+{
   // Stop the audio device before anything else. chq_stop only signals the
   // game thread, which longjmps out mid-frame and leaves the AY holding
   // whatever tone the tune was playing; without this the callback keeps
   // sounding that tone for the whole shutdown wait below. Pause before
   // clear, or the callback refills between the two.
-  SDL_PauseAudioStreamDevice(state.audio.stream);
-  SDL_ClearAudioStream(state.audio.stream);
+  SDL_PauseAudioStreamDevice(state->audio.stream);
+  SDL_ClearAudioStream(state->audio.stream);
 
-  chq_stop(state.game);
+  // game/game_thread are NULL if the instance quit during the shared loading
+  // screen wait, before chq_instance_launch_game ever ran.
+  if (state->game != NULL)
+  {
+    chq_stop(state->game);
+    SDL_WaitThread(state->game_thread, NULL);
+    chq_destroy(state->game);
+  }
 
-  SDL_WaitThread(state.game_thread, NULL);
+  zxspectrum_destroy(state->zx);
 
-  chq_destroy(state.game);
-  zxspectrum_destroy(state.zx);
+  SDL_DestroyAudioStream(state->audio.stream);
+  slopay_chip_destroy(state->audio.ay);
+  SDL_DestroyMutex(state->audio.queue_mutex);
+  SDL_DestroyMutex(state->video.dirty_mutex);
 
-  SDL_DestroyAudioStream(state.audio.stream);
-  slopay_chip_destroy(state.audio.ay);
-  SDL_DestroyMutex(state.audio.queue_mutex);
-  SDL_DestroyMutex(state.video.dirty_mutex);
-
-  if (state.video.crt_enabled)
-    chq_CRT_shader_destroy(&state.video.crt, state.video.window);
+  if (state->video.crt_enabled)
+    chq_CRT_shader_destroy(&state->video.crt, state->video.window);
   else
-    chq_renderer_destroy(&state);
-  SDL_DestroyWindow(state.video.window);
+    chq_renderer_destroy(state);
+  SDL_DestroyWindow(state->video.window);
+}
+
+// Parses a decimal integer strictly: rejects empty strings, non-numeric
+// input and trailing garbage, rather than letting atoi silently coerce them
+// to 0. Returns 1 on success (with *out set), 0 on failure.
+static int chq_parse_int(const char *text, int *out)
+{
+  char *end;
+  long  value;
+
+  if (text[0] == '\0')
+    return 0;
+
+  value = strtol(text, &end, 10);
+  if (*end != '\0')
+    return 0;
+
+  *out = (int) value;
+  return 1;
+}
+
+// Destroys every instance in [0, created) that hasn't already torn itself
+// down, then frees the array and shuts SDL down. Shared by every exit path
+// out of main() so a failure partway through startup doesn't leak windows,
+// audio devices or the SDL subsystem.
+static void chq_shutdown_all(chq_sdl_state_t *instances, int created)
+{
+  int n;
+
+  for (n = 0; n < created; n++)
+  {
+    if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_CLOSED))
+      chq_instance_destroy(&instances[n]);
+  }
+
+  free(instances);
 
   SDL_Quit();
+}
 
-  exit(EXIT_SUCCESS);
+int main(int argc, char *argv[])
+{
+  chq_sdl_state_t *instances;
+  int              n, count, arg, mode_128k, quit_count, quiet, scale;
 
+  count     = 1;
+  mode_128k = 1;
+  quiet     = 0;
+  scale     = SCALE_DEFAULT;
 
-failure:
+  for (arg = 1; arg < argc; arg++)
+  {
+    if (strcmp(argv[arg], "-48k") == 0)
+    {
+      mode_128k = 0;
+    }
+    else if (strcmp(argv[arg], "-128k") == 0)
+    {
+      mode_128k = 1;
+    }
+    else if (strcmp(argv[arg], "-n") == 0 && arg + 1 < argc)
+    {
+      if (!chq_parse_int(argv[++arg], &count))
+      {
+        fprintf(stderr, "Error: -n expects an integer, got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
+    }
+    else if (strcmp(argv[arg], "-quiet") == 0)
+    {
+      quiet = 1;
+    }
+    else if (strcmp(argv[arg], "-scale") == 0 && arg + 1 < argc)
+    {
+      if (!chq_parse_int(argv[++arg], &scale))
+      {
+        fprintf(stderr, "Error: -scale expects an integer, got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
+    }
+    else
+    {
+      fprintf(stderr, "Usage: %s [-48k | -128k] [-n count] [-quiet] [-scale factor]\n", argv[0]);
+      return EXIT_FAILURE;
+    }
+  }
 
-  exit(EXIT_FAILURE);
+  if (count < 1)
+  {
+    fprintf(stderr, "Error: -n count must be at least 1\n");
+    return EXIT_FAILURE;
+  }
+
+  if (scale < SCALE_MIN || scale > SCALE_MAX)
+  {
+    fprintf(stderr, "Error: -scale must be between %d and %d\n", SCALE_MIN, SCALE_MAX);
+    return EXIT_FAILURE;
+  }
+
+#ifdef __APPLE__
+  /* Conv: disable macOS press-and-hold accent popover so held keys repeat
+   * instead of opening the accent picker.
+   */
+  CFPreferencesSetAppValue(CFSTR("ApplePressAndHoldEnabled"),
+                            kCFBooleanFalse,
+                            kCFPreferencesCurrentApplication);
+  CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+#endif
+
+  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+  {
+    fprintf(stderr, "Error: SDL_Init: %s\n", SDL_GetError());
+    return EXIT_FAILURE;
+  }
+
+  instances = calloc((size_t) count, sizeof(*instances));
+  if (instances == NULL)
+  {
+    fprintf(stderr, "Error: out of memory\n");
+    SDL_Quit();
+    return EXIT_FAILURE;
+  }
+
+  for (n = 0; n < count; n++)
+  {
+    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, scale))
+    {
+      fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
+      chq_shutdown_all(instances, n);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // Hold the loading screen for every instance at once -- one
+  // LOADING_SCREEN_DURATION_MS wait total, not one per instance.
+  {
+    Uint64 splash_start_ms = SDL_GetTicks();
+    int    any_quit;
+
+    do
+    {
+      any_quit = 0;
+      chq_dispatch_events(instances, count);
+      for (n = 0; n < count; n++)
+      {
+        chq_sdl_main_loop(&instances[n]);
+        any_quit |= CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT);
+      }
+      SDL_Delay(16);
+    }
+    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS && !any_quit);
+  }
+
+  for (n = 0; n < count; n++)
+  {
+    if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT) &&
+        !chq_instance_launch_game(&instances[n]))
+    {
+      fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
+      chq_shutdown_all(instances, count);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // Two-up test harness: pumps every instance's event/game loop from a
+  // single thread, same as the single-instance case did for one. Each
+  // instance's game logic still runs on its own game thread (spawned in
+  // chq_instance_create); this loop only drives SDL events/rendering, which
+  // is inherently single-threaded per process in SDL3.
+  do
+  {
+    quit_count = 0;
+    chq_dispatch_events(instances, count);
+    for (n = 0; n < count; n++)
+    {
+      if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT))
+      {
+        chq_sdl_main_loop(&instances[n]);
+      }
+      else
+      {
+        // Tear this instance down (and close its window) the moment it
+        // quits, rather than waiting for every other instance to catch up --
+        // otherwise closing window #2 leaves it hanging on screen until #1
+        // quits too.
+        if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_CLOSED))
+        {
+          chq_instance_destroy(&instances[n]);
+          CHQ_FLAG_SET(&instances[n], CHQ_FLAG_CLOSED);
+        }
+        quit_count++;
+      }
+    }
+  }
+  while (quit_count < count);
+
+  chq_shutdown_all(instances, count);
+
+  return EXIT_SUCCESS;
 }
