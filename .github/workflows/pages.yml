@@ -46,7 +46,7 @@ jobs:
     - name: Assemble site
       run: |
         mkdir -p site/play
-        cp -r Speccy/build/. site/
+        cp -r Speccy/build/ChaseHQ/. site/
         cp C/build/ChaseHQ.html site/play/index.html
         cp C/build/ChaseHQ.js C/build/ChaseHQ.wasm C/build/coi-serviceworker.js site/play/
 
