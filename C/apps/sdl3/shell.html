@@ -14,11 +14,14 @@
       align-items: center;
       justify-content: center;
     }
+    #stage {
+      display: flex;
+    }
     canvas.emscripten {
       border: 0;
       image-rendering: pixelated;
-      max-width: 100vw;
-      max-height: 80vh;
+      max-width: 90vw;
+      max-height: 90vh;
     }
     #status {
       position: fixed;
@@ -27,12 +30,15 @@
       font: 14px monospace;
     }
     #controls {
+      position: fixed;
+      left: 1em;
+      top: 50%;
+      transform: translateY(-50%);
       color: #999;
       font: 13px monospace;
-      margin: 0.75em 0;
       display: grid;
-      grid-template-columns: repeat(3, auto);
-      gap: 0.35em 2em;
+      grid-template-columns: auto;
+      gap: 0.35em 0;
     }
     #controls span {
       white-space: nowrap;
@@ -42,6 +48,43 @@
       border: 1px solid #555;
       border-radius: 3px;
       padding: 0 0.3em;
+    }
+    #controls details {
+      border-top: 1px solid #333;
+      padding-top: 0.35em;
+    }
+    #controls details[open] {
+      padding-bottom: 0.1em;
+    }
+    #controls summary {
+      cursor: pointer;
+      color: #ccc;
+      margin-bottom: 0.35em;
+    }
+    #controls summary:hover {
+      color: #fff;
+    }
+    #controls summary:focus-visible {
+      outline: 2px solid #7ab8ff;
+      outline-offset: 2px;
+    }
+    #controls details > span {
+      display: block;
+      margin: 0.35em 0;
+    }
+    @media (max-width: 900px), (max-height: 500px) {
+      #controls {
+        position: static;
+        transform: none;
+        margin: 0.75em 1em 0;
+      }
+      #stage {
+        flex-direction: column;
+        align-items: center;
+      }
+      canvas.emscripten {
+        max-width: 95vw;
+      }
     }
     #about {
       color: #999;
@@ -58,7 +101,49 @@
 </head>
 <body>
   <div id="status">Loading...</div>
-  <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="stage">
+    <div id="controls">
+      <details open>
+        <summary>Drive</summary>
+        <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive+gear (kempston)</span>
+        <span><kbd>F1</kbd> pause</span>
+        <span><kbd>F11</kbd> fullscreen</span>
+        <span><kbd>-</kbd>/<kbd>=</kbd> set window scale</span>
+      </details>
+      <details>
+        <summary>Speed</summary>
+        <span><kbd>[</kbd>/<kbd>]</kbd>/<kbd>\</kbd> speed down/up/reset</span>
+        <span><kbd>Ctrl</kbd>+<kbd>[</kbd>/<kbd>]</kbd> speed min/max</span>
+      </details>
+      <details>
+        <summary>Audio</summary>
+        <span><kbd>F2</kbd> mute all</span>
+        <span><kbd>F5</kbd>/<kbd>F6</kbd> volume down/up</span>
+        <span><kbd>F7</kbd>/<kbd>F8</kbd>/<kbd>F9</kbd> mute AY channel A/B/C</span>
+        <span><kbd>F10</kbd> mute beeper sfx</span>
+      </details>
+      <details>
+        <summary>Palette</summary>
+        <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome palette</span>
+        <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette (less harsh)</span>
+      </details>
+      <details>
+        <summary>Shader / CRT</summary>
+        <span><kbd>F4</kbd> toggle CRT shader</span>
+        <span><kbd>Tab</kbd>/<kbd>Shift</kbd>+<kbd>Tab</kbd> select shader param</span>
+        <span><kbd>PgUp</kbd>/<kbd>PgDn</kbd> adjust shader param</span>
+        <span><kbd>Ctrl</kbd>+<kbd>R</kbd> reset shader params</span>
+        <span><kbd>Ctrl</kbd>+<kbd>T</kbd> use tuned shader preset</span>
+      </details>
+      <details>
+        <summary>Debug</summary>
+        <span><kbd>F3</kbd> dirty-rect overlay (not CRT)</span>
+        <span><kbd>F12</kbd> show game backbuffer</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen bytes</span>
+      </details>
+    </div>
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  </div>
   <div id="about">
     <p>
       This is a <a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">disassembly and portable C reimplementation</a>
@@ -73,29 +158,6 @@
       playing directly from the original game's graphics, level and sound
       data.
     </p>
-  </div>
-  <div id="controls">
-    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive+gear (kempston)</span>
-    <span><kbd>F1</kbd> pause</span>
-    <span><kbd>F2</kbd> mute all</span>
-    <span><kbd>F3</kbd> dirty-rect overlay (not CRT)</span>
-    <span><kbd>F4</kbd> toggle CRT shader</span>
-    <span><kbd>F5</kbd>/<kbd>F6</kbd> volume down/up</span>
-    <span><kbd>F7</kbd>/<kbd>F8</kbd>/<kbd>F9</kbd> mute AY channel A/B/C</span>
-    <span><kbd>F10</kbd> mute beeper sfx</span>
-    <span><kbd>F11</kbd> fullscreen</span>
-    <span><kbd>F12</kbd> show game backbuffer</span>
-    <span><kbd>Tab</kbd>/<kbd>Shift</kbd>+<kbd>Tab</kbd> select shader param</span>
-    <span><kbd>PgUp</kbd>/<kbd>PgDn</kbd> adjust shader param</span>
-    <span><kbd>Ctrl</kbd>+<kbd>R</kbd> reset shader params</span>
-    <span><kbd>Ctrl</kbd>+<kbd>T</kbd> use tuned shader preset</span>
-    <span><kbd>-</kbd>/<kbd>=</kbd> set window scale</span>
-    <span><kbd>[</kbd>/<kbd>]</kbd> speed down/up</span>
-    <span><kbd>\</kbd> reset speed to 100%</span>
-    <span><kbd>Ctrl</kbd>+<kbd>[</kbd>/<kbd>]</kbd> speed min/max</span>
-    <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome palette</span>
-    <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette</span>
-    <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen bytes</span>
   </div>
   <script>
     var Module = {
