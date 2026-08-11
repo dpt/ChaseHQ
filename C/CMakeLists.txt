@@ -132,6 +132,10 @@ if(SDL3_FOUND)
       "--shell-file=${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
     set_target_properties(ChaseHQ PROPERTIES LINK_DEPENDS
       "${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
+    add_custom_command(TARGET ChaseHQ POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_SOURCE_DIR}/apps/sdl3/coi-serviceworker.js"
+        "$<TARGET_FILE_DIR:ChaseHQ>/coi-serviceworker.js")
   else()
     target_link_libraries(ChaseHQ SDL3::SDL3)
   endif()

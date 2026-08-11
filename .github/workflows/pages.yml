@@ -1,0 +1,65 @@
+on:
+  push:
+    branches: develop
+    paths:
+      - 'C/**'
+      - 'Speccy/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install SkoolKit
+      run: pip install 'skoolkit>=9.0'
+
+    - name: Build the disassembly docs
+      working-directory: Speccy
+      run: make disasm
+
+    # ponytail: CMakeLists requires cmake >= 4.1; ubuntu-latest ships 3.x.
+    - name: Install CMake
+      run: pip install 'cmake>=4.1'
+
+    - uses: mymindstorm/setup-emsdk@v14
+
+    - name: Configure the game
+      working-directory: C
+      run: emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build the game
+      working-directory: C
+      run: cmake --build build --target ChaseHQ -j2
+
+    - name: Assemble site
+      run: |
+        mkdir -p site/play
+        cp -r Speccy/build/. site/
+        cp C/build/ChaseHQ.html site/play/index.html
+        cp C/build/ChaseHQ.js C/build/ChaseHQ.wasm C/build/coi-serviceworker.js site/play/
+
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - id: deployment
+      uses: actions/deploy-pages@v4

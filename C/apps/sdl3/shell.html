@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Chase H.Q.</title>
+  <script src="coi-serviceworker.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -42,17 +43,6 @@
       border-radius: 3px;
       padding: 0 0.3em;
     }
-    #links {
-      color: #999;
-      font: 13px monospace;
-      margin-bottom: 0.75em;
-    }
-    #links a {
-      color: #7ab8ff;
-    }
-    #links span {
-      margin: 0 0.75em;
-    }
     #about {
       color: #999;
       font: 13px sans-serif;
@@ -61,19 +51,28 @@
       margin: 0 1em 0.75em;
       line-height: 1.4;
     }
+    #about a {
+      color: #7ab8ff;
+    }
   </style>
 </head>
 <body>
   <div id="status">Loading...</div>
   <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-  <p id="about">
-    This is a disassembly and portable C reimplementation of the ZX Spectrum
-    128K version of Ocean Software's <em>Chase H.Q.</em>, built by reverse
-    engineering the original cassette-loaded game and translating its Z80
-    machine code into readable, heavily-commented C. This page runs that C
-    port compiled to WebAssembly, playing directly from the original game's
-    graphics, level and sound data.
-  </p>
+  <div id="about">
+    <p>
+      This is a disassembly and portable C reimplementation of the ZX Spectrum
+      128K version of Ocean Software's <em>Chase H.Q.</em>, built by reverse
+      engineering the original cassette-loaded game and translating its Z80
+      machine code into readable, heavily-commented C. This page runs that C
+      port compiled to WebAssembly, playing directly from the original game's
+      graphics, level and sound data.
+    </p>
+    <p>
+      See the <a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">GitHub project</a>
+      and <em>Chase H.Q.</em> on <a href="https://en.wikipedia.org/wiki/Chase_H.Q." target="_blank" rel="noopener">Wikipedia</a>.
+    </p>
+  </div>
   <div id="controls">
     <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive (kempston)</span>
     <span><kbd>F1</kbd> pause</span>
@@ -91,10 +90,6 @@
     <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome</span>
     <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette</span>
     <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen</span>
-  </div>
-  <div id="links">
-    <span><a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">GitHub project</a></span>
-    <span><a href="https://en.wikipedia.org/wiki/Chase_H.Q." target="_blank" rel="noopener">Chase H.Q. on Wikipedia</a></span>
   </div>
   <script>
     var Module = {
