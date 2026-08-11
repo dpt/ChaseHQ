@@ -42,7 +42,6 @@
 #include "CRTShader.h"
 
 #include "ChaseHQ/Data/CommonData.h"
-#include "ChaseHQ/Data/LoadingScreen.h"
 
 // -----------------------------------------------------------------------------
 
@@ -66,8 +65,6 @@
 #define VOLUME_MIN           (0)
 #define VOLUME_MAX         (100)
 #define VOLUME_STEP         (10)
-
-#define LOADING_SCREEN_DURATION_MS (2000) // how long the tape loading screen splash shows
 
 /* Whether the CRT post-effect starts switched on. Both display backends are
  * always built: the plain SDL_Renderer blit (any GPU backend,
@@ -2121,26 +2118,11 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   if (!state->video.crt_enabled && state->video.renderer == NULL)
     return 0;
 
-  /* Show the cassette loading screen before the game starts. On real
-   * hardware this isn't drawn by the game at all: the tape loader blits it
-   * straight into screen memory before the BASIC loader runs the machine
-   * code, so we do the same here, ahead of chq_create/chq_start. The hold
-   * itself happens once, across every instance, in main() -- not here --
-   * so N instances share one LOADING_SCREEN_DURATION_MS wait instead of
-   * paying it N times serially.
-   */
-  memcpy(state->zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
-  memcpy(state->zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
-  state->zx->draw(state->zx, NULL);
-
-  return 1;
-}
-
-// Starts the game thread for an instance that chq_instance_create has
-// already brought a window up for. Split out so main() can hold the loading
-// screen for every instance at once before any of them start playing.
-static int chq_instance_launch_game(chq_sdl_state_t *state)
-{
+  // The cassette loading screen is drawn and held by the game itself now
+  // (entry_common's show_loading_screen, called from chq_start on the game
+  // thread below) -- on real hardware the tape loader blits it before the
+  // BASIC loader ever runs the machine code, so the game reproducing that
+  // ordering internally is truer than the host faking it beforehand.
   state->game = chq_create(state->zx);
   if (state->game == NULL)
     return 0;
@@ -2167,8 +2149,8 @@ static void chq_instance_destroy(chq_sdl_state_t *state)
   SDL_PauseAudioStreamDevice(state->audio.stream);
   SDL_ClearAudioStream(state->audio.stream);
 
-  // game/game_thread are NULL if the instance quit during the shared loading
-  // screen wait, before chq_instance_launch_game ever ran.
+  // game/game_thread are NULL if chq_instance_create failed before reaching
+  // chq_create/SDL_CreateThread.
   if (state->game != NULL)
   {
     chq_stop(state->game);
@@ -2229,20 +2211,18 @@ static void chq_shutdown_all(chq_sdl_state_t *instances, int created)
 }
 
 #ifdef __EMSCRIPTEN__
-/* Conv: native builds pump the loading splash and the game loop with a
- * blocking do/while + SDL_Delay on the calling thread. That's fine on
- * desktop, where the OS keeps compositing the window regardless. Under
- * Emscripten the browser only ever repaints between yields back to its own
- * event loop -- a thread that blocks in a loop, even one that calls
- * SDL_Delay, never yields, so the canvas stays black and the tab looks
- * wedged. emscripten_set_main_loop schedules each iteration via
+/* Conv: native builds pump the game loop with a blocking do/while on the
+ * calling thread. That's fine on desktop, where the OS keeps compositing the
+ * window regardless. Under Emscripten the browser only ever repaints between
+ * yields back to its own event loop -- a thread that blocks in a loop never
+ * yields, so the canvas stays black and the tab looks wedged.
+ * emscripten_set_main_loop schedules each iteration via
  * requestAnimationFrame instead, which yields naturally.
  */
 typedef struct
 {
   chq_sdl_state_t *instances;
   int               count;
-  Uint64            splash_start_ms;
 } chq_web_ctx_t;
 
 static void chq_web_main_loop(void *opaque)
@@ -2279,40 +2259,6 @@ static void chq_web_main_loop(void *opaque)
   }
 }
 
-static void chq_web_splash_loop(void *opaque)
-{
-  chq_web_ctx_t *ctx;
-  int             n, any_quit;
-
-  ctx      = (chq_web_ctx_t *) opaque;
-  any_quit = 0;
-
-  chq_dispatch_events(ctx->instances, ctx->count);
-  for (n = 0; n < ctx->count; n++)
-  {
-    chq_sdl_main_loop(&ctx->instances[n]);
-    any_quit |= CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_QUIT);
-  }
-
-  if (any_quit || SDL_GetTicks() - ctx->splash_start_ms >= LOADING_SCREEN_DURATION_MS)
-  {
-    emscripten_cancel_main_loop();
-
-    for (n = 0; n < ctx->count; n++)
-    {
-      if (!CHQ_FLAG_TEST(&ctx->instances[n], CHQ_FLAG_QUIT) &&
-          !chq_instance_launch_game(&ctx->instances[n]))
-      {
-        fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
-        chq_shutdown_all(ctx->instances, ctx->count);
-        free(ctx);
-        return;
-      }
-    }
-
-    emscripten_set_main_loop_arg(chq_web_main_loop, ctx, 0, 1);
-  }
-}
 #endif
 
 int main(int argc, char *argv[])
@@ -2412,10 +2358,10 @@ int main(int argc, char *argv[])
   }
 
 #ifdef __EMSCRIPTEN__
-  // Conv: browser build hands both the splash hold and the game loop to
-  // emscripten_set_main_loop (see chq_web_splash_loop / chq_web_main_loop
-  // above) instead of blocking this thread -- a blocking loop never yields
-  // to the browser's compositor, which would leave the canvas black.
+  // Conv: browser build hands the game loop to emscripten_set_main_loop
+  // (see chq_web_main_loop above) instead of blocking this thread -- a
+  // blocking loop never yields to the browser's compositor, which would
+  // leave the canvas black.
   {
     chq_web_ctx_t *ctx = malloc(sizeof(*ctx));
     if (ctx == NULL)
@@ -2424,45 +2370,13 @@ int main(int argc, char *argv[])
       chq_shutdown_all(instances, count);
       return EXIT_FAILURE;
     }
-    ctx->instances       = instances;
-    ctx->count           = count;
-    ctx->splash_start_ms = SDL_GetTicks();
-    emscripten_set_main_loop_arg(chq_web_splash_loop, ctx, 0, 1);
+    ctx->instances = instances;
+    ctx->count     = count;
+    emscripten_set_main_loop_arg(chq_web_main_loop, ctx, 0, 1);
   }
 
   return EXIT_SUCCESS;
 #else
-  // Hold the loading screen for every instance at once -- one
-  // LOADING_SCREEN_DURATION_MS wait total, not one per instance.
-  {
-    Uint64 splash_start_ms = SDL_GetTicks();
-    int    any_quit;
-
-    do
-    {
-      any_quit = 0;
-      chq_dispatch_events(instances, count);
-      for (n = 0; n < count; n++)
-      {
-        chq_sdl_main_loop(&instances[n]);
-        any_quit |= CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT);
-      }
-      SDL_Delay(16);
-    }
-    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS && !any_quit);
-  }
-
-  for (n = 0; n < count; n++)
-  {
-    if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT) &&
-        !chq_instance_launch_game(&instances[n]))
-    {
-      fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
-      chq_shutdown_all(instances, count);
-      return EXIT_FAILURE;
-    }
-  }
-
   // Two-up test harness: pumps every instance's event/game loop from a
   // single thread, same as the single-instance case did for one. Each
   // instance's game logic still runs on its own game thread (spawned in

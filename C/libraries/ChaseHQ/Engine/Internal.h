@@ -81,6 +81,11 @@
 #define PREGAME_TSTATES         (288192)
 #define ESCAPE_SCENE_TSTATES    (283239)
 
+/* Conv: port-added; no Z80 timing to calibrate against, as a real tape's
+ * load time depends on the cassette. Held for a fixed ~2s (100 frames at
+ * 50Hz), matching the fixed hold the host previously used. */
+#define LOADING_SCREEN_TSTATES  (FRAME_TSTATES * 100)
+
 /* $F82F titlescr_music ends by spinning on the IM2 frame flag ($F8A7), so one
  * call is exactly one frame. Trace: 8096 calls, median entry-to-entry delta
  * 70908.

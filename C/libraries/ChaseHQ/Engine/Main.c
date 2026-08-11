@@ -86,6 +86,7 @@
 #include "ZXSpectrum/slopay-chip.h"
 
 #include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/LoadingScreen.h"
 #include "ChaseHQ/Data/SoundSamples.h"
 #include "ChaseHQ/Data/Stage1Data.h"
 #include "ChaseHQ/Data/Stage2Data.h"
@@ -766,6 +767,7 @@ static void play_engine_sfx_hook(chqstate_t *state);
 static void play_speech_hook(chqstate_t *state, int A_sample);
 static void attract_mode_hook(chqstate_t *state);
 
+static void show_loading_screen(chqstate_t *state);
 static void bootstrap(chqstate_t *state);
 static void main_loop(chqstate_t *state);
 
@@ -20124,6 +20126,27 @@ static void entry_128k(chqstate_t *state)
 }
 
 /**
+ * Show the cassette loading screen and hold it briefly.
+ *
+ * Conv: port-added; has no Z80 counterpart. On real hardware the tape loader
+ * blits this bitmap into screen memory before the BASIC loader hands control
+ * to the machine code, so the player sees it before any game logic runs. The
+ * port reproduces that ordering here, at the very start of entry_common,
+ * instead of leaving it to the host to draw and hold before the game starts.
+ */
+static void show_loading_screen(chqstate_t *state)
+{
+  memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), loading_screen_bitmap,
+         sizeof(loading_screen_bitmap));
+  memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), loading_screen_attributes,
+         sizeof(loading_screen_attributes));
+  update_screen(state, SCREEN_START_ADDRESS, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  state->speccy->stamp(state->speccy);
+  state->speccy->sleep(state->speccy, LOADING_SCREEN_TSTATES);
+}
+
+/**
  * $E81D: Entry common
  *
  * Shared entry point reached from both entry_48k and entry_128k. Records the
@@ -20271,6 +20294,8 @@ static void entry_common(chqstate_t *state, int A_mode_128k, int B_nrelocs)
   NOT_USED(B_nrelocs);
 
   state->mode_128k = A_mode_128k;
+
+  show_loading_screen(state);
 
   memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
          sizeof(marquee_initial));
