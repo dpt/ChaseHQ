@@ -435,7 +435,7 @@ struct chqstate
     u8        best_officers[163];
   } attract_mode_128k;
 
-  /* $8277: (SM in attract_mode) Rotating bit pattern deciding which attract
+  /* $8277: (SM in attract_mode_48k) Rotating bit pattern deciding which attract
    * messages are drawn this frame */
   u8        attract_blinker;
 
@@ -529,17 +529,17 @@ struct chqstate
     u8        delay;
   } overlay;
 
-  /* $8F82-$8FA7: (SM in draw_everything_else) Per-frame scenery draw enables */
+  /* $8F82-$8FA7: (SM in draw_scene_objects) Per-frame scenery draw enables */
   struct
   {
-    /* $8F82: (SM in draw_everything_else) Enables drawing of the first tunnel
+    /* $8F82: (SM in draw_scene_objects) Enables drawing of the first tunnel
      * mouth */
     u8        draw_tunnel_1;
 
-    /* $8FA4: (SM in draw_everything_else) Enables drawing of the helicopter */
+    /* $8FA4: (SM in draw_scene_objects) Enables drawing of the helicopter */
     u8        draw_helicopter;
 
-    /* $8FA7: (SM in draw_everything_else) Enables drawing of the second tunnel
+    /* $8FA7: (SM in draw_scene_objects) Enables drawing of the second tunnel
      * mouth */
     u8        draw_tunnel_2;
   } dee;
@@ -557,7 +557,7 @@ struct chqstate
     u8        span_width_words;
   } overhead;
 
-  /* $933D-$946F: (SM in draw_object_common) Sprite plot parameters
+  /* $933D-$946F: (SM in draw_object_clipped) Sprite plot parameters
    *
    * draw_object_common patches its own plot calls rather than passing
    * arguments: a sprite is drawn as up to two runs of rows, each with its own
@@ -566,15 +566,15 @@ struct chqstate
    */
   struct
   {
-    /* $9395: (SM in draw_object_common) Selects which pre-shifted copy of the
+    /* $9395: (SM in draw_object_clipped) Selects which pre-shifted copy of the
      * sprite to plot */
     u8        shift_select;
 
-    /* $933D: (SM in draw_object_common) Signed column adjustment applied to the
+    /* $933D: (SM in draw_object_clipped) Signed column adjustment applied to the
      * sprite's screen position */
     s8        col_pos;
 
-    /* $93C0: (SM in draw_object_common) Plot dispatch selector
+    /* $93C0: (SM in draw_object_clipped) Plot dispatch selector
      *
      * Dispatch selector at $93B4: 0 = normal plot; 1 = vertically-inverted plot
      * (hazard hit-wobble flip, e.g. barriers); 2 = multi-section column plot
@@ -583,35 +583,35 @@ struct chqstate
      */
     u8        plot_mode;
 
-    /* $9404: (SM in draw_object_common) Row count for the sprite's first plot
+    /* $9404: (SM in draw_object_clipped) Row count for the sprite's first plot
      * call */
     u8        rows_main;
 
-    /* $940F: (SM in draw_object_common) Plot routine for the sprite's first plot
+    /* $940F: (SM in draw_object_clipped) Plot routine for the sprite's first plot
      * call */
     plot_sprite_cb_t *plot_fn;
 
-    /* $9412: (SM in draw_object_common) Bitmap data for the sprite's second plot
+    /* $9412: (SM in draw_object_clipped) Bitmap data for the sprite's second plot
      * call */
     const u8 *bitmap_ptr;
 
-    /* $9415: (SM in draw_object_common) Row count for the sprite's second plot
+    /* $9415: (SM in draw_object_clipped) Row count for the sprite's second plot
      * call */
     u8        rows_2nd;
 
-    /* $941D: (SM in draw_object_common) Plot routine for the sprite's second
+    /* $941D: (SM in draw_object_clipped) Plot routine for the sprite's second
      * plot call */
     plot_sprite_cb_t *plot_fn_2;
 
-    /* $945F: (SM in draw_object_common) Row count for the mask's first plot
+    /* $945F: (SM in draw_object_clipped) Row count for the mask's first plot
      * call */
     u8        mask_rows_main;
 
-    /* $946C: (SM in draw_object_common) Bitmap data for the mask's second plot
+    /* $946C: (SM in draw_object_clipped) Bitmap data for the mask's second plot
      * call */
     const u8 *mask_bitmap_ptr;
 
-    /* $946F: (SM in draw_object_common) Row count for the mask's second plot
+    /* $946F: (SM in draw_object_clipped) Row count for the mask's second plot
      * call */
     u8        mask_rows_2nd;
   } doc;
@@ -656,17 +656,18 @@ struct chqstate
   /* $9982: (SM) Blink phase of the cursor trailing the chatter text */
   u8        chatter_cursor_blink;
 
-  /* $9C85-$9C86: (SM in tick) Countdown timer remainder */
+  /* $9C85-$9C86: (SM) Countdown timer remainder */
   struct
   {
-    /* $9C85: (SM in tick) Seconds left on the countdown, doubled
+    /* $9C85: (SM in tick_check_credits) Seconds left on the countdown, doubled
      *
      * Conv: the Z80's 16-bit load was split into this field and
      *       tick.remaining_subseconds.
      */
     u8        remaining_seconds_x2;
 
-    /* $9C86: (SM in tick) Sub-second delay factor, roughly sixths of a second
+    /* $9C86: (SM in tick_update_remaining_time) Sub-second delay factor,
+     * roughly sixths of a second
      *
      * Conv: the Z80's 16-bit load was split into tick.remaining_seconds_x2 and
      *       this field.
@@ -683,7 +684,7 @@ struct chqstate
   /* $9D9B: First digit of the score to redraw this frame */
   const u8 *score_digits_start;
 
-  /* $9E22: (SM in plot_turbos_and_scores) Animation frame of the spinning
+  /* $9E22: (SM in plot_turbos_and_digits) Animation frame of the spinning
    * turbo indicator */
   u8        turbo_spin_frame;
 
@@ -1002,7 +1003,7 @@ struct chqstate
     u8        rotor_pos;
   } dheli;
 
-  /* $AA94: (SM in move_helicopter) Helicopter's horizontal position
+  /* $AA94: (SM in draw_helicopter) Helicopter's horizontal position
    *
    * Read by draw_helicopter and drive_helicopter.
    */

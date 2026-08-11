@@ -56,8 +56,8 @@ struct chq_bank7_state
   u8           es_frame_count;
 
   /* $5C31-$5C32 (SM): the per-frame draw handler, self-modified by
-   * run_script's rs_exit tail ($E2D4 LD ($5C31),DE) each time a command hands
-   * off to a delayed handler instead of running immediately.
+   * run_script's es_set_dispatch tail ($E2D4 LD ($5C31),DE) each time a
+   * command hands off to a delayed handler instead of running immediately.
    */
   void       (*es_handler)(chqstate_t *state);
 
@@ -72,20 +72,23 @@ struct chq_bank7_state
   u8           es_input_mask;
 
   /* $5C6C (SM): GLYPH_A/GLYPH_B flip-flop cadence gate, rotated (RLC) once
-   * per call by both routine_e42e (GLYPH_A) and routine_e472 (GLYPH_B, also
-   * called by routine_e3b7's handshake handler before its own animation
-   * logic).
+   * per call by both es_attribute_fade_in ($E42E, GLYPH_A) and
+   * es_handler_glyph_fade_b ($E472, GLYPH_B, also called by
+   * es_handler_handshake's ($E3B7) handshake handler before its own
+   * animation logic).
    */
   u8           es_fade_gate_ab;
 
   /* $5C6D (SM): GLYPH_C flip-flop cadence gate, rotated (RLC) once per call
-   * by both routine_e46d (GLYPH_C) and routine_e3b7 (HANDSHAKE) itself, where
-   * it also gates the animation-advance block.
+   * by both es_handler_glyph_fade_c ($E46D, GLYPH_C) and
+   * es_handler_handshake ($E3B7, HANDSHAKE) itself, where it also gates the
+   * animation-advance block.
    */
   u8           es_fade_gate_c;
 
   /* $A172 (SM): handshake animation frame index (0..5), advanced and
-   * wrapped by routine_e3b7 each call; indexes handshake_table.
+   * wrapped by es_handler_handshake ($E3B7) each call; indexes
+   * handshake_table.
    */
   u8           es_handshake_index;
 
