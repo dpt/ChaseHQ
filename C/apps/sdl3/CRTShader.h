@@ -23,17 +23,27 @@
 #include "ZXSpectrum/Spectrum.h"
 
 /* CRT post-effect: renders the game's converted screen buffer through a
- * fragment shader (scanlines/bloom/vignette) via SDL's GPU API, instead of
- * the plain SDL_Renderer blit. Metal (MSL) on macOS, Vulkan (SPIR-V) on
- * Linux -- see CRTShader.c's platform gating.
+ * fragment shader (scanlines/bloom/vignette). Metal (MSL) on macOS, Vulkan
+ * (SPIR-V) on Linux via SDL's GPU API; GLSL ES over a raw GL context on
+ * Emscripten (SDL3 GPU has no stable WebGPU backend yet) -- see CRTShader.c's
+ * platform gating.
  */
 typedef struct
 {
+#if defined(CHQ_CRT_SHADER_GLES)
+  SDL_GLContext gl_context;
+  unsigned int  program;
+  unsigned int  texture;  // GLuint, avoids pulling in GLES headers here
+  unsigned int  vbo;
+  int           uniform_locs[13]; // GLint, cached at link time -- see
+                                   // chq_gles_uniform in CRTShader.c
+#else
   SDL_GPUDevice         *gpu;
   SDL_GPUTexture        *texture;         // holds the game's converted screen
   SDL_GPUTransferBuffer *transfer_buffer; // staging buffer for the upload above
   SDL_GPUSampler        *sampler;
   SDL_GPUGraphicsPipeline *pipeline;
+#endif
 } chq_CRT_shader_t;
 
 /* Tunable shader knobs, pushed to the fragment shader as a uniform each

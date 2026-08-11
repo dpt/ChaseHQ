@@ -28,6 +28,9 @@ translated function by function from the disassembly and keeping the original
 game's Z80 addresses in the comments. It builds with CMake, links against SDL3
 and plays through all five stages.
 
+[Play it in your browser](https://dpt.github.io/ChaseHQ/play/) — an
+Emscripten/WebAssembly build of the SDL3 app.
+
 The two feed each other: the disassembly explains the game, the C port proves
 the explanation is right. They get out of sync sometimes.
 

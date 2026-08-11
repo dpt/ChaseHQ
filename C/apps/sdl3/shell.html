@@ -61,35 +61,41 @@
   <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
   <div id="about">
     <p>
-      This is a disassembly and portable C reimplementation of the ZX Spectrum
-      128K version of Ocean Software's <em>Chase H.Q.</em>, built by reverse
-      engineering the original cassette-loaded game and translating its Z80
-      machine code into readable, heavily-commented C. This page runs that C
-      port compiled to WebAssembly, playing directly from the original game's
-      graphics, level and sound data.
-    </p>
-    <p>
-      See the <a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">GitHub project</a>
-      and <em>Chase H.Q.</em> on <a href="https://en.wikipedia.org/wiki/Chase_H.Q." target="_blank" rel="noopener">Wikipedia</a>.
+      This is a <a href="https://github.com/dpt/ChaseHQ" target="_blank" rel="noopener">disassembly and portable C reimplementation</a>
+      of the <a href="https://en.wikipedia.org/wiki/ZX_Spectrum" target="_blank" rel="noopener">ZX Spectrum</a>
+      128K version of <a href="https://en.wikipedia.org/wiki/Ocean_Software" target="_blank" rel="noopener">Ocean Software</a>'s
+      <a href="https://en.wikipedia.org/wiki/Chase_H.Q." target="_blank" rel="noopener"><em>Chase H.Q.</em></a>,
+      built by reverse engineering the original cassette-loaded game and
+      translating its <a href="https://en.wikipedia.org/wiki/Zilog_Z80" target="_blank" rel="noopener">Z80</a>
+      machine code into readable, heavily-commented C.
+      This page runs that C port compiled to
+      <a href="https://webassembly.org/" target="_blank" rel="noopener">WebAssembly</a>,
+      playing directly from the original game's graphics, level and sound
+      data.
     </p>
   </div>
   <div id="controls">
-    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive (kempston)</span>
+    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>.</kbd> drive+gear (kempston)</span>
     <span><kbd>F1</kbd> pause</span>
     <span><kbd>F2</kbd> mute all</span>
-    <span><kbd>F3</kbd> dirty-rect overlay</span>
+    <span><kbd>F3</kbd> dirty-rect overlay (not CRT)</span>
+    <span><kbd>F4</kbd> toggle CRT shader</span>
     <span><kbd>F5</kbd>/<kbd>F6</kbd> volume down/up</span>
     <span><kbd>F7</kbd>/<kbd>F8</kbd>/<kbd>F9</kbd> mute AY channel A/B/C</span>
     <span><kbd>F10</kbd> mute beeper sfx</span>
     <span><kbd>F11</kbd> fullscreen</span>
-    <span><kbd>F12</kbd> show backbuffer</span>
-    <span><kbd>-</kbd>/<kbd>=</kbd> window scale</span>
+    <span><kbd>F12</kbd> show game backbuffer</span>
+    <span><kbd>Tab</kbd>/<kbd>Shift</kbd>+<kbd>Tab</kbd> select shader param</span>
+    <span><kbd>PgUp</kbd>/<kbd>PgDn</kbd> adjust shader param</span>
+    <span><kbd>Ctrl</kbd>+<kbd>R</kbd> reset shader params</span>
+    <span><kbd>Ctrl</kbd>+<kbd>T</kbd> use tuned shader preset</span>
+    <span><kbd>-</kbd>/<kbd>=</kbd> set window scale</span>
     <span><kbd>[</kbd>/<kbd>]</kbd> speed down/up</span>
     <span><kbd>\</kbd> reset speed to 100%</span>
     <span><kbd>Ctrl</kbd>+<kbd>[</kbd>/<kbd>]</kbd> speed min/max</span>
-    <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome</span>
+    <span><kbd>Ctrl</kbd>+<kbd>M</kbd> monochrome palette</span>
     <span><kbd>Ctrl</kbd>+<kbd>N</kbd> mellow palette</span>
-    <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> randomise screen bytes</span>
   </div>
   <script>
     var Module = {
