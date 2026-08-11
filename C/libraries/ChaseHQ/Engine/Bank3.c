@@ -56,10 +56,11 @@
 #define TITLE_SCENE_DATA_BASE (0xCCB7)
 #define TITLE_GLYPH_COUNT        (115)
 
-typedef struct title_glyph {
+typedef struct title_glyph
+{
   u8        height_pairs; /* number of scanline-pairs to blit */
   u8        width_bytes;  /* glyph width in screen bytes (1-7) */
-  const u8 *bitmap;      /* source pixel bytes, OR-blitted verbatim */
+  const u8 *bitmap;       /* source pixel bytes, OR-blitted verbatim */
 } title_glyph_t;
 
 /* Object animation script opcodes (title_object::opcode / script byte-code
@@ -101,7 +102,8 @@ typedef struct title_glyph {
 /* Index names for note_periods (compute_channel_ay_registers, Bank3.c), in
  * scientific pitch notation (A4 = 440 Hz, C4 = middle C), derived from each
  * entry's AY tone period. */
-enum note_index {
+enum note_index
+{
   NOTE_AS0, NOTE_B0,
   NOTE_C1, NOTE_CS1, NOTE_D1, NOTE_DS1, NOTE_E1, NOTE_F1, NOTE_FS1, NOTE_G1, NOTE_GS1, NOTE_A1, NOTE_AS1, NOTE_B1,
   NOTE_C2, NOTE_CS2, NOTE_D2, NOTE_DS2, NOTE_E2, NOTE_F2, NOTE_FS2, NOTE_G2, NOTE_GS2, NOTE_A2, NOTE_AS2, NOTE_B2,
@@ -115,7 +117,8 @@ enum note_index {
 
 /* One tune's entry in the tune-select table below: a tempo/speed byte plus
  * the raw Z80 address of each of the 3 channels' pattern-data blocks. */
-typedef struct tune {
+typedef struct tune
+{
   u8  tempo;                   /* tune tempo/speed byte */
   u16 channel_pattern_addr[3]; /* raw Z80 address of each channel's pattern-data block */
 } tune_t;
@@ -4359,15 +4362,20 @@ static void check_high_score(chqstate_t *state)
   HL_digit     = state->bank3->high_score_digits;
   DE_bcd_index = 3;
 
-  for (B_bcd_count = 4; B_bcd_count > 0; B_bcd_count--) {
+  for (B_bcd_count = 4; B_bcd_count > 0; B_bcd_count--)
+  {
     A_bcd = state->score_bcd[DE_bcd_index];
 
-    for (nibble = 0; nibble < 2; nibble++) {
+    for (nibble = 0; nibble < 2; nibble++)
+    {
       A_digit = (u8) (nibble == 0 ? (A_bcd >> 4) : (A_bcd & 0x0F));
 
-      if (A_digit == 0 && !C_seen) {
+      if (A_digit == 0 && !C_seen)
+      {
         *HL_digit++ = ' '; /* suppressed leading zero */
-      } else {
+      }
+      else
+      {
         C_seen      = 1;
         *HL_digit++ = (u8) (A_digit + '0');
       }
@@ -4376,9 +4384,11 @@ static void check_high_score(chqstate_t *state)
     DE_bcd_index--;
   }
 
-  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
+  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
+  {
     if (memcmp(state->bank3->high_score_digits,
-               state->bank3->high_score_table[row].score, 8) >= 0) {
+               state->bank3->high_score_table[row].score, 8) >= 0)
+               {
       insert_high_score_entry(state, row);
       return;
     }
@@ -4482,7 +4492,7 @@ static void insert_high_score_entry(chqstate_t *state, int row)
 
   clear_playfield_and_attrs(state); /* Conv: added -- clear hiscore table
                                       * before returning to the title screen */
-  update_whole_playfield(state); /* Conv: added */
+  update_whole_playfield(state);    /* Conv: added */
 }
 
 /* $C3AF-$C400: static header/label text for the name-entry screen, packed in
@@ -4543,7 +4553,8 @@ static void name_entry_setup_screen(chqstate_t *state)
                                                * just update_whole_playfield's
                                                * driving-playfield inset */
 
-  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
+  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
+  {
     state->bank3->hiscore.row_addr[row][0] = name_entry_row_offsets[row][0];
     state->bank3->hiscore.row_addr[row][1] = name_entry_row_offsets[row][1];
   }
@@ -4613,22 +4624,27 @@ static void name_entry_setup_screen(chqstate_t *state)
  */
 static void ihe_flash_loop(chqstate_t *state)
 {
-  for (;;) {
+  for (;;)
+  {
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state); /* $F82F */
 
-    if (state->bank3->hiscore.intro_timer != 0) {
+    if (state->bank3->hiscore.intro_timer != 0)
+    {
       state->bank3->hiscore.intro_timer--;
       scroll_score_rows(state);
-    } else {
+    }
+    else
+    {
       name_entry_frame(state);
       blink_hiscore_row(state, 0);
     }
 
     name_entry_input(state);
 
-    if (state->bank3->hiscore.complete) {
+    if (state->bank3->hiscore.complete)
+    {
       /* Conv: the real $C258 parks here forever servicing tune 2, only
        * leaving via an interrupt-driven scene change elsewhere -- it never
        * returns to its own caller (see hiscore_finalise's prologue). This
@@ -4636,7 +4652,8 @@ static void ihe_flash_loop(chqstate_t *state)
        * completion here, using the same title_music.tune_active
        * end-of-pattern signal titlescr_wait_loop polls for its own tune
        * waits, then returns. */
-      while (state->bank3->title_music.tune_active) {
+      while (state->bank3->title_music.tune_active)
+      {
         CHECK_HOST_QUIT(state);
         titlescr_music(state);
       }
@@ -4681,7 +4698,7 @@ static void name_entry_frame(chqstate_t *state)
 
   state->bank3->hiscore.draw_erase_toggle =
     (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-          (state->bank3->hiscore.draw_erase_toggle >> 7));
+           (state->bank3->hiscore.draw_erase_toggle >> 7));
   redraw_name_frame(state, D_screen, E_screen);
 }
 
@@ -4792,7 +4809,8 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
  */
 static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 {
-  if (--state->bank3->hiscore.blink_timer == 0) {
+  if (--state->bank3->hiscore.blink_timer == 0)
+  {
     u8 L_attr; /* selector cell column before advancing (was L via $C596) */
 
     state->bank3->hiscore.blink_timer = 0x0C;
@@ -4802,7 +4820,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     L_attr = (u8) (MARQUEE_ROW_ATTR_L + state->bank3->hiscore.blink_offset);
     set_marquee_attr(state, L_attr, 0x46);
 
-    if (++state->bank3->hiscore.blink_offset >= 20) {
+    if (++state->bank3->hiscore.blink_offset >= 20)
+    {
       state->bank3->hiscore.blink_offset = 0;
 
       /* $C183-$C18D: one full pass of the fast selector done -- promote the
@@ -4813,7 +4832,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
       set_marquee_attr(state, L_attr, 0x42);
       set_marquee_attr(state, (u8) (L_attr + 0x20), 0x02);
 
-      if (++state->bank3->hiscore.cursor_addr == HISCORE_CURSOR_ADDR_FINALISE) {
+      if (++state->bank3->hiscore.cursor_addr == HISCORE_CURSOR_ADDR_FINALISE)
+      {
         hiscore_finalise(state);
         return;
       }
@@ -4827,7 +4847,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 
   fast_blink_best_officers_cell(state);
 
-  if (A_input & USERINPUTFLAG_FIRE) {
+  if (A_input & USERINPUTFLAG_FIRE)
+  {
     high_score_row_t *DE_entry; /* row being written (was DE) */
     u8                A_code;   /* current candidate letter code (was A) */
 
@@ -4835,7 +4856,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
       return;
     state->bank3->hiscore.fire_locked = 1;
 
-    if (state->bank3->hiscore.char_index == 2) {
+    if (state->bank3->hiscore.char_index == 2)
+    {
       /* hiscore_finalise stores this last letter itself -- no need to write
        * DE_entry->name here first. */
       hiscore_finalise(state);
@@ -4904,10 +4926,15 @@ static void hiscore_finalise(chqstate_t *state)
  */
 static void cycle_and_draw_letter(chqstate_t *state, u8 C_input_bits)
 {
-  if (C_input_bits & USERINPUTFLAG_RIGHT) {
+  if (C_input_bits & USERINPUTFLAG_RIGHT)
+  {
     state->bank3->hiscore.letter_code =
-      (state->bank3->hiscore.letter_code == 'Z') ? '@' : (u8) (state->bank3->hiscore.letter_code + 1);
-  } else if (C_input_bits & USERINPUTFLAG_LEFT) {
+        (state->bank3->hiscore.letter_code == 'Z')
+            ? '@'
+            : (u8)(state->bank3->hiscore.letter_code + 1);
+  }
+  else if (C_input_bits & USERINPUTFLAG_LEFT)
+  {
     state->bank3->hiscore.letter_code =
       (state->bank3->hiscore.letter_code == '@') ? 'Z' : (u8) (state->bank3->hiscore.letter_code - 1);
   }
@@ -4948,21 +4975,23 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
   glyph_addr = (D_screen << 8) | E_screen;
   DE_screen  = ADDRTOSCREEN(glyph_addr);
 
-  for (row = 0; row < 4; row++) {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
+  for (row = 0; row < 4; row++)
+  {
+    *DE_screen  = *HL_font;
+    DE_screen  += 256;
+    *DE_screen  = *HL_font++;
+    DE_screen  += 256;
   }
 
   /* Conv: crosses the screen-third boundary; see print_character's own
    * comment on the identical -2016 correction for the reasoning. */
   DE_screen -= 2016;
-  for (row = 0; row < 3; row++) {
-    *DE_screen = *HL_font;
-    DE_screen += 256;
-    *DE_screen = *HL_font++;
-    DE_screen += 256;
+  for (row = 0; row < 3; row++)
+  {
+    *DE_screen  = *HL_font;
+    DE_screen  += 256;
+    *DE_screen  = *HL_font++;
+    DE_screen  += 256;
   }
 
   update_screen(state, glyph_addr, 8, 14);
@@ -5061,7 +5090,8 @@ static void scroll_score_rows(chqstate_t *state)
   u8                 D;      /* row's screen address high byte (was D) */
   high_score_row_t  *DE_entry; /* this row's data (was DE) */
 
-  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++) {
+  for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
+  {
     E = state->bank3->hiscore.row_addr[row][0];
     D = state->bank3->hiscore.row_addr[row][1];
 
@@ -5073,7 +5103,8 @@ static void scroll_score_rows(chqstate_t *state)
     if (!table_row_visible(D, E))
       continue;
 
-    if (row == state->bank3->hiscore.row) {
+    if (row == state->bank3->hiscore.row)
+    {
       blink_hiscore_row(state, 1);
       continue;
     }
@@ -5183,7 +5214,8 @@ static void draw_table_field_scrolling(chqstate_t *state,
   u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
   u16       attr_addr; /* this glyph's attribute address (Conv: added) */
 
-  for (i = 0; i < len; i++) {
+  for (i = 0; i < len; i++)
+  {
     D = D_row;
     E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
 
@@ -5196,11 +5228,13 @@ static void draw_table_field_scrolling(chqstate_t *state,
     if (HL_font == NULL)
       continue;
 
-    if (erase) {
+    if (erase)
+    {
       /* $C390-$C3A9 (rsn_char_loop2): 8 rows of zero, write-then-advance,
        * starting at the character's own (D, E) -- no leading byte, no
        * 1-row offset. */
-      for (row = 0; row < 8; row++) {
+      for (row = 0; row < 8; row++)
+      {
         DE_screen  = ADDRTOSCREEN((D << 8) | E);
         *DE_screen = 0;
         update_screen(state, (D << 8) | E, 8, 1);
@@ -5215,7 +5249,8 @@ static void draw_table_field_scrolling(chqstate_t *state,
     *DE_screen = 0;
     update_screen(state, (D << 8) | E, 8, 1);
 
-    for (row = 0; row < 7; row++) {
+    for (row = 0; row < 7; row++)
+    {
       /* $C353: INC D (+ wrap) runs before the row's write, not after. */
       advance_screen_scanline(&D, &E);
       DE_screen  = ADDRTOSCREEN((D << 8) | E);
@@ -5326,7 +5361,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
   if (do_toggle)
     state->bank3->hiscore.draw_erase_toggle =
       (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-            (state->bank3->hiscore.draw_erase_toggle >> 7));
+             (state->bank3->hiscore.draw_erase_toggle >> 7));
   blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
   draw_score_row_fields(state, D, E, row, DE_entry, blink, TABLE_ROW_COLOUR);
@@ -5357,7 +5392,8 @@ static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
   int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
   int scan_row;   /* erase-blit row counter (Conv: rolled) */
 
-  if (!(state->bank3->hiscore.draw_erase_toggle & 1)) {
+  if (!(state->bank3->hiscore.draw_erase_toggle & 1))
+  {
     hiscore_draw_glyph(state, D_screen, E_screen);
     return;
   }
@@ -5367,18 +5403,20 @@ static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
    * comment for why this cell is double-height, not single. */
   glyph_addr = (D_screen << 8) | E_screen;
   DE_screen  = ADDRTOSCREEN(glyph_addr);
-  for (scan_row = 0; scan_row < 4; scan_row++) {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
+  for (scan_row = 0; scan_row < 4; scan_row++)
+  {
+    *DE_screen  = 0;
+    DE_screen  += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
   }
   DE_screen -= 2016; /* crosses the screen-third boundary, see hiscore_draw_glyph */
-  for (scan_row = 0; scan_row < 3; scan_row++) {
-    *DE_screen = 0;
-    DE_screen += 256;
-    *DE_screen = 0;
-    DE_screen += 256;
+  for (scan_row = 0; scan_row < 3; scan_row++)
+  {
+    *DE_screen  = 0;
+    DE_screen  += 256;
+    *DE_screen  = 0;
+    DE_screen  += 256;
   }
 
   update_screen(state, glyph_addr, 8, 14);
@@ -6022,7 +6060,8 @@ static u8 run_title_screen(chqstate_t *state)
   int       obj;            /* object-record loop index, 0-8 (was B) */
   u8        A_outcome;      /* titlescr_wait_loop outcome; restart or return (was A) */
 
-  for (;;) {
+  for (;;)
+  {
     clear_and_fill_border_attrs(state);
 
     /* $C5A1-$C5A9: read the stored animation index, rotate (shift) it left,
@@ -6043,9 +6082,11 @@ static u8 run_title_screen(chqstate_t *state)
                    // bit 7, never the branch below (which tests bit 0 of
                    // the pre-rotation value); the loop's outcome does not
                    // depend on this, but the read must be well-defined.
-    for (bit = 0; bit < 4; bit++) {
+    for (bit = 0; bit < 4; bit++)
+    {
       RR(A_anim);
-      if (carry) {
+      if (carry)
+      {
         scene_idx = bit;
         break;
       }
@@ -6061,7 +6102,8 @@ static u8 run_title_screen(chqstate_t *state)
      * x/y/row/script (confirmed against object_script_step's own (IX+n)
      * accesses at $C740-$C7AC, not the (misleading) inline comment at
      * $C5DB-$C5E3, which names the wrong offsets for the script pointer). */
-    for (obj = 0; obj < 9; obj++) {
+    for (obj = 0; obj < 9; obj++)
+    {
       state->bank3->title_objects[obj].opcode = 0;
       state->bank3->title_objects[obj].wait   = 0;
       state->bank3->title_objects[obj].x_step = 0;
@@ -6156,12 +6198,14 @@ static u8 titlescr_wait_loop(chqstate_t *state)
   u8  A_anykey; /* 1/2/3/4/5 half-row, tested for any key (was A) */
   int carry;    /* required by the RRC macro, unused (carry) */
 
-  for (;;) {
+  for (;;)
+  {
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state);
 
-    if (!state->bank3->title_music.tune_active) {
+    if (!state->bank3->title_music.tune_active)
+    {
       /* $C627-$C637: wait out ~180 frames (one titlescr_music call per
        * iteration) before falling through to the credit/name-table refresh
        * tail at titlescr_refresh_name_table.
@@ -6197,7 +6241,8 @@ static u8 titlescr_wait_loop(chqstate_t *state)
      * Conv: was IN+CPL+RRA; RRA only tests bit 0, so this is collapsed to a
      * direct bit-0 mask (cf. attract_mode_128k's ENTER check). */
     A_fire = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH);
-    if (A_fire & 1) {
+    if (A_fire & 1)
+    {
       omd_redraw_and_poll(state); /* hands off to the options menu, whose own
         * $FC11 JP $C59E re-runs the title screen. */
       return TITLESCR_RESTART;
@@ -6209,12 +6254,14 @@ static u8 titlescr_wait_loop(chqstate_t *state)
      * credit configuration doubling as "controls selected") or just loose
      * wording -- either way this reuses the existing field rather than
      * inventing a second one. */
-    if (state->controls_selected) {
+    if (state->controls_selected)
+    {
       /* Conv: $800E is CALL $A0D6 (keyscan) in disguise -- see the skool's
        * $8008 entry. Bit 4 (USERINPUTFLAG_FIRE) is the credit-insert key,
        * matching the "confirm" bit used the same way by $800E's other
        * caller, name_entry_input. */
-      if (keyscan(state) & USERINPUTFLAG_FIRE) {
+      if (keyscan(state) & USERINPUTFLAG_FIRE)
+      {
         titlescr_credit_inserted(state);
         /* $C696 pushes $8011 before falling into the shared tail, so that
          * tail's $C6C3 RET lands on $8011 -- three bytes ($C3,$79,$9C) that
@@ -6238,15 +6285,16 @@ static u8 titlescr_wait_loop(chqstate_t *state)
 
     /* was IN+CPL */
     A_key6 = ~state->speccy->in(state->speccy, port_KEYBOARD_09876);
-    if (A_key6 & 0x10) {
+    if (A_key6 & 0x10)
+    {
       /* $C65F-$C67B: seed a placeholder score of $87654321, stage 6,
        * 3 retries, check it against the high-score table, then restart. */
-      state->score_bcd[0] = 0x21;
-      state->score_bcd[1] = 0x43;
-      state->score_bcd[2] = 0x65;
-      state->score_bcd[3] = 0x87;
+      state->score_bcd[0]        = 0x21;
+      state->score_bcd[1]        = 0x43;
+      state->score_bcd[2]        = 0x65;
+      state->score_bcd[3]        = 0x87;
       state->wanted_stage_number = 6; // MAX?
-      state->retry_count = 3;
+      state->retry_count         = 3;
 
       stop_music_and_silence(state);
 
@@ -6415,13 +6463,15 @@ static u8 titlescr_animate_frame(chqstate_t *state)
   clear_playfield_buffer(state);
 
   /* Draw the six "foreground" objects: C, H, A, S, E, H */
-  for (obj = 0; obj < 6; obj++) {
+  for (obj = 0; obj < 6; obj++)
+  {
     rec = &state->bank3->title_objects[obj];
     compute_glyph_blit_params_fg(state, rec->y, rec->x, rec->row);
   }
 
   /* Draw the three "background" objects: DOT, Q, DOT */
-  for (obj = 6; obj < 9; obj++) {
+  for (obj = 6; obj < 9; obj++)
+  {
     rec = &state->bank3->title_objects[obj];
     compute_glyph_blit_params_bg(state, rec->y, rec->x, rec->row);
   }
@@ -6430,10 +6480,13 @@ static u8 titlescr_animate_frame(chqstate_t *state)
   update_whole_playfield(state);
   state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
 
-  if (object_script_step(state)) {
+  if (object_script_step(state))
+  {
     /* Conv: the frame's remaining work is abandoned, but the sleep still runs. */
     return 0; /* $D2 hit -- abort before clear/bg-draw/present, see prologue */
-  } else {
+  }
+  else
+  {
     return 1;
   }
 }
@@ -6519,18 +6572,21 @@ static u8 object_script_step(chqstate_t *state)
   int                  recognised; /* true if rec->opcode is $C9-$CF (was Z
                                      * flag out of the $C72E DEC-chain) */
 
-  for (obj = 0; obj < 9; obj++) {
+  for (obj = 0; obj < 9; obj++)
+  {
     rec = &state->bank3->title_objects[obj];
 
     for (;;) { /* models the "JP $C70E" re-entry after fetching a new opcode */
-      if (rec->opcode == 0) {
+      if (rec->opcode == 0)
+      {
         /* $C740-$C743 oss_fetch_opcode: idle -- fetch from the script. */
         HL_script = rec->script;
 
         for (;;) { /* $C746 oss_fetch_opcode_cont: fetch/instant-op loop */
           A_byte = *HL_script++;
 
-          if ((s8) A_byte >= 0) {
+          if ((s8) A_byte >= 0)
+          {
             /* $C868-$C88D oss_op_immediate_step: immediate 2-axis step. */
             A_x_delta = (A_byte & 0x03) << 1;
             if (A_byte & 0x04)
@@ -6549,7 +6605,8 @@ static u8 object_script_step(chqstate_t *state)
            * opcode, then read its operand bytes (if any). */
           rec->opcode = A_byte;
 
-          switch (A_byte) {
+          switch (A_byte)
+          {
           case OSS_OP_SET_ROW_VAL:
             rec->row = *HL_script++;
             continue;
@@ -6608,7 +6665,8 @@ static u8 object_script_step(chqstate_t *state)
 
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
       recognised = 1;
-      switch (rec->opcode) {
+      switch (rec->opcode)
+      {
       case OSS_OP_VELOCITY_VAL:  oss_op_velocity(rec);  break;
       case OSS_OP_DECEL_X_VAL:   oss_op_decel_x(rec);   break;
       case OSS_OP_DECEL_Y_VAL:   oss_op_decel_y(rec);   break;
@@ -6701,8 +6759,8 @@ static void oss_op_decel_x(struct title_object *rec)
   oss_apply_x_step(rec);
 
   C_idx   = (u8) rec->y_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->y -= A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->y      -= A_speed;
   rec->y_step = (s8) (C_idx + 1);
 }
 
@@ -6801,8 +6859,8 @@ static void oss_op_decel_y(struct title_object *rec)
   oss_apply_x_step(rec);
 
   C_idx   = (u8) rec->y_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->y += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->y      += A_speed;
   rec->y_step = (s8) (C_idx - 1);
 }
 
@@ -6826,8 +6884,8 @@ static void oss_op_accel_x_a(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x -= A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      -= A_speed;
   rec->x_step = (s8) (C_idx - 1);
 }
 
@@ -6846,8 +6904,8 @@ static void oss_op_accel_x_b(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      += A_speed;
   rec->x_step = (s8) (C_idx - 1);
 }
 
@@ -6867,8 +6925,8 @@ static void oss_op_accel_x_c(struct title_object *rec)
   oss_apply_y_step(rec);
 
   C_idx   = (u8) rec->x_step;
-  A_speed = oss_lookup_speed(C_idx);
-  rec->x += A_speed;
+  A_speed      = oss_lookup_speed(C_idx);
+  rec->x      += A_speed;
   rec->x_step = (s8) (C_idx + 1);
 }
 
@@ -6910,8 +6968,9 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
   clear_playfield_and_attrs(state);
 
   attrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  c = PLAYFIELD_HEIGHT / 8;
-  do {
+  c     = PLAYFIELD_HEIGHT / 8;
+  do
+  {
     *attrs++ = attribute_BLACK_OVER_BLACK;
     *attrs++ = attribute_BLACK_OVER_BLACK;
     memset(attrs, attribute_BRIGHT_CYAN_OVER_BLACK, 28); attrs += 28; /* Conv: memset replaces loop */
@@ -6979,9 +7038,11 @@ static void compute_glyph_blit_params_fg(chqstate_t *state,
 
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
-  if (!g.carry_initial) {
+  if (!g.carry_initial)
+  {
     A_skip_pairs = (u8) (g.A_excess >> 1);
-    do {
+    do
+    {
       g.HL_src += g.C_width_select * 2;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
@@ -7151,11 +7212,13 @@ static void compute_glyph_geometry(u8                     B_y,
   int                  glyph_index;   /* index into title_glyph_table (was BC, table offset / 4) */
   const title_glyph_t *glyph;         /* looked-up glyph-table entry (was the HL read chain at $C8F5) */
 
-  if (B_y < 0x70) {
+  if (B_y < 0x70)
+  {
     B_clamped           = B_y;
     out->A_excess       = 0;    /* unused: carry_initial skips the row-offset walk */
     out->carry_initial  = 1;
-  } else {
+  } else
+  {
     B_clamped           = 0x6F;
     out->A_excess       = (u8) (B_y - 0x6F);
     out->carry_initial  = 0;
@@ -7170,7 +7233,7 @@ static void compute_glyph_geometry(u8                     B_y,
   A ^= B_screen_rows;
   A &= 0xF8;
   A ^= B_screen_rows;
-  D = A;
+  D  = A;
 
   /* $C8DD-$C8E7 / $C967-$C971: E = destination screen address low byte. */
   A = C_x;
@@ -7190,7 +7253,7 @@ static void compute_glyph_geometry(u8                     B_y,
   glyph_index = L_row + ((C_x >> 1) & 0x03);
   assert(glyph_index >= 0 && glyph_index < TITLE_GLYPH_COUNT);
 
-  glyph = &title_glyph_table[glyph_index];
+  glyph               = &title_glyph_table[glyph_index];
   out->B_height_pairs = glyph->height_pairs;
   out->C_width_select = glyph->width_bytes;
   out->HL_src          = glyph->bitmap;
@@ -7217,7 +7280,8 @@ static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
                                            int         B_height_pairs,
                                            int         C_width_select)
 {
-  switch (C_width_select) {
+  switch (C_width_select)
+  {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
   case 2:  blit_width2(state, H, L, src, B_height_pairs); break;
   case 3:  blit_width3(state, H, L, src, B_height_pairs); break;
@@ -7254,7 +7318,8 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
 
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
-  if (!g.carry_initial) {
+  if (!g.carry_initial)
+  {
     if (g.C_width_select < 6)
       E_stride = (u8) (g.C_width_select << 1);
     else
@@ -7264,7 +7329,8 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
     if (A_skip_pairs == 0)
       A_skip_pairs = 1; /* $C9A3-$C9A5: guards the wrap quirk noted above */
 
-    do {
+    do
+    {
       g.HL_src += E_stride;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
@@ -7295,7 +7361,8 @@ static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
                                            int         B_height_pairs,
                                            int         C_width_select)
 {
-  switch (C_width_select) {
+  switch (C_width_select)
+  {
   case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
   case 2:  blit_width2(state, H, L, src, B_height_pairs); break;
   case 3:  blit_width3(state, H, L, src, B_height_pairs); break;
@@ -7363,15 +7430,20 @@ static void blit_glyph_rows(chqstate_t *state,
   int i;    /* byte offset within the current scanline (Conv: rolled, no Z80 equivalent) */
   int addr; /* destination Z80 screen address for this scanline (Conv: added, for the bounds check below) */
 
-  do {
-    for (row = 0; row < 2; row++) {
+  do
+  {
+    for (row = 0; row < 2; row++)
+    {
       addr = (H << 8) | L;
       if (addr >= SCREEN_START_ADDRESS &&
-          addr <  SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH) {
+          addr <  SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH)
+          {
         dst = ADDRTOSCREEN(addr);
         for (i = 0; i < row_bytes; i++)
           dst[i] |= *src++;
-      } else {
+      }
+      else
+      {
         src += row_bytes; /* Conv: off-screen scanline, see note above */
       }
       H++;
@@ -7426,7 +7498,8 @@ static void advance_glyph_scanline(int *H, int *L)
 
   *H -= 0x08;
   *L += 0x20;
-  if (*L > 0xFF) {
+  if (*L > 0xFF)
+  {
     *L &= 0xFF;
     *H += 0x08;
   }
@@ -7571,23 +7644,25 @@ static void clear_playfield_buffer(chqstate_t *state)
 
   do { /* $CC10-$CC29: screen third 2, all 8 character rows */
     B_scanline = 8;
-    do {
+    do
+    {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
     } while (--B_scanline);
-    H = 0x48;
+    H  = 0x48;
     L += 0x20;
   } while (L <= 0xFF);
   L &= 0xFF;
-  H = 0x50;
+  H  = 0x50;
 
   do { /* $CC2E-$CC49: screen third 3, top 5 character rows only */
     B_scanline = 8;
-    do {
+    do
+    {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
     } while (--B_scanline);
-    H = 0x50;
+    H  = 0x50;
     L += 0x20;
   } while (L < 0xA0);
 }
@@ -7639,7 +7714,8 @@ static const u8 title_envelope_shape_08[] = { 0x0F, 0x0E, 0x0C, 0x06, SEQ_END_BI
 static const u8 title_envelope_shape_09[] = { 0x0F, 0x0D, 0x0C, 0x0A, 0x08, 0x07, 0x06, SEQ_END_BIT | 0x07 };
 static const u8 title_envelope_shape_10[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, SEQ_END_BIT | 0x07 };
 
-static const struct {
+static const struct
+{
   const u8 *base;
 } pitch_offset_table[24] = {
   { &title_pitch_offset_seq_00[0] },
@@ -7669,7 +7745,8 @@ static const struct {
 };
 
 // $F123
-static const struct {
+static const struct
+{
   const u8 *base;
   u8        speed;
 } envelope_shape_table[16] = {
@@ -7837,7 +7914,8 @@ static void titlescr_start_ay(chqstate_t *state, u8 A_tune)
 
   /* $EBBD-$EBF4 stu_channel_loop: initialise all 3 channel-tracker
    * records. */
-  for (channel_index = 0; channel_index < 3; channel_index++) {
+  for (channel_index = 0; channel_index < 3; channel_index++)
+  {
     IX_channel = &state->bank3->title_music.channel[channel_index];
 
     /* $EBBF-$EBC2: read this channel's pattern-data pointer from the tune
@@ -7932,14 +8010,16 @@ static void titlescr_ay_music(chqstate_t *state)
 
   /* $EC71-$EC75: tune-active flag; skip straight to the output guard when no
    * tune is playing. */
-  if (state->bank3->title_music.tune_active) {
+  if (state->bank3->title_music.tune_active)
+  {
     /* $EC78-$EC7A: clear a driver-internal flag (consumed elsewhere in the
      * pattern processing, not traced in the skool). */
     state->bank3->title_music.driver_internal_flag = 0; /* $ECC6 (SM) */
 
     /* $EC7D-$EC81: decrement the tempo counter; only re-process the tracker
      * patterns when it reaches zero. */
-    if (--state->bank3->title_music.tempo_counter == 0) {
+    if (--state->bank3->title_music.tempo_counter == 0)
+    {
       /* $EC84-$EC88: advance channel 1's pattern by one tracker row.
        *
        * Conv: any of the three may hit the tune's end-of-data command (0x8E),
@@ -8031,8 +8111,9 @@ static void titlescr_write_ay_registers(chqstate_t *state)
   /* $ECCF-$ECD4: LD HL,$EFBA / LD A,$0B / LD C,$FD (10+7+7=24). */
   speccy->logtime(speccy, 24);
   values = &state->bank3->title_ay_regs.env_fine;
-  reg  = AY_REG_ENVELOPE_FINE_DURATION;
-  do {
+  reg    = AY_REG_ENVELOPE_FINE_DURATION;
+  do
+  {
     /* $ECD6-$ECDF: LD B,$FF / OUT (C),A / LD B,$BF / OUTD / DEC A / JP P
      * (7+12+7+16+4+10=56). */
     speccy->logtime(speccy, 56);
@@ -8060,8 +8141,9 @@ static void titlescr_silence_ay(chqstate_t *state)
   int           reg;    /* AY register index, 13 down to 0 (was D) */
 
   speccy = state->speccy;
-  reg = AY_REG_ENVELOPE_SHAPE;
-  do {
+  reg    = AY_REG_ENVELOPE_SHAPE;
+  do
+  {
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, 0);
   } while (--reg >= 0);
@@ -8239,7 +8321,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   state->speccy->logtime(state->speccy, 23);
 
   /* $EDD6-$EDD9: per-row wait countdown. */
-  if (--IX_channel->row_wait != 0) {
+  if (--IX_channel->row_wait != 0)
+  {
     /* $EDD9-$EE3B: JR NZ taken (12); LD A,(IX+$00)/BIT 3,A (19+8=27). Total
      * 12+27=39. */
     state->speccy->logtime(state->speccy, 39);
@@ -8247,7 +8330,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
     /* $EE38 channel_slide_upkeep: nudge the note by one semitone per frame
      * while a portamento/slide effect is active. */
     A_status = IX_channel->status;
-    if (!(A_status & CHSTATUS_SLIDE_UPKEEP)) {
+    if (!(A_status & CHSTATUS_SLIDE_UPKEEP))
+    {
       /* $EE3D: RET Z taken (11). */
       state->speccy->logtime(state->speccy, 11);
       return 0;
@@ -8259,7 +8343,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       /* $EE3E-$EE44: RLA/JR NC not taken/INC (IX+$12)/RET (4+7+23+10=44). */
       state->speccy->logtime(state->speccy, 44);
       IX_channel->note_index++;
-    } else {
+    }
+    else
+    {
       /* $EE3E-$EE48: RLA/JR NC taken/DEC (IX+$12)/RET (4+12+23+10=49). */
       state->speccy->logtime(state->speccy, 49);
       IX_channel->note_index--;
@@ -8273,16 +8359,18 @@ static u8 advance_channel_pattern(chqstate_t           *state,
   /* $EDDB-$EDE1: countdown reached zero -- start reading this row's pattern
    * bytes. */
   IX_channel->status = 0;
-  DE_pattern = IX_channel->pattern_ptr;
+  DE_pattern         = IX_channel->pattern_ptr;
 
-  for (;;) {
+  for (;;)
+  {
     A_byte = acp_read_byte(IX_channel, &DE_pattern);
 
     /* $EDE4-$EDE7 acp_read_pattern_byte + sign test: LD A,(DE)/INC DE (this
      * pair recurs at every operand-byte read site below, each acp_read_byte
      * call); AND A/JP M (7+6+4+10=27). */
     state->speccy->logtime(state->speccy, 27);
-    if (!(A_byte & 0x80)) {
+    if (!(A_byte & 0x80))
+    {
       /* $EDEA-$EDED: ADD A,(IX+$20)/LD (IX+$12),A (19+19=38). */
       state->speccy->logtime(state->speccy, 38);
       A_note = (u8) (A_byte + IX_channel->transpose);
@@ -8290,11 +8378,14 @@ static u8 advance_channel_pattern(chqstate_t           *state,
 
       /* $EDF0: BIT 0,(IX+$1E) (20). */
       state->speccy->logtime(state->speccy, 20);
-      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE) {
+      if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
+      {
         /* $EDF4: JR Z not taken (7); $EDF6: LD ($EC79),A (13). Total 20. */
         state->speccy->logtime(state->speccy, 20);
         state->bank3->title_music.shared_note_value = A_note; /* $EC79 (SM) */
-      } else {
+      }
+      else
+      {
         /* $EDF4: JR Z taken (12). */
         state->speccy->logtime(state->speccy, 12);
       }
@@ -8311,7 +8402,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       HL_ptr = IX_channel->envelope_shape_default;  /* +$14/$15 */
       IX_channel->envelope_shape_ptr = HL_ptr;      /* +$16/$17: reset envelope pointer */
 
-      A_env_byte = *HL_ptr;
+      A_env_byte                     = *HL_ptr;
       IX_channel->envelope_amplitude = A_env_byte;  /* +$18 */
       IX_channel->volume             = A_env_byte;  /* +$13 */
 
@@ -8323,7 +8414,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
     }
 
     /* $EE49 decode_pattern_command: command/effect byte. */
-    if (A_byte < PCMD_TEMPO_BASE) {
+    if (A_byte < PCMD_TEMPO_BASE)
+    {
       /* $EE49-$EE59 cascade (CP $B0/JR C not taken x3 folded into the
        * enclosing if/else-if chain -- see the else-if branches below) plus
        * $EE96-$EE9D dispatch_pattern_command: ADD HL,BC-style table walk and
@@ -8332,11 +8424,12 @@ static u8 advance_channel_pattern(chqstate_t           *state,
        * for every switch case below is 66; see the Conv note above the
        * prologue for how the jump table was recovered. */
       state->speccy->logtime(state->speccy, 66);
-      switch (A_byte) {
+      switch (A_byte)
+      {
       case PCMD_RESET_ROW_COUNTER_CLEAR_ENV:
         /* $EDBC-$EDC3: LD (IX+$13),B/RES 5,(IX+$00)/JR $EE22 (19+23+12=54). */
         state->speccy->logtime(state->speccy, 54);
-        IX_channel->volume = 0;
+        IX_channel->volume  = 0;
         IX_channel->status &= (u8) ~CHSTATUS_ENVELOPE_ACTIVE;
         goto reset_row_counter;
 
@@ -8416,7 +8509,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = 0;
+        IX_channel->slide_update_flag                = 0;
         continue;
 
       case PCMD_SET_MIXER_BITS_LOW3:
@@ -8429,7 +8522,7 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->bank3->title_music.pending_mixer_bits;
         state->bank3->title_music.pending_mixer_bits = A_mix;
-        IX_channel->slide_update_flag = CHSLIDE_ECHO_NOTE;
+        IX_channel->slide_update_flag                = CHSLIDE_ECHO_NOTE;
         continue;
 
       case PCMD_CLEAR_MIXER_BITS:
@@ -8496,7 +8589,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         state->speccy->logtime(state->speccy, 35);
         continue;
       }
-    } else if (A_byte < PCMD_PITCH_OFFSET_BASE) {
+    }
+    else if (A_byte < PCMD_PITCH_OFFSET_BASE)
+    {
       /* $EE49-$EE74: CP $B0/JR C not taken/ADD A,$20/JR C not taken/
        * ADD A,$10/JR C not taken/ADD A,$18/JR NC taken (cascade,
        * 7+7+7+7+7+7+7+12=61); ADD A,$09/LD ($EC9A),A/JP $EDE4
@@ -8505,7 +8600,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       /* $EE6F: set the tune tempo/speed byte. */
       state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
       continue;
-    } else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE) {
+    }
+    else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE)
+    {
       /* $EE49-$EE57 cascade (7+7+7+7+7+7+7+7=56); $EE59-$EE6C: LD C,A/
        * LD HL,$F07C/ADD HL,BC/LD C,(HL)/ADD HL,BC/LD (IX+$0B),L/
        * LD (IX+$09),L/LD (IX+$0C),H/LD (IX+$0A),H/JP $EDE4
@@ -8519,7 +8616,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
       IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
       continue;
-    } else if (A_byte < PCMD_ROW_WAIT_BASE) {
+    }
+    else if (A_byte < PCMD_ROW_WAIT_BASE)
+    {
       /* $EE49-$EE53 cascade (7+7+7+7+7+12=47); $EE7E-$EE93: LD HL,$F123/
        * ADD A,A/LD C,A/ADD HL,BC/LD A,(HL)/INC HL/LD H,(HL)/LD L,A/
        * LD (IX+$14),L/LD (IX+$15),H/DEC HL/LD A,(HL)/LD (IX+$0F),A/JP $EDE4
@@ -8532,7 +8631,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
       IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
       continue;
-    } else {
+    }
+    else
+    {
       /* $EE49-$EE4F cascade (7+7+7+12=33); $EE77-$EE7B: INC A/LD (IX+$11),A/
        * JP $EDE4 (4+19+10=33). Total 33+33=66. */
       state->speccy->logtime(state->speccy, 66);
@@ -8550,7 +8651,8 @@ reset_row_counter:
    * LD (IX+$02),D/LD (IX+$01),E (19+19+19+19=76); LD A,(IX+$1F)/AND A
    * (19+4=23). Total 99. */
   state->speccy->logtime(state->speccy, 99);
-  if (IX_channel->mute_pending) {
+  if (IX_channel->mute_pending)
+  {
     /* $EE32: RET Z not taken (5); $EE33-$EE37: LD (IX+$1F),$FF/RET
      * (19+10=29). Total 34. */
     state->speccy->logtime(state->speccy, 34);
@@ -8764,19 +8866,21 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   /* $EE9E-$EEA1: LD C,(IX+$00)/BIT 5,C (19+8=27). */
   state->speccy->logtime(state->speccy, 27);
   C_status = IX_channel->status;
-  if (C_status & CHSTATUS_ENVELOPE_ACTIVE) {
+  if (C_status & CHSTATUS_ENVELOPE_ACTIVE)
+  {
     /* $EEA3-$EEAA: JR Z not taken(7); LD A,(IX+$19)/SUB $01/LD (IX+$19),A
      * (19+7+19=45) -- the Z80 speculatively decrements and stores here
      * regardless of underflow; the reload branch below overwrites this store
      * at $EEB2. Total 7+45=52. */
     state->speccy->logtime(state->speccy, 52);
     A_env_step = IX_channel->envelope_step_counter;
-    if (A_env_step == 0) {
+    if (A_env_step == 0)
+    {
       /* $EEAD: JR NC not taken (7). */
       state->speccy->logtime(state->speccy, 7);
       /* Underflow: reload the counter and try to advance the envelope shape
        * pointer. */
-      A_env_step = IX_channel->envelope_speed;
+      A_env_step                        = IX_channel->envelope_speed;
       IX_channel->envelope_step_counter = A_env_step;
 
       /* $EEAF-$EEBD: LD A,(IX+$0F)/LD (IX+$19),A/LD L,(IX+$16)/
@@ -8791,12 +8895,16 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
         /* Not an end-of-table marker: commit the advance. */
         IX_channel->envelope_shape_ptr = HL_env_shape;
         IX_channel->envelope_amplitude = A_env_byte;
-      } else {
+      }
+      else
+      {
         /* $EEBE: JP M taken (10). */
         state->speccy->logtime(state->speccy, 10);
       }
       /* Else: halt the pointer, keep the previous amplitude. */
-    } else {
+    }
+    else
+    {
       /* $EEAD: JR NC taken (12). */
       state->speccy->logtime(state->speccy, 12);
       IX_channel->envelope_step_counter = A_env_step - 1;
@@ -8804,7 +8912,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EECA-$EECD: LD A,(IX+$18)/LD (IX+$13),A (19+19=38). */
     state->speccy->logtime(state->speccy, 38);
     IX_channel->volume = IX_channel->envelope_amplitude;
-  } else {
+  }
+  else
+  {
     /* $EEA3: JR Z taken (12) -- envelope not active, phase 1 skipped
      * entirely. */
     state->speccy->logtime(state->speccy, 12);
@@ -8828,7 +8938,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * strip the marker bit. */
     HL_offset_ptr = IX_channel->pitch_offset_default;
     A_offset_byte &= (u8) ~SEQ_END_BIT;
-  } else {
+  } else
+  {
     /* $EEDF: JP P taken (10). */
     state->speccy->logtime(state->speccy, 10);
   }
@@ -8849,17 +8960,18 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
    * real memory is zero, so DE_period comes out as 0 on real hardware.
    * Reproduce that rather than reading past note_periods' bounds in C. */
   DE_period = ((A_note_lookup >> 1) < NELEMS(note_periods))
-                ? note_periods[A_note_lookup >> 1]
-                : 0;
+                  ? note_periods[A_note_lookup >> 1]
+                  : 0;
 
   /* $EEFC-$EF4B: phase 3, vibrato. */
   /* $EEFC-$EEFF: LD L,(IX+$1D)/BIT 6,L (19+8=27). */
   state->speccy->logtime(state->speccy, 27);
-  if (IX_channel->flags & CHFLAGS_VIBRATO_ENABLE) {
+  if (IX_channel->flags & CHFLAGS_VIBRATO_ENABLE)
+  {
     /* $EF01: JR Z not taken (7); $EF03-$EF0B: LD H,A/LD B,(IX+$1A)/SLA B/
      * BIT 7,L/LD A,(IX+$1C) (4+19+8+8+19=58). Total 7+58=65. */
     state->speccy->logtime(state->speccy, 65);
-    B_vib_range = IX_channel->vibrato_depth;
+    B_vib_range   = IX_channel->vibrato_depth;
     B_vib_range <<= 1;
 
     A_vib_phase = IX_channel->vibrato_phase;
@@ -8869,44 +8981,59 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * the toggle bit is clear (also update), or 27 when both are set (skip
      * update). This re-derives the condition purely to select the billing
      * constant; it does not alter behaviour. */
-    if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE)) {
+    if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE))
+    {
       state->speccy->logtime(state->speccy, 12);
-    } else if (!(C_status & CHSTATUS_TOGGLE)) {
+    }
+    else if (!(C_status & CHSTATUS_TOGGLE))
+    {
       state->speccy->logtime(state->speccy, 22);
-    } else {
+    }
+    else
+    {
       state->speccy->logtime(state->speccy, 27);
     }
-    if (!((IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE) && (C_status & CHSTATUS_TOGGLE))) {
+    if (!((IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE) && (C_status & CHSTATUS_TOGGLE)))
+    {
       /* Conv: $EF09-$EF12 gate whether the phase updates this call at all
        * (runs every other call); not fully resolved against source, mirrored
        * literally from the skool. */
-      if (!(IX_channel->flags & CHFLAGS_VIBRATO_ASCENDING)) {
+      if (!(IX_channel->flags & CHFLAGS_VIBRATO_ASCENDING))
+      {
         /* $EF14-$EF16: BIT 5,L/JR NZ not taken (8+7=15). */
         state->speccy->logtime(state->speccy, 15);
         /* Descending. */
-        if (A_vib_phase >= IX_channel->vibrato_increment) {
+        if (A_vib_phase >= IX_channel->vibrato_increment)
+        {
           /* $EF18-$EF1B: SUB (IX+$1B)/JR NC taken (19+12=31). */
           state->speccy->logtime(state->speccy, 31);
           A_vib_phase -= IX_channel->vibrato_increment;
-        } else {
+        }
+        else
+        {
           /* $EF18-$EF22: SUB (IX+$1B)/JR NC not taken/SET 5,(IX+$1D)/SUB A/JR
            * (19+7+23+4+12=65). */
           state->speccy->logtime(state->speccy, 65);
           IX_channel->flags |= CHFLAGS_VIBRATO_ASCENDING; // flip to ascending
-          A_vib_phase = 0;
+          A_vib_phase        = 0;
         }
-      } else {
+      }
+      else
+      {
         /* $EF14-$EF16: BIT 5,L/JR NZ taken (8+12=20). */
         state->speccy->logtime(state->speccy, 20);
         /* Ascending. */
         A_vib_phase += IX_channel->vibrato_increment;
-        if (A_vib_phase >= B_vib_range) {
+        if (A_vib_phase >= B_vib_range)
+        {
           /* $EF24-$EF2A: ADD A,(IX+$1B)/CP B/JR C not taken/RES 5,(IX+$1D)/
            * LD A,B (19+4+7+23+4=57). */
           state->speccy->logtime(state->speccy, 57);
           IX_channel->flags &= ~CHFLAGS_VIBRATO_ASCENDING; // flip to descending
-          A_vib_phase = B_vib_range;
-        } else {
+          A_vib_phase        = B_vib_range;
+        }
+        else
+        {
           /* $EF24-$EF28: ADD A,(IX+$1B)/CP B/JR C taken (19+4+12=35). */
           state->speccy->logtime(state->speccy, 35);
         }
@@ -8924,21 +9051,26 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EF3A: JR NC (12 taken/11 not taken) -- re-derives the sign of the
      * expression above purely to select the billing constant; no behaviour
      * change. */
-    if (DE_vib_offset >= 0) {
+    if (DE_vib_offset >= 0)
+    {
       state->speccy->logtime(state->speccy, 12);
-    } else {
+    }
+    else
+    {
       state->speccy->logtime(state->speccy, 11);
     }
 
     A_shift_test = (u16) A_note_lookup + 0xA0;
     /* $EF3D: ADD A,$A0 (7). */
     state->speccy->logtime(state->speccy, 7);
-    if (A_shift_test <= 0xFF) {
+    if (A_shift_test <= 0xFF)
+    {
       /* $EF3F: JR C not taken (7) -- loop entered. */
       state->speccy->logtime(state->speccy, 7);
-      do {
+      do
+      {
         DE_vib_offset <<= 1;
-        A_shift_test = (A_shift_test & 0xFF) + 0x18;
+        A_shift_test    = (A_shift_test & 0xFF) + 0x18;
         /* $EF41-$EF47: SLA E/RL D/ADD A,$18/JR NC (8+8+7=23, +12 taken/+7 not
          * taken depending on whether the loop continues). */
         if (A_shift_test <= 0xFF)
@@ -8946,7 +9078,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
         else
           state->speccy->logtime(state->speccy, 23 + 7);
       } while (A_shift_test <= 0xFF);
-    } else {
+    }
+    else
+    {
       /* $EF3F: JR C taken (12) -- loop skipped entirely. */
       state->speccy->logtime(state->speccy, 12);
     }
@@ -8954,7 +9088,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     /* $EF49-$EF4A: ADD HL,DE/EX DE,HL (Conv folded) (11+4=15). */
     state->speccy->logtime(state->speccy, 15);
     DE_period += DE_vib_offset;
-  } else {
+  }
+  else
+  {
     /* $EF01: JR Z taken (12) -- vibrato disabled, phase 3 skipped entirely. */
     state->speccy->logtime(state->speccy, 12);
   }
@@ -8962,21 +9098,25 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   /* $EF4B-$EF76: phase 4, portamento/slide. */
   /* $EF4B-$EF4E: LD A,C/XOR $01/LD (IX+$00),A (4+7+19=30). */
   state->speccy->logtime(state->speccy, 30);
-  A_status_new = C_status ^ CHSTATUS_TOGGLE;
+  A_status_new       = C_status ^ CHSTATUS_TOGGLE;
   IX_channel->status = A_status_new;
 
   /* $EF51: BIT 2,C (8). */
   state->speccy->logtime(state->speccy, 8);
-  if (C_status & CHSTATUS_SLIDE_ACTIVE) {
+  if (C_status & CHSTATUS_SLIDE_ACTIVE)
+  {
     /* $EF53: JR Z not taken (7); $EF55: LD B,(IX+$0E) (19). Total 26. */
     state->speccy->logtime(state->speccy, 26);
     B_slide_countdown = IX_channel->slide_countdown;
     B_slide_countdown--;
-    if (B_slide_countdown != 0) {
+    if (B_slide_countdown != 0)
+    {
       /* $EF58: DJNZ taken (13); $EF73: LD (IX+$0E),B (19). Total 32. */
       state->speccy->logtime(state->speccy, 32);
       IX_channel->slide_countdown = B_slide_countdown;
-    } else {
+    }
+    else
+    {
       /* $EF58: DJNZ not taken (8); $EF5A-$EF5D: LD C,(IX+$0D)/BIT 7,C
        * (19+8=27). Total 35. */
       state->speccy->logtime(state->speccy, 35);
@@ -8985,9 +9125,12 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       /* $EF5F: JR Z (12 taken/11 not taken) -- re-derives the sign of
        * C_slide_step purely to select the billing constant; matches the
        * BIT 7,C test above. */
-      if ((s8) C_slide_step >= 0) {
+      if ((s8) C_slide_step >= 0)
+      {
         state->speccy->logtime(state->speccy, 12);
-      } else {
+      }
+      else
+      {
         state->speccy->logtime(state->speccy, 11);
       }
 
@@ -9001,7 +9144,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 27);
       DE_period += HL_slide_accum;
     }
-  } else {
+  }
+  else
+  {
     /* $EF53: JR Z taken (12). */
     state->speccy->logtime(state->speccy, 12);
   }
@@ -9014,7 +9159,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   /* $EF79: LD A,$00 (7) -- reads the self-modified pending_mixer_bits operand
    * (see State.h); this is the same load either branch below consumes. */
   state->speccy->logtime(state->speccy, 7);
-  if (A_mixer_test == 0) {
+  if (A_mixer_test == 0)
+  {
     /* $EF7B: JR NZ not taken (7); $EF7D-$EF85: LD A,($EC79)/XOR $08/
      * LD ($ECC6),A/LD A,$07 (13+7+13+7=40). Total 47. */
     state->speccy->logtime(state->speccy, 47);
@@ -9022,7 +9168,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
     A_shared = state->bank3->title_music.shared_note_value ^ 0x08; // $EC79
     state->bank3->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = CHMIXER_TONE_MASK;
-  } else {
+  }
+  else
+  {
     /* $EF7B: JR NZ taken (12). */
     state->speccy->logtime(state->speccy, 12);
     /* Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
@@ -9036,19 +9184,20 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
 
   /* Replace-bits-under-mask: merge this channel's tone-enable bits into the
    * shared mixer cache without disturbing the other channels' bits. */
-  A_mixer_val ^= state->bank3->title_ay_regs.mixer;
-  A_mixer_val &= IX_channel->mixer_mask;
-  A_mixer_val ^= state->bank3->title_ay_regs.mixer;
-  state->bank3->title_ay_regs.mixer = A_mixer_val;
+  A_mixer_val                       ^= state->bank3->title_ay_regs.mixer;
+  A_mixer_val                       &= IX_channel->mixer_mask;
+  A_mixer_val                       ^= state->bank3->title_ay_regs.mixer;
+  state->bank3->title_ay_regs.mixer  = A_mixer_val;
 
   /* $EF87-$EF93: LD HL,$EFB6/XOR (HL)/AND (IX+$24)/XOR (HL)/LD (HL),A
    * (10+7+19+7+7=50); LD A,(IX+$1F)/AND A (19+4=23). Total 73. */
   state->speccy->logtime(state->speccy, 73);
   A_mute_flag = IX_channel->mute_pending;
-  if ((s8) A_mute_flag < 0) {
+  if ((s8) A_mute_flag < 0)
+  {
     /* One-shot mute transition. */
     A_mute_flag &= (u8) ~CHMUTE_GATE_BIT;
-    IX_channel->mute_pending = A_mute_flag;
+    IX_channel->mute_pending  = A_mute_flag;
     A_noise_mask = (u8) ~(IX_channel->mixer_mask & CHMIXER_NOISE_MASK);
     state->bank3->title_ay_regs.mixer &= A_noise_mask;
 
@@ -9057,7 +9206,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * (7+7=14); LD A,$41/LD ($ECC6),A (7+13=20). Total 103. */
     state->speccy->logtime(state->speccy, 103);
     state->bank3->title_music.driver_internal_flag = 0x41; // $ECC6 (SM)
-  } else {
+  }
+  else
+  {
     /* $EF94: JP P taken (10). */
     state->speccy->logtime(state->speccy, 10);
   }
@@ -9166,7 +9317,8 @@ static void advance_channel_phrase(chqstate_t           *state,
   state->speccy->logtime(state->speccy, 38);
   BC_table_offset = IX_channel->phrase_table_offset;
 
-  for (;;) {
+  for (;;)
+  {
     /* $F1B4: HL -> this table position. */
     HL_entry = IX_channel->pattern_data_ptr + BC_table_offset;
 
@@ -9193,7 +9345,8 @@ static void advance_channel_phrase(chqstate_t           *state,
      * JR NZ outcome below; the loaded value is only consumed when
      * A_repeat != 0. Total 57. */
     state->speccy->logtime(state->speccy, 57);
-    if (A_repeat != 0) {
+    if (A_repeat != 0)
+    {
       /* $F1CB: JR NZ taken (12). */
       state->speccy->logtime(state->speccy, 12);
       *DE_pattern = IX_channel->phrase_ptr;
@@ -9212,14 +9365,16 @@ static void advance_channel_phrase(chqstate_t           *state,
    * override to none. */
   IX_channel->transpose = 0;
 
-  for (;;) {
+  for (;;)
+  {
     /* $F1D5-$F1D9: LD A,(HL)/INC HL/LD D,(HL)/LD E,A (word read, 7+6+7+4=24);
      * $F1D9: OR D (4). Total 28. */
     state->speccy->logtime(state->speccy, 28);
     /* $F1D5-$F1D9: read a little-endian word at HL_entry. */
     DE_word = wordat(HL_entry++);
 
-    switch (DE_word) {
+    switch (DE_word)
+    {
     case PHRASE_TABLE_RESET:
       /* $F1DA-$F1E7: JR NZ not taken (7); LD L,(IX+$03)/LD H,(IX+$04)/
        * LD BC,$0002/LD E,(HL)/INC HL/LD D,(HL) (19+19+10+7+6+7=68). Total
@@ -9265,7 +9420,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       IX_channel->phrase_ptr          = resolve_phrase_addr(DE_new_ptr);
 
       BC_table_offset += 3;
-      *DE_pattern = IX_channel->phrase_ptr;
+      *DE_pattern      = IX_channel->phrase_ptr;
       goto finalize;
 
     default:
@@ -9276,7 +9431,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 100);
       /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
       BC_table_offset += 2;
-      *DE_pattern = resolve_phrase_addr(DE_word);
+      *DE_pattern      = resolve_phrase_addr(DE_word);
       goto finalize;
     }
   }
@@ -9319,7 +9474,8 @@ u8 bank3_call(chqstate_t *state, int routine)
 
   page_128k(state); /* $F3CE: page in */
 
-  switch (routine) {
+  switch (routine)
+  {
   default:
     assert(0);
     A_result = 1;
@@ -9397,7 +9553,8 @@ static void play_success_music(chqstate_t *state)
   titlescr_start_tune(state, 1);
 
   B_wait = ATTRACT_TUNE_WAIT_FRAMES;
-  do {
+  do
+  {
     /* Conv: ~3.6s of jingle; without this the window stays up that long after
      * the host asks to quit. */
     CHECK_HOST_QUIT(state);
@@ -9837,7 +9994,8 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
   u8        C_offset; /* raw byte offset into the $FAA4 trigger table (was C) */
   const u8 *entry;    /* trigger-table entry: selector + dispatch stream (was HL) */
 
-  for (;;) {
+  for (;;)
+  {
     A = *HL;
     HL++;
 
@@ -9845,7 +10003,8 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
      * (7+6+7+10=30). */
     state->speccy->logtime(state->speccy, 30);
 
-    if (A == 0xFE) {
+    if (A == 0xFE)
+    {
       /* $F829-$F82B POP HL / POP HL / DI have no C equivalent (see prologue
        * Conv note); $F82C JP $ED0B's own cost is billed inside
        * stop_music_and_silence. */
@@ -9856,7 +10015,8 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
     /* $F805 CP $FF (7). */
     state->speccy->logtime(state->speccy, 7);
 
-    if (A == 0xFF) {
+    if (A == 0xFF)
+    {
       /* $F807 JR Z,$F823 taken (12) + $F823 LD A,(HL) / $F824 INC HL /
        * $F825 LD H,(HL) / $F826 LD L,A / $F827 JR $F7FE (7+6+7+4+12=36). */
       state->speccy->logtime(state->speccy, 12 + 36);
@@ -9873,7 +10033,7 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
 
     state->bank3->drums.script_delay = A;
 
-    C_offset = *HL++;
+    C_offset                       = *HL++;
     state->bank3->drums.script_ptr = HL;
 
     entry = resolve_drum_script_addr(0xFAA4 + C_offset);
@@ -9962,7 +10122,8 @@ static void titlescr_music(chqstate_t *state)
    * busy/idle branch. */
   state->speccy->logtime(state->speccy, 4 + 13 + 7 + 4);
 
-  if (!state->bank3->drums.slot1_busy) {
+  if (!state->bank3->drums.slot1_busy)
+  {
     /* $F839 JR NZ,$F841 not taken (7) + $F83B INC A / $F83C LD
      * (slot1_busy),A / $F83F JR $F85D (4+13+12=29) -- idle -> arm slot 1,
      * reload and enter the loop. */
@@ -9976,7 +10137,8 @@ static void titlescr_music(chqstate_t *state)
   state->speccy->logtime(state->speccy, 12 + 21);
 
   A = (u8)(state->bank3->drums.slot1_countdown - 1);
-  if (A != 0) {
+  if (A != 0)
+  {
     /* $F847 LD (slot1_countdown),A / $F84A JP $F894 -- skip slot 1 entirely
      * this frame. */
     state->speccy->logtime(state->speccy, 13 + 10);
@@ -9998,7 +10160,7 @@ static void titlescr_music(chqstate_t *state)
    * trigger-table pacing intends.
    */
   state->bank3->drums.slot1_countdown = state->bank3->drums.slot1_selector_dup;
-  HL_stream = state->bank3->drums.stream_ptr;
+  HL_stream                           = state->bank3->drums.stream_ptr;
   goto drum_read_stream_byte;
 
 sfx1_reload_pointer:
@@ -10027,7 +10189,8 @@ drum_dispatch_entry:
   state->speccy->logtime(state->speccy, 34);
   state->bank3->drums.stream_ptr = ++HL_stream;
   A++; // restore the original entry byte (undo the -1 above)
-  if (A & 0x80) {
+  if (A & 0x80)
+  {
     /* $F86D JR Z,$F87B not taken (7) + $F86F AND $7F / $F871 EX AF,AF' /
      * $F872 LD A,$01 / $F874 LD (slot1_countdown),A / $F877 LD
      * (slot2_busy),A / $F87A EX AF,AF' (7+48=55) -- also arm slot 2. */
@@ -10035,16 +10198,18 @@ drum_dispatch_entry:
     A &= ~0x80;
     state->bank3->drums.slot1_countdown = 1;
     state->bank3->drums.slot2_busy      = 1;
-  } else {
+  } else
+  {
     /* $F86D JR Z,$F87B taken (12). */
     state->speccy->logtime(state->speccy, 12);
   }
 
   /* $F87B LD D,A / $F87C AND $07 (4+7=11). */
   state->speccy->logtime(state->speccy, 11);
-  D_entry = A;
-  A &= 0x07;
-  if (A == 0) {
+  D_entry  = A;
+  A       &= 0x07;
+  if (A == 0)
+  {
     /* $F87E JR Z,$F894 taken (12) -- nothing to trigger this frame. */
     state->speccy->logtime(state->speccy, 12);
     goto sfx2_tick_countdown; // nothing to trigger this frame
@@ -10058,7 +10223,8 @@ drum_dispatch_entry:
 
   B_instrument  = A;
   A_pitch_param = D_entry >> 3;
-  switch (B_instrument) {
+  switch (B_instrument)
+  {
   case 1:
     play_fixed_sample_1(state, A_pitch_param);
     goto tm_exit;
@@ -10078,13 +10244,16 @@ drum_dispatch_entry:
 sfx2_tick_countdown:
   /* $F894 LD A,(slot2_busy) / $F896 AND A (7+4=11). */
   state->speccy->logtime(state->speccy, 11);
-  if (state->bank3->drums.slot2_busy) {
+  if (state->bank3->drums.slot2_busy)
+  {
     /* $F897 JR Z,$F8A1 not taken (7) + $F899 LD HL,$F842 / $F89C DEC (HL) /
      * $F89D LD HL,$F895 / $F8A0 DEC (HL) (10+11+10+11=42). */
     state->speccy->logtime(state->speccy, 7 + 42);
     state->bank3->drums.slot1_countdown--;
     state->bank3->drums.slot2_busy--;
-  } else {
+  }
+  else
+  {
     /* $F897 JR Z,$F8A1 taken (12). */
     state->speccy->logtime(state->speccy, 12);
   }
@@ -10092,7 +10261,8 @@ sfx2_tick_countdown:
   /* $F8A1 LD A,(sample_active) / $F8A3 DEC A / $F8A4 JP Z,$F8CC
    * (7+4+10=21). */
   state->speccy->logtime(state->speccy, 21);
-  if (state->bank3->drums.sample_active) {
+  if (state->bank3->drums.sample_active)
+  {
     /* $F8CC EXX -- bank into the shadow HL'/D' that play_sample_row resumes
      * from. */
     state->speccy->logtime(state->speccy, 4);
@@ -10269,12 +10439,14 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
 
   speccy        = state->speccy;
   frame_tstates = 0;
-  for (;;) {
+  for (;;)
+  {
     /* Conv: DJNZ with B = 0 loops 256 times */
     i = state->bank3->drums.sample_pitch_param
-          ? state->bank3->drums.sample_pitch_param
-          : 256;
-    do {
+            ? state->bank3->drums.sample_pitch_param
+            : 256;
+    do
+    {
       bits = port_MASK_EAR; // speaker bit
       if ((*HL_data & (1 << 7)) == 0)
         bits = 0;
@@ -10291,11 +10463,13 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);
     frame_tstates += 46;
-    if (--D_length == 0) {
+    if (--D_length == 0)
+    {
       finish_sample_playback(state);
       return;
     }
-    if (frame_tstates >= SAMPLE_ROW_FRAME_TSTATES) {
+    if (frame_tstates >= SAMPLE_ROW_FRAME_TSTATES)
+    {
       /* Conv: $F8E2's flag check -- one real interrupt period's worth of
        * bit-banging has passed, so yield back to titlescr_music exactly as
        * the Z80 does, saving position for the next call to resume from. */
@@ -10362,25 +10536,28 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
   int           B_phase;    /* phase byte read after the +3 advance (was B) */
   u8            A;          /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
 
-  speccy    = state->speccy;
-  carry     = 0;
+  speccy     = state->speccy;
+  carry      = 0;
   E_duration = E_pitch_param;
 
-  do {
+  do
+  {
     D_inner = 50;
-    do {
+    do
+    {
       state->bank3->drums.noise_phase += 3;
-      B_phase = state->bank3->drums.noise_phase;
-      A       = state->bank3->drums.noise_accum - 0x8D;
-      state->bank3->drums.noise_accum = A;
-      A += B_phase;
+      B_phase                          = state->bank3->drums.noise_phase;
+      A                                = state->bank3->drums.noise_accum - 0x8D;
+      state->bank3->drums.noise_accum  = A;
+      A                               += B_phase;
       RLC(A);
       RRC(state->bank3->drums.noise_rotate);
-      A += state->bank3->drums.noise_rotate;
-      state->bank3->drums.noise_rotate = A;
+      A                                += state->bank3->drums.noise_rotate;
+      state->bank3->drums.noise_rotate  = A;
       /* $FA3D-$FA50: phase/accumulator/rotate advance + AND $10 (127 T-states) */
       speccy->logtime(speccy, 127);
-      if (A & (1 << 4)) {
+      if (A & (1 << 4))
+      {
         /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
         speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC, port_MASK_EAR | port_MASK_MIC);
@@ -10389,7 +10566,9 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
         speccy->logtime(speccy, 16);
-      } else {
+      }
+      else
+      {
         /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
       }
@@ -10479,7 +10658,8 @@ redraw:
   update_whole_playfield(state); /* Conv: added */
 
 poll: /* $FBAB omd_service_and_read_keys */
-  do {
+  do
+  {
     run_title_tune(state);
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
@@ -10528,7 +10708,8 @@ shared_tail:
 
   update_whole_playfield(state); /* Conv: added */
 
-  do {
+  do
+  {
     run_title_tune(state);
 
     /* $FC00 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
@@ -10590,7 +10771,8 @@ static u8 detect_kempston_joystick(chqstate_t *state)
   C_baseline = A_sample;
 
   B_count = 20;
-  do {
+  do
+  {
     A_sample = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
     if (A_sample != C_baseline)
       return 0;
@@ -10613,7 +10795,8 @@ static u8 detect_kempston_joystick(chqstate_t *state)
  */
 static void print_string(chqstate_t *state, const u8 *HL_string)
 {
-  for (;;) {
+  for (;;)
+  {
     HL_string = print_character(state, HL_string);
     if (*HL_string == 0)
       return;
@@ -10689,8 +10872,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   C_attrs     = C_byte0 & ~SINGLE_HEIGHT;
   A_style_bit = (C_byte0 >> 7) & 1;
 
-  E_screen = HL_record[1];
-  D_screen = HL_record[2];
+  E_screen   = HL_record[1];
+  D_screen   = HL_record[2];
   HL_record += 3;
 
   H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03));
@@ -10698,14 +10881,18 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
 
   HL_shape = HL_record; /* // EXX / EX (SP),HL - bank ($FDBA-$FDBB) */
 
-  do {
+  do
+  {
     A_char = *HL_shape & ~EOS;
 
-    if (A_char == ' ') {
+    if (A_char == ' ')
+    {
       /* $FDD1-$FDD9: space */
       E_screen++;
       L_attr++;
-    } else {
+    }
+    else
+    {
       A_diff = (u8) (A_char - ' ');
 
       /* $FDDA-$FDFE classification ladder */
@@ -10731,7 +10918,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
       DE_screen  = ADDRTOSCREEN(glyph_addr);
       E_screen++;
 
-      if (!A_style_bit) {
+      if (!A_style_bit)
+      {
         /* $FE16-$FE4E: double-height, 7 font bytes -> 15 rows */
         for (row = 0; row < 4; row++) { /* Conv: rolled */
           *DE_screen = *HL_font;
@@ -10762,7 +10950,9 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         L_attr++;
 
         glyph_height = 16; /* two character rows (Conv: added) */
-      } else {
+      }
+      else
+      {
         /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
         for (row = 0; row < 7; row++) { /* Conv: rolled */
           *DE_screen = *HL_font++;
@@ -10847,7 +11037,8 @@ static void redefine_keys_screen(chqstate_t *state)
   int B_wait;          /* ~20-frame post-capture wait counter (was B) */
   int B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
 
-  for (;;) {
+  for (;;)
+  {
     clear_options_screen(state);
 
     print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
@@ -10862,8 +11053,10 @@ static void redefine_keys_screen(chqstate_t *state)
     B_remaining     = 8;      /* $FEBE LD BC,$0801: B half */
     C_control_index = 1;      /* $FEBE LD BC,$0801: C half */
 
-    do {
-      do {
+    do
+    {
+      do
+      {
         run_title_tune(state);
 
         /* $FECA XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
@@ -10876,7 +11069,8 @@ static void redefine_keys_screen(chqstate_t *state)
     } while (--B_remaining != 0);
 
     B_wait = 0x14;
-    do {
+    do
+    {
       run_title_tune(state);
     } while (--B_wait != 0);
 
@@ -10891,7 +11085,8 @@ static void redefine_keys_screen(chqstate_t *state)
 
     update_whole_playfield(state); /* Conv: added */
 
-    do {
+    do
+    {
       run_title_tune(state);
 
       /* $FF02 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
@@ -10932,17 +11127,20 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
   E_row_value = 0x2F; /* $FF0C LD DE,$FF2F: E half */
   B_port_hi   = 0xFE; /* $FF0F LD BC,$FEFE: B half */
 
-  do {
+  do
+  {
     A_pressed_mask = (u8) (~state->speccy->in(state->speccy, (u16) ((B_port_hi << 8) | 0xFE)) & 0x1F);
 
-    if (A_pressed_mask != 0) {
+    if (A_pressed_mask != 0)
+    {
       D_key_code++;
       if (D_key_code != 0)
         return 1; /* $FF1A RET NZ: a second row is also held -- ambiguous */
 
       H_bits = A_pressed_mask;
       A_code = (u8) E_row_value;
-      do {
+      do
+      {
         A_code -= 8;
         SRL(H_bits);
       } while (!carry);
@@ -10999,7 +11197,8 @@ static void read_new_key_definition(chqstate_t *state,
   u8  char1;       /* second character, with the EOS bit set (was A) */
 
 rescan:
-  for (;;) {
+  for (;;)
+  {
     run_title_tune(state);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
@@ -11021,8 +11220,8 @@ rescan:
   state->bank3->control_keys[C_control_index - 1] = A_key_code;
 
   index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3);
-  char0 = control_key_names[index_bytes];
-  char1 = control_key_names[index_bytes + 1] | EOS;
+  char0       = control_key_names[index_bytes];
+  char1       = control_key_names[index_bytes + 1] | EOS;
 
   state->bank3->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
                                                * $FD97; never rewritten by this

@@ -176,7 +176,8 @@ static void write_wav(const char *path)
   int      level;
   uint64_t sample_tstates;
 
-  if (g_nedges == 0) {
+  if (g_nedges == 0)
+  {
     printf("no beeper edges recorded, no WAV written\n");
     return;
   }
@@ -185,7 +186,8 @@ static void write_wav(const char *path)
   nsamples      = (uint32_t) (total_tstates * SAMPLE_RATE / CPU_HZ);
 
   f = fopen(path, "wb");
-  if (f == NULL) {
+  if (f == NULL)
+  {
     printf("cannot write %s\n", path);
     return;
   }
@@ -205,9 +207,11 @@ static void write_wav(const char *path)
 
   e     = 0;
   level = 0;
-  for (i = 0; i < nsamples; i++) {
+  for (i = 0; i < nsamples; i++)
+  {
     sample_tstates = (uint64_t) i * CPU_HZ / SAMPLE_RATE;
-    while (e < g_nedges && g_edges[e].tstates <= sample_tstates) {
+    while (e < g_nedges && g_edges[e].tstates <= sample_tstates)
+    {
       level = g_edges[e].level;
       e++;
     }
@@ -242,9 +246,11 @@ static void report_frames(void)
   total     = 0;
   prev_edge = 0;
 
-  for (frame = 0; frame < g_nframes; frame++) {
+  for (frame = 0; frame < g_nframes; frame++)
+  {
     edges = g_frame_edges[frame] - prev_edge;
-    if (edges > 0) {
+    if (edges > 0)
+    {
       /* Bit-bang time in this frame: from the first edge of the frame to the
        * frame's end on the virtual clock. Each OUT is one bit of a row. */
       span = g_edges[g_frame_edges[frame] - 1].tstates -
@@ -259,7 +265,8 @@ static void report_frames(void)
 
   printf("frames run          %d\n", g_nframes);
   printf("frames with drums   %d\n", playing);
-  if (playing > 0) {
+  if (playing > 0)
+  {
     printf("bit-bang per playing frame: mean %llu T, max %llu T"
            " (real hardware: 62524 T, one frame = %d T)\n",
            (unsigned long long) (total / playing),
@@ -295,12 +302,14 @@ static void report_bursts(void)
   prev    = 0;
   worst   = 0.0;
 
-  for (i = 0; i < g_nedges; i++) {
+  for (i = 0; i < g_nedges; i++)
+  {
     if (i > 0 &&
         g_edges[i].tstates - g_edges[i - 1].tstates <= BURST_GAP_TSTATES)
       continue;
 
-    if (nbursts > 0) {
+    if (nbursts > 0)
+    {
       interval = (double) (g_edges[i].tstates - prev) / FRAME_TSTATES;
       off      = interval - (int) (interval + 0.5);
       if (off < 0.0)
@@ -368,7 +377,8 @@ int main(int argc, char *argv[])
 
   chq_test_start_title_tune(state, (u8) tune);
 
-  for (frame = 0; frame < frames; frame++) {
+  for (frame = 0; frame < frames; frame++)
+  {
     g_frame_start = g_tstates;
     edges_before  = g_nedges;
     was_playing   = state->bank3->drums.sample_active;

@@ -251,6 +251,27 @@ if(CLANG_FORMAT)
   set(ALL_SOURCE_FILES ${SOURCE_FILES} ${TEST_SOURCE_FILES})
   list(FILTER ALL_SOURCE_FILES INCLUDE REGEX "\\.(c|h)$")
   list(REMOVE_DUPLICATES ALL_SOURCE_FILES)
+  # These headers hand-align struct fields / macro tables against blocks of
+  # "/* ... */" commentary between entries. clang-format's
+  # AlignConsecutiveDeclarations/AlignConsecutiveMacros only align within a
+  # single run of declarations with no intervening comment or blank line, so
+  # a raw pass flattens every column to the width of one entry instead of the
+  # widest in the group -- format_all.py's align_declarations.py cannot help
+  # either, as it only realigns function-local variable blocks, not struct
+  # fields or top-level macros. Left to hand maintenance until a script
+  # exists for this case.
+  # slopay-chip.{c,h} are ported third-party code with their own hand-tuned
+  # formatting (see .clang-format-ignore, which this target does not read).
+  list(REMOVE_ITEM ALL_SOURCE_FILES
+    libraries/ChaseHQ/Engine/State.h
+    libraries/ChaseHQ/Engine/Bank3State.h
+    libraries/ChaseHQ/Engine/Bank7State.h
+    libraries/ChaseHQ/Engine/Internal.h
+    libraries/ChaseHQ/Data/Stages.h
+    libraries/ChaseHQ/Data/CommonData.h
+    include/ZXSpectrum/Pixels.h
+    libraries/ZXSpectrum/slopay-chip.c
+    include/ZXSpectrum/slopay-chip.h)
   # clang-format cannot align a signature against the prologue above it, or
   # a declaration block against its "(was X)" comments, so format_all.py
   # runs afterwards over the .c files: it reflows signatures and \param

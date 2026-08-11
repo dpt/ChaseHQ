@@ -227,10 +227,10 @@ const depthset_t shortpole_middle = {
 /**
  * stretchy_shortpole
  *
- * Conv: host-side aggregate wrapping shortpole_bottom/shortpole_middle into
- * the stretchy_t list format render_stretchy_object walks; not a Z80 table
- * itself, so there is no single originating address -- see the components'
- * own addresses below.
+ * Conv: host-side aggregate wrapping shortpole_bottom/shortpole_middle into the
+ *       stretchy_t list format render_stretchy_object walks; not a Z80 table
+ *       itself, so there is no single originating address -- see the
+ *       components' own addresses below.
  */
 const stretchy_t stretchy_shortpole[3] = {
   { STRETCHY_TYPE_FIXED, &shortpole_bottom },
@@ -535,8 +535,8 @@ const u8 chatterblk_tony_hold_on[3] = {
  * common_chatter_strings
  *
  * Conv: chatter strings from two locations ($81EC and $97B5, marked inline
- * below) are combined into this single table; not a Z80 table itself, so
- * there is no single originating address.
+ *       below) are combined into this single table; not a Z80 table itself, so
+ *       there is no single originating address.
  */
 const char *common_chatter_strings[CHATTERSTR__LIMIT] = {
   // $81EC
@@ -822,11 +822,11 @@ const u8 chatterblk_tony_lets_go[3] = {
 /**
  * chatter_blocks
  *
- * Conv: host-side index of all chatter blocks, added so callers can look
- * one up by enum instead of address; not a Z80 table itself, so there is
- * no single originating address -- see each chatterblk_* array's own
- * address above. Strictly this only needs to hold the blocks that are
- * referred to from other blocks.
+ * Conv: host-side index of all chatter blocks, added so callers can look one up
+ *       by enum instead of address; not a Z80 table itself, so there is no
+ *       single originating address -- see each chatterblk_* array's own address
+ *       above. Strictly this only needs to hold the blocks that are referred to
+ *       from other blocks.
  */
 const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
   &chatterblk_start_stage[0],
@@ -1936,7 +1936,7 @@ const u8 persp_y_scale[8][PERSP_TABLE_COLS] = {
  * $E88E: transitions
  *
  * Conv: Changed to point at fixed data only. Original game copied two of the
- * transition frames around during relocation.
+ *       transition frames around during relocation.
  */
 const transition_t transitions[8] = {
   /* Forward animations */

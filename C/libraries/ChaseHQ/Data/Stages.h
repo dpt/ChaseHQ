@@ -306,7 +306,8 @@
  * 6 for directly-indexed objects: four size bands where 2–3 share data, 4–5
  * are an unshifted/shifted pair. Turn signs: 10 = 5 unflipped + 5 flipped.
  */
-typedef struct bitmap {
+typedef struct bitmap
+{
   u8        width_bytes;
   u8        flags;
   u8        height;
@@ -314,17 +315,20 @@ typedef struct bitmap {
   const u8 *shifted;
 } bitmap_t;
 
-typedef struct hittable {
+typedef struct hittable
+{
   u8              width;
   const bitmap_t *bitmaps;
 } hittable_t;
 
-typedef struct heli_bitmap_xonly {
+typedef struct heli_bitmap_xonly
+{
   s8                  x_offset;
   bitmap_t            bm;
 } heli_bitmap_xonly_t;
 
-typedef struct heli_bitmap {
+typedef struct heli_bitmap
+{
   u8                  y_offset;
   heli_bitmap_xonly_t bitmap_x;
 } heli_bitmap_t;
@@ -335,7 +339,8 @@ typedef struct heli_bitmap {
  * byte). The Z80 never type-checks these; the union lets each of the two use
  * sites pick the right member instead of casting an untyped pointer.
  */
-typedef union heli_part_ptr {
+typedef union heli_part_ptr
+{
   const heli_bitmap_t       *part;  // entries 0-4
   const heli_bitmap_xonly_t *rotor; // entry 5
 } heli_part_ptr_t;
@@ -345,11 +350,12 @@ typedef union heli_part_ptr {
  * (7 is original game sizeof(bitmap_t))
  * M is a bodge factor since the streetlamp values seem to be +2.
  */
-#define DEPTHSET_OFFSET(N,M) ((N) * 7 + (M))
+#define DEPTHSET_OFFSET(N, M) ((N) * 7 + (M))
 
 #define DEPTHSET_MAX (10)
 
-typedef struct depthset_pair {
+typedef struct depthset_pair
+{
   u8 depth;
   u8 offset; // byte offset from 'bitmaps' in parent structure
 } depthset_pair_t;
@@ -360,13 +366,15 @@ typedef struct depthset_pair {
  * here rather than as an out-of-bounds read. Only overhead-bridge depthsets
  * populate 'spans'; all other depthset_t instances leave it NULL.
  */
-typedef struct overhead_span {
+typedef struct overhead_span
+{
   u8        nrows;      // number of scanlines in the span
   const u8 *fill_bytes; // one fill byte per scanline, nrows entries
 } overhead_span_t;
 
-typedef struct depthset {
-  const bitmap_t        *bitmaps; // -> array of bitmaps
+typedef struct depthset
+{
+  const bitmap_t        *bitmaps;             // -> array of bitmaps
   depthset_pair_t        pairs[DEPTHSET_MAX]; // maps depths to offsets
   const overhead_span_t *spans; // overhead-bridge span table, or NULL
 } depthset_t;
@@ -374,7 +382,8 @@ typedef struct depthset {
 /* root objects (an array of these) used with routine draw_stretchy_object_left/right
  * bottom-most object is given first
  */
-typedef struct stretchy {
+typedef struct stretchy
+{
   /* STRETCHY_TYPE_END:   terminator
    * STRETCHY_TYPE_FIXED: draw at height = bitmap->width_bytes - 2 (no perspective scaling)
    * STRETCHY_TYPE_*PC:   draw at given % of the perspective height
@@ -384,7 +393,8 @@ typedef struct stretchy {
   // final entry
 } stretchy_t;
 
-typedef struct obj {
+typedef struct obj
+{
   /* Together these define the hit zone [lo, hi). Which field is lo and which
    * is hi swaps between sides: for right-hand objects field1=hi, field2=lo;
    * for left-hand objects field1=lo, field2=hi.
@@ -396,7 +406,8 @@ typedef struct obj {
   obj_handler_t *handler;
 } obj_t;
 
-typedef struct scenedata {
+typedef struct scenedata
+{
   /* $A26C
    * Normal range: ROAD_RIGHTMOST (0x00F5) .. ROAD_LEFTMOST (0x0105), capped
    * to ROAD_126 (0x0126) during car bounce (see Internal.h). During fork
@@ -425,20 +436,21 @@ typedef struct scenedata {
 
 #define SPRITE_FRAMES (6) /* bitmaps per sprite sequence (distance LODs / animation frames) */
 
-typedef struct stage {
-  u8                backdrop[BACKDROP_LENGTH];
-  const u8         *addrof_perp_mugshot_attributes;
-  const u8         *addrof_perp_mugshot_bitmap;
-  u16               ground_colour;
-  const hittable_t *addrof_hittable_objects;
-  const void       *addrof_right_hand_handlers;
-  const obj_t      *addrof_right_hand_objects;
-  const obj_t      *addrof_right_hand_short_pole_object;
-  const void       *addrof_left_hand_handlers;
-  const obj_t      *addrof_left_hand_objects;
-  const obj_t      *addrof_left_hand_short_pole_object;
-  const u8         *addrof_perp_description;
-  const u8         *addrof_arrest_messages;
+typedef struct stage
+{
+  u8                     backdrop[BACKDROP_LENGTH];
+  const u8              *addrof_perp_mugshot_attributes;
+  const u8              *addrof_perp_mugshot_bitmap;
+  u16                    ground_colour;
+  const hittable_t      *addrof_hittable_objects;
+  const void            *addrof_right_hand_handlers;
+  const obj_t           *addrof_right_hand_objects;
+  const obj_t           *addrof_right_hand_short_pole_object;
+  const void            *addrof_left_hand_handlers;
+  const obj_t           *addrof_left_hand_objects;
+  const obj_t           *addrof_left_hand_short_pole_object;
+  const u8              *addrof_perp_description;
+  const u8              *addrof_arrest_messages;
   const heli_part_ptr_t *addrof_helicopter_frames[2];
 
   const bitmap_t  (*bitmaps_stones)[SPRITE_FRAMES];

@@ -46,7 +46,8 @@ extern "C"
 /**
  * Identifiers of screen attributes.
  */
-enum {
+enum
+{
   attribute_BLACK_OVER_BLACK          = MKATTR(0, 0, ATTR_BLACK, ATTR_BLACK),
 
   attribute_BLUE_OVER_BLACK           = MKATTR(0, 0, ATTR_BLACK, ATTR_BLUE),
@@ -161,13 +162,12 @@ zx_pixel_format_t;
 /** A claimed, top-to-bottom converted frame. */
 typedef struct zx_frame
 {
-  void              *pixels;
-  zx_pixel_format_t  format;
-  int                width;
-  int                height;
-  int                stride;
-}
-zx_frame_t;
+  void             *pixels;
+  zx_pixel_format_t format;
+  int               width;
+  int               height;
+  int               stride;
+} zx_frame_t;
 
 /**
  * Screen pixels and attributes.

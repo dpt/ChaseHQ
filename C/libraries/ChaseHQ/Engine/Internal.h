@@ -423,13 +423,15 @@ void start_chatter(chqstate_t *state, chatterpriority_t priority,
 
 typedef struct session session_t;
 
-typedef struct carpart {
+typedef struct carpart
+{
   u8        y;
   u8        rows;
   const u8 *bitmap;
 } carpart_t;
 
-typedef struct carsmokeframe {
+typedef struct carsmokeframe
+{
   u8        height;
   u8        width;
   u8        unflipped_x;
@@ -437,13 +439,15 @@ typedef struct carsmokeframe {
   const u8 *bitmap;
 } carsmokeframe_t;
 
-typedef struct carframe {
+typedef struct carframe
+{
   u8        y;
   u8        x;
   u8        index;
 } carframe_t;
 
-typedef struct caradornment {
+typedef struct caradornment
+{
   u8        height;
   u8        width;
   const u8 *bitmap;

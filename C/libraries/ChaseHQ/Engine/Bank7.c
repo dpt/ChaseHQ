@@ -54,7 +54,8 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct {
+typedef struct
+{
   u8        rows;
   const u8 *image;
 } handshake_frame_t;
@@ -341,7 +342,8 @@ void show_end_screen(chqstate_t *state)
 
   outer_count = 6;
 
-  for (;;) {
+  for (;;)
+  {
     CHECK_HOST_QUIT(state);
 
     state->speccy->stamp(state->speccy);
@@ -362,18 +364,20 @@ void show_end_screen(chqstate_t *state)
     if (!(A_input & USERINPUTFLAG_FIRE))
       continue;
 
-    if (state->bank7->es_input_mask == 0) {
+    if (state->bank7->es_input_mask == 0)
+    {
       /* First fire press: skip ahead to the congratulations script. */
       state->bank7->es_input_mask  = 1;
       state->bank7->es_frame_count = 1; /* $E04F: run the script next frame */
       state->bank7->es_script_ptr =
-        &state->bank7->es_script[ES_SCRIPT_CONGRATS_OFFSET]; /* $E052 */
+          &state->bank7->es_script[ES_SCRIPT_CONGRATS_OFFSET]; /* $E052 */
       drive_chatter_stop(state);
       /* Conv: the Z80 spins here on the keyboard alone. The C port must pace
        * the wait -- an unpaced poll runs the game thread flat out and the host
        * never gets a frame -- and honour the quit request while the player is
        * still holding fire. */
-      while (keyscan(state) & USERINPUTFLAG_FIRE) {
+      while (keyscan(state) & USERINPUTFLAG_FIRE)
+      {
         CHECK_HOST_QUIT(state);
 
         state->speccy->stamp(state->speccy);
@@ -426,7 +430,8 @@ static void run_script(chqstate_t *state)
 
   HL_script = state->bank7->es_script_ptr;
 
-  for (;;) {
+  for (;;)
+  {
     A_cmd = *HL_script++;
 
     /* Conv: es_chatter reads/advances state->bank7->es_script_ptr directly
@@ -434,7 +439,8 @@ static void run_script(chqstate_t *state)
      * the pointer already advanced past A_cmd before it runs. */
     state->bank7->es_script_ptr = HL_script;
 
-    switch (A_cmd) {
+    switch (A_cmd)
+    {
     case ESCMD_CLEAR_DRAW_FRAME_VAL:
       es_clear_then_draw_frame(state, &HL_script);
       continue;
@@ -467,7 +473,7 @@ static void run_script(chqstate_t *state)
       goto rs_exit;
 
     case ESCMD_RESET_HANDSHAKE_VAL:
-      C_reload = *HL_script++;
+      C_reload                         = *HL_script++;
       state->bank7->es_handshake_index = 0; /* $E2C0 LD ($A172),A with A=0 */
       es_set_dispatch(state, es_handler_handshake_advance, C_reload);
       goto rs_exit;
@@ -495,7 +501,7 @@ static void run_script(chqstate_t *state)
       es_handler_draw_score(state);
       continue;
 
-    default:
+default:
       /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
        * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
       HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
@@ -534,7 +540,8 @@ static void es_handler_draw_score(chqstate_t *state)
   int       pair;     /* BCD byte-pair iteration counter (was B) */
   u8        A_nibble; /* nibble being converted to ASCII (was A) */
 
-  for (tally = 1000; tally != 0; tally--) {
+  for (tally = 1000; tally != 0; tally--)
+  {
     /* Conv: the tally runs for ~11s; without this the window stays up for the
      * remainder of it after the host asks to quit. */
     CHECK_HOST_QUIT(state);
@@ -560,20 +567,27 @@ static void es_handler_draw_score(chqstate_t *state)
   HL_dst = &state->bank7->es_script[0xFD];
   C_seen = 0;
 
-  for (pair = 4; pair != 0; pair--) {
+  for (pair = 4; pair != 0; pair--)
+  {
     A_nibble = (*DE_bcd >> 4) & 0x0F;
-    if (A_nibble != 0 || C_seen != 0) {
+    if (A_nibble != 0 || C_seen != 0)
+    {
       C_seen    = 0xFF;
       *HL_dst++ = '0' + A_nibble;
-    } else {
+    }
+    else
+    {
       *HL_dst++ = ' ';
     }
 
     A_nibble = *DE_bcd & 0x0F;
-    if (A_nibble != 0 || C_seen != 0) {
+    if (A_nibble != 0 || C_seen != 0)
+    {
       C_seen    = 0xFF;
       *HL_dst++ = '0' + A_nibble;
-    } else {
+    }
+    else
+    {
       *HL_dst++ = ' ';
     }
 
@@ -617,12 +631,13 @@ static const u8 *z80addrtochatterblk(u16 addr)
   };
   // clang-format on
 
-  switch (addr) {
+  switch (addr)
+  {
   case CHATTERBLK_NANCY_CONGRATULATES_ADDR:
     return &chatterblk_nancy_congratulates[0];
   case CHATTERBLK_PRESS_GEAR_ADDR:
     return &chatterblk_press_gear[0];
-  default:
+default:
     assert(0);
     return NULL;
   }
@@ -663,7 +678,7 @@ static void es_chatter(chqstate_t *state)
 
   HL_script_ptr = state->bank7->es_script_ptr;
 
-  target_addr = wordat(HL_script_ptr);
+  target_addr    = wordat(HL_script_ptr);
   HL_script_ptr += 2;
 
   chatterblk = z80addrtochatterblk(target_addr);
@@ -777,9 +792,9 @@ static void es_draw_frame_common(chqstate_t *state, const u8 **script)
 
   HL_script = *script;
 
-  image_addr  = wordat(HL_script);
-  screen_addr = wordat(HL_script + 2);
-  HL_script += 4;
+  image_addr   = wordat(HL_script);
+  screen_addr  = wordat(HL_script + 2);
+  HL_script   += 4;
 
   draw_endshot(state, z80addrtoendshot(image_addr), screen_addr);
 
@@ -832,7 +847,8 @@ static void render_text_common(chqstate_t *state, const u8 **script)
   H_attr = (u8) ((((D_scr >> 3) | (D_scr << 5)) & 0x03) + 0xEF);
   L_attr = E_scr;
 
-  do {
+  do
+  {
     raw    = *HL_script;
     A_char = raw & (u8) ~EOS;
     plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
@@ -931,7 +947,8 @@ static void plot_char(chqstate_t *state,
   u8        L_cur;         /* this character's attribute column (was L) */
 
   character = A_char - ' ';
-  if (character == 0) {
+  if (character == 0)
+  {
     // Space: $E323-$E327.
     (*E_col)++;
     (*L_attr)++;
@@ -941,14 +958,15 @@ static void plot_char(chqstate_t *state,
   glyphid = ascii_to_glyph_id(character);
   HL_font  = &font[glyphid * 7];
 
-  E_cur = *E_col;
+  E_cur         = *E_col;
   starting_addr = (u16) (((u16) D_row << 8) | E_cur);
   (*E_col)++; // $E35D: persistent cursor advances for the NEXT character now.
 
   // Pass 1 ($E360-$E378): font bytes 0-3, double height.
   D_cur = D_row;
-  for (i = 0; i < 4; i++) {
-    data = *HL_font++;
+  for (i = 0; i < 4; i++)
+  {
+    data                                     = *HL_font++;
     *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
     D_cur++;
     *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
@@ -961,8 +979,9 @@ static void plot_char(chqstate_t *state,
   D_cur = (u8) (D_cur - 7);
 
   // Pass 2 ($E382-$E398): font bytes 4-6, double height, then a blank row.
-  for (i = 0; i < 3; i++) {
-    data = *HL_font++;
+  for (i = 0; i < 3; i++)
+  {
+    data                                     = *HL_font++;
     *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
     D_cur++;
     *ADDRTOSCREEN(((u16) D_cur << 8) | E_cur) = (u8) data;
@@ -973,7 +992,7 @@ static void plot_char(chqstate_t *state,
   update_screen(state, starting_addr, 8, 16); /* Conv: added */
 
   // $E399-$E3A4: stamp the call's colour into both glyph-cell attributes.
-  L_cur = *L_attr;
+  L_cur                                                   = *L_attr;
   *ADDRTOBACKBUF(((u16) H_attr << 8) | L_cur)               = A_attr;
   *ADDRTOBACKBUF(((u16) H_attr << 8) | (u8) (L_cur + 0x20)) = A_attr;
   *L_attr = (u8) (L_cur + 1);
@@ -1198,27 +1217,31 @@ static void es_handler_handshake_advance(chqstate_t *state)
   int       group;     /* decorative attribute group counter, 5 down to 0 (was C) */
 
   RLC(state->bank7->es_fade_gate_c);
-  if (carry) {
+  if (carry)
+  {
     A_index = state->bank7->es_handshake_index;
     state->bank7->es_handshake_index = (u8) ((A_index + 1 == 6) ? 0 : A_index + 1);
 
-    HL_image = handshake_frames[A_index].image;
+    HL_image  = handshake_frames[A_index].image;
     DE_screen = 0x48AC;
 
-    for (row = handshake_frames[A_index].rows; row != 0; row--) {
+    for (row = handshake_frames[A_index].rows; row != 0; row--)
+    {
       memcpy(ADDRTOSCREEN(DE_screen), HL_image, 8);
-      HL_image += 8;
-      DE_screen = next_screen_row(DE_screen);
+      HL_image  += 8;
+      DE_screen  = next_screen_row(DE_screen);
     }
 
-    for (blank = 3; blank != 0; blank--) {
+    for (blank = 3; blank != 0; blank--)
+    {
       memset(ADDRTOSCREEN(DE_screen), 0, 8);
       DE_screen = next_screen_row(DE_screen);
     }
   }
 
   HL_attr = ADDRTOATTRS(0x59AC);
-  for (group = 5; group != 0; group--) {
+  for (group = 5; group != 0; group--)
+  {
     memset(HL_attr, attribute_WHITE_OVER_BLACK, 8);
     HL_attr += SCREEN_ATTRIBUTES_WIDTH;
   }
@@ -1261,12 +1284,14 @@ static void es_attribute_fade_in(chqstate_t *state)
   HL_attr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
   DE_back = ADDRTOBACKBUF(BACKBUFFER_START_ADDRESS);
 
-  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++) {
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_attr++, DE_back++)
+  {
     if (*HL_attr & ATTR_BRIGHT) /* BRIGHT set: leave this cell untouched */
       continue;
 
     A_target = *DE_back & (ATTR_INK_MASK | ATTR_PAPER_MASK);
-    if (A_target == *HL_attr) {
+    if (A_target == *HL_attr)
+    {
       *HL_attr = *DE_back;
       continue; // already there
     }
@@ -1338,7 +1363,8 @@ static void es_attribute_fade_out(chqstate_t *state, u8 *flag)
 
   HL_pattrs = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
 
-  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_pattrs++) {
+  for (c = SCREEN_ATTRIBUTES_WIDTH * PLAYFIELD_HEIGHT / 8; c != 0; c--, HL_pattrs++)
+  {
     A_attr = *HL_pattrs;
     if (A_attr == 0)
       continue;
@@ -1428,10 +1454,11 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
 
   DE_screen_addr = screen_addr;
 
-  for (row = ENDSHOT_HEIGHT; row != 0; row--) {
+  for (row = ENDSHOT_HEIGHT; row != 0; row--)
+  {
     memcpy(ADDRTOSCREEN(DE_screen_addr), image, ENDSHOT_WIDTH / 8);
-    image += ENDSHOT_WIDTH / 8;
-    DE_screen_addr = next_screen_row(DE_screen_addr);
+    image          += ENDSHOT_WIDTH / 8;
+    DE_screen_addr  = next_screen_row(DE_screen_addr);
   }
 
   /* Conv: skool POPs DE here, restoring the original destination pushed at
@@ -1441,7 +1468,8 @@ static void draw_endshot(chqstate_t *state, const u8 *image, u16 screen_addr)
   D_attr    = (u8) ((((D_attr >> 3) | (D_attr << 5)) & 0x03) + 0xEF);
   attraddr = (u16) ((D_attr << 8) | (screen_addr & 0xFF));
 
-  for (attrrow = 8; attrrow != 0; attrrow--) {
+  for (attrrow = 8; attrrow != 0; attrrow--)
+  {
     memcpy(ADDRTOBACKBUF(attraddr), image, 13);
     image += 13;
     /* Conv: the skool's LDIR ($E4D6) advances DE by 13 as a side effect of
@@ -1790,7 +1818,8 @@ static const u8 *z80addrtoendshot(u16 addr)
   };
   // clang-format on
 
-  switch (addr) {
+  switch (addr)
+  {
   case BITMAP_ENDSHOT_1_ADDR: return &bitmap_endshot_1[0];
   case BITMAP_ENDSHOT_2_ADDR: return &bitmap_endshot_2[0];
   case BITMAP_ENDSHOT_3_ADDR: return &bitmap_endshot_3[0];
@@ -1940,20 +1969,24 @@ static void es_next_pattern_at_addr(chqstate_t *state, const u8 *HL_pataddr)
   int       C_offset;    /* offset into es_music_data for this pattern's notes (was C) */
   const u8 *HL_data;     /* es_music_data read pointer, walked past the note-delay byte (was HL) */
 
-  for (;;) {
+  for (;;)
+  {
     A_n_repeats = *HL_pataddr++;
-    if (A_n_repeats != 0xFF) {
+    if (A_n_repeats != 0xFF)
+    {
       // Not end of pattern(s)
       state->bank7->es_music.pattern_repeats = (u8) A_n_repeats;
-      C_offset = *HL_pataddr++;
-      state->bank7->es_music.pattern_addr = HL_pataddr;
+      C_offset                               = *HL_pataddr++;
+      state->bank7->es_music.pattern_addr    = HL_pataddr;
 
       // Calculate address of music data
       HL_data = &es_music_data[C_offset];
       state->bank7->es_music.note_delay_reload = state->bank7->es_music.note_delay = *HL_data++;
       state->bank7->es_music.pattern_start_ptr = HL_data;
       return;
-    } else {
+    }
+    else
+    {
       // Restart
       HL_pataddr = &es_music_patterns[wordat(HL_pataddr) - 0xF53C];
     }
@@ -1999,19 +2032,24 @@ static void es_play_music_48k(chqstate_t *state)
   if (state->bank7->es_input_mask != 0)
     return; // Conv: wait-for-interrupt loop is a no-op here (see prologue)
 
-  if (state->bank7->es_music.started == 0) {
+  if (state->bank7->es_music.started == 0)
+  {
     state->bank7->es_music.started = 1;
     goto pm_reset_pattern;
   }
 
   A_delay = state->bank7->es_music.note_delay - 1;
-  if (A_delay) {
+  if (A_delay)
+  {
     state->bank7->es_music.note_delay = A_delay;
-  } else {
+  }
+  else
+  {
     state->bank7->es_music.note_delay = state->bank7->es_music.note_delay_reload;
     HL_data = state->bank7->es_music.data_ptr;
 
-    for (;;) {
+    for (;;)
+    {
       A_n_note = *HL_data - 1;
       if (A_n_note)
         break;
@@ -2024,18 +2062,21 @@ pm_reset_pattern:
     }
 
     state->bank7->es_music.data_ptr = ++HL_data;
-    if (++A_n_note > NOTE_XDELAY_FLAG) {
+    if (++A_n_note > NOTE_XDELAY_FLAG)
+    {
       // A byte of the form 0b1aaaaiii (1 is the delay flag bit)
-      A_n_note &= ~NOTE_XDELAY_FLAG;
-      state->bank7->es_music.note_delay = 1;
-      state->bank7->es_music.extra_delay = 1;
+      A_n_note                           &= ~NOTE_XDELAY_FLAG;
+      state->bank7->es_music.note_delay   = 1;
+      state->bank7->es_music.extra_delay  = 1;
     }
 
     D_note       = A_n_note;
     B_instrument = D_note & NOTE_INST_MASK;
-    if (B_instrument) {
+    if (B_instrument)
+    {
       A_param = D_note >> 3;
-      switch (B_instrument) {
+      switch (B_instrument)
+      {
       case NOTE_DRUM2_VAL: es_playdrum_2(state, A_param); return;
       case NOTE_DRUM1_VAL: es_playdrum_1(state, A_param); return;
       case NOTE_NOISE_VAL: es_play_noise(state, A_param); return;
@@ -2043,7 +2084,8 @@ pm_reset_pattern:
     }
   }
 
-  if (state->bank7->es_music.extra_delay) {
+  if (state->bank7->es_music.extra_delay)
+  {
     state->bank7->es_music.note_delay--;
     state->bank7->es_music.extra_delay--;
   }
@@ -2144,9 +2186,11 @@ static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data)
 
   speccy = state->speccy;
   carry  = 0;
-  for (;;) {
+  for (;;)
+  {
     i = state->bank7->es_music.drum_speed;
-    do {
+    do
+    {
       bits = port_MASK_EAR; // speaker bit
       if ((*HL_data & (1 << 7)) == 0)
         bits = 0;
@@ -2239,7 +2283,7 @@ int bank7_state_create(chqstate_t *state)
    * disables the GLYPH_B fade and the handshake animation's advance/draw
    * block. */
   state->bank7->es_fade_gate_ab = 0xAA;
-  state->bank7->es_fade_gate_c = 0x88;
+  state->bank7->es_fade_gate_c  = 0x88;
 
   /* es_playdrum_go rotates each sample byte in place during playback (RLC),
    * so bank 7 needs its own mutable copies of the drum templates, refreshed

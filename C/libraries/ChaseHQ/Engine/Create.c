@@ -245,7 +245,8 @@ static void chq_initialise(chqstate_t *state)
   };
   // clang-format on
 
-  static const struct {
+  static const struct
+  {
     size_t      dstoff;
     const void *src;
     size_t      n;
@@ -343,8 +344,8 @@ static void chq_initialise(chqstate_t *state)
   state->sc_spawn_counter = 20;
 
   // $A97F/$A9DF/$C0BC: dirt-and-stones SM flags, assembled as zero
-  state->ldas_enabled = 0;
-  state->ddas.enabled = 0;
+  state->ldas_enabled             = 0;
+  state->ddas.enabled             = 0;
   state->rm.scroll_dirt_particles = 0;
 
   // $B395/$B3A3: SM operands (default LD DE operands) in animate_hero_car

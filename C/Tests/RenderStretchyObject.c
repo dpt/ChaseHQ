@@ -90,7 +90,8 @@ static chqstate_t *make_state(int stage)
   chqstate_t *state;
 
   state = chq_create(&g_speccy);
-  if (state == NULL) {
+  if (state == NULL)
+  {
     fprintf(stderr, "chq_create failed\n");
     exit(1);
   }
@@ -126,7 +127,8 @@ static int pick_row(const chqstate_t *state, const char *side)
   int row;
   const u8 *high_byte;
 
-  for (row = 0; row <= 19; row++) {
+  for (row = 0; row <= 19; row++)
+  {
     high_byte = (const u8 *)&state->xpos.centre[xpos_index(row, side)];
     if (high_byte[1] == 0)
       return row;
@@ -164,11 +166,14 @@ static void write_pgm(const chqstate_t *state, FILE *out)
 
   fprintf(out, "P5\n%d %d\n255\n", BACKBUFFER_WIDTH, BACKBUFFER_HEIGHT);
 
-  for (row = 0; row < BACKBUFFER_HEIGHT; row++) {
+  for (row = 0; row < BACKBUFFER_HEIGHT; row++)
+  {
     src = &state->backbuffer[deinterleave_row(row)];
-    for (col = 0; col < BACKBUFFER_ROWBYTES; col++) {
+    for (col = 0; col < BACKBUFFER_ROWBYTES; col++)
+    {
       byte = src[col];
-      if (byte == 0xFF) {
+      if (byte == 0xFF)
+      {
         for (bit = 0; bit < 8; bit++)
           fputc(0x80, out);
         continue;
@@ -205,7 +210,8 @@ int main(int argc, char **argv)
   row      = -1; /* -1 means "auto-pick" */
   out_path = NULL;
 
-  for (i = 1; i < argc; i++) {
+  for (i = 1; i < argc; i++)
+  {
     if (strcmp(argv[i], "--stage") == 0 && i + 1 < argc)
       stage = atoi(argv[++i]);
     else if (strcmp(argv[i], "--side") == 0 && i + 1 < argc)
@@ -216,14 +222,16 @@ int main(int argc, char **argv)
       row = atoi(argv[++i]);
     else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc)
       out_path = argv[++i];
-    else {
+    else
+    {
       usage(argv[0]);
       return 1;
     }
   }
 
   if (stage < 1 || stage > 5 || index < 1 || index > 6 ||
-      (strcmp(side, "left") != 0 && strcmp(side, "right") != 0)) {
+      (strcmp(side, "left") != 0 && strcmp(side, "right") != 0))
+      {
     usage(argv[0]);
     return 1;
   }
@@ -231,9 +239,11 @@ int main(int argc, char **argv)
   speccy_init();
   state = make_state(stage);
 
-  if (row == -1) {
+  if (row == -1)
+  {
     row = pick_row(state, side);
-    if (row == -1) {
+    if (row == -1)
+    {
       fprintf(stderr,
               "no row 0-19 satisfies the object-present gate for stage %d; "
               "try a different stage or pass --row explicitly\n",
@@ -242,7 +252,8 @@ int main(int argc, char **argv)
       return 1;
     }
     fprintf(stderr, "auto-picked row %d\n", row);
-  } else if (row < 0 || row > 19) {
+  } else if (row < 0 || row > 19)
+  {
     usage(argv[0]);
     chq_destroy(state);
     return 1;
@@ -254,7 +265,8 @@ int main(int argc, char **argv)
 
   if (obj->handler != draw_stretchy_object_left &&
       obj->handler != draw_stretchy_object_right &&
-      obj->handler != draw_overhead) {
+      obj->handler != draw_overhead)
+      {
     /* obj_t.handler also covers non-stretchy objects (e.g. draw_overhead
      * for tunnels/bridges) with the same pointer signature but different
      * expectations about state and arg; calling those here crashes. */
@@ -283,14 +295,17 @@ int main(int argc, char **argv)
             written, BACKBUFFER_LENGTH);
   }
 
-  if (out_path != NULL) {
+  if (out_path != NULL)
+  {
     out = fopen(out_path, "wb");
-    if (out == NULL) {
+    if (out == NULL)
+    {
       fprintf(stderr, "cannot open %s for writing\n", out_path);
       chq_destroy(state);
       return 1;
     }
-  } else {
+  } else
+  {
     out = stdout;
   }
 

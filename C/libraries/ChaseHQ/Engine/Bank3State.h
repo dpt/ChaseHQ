@@ -36,7 +36,8 @@
  * insert_high_score_entry in Bank3.c). The 5-char rank suffix ("1ST  " etc)
  * is fixed to its screen position, never shifts, and is stored separately in
  * high_score_rank_suffixes (Bank3.c) rather than per-row. */
-typedef struct high_score_row {
+typedef struct high_score_row
+{
   u8 score[8];      /* $C408: ASCII score digits, most significant first */
   u8 stage_code[3]; /* $C414: e.g. " 1 ", "ALL" */
   u8 retry_digit;   /* $C41C: ASCII '1'-'3' (or higher in test-mode data) */
@@ -53,7 +54,8 @@ typedef struct high_score_row {
  * fields read/written by advance_channel_phrase ($F1AE, reached via pattern
  * command 0x87) -- see that function's prologue for the table format.
  */
-typedef struct title_tune_channel {
+typedef struct title_tune_channel
+{
   u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
   const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
   const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
@@ -93,7 +95,8 @@ title_tune_channel_t;
  * title_screen_driver, drawn each frame by ts_animate_frame, and advanced
  * by object_script_step ($C705).
  */
-struct title_object {
+struct title_object
+{
   u8        opcode; // +$00 active movement-mode opcode, or 0 (idle: fetch next script opcode)
   u8        wait;   // +$01 "wait N frames" countdown, also reused as the decel/accel countdown
   s8        x_step; // +$02 X velocity/step
@@ -111,14 +114,16 @@ struct title_object {
  * chqstate_t only holds a pointer to this (see State.h); the fields below
  * are reachable only from within Bank3.c.
  */
-struct chq_bank3_state {
+struct chq_bank3_state
+{
   /* $EC01-$F224 (128K bank 3 only) -- title-screen tune engine channel
    * trackers and self-modifying scratch bytes. Same numeric address range as
    * the 48K `music` state but a different bank/context; kept as a distinct
    * struct rather than aliased onto it (see compute_channel_ay_registers,
    * $EE9E@bank3).
    */
-  struct {
+  struct
+  {
     // $EC01/$EC26/$EC4B
     struct title_tune_channel channel[3];
 
@@ -245,7 +250,8 @@ struct chq_bank3_state {
    * See sfx_music_service's prologue in Bank3.c for the slot1/slot2/tail
    * state machine this drives.
    */
-  struct {
+  struct
+  {
     /* $F7F5: sfx_script_advance's own re-entry countdown -- throttles how
      * often a fresh script opcode byte is read.
      */

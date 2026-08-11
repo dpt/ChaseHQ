@@ -334,9 +334,9 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   color_target_desc.format = SDL_GetGPUSwapchainTextureFormat(shader->gpu, window);
 
   memset(&pipeline_info, 0, sizeof(pipeline_info));
-  pipeline_info.vertex_shader                         = vertex_shader;
-  pipeline_info.fragment_shader                       = fragment_shader;
-  pipeline_info.primitive_type                        = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+  pipeline_info.vertex_shader   = vertex_shader;
+  pipeline_info.fragment_shader = fragment_shader;
+  pipeline_info.primitive_type  = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
   pipeline_info.target_info.color_target_descriptions = &color_target_desc;
   pipeline_info.target_info.num_color_targets         = 1;
 

@@ -50,7 +50,8 @@ typedef u8 *(plot_sprite_cb_t)(chqstate_t *state,
  * which is how the Z80 reaches them -- always as (IX+n), never by absolute
  * address.
  */
-struct hazard {
+struct hazard
+{
   /* +0: Slot allocation flag
    *
    * HAZARD_USED ($FF) or HAZARD_UNUSED ($00). The spawn routines scan the
@@ -189,7 +190,8 @@ struct hazard {
  * $A16D-$A187: Counters and on-screen digit caches for the run in progress.
  * All of it is reset between stages by load_scene.
  */
-struct session {
+struct session
+{
   /* $A16D: Object-spawning accumulator, usually 1
    *
    * layout_road adds allow_spawning to it each slice and subtracts 2 when it
@@ -304,7 +306,8 @@ struct chq_bank7_state;
  * field order and the absence of padding are correctness-critical -- do not
  * reorder, insert, or remove fields.
  */
-typedef struct {
+typedef struct
+{
   u16       chan_a_pitch;
   u16       chan_b_pitch;
   u16       chan_c_pitch;
@@ -321,7 +324,8 @@ typedef struct {
 /**
  * Holds the current state of the game.
  */
-struct chqstate {
+struct chqstate
+{
   /* ------------------------------------------------------------------------
    * State variables additional to the original game.
    * --------------------------------------------------------------------- */
@@ -395,7 +399,8 @@ struct chqstate {
    * and the number of times they repeat, are patched per frame from the car's
    * speed.
    */
-  struct {
+  struct
+  {
     /* $823B: (SM in play_engine_sfx_48k) Countdown within the current engine
      * tone phase */
     u8        counter;
@@ -413,7 +418,8 @@ struct chqstate {
 
   /* $824B-$825D: (SM in attract_mode_128k, relocated) Attract mode screen
    * state */
-  struct {
+  struct
+  {
     /* $824B: (SM in attract_mode_128k, relocated) Blink phase for the attract
      * screen's flashing message */
     u8        blink;
@@ -450,7 +456,8 @@ struct chqstate {
   s8        meter_level[2];
 
   /* $86C3-$86C9: (SM in draw_pregame) Pregame screen artwork selection */
-  struct {
+  struct
+  {
     /* $86C3: (SM in draw_pregame) Backdrop variant drawn behind the pregame
      * screen */
     u8        background;
@@ -489,7 +496,8 @@ struct chqstate {
   u8        continue_messages[CONTINUE_MESSAGES_LENGTH];
 
   /* $8DA1-$8DBB: (SM in transition) Screen fade state */
-  struct {
+  struct
+  {
     /* $8DA1: (SM in transition) Number of frames the current screen fade runs
      * for */
     u8        nframes;
@@ -506,7 +514,8 @@ struct chqstate {
    * Overlay messages are typed on a character at a time; these track how far
    * through the current message the reveal has got.
    */
-  struct {
+  struct
+  {
     /* $8E43: (SM in draw_overlay_messages) Message record currently being
      * revealed */
     const u8 *message;
@@ -521,7 +530,8 @@ struct chqstate {
   } overlay;
 
   /* $8F82-$8FA7: (SM in draw_everything_else) Per-frame scenery draw enables */
-  struct {
+  struct
+  {
     /* $8F82: (SM in draw_everything_else) Enables drawing of the first tunnel
      * mouth */
     u8        draw_tunnel_1;
@@ -536,7 +546,8 @@ struct chqstate {
 
   /* $90F1-$9115: (SM in draw_overhead) Geometry of the overhead structure
    * being drawn */
-  struct {
+  struct
+  {
     /* $90F1: (SM in draw_overhead) Vertical offset subtracted from the overhead
      * structure's screen position */
     u8        vert_sub;
@@ -553,7 +564,8 @@ struct chqstate {
    * row count, bitmap pointer and plot routine, and a mask may be plotted the
    * same way beforehand.
    */
-  struct {
+  struct
+  {
     /* $9395: (SM in draw_object_common) Selects which pre-shifted copy of the
      * sprite to plot */
     u8        shift_select;
@@ -625,7 +637,8 @@ struct chqstate {
    * animated static, drawn by draw_noise_effect and wound down over four
    * frames by drive_noise_effect.
    */
-  struct {
+  struct
+  {
     /* $9634: Rotating state the pseudo-random pixel bytes are derived from */
     u8        bytes[5];
 
@@ -644,7 +657,8 @@ struct chqstate {
   u8        chatter_cursor_blink;
 
   /* $9C85-$9C86: (SM in tick) Countdown timer remainder */
-  struct {
+  struct
+  {
     /* $9C85: (SM in tick) Seconds left on the countdown, doubled
      *
      * Conv: the Z80's 16-bit load was split into this field and
@@ -937,7 +951,8 @@ struct chqstate {
   scenedata_t scenedata;
 
   /* $A68F-$A749: (SM in perp_behaviour) Perp AI timers */
-  struct {
+  struct
+  {
     /* $A68F: (SM in perp_behaviour) Set while the perp is changing lane */
     u8        changing_lane;
 
@@ -960,7 +975,8 @@ struct chqstate {
 
   /* $A9DE-$A9E2: (SM in draw_dirt_and_stones) Dirt and stone particle drawing
    * state */
-  struct {
+  struct
+  {
     /* $A9DE: (SM in draw_dirt_and_stones) Enables draw_dirt_and_stones */
     u8        enabled;
 
@@ -970,7 +986,8 @@ struct chqstate {
   } ddas;
 
   /* $AA5A-$AA8C: (SM in draw_helicopter) Helicopter drawing position */
-  struct {
+  struct
+  {
     /* $AA5A: (SM in draw_helicopter) Helicopter's vertical base position
      *
      * Swing offset plus height, minus the per-distance object position when
@@ -992,7 +1009,8 @@ struct chqstate {
   s16       helicopter_x;
 
   /* $AACB-$AB06: (SM in move_helicopter) Helicopter flight state */
-  struct {
+  struct
+  {
     /* $AACB: (SM in move_helicopter) Helicopter's height above the road */
     u8        height;
 
@@ -1019,7 +1037,8 @@ struct chqstate {
   u16       ah_road_left_xpos;
 
   /* $AED0-$B02C: (SM in draw_hazard_sprites) Hazard sprite drawing state */
-  struct {
+  struct
+  {
     /* $AED0: (SM in draw_hazard_sprites) Cursor into the depth-sorted draw list
      *
      * The list of (distance, hazard) pairs is built over xpos.centre_left
@@ -1048,7 +1067,8 @@ struct chqstate {
   } dhs;
 
   /* $B063-$B079: (SM in move_hero_car) Hero car jump state */
-  struct {
+  struct
+  {
     /* $B063: (SM in move_hero_car) Height of the car through a jump */
     u8        y_offset;
 
@@ -1058,7 +1078,8 @@ struct chqstate {
 
   /* $B325-$B478: (SM in animate_hero_car) Hero car crash and hand animation
    * state */
-  struct {
+  struct
+  {
     /* $B325: (SM in animate_hero_car) Non-zero while the crash sequence runs */
     u16       crashed_flag;
 
@@ -1106,7 +1127,8 @@ struct chqstate {
   u8        smash_cycling_counter;
 
   /* $B549-$B570: (SM in draw_debris) Debris animation state */
-  struct {
+  struct
+  {
     /* $B549: (SM in draw_debris) Frames left on the debris animation; set to 9
      * by smash */
     u8        frame_counter;
@@ -1121,7 +1143,8 @@ struct chqstate {
   } dd;
 
   /* $B5AA-$B5AF: (SM in draw_hero_car) Hero car sprite selection */
-  struct {
+  struct
+  {
     /* $B5AA: (SM in draw_hero_car) Height of the car in the air, leaving its
      * shadow on the ground */
     u8        jump_y;
@@ -1138,7 +1161,8 @@ struct chqstate {
    * rightfork_* addresses are where each stream's branch begins, and the
    * *_fork_end_ptr pointers are where it rejoins.
    */
-  struct {
+  struct
+  {
     /* $BB8B: (SM in rm_cycle_buffer_offset) Z80 address of the hazard stream's
      * left-fork branch */
     u16       leftfork_hazards;
@@ -1222,7 +1246,8 @@ struct chqstate {
   } rm;
 
   /* $C15D-$C2B8: (SM in draw_tunnel) Tunnel drawing state */
-  struct {
+  struct
+  {
     /* $C15D: (SM in draw_tunnel) Distance to the tunnel mouth: 15 when small, 6
      * when it fills the screen */
     u8        tunnel_distance;
@@ -1251,7 +1276,8 @@ struct chqstate {
    * draw_road patches the widths, fill patterns, marking variants and buffer
    * addresses for the row it is about to draw, then runs a common inner loop.
    */
-  struct {
+  struct
+  {
     /* $C56C: (SM in draw_road) Back buffer address the first road span is drawn
      * to */
     u16       backbuf_1;
@@ -1375,7 +1401,8 @@ struct chqstate {
    * outside that range are off-screen left or right during curves and are
    * clamped when consumed (see docs/draw-road-internals.md).
    */
-  struct {
+  struct
+  {
     /* $E800: Left outer edge, the verge/road boundary */
     s16       left[128];
 
@@ -1412,7 +1439,8 @@ struct chqstate {
   u8        temp_keydefs[8];
 
   /* $EE6E-$F0C5: 48K music engine state, including the two drum samples */
-  struct {
+  struct
+  {
     /* (SM in next_pattern) Repeats left of the current pattern */
     u8        pattern_repeats;
 
@@ -1487,7 +1515,8 @@ struct chqstate {
    * The C port has no shadow register bank; values the original code carries
    * across calls via EX AF,AF' / EXX are modelled here instead.
    */
-  struct {
+  struct
+  {
     /* Curvature scroll amount banked in the AF' shadow register.
      *
      * Models the Z80 AF' shadow register as banked by move_hero_car's
