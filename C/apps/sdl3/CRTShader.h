@@ -35,6 +35,8 @@ typedef struct
   unsigned int  program;
   unsigned int  texture;  // GLuint, avoids pulling in GLES headers here
   unsigned int  vbo;
+  int           uniform_locs[13]; // GLint, cached at link time -- see
+                                   // chq_gles_uniform in CRTShader.c
 #else
   SDL_GPUDevice         *gpu;
   SDL_GPUTexture        *texture;         // holds the game's converted screen

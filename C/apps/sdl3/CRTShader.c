@@ -281,13 +281,41 @@ static const char *const chq_crt_fragment_msl =
 
 #if defined(CHQ_CRT_SHADER_GLES)
 
+/* Uniform names, in the order their locations are cached into
+ * shader->uniform_locs by chq_CRT_shader_create -- keep in sync with the
+ * enum below and with the uniform declarations in chq_crt_fragment_gles.
+ */
+enum
+{
+  CHQ_U_TEX,
+  CHQ_U_TEXEL,
+  CHQ_U_CURVATURE,
+  CHQ_U_BLOOM_THRESHOLD,
+  CHQ_U_BLOOM_INTENSITY,
+  CHQ_U_BRIGHTNESS,
+  CHQ_U_CONTRAST,
+  CHQ_U_SATURATION,
+  CHQ_U_SCANLINE_INTENSITY,
+  CHQ_U_VIGNETTE_STRENGTH,
+  CHQ_U_CHROMA_BLEED,
+  CHQ_U_GLITCH,
+  CHQ_U_TIME,
+  CHQ_U_COUNT
+};
+
+static const char *const chq_gles_uniform_names[CHQ_U_COUNT] = {
+  "u_tex", "u_texel", "u_curvature", "u_bloomThreshold", "u_bloomIntensity",
+  "u_brightness", "u_contrast", "u_saturation", "u_scanlineIntensity",
+  "u_vignetteStrength", "u_chromaBleed", "u_glitch", "u_time",
+};
+
 /* Compiles one shader stage and checks the compile log; returns 0 (and
  * prints the log) on failure, matching the SDL_GPU paths' error handling.
  */
-static unsigned int chq_gles_compile(unsigned int stage, const char *source)
+static GLuint chq_gles_compile(GLenum stage, const char *source)
 {
-  unsigned int shader;
-  int          compiled;
+  GLuint shader;
+  GLint  compiled;
 
   shader = glCreateShader(stage);
   glShaderSource(shader, 1, &source, NULL);
@@ -311,9 +339,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                           int               game_width,
                           int               game_height)
 {
-  unsigned int vertex_shader;
-  unsigned int fragment_shader;
-  int          linked;
+  GLuint vertex_shader;
+  GLuint fragment_shader;
+  GLint  linked;
+  int    i;
   /* Fullscreen triangle: positions [-1,-1]..[3,3] extend past the clip
    * volume on two corners, which is fine -- the rasteriser clips it back to
    * the screen and the third corner lands exactly at the far edges, same
@@ -367,6 +396,10 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
     return 0;
   }
 
+  for (i = 0; i < CHQ_U_COUNT; i++)
+    shader->uniform_locs[i] =
+        glGetUniformLocation(shader->program, chq_gles_uniform_names[i]);
+
   glGenBuffers(1, &shader->vbo);
   glBindBuffer(GL_ARRAY_BUFFER, shader->vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -398,6 +431,8 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   const uint32_t   *pixels;
   uint32_t         *composited = NULL;
 
+  SDL_GL_MakeCurrent(window, shader->gl_context);
+
   /* Composite the OSD mask on the CPU before upload, same as the SDL_GPU
    * path -- there is no SDL_Renderer here for the caller to draw an overlay
    * rect with. Needs a scratch copy since, unlike the GPU transfer buffer,
@@ -417,15 +452,21 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
     int i;
 
     composited = SDL_malloc((size_t) game_width * (size_t) game_height * 4);
-    memcpy(composited, pixels, (size_t) game_width * (size_t) game_height * 4);
-    for (i = 0; i < game_width * game_height; i++)
-      if (osd_mask[i] == 1)
-        composited[i] = 0xFF40FF40u; /* green interior */
-      else if (osd_mask[i] == 2)
-        composited[i] = 0xFF000000u; /* black outline */
-    pixels = composited;
+    if (composited != NULL)
+    {
+      memcpy(composited, pixels, (size_t) game_width * (size_t) game_height * 4);
+      for (i = 0; i < game_width * game_height; i++)
+        if (osd_mask[i] == 1)
+          composited[i] = 0xFF40FF40u; /* green interior */
+        else if (osd_mask[i] == 2)
+          composited[i] = 0xFF000000u; /* black outline */
+      pixels = composited;
+    }
+    /* SDL_malloc failure: fall through and upload the frame without the
+     * OSD overlay rather than crash on a null buffer. */
   }
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, shader->texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0, GL_RGBA,
               GL_UNSIGNED_BYTE, pixels);
@@ -441,20 +482,20 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   glUseProgram(shader->program);
 
-  glUniform1i(glGetUniformLocation(shader->program, "u_tex"), 0);
-  glUniform2f(glGetUniformLocation(shader->program, "u_texel"),
+  glUniform1i(shader->uniform_locs[CHQ_U_TEX], 0);
+  glUniform2f(shader->uniform_locs[CHQ_U_TEXEL],
              1.0f / (float) game_width, 1.0f / (float) game_height);
-  glUniform1f(glGetUniformLocation(shader->program, "u_curvature"), params->curvature);
-  glUniform1f(glGetUniformLocation(shader->program, "u_bloomThreshold"), params->bloom_threshold);
-  glUniform1f(glGetUniformLocation(shader->program, "u_bloomIntensity"), params->bloom_intensity);
-  glUniform1f(glGetUniformLocation(shader->program, "u_brightness"), params->brightness);
-  glUniform1f(glGetUniformLocation(shader->program, "u_contrast"), params->contrast);
-  glUniform1f(glGetUniformLocation(shader->program, "u_saturation"), params->saturation);
-  glUniform1f(glGetUniformLocation(shader->program, "u_scanlineIntensity"), params->scanline_intensity);
-  glUniform1f(glGetUniformLocation(shader->program, "u_vignetteStrength"), params->vignette_strength);
-  glUniform1f(glGetUniformLocation(shader->program, "u_chromaBleed"), params->chroma_bleed);
-  glUniform1f(glGetUniformLocation(shader->program, "u_glitch"), params->glitch);
-  glUniform1f(glGetUniformLocation(shader->program, "u_time"), SDL_GetTicks() * 0.001f);
+  glUniform1f(shader->uniform_locs[CHQ_U_CURVATURE], params->curvature);
+  glUniform1f(shader->uniform_locs[CHQ_U_BLOOM_THRESHOLD], params->bloom_threshold);
+  glUniform1f(shader->uniform_locs[CHQ_U_BLOOM_INTENSITY], params->bloom_intensity);
+  glUniform1f(shader->uniform_locs[CHQ_U_BRIGHTNESS], params->brightness);
+  glUniform1f(shader->uniform_locs[CHQ_U_CONTRAST], params->contrast);
+  glUniform1f(shader->uniform_locs[CHQ_U_SATURATION], params->saturation);
+  glUniform1f(shader->uniform_locs[CHQ_U_SCANLINE_INTENSITY], params->scanline_intensity);
+  glUniform1f(shader->uniform_locs[CHQ_U_VIGNETTE_STRENGTH], params->vignette_strength);
+  glUniform1f(shader->uniform_locs[CHQ_U_CHROMA_BLEED], params->chroma_bleed);
+  glUniform1f(shader->uniform_locs[CHQ_U_GLITCH], params->glitch);
+  glUniform1f(shader->uniform_locs[CHQ_U_TIME], SDL_GetTicks() * 0.001f);
 
   glBindBuffer(GL_ARRAY_BUFFER, shader->vbo);
   glEnableVertexAttribArray(0);
