@@ -1745,8 +1745,10 @@ static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
 // not tied to any one window), so it is broadcast to all instances.
 static void chq_dispatch_events(chq_sdl_state_t *instances, int count)
 {
-  SDL_Event event;
-  int       n;
+  SDL_Event  event;
+  int        n;
+  int        have_windowID;
+  Uint32     windowID;
 
   while (SDL_PollEvent(&event))
   {
@@ -1757,9 +1759,63 @@ static void chq_dispatch_events(chq_sdl_state_t *instances, int count)
       continue;
     }
 
+    // SDL_Event is a tagged union -- only read the member that matches
+    // event.type, rather than assuming every event carries a window.window
+    // field at the same offset.
+    have_windowID = 1;
+    switch (event.type)
+    {
+    case SDL_EVENT_WINDOW_SHOWN:
+    case SDL_EVENT_WINDOW_HIDDEN:
+    case SDL_EVENT_WINDOW_EXPOSED:
+    case SDL_EVENT_WINDOW_MOVED:
+    case SDL_EVENT_WINDOW_RESIZED:
+    case SDL_EVENT_WINDOW_MINIMIZED:
+    case SDL_EVENT_WINDOW_MAXIMIZED:
+    case SDL_EVENT_WINDOW_RESTORED:
+    case SDL_EVENT_WINDOW_MOUSE_ENTER:
+    case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+      windowID = event.window.windowID;
+      break;
+
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
+      windowID = event.key.windowID;
+      break;
+
+    case SDL_EVENT_TEXT_EDITING:
+    case SDL_EVENT_TEXT_INPUT:
+      windowID = event.text.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_MOTION:
+      windowID = event.motion.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+      windowID = event.button.windowID;
+      break;
+
+    case SDL_EVENT_MOUSE_WHEEL:
+      windowID = event.wheel.windowID;
+      break;
+
+    default:
+      have_windowID = 0;
+      windowID      = 0;
+      break;
+    }
+
+    if (!have_windowID)
+      continue;
+
     for (n = 0; n < count; n++)
     {
-      if (SDL_GetWindowID(instances[n].video.window) == event.window.windowID)
+      if (SDL_GetWindowID(instances[n].video.window) == windowID)
       {
         chq_handle_event(&instances[n], &event);
         break;
@@ -2049,6 +2105,44 @@ static void chq_instance_destroy(chq_sdl_state_t *state)
   SDL_DestroyWindow(state->video.window);
 }
 
+// Parses a decimal integer strictly: rejects empty strings, non-numeric
+// input and trailing garbage, rather than letting atoi silently coerce them
+// to 0. Returns 1 on success (with *out set), 0 on failure.
+static int chq_parse_int(const char *text, int *out)
+{
+  char *end;
+  long  value;
+
+  if (text[0] == '\0')
+    return 0;
+
+  value = strtol(text, &end, 10);
+  if (*end != '\0')
+    return 0;
+
+  *out = (int) value;
+  return 1;
+}
+
+// Destroys every instance in [0, created) that hasn't already torn itself
+// down, then frees the array and shuts SDL down. Shared by every exit path
+// out of main() so a failure partway through startup doesn't leak windows,
+// audio devices or the SDL subsystem.
+static void chq_shutdown_all(chq_sdl_state_t *instances, int created)
+{
+  int n;
+
+  for (n = 0; n < created; n++)
+  {
+    if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_CLOSED))
+      chq_instance_destroy(&instances[n]);
+  }
+
+  free(instances);
+
+  SDL_Quit();
+}
+
 int main(int argc, char *argv[])
 {
   chq_sdl_state_t *instances;
@@ -2071,7 +2165,11 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(argv[arg], "-n") == 0 && arg + 1 < argc)
     {
-      count = atoi(argv[++arg]);
+      if (!chq_parse_int(argv[++arg], &count))
+      {
+        fprintf(stderr, "Error: -n expects an integer, got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
     }
     else if (strcmp(argv[arg], "-quiet") == 0)
     {
@@ -2079,7 +2177,11 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(argv[arg], "-scale") == 0 && arg + 1 < argc)
     {
-      scale = atoi(argv[++arg]);
+      if (!chq_parse_int(argv[++arg], &scale))
+      {
+        fprintf(stderr, "Error: -scale expects an integer, got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
     }
     else
     {
@@ -2120,6 +2222,7 @@ int main(int argc, char *argv[])
   if (instances == NULL)
   {
     fprintf(stderr, "Error: out of memory\n");
+    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -2128,6 +2231,7 @@ int main(int argc, char *argv[])
     if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, scale))
     {
       fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
+      chq_shutdown_all(instances, n);
       return EXIT_FAILURE;
     }
   }
@@ -2158,6 +2262,7 @@ int main(int argc, char *argv[])
         !chq_instance_launch_game(&instances[n]))
     {
       fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
+      chq_shutdown_all(instances, count);
       return EXIT_FAILURE;
     }
   }
@@ -2194,9 +2299,7 @@ int main(int argc, char *argv[])
   }
   while (quit_count < count);
 
-  free(instances);
-
-  SDL_Quit();
+  chq_shutdown_all(instances, count);
 
   return EXIT_SUCCESS;
 }
