@@ -1969,24 +1969,23 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   /* Show the cassette loading screen before the game starts. On real
    * hardware this isn't drawn by the game at all: the tape loader blits it
    * straight into screen memory before the BASIC loader runs the machine
-   * code, so we do the same here, ahead of chq_create/chq_start.
+   * code, so we do the same here, ahead of chq_create/chq_start. The hold
+   * itself happens once, across every instance, in main() -- not here --
+   * so N instances share one LOADING_SCREEN_DURATION_MS wait instead of
+   * paying it N times serially.
    */
   memcpy(state->zx->screen.pixels, loading_screen_bitmap, sizeof(loading_screen_bitmap));
   memcpy(state->zx->screen.attributes, loading_screen_attributes, sizeof(loading_screen_attributes));
   state->zx->draw(state->zx, NULL);
 
-  {
-    Uint64 splash_start_ms = SDL_GetTicks();
+  return 1;
+}
 
-    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS &&
-           !CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
-    {
-      chq_dispatch_events(state, 1);
-      chq_sdl_main_loop(state);
-      SDL_Delay(16);
-    }
-  }
-
+// Starts the game thread for an instance that chq_instance_create has
+// already brought a window up for. Split out so main() can hold the loading
+// screen for every instance at once before any of them start playing.
+static int chq_instance_launch_game(chq_sdl_state_t *state)
+{
   state->game = chq_create(state->zx);
   if (state->game == NULL)
     return 0;
@@ -2013,11 +2012,15 @@ static void chq_instance_destroy(chq_sdl_state_t *state)
   SDL_PauseAudioStreamDevice(state->audio.stream);
   SDL_ClearAudioStream(state->audio.stream);
 
-  chq_stop(state->game);
+  // game/game_thread are NULL if the instance quit during the shared loading
+  // screen wait, before chq_instance_launch_game ever ran.
+  if (state->game != NULL)
+  {
+    chq_stop(state->game);
+    SDL_WaitThread(state->game_thread, NULL);
+    chq_destroy(state->game);
+  }
 
-  SDL_WaitThread(state->game_thread, NULL);
-
-  chq_destroy(state->game);
   zxspectrum_destroy(state->zx);
 
   SDL_DestroyAudioStream(state->audio.stream);
@@ -2111,6 +2114,36 @@ int main(int argc, char *argv[])
     if (!chq_instance_create(&instances[n], mode_128k, n, quiet, scale))
     {
       fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // Hold the loading screen for every instance at once -- one
+  // LOADING_SCREEN_DURATION_MS wait total, not one per instance.
+  {
+    Uint64 splash_start_ms = SDL_GetTicks();
+    int    any_quit;
+
+    do
+    {
+      any_quit = 0;
+      chq_dispatch_events(instances, count);
+      for (n = 0; n < count; n++)
+      {
+        chq_sdl_main_loop(&instances[n]);
+        any_quit |= CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT);
+      }
+      SDL_Delay(16);
+    }
+    while (SDL_GetTicks() - splash_start_ms < LOADING_SCREEN_DURATION_MS && !any_quit);
+  }
+
+  for (n = 0; n < count; n++)
+  {
+    if (!CHQ_FLAG_TEST(&instances[n], CHQ_FLAG_QUIT) &&
+        !chq_instance_launch_game(&instances[n]))
+    {
+      fprintf(stderr, "Error: failed to launch instance #%d\n", n + 1);
       return EXIT_FAILURE;
     }
   }
