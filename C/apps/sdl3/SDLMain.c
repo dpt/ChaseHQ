@@ -1340,6 +1340,7 @@ static void chq_action_toggle_mute(chq_sdl_state_t *state)
 static void chq_action_toggle_dirty_overlay(chq_sdl_state_t *state)
 {
   state->video.show_dirty_overlay = !state->video.show_dirty_overlay;
+  chq_osd_show(state, state->video.show_dirty_overlay ? "DIRTY RECTS ON" : "DIRTY RECTS OFF");
 }
 
 static void chq_action_toggle_crt(chq_sdl_state_t *state)
