@@ -21,6 +21,7 @@
 #include <setjmp.h>
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Pixels.h"
 #include "ZXSpectrum/Spectrum.h"
 
 #include "ChaseHQ/ChaseHQ.h"
@@ -593,7 +594,7 @@ struct chqstate
 
     /* $9412: (SM in draw_object_clipped) Bitmap data for the sprite's second plot
      * call */
-    const u8 *bitmap_ptr;
+    const pixel_t *bitmap_ptr;
 
     /* $9415: (SM in draw_object_clipped) Row count for the sprite's second plot
      * call */
@@ -609,7 +610,7 @@ struct chqstate
 
     /* $946C: (SM in draw_object_clipped) Bitmap data for the mask's second plot
      * call */
-    const u8 *mask_bitmap_ptr;
+    const pixel_t *mask_bitmap_ptr;
 
     /* $946F: (SM in draw_object_clipped) Row count for the mask's second plot
      * call */

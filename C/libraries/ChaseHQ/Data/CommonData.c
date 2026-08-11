@@ -34,7 +34,7 @@
  */
 
 /** $7BE9: bitmap_faces */
-const u8 bitmap_faces[FACEBYTES * NFACES] = {
+const pixel_t bitmap_faces[FACEBYTES * NFACES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XX__X, X_______, ________, ____X_XX,
   X_XX___X, ________, ________, _____X_X,
@@ -344,7 +344,7 @@ const depthset_t streetlampmiddle_right = {
   }
 };
 
-static const u8 streetlampbody_shifted_pool[64]; /* defined below with 13s/14s/15s data */
+static const pixel_t streetlampbody_shifted_pool[64]; /* defined below with 13s/14s/15s data */
 
 /** $7EBC: streetlampbody_bitmaps */
 const bitmap_t streetlampbody_bitmaps[15] = {
@@ -366,123 +366,123 @@ const bitmap_t streetlampbody_bitmaps[15] = {
 };
 
 /** $7F25: bitmap_streetlampbody_1 */
-const u8 bitmap_streetlampbody_1[4] = {
+const pixel_t bitmap_streetlampbody_1[4] = {
   X______X, _XXXXXX_,
   _______X, XXX__XX_
 };
 
 /** $7F29: bitmap_streetlampbody_2 */
-const u8 bitmap_streetlampbody_2[4] = {
+const pixel_t bitmap_streetlampbody_2[4] = {
   _______X, XX____X_,
   _______X, X_X___X_
 };
 
 /** $7F2D: bitmap_streetlampbody_3 */
-const u8 bitmap_streetlampbody_3[4] = {
+const pixel_t bitmap_streetlampbody_3[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
 /** $7F31: bitmap_streetlampbody_4 */
-const u8 bitmap_streetlampbody_4[4] = {
+const pixel_t bitmap_streetlampbody_4[4] = {
   XX____XX, __XXXX__,
   X______X, _X_X_XX_
 };
 
 /** $7F35: bitmap_streetlampbody_5 */
-const u8 bitmap_streetlampbody_5[4] = {
+const pixel_t bitmap_streetlampbody_5[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
 /** $7F39: bitmap_streetlampbody_6 */
-const u8 bitmap_streetlampbody_6[4] = {
+const pixel_t bitmap_streetlampbody_6[4] = {
   X____XXX, _X__X___,
   X____XXX, _X__X___
 };
 
 /** $7F3D: bitmap_streetlampbody_7 */
-const u8 bitmap_streetlampbody_7[2] = {
+const pixel_t bitmap_streetlampbody_7[2] = {
   ____XXXX, XXXX____
 };
 
 /** $7F3F: bitmap_streetlampbody_8 */
-const u8 bitmap_streetlampbody_8[4] = {
+const pixel_t bitmap_streetlampbody_8[4] = {
   ____XXXX, XX_X____,
   ____XXXX, XX_X____
 };
 
 /** $7F43: bitmap_streetlampbody_9 */
-const u8 bitmap_streetlampbody_9[4] = {
+const pixel_t bitmap_streetlampbody_9[4] = {
   ___XXXXX, X_X_____,
   ___XXXXX, X_X_____
 };
 
 /** $7F47: bitmap_streetlampbody_7s */
-const u8 bitmap_streetlampbody_7s[2] = {
+const pixel_t bitmap_streetlampbody_7s[2] = {
   XXXX____, ____XXXX
 };
 
 /** $7F49: bitmap_streetlampbody_8s */
-const u8 bitmap_streetlampbody_8s[4] = {
+const pixel_t bitmap_streetlampbody_8s[4] = {
   XXXX____, ____XX_X,
   XXXX____, ____XX_X
 };
 
 /** $7F4D: bitmap_streetlampbody_9s */
-const u8 bitmap_streetlampbody_9s[4] = {
+const pixel_t bitmap_streetlampbody_9s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
 /** $7F51: bitmap_streetlampbody_10 */
-const u8 bitmap_streetlampbody_10[2] = {
+const pixel_t bitmap_streetlampbody_10[2] = {
   XX___XXX, __XXX___
 };
 
 /** $7F53: bitmap_streetlampbody_11 */
-const u8 bitmap_streetlampbody_11[4] = {
+const pixel_t bitmap_streetlampbody_11[4] = {
   XX___XXX, __X_X___,
   XX___XXX, __X_X___
 };
 
 /** $7F57: bitmap_streetlampbody_12 */
-const u8 bitmap_streetlampbody_12[4] = {
+const pixel_t bitmap_streetlampbody_12[4] = {
   XX__XXXX, __XX____,
   XX__XXXX, __XX____
 };
 
 /** $7F5B: bitmap_streetlampbody_10s */
-const u8 bitmap_streetlampbody_10s[2] = {
+const pixel_t bitmap_streetlampbody_10s[2] = {
   XXXX___X, ____XXX_
 };
 
 /** $7F5D: bitmap_streetlampbody_11s */
-const u8 bitmap_streetlampbody_11s[4] = {
+const pixel_t bitmap_streetlampbody_11s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
 /** $7F61: bitmap_streetlampbody_12s */
-const u8 bitmap_streetlampbody_12s[4] = {
+const pixel_t bitmap_streetlampbody_12s[4] = {
   XXXX__XX, ____XX__,
   XXXX__XX, ____XX__
 };
 
 /** $7F65: bitmap_streetlampbody_13 */
-const u8 bitmap_streetlampbody_13[4] = {
+const pixel_t bitmap_streetlampbody_13[4] = {
   XXXXXXX_, _______X,
   _XXXXXXX, X_______
 };
 
 /** $7F69: bitmap_streetlampbody_14 */
-const u8 bitmap_streetlampbody_14[8] = {
+const pixel_t bitmap_streetlampbody_14[8] = {
   XXXXXXX_, _______X, _XXXXXXX, X_______,
   XXXXXXX_, _______X, _XXXXXXX, X_______
 };
 
 /** $7F71: bitmap_streetlampbody_15 */
-const u8 bitmap_streetlampbody_15[8] = {
+const pixel_t bitmap_streetlampbody_15[8] = {
   XXXXXXXX, ________, _XXXXXXX, X_______,
   XXXXXXXX, ________, _XXXXXXX, X_______
 };
@@ -495,7 +495,7 @@ const u8 bitmap_streetlampbody_15[8] = {
  * must be a single C array. Max read: start_offset=2 (1 row skipped),
  * max_height=30, draw_width=4: 2 + 2*29 + 3 = 63 -- need 64 bytes.
  */
-static const u8 streetlampbody_shifted_pool[64] = {
+static const pixel_t streetlampbody_shifted_pool[64] = {
   /* $7F79: bitmap_streetlampbody_13s */
   XXXXXXXX, ________, XXX__XXX, ___XX___,
   /* $7F7D: bitmap_streetlampbody_14s */
@@ -866,7 +866,7 @@ const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
 /* ----------------------------------------------------------------------- */
 
 /** $A27A: font */
-const u8 font[41 * 7] = {
+const pixel_t font[41 * 7] = {
   __XX____,
   _XXXX___,
   _XXXX___,
@@ -1259,7 +1259,7 @@ const u8 horizon_table[32] = {
 /* ----------------------------------------------------------------------- */
 
 /** $D03F: bitmap_arrow */
-const u8 bitmap_arrow[3 * 2 * 28] = {
+const pixel_t bitmap_arrow[3 * 2 * 28] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   XX______, _____XXX, ______XX, XXXXXX__, XXXXXXXX, ________,
   XX______, ___XXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
@@ -1324,7 +1324,7 @@ const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $E229: bitmap_tunnellight_1 */
-const u8 bitmap_tunnellight_1[2 * 16] = {
+const pixel_t bitmap_tunnellight_1[2 * 16] = {
   XXXXXXXX, _XXXXXXX,
   XX_XXXX_, _XXXXXXX,
   XXX_X_X_, _X_XXXXX,
@@ -1344,7 +1344,7 @@ const u8 bitmap_tunnellight_1[2 * 16] = {
 };
 
 /** $E249: bitmap_tunnellight_2 */
-const u8 bitmap_tunnellight_2[2 * 12] = {
+const pixel_t bitmap_tunnellight_2[2 * 12] = {
   XXXXX_XX, XXXXXXXX,
   X_XXX_XX, X_XXXXXX,
   XX_X___X, _XXXXXXX,
@@ -1360,7 +1360,7 @@ const u8 bitmap_tunnellight_2[2 * 12] = {
 };
 
 /** $E261: bitmap_tunnellight_3 */
-const u8 bitmap_tunnellight_3[1 * 8] = {
+const pixel_t bitmap_tunnellight_3[1 * 8] = {
   XXX_XXXX,
   X_X_X_XX,
   XX_____X,
@@ -1372,7 +1372,7 @@ const u8 bitmap_tunnellight_3[1 * 8] = {
 };
 
 /** $E269: bitmap_tunnellight_4 */
-const u8 bitmap_tunnellight_4[1 * 6] = {
+const pixel_t bitmap_tunnellight_4[1 * 6] = {
   XXXXXXXX,
   _X_X_XXX,
   X___XXXX,
@@ -1382,7 +1382,7 @@ const u8 bitmap_tunnellight_4[1 * 6] = {
 };
 
 /** $E26F: bitmap_tunnellight_5 */
-const u8 bitmap_tunnellight_5[1 * 5] = {
+const pixel_t bitmap_tunnellight_5[1 * 5] = {
   XX_XXXXX,
   X___XXXX,
   _____XXX,
@@ -1391,7 +1391,7 @@ const u8 bitmap_tunnellight_5[1 * 5] = {
 };
 
 /** $E274: bitmap_tunnellight_6 */
-const u8 bitmap_tunnellight_6[2 * 2 * 6] = {
+const pixel_t bitmap_tunnellight_6[2 * 2 * 6] = {
   XX__XXXX, __XX____, XXXXXXXX, ________,
   X____XXX, _X__X___, XXXXXXXX, ________,
   ______XX, X____X__, XXXXXXXX, ________,
@@ -1401,7 +1401,7 @@ const u8 bitmap_tunnellight_6[2 * 2 * 6] = {
 };
 
 /** $E28C: bitmap_tunnellight_6s */
-const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
+const pixel_t bitmap_tunnellight_6s[2 * 2 * 6] = {
   XXXXXX__, ______XX, XXXXXXXX, ________,
   XXXXX___, _____X__, _XXXXXXX, X_______,
   XXXX____, ____X___, __XXXXXX, _X______,
@@ -1421,7 +1421,7 @@ const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
  * Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
  * distinct bitmap per frame, selected by anim_counter bit 0.
  */
-const u8 bitmap_helicopter[590] = {
+const pixel_t bitmap_helicopter[590] = {
   _____X__, X_X_X___, ____X_X_, __XXXX_X, _X_X_X_X, ________, ________,
   ________, _X_XXXX_, ____X_X_, ___XX_X_, XXXXX_X_, ________, ___X____,
   ________, ___XXX_X, _X___X_X, __XXXX_X, _XX__X__, ________, ____X___,
@@ -1645,7 +1645,7 @@ const u8 forked_road_lanes[2] = {
 /* ----------------------------------------------------------------------- */
 
 /** $E364: spiral_transition_frames */
-const u8 spiral_transition_frames[11 * 8] = {
+const pixel_t spiral_transition_frames[11 * 8] = {
   XXXXXXXX, // 1
   ________,
   ________,
@@ -1747,7 +1747,7 @@ const u8 spiral_transition_frames[11 * 8] = {
 };
 
 /** $E3BC: circle_transition_frames */
-const u8 circle_transition_frames[7 * 8] = {
+const pixel_t circle_transition_frames[7 * 8] = {
   ________, // 1
   ________,
   ________,
@@ -1820,7 +1820,7 @@ const u8 circle_transition_frames[7 * 8] = {
  * $E410..$E4CF: edge markings (six 32-byte masked variants)
  * $E4D0..$E4FF: lane markings (three 16-byte unmasked variants)
  */
-const u8 edge_markings[256] = {
+const pixel_t edge_markings[256] = {
   // $E400..$E40F: unused zeros
   ________,________,________,________,
   ________,________,________,________,
@@ -1953,7 +1953,7 @@ const transition_t transitions[8] = {
 };
 
 /** 0xE8A6: square_transition_frames */
-const u8 square_transition_frames[5 * 8] = {
+const pixel_t square_transition_frames[5 * 8] = {
   ________, // 1
   ________,
   ________,
@@ -2001,7 +2001,7 @@ const u8 square_transition_frames[5 * 8] = {
 };
 
 /** 0xE8CE: diamond_transition_frames */
-const u8 diamond_transition_frames[6 * 8] = {
+const pixel_t diamond_transition_frames[6 * 8] = {
   X______X, // 1
   _X____X_,
   __X__X__,

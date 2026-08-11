@@ -59,15 +59,15 @@ static const u8 stage6_map_start_hazards[37];
 static const u8 stage6_map_start_leftobjs[13];
 static const u8 stage6_map_start_rightobjs[13];
 
-static const u8 stage6_perp_face[180];
+static const pixel_t stage6_perp_face[180];
 static const bitmap_t stage6_veh3[6];
 static const bitmap_t stage6_veh2[6];
 static const bitmap_t stage6_veh1[6];
 
 static const bitmap_t stage6_lods_D620[6];
 
-static const u8 stage6_bitmap_C960[1329];
-static const u8 stage6_bitmap_D64A[181];
+static const pixel_t stage6_bitmap_C960[1329];
+static const pixel_t stage6_bitmap_D64A[181];
 
 /* ----------------------------------------------------------------------- */
 
@@ -358,7 +358,7 @@ static const u8 stage6_map_start_rightobjs[13] = {
 /**
  * $C82E: stage6_perp_face
  */
-static const u8 stage6_perp_face[FACEBYTES] = {
+static const pixel_t stage6_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X_XXXXX_, XXX_XXX_, X_X_X__X,
   XXXXXXXX, X_XX_XX_, XX__XX_X, XXXX_X_X,
@@ -442,7 +442,7 @@ static const bitmap_t stage6_veh1[6] = {
 /**
  * $C960: stage6_bitmap_C960
  */
-static const u8 stage6_bitmap_C960[1329] = {
+static const pixel_t stage6_bitmap_C960[1329] = {
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, _XXXXXX_, _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, __XXXXXX,
@@ -625,7 +625,7 @@ static const bitmap_t stage6_lods_D620[6] = {
 /**
  * $D64A: stage6_bitmap_D64A
  */
-static const u8 stage6_bitmap_D64A[181] = {
+static const pixel_t stage6_bitmap_D64A[181] = {
   ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
   ____XX_X, __X___XX, _X___XX_, X__X____, ____XXX_, X_X___XX, XX___XXX, _X_X____,
   _____XXX, _X_X__XX, _X__XXX_, X_X_____, _____XX_, X__X_XX_, X_X_XX_X, __X_____,

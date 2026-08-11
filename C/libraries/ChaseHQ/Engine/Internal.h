@@ -20,6 +20,8 @@
 
 #include <setjmp.h>
 
+#include "ZXSpectrum/Pixels.h"
+
 #include "ChaseHQ/ChaseHQ.h"
 
 /* ----------------------------------------------------------------------- */
@@ -425,18 +427,18 @@ typedef struct session session_t;
 
 typedef struct carpart
 {
-  u8        y;
-  u8        rows;
-  const u8 *bitmap;
+  u8             y;
+  u8             rows;
+  const pixel_t *bitmap;
 } carpart_t;
 
 typedef struct carsmokeframe
 {
-  u8        height;
-  u8        width;
-  u8        unflipped_x;
-  u8        flipped_x;
-  const u8 *bitmap;
+  u8             height;
+  u8             width;
+  u8             unflipped_x;
+  u8             flipped_x;
+  const pixel_t *bitmap;
 } carsmokeframe_t;
 
 typedef struct carframe
@@ -448,9 +450,9 @@ typedef struct carframe
 
 typedef struct caradornment
 {
-  u8        height;
-  u8        width;
-  const u8 *bitmap;
+  u8             height;
+  u8             width;
+  const pixel_t *bitmap;
 } caradornment_t;
 
 /* ----------------------------------------------------------------------- */
