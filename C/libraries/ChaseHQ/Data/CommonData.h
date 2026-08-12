@@ -61,6 +61,9 @@ extern const pixel_t bitmap_streetlampbody_12s[4];
 extern const pixel_t bitmap_streetlampbody_13[4];
 extern const pixel_t bitmap_streetlampbody_14[8];
 extern const pixel_t bitmap_streetlampbody_15[8];
+extern const pixel_t bitmap_streetlampbody_13s[4];
+extern const pixel_t bitmap_streetlampbody_14s[8];
+extern const pixel_t bitmap_streetlampbody_15s[8];
 
 extern const u8 chatterblk_start_stage[4];
 extern const u8 chatterblk_tony_giddy_up[3];

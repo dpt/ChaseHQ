@@ -344,8 +344,6 @@ const depthset_t streetlampmiddle_right = {
   }
 };
 
-static const pixel_t streetlampbody_shifted_pool[64]; /* defined below with 13s/14s/15s data */
-
 /** $7EBC: streetlampbody_bitmaps */
 const bitmap_t streetlampbody_bitmaps[15] = {
   { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
@@ -360,9 +358,9 @@ const bitmap_t streetlampbody_bitmaps[15] = {
   { 1, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
   { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
   { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
-  { 2, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_13[0], &streetlampbody_shifted_pool[0]  },
-  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_14[0], &streetlampbody_shifted_pool[4]  },
-  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_15[0], &streetlampbody_shifted_pool[12] }
+  { 2, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_13[0], &bitmap_streetlampbody_13s[0] },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_14[0], &bitmap_streetlampbody_14s[0] },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_15[0], &bitmap_streetlampbody_15s[0] }
 };
 
 /** $7F25: bitmap_streetlampbody_1 */
@@ -487,29 +485,21 @@ const pixel_t bitmap_streetlampbody_15[8] = {
   XXXXXXXX, ________, _XXXXXXX, X_______
 };
 
-/**
- * $7F79: streetlampbody_shifted_pool
- *
- * Pre-shifted bitmaps 13s/14s/15s, followed by unused zeros ($7F8D+). The
- * renderer reads across their boundaries as contiguous Z80 memory, so they
- * must be a single C array. Max read: start_offset=2 (1 row skipped),
- * max_height=30, draw_width=4: 2 + 2*29 + 3 = 63 -- need 64 bytes.
- */
-static const pixel_t streetlampbody_shifted_pool[64] = {
-  /* $7F79: bitmap_streetlampbody_13s */
-  XXXXXXXX, ________, XXX__XXX, ___XX___,
+/** $7F79: bitmap_streetlampbody_13s */
+const pixel_t bitmap_streetlampbody_13s[4] = {
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
 
-  /* $7F7D: bitmap_streetlampbody_14s */
+/** $7F7D: bitmap_streetlampbody_14s */
+const pixel_t bitmap_streetlampbody_14s[8] = {
   XXXXXXXX, ________, XXX__XXX, ___XX___,
-  XXXXXXXX, ________, XXX__XXX, ___XX___,
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
 
-  /* $7F85: bitmap_streetlampbody_15s */
+/** $7F85: bitmap_streetlampbody_15s */
+const pixel_t bitmap_streetlampbody_15s[8] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___,
-  XXXXXXXX, ________, XXXX_XXX, ____X___,
-
-  /* $7F8D: unused zeros */
-  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0
+  XXXXXXXX, ________, XXXX_XXX, ____X___
 };
 
 /* ----------------------------------------------------------------------- */
