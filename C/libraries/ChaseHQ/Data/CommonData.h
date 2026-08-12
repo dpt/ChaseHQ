@@ -127,7 +127,17 @@ extern const pixel_t bitmap_tunnellight_6s[2 * 2 * 6];
 /* Helicopter sprite (stages 2 and 4 share identical part data; only the
  * per-stage bank addresses of the two frame tables differ in the original).
  */
-extern const pixel_t bitmap_helicopter[590];
+extern const pixel_t bitmap_heli_part2_frame0[7 * 16];
+extern const pixel_t bitmap_heli_part1_frame0[3 * 7];
+extern const pixel_t bitmap_heli_part2_frame1[7 * 16];
+extern const pixel_t bitmap_heli_part1_frame1[3 * 7];
+extern const pixel_t bitmap_heli_part0[2 * 3 * 10];
+extern const pixel_t bitmap_heli_part3_frame0[2 * 2 * 3];
+extern const pixel_t bitmap_heli_part4_frame0[2 * 1 * 7];
+extern const pixel_t bitmap_heli_part3_frame1[2 * 1 * 5];
+extern const pixel_t bitmap_heli_part4_frame1[2 * 2 * 7];
+extern const pixel_t bitmap_heli_rotor_frame0[2 * 5 * 10];
+extern const pixel_t bitmap_heli_rotor_frame1[2 * 5 * 10];
 extern const heli_bitmap_t heli_part0;
 extern const heli_bitmap_t heli_part1_frame0;
 extern const heli_bitmap_t heli_part1_frame1;

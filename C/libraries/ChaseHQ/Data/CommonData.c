@@ -1421,7 +1421,8 @@ const pixel_t bitmap_tunnellight_6s[2 * 2 * 6] = {
  * Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
  * distinct bitmap per frame, selected by anim_counter bit 0.
  */
-const pixel_t bitmap_helicopter[590] = {
+/** $ECE7: bitmap_heli_part2_frame0 */
+const pixel_t bitmap_heli_part2_frame0[7 * 16] = {
   _____X__, X_X_X___, ____X_X_, __XXXX_X, _X_X_X_X, ________, ________,
   ________, _X_XXXX_, ____X_X_, ___XX_X_, XXXXX_X_, ________, ___X____,
   ________, ___XXX_X, _X___X_X, __XXXX_X, _XX__X__, ________, ____X___,
@@ -1438,7 +1439,10 @@ const pixel_t bitmap_helicopter[590] = {
   __X_X_X_, ________, ___XXX__, _X____XX, _____XXX, X_XX____, ________,
   ________, ________, __X_X___, _X____X_, ______X_, XXX_X___, ________,
   ____X___, ________, _X_X_X__, _X____X_, ________, _X_XXX_X, __X_____,
+};
 
+/** $ED57: bitmap_heli_part1_frame0 */
+const pixel_t bitmap_heli_part1_frame0[3 * 7] = {
   X___X__X, XXXXXXXX, X_XXX___,
   X___X__X, XXXXXXXX, _X_XX___,
   X___XX__, XXXXXXXX, X_X_X___,
@@ -1446,7 +1450,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXX_X_, _XXXXXX_, X_X_XXXX,
   ___X_X_X, __XXXX_X, _XXXX_XX,
   ___X_X__, ___XX_XX, X_XXX_X_,
+};
 
+/** $ED6C: bitmap_heli_part2_frame1 */
+const pixel_t bitmap_heli_part2_frame1[7 * 16] = {
   ________, ________, X_XXX_X_, __XXXX_X, _X_X____, ____X_XX, XXX_____,
   _____X__, ________, _X_XX_X_, ___XX_X_, XXXX____, _X_XXX_X, _X_X____,
   ____X___, ________, __X__X_X, __XXXX_X, _XX_____, X_XXX_X_, ________,
@@ -1463,7 +1470,10 @@ const pixel_t bitmap_helicopter[590] = {
   ____X___, _X_X_XXX, _X__X__X, XX____XX, _XX_____, ________, X_X__X__,
   _____XX_, X_XXX_X_, X_______, XX____X_, __XX____, ________, ____X___,
   _____XXX, XXXX_X__, _______X, _X____X_, _X_XX_X_, ________, ________,
+};
 
+/** $EDDC: bitmap_heli_part1_frame1 */
+const pixel_t bitmap_heli_part1_frame1[3 * 7] = {
   X___X__X, XXXXXXXX, X_XXX___,
   X___X__X, XXXXXXXX, _X_XX___,
   X___XX__, XXXXXXXX, X_X_X___,
@@ -1471,7 +1481,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXX_X_, _XXXXXX_, X_X_XXXX,
   X__X_X_X, __XXXX_X, _XXXX___,
   _X_X_X__, ___XX_XX, X_XXX___,
+};
 
+/** $EDF1: bitmap_heli_part0 (masked: 3 visual columns, 6 raw bytes/row) */
+const pixel_t bitmap_heli_part0[2 * 3 * 10] = {
   XXXXX__X, ________, XX_____X, ________, X__XXXXX, ________,
   XXXX____, _____XX_, X_______, __XXXXX_, ____XXXX, _XX_____,
   XXX_____, ____X_XX, ________, _XXXXXXX, _____XXX, _XXX____,
@@ -1482,11 +1495,17 @@ const pixel_t bitmap_helicopter[590] = {
   X_______, __X__XXX, ________, X_______, ________, XXXX_XX_,
   X_______, __X_XX_X, ________, _XXXXXXX, ________, _X_XX_X_,
   ________, _X_X_XXX, ________, XXXXXXXX, ________, XXXX_X_X,
+};
 
+/** $EE2D: bitmap_heli_part3_frame0 (masked: 2 visual columns, 4 raw bytes/row) */
+const pixel_t bitmap_heli_part3_frame0[2 * 2 * 3] = {
   XXXXXXX_, ________, X____XX_, ___X____,
   XXXXXX__, _______X, ____XXXX, _XX_____,
   XXXXX___, _______X, _____XXX, XX_X____,
+};
 
+/** $EE39: bitmap_heli_part4_frame0 (masked: 1 visual column, 2 raw bytes/row) */
+const pixel_t bitmap_heli_part4_frame0[2 * 1 * 7] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
   ____XXXX, X_______,
@@ -1494,13 +1513,19 @@ const pixel_t bitmap_helicopter[590] = {
   _______X, XXX_XX__,
   ________, _X_X__X_,
   ____XX_X, X_X_____,
+};
 
+/** $EE47: bitmap_heli_part3_frame1 (masked: 1 visual column, 2 raw bytes/row) */
+const pixel_t bitmap_heli_part3_frame1[2 * 1 * 5] = {
   XXXXX___, ________,
   XXX_____, _____XXX,
   XX______, ___XXX_X,
   X_______, __X_X_X_,
   XX_X____, _____X_X,
+};
 
+/** $EE51: bitmap_heli_part4_frame1 (masked: 2 visual columns, 4 raw bytes/row) */
+const pixel_t bitmap_heli_part4_frame1[2 * 2 * 7] = {
   __XXXXXX, X_______, XXXXXXXX, ________,
   __XXXXXX, X_______, XXXXXXXX, ________,
   __XXXXXX, X_______, XXXXXXXX, ________,
@@ -1508,7 +1533,10 @@ const pixel_t bitmap_helicopter[590] = {
   _XXX____, _____XX_, _XXXXXXX, ________,
   XXXXX___, _______X, __XXXXXX, X_______,
   XXXX_X__, ________, ___XXXXX, XX______,
+};
 
+/** $EE6D: bitmap_heli_rotor_frame0 (masked: 5 visual columns, 10 raw bytes/row) */
+const pixel_t bitmap_heli_rotor_frame0[2 * 5 * 10] = {
   XXXXXXXX, ________, XXXXXXXX, ________, _X_X__XX, X_X_XX__, XXX_X_XX, ___X_X__, XXXXXXXX, ________,
   XXXXXXX_, _______X, X_XXXXXX, _X______, X_X____X, _X_XXXX_, XX_X_X_X, __X_X_X_, _XXXXXXX, X_______,
   XXXX_X_X, ____X_X_, _X_X_XXX, X_X_X___, XX_X__XX, __X_XX__, X_X_X_XX, _X_X_X__, XXXXXXXX, ________,
@@ -1519,7 +1547,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXXXXX, ________, XXX_X_X_, ___X_X_X, X_______, _XXXXXXX, _XXXXX_X, X_____X_, _X_X_XXX, X_X_X___,
   XXXXXXXX, ________, _X_X_X_X, X_X_X_X_, XX______, __XXXXXX, X_XXXXXX, _X______, X_XXXXXX, _X______,
   XXXXXXXX, ________, XXXXX_XX, _____X__, XXX____X, ___XXXX_, _X_XXXXX, X_X_____, XXXXXXXX, ________,
+};
 
+/** $EED1: bitmap_heli_rotor_frame1 (masked: 5 visual columns, 10 raw bytes/row) */
+const pixel_t bitmap_heli_rotor_frame1[2 * 5 * 10] = {
   XXXXXXXX, ________, XXXX_X_X, ____X_X_, XXXX__X_, ____XX_X, X_X_XXXX, _X_X____, XXXXXXXX, ________,
   XXXXXXXX, ________, X_X_X_X_, _X_X_X_X, XXX____X, ___XXXX_, _X_XXXXX, X_X_____, XXXXXXXX, ________,
   XXXXXXXX, ________, XXXX_X_X, ____X_X_, _X_X__X_, X_X_XX_X, X_XXXXXX, _X______, XXX_X_XX, ___X_X__,
@@ -1534,52 +1565,52 @@ const pixel_t bitmap_helicopter[590] = {
 
 /** $ECAA: heli_part0 */
 const heli_bitmap_t heli_part0 = {
-  0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[266], &bitmap_helicopter[266] } }
+  0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_heli_part0[0], &bitmap_heli_part0[0] } }
 };
 
 /** $EC8F: heli_part1_frame0 */
 const heli_bitmap_t heli_part1_frame0 = {
-  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[112], &bitmap_helicopter[112] } }
+  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_heli_part1_frame0[0], &bitmap_heli_part1_frame0[0] } }
 };
 /** $ECA1: heli_part1_frame1 */
 const heli_bitmap_t heli_part1_frame1 = {
-  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[245], &bitmap_helicopter[245] } }
+  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_heli_part1_frame1[0], &bitmap_heli_part1_frame1[0] } }
 };
 
 /** $EC86: heli_part2_frame0 */
 const heli_bitmap_t heli_part2_frame0 = {
-  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[0], &bitmap_helicopter[0] } }
+  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_heli_part2_frame0[0], &bitmap_heli_part2_frame0[0] } }
 };
 /** $EC98: heli_part2_frame1 */
 const heli_bitmap_t heli_part2_frame1 = {
-  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[133], &bitmap_helicopter[133] } }
+  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_heli_part2_frame1[0], &bitmap_heli_part2_frame1[0] } }
 };
 
 /** $ECB3: heli_part3_frame0 */
 const heli_bitmap_t heli_part3_frame0 = {
-  0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_helicopter[326], &bitmap_helicopter[326] } }
+  0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_heli_part3_frame0[0], &bitmap_heli_part3_frame0[0] } }
 };
 /** $ECC5: heli_part3_frame1 */
 const heli_bitmap_t heli_part3_frame1 = {
-  0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_helicopter[352], &bitmap_helicopter[352] } }
+  0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_heli_part3_frame1[0], &bitmap_heli_part3_frame1[0] } }
 };
 
 /** $ECBC: heli_part4_frame0 */
 const heli_bitmap_t heli_part4_frame0 = {
-  0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[338], &bitmap_helicopter[338] } }
+  0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_heli_part4_frame0[0], &bitmap_heli_part4_frame0[0] } }
 };
 /** $ECCE: heli_part4_frame1 */
 const heli_bitmap_t heli_part4_frame1 = {
-  0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[362], &bitmap_helicopter[362] } }
+  0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_heli_part4_frame1[0], &bitmap_heli_part4_frame1[0] } }
 };
 
 /** $ECD7: heli_rotor_frame0 */
 const heli_bitmap_xonly_t heli_rotor_frame0 = {
-  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[390], &bitmap_helicopter[390] }
+  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_heli_rotor_frame0[0], &bitmap_heli_rotor_frame0[0] }
 };
 /** $ECDF: heli_rotor_frame1 */
 const heli_bitmap_xonly_t heli_rotor_frame1 = {
-  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[490], &bitmap_helicopter[490] }
+  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_heli_rotor_frame1[0], &bitmap_heli_rotor_frame1[0] }
 };
 
 /** $ED93 (stage 2) / $EC6E (stage 4) in the original banks. */
