@@ -4113,8 +4113,6 @@ static const u8 options_menu_text[366] = {
 
 /* ----------------------------------------------------------------------- */
 
-/* ----------------------------------------------------------------------- */
-
 /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
  * each high-score row (fixed to screen position, never shifted -- see
  * high_score_row_t's own comment in Bank3State.h). Not consumed yet: the
