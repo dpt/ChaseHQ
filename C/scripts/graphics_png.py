@@ -351,13 +351,39 @@ def find_masked_array_names(text):
     return names - excluded
 
 
+MAIN_C = ROOT / "libraries" / "ChaseHQ" / "Engine" / "Main.c"
+
+# Main.c references shared data arrays by bare name (plus pointer arithmetic
+# for slices), not CommonData.c's &name[N] form -- e.g. `bitmap_arrow` itself
+# is declared in CommonData.c but only ever used in a BITMAPFLAG_MASKED
+# bitmap_t literal here, so its maskedness is invisible to BITMAP_T_RE.
+MAIN_BITMAP_T_RE = re.compile(
+    r"\{\s*\d+\s*,\s*BITMAPFLAG_MASKED\b[^,]*,\s*\d+\s*,"
+    r"\s*(\w+)(\s*\+\s*\d+)?\s*,\s*(\w+)(\s*\+\s*\d+)?\s*\}"
+)
+
+
+def find_masked_array_names_in_main():
+    """Same offset-0-only rule as find_masked_array_names, applied to Main.c's
+    bare-name bitmap_t literals instead of CommonData.c's &name[N] form."""
+    text = MAIN_C.read_text()
+    names, excluded = set(), set()
+    for data_name, data_off, shifted_name, shifted_off in MAIN_BITMAP_T_RE.findall(text):
+        for name, off in ((data_name, data_off), (shifted_name, shifted_off)):
+            if name == "NULL":
+                continue
+            (excluded if off else names).add(name)
+    return names - excluded
+
+
 def build_manifest(name_to_value):
     attr_idx, attributes = load_attribute_table()
     manifest = []
+    main_masked_names = find_masked_array_names_in_main()
     for filename in DATA_FILES:
         text = (DATA_DIR / filename).read_text()
         entries = discover_arrays(filename, text, name_to_value)
-        masked_names = find_masked_array_names(text)
+        masked_names = find_masked_array_names(text) | main_masked_names
         for e in entries:
             if e.name in masked_names and e.width_bytes % 2 == 0:
                 e.masked = True
