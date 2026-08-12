@@ -348,21 +348,21 @@ static const pixel_t streetlampbody_shifted_pool[64]; /* defined below with 13s/
 
 /** $7EBC: streetlampbody_bitmaps */
 const bitmap_t streetlampbody_bitmaps[15] = {
-  { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_4[0],  &bitmap_streetlampbody_4[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_5[0],  &bitmap_streetlampbody_5[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_6[0],  &bitmap_streetlampbody_6[0]   },
-  { 1, 1, 1, &bitmap_streetlampbody_7[0],  &bitmap_streetlampbody_7s[0]  },
-  { 1, 1, 2, &bitmap_streetlampbody_8[0],  &bitmap_streetlampbody_8s[0]  },
-  { 1, 1, 2, &bitmap_streetlampbody_9[0],  &bitmap_streetlampbody_9s[0]  },
-  { 1, 1, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
-  { 1, 1, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
-  { 1, 1, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
-  { 2, 1, 1, &bitmap_streetlampbody_13[0], &streetlampbody_shifted_pool[0]  },
-  { 2, 1, 2, &bitmap_streetlampbody_14[0], &streetlampbody_shifted_pool[4]  },
-  { 2, 1, 2, &bitmap_streetlampbody_15[0], &streetlampbody_shifted_pool[12] }
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_4[0],  &bitmap_streetlampbody_4[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_5[0],  &bitmap_streetlampbody_5[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_6[0],  &bitmap_streetlampbody_6[0]   },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_7[0],  &bitmap_streetlampbody_7s[0]  },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_8[0],  &bitmap_streetlampbody_8s[0]  },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_9[0],  &bitmap_streetlampbody_9s[0]  },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
+  { 2, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_13[0], &streetlampbody_shifted_pool[0]  },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_14[0], &streetlampbody_shifted_pool[4]  },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_15[0], &streetlampbody_shifted_pool[12] }
 };
 
 /** $7F25: bitmap_streetlampbody_1 */
@@ -498,10 +498,15 @@ const pixel_t bitmap_streetlampbody_15[8] = {
 static const pixel_t streetlampbody_shifted_pool[64] = {
   /* $7F79: bitmap_streetlampbody_13s */
   XXXXXXXX, ________, XXX__XXX, ___XX___,
+
   /* $7F7D: bitmap_streetlampbody_14s */
-  XXXXXXXX, ________, XXX__XXX, ___XX___, XXXXXXXX, ________, XXX__XXX, ___XX___,
+  XXXXXXXX, ________, XXX__XXX, ___XX___,
+  XXXXXXXX, ________, XXX__XXX, ___XX___,
+
   /* $7F85: bitmap_streetlampbody_15s */
-  XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________, XXXX_XXX, ____X___,
+  XXXXXXXX, ________, XXXX_XXX, ____X___,
+  XXXXXXXX, ________, XXXX_XXX, ____X___,
+
   /* $7F8D: unused zeros */
   0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
   0,0,0,0, 0,0,0,0, 0,0,0,0
