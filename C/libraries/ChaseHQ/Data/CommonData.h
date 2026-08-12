@@ -40,27 +40,30 @@ extern const depthset_t streetlampmiddle2_right;
 extern const depthset_t streetlampmiddle_left;
 extern const depthset_t streetlampmiddle_right;
 extern const bitmap_t streetlampbody_bitmaps[15];
-extern const pixel_t bitmap_streetlampbody_1[4];
-extern const pixel_t bitmap_streetlampbody_2[4];
-extern const pixel_t bitmap_streetlampbody_3[4];
-extern const pixel_t bitmap_streetlampbody_4[4];
-extern const pixel_t bitmap_streetlampbody_5[4];
-extern const pixel_t bitmap_streetlampbody_6[4];
-extern const pixel_t bitmap_streetlampbody_7[2];
-extern const pixel_t bitmap_streetlampbody_8[4];
-extern const pixel_t bitmap_streetlampbody_9[4];
-extern const pixel_t bitmap_streetlampbody_7s[2];
-extern const pixel_t bitmap_streetlampbody_8s[4];
-extern const pixel_t bitmap_streetlampbody_9s[4];
-extern const pixel_t bitmap_streetlampbody_10[2];
-extern const pixel_t bitmap_streetlampbody_11[4];
-extern const pixel_t bitmap_streetlampbody_12[4];
-extern const pixel_t bitmap_streetlampbody_10s[2];
-extern const pixel_t bitmap_streetlampbody_11s[4];
-extern const pixel_t bitmap_streetlampbody_12s[4];
-extern const pixel_t bitmap_streetlampbody_13[4];
-extern const pixel_t bitmap_streetlampbody_14[8];
-extern const pixel_t bitmap_streetlampbody_15[8];
+extern const pixel_t bitmap_streetlampbody_1[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_2[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_3[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_4[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_5[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_6[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_7[1 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_8[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_9[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_7s[1 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_8s[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_9s[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_10[1 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_11[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_12[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_10s[1 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_11s[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_12s[1 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_13[2 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_14[2 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_15[2 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_13s[2 * 2 * 1 * 1];
+extern const pixel_t bitmap_streetlampbody_14s[2 * 2 * 2 * 1];
+extern const pixel_t bitmap_streetlampbody_15s[2 * 2 * 2 * 1];
 
 extern const u8 chatterblk_start_stage[4];
 extern const u8 chatterblk_tony_giddy_up[3];
@@ -106,7 +109,7 @@ extern const pixel_t font[41 * 7];
 
 extern const u8 hazard_pos_speed[3 * 4];
 
-extern const u8 hero_car_jump_table[10 * 2];
+extern const s8 hero_car_jump_table[10 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
 
 extern const pixel_t bitmap_arrow[3 * 2 * 28];
@@ -116,18 +119,28 @@ extern const pixel_t bitmap_arrow[3 * 2 * 28];
 
 extern const depthset_t tunnellight;
 extern const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES];
-extern const pixel_t bitmap_tunnellight_1[2 * 16];
-extern const pixel_t bitmap_tunnellight_2[2 * 12];
-extern const pixel_t bitmap_tunnellight_3[1 * 8];
-extern const pixel_t bitmap_tunnellight_4[1 * 6];
-extern const pixel_t bitmap_tunnellight_5[1 * 5];
-extern const pixel_t bitmap_tunnellight_6[2 * 2 * 6];
-extern const pixel_t bitmap_tunnellight_6s[2 * 2 * 6];
+extern const pixel_t bitmap_tunnellight_1[2 * 1 * 16 * 1];
+extern const pixel_t bitmap_tunnellight_2[2 * 1 * 12 * 1];
+extern const pixel_t bitmap_tunnellight_3[1 * 1 * 8 * 1];
+extern const pixel_t bitmap_tunnellight_4[1 * 1 * 6 * 1];
+extern const pixel_t bitmap_tunnellight_5[1 * 1 * 5 * 1];
+extern const pixel_t bitmap_tunnellight_6[2 * 2 * 6 * 1];
+extern const pixel_t bitmap_tunnellight_6s[2 * 2 * 6 * 1];
 
 /* Helicopter sprite (stages 2 and 4 share identical part data; only the
  * per-stage bank addresses of the two frame tables differ in the original).
  */
-extern const pixel_t bitmap_helicopter[590];
+extern const pixel_t bitmap_heli_part2_frame0[7 * 1 * 16 * 1];
+extern const pixel_t bitmap_heli_part1_frame0[3 * 1 * 7 * 1];
+extern const pixel_t bitmap_heli_part2_frame1[7 * 1 * 16 * 1];
+extern const pixel_t bitmap_heli_part1_frame1[3 * 1 * 7 * 1];
+extern const pixel_t bitmap_heli_part0[3 * 2 * 10 * 1];
+extern const pixel_t bitmap_heli_part3_frame0[2 * 2 * 3 * 1];
+extern const pixel_t bitmap_heli_part4_frame0[1 * 2 * 7 * 1];
+extern const pixel_t bitmap_heli_part3_frame1[1 * 2 * 5 * 1];
+extern const pixel_t bitmap_heli_part4_frame1[2 * 2 * 7 * 1];
+extern const pixel_t bitmap_heli_rotor_frame0[5 * 2 * 10 * 1];
+extern const pixel_t bitmap_heli_rotor_frame1[5 * 2 * 10 * 1];
 extern const heli_bitmap_t heli_part0;
 extern const heli_bitmap_t heli_part1_frame0;
 extern const heli_bitmap_t heli_part1_frame1;

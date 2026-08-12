@@ -344,167 +344,162 @@ const depthset_t streetlampmiddle_right = {
   }
 };
 
-static const pixel_t streetlampbody_shifted_pool[64]; /* defined below with 13s/14s/15s data */
-
 /** $7EBC: streetlampbody_bitmaps */
 const bitmap_t streetlampbody_bitmaps[15] = {
-  { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_4[0],  &bitmap_streetlampbody_4[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_5[0],  &bitmap_streetlampbody_5[0]   },
-  { 1, 1, 2, &bitmap_streetlampbody_6[0],  &bitmap_streetlampbody_6[0]   },
-  { 1, 1, 1, &bitmap_streetlampbody_7[0],  &bitmap_streetlampbody_7s[0]  },
-  { 1, 1, 2, &bitmap_streetlampbody_8[0],  &bitmap_streetlampbody_8s[0]  },
-  { 1, 1, 2, &bitmap_streetlampbody_9[0],  &bitmap_streetlampbody_9s[0]  },
-  { 1, 1, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
-  { 1, 1, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
-  { 1, 1, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
-  { 2, 1, 1, &bitmap_streetlampbody_13[0], &streetlampbody_shifted_pool[0]  },
-  { 2, 1, 2, &bitmap_streetlampbody_14[0], &streetlampbody_shifted_pool[4]  },
-  { 2, 1, 2, &bitmap_streetlampbody_15[0], &streetlampbody_shifted_pool[12] }
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_4[0],  &bitmap_streetlampbody_4[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_5[0],  &bitmap_streetlampbody_5[0]   },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_6[0],  &bitmap_streetlampbody_6[0]   },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_7[0],  &bitmap_streetlampbody_7s[0]  },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_8[0],  &bitmap_streetlampbody_8s[0]  },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_9[0],  &bitmap_streetlampbody_9s[0]  },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
+  { 2, BITMAPFLAG_MASKED, 1, &bitmap_streetlampbody_13[0], &bitmap_streetlampbody_13s[0] },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_14[0], &bitmap_streetlampbody_14s[0] },
+  { 2, BITMAPFLAG_MASKED, 2, &bitmap_streetlampbody_15[0], &bitmap_streetlampbody_15s[0] }
 };
 
 /** $7F25: bitmap_streetlampbody_1 */
-const pixel_t bitmap_streetlampbody_1[4] = {
+const pixel_t bitmap_streetlampbody_1[1 * 2 * 2 * 1] = {
   X______X, _XXXXXX_,
   _______X, XXX__XX_
 };
 
 /** $7F29: bitmap_streetlampbody_2 */
-const pixel_t bitmap_streetlampbody_2[4] = {
+const pixel_t bitmap_streetlampbody_2[1 * 2 * 2 * 1] = {
   _______X, XX____X_,
   _______X, X_X___X_
 };
 
 /** $7F2D: bitmap_streetlampbody_3 */
-const pixel_t bitmap_streetlampbody_3[4] = {
+const pixel_t bitmap_streetlampbody_3[1 * 2 * 2 * 1] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
 /** $7F31: bitmap_streetlampbody_4 */
-const pixel_t bitmap_streetlampbody_4[4] = {
+const pixel_t bitmap_streetlampbody_4[1 * 2 * 2 * 1] = {
   XX____XX, __XXXX__,
   X______X, _X_X_XX_
 };
 
 /** $7F35: bitmap_streetlampbody_5 */
-const pixel_t bitmap_streetlampbody_5[4] = {
+const pixel_t bitmap_streetlampbody_5[1 * 2 * 2 * 1] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
 /** $7F39: bitmap_streetlampbody_6 */
-const pixel_t bitmap_streetlampbody_6[4] = {
+const pixel_t bitmap_streetlampbody_6[1 * 2 * 2 * 1] = {
   X____XXX, _X__X___,
   X____XXX, _X__X___
 };
 
 /** $7F3D: bitmap_streetlampbody_7 */
-const pixel_t bitmap_streetlampbody_7[2] = {
+const pixel_t bitmap_streetlampbody_7[1 * 2 * 1 * 1] = {
   ____XXXX, XXXX____
 };
 
 /** $7F3F: bitmap_streetlampbody_8 */
-const pixel_t bitmap_streetlampbody_8[4] = {
+const pixel_t bitmap_streetlampbody_8[1 * 2 * 2 * 1] = {
   ____XXXX, XX_X____,
   ____XXXX, XX_X____
 };
 
 /** $7F43: bitmap_streetlampbody_9 */
-const pixel_t bitmap_streetlampbody_9[4] = {
+const pixel_t bitmap_streetlampbody_9[1 * 2 * 2 * 1] = {
   ___XXXXX, X_X_____,
   ___XXXXX, X_X_____
 };
 
 /** $7F47: bitmap_streetlampbody_7s */
-const pixel_t bitmap_streetlampbody_7s[2] = {
+const pixel_t bitmap_streetlampbody_7s[1 * 2 * 1 * 1] = {
   XXXX____, ____XXXX
 };
 
 /** $7F49: bitmap_streetlampbody_8s */
-const pixel_t bitmap_streetlampbody_8s[4] = {
+const pixel_t bitmap_streetlampbody_8s[1 * 2 * 2 * 1] = {
   XXXX____, ____XX_X,
   XXXX____, ____XX_X
 };
 
 /** $7F4D: bitmap_streetlampbody_9s */
-const pixel_t bitmap_streetlampbody_9s[4] = {
+const pixel_t bitmap_streetlampbody_9s[1 * 2 * 2 * 1] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
 /** $7F51: bitmap_streetlampbody_10 */
-const pixel_t bitmap_streetlampbody_10[2] = {
+const pixel_t bitmap_streetlampbody_10[1 * 2 * 1 * 1] = {
   XX___XXX, __XXX___
 };
 
 /** $7F53: bitmap_streetlampbody_11 */
-const pixel_t bitmap_streetlampbody_11[4] = {
+const pixel_t bitmap_streetlampbody_11[1 * 2 * 2 * 1] = {
   XX___XXX, __X_X___,
   XX___XXX, __X_X___
 };
 
 /** $7F57: bitmap_streetlampbody_12 */
-const pixel_t bitmap_streetlampbody_12[4] = {
+const pixel_t bitmap_streetlampbody_12[1 * 2 * 2 * 1] = {
   XX__XXXX, __XX____,
   XX__XXXX, __XX____
 };
 
 /** $7F5B: bitmap_streetlampbody_10s */
-const pixel_t bitmap_streetlampbody_10s[2] = {
+const pixel_t bitmap_streetlampbody_10s[1 * 2 * 1 * 1] = {
   XXXX___X, ____XXX_
 };
 
 /** $7F5D: bitmap_streetlampbody_11s */
-const pixel_t bitmap_streetlampbody_11s[4] = {
+const pixel_t bitmap_streetlampbody_11s[1 * 2 * 2 * 1] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
 /** $7F61: bitmap_streetlampbody_12s */
-const pixel_t bitmap_streetlampbody_12s[4] = {
+const pixel_t bitmap_streetlampbody_12s[1 * 2 * 2 * 1] = {
   XXXX__XX, ____XX__,
   XXXX__XX, ____XX__
 };
 
 /** $7F65: bitmap_streetlampbody_13 */
-const pixel_t bitmap_streetlampbody_13[4] = {
+const pixel_t bitmap_streetlampbody_13[2 * 2 * 1 * 1] = {
   XXXXXXX_, _______X,
   _XXXXXXX, X_______
 };
 
 /** $7F69: bitmap_streetlampbody_14 */
-const pixel_t bitmap_streetlampbody_14[8] = {
+const pixel_t bitmap_streetlampbody_14[2 * 2 * 2 * 1] = {
   XXXXXXX_, _______X, _XXXXXXX, X_______,
   XXXXXXX_, _______X, _XXXXXXX, X_______
 };
 
 /** $7F71: bitmap_streetlampbody_15 */
-const pixel_t bitmap_streetlampbody_15[8] = {
+const pixel_t bitmap_streetlampbody_15[2 * 2 * 2 * 1] = {
   XXXXXXXX, ________, _XXXXXXX, X_______,
   XXXXXXXX, ________, _XXXXXXX, X_______
 };
 
-/**
- * $7F79: streetlampbody_shifted_pool
- *
- * Pre-shifted bitmaps 13s/14s/15s, followed by unused zeros ($7F8D+). The
- * renderer reads across their boundaries as contiguous Z80 memory, so they
- * must be a single C array. Max read: start_offset=2 (1 row skipped),
- * max_height=30, draw_width=4: 2 + 2*29 + 3 = 63 -- need 64 bytes.
- */
-static const pixel_t streetlampbody_shifted_pool[64] = {
-  /* $7F79: bitmap_streetlampbody_13s */
+/** $7F79: bitmap_streetlampbody_13s */
+const pixel_t bitmap_streetlampbody_13s[2 * 2 * 1 * 1] = {
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
+
+/** $7F7D: bitmap_streetlampbody_14s */
+const pixel_t bitmap_streetlampbody_14s[2 * 2 * 2 * 1] = {
   XXXXXXXX, ________, XXX__XXX, ___XX___,
-  /* $7F7D: bitmap_streetlampbody_14s */
-  XXXXXXXX, ________, XXX__XXX, ___XX___, XXXXXXXX, ________, XXX__XXX, ___XX___,
-  /* $7F85: bitmap_streetlampbody_15s */
-  XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________, XXXX_XXX, ____X___,
-  /* $7F8D: unused zeros */
-  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
+
+/** $7F85: bitmap_streetlampbody_15s */
+const pixel_t bitmap_streetlampbody_15s[2 * 2 * 2 * 1] = {
+  XXXXXXXX, ________, XXXX_XXX, ____X___,
+  XXXXXXXX, ________, XXXX_XXX, ____X___
 };
 
 /* ----------------------------------------------------------------------- */
@@ -1208,17 +1203,17 @@ const u8 hazard_pos_speed[3 * 4] = {
 /* ----------------------------------------------------------------------- */
 
 /** $B045: hero_car_jump_table */
-const u8 hero_car_jump_table[10 * 2] = {
-  0x03, 0x0D, // Pitch Up,    Delta  13
-  0x03, 0x0A, // Pitch Up,    Delta  10
-  0x03, 0x07, // Pitch Up,    Delta   7
-  0x03, 0x04, // Pitch Up,    Delta   4
-  0x00, 0x02, // Pitch Level, Delta   2
-  0x00, 0xFE, // Pitch Level, Delta  -2
-  0x06, 0xFC, // Pitch Down,  Delta  -4
-  0x06, 0xF9, // Pitch Down,  Delta  -7
-  0x06, 0xF6, // Pitch Down,  Delta -10
-  0x06, 0xF3  // Pitch Down,  Delta -13
+const s8 hero_car_jump_table[10 * 2] = {
+  3,  13,  // Pitch Up,    Delta  13
+  3,  10,  // Pitch Up,    Delta  10
+  3,  7,   // Pitch Up,    Delta   7
+  3,  4,   // Pitch Up,    Delta   4
+  0,  2,   // Pitch Level, Delta   2
+  0,  -2,  // Pitch Level, Delta  -2
+  6,  -4,  // Pitch Down,  Delta  -4
+  6,  -7,  // Pitch Down,  Delta  -7
+  6,  -10, // Pitch Down,  Delta -10
+  6,  -13  // Pitch Down,  Delta -13
 };
 
 /**
@@ -1245,16 +1240,6 @@ const u8 horizon_table[32] = {
   0x01, 0x01,  /* $B844: from DEFW $0101 */
   0x01, 0x02   /* $B846: from DEFW $0201 */
 };
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------- */
 
@@ -1292,12 +1277,6 @@ const pixel_t bitmap_arrow[3 * 2 * 28] = {
 
 /* ----------------------------------------------------------------------- */
 
-/* ----------------------------------------------------------------------- */
-
-// Conv: Made these bitmap_t's and used NULL for the pre-shifted bitmap field.
-
-/* ----------------------------------------------------------------------- */
-
 /** $E1E9: tunnellight */
 const depthset_t tunnellight = {
   &tunnellight_bitmaps[0],
@@ -1324,7 +1303,7 @@ const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES] = {
 };
 
 /** $E229: bitmap_tunnellight_1 */
-const pixel_t bitmap_tunnellight_1[2 * 16] = {
+const pixel_t bitmap_tunnellight_1[2 * 1 * 16 * 1] = {
   XXXXXXXX, _XXXXXXX,
   XX_XXXX_, _XXXXXXX,
   XXX_X_X_, _X_XXXXX,
@@ -1344,7 +1323,7 @@ const pixel_t bitmap_tunnellight_1[2 * 16] = {
 };
 
 /** $E249: bitmap_tunnellight_2 */
-const pixel_t bitmap_tunnellight_2[2 * 12] = {
+const pixel_t bitmap_tunnellight_2[2 * 1 * 12 * 1] = {
   XXXXX_XX, XXXXXXXX,
   X_XXX_XX, X_XXXXXX,
   XX_X___X, _XXXXXXX,
@@ -1360,7 +1339,7 @@ const pixel_t bitmap_tunnellight_2[2 * 12] = {
 };
 
 /** $E261: bitmap_tunnellight_3 */
-const pixel_t bitmap_tunnellight_3[1 * 8] = {
+const pixel_t bitmap_tunnellight_3[1 * 1 * 8 * 1] = {
   XXX_XXXX,
   X_X_X_XX,
   XX_____X,
@@ -1372,7 +1351,7 @@ const pixel_t bitmap_tunnellight_3[1 * 8] = {
 };
 
 /** $E269: bitmap_tunnellight_4 */
-const pixel_t bitmap_tunnellight_4[1 * 6] = {
+const pixel_t bitmap_tunnellight_4[1 * 1 * 6 * 1] = {
   XXXXXXXX,
   _X_X_XXX,
   X___XXXX,
@@ -1382,7 +1361,7 @@ const pixel_t bitmap_tunnellight_4[1 * 6] = {
 };
 
 /** $E26F: bitmap_tunnellight_5 */
-const pixel_t bitmap_tunnellight_5[1 * 5] = {
+const pixel_t bitmap_tunnellight_5[1 * 1 * 5 * 1] = {
   XX_XXXXX,
   X___XXXX,
   _____XXX,
@@ -1391,7 +1370,7 @@ const pixel_t bitmap_tunnellight_5[1 * 5] = {
 };
 
 /** $E274: bitmap_tunnellight_6 */
-const pixel_t bitmap_tunnellight_6[2 * 2 * 6] = {
+const pixel_t bitmap_tunnellight_6[2 * 2 * 6 * 1] = {
   XX__XXXX, __XX____, XXXXXXXX, ________,
   X____XXX, _X__X___, XXXXXXXX, ________,
   ______XX, X____X__, XXXXXXXX, ________,
@@ -1401,7 +1380,7 @@ const pixel_t bitmap_tunnellight_6[2 * 2 * 6] = {
 };
 
 /** $E28C: bitmap_tunnellight_6s */
-const pixel_t bitmap_tunnellight_6s[2 * 2 * 6] = {
+const pixel_t bitmap_tunnellight_6s[2 * 2 * 6 * 1] = {
   XXXXXX__, ______XX, XXXXXXXX, ________,
   XXXXX___, _____X__, _XXXXXXX, X_______,
   XXXX____, ____X___, __XXXXXX, _X______,
@@ -1421,7 +1400,8 @@ const pixel_t bitmap_tunnellight_6s[2 * 2 * 6] = {
  * Part 0 is shared by both animation frames; parts 1-4 and the rotor have a
  * distinct bitmap per frame, selected by anim_counter bit 0.
  */
-const pixel_t bitmap_helicopter[590] = {
+/** $ECE7: bitmap_heli_part2_frame0 */
+const pixel_t bitmap_heli_part2_frame0[7 * 1 * 16 * 1] = {
   _____X__, X_X_X___, ____X_X_, __XXXX_X, _X_X_X_X, ________, ________,
   ________, _X_XXXX_, ____X_X_, ___XX_X_, XXXXX_X_, ________, ___X____,
   ________, ___XXX_X, _X___X_X, __XXXX_X, _XX__X__, ________, ____X___,
@@ -1438,7 +1418,10 @@ const pixel_t bitmap_helicopter[590] = {
   __X_X_X_, ________, ___XXX__, _X____XX, _____XXX, X_XX____, ________,
   ________, ________, __X_X___, _X____X_, ______X_, XXX_X___, ________,
   ____X___, ________, _X_X_X__, _X____X_, ________, _X_XXX_X, __X_____,
+};
 
+/** $ED57: bitmap_heli_part1_frame0 */
+const pixel_t bitmap_heli_part1_frame0[3 * 1 * 7 * 1] = {
   X___X__X, XXXXXXXX, X_XXX___,
   X___X__X, XXXXXXXX, _X_XX___,
   X___XX__, XXXXXXXX, X_X_X___,
@@ -1446,7 +1429,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXX_X_, _XXXXXX_, X_X_XXXX,
   ___X_X_X, __XXXX_X, _XXXX_XX,
   ___X_X__, ___XX_XX, X_XXX_X_,
+};
 
+/** $ED6C: bitmap_heli_part2_frame1 */
+const pixel_t bitmap_heli_part2_frame1[7 * 1 * 16 * 1] = {
   ________, ________, X_XXX_X_, __XXXX_X, _X_X____, ____X_XX, XXX_____,
   _____X__, ________, _X_XX_X_, ___XX_X_, XXXX____, _X_XXX_X, _X_X____,
   ____X___, ________, __X__X_X, __XXXX_X, _XX_____, X_XXX_X_, ________,
@@ -1463,7 +1449,10 @@ const pixel_t bitmap_helicopter[590] = {
   ____X___, _X_X_XXX, _X__X__X, XX____XX, _XX_____, ________, X_X__X__,
   _____XX_, X_XXX_X_, X_______, XX____X_, __XX____, ________, ____X___,
   _____XXX, XXXX_X__, _______X, _X____X_, _X_XX_X_, ________, ________,
+};
 
+/** $EDDC: bitmap_heli_part1_frame1 */
+const pixel_t bitmap_heli_part1_frame1[3 * 1 * 7 * 1] = {
   X___X__X, XXXXXXXX, X_XXX___,
   X___X__X, XXXXXXXX, _X_XX___,
   X___XX__, XXXXXXXX, X_X_X___,
@@ -1471,7 +1460,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXX_X_, _XXXXXX_, X_X_XXXX,
   X__X_X_X, __XXXX_X, _XXXX___,
   _X_X_X__, ___XX_XX, X_XXX___,
+};
 
+/** $EDF1: bitmap_heli_part0 (masked: 3 visual columns, 6 raw bytes/row) */
+const pixel_t bitmap_heli_part0[3 * 2 * 10 * 1] = {
   XXXXX__X, ________, XX_____X, ________, X__XXXXX, ________,
   XXXX____, _____XX_, X_______, __XXXXX_, ____XXXX, _XX_____,
   XXX_____, ____X_XX, ________, _XXXXXXX, _____XXX, _XXX____,
@@ -1482,11 +1474,17 @@ const pixel_t bitmap_helicopter[590] = {
   X_______, __X__XXX, ________, X_______, ________, XXXX_XX_,
   X_______, __X_XX_X, ________, _XXXXXXX, ________, _X_XX_X_,
   ________, _X_X_XXX, ________, XXXXXXXX, ________, XXXX_X_X,
+};
 
+/** $EE2D: bitmap_heli_part3_frame0 (masked: 2 visual columns, 4 raw bytes/row) */
+const pixel_t bitmap_heli_part3_frame0[2 * 2 * 3 * 1] = {
   XXXXXXX_, ________, X____XX_, ___X____,
   XXXXXX__, _______X, ____XXXX, _XX_____,
   XXXXX___, _______X, _____XXX, XX_X____,
+};
 
+/** $EE39: bitmap_heli_part4_frame0 (masked: 1 visual column, 2 raw bytes/row) */
+const pixel_t bitmap_heli_part4_frame0[1 * 2 * 7 * 1] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
   ____XXXX, X_______,
@@ -1494,13 +1492,19 @@ const pixel_t bitmap_helicopter[590] = {
   _______X, XXX_XX__,
   ________, _X_X__X_,
   ____XX_X, X_X_____,
+};
 
+/** $EE47: bitmap_heli_part3_frame1 (masked: 1 visual column, 2 raw bytes/row) */
+const pixel_t bitmap_heli_part3_frame1[1 * 2 * 5 * 1] = {
   XXXXX___, ________,
   XXX_____, _____XXX,
   XX______, ___XXX_X,
   X_______, __X_X_X_,
   XX_X____, _____X_X,
+};
 
+/** $EE51: bitmap_heli_part4_frame1 (masked: 2 visual columns, 4 raw bytes/row) */
+const pixel_t bitmap_heli_part4_frame1[2 * 2 * 7 * 1] = {
   __XXXXXX, X_______, XXXXXXXX, ________,
   __XXXXXX, X_______, XXXXXXXX, ________,
   __XXXXXX, X_______, XXXXXXXX, ________,
@@ -1508,7 +1512,10 @@ const pixel_t bitmap_helicopter[590] = {
   _XXX____, _____XX_, _XXXXXXX, ________,
   XXXXX___, _______X, __XXXXXX, X_______,
   XXXX_X__, ________, ___XXXXX, XX______,
+};
 
+/** $EE6D: bitmap_heli_rotor_frame0 (masked: 5 visual columns, 10 raw bytes/row) */
+const pixel_t bitmap_heli_rotor_frame0[5 * 2 * 10 * 1] = {
   XXXXXXXX, ________, XXXXXXXX, ________, _X_X__XX, X_X_XX__, XXX_X_XX, ___X_X__, XXXXXXXX, ________,
   XXXXXXX_, _______X, X_XXXXXX, _X______, X_X____X, _X_XXXX_, XX_X_X_X, __X_X_X_, _XXXXXXX, X_______,
   XXXX_X_X, ____X_X_, _X_X_XXX, X_X_X___, XX_X__XX, __X_XX__, X_X_X_XX, _X_X_X__, XXXXXXXX, ________,
@@ -1519,7 +1526,10 @@ const pixel_t bitmap_helicopter[590] = {
   XXXXXXXX, ________, XXX_X_X_, ___X_X_X, X_______, _XXXXXXX, _XXXXX_X, X_____X_, _X_X_XXX, X_X_X___,
   XXXXXXXX, ________, _X_X_X_X, X_X_X_X_, XX______, __XXXXXX, X_XXXXXX, _X______, X_XXXXXX, _X______,
   XXXXXXXX, ________, XXXXX_XX, _____X__, XXX____X, ___XXXX_, _X_XXXXX, X_X_____, XXXXXXXX, ________,
+};
 
+/** $EED1: bitmap_heli_rotor_frame1 (masked: 5 visual columns, 10 raw bytes/row) */
+const pixel_t bitmap_heli_rotor_frame1[5 * 2 * 10 * 1] = {
   XXXXXXXX, ________, XXXX_X_X, ____X_X_, XXXX__X_, ____XX_X, X_X_XXXX, _X_X____, XXXXXXXX, ________,
   XXXXXXXX, ________, X_X_X_X_, _X_X_X_X, XXX____X, ___XXXX_, _X_XXXXX, X_X_____, XXXXXXXX, ________,
   XXXXXXXX, ________, XXXX_X_X, ____X_X_, _X_X__X_, X_X_XX_X, X_XXXXXX, _X______, XXX_X_XX, ___X_X__,
@@ -1534,52 +1544,52 @@ const pixel_t bitmap_helicopter[590] = {
 
 /** $ECAA: heli_part0 */
 const heli_bitmap_t heli_part0 = {
-  0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[266], &bitmap_helicopter[266] } }
+  0x00, { 0, { 3, BITMAPFLAG_MASKED, 10, &bitmap_heli_part0[0], &bitmap_heli_part0[0] } }
 };
 
 /** $EC8F: heli_part1_frame0 */
 const heli_bitmap_t heli_part1_frame0 = {
-  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[112], &bitmap_helicopter[112] } }
+  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_heli_part1_frame0[0], &bitmap_heli_part1_frame0[0] } }
 };
 /** $ECA1: heli_part1_frame1 */
 const heli_bitmap_t heli_part1_frame1 = {
-  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_helicopter[245], &bitmap_helicopter[245] } }
+  0x0A, { 0, { 3, BITMAPFLAG_DEFAULT, 7, &bitmap_heli_part1_frame1[0], &bitmap_heli_part1_frame1[0] } }
 };
 
 /** $EC86: heli_part2_frame0 */
 const heli_bitmap_t heli_part2_frame0 = {
-  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[0], &bitmap_helicopter[0] } }
+  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_heli_part2_frame0[0], &bitmap_heli_part2_frame0[0] } }
 };
 /** $EC98: heli_part2_frame1 */
 const heli_bitmap_t heli_part2_frame1 = {
-  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_helicopter[133], &bitmap_helicopter[133] } }
+  0x11, { -16, { 7, BITMAPFLAG_DEFAULT, 16, &bitmap_heli_part2_frame1[0], &bitmap_heli_part2_frame1[0] } }
 };
 
 /** $ECB3: heli_part3_frame0 */
 const heli_bitmap_t heli_part3_frame0 = {
-  0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_helicopter[326], &bitmap_helicopter[326] } }
+  0x0E, { -16, { 2, BITMAPFLAG_MASKED, 3, &bitmap_heli_part3_frame0[0], &bitmap_heli_part3_frame0[0] } }
 };
 /** $ECC5: heli_part3_frame1 */
 const heli_bitmap_t heli_part3_frame1 = {
-  0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_helicopter[352], &bitmap_helicopter[352] } }
+  0x0C, { -8, { 1, BITMAPFLAG_MASKED, 5, &bitmap_heli_part3_frame1[0], &bitmap_heli_part3_frame1[0] } }
 };
 
 /** $ECBC: heli_part4_frame0 */
 const heli_bitmap_t heli_part4_frame0 = {
-  0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[338], &bitmap_helicopter[338] } }
+  0x0A, { 24, { 1, BITMAPFLAG_MASKED, 7, &bitmap_heli_part4_frame0[0], &bitmap_heli_part4_frame0[0] } }
 };
 /** $ECCE: heli_part4_frame1 */
 const heli_bitmap_t heli_part4_frame1 = {
-  0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_helicopter[362], &bitmap_helicopter[362] } }
+  0x0A, { 24, { 2, BITMAPFLAG_MASKED, 7, &bitmap_heli_part4_frame1[0], &bitmap_heli_part4_frame1[0] } }
 };
 
 /** $ECD7: heli_rotor_frame0 */
 const heli_bitmap_xonly_t heli_rotor_frame0 = {
-  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[390], &bitmap_helicopter[390] }
+  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_heli_rotor_frame0[0], &bitmap_heli_rotor_frame0[0] }
 };
 /** $ECDF: heli_rotor_frame1 */
 const heli_bitmap_xonly_t heli_rotor_frame1 = {
-  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_helicopter[490], &bitmap_helicopter[490] }
+  -8, { 5, BITMAPFLAG_MASKED, 10, &bitmap_heli_rotor_frame1[0], &bitmap_heli_rotor_frame1[0] }
 };
 
 /** $ED93 (stage 2) / $EC6E (stage 4) in the original banks. */
@@ -2056,12 +2066,6 @@ const pixel_t diamond_transition_frames[6 * 8] = {
   XXXXXXXX,
   XXXXXXXX
 };
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------- */
 

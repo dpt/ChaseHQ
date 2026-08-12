@@ -139,8 +139,13 @@ def height_of(size_expr, total_bytes):
     if "*" not in size_expr:
         return 1
     factors = [f.strip() for f in size_expr.split("*")]
-    if factors and factors[-1].isdigit():
-        height = int(factors[-1])
+    # width * height (2 factors) or width * mask * height[ * entries] (3-4
+    # factors): height is always the 3rd factor once mask is present, not
+    # simply the last one -- a trailing entries factor (e.g. "* 1") would
+    # otherwise be picked up as the height instead.
+    candidate = factors[2] if len(factors) >= 3 else factors[-1] if factors else None
+    if candidate and candidate.isdigit():
+        height = int(candidate)
         if height > 0 and total_bytes % height == 0:
             return height
     return 1
@@ -182,7 +187,7 @@ class Entry:
 
 
 ARRAY_RE = re.compile(
-    r"static const u8 (\w+)\[([^\]]*)\]\s*=\s*\{(.*?)\};", re.DOTALL
+    r"(?:static )?const pixel_t (\w+)\[([^\]]*)\]\s*=\s*\{(.*?)\};", re.DOTALL
 )
 
 
@@ -190,7 +195,8 @@ def discover_arrays(filename, text, name_to_value):
     entries = []
     for m in ARRAY_RE.finditer(text):
         name, size_expr, body = m.groups()
-        tokens = [t.strip() for t in body.replace("\n", " ").split(",")]
+        body_nocomments = re.sub(r"//[^\n]*", "", body)
+        tokens = [t.strip() for t in body_nocomments.replace("\n", " ").split(",")]
         tokens = [t for t in tokens if t]
         if not tokens or not all(t in name_to_value for t in tokens):
             continue
@@ -241,9 +247,31 @@ def find_backdrop(filename, text):
 TOKEN_OR_ATTR_RE = re.compile(r"[X_]{8}|attribute_\w+|MKATTR\([^)]*\)")
 
 
+def _face_entry(name, filename, bitmap_matches, attr_matches, attr_idx, attributes):
+    """Builds one coloured face Entry from bitmap+attribute token match lists."""
+    if len(bitmap_matches) < FACEBITMAPBYTES or len(attr_matches) < FACEATTRBYTES:
+        return None
+    text_ref = bitmap_matches[0].string
+    indent = line_indent(text_ref, bitmap_matches[0].start())
+    span_start = text_ref.rfind("\n", 0, bitmap_matches[0].start())  # include the row's leading newline+indent
+    span_end = bitmap_matches[-1].end()
+    if text_ref[span_end : span_end + 1] == ",":
+        span_end += 1  # fold the row's trailing comma into the span so it isn't duplicated
+    span = (span_start, span_end)
+    colour_grid = [attr_expr_to_ink_paper(m.group(0), attr_idx, attributes) for m in attr_matches]
+
+    def colour_fn(px_row, px_col, grid=colour_grid):
+        return grid[(px_row // 8) * FACEROWBYTES + px_col]
+
+    return Entry(
+        name, filename, span, FACEROWBYTES, FACEHEIGHT, FACEBITMAPBYTES,
+        colour_fn, indent=indent, trailing="", flip_v=False,
+    )
+
+
 def find_faces(text, attr_idx, attributes):
     """Splits the shared bitmap_faces[] array into NFACES coloured face entries."""
-    marker = re.search(r"const u8 bitmap_faces\[FACEBYTES \* NFACES\]\s*=\s*\{", text)
+    marker = re.search(r"const pixel_t bitmap_faces\[FACEBYTES \* NFACES\]\s*=\s*\{", text)
     if not marker:
         return []
     body_end = text.index("};", marker.end())
@@ -254,28 +282,34 @@ def find_faces(text, attr_idx, attributes):
     pos = 0
     for face_i in range(NFACES):
         bitmap_matches = matches[pos : pos + FACEBITMAPBYTES]
-        pos += FACEBITMAPBYTES
-        attr_matches = matches[pos : pos + FACEATTRBYTES]
-        pos += FACEATTRBYTES
-        if len(bitmap_matches) < FACEBITMAPBYTES or len(attr_matches) < FACEATTRBYTES:
+        attr_matches = matches[pos + FACEBITMAPBYTES : pos + FACEBITMAPBYTES + FACEATTRBYTES]
+        pos += FACEBITMAPBYTES + FACEATTRBYTES
+        entry = _face_entry(f"face_{face_i}", "CommonData.c", bitmap_matches, attr_matches, attr_idx, attributes)
+        if entry is None:
             break
-        indent = line_indent(text, bitmap_matches[0].start())
-        span_start = text.rfind("\n", 0, bitmap_matches[0].start())  # include the row's leading newline+indent
-        span_end = bitmap_matches[-1].end()
-        if text[span_end : span_end + 1] == ",":
-            span_end += 1  # fold the row's trailing comma into the span so it isn't duplicated
-        span = (span_start, span_end)
-        colour_grid = [attr_expr_to_ink_paper(m.group(0), attr_idx, attributes) for m in attr_matches]
+        entries.append(entry)
+    return entries
 
-        def colour_fn(px_row, px_col, grid=colour_grid):
-            return grid[(px_row // 8) * FACEROWBYTES + px_col]
 
-        entries.append(
-            Entry(
-                f"face_{face_i}", "CommonData.c", span, FACEROWBYTES, FACEHEIGHT, FACEBITMAPBYTES,
-                colour_fn, indent=indent, trailing="", flip_v=False,
-            )
-        )
+SINGLE_FACE_RE = re.compile(r"(?:static )?const pixel_t (\w+)\[(?:FACEBYTES|180)\]\s*=\s*\{")
+
+
+def find_single_faces(filename, text, attr_idx, attributes):
+    """Per-stage standalone face/mugshot arrays (stage1_perp_face,
+    stage2_pilot_mugshot, ...) -- same bitmap+attribute layout as
+    bitmap_faces but one face per array, not part of the shared blob."""
+    entries = []
+    for m in SINGLE_FACE_RE.finditer(text):
+        name = m.group(1)
+        if name == "bitmap_faces":
+            continue
+        body_end = text.index("};", m.end())
+        matches = list(TOKEN_OR_ATTR_RE.finditer(text, m.end(), body_end))
+        bitmap_matches = matches[:FACEBITMAPBYTES]
+        attr_matches = matches[FACEBITMAPBYTES : FACEBITMAPBYTES + FACEATTRBYTES]
+        entry = _face_entry(name, filename, bitmap_matches, attr_matches, attr_idx, attributes)
+        if entry is not None:
+            entries.append(entry)
     return entries
 
 
@@ -322,13 +356,39 @@ def find_masked_array_names(text):
     return names - excluded
 
 
+MAIN_C = ROOT / "libraries" / "ChaseHQ" / "Engine" / "Main.c"
+
+# Main.c references shared data arrays by bare name (plus pointer arithmetic
+# for slices), not CommonData.c's &name[N] form -- e.g. `bitmap_arrow` itself
+# is declared in CommonData.c but only ever used in a BITMAPFLAG_MASKED
+# bitmap_t literal here, so its maskedness is invisible to BITMAP_T_RE.
+MAIN_BITMAP_T_RE = re.compile(
+    r"\{\s*\d+\s*,\s*BITMAPFLAG_MASKED\b[^,]*,\s*\d+\s*,"
+    r"\s*(\w+)(\s*\+\s*\d+)?\s*,\s*(\w+)(\s*\+\s*\d+)?\s*\}"
+)
+
+
+def find_masked_array_names_in_main():
+    """Same offset-0-only rule as find_masked_array_names, applied to Main.c's
+    bare-name bitmap_t literals instead of CommonData.c's &name[N] form."""
+    text = MAIN_C.read_text()
+    names, excluded = set(), set()
+    for data_name, data_off, shifted_name, shifted_off in MAIN_BITMAP_T_RE.findall(text):
+        for name, off in ((data_name, data_off), (shifted_name, shifted_off)):
+            if name == "NULL":
+                continue
+            (excluded if off else names).add(name)
+    return names - excluded
+
+
 def build_manifest(name_to_value):
     attr_idx, attributes = load_attribute_table()
     manifest = []
+    main_masked_names = find_masked_array_names_in_main()
     for filename in DATA_FILES:
         text = (DATA_DIR / filename).read_text()
         entries = discover_arrays(filename, text, name_to_value)
-        masked_names = find_masked_array_names(text)
+        masked_names = find_masked_array_names(text) | main_masked_names
         for e in entries:
             if e.name in masked_names and e.width_bytes % 2 == 0:
                 e.masked = True
@@ -340,6 +400,7 @@ def build_manifest(name_to_value):
             entries.append(backdrop)
         if filename == "CommonData.c":
             entries.extend(find_faces(text, attr_idx, attributes))
+        entries.extend(find_single_faces(filename, text, attr_idx, attributes))
         entries.sort(key=lambda e: e.name)
         manifest.extend(entries)
     return manifest

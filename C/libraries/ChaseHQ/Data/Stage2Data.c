@@ -148,102 +148,102 @@ static const depthset_t stage2_depthset_F92C;
 static const depthset_t stage2_depthset_F942;
 static const bitmap_t stage2_lods_F958[5];
 static const bitmap_t stage2_lods_FA0F[6];
-static const pixel_t stage2_bitmap_E97D[6 * 29];
-static const pixel_t stage2_bitmap_EA2B[4 * 19];
-static const pixel_t stage2_bitmap_EA77[3 * 13];
-static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8];
-static const pixel_t stage2_bitmap_EABE[2 * 2 * 8];
-static const pixel_t stage2_bitmap_EADE[6 * 30];
-static const pixel_t stage2_bitmap_EB92[4 * 22];
-static const pixel_t stage2_bitmap_EBEA[3 * 15];
-static const pixel_t stage2_bitmap_EC17[2 * 2 * 8];
-static const pixel_t stage2_bitmap_EC37[2 * 2 * 8];
-static const pixel_t stage2_bitmap_EC57[6 * 30];
-static const pixel_t stage2_bitmap_ED0B[4 * 22];
-static const pixel_t stage2_bitmap_ED63[3 * 16];
-static const pixel_t stage2_bitmap_F2F0[5 * 8];
-static const pixel_t stage2_bitmap_F318[7 * 8];
-static const pixel_t stage2_bitmap_F350[7 * 8];
-static const pixel_t stage2_bitmap_F388[8 * 8];
-static const pixel_t stage2_bitmap_F3C8[3 * 4];
-static const pixel_t stage2_bitmap_F3D4[4 * 4];
-static const pixel_t stage2_bitmap_F3E9[5 * 6];
-static const pixel_t stage2_bitmap_F407[6 * 6];
-static const pixel_t stage2_bitmap_F42B[2 * 4];
-static const pixel_t stage2_bitmap_F433[3 * 3];
-static const pixel_t stage2_bitmap_F43C[3 * 4];
-static const pixel_t stage2_bitmap_F448[4 * 4];
-static const pixel_t stage2_bitmap_F458[1 * 3];
-static const pixel_t stage2_bitmap_F45B[2 * 3];
-static const pixel_t stage2_bitmap_F461[2 * 3];
-static const pixel_t stage2_bitmap_F467[3 * 2];
-static const pixel_t stage2_bitmap_F46D[7 * 8];
-static const pixel_t stage2_bitmap_F4A5[5 * 6];
-static const pixel_t stage2_bitmap_F4C3[3 * 4];
-static const pixel_t stage2_bitmap_F4CF[2 * 3];
-static const pixel_t stage2_bitmap_F4D5[1 * 2 * 1];
-static const pixel_t stage2_bitmap_F4D7[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F4DB[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F4E3[3 * 2 * 2];
-static const pixel_t stage2_bitmap_F4EF[1 * 2 * 1];
-static const pixel_t stage2_bitmap_F4F1[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F4F5[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F4FD[3 * 2 * 2];
-static const pixel_t stage2_bitmap_F768[5 * 4];
-static const pixel_t stage2_bitmap_F77C[4 * 11];
-static const pixel_t stage2_bitmap_F7A8[5 * 8];
-static const pixel_t stage2_bitmap_F7D0[4 * 6];
-static const pixel_t stage2_bitmap_F7E8[3 * 4];
-static const pixel_t stage2_bitmap_F7F4[3 * 4];
-static const pixel_t stage2_bitmap_F800[4 * 11];
-static const pixel_t stage2_bitmap_F82C[3 * 4];
-static const pixel_t stage2_bitmap_F838[2 * 2];
-static const pixel_t stage2_bitmap_F83C[2 * 5];
-static const pixel_t stage2_bitmap_F846[3 * 4];
-static const pixel_t stage2_bitmap_F854[2 * 4];
-static const pixel_t stage2_bitmap_F85C[2 * 2];
-static const pixel_t stage2_bitmap_F860[2 * 4];
-static const pixel_t stage2_bitmap_F868[2 * 4];
-static const pixel_t stage2_bitmap_F870[2 * 2];
-static const pixel_t stage2_bitmap_F874[1 * 2 * 3];
-static const pixel_t stage2_bitmap_F87A[1 * 2 * 3];
-static const pixel_t stage2_bitmap_F880[1 * 2 * 3];
-static const pixel_t stage2_bitmap_F886[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F88A[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F88E[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F892[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F896[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F89A[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F89E[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F8A2[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F8A6[1 * 2 * 2];
-static const pixel_t stage2_bitmap_F8AA[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8AE[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8B2[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F8BA[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8BE[2 * 2 * 3];
-static const pixel_t stage2_bitmap_F8CA[2 * 2 * 3];
-static const pixel_t stage2_bitmap_F8D6[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F8DE[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8E2[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8E6[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F8EE[2 * 2 * 1];
-static const pixel_t stage2_bitmap_F8F2[2 * 2 * 3];
-static const pixel_t stage2_bitmap_F8FE[2 * 2 * 3];
-static const pixel_t stage2_bitmap_F90A[2 * 2 * 2];
-static const pixel_t stage2_bitmap_F97B[5 * 8];
-static const pixel_t stage2_bitmap_F9A3[4 * 6];
-static const pixel_t stage2_bitmap_F9BB[3 * 4];
-static const pixel_t stage2_bitmap_F9C7[3 * 4];
-static const pixel_t stage2_bitmap_F9D3[3 * 2 * 3];
-static const pixel_t stage2_bitmap_F9E5[3 * 2 * 3];
+static const pixel_t stage2_bitmap_E97D[6 * 1 * 29 * 1];
+static const pixel_t stage2_bitmap_EA2B[4 * 1 * 19 * 1];
+static const pixel_t stage2_bitmap_EA77[3 * 1 * 13 * 1];
+static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8 * 1];
+static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1];
+static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1];
+static const pixel_t stage2_bitmap_EB92[4 * 1 * 22 * 1];
+static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1];
+static const pixel_t stage2_bitmap_EC17[2 * 2 * 8 * 1];
+static const pixel_t stage2_bitmap_EC37[2 * 2 * 8 * 1];
+static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1];
+static const pixel_t stage2_bitmap_ED0B[4 * 1 * 22 * 1];
+static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1];
+static const pixel_t stage2_bitmap_F2F0[5 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F318[7 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F350[7 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F388[8 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F3C8[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F3D4[4 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F3E9[5 * 1 * 6 * 1];
+static const pixel_t stage2_bitmap_F407[6 * 1 * 6 * 1];
+static const pixel_t stage2_bitmap_F42B[2 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F433[3 * 1 * 3 * 1];
+static const pixel_t stage2_bitmap_F43C[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F448[4 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F458[1 * 1 * 3 * 1];
+static const pixel_t stage2_bitmap_F45B[2 * 1 * 3 * 1];
+static const pixel_t stage2_bitmap_F461[2 * 1 * 3 * 1];
+static const pixel_t stage2_bitmap_F467[3 * 1 * 2 * 1];
+static const pixel_t stage2_bitmap_F46D[7 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F4A5[5 * 1 * 6 * 1];
+static const pixel_t stage2_bitmap_F4C3[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F4CF[2 * 1 * 3 * 1];
+static const pixel_t stage2_bitmap_F4D5[1 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F4D7[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F4DB[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F4E3[3 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F4EF[1 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F4F1[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F4F5[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F4FD[3 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F768[5 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F77C[4 * 1 * 11 * 1];
+static const pixel_t stage2_bitmap_F7A8[5 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F7D0[4 * 1 * 6 * 1];
+static const pixel_t stage2_bitmap_F7E8[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F7F4[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F800[4 * 1 * 11 * 1];
+static const pixel_t stage2_bitmap_F82C[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F838[2 * 1 * 2 * 1];
+static const pixel_t stage2_bitmap_F83C[2 * 1 * 5 * 1];
+static const pixel_t stage2_bitmap_F846[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F854[2 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F85C[2 * 1 * 2 * 1];
+static const pixel_t stage2_bitmap_F860[2 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F868[2 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F870[2 * 1 * 2 * 1];
+static const pixel_t stage2_bitmap_F874[1 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F87A[1 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F880[1 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F886[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F88A[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F88E[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F892[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F896[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F89A[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F89E[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8A2[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8A6[1 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8AA[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8AE[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8B2[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8BA[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8BE[2 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F8CA[2 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F8D6[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8DE[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8E2[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8E6[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F8EE[2 * 2 * 1 * 1];
+static const pixel_t stage2_bitmap_F8F2[2 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F8FE[2 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F90A[2 * 2 * 2 * 1];
+static const pixel_t stage2_bitmap_F97B[5 * 1 * 8 * 1];
+static const pixel_t stage2_bitmap_F9A3[4 * 1 * 6 * 1];
+static const pixel_t stage2_bitmap_F9BB[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F9C7[3 * 1 * 4 * 1];
+static const pixel_t stage2_bitmap_F9D3[3 * 2 * 3 * 1];
+static const pixel_t stage2_bitmap_F9E5[3 * 2 * 3 * 1];
 static const pixel_t stage2_bitmap_F9F7[2 * 2 * 2 + 4];
 static const pixel_t stage2_bitmap_FA03[2 * 2 * 2 + 4];
-static const pixel_t stage2_bitmap_FA39[4 * 17];
-static const pixel_t stage2_bitmap_FA7D[3 * 13];
-static const pixel_t stage2_bitmap_FAA4[2 * 9];
-static const pixel_t stage2_bitmap_FAB6[2 * 2 * 7];
-static const pixel_t stage2_bitmap_FAD2[2 * 2 * 7];
+static const pixel_t stage2_bitmap_FA39[4 * 1 * 17 * 1];
+static const pixel_t stage2_bitmap_FA7D[3 * 1 * 13 * 1];
+static const pixel_t stage2_bitmap_FAA4[2 * 1 * 9 * 1];
+static const pixel_t stage2_bitmap_FAB6[2 * 2 * 7 * 1];
+static const pixel_t stage2_bitmap_FAD2[2 * 2 * 7 * 1];
 
 /* ----------------------------------------------------------------------- */
 
@@ -1906,7 +1906,7 @@ static const bitmap_t stage2_lods_E953[6] = {
 /**
  * $E97D: stage2_bitmap_E97D
  */
-static const pixel_t stage2_bitmap_E97D[6 * 29] = {
+static const pixel_t stage2_bitmap_E97D[6 * 1 * 29 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
   _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXX_X_X_, _XXXXX__,
@@ -1941,7 +1941,7 @@ static const pixel_t stage2_bitmap_E97D[6 * 29] = {
 /**
  * $EA2B: stage2_bitmap_EA2B
  */
-static const pixel_t stage2_bitmap_EA2B[4 * 19] = {
+static const pixel_t stage2_bitmap_EA2B[4 * 1 * 19 * 1] = {
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
   _XXX_X_X, XXXXXXXX, XXXXXXXX, X_X_XXX_,
   XXX_XXXX, _X__X_XX, _X_XX_X_, XXXX_XXX,
@@ -1966,7 +1966,7 @@ static const pixel_t stage2_bitmap_EA2B[4 * 19] = {
 /**
  * $EA77: stage2_bitmap_EA77
  */
-static const pixel_t stage2_bitmap_EA77[3 * 13] = {
+static const pixel_t stage2_bitmap_EA77[3 * 1 * 13 * 1] = {
   ___XXXXX, XXXXXXXX, XXXXXX__,
   __XXX_X_, XXXXXXXX, X_X_XXX_,
   _XXX_XXX, X__XXX__, XXXX_XXX,
@@ -1985,7 +1985,7 @@ static const pixel_t stage2_bitmap_EA77[3 * 13] = {
 /**
  * $EA9E: stage2_bitmap_EA9E
  */
-static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8] = {
+static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8 * 1] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
   ________, XX__XXXX, _____XXX, X__XX___,
   X_______, _XX_X_X_, ____XXXX, X_XX____,
@@ -1999,7 +1999,7 @@ static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8] = {
 /**
  * $EABE: stage2_bitmap_EABE
  */
-static const pixel_t stage2_bitmap_EABE[2 * 2 * 8] = {
+static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1] = {
   XXX_____, ___XXXXX, ________, XXXXXXXX,
   XXX_____, ___XX__X, ________, XXXX__XX,
   XXXX____, ____XX_X, _______X, _X_X_XX_,
@@ -2013,7 +2013,7 @@ static const pixel_t stage2_bitmap_EABE[2 * 2 * 8] = {
 /**
  * $EADE: stage2_bitmap_EADE
  */
-static const pixel_t stage2_bitmap_EADE[6 * 30] = {
+static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
   _XXX__X_, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXX_X_, X__XXX__,
@@ -2049,7 +2049,7 @@ static const pixel_t stage2_bitmap_EADE[6 * 30] = {
 /**
  * $EB92: stage2_bitmap_EB92
  */
-static const pixel_t stage2_bitmap_EB92[4 * 22] = {
+static const pixel_t stage2_bitmap_EB92[4 * 1 * 22 * 1] = {
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
   _XX_X_XX, XXXXXXXX, XXXXXXXX, XX_X_XX_,
   XX_XXXXX, XXXXXXXX, XXXXXXXX, XXXXX_XX,
@@ -2077,7 +2077,7 @@ static const pixel_t stage2_bitmap_EB92[4 * 22] = {
 /**
  * $EBEA: stage2_bitmap_EBEA
  */
-static const pixel_t stage2_bitmap_EBEA[3 * 15] = {
+static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1] = {
   __XXXXXX, XXXXXXXX, XXXXX___,
   _X_XXXXX, XXXXXXXX, XXXX_X__,
   XXXXXXXX, XXXXXXXX, XXXXXXX_,
@@ -2098,7 +2098,7 @@ static const pixel_t stage2_bitmap_EBEA[3 * 15] = {
 /**
  * $EC17: stage2_bitmap_EC17
  */
-static const pixel_t stage2_bitmap_EC17[2 * 2 * 8] = {
+static const pixel_t stage2_bitmap_EC17[2 * 2 * 8 * 1] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
   ________, XX__XXXX, _____XXX, X__XX___,
   X_______, _X_X_XXX, ____XXXX, _X_X____,
@@ -2112,7 +2112,7 @@ static const pixel_t stage2_bitmap_EC17[2 * 2 * 8] = {
 /**
  * $EC37: stage2_bitmap_EC37
  */
-static const pixel_t stage2_bitmap_EC37[2 * 2 * 8] = {
+static const pixel_t stage2_bitmap_EC37[2 * 2 * 8 * 1] = {
   XXX_____, ___XXXXX, ________, XXXXXXXX,
   XXX_____, ___XX__X, ________, XXXX__XX,
   XXXX____, ____X_X_, _______X, XXX_X_X_,
@@ -2126,7 +2126,7 @@ static const pixel_t stage2_bitmap_EC37[2 * 2 * 8] = {
 /**
  * $EC57: stage2_bitmap_EC57
  */
-static const pixel_t stage2_bitmap_EC57[6 * 30] = {
+static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
   _XXX__X_, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXX_X_, X__XXX__,
@@ -2162,7 +2162,7 @@ static const pixel_t stage2_bitmap_EC57[6 * 30] = {
 /**
  * $ED0B: stage2_bitmap_ED0B
  */
-static const pixel_t stage2_bitmap_ED0B[4 * 22] = {
+static const pixel_t stage2_bitmap_ED0B[4 * 1 * 22 * 1] = {
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
   _XX_X_XX, XXXXXXXX, XXXXXXXX, XX_X_XX_,
   XX_XXXXX, XXXXXXXX, XXXXXXXX, XXXXX_XX,
@@ -2190,7 +2190,7 @@ static const pixel_t stage2_bitmap_ED0B[4 * 22] = {
 /**
  * $ED63: stage2_bitmap_ED63
  */
-static const pixel_t stage2_bitmap_ED63[3 * 16] = {
+static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1] = {
   __XXXXXX, XXXXXXXX, XXXXXX__,
   _X_XXXXX, XXXXXXXX, XXXXX_X_,
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2476,7 +2476,7 @@ static const bitmap_t stage2_lods_F264[20] = {
 /**
  * $F2F0: stage2_bitmap_F2F0
  */
-static const pixel_t stage2_bitmap_F2F0[5 * 8] = {
+static const pixel_t stage2_bitmap_F2F0[5 * 1 * 8 * 1] = {
   XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX, _X_XXXX_,
   XX_XXXXX, X_XXXXXX, _XXXXXXX, XXXXX_XX, __XX____,
   XXXX_XXX, _XXXXXX_, XXXXXX_X, XXXX_X__, _XX_____,
@@ -2490,7 +2490,7 @@ static const pixel_t stage2_bitmap_F2F0[5 * 8] = {
 /**
  * $F318: stage2_bitmap_F318
  */
-static const pixel_t stage2_bitmap_F318[7 * 8] = {
+static const pixel_t stage2_bitmap_F318[7 * 1 * 8 * 1] = {
   X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX, _XXXX___, XX__XX__,
   X__XXXXX, _XXXXX_X, XXXXXXX_, XXXXXXX_, XXXX_XXX, _XX_XX_X, X__X____,
   X_XXXXX_, XXXXXXXX, XXXXX_XX, XXXXXXXX, XXX_XXX_, _XXX___X, XXX_____,
@@ -2504,7 +2504,7 @@ static const pixel_t stage2_bitmap_F318[7 * 8] = {
 /**
  * $F350: stage2_bitmap_F350
  */
-static const pixel_t stage2_bitmap_F350[7 * 8] = {
+static const pixel_t stage2_bitmap_F350[7 * 1 * 8 * 1] = {
   X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX, _XXXXXX_, _XXXX_XX,
   X__XXXXX, _XXXXX_X, XXXXXXX_, XXXXXXX_, XXXX_XXX, _XX_XX__, _XXX___X,
   X_XXXXX_, XXXXXXXX, XXXXX_XX, XXXXXXXX, XXX_XXX_, _XXXXXX_, _XX_X__X,
@@ -2518,7 +2518,7 @@ static const pixel_t stage2_bitmap_F350[7 * 8] = {
 /**
  * $F388: stage2_bitmap_F388
  */
-static const pixel_t stage2_bitmap_F388[8 * 8] = {
+static const pixel_t stage2_bitmap_F388[8 * 1 * 8 * 1] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XXXXX, X_XXXXXX, XXX_XXX_, X_XXX_X_, X_XX_X_X, ____XXXX, __XX__XX, _XX_X__X,
   X__XXX_X, XX_XXXX_, XXXXXXXX, _XXXXX__, XXXXX_X_, ___XXXX_, _XX_X_XX, XX_X___X,
@@ -2532,7 +2532,7 @@ static const pixel_t stage2_bitmap_F388[8 * 8] = {
 /**
  * $F3C8: stage2_bitmap_F3C8
  */
-static const pixel_t stage2_bitmap_F3C8[3 * 4] = {
+static const pixel_t stage2_bitmap_F3C8[3 * 1 * 4 * 1] = {
   XX_XXXXX, XXXX_XXX, _XX_XXXX,
   XX__XXX_, XX__XX__, XX_XX___,
   X_X___XX, XXXXXXXX, XXX_____,
@@ -2542,7 +2542,7 @@ static const pixel_t stage2_bitmap_F3C8[3 * 4] = {
 /**
  * $F3D4: stage2_bitmap_F3D4
  */
-static const pixel_t stage2_bitmap_F3D4[4 * 4] = {
+static const pixel_t stage2_bitmap_F3D4[4 * 1 * 4 * 1] = {
   X_XXXXXX, XX_XXXXX, _XXXXXXX, XX_XX_XX,
   X_XXX_XX, XXXXXX_X, XXXXXXXX, X__X_XX_,
   XXXXXXXX, XXXXXXXX, X_XXXXXX, __XXX___,
@@ -2552,7 +2552,7 @@ static const pixel_t stage2_bitmap_F3D4[4 * 4] = {
 /**
  * $F3E9: stage2_bitmap_F3E9
  */
-static const pixel_t stage2_bitmap_F3E9[5 * 6] = {
+static const pixel_t stage2_bitmap_F3E9[5 * 1 * 6 * 1] = {
   XX_XX_XX, XXXXXXXX, XXXXXXXX, XX_X_X_X, X_X__XX_,
   X_XXX_XX, XX_XXXXX, XXXXXXX_, XXX__X_X, _X___X_X,
   X_XXXX_X, XXXXXXXX, X_XXXXX_, XXX_XX_X, XXX__X_X,
@@ -2564,7 +2564,7 @@ static const pixel_t stage2_bitmap_F3E9[5 * 6] = {
 /**
  * $F407: stage2_bitmap_F407
  */
-static const pixel_t stage2_bitmap_F407[6 * 6] = {
+static const pixel_t stage2_bitmap_F407[6 * 1 * 6 * 1] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X_XXXXXX, XXXXXX_X, X_XXXXX_, _XXX_X__, XXX__XX_, XXXXX__X,
   X__XXXXX, XXXXXXXX, XXXXXX__, X_X____X, _X_XXX__, XX_X__X_,
@@ -2576,7 +2576,7 @@ static const pixel_t stage2_bitmap_F407[6 * 6] = {
 /**
  * $F42B: stage2_bitmap_F42B
  */
-static const pixel_t stage2_bitmap_F42B[2 * 4] = {
+static const pixel_t stage2_bitmap_F42B[2 * 1 * 4 * 1] = {
   X_XXX_XX, _XXXXX_X,
   XX_XXXXX, _XX_XXX_,
   XX__XXX_, XXXXX___,
@@ -2586,7 +2586,7 @@ static const pixel_t stage2_bitmap_F42B[2 * 4] = {
 /**
  * $F433: stage2_bitmap_F433
  */
-static const pixel_t stage2_bitmap_F433[3 * 3] = {
+static const pixel_t stage2_bitmap_F433[3 * 1 * 3 * 1] = {
   X_XX_XX_, XXXXXXXX, _X_XXX__,
   X_XX_XXX, _XXXXX__, XX_XX___,
   X_XXXXX_, XXX_XXX_, X_XX____,
@@ -2595,7 +2595,7 @@ static const pixel_t stage2_bitmap_F433[3 * 3] = {
 /**
  * $F43C: stage2_bitmap_F43C
  */
-static const pixel_t stage2_bitmap_F43C[3 * 4] = {
+static const pixel_t stage2_bitmap_F43C[3 * 1 * 4 * 1] = {
   X_XX_XX_, XXXXXXXX, XX___X_X,
   X_XX_XXX, _XXXXXX_, X__X_X_X,
   X_XXX_XX, _XX_XX_X, X_X_XX_X,
@@ -2605,7 +2605,7 @@ static const pixel_t stage2_bitmap_F43C[3 * 4] = {
 /**
  * $F448: stage2_bitmap_F448
  */
-static const pixel_t stage2_bitmap_F448[4 * 4] = {
+static const pixel_t stage2_bitmap_F448[4 * 1 * 4 * 1] = {
   X_XXXXXX, XXXXXXX_, XX_X__XX, __X_X_X_,
   X__XXX_X, XXXXXX_X, X_X__X__, _XXXXXX_,
   XX__XXXX, _XX_XXX_, X___XXX_, XXX__X__,
@@ -2615,7 +2615,7 @@ static const pixel_t stage2_bitmap_F448[4 * 4] = {
 /**
  * $F458: stage2_bitmap_F458
  */
-static const pixel_t stage2_bitmap_F458[1 * 3] = {
+static const pixel_t stage2_bitmap_F458[1 * 1 * 3 * 1] = {
   XXX_XX_X,
   XXXX_XX_,
   XX______,
@@ -2624,7 +2624,7 @@ static const pixel_t stage2_bitmap_F458[1 * 3] = {
 /**
  * $F45B: stage2_bitmap_F45B
  */
-static const pixel_t stage2_bitmap_F45B[2 * 3] = {
+static const pixel_t stage2_bitmap_F45B[2 * 1 * 3 * 1] = {
   XXXXXXXX, XXXX_X__,
   XXXXX_X_, X_XXX___,
   XX_XXXXX, XXX_____,
@@ -2633,7 +2633,7 @@ static const pixel_t stage2_bitmap_F45B[2 * 3] = {
 /**
  * $F461: stage2_bitmap_F461
  */
-static const pixel_t stage2_bitmap_F461[2 * 3] = {
+static const pixel_t stage2_bitmap_F461[2 * 1 * 3 * 1] = {
   XXXXXXXX, XXXXXX_X,
   XXXXX_X_, XXX__X_X,
   XX_XXXXX, XX_XX_X_,
@@ -2642,7 +2642,7 @@ static const pixel_t stage2_bitmap_F461[2 * 3] = {
 /**
  * $F467: stage2_bitmap_F467
  */
-static const pixel_t stage2_bitmap_F467[3 * 2] = {
+static const pixel_t stage2_bitmap_F467[3 * 1 * 2 * 1] = {
   XXX_XXXX, XX_XX_XX, _X_X____,
   X_XXXX_X, X_X__XX_, XXX_____,
 };
@@ -2650,7 +2650,7 @@ static const pixel_t stage2_bitmap_F467[3 * 2] = {
 /**
  * $F46D: stage2_bitmap_F46D
  */
-static const pixel_t stage2_bitmap_F46D[7 * 8] = {
+static const pixel_t stage2_bitmap_F46D[7 * 1 * 8 * 1] = {
   XX_XXXX_, _XXXXXX_, XXXX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_X_X,
   X___XXX_, __XX_XX_, XXX_XXXX, _XXXXXXX, _XXXXXXX, X_XXXXX_, XXXXX__X,
   X__X_XX_, _XXXXXX_, _XXX_XXX, XXXXXXXX, XX_XXXXX, XXXXXXXX, _XXXXX_X,
@@ -2664,7 +2664,7 @@ static const pixel_t stage2_bitmap_F46D[7 * 8] = {
 /**
  * $F4A5: stage2_bitmap_F4A5
  */
-static const pixel_t stage2_bitmap_F4A5[5 * 6] = {
+static const pixel_t stage2_bitmap_F4A5[5 * 1 * 6 * 1] = {
   _XX__X_X, X_X_X_XX, XXXXXXXX, XXXXXXXX, XX_XX_XX,
   X_X___X_, X_X__XXX, _XXXXXXX, XXXXX_XX, XX_XXX_X,
   X_X__XXX, X_XX_XXX, _XXXXX_X, XXXXXXXX, X_XXXX_X,
@@ -2676,7 +2676,7 @@ static const pixel_t stage2_bitmap_F4A5[5 * 6] = {
 /**
  * $F4C3: stage2_bitmap_F4C3
  */
-static const pixel_t stage2_bitmap_F4C3[3 * 4] = {
+static const pixel_t stage2_bitmap_F4C3[3 * 1 * 4 * 1] = {
   X_X___XX, XXXXXXXX, _XX_XX_X,
   X_X_X__X, _XXXXXX_, XXX_XX_X,
   X_XX_X_X, X_XX_XX_, XX_XXX_X,
@@ -2686,7 +2686,7 @@ static const pixel_t stage2_bitmap_F4C3[3 * 4] = {
 /**
  * $F4CF: stage2_bitmap_F4CF
  */
-static const pixel_t stage2_bitmap_F4CF[2 * 3] = {
+static const pixel_t stage2_bitmap_F4CF[2 * 1 * 3 * 1] = {
   X_XXXXXX, XXXXXXXX,
   X_X__XXX, _X_XXXXX,
   _X_XX_XX, XXXXX_XX,
@@ -2695,21 +2695,21 @@ static const pixel_t stage2_bitmap_F4CF[2 * 3] = {
 /**
  * $F4D5: stage2_bitmap_F4D5
  */
-static const pixel_t stage2_bitmap_F4D5[1 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F4D5[1 * 2 * 1 * 1] = {
   ____XXXX, XXXX____,
 };
 
 /**
  * $F4D7: stage2_bitmap_F4D7
  */
-static const pixel_t stage2_bitmap_F4D7[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F4D7[2 * 2 * 1 * 1] = {
   ________, XX_X_XXX, XXXXXXXX, ________,
 };
 
 /**
  * $F4DB: stage2_bitmap_F4DB
  */
-static const pixel_t stage2_bitmap_F4DB[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F4DB[2 * 2 * 2 * 1] = {
   ________, X_XXX_XX, ___XXXXX, X_X_____,
   ________, XXXXXXXX, __XXXXXX, _X______,
 };
@@ -2717,7 +2717,7 @@ static const pixel_t stage2_bitmap_F4DB[2 * 2 * 2] = {
 /**
  * $F4E3: stage2_bitmap_F4E3
  */
-static const pixel_t stage2_bitmap_F4E3[3 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F4E3[3 * 2 * 2 * 1] = {
   ________, XX_XXXXX, ______XX, XX_X_X__, XXXXXXXX, ________,
   ________, XXXXXXX_, _____XXX, X_X_X___, XXXXXXXX, ________,
 };
@@ -2725,21 +2725,21 @@ static const pixel_t stage2_bitmap_F4E3[3 * 2 * 2] = {
 /**
  * $F4EF: stage2_bitmap_F4EF
  */
-static const pixel_t stage2_bitmap_F4EF[1 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F4EF[1 * 2 * 1 * 1] = {
   XXXX____, ____XXXX,
 };
 
 /**
  * $F4F1: stage2_bitmap_F4F1
  */
-static const pixel_t stage2_bitmap_F4F1[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F4F1[2 * 2 * 1 * 1] = {
   XXXX____, ____XX_X, ____XXXX, _XXX____,
 };
 
 /**
  * $F4F5: stage2_bitmap_F4F5
  */
-static const pixel_t stage2_bitmap_F4F5[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F4F5[2 * 2 * 2 * 1] = {
   XXXX____, ____X_XX, _______X, X_XXX_X_,
   XXXX____, ____XXXX, ______XX, XXXX_X__,
 };
@@ -2747,7 +2747,7 @@ static const pixel_t stage2_bitmap_F4F5[2 * 2 * 2] = {
 /**
  * $F4FD: stage2_bitmap_F4FD
  */
-static const pixel_t stage2_bitmap_F4FD[3 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F4FD[3 * 2 * 2 * 1] = {
   XXXX____, ____XX_X, ________, XXXXXX_X, __XXXXXX, _X______,
   XXXX____, ____XXXX, ________, XXX_X_X_, _XXXXXXX, X_______,
 };
@@ -3076,7 +3076,7 @@ static const bitmap_t stage2_lods_F673[35] = {
 /**
  * $F768: stage2_bitmap_F768
  */
-static const pixel_t stage2_bitmap_F768[5 * 4] = {
+static const pixel_t stage2_bitmap_F768[5 * 1 * 4 * 1] = {
   _X_X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_,
   XXXXXXXX, XXXXXXXX, _X_XXXXX, XXXXXXXX, XXXXXXXX,
   __X__XXX, XXXXXXXX, _____XXX, XXXXXXXX, XX_X____,
@@ -3086,7 +3086,7 @@ static const pixel_t stage2_bitmap_F768[5 * 4] = {
 /**
  * $F77C: stage2_bitmap_F77C
  */
-static const pixel_t stage2_bitmap_F77C[4 * 11] = {
+static const pixel_t stage2_bitmap_F77C[4 * 1 * 11 * 1] = {
   ____X___, __X_XXX_, XXX_____, ____XXX_,
   ___X_X__, __XX__XX, X_XX____, __XXX_X_,
   ___X__XX, X__XXXXX, _X_XXXXX, XXX__XX_,
@@ -3103,7 +3103,7 @@ static const pixel_t stage2_bitmap_F77C[4 * 11] = {
 /**
  * $F7A8: stage2_bitmap_F7A8
  */
-static const pixel_t stage2_bitmap_F7A8[5 * 8] = {
+static const pixel_t stage2_bitmap_F7A8[5 * 1 * 8 * 1] = {
   _XXXX__X, _XXX_XX_, XX_XXX_X, X__XX_XX, X__X__X_,
   _XX__XXX, XXXXX__X, XXXXXXXX, __XXXX__, _XXX_X_X,
   __X__X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
@@ -3117,7 +3117,7 @@ static const pixel_t stage2_bitmap_F7A8[5 * 8] = {
 /**
  * $F7D0: stage2_bitmap_F7D0
  */
-static const pixel_t stage2_bitmap_F7D0[4 * 6] = {
+static const pixel_t stage2_bitmap_F7D0[4 * 1 * 6 * 1] = {
   _XXXXXXX, ___X_XXX, XXXXXXX_, __XX_X__,
   X_XXXXX_, X_X__XXX, _XXXXXXX, XX__XX__,
   X__XXX__, _XX_XXXX, __XX_XX_, _X__X___,
@@ -3129,7 +3129,7 @@ static const pixel_t stage2_bitmap_F7D0[4 * 6] = {
 /**
  * $F7E8: stage2_bitmap_F7E8
  */
-static const pixel_t stage2_bitmap_F7E8[3 * 4] = {
+static const pixel_t stage2_bitmap_F7E8[3 * 1 * 4 * 1] = {
   ____XXXX, XXXXXXXX, XXXX____,
   XXXXXXXX, XXXXXXXX, XXXXXXXX,
   __XXXXXX, XX____XX, XXXXXXX_,
@@ -3139,7 +3139,7 @@ static const pixel_t stage2_bitmap_F7E8[3 * 4] = {
 /**
  * $F7F4: stage2_bitmap_F7F4
  */
-static const pixel_t stage2_bitmap_F7F4[3 * 4] = {
+static const pixel_t stage2_bitmap_F7F4[3 * 1 * 4 * 1] = {
   XX__XX_X, XXXX____, __XX____,
   X_XXX_XX, XX__XXXX, XX__X___,
   X_XXXX_X, X_X_XX__, X_X_X___,
@@ -3149,7 +3149,7 @@ static const pixel_t stage2_bitmap_F7F4[3 * 4] = {
 /**
  * $F800: stage2_bitmap_F800
  */
-static const pixel_t stage2_bitmap_F800[4 * 11] = {
+static const pixel_t stage2_bitmap_F800[4 * 1 * 11 * 1] = {
   _____XXX, XX_X_XXX, _XXX_XXX, XXXX_X__,
   _____X_X, _XX___XX, __X_XX_X, XX__XX__,
   _XX__XX_, _X_XX_X_, XXXXX__X, __X_X___,
@@ -3166,7 +3166,7 @@ static const pixel_t stage2_bitmap_F800[4 * 11] = {
 /**
  * $F82C: stage2_bitmap_F82C
  */
-static const pixel_t stage2_bitmap_F82C[3 * 4] = {
+static const pixel_t stage2_bitmap_F82C[3 * 1 * 4 * 1] = {
   XXX_XX_X, XX_XXXXX, X__XX___,
   X_X_X_X_, _XX_X_X_, _X_X____,
   XXXX_X__, __X__X_X, __X_____,
@@ -3176,7 +3176,7 @@ static const pixel_t stage2_bitmap_F82C[3 * 4] = {
 /**
  * $F838: stage2_bitmap_F838
  */
-static const pixel_t stage2_bitmap_F838[2 * 2] = {
+static const pixel_t stage2_bitmap_F838[2 * 1 * 2 * 1] = {
   XXXXXXXX, XXXXXX__,
   _XXX___X, XXX_X___,
 };
@@ -3184,7 +3184,7 @@ static const pixel_t stage2_bitmap_F838[2 * 2] = {
 /**
  * $F83C: stage2_bitmap_F83C
  */
-static const pixel_t stage2_bitmap_F83C[2 * 5] = {
+static const pixel_t stage2_bitmap_F83C[2 * 1 * 5 * 1] = {
   __X__XXX, XX____XX,
   _X_XX_XX, __XXXX_X,
   XX_XXXXX, _XXXX_X_,
@@ -3195,7 +3195,7 @@ static const pixel_t stage2_bitmap_F83C[2 * 5] = {
 /**
  * $F846: stage2_bitmap_F846
  */
-static const pixel_t stage2_bitmap_F846[3 * 4] = {
+static const pixel_t stage2_bitmap_F846[3 * 1 * 4 * 1] = {
   _____XX_, X__X__X_, X_X___XX,
   _____X_X, XX__XXXX, _XX__XX_,
   ______X_, _XXXX_XX, XXXXXX_X,
@@ -3205,7 +3205,7 @@ static const pixel_t stage2_bitmap_F846[3 * 4] = {
 /**
  * $F854: stage2_bitmap_F854
  */
-static const pixel_t stage2_bitmap_F854[2 * 4] = {
+static const pixel_t stage2_bitmap_F854[2 * 1 * 4 * 1] = {
   XX_XX__X, X_X_XXX_,
   XXXX_X_X, _XXXX_X_,
   _X__X_X_, X__X_X__,
@@ -3215,7 +3215,7 @@ static const pixel_t stage2_bitmap_F854[2 * 4] = {
 /**
  * $F85C: stage2_bitmap_F85C
  */
-static const pixel_t stage2_bitmap_F85C[2 * 2] = {
+static const pixel_t stage2_bitmap_F85C[2 * 1 * 2 * 1] = {
   XXXXXXXX, XXXXX___,
   _XXX_X_X, XXXX____,
 };
@@ -3223,7 +3223,7 @@ static const pixel_t stage2_bitmap_F85C[2 * 2] = {
 /**
  * $F860: stage2_bitmap_F860
  */
-static const pixel_t stage2_bitmap_F860[2 * 4] = {
+static const pixel_t stage2_bitmap_F860[2 * 1 * 4 * 1] = {
   __XXX_XX, _XXXXX__,
   _X_X_XXX, _XXXXX__,
   X_XXX_XX, X_XXXX__,
@@ -3233,7 +3233,7 @@ static const pixel_t stage2_bitmap_F860[2 * 4] = {
 /**
  * $F868: stage2_bitmap_F868
  */
-static const pixel_t stage2_bitmap_F868[2 * 4] = {
+static const pixel_t stage2_bitmap_F868[2 * 1 * 4 * 1] = {
   XX__XX_X, XXX__X__,
   _XXXXXXX, X__XX_X_,
   X___X_XX, XXX_XXX_,
@@ -3243,7 +3243,7 @@ static const pixel_t stage2_bitmap_F868[2 * 4] = {
 /**
  * $F870: stage2_bitmap_F870
  */
-static const pixel_t stage2_bitmap_F870[2 * 2] = {
+static const pixel_t stage2_bitmap_F870[2 * 1 * 2 * 1] = {
   _X_X__XX, _X___X__,
   __XXXX__, XXXXX___,
 };
@@ -3251,7 +3251,7 @@ static const pixel_t stage2_bitmap_F870[2 * 2] = {
 /**
  * $F874: stage2_bitmap_F874
  */
-static const pixel_t stage2_bitmap_F874[1 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F874[1 * 2 * 3 * 1] = {
   ______XX, X____X__,
   ______XX, X_XXXX__,
   ______XX, XX___X__,
@@ -3260,7 +3260,7 @@ static const pixel_t stage2_bitmap_F874[1 * 2 * 3] = {
 /**
  * $F87A: stage2_bitmap_F87A
  */
-static const pixel_t stage2_bitmap_F87A[1 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F87A[1 * 2 * 3 * 1] = {
   X_____XX, _X___X__,
   X_____XX, _X_XXX__,
   X_____XX, _XX__X__,
@@ -3269,7 +3269,7 @@ static const pixel_t stage2_bitmap_F87A[1 * 2 * 3] = {
 /**
  * $F880: stage2_bitmap_F880
  */
-static const pixel_t stage2_bitmap_F880[1 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F880[1 * 2 * 3 * 1] = {
   XX_____X, __X___X_,
   XX_____X, __XX__X_,
   XX_____X, __X_XXX_,
@@ -3278,7 +3278,7 @@ static const pixel_t stage2_bitmap_F880[1 * 2 * 3] = {
 /**
  * $F886: stage2_bitmap_F886
  */
-static const pixel_t stage2_bitmap_F886[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F886[1 * 2 * 2 * 1] = {
   X_____XX, _X___X__,
   X_____XX, _X_XXX__,
 };
@@ -3286,7 +3286,7 @@ static const pixel_t stage2_bitmap_F886[1 * 2 * 2] = {
 /**
  * $F88A: stage2_bitmap_F88A
  */
-static const pixel_t stage2_bitmap_F88A[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F88A[1 * 2 * 2 * 1] = {
   XX____XX, __X_XX__,
   XX____XX, __XX_X__,
 };
@@ -3294,7 +3294,7 @@ static const pixel_t stage2_bitmap_F88A[1 * 2 * 2] = {
 /**
  * $F88E: stage2_bitmap_F88E
  */
-static const pixel_t stage2_bitmap_F88E[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F88E[1 * 2 * 2 * 1] = {
   XXX____X, ___X_XX_,
   XXX____X, ___XX_X_,
 };
@@ -3302,7 +3302,7 @@ static const pixel_t stage2_bitmap_F88E[1 * 2 * 2] = {
 /**
  * $F892: stage2_bitmap_F892
  */
-static const pixel_t stage2_bitmap_F892[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F892[1 * 2 * 2 * 1] = {
   XXX____X, ___X__X_,
   XXX____X, ___X__X_,
 };
@@ -3310,7 +3310,7 @@ static const pixel_t stage2_bitmap_F892[1 * 2 * 2] = {
 /**
  * $F896: stage2_bitmap_F896
  */
-static const pixel_t stage2_bitmap_F896[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F896[1 * 2 * 2 * 1] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_,
 };
@@ -3318,7 +3318,7 @@ static const pixel_t stage2_bitmap_F896[1 * 2 * 2] = {
 /**
  * $F89A: stage2_bitmap_F89A
  */
-static const pixel_t stage2_bitmap_F89A[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F89A[1 * 2 * 2 * 1] = {
   XXXXX___, _____X_X,
   XXXXX___, _____X_X,
 };
@@ -3326,7 +3326,7 @@ static const pixel_t stage2_bitmap_F89A[1 * 2 * 2] = {
 /**
  * $F89E: stage2_bitmap_F89E
  */
-static const pixel_t stage2_bitmap_F89E[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F89E[1 * 2 * 2 * 1] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_,
 };
@@ -3334,7 +3334,7 @@ static const pixel_t stage2_bitmap_F89E[1 * 2 * 2] = {
 /**
  * $F8A2: stage2_bitmap_F8A2
  */
-static const pixel_t stage2_bitmap_F8A2[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F8A2[1 * 2 * 2 * 1] = {
   XXXXX__X, _____XX_,
   XXXXX__X, _____XX_,
 };
@@ -3342,7 +3342,7 @@ static const pixel_t stage2_bitmap_F8A2[1 * 2 * 2] = {
 /**
  * $F8A6: stage2_bitmap_F8A6
  */
-static const pixel_t stage2_bitmap_F8A6[1 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F8A6[1 * 2 * 2 * 1] = {
   XXXXXX__, ______XX,
   XXXXXX__, ______XX,
 };
@@ -3350,21 +3350,21 @@ static const pixel_t stage2_bitmap_F8A6[1 * 2 * 2] = {
 /**
  * $F8AA: stage2_bitmap_F8AA
  */
-static const pixel_t stage2_bitmap_F8AA[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8AA[2 * 2 * 1 * 1] = {
   ________, XXXXXXXX, ____XXXX, XXXX____,
 };
 
 /**
  * $F8AE: stage2_bitmap_F8AE
  */
-static const pixel_t stage2_bitmap_F8AE[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8AE[2 * 2 * 1 * 1] = {
   XXXX___X, ____XXX_, XXXXXXXX, ________,
 };
 
 /**
  * $F8B2: stage2_bitmap_F8B2
  */
-static const pixel_t stage2_bitmap_F8B2[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F8B2[2 * 2 * 2 * 1] = {
   XXXXX__X, _____XX_, XXXXXXXX, ________,
   XXXXX__X, _____XX_, XXXXXXXX, ________,
 };
@@ -3372,14 +3372,14 @@ static const pixel_t stage2_bitmap_F8B2[2 * 2 * 2] = {
 /**
  * $F8BA: stage2_bitmap_F8BA
  */
-static const pixel_t stage2_bitmap_F8BA[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8BA[2 * 2 * 1 * 1] = {
   XXXXX___, _____XXX, XXXXXXXX, ________,
 };
 
 /**
  * $F8BE: stage2_bitmap_F8BE
  */
-static const pixel_t stage2_bitmap_F8BE[2 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F8BE[2 * 2 * 3 * 1] = {
   XX______, __XXXXX_, ___XXXXX, XXX_____,
   XX______, __XX_XXX, ____XXXX, _XXX____,
   X_______, _X_XX_XX, ____XXXX, XXXX____,
@@ -3388,7 +3388,7 @@ static const pixel_t stage2_bitmap_F8BE[2 * 2 * 3] = {
 /**
  * $F8CA: stage2_bitmap_F8CA
  */
-static const pixel_t stage2_bitmap_F8CA[2 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F8CA[2 * 2 * 3 * 1] = {
   ________, XXX_X__X, ____XXXX, _X_X____,
   ________, X_XXXXXX, ____XXXX, XXX_____,
   X_______, _X__XX_X, ____XXXX, _X_X____,
@@ -3397,7 +3397,7 @@ static const pixel_t stage2_bitmap_F8CA[2 * 2 * 3] = {
 /**
  * $F8D6: stage2_bitmap_F8D6
  */
-static const pixel_t stage2_bitmap_F8D6[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F8D6[2 * 2 * 2 * 1] = {
   XX______, __XXX__X, ___XXXXX, __X_____,
   XXX_____, ___XXXXX, __XXXXXX, XX______,
 };
@@ -3405,21 +3405,21 @@ static const pixel_t stage2_bitmap_F8D6[2 * 2 * 2] = {
 /**
  * $F8DE: stage2_bitmap_F8DE
  */
-static const pixel_t stage2_bitmap_F8DE[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8DE[2 * 2 * 1 * 1] = {
   XXXX____, ____XXXX, ________, XXXXXXXX,
 };
 
 /**
  * $F8E2: stage2_bitmap_F8E2
  */
-static const pixel_t stage2_bitmap_F8E2[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8E2[2 * 2 * 1 * 1] = {
   XXXXXXXX, ________, ___XXXXX, XXX_____,
 };
 
 /**
  * $F8E6: stage2_bitmap_F8E6
  */
-static const pixel_t stage2_bitmap_F8E6[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F8E6[2 * 2 * 2 * 1] = {
   XXXXXXXX, ________, X__XXXXX, _XX_____,
   XXXXXXXX, ________, X__XXXXX, _XX_____,
 };
@@ -3427,14 +3427,14 @@ static const pixel_t stage2_bitmap_F8E6[2 * 2 * 2] = {
 /**
  * $F8EE: stage2_bitmap_F8EE
  */
-static const pixel_t stage2_bitmap_F8EE[2 * 2 * 1] = {
+static const pixel_t stage2_bitmap_F8EE[2 * 2 * 1 * 1] = {
   XXXXXXXX, ________, X___XXXX, _XXX____,
 };
 
 /**
  * $F8F2: stage2_bitmap_F8F2
  */
-static const pixel_t stage2_bitmap_F8F2[2 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F8F2[2 * 2 * 3 * 1] = {
   XXXXXX__, ______XX, _______X, XXX_XXX_,
   XXXXXX__, ______XX, ________, _XXX_XXX,
   XXXXX___, _____X_X, ________, X_XXXXXX,
@@ -3443,7 +3443,7 @@ static const pixel_t stage2_bitmap_F8F2[2 * 2 * 3] = {
 /**
  * $F8FE: stage2_bitmap_F8FE
  */
-static const pixel_t stage2_bitmap_F8FE[2 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F8FE[2 * 2 * 3 * 1] = {
   XXXX____, ____XXX_, ________, X__X_X_X,
   XXXX____, ____X_XX, ________, XXXXXXX_,
   XXXXX___, _____X__, ________, XX_X_X_X,
@@ -3452,7 +3452,7 @@ static const pixel_t stage2_bitmap_F8FE[2 * 2 * 3] = {
 /**
  * $F90A: stage2_bitmap_F90A
  */
-static const pixel_t stage2_bitmap_F90A[2 * 2 * 2] = {
+static const pixel_t stage2_bitmap_F90A[2 * 2 * 2 * 1] = {
   XXXXXX__, ______XX, _______X, X__X__X_,
   XXXXXXX_, _______X, ______XX, XXXXXX__,
 };
@@ -3521,7 +3521,7 @@ static const bitmap_t stage2_lods_F958[5] = {
 /**
  * $F97B: stage2_bitmap_F97B
  */
-static const pixel_t stage2_bitmap_F97B[5 * 8] = {
+static const pixel_t stage2_bitmap_F97B[5 * 1 * 8 * 1] = {
   __XXXXX_, ________, XXX_XXX_, ________, _XXXXX__,
   _XX___XX, _______X, X_X_X_XX, ________, XX___XX_,
   _X_____X, _____XXX, __X_X__X, XX______, X_____X_,
@@ -3535,7 +3535,7 @@ static const pixel_t stage2_bitmap_F97B[5 * 8] = {
 /**
  * $F9A3: stage2_bitmap_F9A3
  */
-static const pixel_t stage2_bitmap_F9A3[4 * 6] = {
+static const pixel_t stage2_bitmap_F9A3[4 * 1 * 6 * 1] = {
   ____XXXX, _______X, X_XX____, ___XXXX_,
   ___XX__X, X____XX_, X_X_XX__, __XX__XX,
   ___X____, X_XXX__X, X__X__XX, X_X____X,
@@ -3547,7 +3547,7 @@ static const pixel_t stage2_bitmap_F9A3[4 * 6] = {
 /**
  * $F9BB: stage2_bitmap_F9BB
  */
-static const pixel_t stage2_bitmap_F9BB[3 * 4] = {
+static const pixel_t stage2_bitmap_F9BB[3 * 1 * 4 * 1] = {
   _X_X___X, XXXXX___, X_X_____,
   X___XXX_, X__X_XXX, ___X____,
   XXXX____, _XX_____, XXXX____,
@@ -3557,7 +3557,7 @@ static const pixel_t stage2_bitmap_F9BB[3 * 4] = {
 /**
  * $F9C7: stage2_bitmap_F9C7
  */
-static const pixel_t stage2_bitmap_F9C7[3 * 4] = {
+static const pixel_t stage2_bitmap_F9C7[3 * 1 * 4 * 1] = {
   _____X_X, ___XXXXX, X___X_X_,
   ____X___, XXX_X__X, _XXX___X,
   ____XXXX, _____XX_, ____XXXX,
@@ -3567,7 +3567,7 @@ static const pixel_t stage2_bitmap_F9C7[3 * 4] = {
 /**
  * $F9D3: stage2_bitmap_F9D3
  */
-static const pixel_t stage2_bitmap_F9D3[3 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F9D3[3 * 2 * 3 * 1] = {
   XX___XX_, __X_X__X, ____XX__, XXXX__X_, _XXXXXXX, X_______,
   XX______, ____XXX_, _____X__, X_X_X_X_, _XXXXXXX, ________,
   XX_____X, __XXX___, XXXX____, ______XX, _XXXXXXX, X_______,
@@ -3576,7 +3576,7 @@ static const pixel_t stage2_bitmap_F9D3[3 * 2 * 3] = {
 /**
  * $F9E5: stage2_bitmap_F9E5
  */
-static const pixel_t stage2_bitmap_F9E5[3 * 2 * 3] = {
+static const pixel_t stage2_bitmap_F9E5[3 * 2 * 3 * 1] = {
   XXXXXX__, ______X_, _XX_____, X__XXXXX, XX___XXX, __X_X___,
   XXXXXX__, ________, ________, XXX_X_X_, _X___XXX, X_X_____,
   XXXXXX__, ______XX, ___XXXXX, X_______, _____XXX, __XXX___,
@@ -3615,7 +3615,7 @@ static const bitmap_t stage2_lods_FA0F[6] = {
 /**
  * $FA39: stage2_bitmap_FA39
  */
-static const pixel_t stage2_bitmap_FA39[4 * 17] = {
+static const pixel_t stage2_bitmap_FA39[4 * 1 * 17 * 1] = {
   ___XXXXX, XX______, ______XX, XXXXX___,
   ___XXXX_, _X____XX, XX____XX, _X__X___,
   ____XX_X, __X___XX, _X___XX_, X__X____,
@@ -3638,7 +3638,7 @@ static const pixel_t stage2_bitmap_FA39[4 * 17] = {
 /**
  * $FA7D: stage2_bitmap_FA7D
  */
-static const pixel_t stage2_bitmap_FA7D[3 * 13] = {
+static const pixel_t stage2_bitmap_FA7D[3 * 1 * 13 * 1] = {
   __XXXXXX, ________, XXXXXX__,
   __XXX_XX, ___XXX__, XX_X_X__,
   ___XXX_X, X__X_X_X, X_X_X___,
@@ -3657,7 +3657,7 @@ static const pixel_t stage2_bitmap_FA7D[3 * 13] = {
 /**
  * $FAA4: stage2_bitmap_FAA4
  */
-static const pixel_t stage2_bitmap_FAA4[2 * 9] = {
+static const pixel_t stage2_bitmap_FAA4[2 * 1 * 9 * 1] = {
   _XXXX___, ___XXXX_,
   _XX_X__X, X__XX_X_,
   __XX_X_X, X_XX_X__,
@@ -3672,7 +3672,7 @@ static const pixel_t stage2_bitmap_FAA4[2 * 9] = {
 /**
  * $FAB6: stage2_bitmap_FAB6
  */
-static const pixel_t stage2_bitmap_FAB6[2 * 2 * 7] = {
+static const pixel_t stage2_bitmap_FAB6[2 * 2 * 7 * 1] = {
   X__XXXXX, _XX_____, X__XXXXX, _XX_____,
   X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
   XX______, __XXXXXX, __XXXXXX, XX______,
@@ -3685,7 +3685,7 @@ static const pixel_t stage2_bitmap_FAB6[2 * 2 * 7] = {
 /**
  * $FAD2: stage2_bitmap_FAD2
  */
-static const pixel_t stage2_bitmap_FAD2[2 * 2 * 7] = {
+static const pixel_t stage2_bitmap_FAD2[2 * 2 * 7 * 1] = {
   XXXXX__X, _____XX_, XXXXX__X, _____XX_,
   XXXXX___, _____XXX, X__X___X, _XX_XXX_,
   XXXXXX__, ______XX, ______XX, XXXXXX__,

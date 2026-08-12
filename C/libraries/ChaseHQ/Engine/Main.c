@@ -4680,6 +4680,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state,
 static void draw_scene_objects(chqstate_t *state)
 {
   // clang-format off
+  // Conv: Made these bitmap_t's and used NULL for the pre-shifted bitmap field.
   /** $E1DF: floating_arrow_left_defn */
   static const bitmap_t floating_arrow_left_defn = {
     3, BITMAPFLAG_MASKED, 21, bitmap_arrow, NULL
@@ -12477,7 +12478,7 @@ static void move_hero_car(chqstate_t *state)
   const int SpeedHighGearBoosted = 695; /* high gear max with boost */
 
   int        y_offset;              /* jump counter: 8..1 while airborne, 0 when landed (was A) */
-  const u8  *jump_data;             /* pointer into hero_car_jump_table for current air frame (was HL) */
+  const s8  *jump_data;             /* pointer into hero_car_jump_table for current air frame (was HL) */
   int        C_input;               /* latched user_input; masked to fire-only when crashed (was C) */
   int        A_input;               /* copy of C_input used for fire and brake/accel checks (was A) */
   int        fire_pressed;          /* non-zero when FIRE held and gear lockout is zero (Conv: extracted) */

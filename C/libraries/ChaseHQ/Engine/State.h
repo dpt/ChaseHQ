@@ -1075,7 +1075,7 @@ struct chqstate
     u8        y_offset;
 
     /* $B079: (SM in move_hero_car) Current entry in the jump trajectory table */
-    const u8 *jump_data;
+    const s8 *jump_data;
   } mhc;
 
   /* $B325-$B478: (SM in animate_hero_car) Hero car crash and hand animation
