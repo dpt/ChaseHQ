@@ -55,6 +55,7 @@
 > $F000 ; $F0CA  Low-level tape bit-read primitive
 > $F000 ; $F0CE  Low-level tape edge-read primitive
 > $F000 ;
+@ $4000 start
 b $4000 Screen memory
 u $5B00 Unloaded gap (pre-shifted backdrop scratch area in the retail game)
 b $5C00 [Stage 1] Horizon graphic (identical to retail fixed $5C00)
@@ -80,7 +81,7 @@ b $6DEA Not yet identified
 b $6DF5 [Stage 4] Pilot's mugshot (identical to retail bank6 $EFF5)
 b $705A Not yet identified
 b $7063 [Stage 5] Perp's mugshot (identical to retail bank7 $D295)
-b $73EE Not yet identified
+s $73EE Not yet identified
 b $76D6 Identical to retail bank5 $F6D6 (not yet disassembled there)
 c $8000 Not yet identified
 c $8153 Reveals the perp's car on the pre-game screen (identical to retail fixed $85F5)
@@ -92,7 +93,6 @@ c $8278 Not yet identified
 c $828F Sets up the stage (identical to retail fixed $87F3)
 c $82FE Not yet identified
 c $83EE Crash sound effect (identical to retail fixed $8963)
-c $8469 Not yet identified
 c $8469 "Thud" sound effect (identical to retail fixed $89DE)
 c $84A1 Not yet identified
 c $84A6 Cornering sound effect (identical to retail fixed $8A1B)
@@ -130,7 +130,6 @@ c $94CC Not yet identified
 c $9580 Shows the chatter - the alerts and remarks from the game's characters (identical to retail fixed $99F9)
 c $95AA Not yet identified
 c $95FD Noise in/out effect used for mugshots (identical to retail fixed $9A76)
-c $9643 Not yet identified
 c $9643 Plots a face on the screen (identical to retail fixed $9ABC)
 c $9680 Not yet identified
 c $9684 Plot mini font characters (identical to retail fixed $9AFD)
@@ -144,7 +143,6 @@ c $98FF Not yet identified
 c $9927 Draws the turbo sprites and updates the displayed speed, time, distance and score (identical to retail fixed $9E3C)
 c $9A2A Not yet identified
 c $9A3F Plots an 8x15 LED font digit to the screen (identical to retail fixed $9F54)
-c $9A98 Not yet identified
 c $9A98 Another draw string entry point? (identical to retail fixed $9FAD)
 c $9ADA Not yet identified
 c $9AE6 Draws a character (to buffer or screen?) (identical to retail fixed $9FFB)
@@ -178,7 +176,6 @@ c $A547 Not yet identified
 c $A54D Hazard collision (identical to retail fixed $AD7A)
 c $A577 Not yet identified
 c $A58B Draws all hazards (identical to retail fixed $ADB8)
-c $A6B4 Not yet identified
 c $A6B4 This entry point is used by the routine at #R$8F5F. (identical to retail fixed $AEE1)
 c $A83F Not yet identified
 c $A8DA Hero car jumps; gear changing; turbos; off road checks; speed adjustment; turning (identical to retail fixed $B107)
@@ -202,13 +199,11 @@ c $AF32 Not yet identified
 c $AF4C Masked sprite plotter which flips (identical to retail fixed $B779)
 c $AFB5 Not yet identified
 c $AFCA Masked + inverted sprite plotter (identical to retail fixed $B7F7)
-c $AFFB Not yet identified
 b $AFFB Horizon image related (identical to retail fixed $B828)
 c $B01C Not yet identified
 c $B11B Horizon stuff / Car jumping stuff (identical to retail fixed $B948)
 c $B1BF Not yet identified
 c $B218 Copies the back buffer at $F000 to the screen (and sets attributes) (identical to retail fixed $BC49)
-c $B393 Not yet identified
 c $B393 Clears the playfield then sets its attributes (identical to retail fixed $BDC4)
 c $B3CE Not yet identified
 c $B5B2 Identical to retail bank0 $C08C (not yet disassembled there)
@@ -222,15 +217,12 @@ c $B732 Not yet identified
 c $B89F Identical to retail bank0 $C5F9 (not yet disassembled there)
 c $B8E7 Not yet identified
 c $B8EA Identical to retail bank0 $C644 (not yet disassembled there)
-c $B930 Not yet identified
 c $B930 Identical to retail bank0 $C68A (not yet disassembled there)
 c $B95F Not yet identified
 c $BA1B Identical to retail bank0 $C7DA (not yet disassembled there)
 c $BA3C Not yet identified
 c $BA62 Identical to retail bank0 $C821 (not yet disassembled there)
-c $BAD6 Not yet identified
 c $BAD6 Identical to retail bank0 $C895 (not yet disassembled there)
-c $BAFF Not yet identified
 c $BAFF Identical to retail bank0 $C8BE (not yet disassembled there)
 c $BB23 Not yet identified
 c $BB6C Identical to retail bank0 $CC1E (not yet disassembled there)
@@ -263,7 +255,6 @@ c $C694 Not yet identified
 c $C770 Drum sample players (identical to retail bank7 $F8CD)
 c $C78B Not yet identified
 c $C798 Identical to retail bank0 $EF5E (not yet disassembled there)
-c $C906 Not yet identified
 b $C906 Data block at F8F5 (identical to retail bank7 $F9F9)
 c $C92E Not yet identified
 c $C94C Identical to retail bank0 $F111 (not yet disassembled there)
@@ -281,9 +272,9 @@ c $DEE7 Not yet identified
 c $DEFF Identical to retail bank0 $E8A6 (not yet disassembled there)
 c $DF57 Not yet identified
 c $E100 Identical to retail bank0 $E400 (not yet disassembled there)
-c $E510 Not yet identified
+s $E510 Not yet identified
 c $E525 Identical to retail bank0 $F5C3 (not yet disassembled there)
-c $EE60 Not yet identified
+s $EE60 Not yet identified
 i $EE80 Leftover/padding RAM content; not part of any tape block
 c $F000 Paul Owens protection loader
 i $F0EC Leftover/padding RAM content; not part of any tape block
