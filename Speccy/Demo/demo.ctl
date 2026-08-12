@@ -81,7 +81,7 @@ b $6DEA Not yet identified
 b $6DF5 [Stage 4] Pilot's mugshot (identical to retail bank6 $EFF5)
 b $705A Not yet identified
 b $7063 [Stage 5] Perp's mugshot (identical to retail bank7 $D295)
-s $73EE Not yet identified
+s $73EE Zero-fill (744 bytes)
 b $76D6 Identical to retail bank5 $F6D6 (not yet disassembled there)
 c $8000 Demo's own entry point and per-frame main loop: sets up stack/screen, detects 128K hardware via port $7FFD, then dispatches to the engine subsystems each frame
 c $8153 Reveals the perp's car on the pre-game screen (identical to retail fixed $85F5)
@@ -272,9 +272,9 @@ c $DEE7 Data table; misdisassembles as garbage instructions
 c $DEFF Identical to retail bank0 $E8A6 (not yet disassembled there)
 c $DF57 Data table (mixed byte values, not code)
 c $E100 Identical to retail bank0 $E400 (not yet disassembled there)
-s $E510 Not yet identified
+s $E510 Zero-fill (21 bytes)
 c $E525 Identical to retail bank0 $F5C3 (not yet disassembled there)
-s $EE60 Not yet identified
+s $EE60 Zero-fill (32 bytes)
 i $EE80 Leftover/padding RAM content; not part of any tape block
 c $F000 Paul Owens protection loader
 i $F0EC Leftover/padding RAM content; not part of any tape block
