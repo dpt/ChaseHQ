@@ -123,7 +123,7 @@ c $90B3 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, fli
 c $9101 Same routine as retail fixed $95A1 (Routine at 9565); differs only in an embedded address literal (data lives at a different offset in this build)
 c $911C Routine at 9565 (identical to retail fixed $95BC)
 c $9166 Same routine as retail fixed $9606 (Routine at 9565); differs only in an embedded address literal (data lives at a different offset in this build)
-c $917E Random number generator (identical to retail fixed $961E)
+c $917E Random number generator (identical to retail fixed $961E); the code is only the first ~33 bytes, followed by the embedded police-radio chatter dialogue text table (e.g. "THIS IS SPECIAL INVESTIGATION AIRBORNE", "GOTCHA, NANCY BABY") that runs to the end of the block
 c $940A Data table used by L917E; misdisassembles as garbage instructions, not real code
 b $94B3 [Messages] Start of stage chatter (identical to retail fixed $81EB)
 c $94CC Same routine as retail fixed $9945 (Start chatter); differs only in an embedded address literal (data lives at a different offset in this build)
@@ -249,7 +249,7 @@ c $C517 Identical to retail bank0 $ECB7 (not yet disassembled there)
 c $C556 Menu-item scroll/highlight animation, part of the options-menu machinery
 c $C58C Scans the keyboard matrix for a single currently-held key (identical to retail bank3 $FF0C)
 c $C5B1 Wait-for-key-selection loop for the options menu, calls LC58C
-c $C5D9 Waits for a fresh single keypress, rejecting ambiguous or empty scans (identical to retail bank3 $FF56)
+c $C5D9 Waits for a fresh single keypress, rejecting ambiguous or empty scans (identical to retail bank3 $FF56); the routine ends around $C618, followed by an embedded keyboard-layout label string ("B N M SYSPH J K L ENY U I O P 6 7 8 9 0 5 4 3 2 1 T R E W Q G F D S A V C X Z CP#") used by the redefine-keys option
 c $C672 Identical to retail bank0 $EE38 (not yet disassembled there)
 c $C694 Same routine as retail bank0 $EE5A (not yet disassembled there); differs only in an embedded address literal
 c $C770 Drum sample players (identical to retail bank7 $F8CD)
