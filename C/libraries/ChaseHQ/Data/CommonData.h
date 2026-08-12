@@ -106,7 +106,7 @@ extern const pixel_t font[41 * 7];
 
 extern const u8 hazard_pos_speed[3 * 4];
 
-extern const u8 hero_car_jump_table[10 * 2];
+extern const s8 hero_car_jump_table[10 * 2];
 extern const u8 horizon_table[32]; // byte table; Z80 $B828
 
 extern const pixel_t bitmap_arrow[3 * 2 * 28];

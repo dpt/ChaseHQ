@@ -12477,7 +12477,7 @@ static void move_hero_car(chqstate_t *state)
   const int SpeedHighGearBoosted = 695; /* high gear max with boost */
 
   int        y_offset;              /* jump counter: 8..1 while airborne, 0 when landed (was A) */
-  const u8  *jump_data;             /* pointer into hero_car_jump_table for current air frame (was HL) */
+  const s8  *jump_data;             /* pointer into hero_car_jump_table for current air frame (was HL) */
   int        C_input;               /* latched user_input; masked to fire-only when crashed (was C) */
   int        A_input;               /* copy of C_input used for fire and brake/accel checks (was A) */
   int        fire_pressed;          /* non-zero when FIRE held and gear lockout is zero (Conv: extracted) */

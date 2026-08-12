@@ -1208,17 +1208,17 @@ const u8 hazard_pos_speed[3 * 4] = {
 /* ----------------------------------------------------------------------- */
 
 /** $B045: hero_car_jump_table */
-const u8 hero_car_jump_table[10 * 2] = {
-  0x03, 0x0D, // Pitch Up,    Delta  13
-  0x03, 0x0A, // Pitch Up,    Delta  10
-  0x03, 0x07, // Pitch Up,    Delta   7
-  0x03, 0x04, // Pitch Up,    Delta   4
-  0x00, 0x02, // Pitch Level, Delta   2
-  0x00, 0xFE, // Pitch Level, Delta  -2
-  0x06, 0xFC, // Pitch Down,  Delta  -4
-  0x06, 0xF9, // Pitch Down,  Delta  -7
-  0x06, 0xF6, // Pitch Down,  Delta -10
-  0x06, 0xF3  // Pitch Down,  Delta -13
+const s8 hero_car_jump_table[10 * 2] = {
+  3,  13,  // Pitch Up,    Delta  13
+  3,  10,  // Pitch Up,    Delta  10
+  3,  7,   // Pitch Up,    Delta   7
+  3,  4,   // Pitch Up,    Delta   4
+  0,  2,   // Pitch Level, Delta   2
+  0,  -2,  // Pitch Level, Delta  -2
+  6,  -4,  // Pitch Down,  Delta  -4
+  6,  -7,  // Pitch Down,  Delta  -7
+  6,  -10, // Pitch Down,  Delta -10
+  6,  -13  // Pitch Down,  Delta -13
 };
 
 /**
