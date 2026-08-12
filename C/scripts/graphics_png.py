@@ -139,8 +139,13 @@ def height_of(size_expr, total_bytes):
     if "*" not in size_expr:
         return 1
     factors = [f.strip() for f in size_expr.split("*")]
-    if factors and factors[-1].isdigit():
-        height = int(factors[-1])
+    # width * height (2 factors) or width * mask * height[ * entries] (3-4
+    # factors): height is always the 3rd factor once mask is present, not
+    # simply the last one -- a trailing entries factor (e.g. "* 1") would
+    # otherwise be picked up as the height instead.
+    candidate = factors[2] if len(factors) >= 3 else factors[-1] if factors else None
+    if candidate and candidate.isdigit():
+        height = int(candidate)
         if height > 0 and total_bytes % height == 0:
             return height
     return 1
