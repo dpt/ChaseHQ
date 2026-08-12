@@ -59,27 +59,27 @@
 b $4000 Screen memory
 u $5B00 Unloaded gap (pre-shifted backdrop scratch area in the retail game)
 b $5C00 [Stage 1] Horizon graphic (identical to retail fixed $5C00)
-b $5CF0 Not yet identified
+b $5CF0 Pointer table indexing into the DEBAUCHER script data at $5E23 (and other cluster assets); its first word is read indirectly by L89E3_7 (LD HL,(L5CF0)) as a scene-drawing source address
 b $5D37 [Stage 1] Nancy's perp description (identical to retail fixed $5D45)
-b $5E23 Not yet identified
+b $5E23 DEBAUCHER script/command table for the L89E3 interpreter (5-byte entries: byte + two words); begins with the literal ASCII string "DEBAUCHER" (credit/tag) and embeds target words such as $E510
 b $6016 [Stage 4] Map curvature data (identical to retail bank6 $E577)
-b $6030 Not yet identified
+b $6030 Tail of the Map curvature stream plus its trailing 2-byte Target/loop-back pointer to $6016 (stream start)
 b $6035 [Stage 4] Map height data (identical to retail bank6 $E59A)
-b $6065 Not yet identified
+b $6065 Tail and Target pointer ($6035, back to the Map height stream) followed by the Map lanes stream and its own trailing Target pointer
 b $6080 [Stage 4] Map hazards data (identical to retail bank6 $E5FB)
-b $609E Not yet identified
+b $609E Tail and Target pointer ($6080, back to the Map hazards stream) followed by the Map left object stream data
 b $613D [Stage 4] Map right object data (identical to retail bank6 $E6CF)
-b $6170 Not yet identified
+b $6170 Tail of the Map right object stream plus a trailing Target/loop-back pointer
 b $619D [Stage 1] Ralph the Idaho Slasher's mugshot (identical to retail fixed $638A)
-b $6254 Not yet identified
+b $6254 LOD-selection pointer table (address-pair and count entries) indexing into the LODs array at $62CF
 b $62CF [Stage 1] LODs (identical to retail fixed $64BC)
-b $6CD6 Not yet identified
+b $6CD6 Pointer/index table entries (count and address pairs), continuing into the LODs table at $6D32
 b $6CE5 [Stage 5] Perp's mugshot (identical to retail bank7 $D9E5)
-b $6D13 Not yet identified
+b $6D13 LOD-selection pointer table (address-pair and count entries) for the LODs array at $6D32
 b $6D32 [Stage 1] LODs (identical to retail fixed $703F)
-b $6DEA Not yet identified
+b $6DEA Pointer/index table entries (count and address pairs) indexing frames of the Pilot's mugshot at $6DF5
 b $6DF5 [Stage 4] Pilot's mugshot (identical to retail bank6 $EFF5)
-b $705A Not yet identified
+b $705A Pointer/index table entries (count and address pairs) indexing frames of the Perp's mugshot at $7063
 b $7063 [Stage 5] Perp's mugshot (identical to retail bank7 $D295)
 s $73EE Zero-fill (744 bytes)
 b $76D6 Identical to retail bank5 $F6D6 (not yet disassembled there)
