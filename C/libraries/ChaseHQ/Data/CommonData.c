@@ -1277,10 +1277,6 @@ const pixel_t bitmap_arrow[3 * 2 * 28] = {
 
 /* ----------------------------------------------------------------------- */
 
-// Conv: Made these bitmap_t's and used NULL for the pre-shifted bitmap field.
-
-/* ----------------------------------------------------------------------- */
-
 /** $E1E9: tunnellight */
 const depthset_t tunnellight = {
   &tunnellight_bitmaps[0],
