@@ -2202,6 +2202,7 @@ u $8008 Unused, except for $800E-$8010: those three bytes ($C3,$D6,$A0) decode a
 B $8008,8,8 Can't see any consistent use of these.
 B $8010,4,4
 c $8014 Load a stage
+D $8014 Returns at once if the wanted stage is already loaded. Otherwise it records the new stage number, clears the playfield and starts a reverse transition, then reads two-byte headers into #R$A19C until one arrives whose two bytes agree; that byte is the stage number. When it is the wanted stage, #R$80B9 loads $1AF0 (6896) bytes of stage data to $5C00.
 D $8014 Used by the routine at #R$8401.
 @ $8014 label=load_stage
 C $8014,3 Load wanted_stage_number
@@ -2413,6 +2414,8 @@ T $81EC,13,12:n1 "GIDDY UP BOY!"
 @ $81F9 label=string_hold_on_man
 T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise (48K)
+D $8204 Derives the tone parameters from the current speed and gear, then falls through to #R$8234 to emit a pulse. The speed is halved and complemented to give an inverse-speed divisor, shifted right twice and OR'd with 1 to keep it odd and non-zero, so a higher speed yields more iterations and a higher pitch. Low gear halves the iteration count again. In a tunnel the off-phase delay drops from 3 to 1; the on-phase delay is always 5 minus the off-phase delay.
+D $8204 The three results are written into the LD C,n and LD B,n operands at $8243, $8249 and $8251.
 D $8204 Used by the routine at #R$83B5.
 @ $8204 label=setup_engine_sfx_48k
 C $8204,3 Load speed into #REGhl
@@ -2445,6 +2448,7 @@ C $8250,4 Delay for B cycles (self modified above)
 C $8254,3 Loop until iterations is zero
 C $8257,1 Return
 c $8258 Attract mode
+D $8258 Sets up the attract stage and then drives the game as a demonstration. Each frame it scans for fire (returning at once if pressed), runs a demo tick via #R$852A and prints the #R$82A6 messages. "PRESS GEAR TO PLAY" blinks: a pattern is rotated through RRCA each frame and the message is included in the print count only when the bit rotated out is clear. Once the transition has stopped it alternates between #R$82CC and #R$8320 each frame.
 D $8258 Used by the routine at #R$83B5.
 @ $8258 label=attract_mode_48k
 C $8258,3 #REGhl -> attract_data
@@ -2591,7 +2595,8 @@ C $83FC,3 Call relocated call_bank_3_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the bootstrap / uber main loop above.
-R $8401 Used by the routines at #R$83CD and #R$8A57.
+D $8401 Each iteration loads the wanted stage, runs the pre-game radio screen, sets up the stage, chooses the startup speech sample and then repeats the frame tick at #R$8444 until the perp is caught or the player quits. Stage 6 is the end screen: the animation loaded at $5C00 is called, stage 1 is reloaded to restore the game data and control returns to the bootstrap loop.
+D $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
 C $8404,7 Jump to #R$841B if we're not on the end screen (stage 6)
@@ -2707,6 +2712,7 @@ C $8524,3 Call setup_transition
 C $8527,3 Loop to ml_loop
 c $852A CPU driver for attract mode
 D $852A This runs the game loop while driving the car.
+D $852A The steering comes from the road position alone: right when it is at or above $0105, left when it is below $00F5, straight between the two. A gear change is requested whenever the gear does not match the speed. What follows is a cut-down frame tick — no user input, no scoring, no chatter, no helicopter and no smash bar.
 @ $852A label=drive_attract_demo
 C $852A,3 Get road position
 N $852D If we're on the left, go right.
@@ -2745,6 +2751,7 @@ C $8583,3 Call check_scenery_collisions
 C $8586,3 Call draw_scene_objects
 C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
+D $858C Sets up the stage data, starts a reverse transition, clears the playfield and starts the chatter that describes this stage's target. The reveal counter in #R$85E4 is reset so that the perp's car is uncovered a row at a time. The loop at #R$85A8 then runs until the chatter has finished or fire is pressed.
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
 C $858C,3 Load address of stage_set_up_data
@@ -2783,6 +2790,7 @@ N $85DD Since nothing can arrive here this can only be dead code.
 C $85DD,6 Loop to run_pregame_screen_loop if transition_control is non-zero
 C $85E3,1 Return
 c $85E4 Reveals the perp's car on the pre-game screen
+D $85E4 Each call raises the reveal height by one row, capping at 50, then plots the perp's car with that height as a clip limit so that fewer rows show early on. The counter lives in the LD A,n operand at $85EB.
 D $85E4 Used by the routine at #R$858C.
 @ $85E4 label=reveal_perp_car
 C $85E4,6 Return if wanted_stage_number is 5 (the perp's car is hidden on the pre-game screen for that stage)
@@ -2803,6 +2811,7 @@ C $8608,1 Bank for plot_sprite entry
 C $8609,3 Fixed address in back buffer to plot at
 C $860C,3 Exit via plot_sprite
 c $860F Animate the signal meters
+D $860F Calls #R$961B once per meter and uses the sign of the random byte to nudge that meter's level up or down, clamped to 0-7. #R$8646 then paints the level as a row of seven attribute cells, green for signal and red for noise. Each level lives in a LD A,n operand ($8614 and $8631).
 D $860F Used by the routine at #R$858C.
 N $860F Update the first meter.
 @ $860F label=animate_meters
@@ -2970,7 +2979,8 @@ W $8735,2,2 Speed
 B $8737,5,5
 c $873C Escape scene
 D $873C This runs the scene shown when the perp has escaped.
-R $873C Used by the routine at #R$8401.
+D $873C It silences audio, loads the escape scene data, fixes the camera speed, respawns the perp as hazard 0, inhibits collision detection and starts the "failed" chatter. The loop at #R$8767 then runs the road, hazard and object pipeline until the tunnel has swallowed the perp and the chatter has finished. When the perp reaches distance 5 the three barriers at $A1A3, $A1B7 and $A1CB are activated as a last obstacle.
+D $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
 C $873C,3 Call silence_audio_hook
 C $873F,3 Load address of escape_scene_data
@@ -3016,6 +3026,7 @@ C $87D4,2 Forward transition
 C $87D6,3 Call setup_transition if non-zero
 C $87D9,3 Loop
 c $87DC Sets up the stage
+D $87DC Resets the road buffer, restores the saved game session over the live one, clears every hazard slot but slot 0, copies the caller's set-up data, pre-shifts the backdrop, resets the horizon attribute bytes at $E34B, NOPs the helicopter and tunnel draw calls in #R$8F5F, primes the map reader by cycling it 32 times, then starts a reverse transition, clears the playfield, dims the marquee lights and silences audio.
 D $87DC Used by the routines at #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 R $87DC I:HL Address of 14 bytes of set up data to be copied to #R$A26C onwards.
 @ $87DC label=set_up_stage
@@ -3067,6 +3078,7 @@ N $8870 Exit, updating the scoreboard. [This must happen twice since this block 
 C $8870,3 Call silence_audio_hook
 C $8873,3 Exit via update_scoreboard
 c $8876 Handle quit, pause or turbo
+D $8876 Discards the user's input outright during a fade transition (transition_control 4). Otherwise it masks user_input with the stage's input mask and dispatches on the top three bits: quit starts the quit sequence at #R$88A9, pause spins until the key is released and then waits for any key before debouncing, and turbo arms 60 ticks of boost and starts the turbo chatter — but only if no boost is running and boosts remain.
 D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
 C $8876,3 Load transition_control
