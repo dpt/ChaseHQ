@@ -7966,7 +7966,7 @@ C $B263,2 A = -A
 N $B265 Positive scroll => scroll horizon left.
 @ $B265 label=mhc_scroll_horizon
 @ $B265 ssub=LD HL,horizon_table - 1
-C $B265,3 16 word horizon table at #R$B828
+C $B265,3 #R$B828 - 1: the curvature magnitude added next is 1-based, so curvature 1 selects the first byte
 C $B268,1 BC = A  -- B is zero at this point
 C $B269,1 HL += BC
 C $B26A,3 A = var_a261
@@ -7995,7 +7995,8 @@ C $B292,1 B--
 C $B293,2 A = -A
 @ $B295 label=mhc_b295
 C $B295,1 C = A
-C $B297,3 var_a261 = A
+C $B296,1 Bank the scroll amount just copied to #REGc into #REGa'. #R$B854 in scroll_horizon reads it back; nothing between here and there executes EX AF,AF', so it survives. Only written when this path is reached, i.e. curvature is non-zero and ticks have elapsed
+C $B297,3 var_a261 = A  [the value unbanked by the EX above]
 N $B29A No curvature - No scroll required?
 @ $B29A label=mhc_straight_road
 C $B29A,4 HL = horizontal_adjust + BC
@@ -8732,14 +8733,19 @@ C $B81F,1 pop banked-on-entry HL
 C $B820,5 Negate #REGde
 N $B825 HL -> graphic data here
 C $B825,3 Exit via pms_entry
-b $B828 Horizon image related
+b $B828 Horizon scroll rate table
+D $B828 32 bytes, not 16 words: every user indexes it a byte at a time. #R$B265 and #R$B898 load $B827 and add a 1-based curvature magnitude; #R$B9BD adds a byte index built from the curvature and the speed; only #R$B864 reads two adjacent entries, and it takes them high byte first (#REGb from the lower address, #REGc from the higher), which is not how a DEFW would be stored.
+D $B828 The first eight bytes are 255 divided by 1 to 8, so the value is the number of ticks between horizon steps and the scroll rate rises with the curvature.
 D $B828 breaks/crashes road rendering if messed with
 @ $B828 label=horizon_table
-W $B828,32,8
+B $B828,32,8
 c $B848 Scroll the horizon
+D $B848 Returns immediately when the speed is zero. Otherwise two independent sections run.
+D $B848 Horizontal (#R$B854): when current_curvature is non-zero, picks a pair of bytes out of #R$B828 using an index built from the curvature and the top bits of the speed, counts horizon_x_scroll down, and on reaching zero reloads it and steps the horizon's horizontal shift (#R$C7E8) by the table's signed step, wrapping to stay in 0..19.
+D $B848 Vertical (#R$B889): with a non-zero incline, works out how many ticks have passed since the last vertical step, converts that to a movement using the per-incline rate from #R$B828, applies it to horizon_level and carries the remainders in var_a25a and var_a25b.
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
-R $B848 I:A' Seems to be using A' on entry
-R $B848 O:A' Seems to be leaving A' with a value in it
+R $B848 I:A' The scroll amount move_hero_car banked at #R$B296, consumed by #R$B857; only meaningful when current_curvature is non-zero
+R $B848 O:A' Zeroed at #R$B889 then used as the routine's own accumulator
 @ $B848 label=scroll_horizon
 C $B848,3 Load speed into #REGhl
 C $B84B,3 Return if speed is zero
@@ -8747,23 +8753,23 @@ C $B84E,3 Load current_curvature into #REGa
 C $B851,3 Jump if current_curvature is zero
 N $B854 current_curvature is non-zero here.
 @ $B854 label=sh_curved_road
-C $B854,1 Bank current_curvature (and unbank what?)
+C $B854,1 Bank current_curvature into #REGa', unbanking the scroll amount move_hero_car left there at #R$B296. The banked current_curvature is never read back: #R$B873 overwrites #REGa. Only the flags come back, at #R$B872
 C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
-N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me. Where was it last banked? $B296?
+N $B857 #REGa here is move_hero_car's scroll amount, unbanked by the EX above.
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
 C $B85C,8 BC = horizon_a25d + A
-C $B864,3 16 word horizon table at #R$B828
+C $B864,3 32 byte horizon scroll rate table at #R$B828
 C $B867,1 HL += BC
-C $B868,3 BC = wordat(HL) - wrong way around! needs to swap
+C $B868,3 Two separate bytes, not a word: #REGb is the reload value for horizon_x_scroll (#R$B871) and #REGc the signed step applied to the shift (#R$B873)
 N $B86B Decrement horizon_x_scroll.
 C $B86B,3 HL = &horizon_x_scroll
 C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
 N $B871 It became zero.
-C $B871,1 *HL = B  [bottom byte of table entry]
-C $B872,1 Bank A [must be because A gets overwritten next]
-C $B873,1 A = C
-C $B874,3 Jump if positive
+C $B871,1 *HL = B  [reload value from the table]
+C $B872,1 Restores the AF banked at #R$B854, which brings back the flags set by the AND A at #R$B851 as well as #REGa
+C $B873,1 A = C  [the table's signed step; this does not touch the flags]
+C $B874,3 Jump if positive. The flags are still #R$B851's, so this tests the sign of current_curvature, not of #REGc
 C $B877,2 A = -A
 @ $B879 label=sh_update_hz_shift
 C $B879,3 Load address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
@@ -8785,7 +8791,7 @@ C $B895,1 E++
 C $B896,2 A = -A
 @ $B898 label=sh_not_flat_road
 @ $B898 ssub=LD HL,horizon_table - 1
-C $B898,3 16 word horizon table at #R$B828
+C $B898,3 #R$B828 - 1: the incline magnitude added next is 1-based, so incline 1 selects the first byte
 C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
 C $B89D,8 A = fast_counter - var_a25b
@@ -8796,16 +8802,14 @@ C $B8A7,1 C = *HL  -- loading from horizon table
 C $B8A8,1 A -= C
 C $B8A9,2 Jump if carry
 C $B8AB,1 B++
-C $B8AC,1 Bank
-C $B8AD,1 A += C
-C $B8AE,1 Bank
+C $B8AC,3 Add the rate to the accumulator kept in #REGa', which was zeroed at #R$B889. #R$B8CB reads the total back
 C $B8AF,2 Loop
 @ $B8B1 label=sh_b8b1_exit
 C $B8B1,3 Return if B is zero
 C $B8B4,5 var_a25a += A
-N $B8B9 Sign extend based on low bit of E?
-C $B8B9,1 A = B
-C $B8BA,2 Shift bottom bit of E out?
+N $B8B9 Sign extend the step count using the downhill flag #R$B895 put in #REGe.
+C $B8B9,1 A = B  [the number of steps counted above]
+C $B8BA,2 Move the downhill flag into carry
 C $B8BC,2 B = 0  -- just widen to (B,A)
 C $B8BE,2 Jump if no carry
 N $B8C0 Otherwise negative.
@@ -8814,7 +8818,7 @@ C $B8C1,2 A = -A
 N $B8C3 Adjust horizon_level by (B,A).
 @ $B8C3 label=sh_set_horizon
 C $B8C3,8 Change horizon_level by (B,A)
-C $B8CB,1 Bank
+C $B8CB,1 Retrieve the accumulator built at #R$B8AD. #REGa is that total from here on, not the step count #R$B8C1 left
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
 c $B8D2 Horizon stuff / Car jumping stuff
