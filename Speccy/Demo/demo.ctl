@@ -9,7 +9,7 @@
 > $4000 ; ../ChaseHQ-128K.skool: a single 48K (non-banked) memory layout, its own
 > $4000 ; "Paul Owens" tape protection loader (handled by SkoolKit's built-in
 > $4000 ; accelerator=rom,paul-owens sim-load config), and its own menu system. It
-> $4000 ; features a single stage using stage 1's graphics and a custom map, no retry
+> $4000 ; features a single stage using stage 1's graphics and stage 4's map, no retry
 > $4000 ; on fail.
 > $4000 ;
 > $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2026.
@@ -30,7 +30,7 @@
 > $4000 ;              per-stage data cherry-picked from stages 1, 4 and 5. Matched
 > $4000 ;              spans are labelled below with their retail source address;
 > $4000 ;              "not yet identified" spans are either genuinely demo-specific
-> $4000 ;              (menu, custom map) or draw on retail bank 0, which the main
+> $4000 ;              (menu) or draw on retail bank 0, which the main
 > $4000 ;              project hasn't disassembled separately (see
 > $4000 ;              ../ChaseHQ-128K.ctl - only banks 1,3,4,6,7 have their own ctl,
 > $4000 ;              since banks 2/5 are the always-resident fixed region and bank 0
