@@ -4975,8 +4975,9 @@ C $9AE7,2 If no carry then loop
 C $9AE9,1 Move down 8 attribute rows
 C $9AEA,2 Loop
 c $9AEC Plot mini font characters
+D $9AEC Entry point with #REGbc zero, so both of the extra bitmap bytes are zero and no cursor block is drawn beneath the character.
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
-R $9AEC I:A 0xFF (meaning ?) or value (meaning ?)
+R $9AEC I:A Column index, counting from zero, or $FF for the off-screen cursor position
 R $9AEC I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_cursor_off
 C $9AEF,2 Jump to plot_mini_font_char
@@ -5513,7 +5514,7 @@ C $9F41,1 Update drawn digit
 C $9F42,3 Plot the digit
 C $9F45,2 Jump back to handle hext digit (next whole pair)
 c $9F47 Plots an 8x15 LED font digit to the screen
-D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
+D $9F47 The glyph is 15 bytes: the first seven fill the bottom seven scanlines of one character row and the remaining eight fill the row below it, which is why the digits sit at Y coordinates of 1, 9, 17 and so on.
 R $9F47 I:A Glyph ID (0..9)
 R $9F47 I:DE' Address of (real) screen location
 R $9F47 O:DE' Next screen location
@@ -6404,6 +6405,8 @@ W $A630,2,2
 B $A632,5,5
 c $A637 Perp car behaviour
 D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
+D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
+D $A637 A normal frame first walks the five non-perp slots for an active vehicle in the perp's lane and within range, which forces a random lane change. It then picks a lane by a random +/-1 walk biased by the road width, clamps that to the spawn lane bounds, slides the horizontal position toward it and finally scales the perp's approach speed by the distance remaining.
 R $A637 I:IX Address of hazard[0] (the perp)
 R $A637 I:IY ? sampled $E360 $E356 $E34F
 N $A637 Exit if we've caught the perp.
@@ -6845,7 +6848,9 @@ C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
 C $A97A,3 Self modify 'LD A' @ #R$A9DE to load 1
 C $A97D,1 Return
 c $A97E Lays out dirt and stones
-D $A97E This seems to calculate the position of stones on the dirt track section.
+D $A97E Computes the screen x position of up to 20 stone and dirt particles a frame. Returns at once when the self modified enable flag is zero.
+D $A97E It walks the $ED28 particle table in four-byte entries of type byte, position byte and a result word. For each entry with a non-zero type it reads the road left and right edge words at the object's road position and multiplies the position byte by the road width with an 8-bit shift-and-add loop, writing left edge + (position * width) / 256 back into the entry's word for #R$A9DE to draw.
+D $A97E A pass that finds nothing but zero types clears all three of the self modified enable flags, stopping the layout, the scroll and the drawing.
 D $A97E Used by the routines at #R$8401 and #R$852A.
 @ $A97E label=layout_dirt_and_stones
 C $A97E,2 A = <self modified>  -- Self modified by #R$A974
@@ -6899,9 +6904,10 @@ C $A9D3,1 HL += BC
 C $A9D7,4 DE = wordat(HL); HL += 2
 C $A9DB,3 Jump to ldas_loop1_continue
 c $A9DE Dust/Stones stuff
-D $A9DE If disabled this stops stones and dirt from rendering.
+D $A9DE Draws one stone or dirt particle a call, from the positions #R$A97E worked out. Returns at once when the self modified enable flag is zero, which is what stops stones and dirt from rendering.
+D $A9DE It reads the current entry through the particle pointer. A zero type byte means the slot is inactive and only advances the pointer. Otherwise the type byte picks the stones or the dust sprite table, #REGb is clamped to 10 and halved for a level of detail index, and the particle is drawn at the x position in the entry.
 D $A9DE Used by the routine at #R$8F5F.
-R $A9DE I:B Counter?
+R $A9DE I:B Distance counter, clamped to 10 and halved to pick the level of detail
 @ $A9DE label=draw_dirt_and_stones
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
@@ -7203,6 +7209,8 @@ C $AC34,3 IX[1] = C  -- buffer offset/distance
 C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
 c $AC3C Test for collision with hazard
+D $AC3C The hit handler for the static hazards, the barriers and tumbleweeds, hooked into every slot that #R$AB9A spawns.
+D $AC3C IX[15] is a three-state machine. 0 is the untouched state: return unless IX[7] shows a hit, otherwise look the wobble parameters up by hero speed, stash them in IX[17] and IX[18], scale the approach speed, play the hit effect and move to state 2. 2 is the wobble itself: each call steps IX[16] through the amplitude table, decays the speed by a thirty-second, toggles the inverted flag and counts IX[18] down, and at zero it clears the speed and the flag and drops to state 1. 1 is finished, and returns at once.
 R $AC3C I:IX Address of hazard structure ($A188+)
 N $AC3C If IX[15] is non-zero then jump forward.
 @ $AC3C label=hazard_hit
@@ -8295,8 +8303,8 @@ C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
 c $B4CC Start the chase
 D $B4CC This starts the animation to put the cherry light on the roof of the hero car, enables flashing lights and the smash bar, shows the "SIGHTING OF..." message and starts the siren.
+D $B4CC It also resets the hand animation's step and delay and sets hand_flag to make it run, resets the time limit to 15 sixteenths, a BCD 60 seconds, and toggles the marquee's left light.
 R $B4CC Used by the routine at #R$A637.
-R $B4CC This is hand animation related?
 @ $B4CC label=start_chase
 C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
 N $B4D0 Starts the animation that puts the cherry light on the roof
@@ -8478,9 +8486,10 @@ C $B645,1 Skip final byte - already consumed
 C $B646,1 Restore X,Y
 C $B647,1 Return
 c $B648 Draw the hero car's turbo smoke
+D $B648 Draws one cloud of turbo exhaust smoke, at vertical position 119 and centred at x + 127. It returns without drawing while the car is airborne. Unflipped, #REGc' is zero and x comes from the unflipped table; flipped, #REGc' is the byte width less one and x comes from the flipped table.
 D $B648 Used by the routine at #R$B318.
 R $B648 I:A Index 0..3 of car turbo smoke animation
-R $B648 I:A' Flip flag?
+R $B648 I:A' Non-zero to draw flipped, for the left hand exhaust
 R $B648 Calculate address of hero_car_turbo smoke[#REGa]
 @ $B648 label=draw_smoke
 N $B653 Don't draw smoke if car's mid-jump
@@ -8542,9 +8551,12 @@ N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_crash_unflipped
 C $B699,5 BC' = 0   -- not self modified
 E $B67C FALL THROUGH
-c $B69E This entry point is used by the routine at #R$B318.
+c $B69E Draw one frame of the crash, hand and smash animation
+D $B69E Takes the x and y offsets and the adornment index from the frame table at #R$CFB2, reads that adornment's dimensions and bitmap, adjusts y for the jump height and the road's pitch, then draws it via #R$B6D6.
 D $B69E Used by the routine at #R$B318.
-R $B69E I:A Index of thing to draw - indexes unknown_cfb2
+R $B69E I:A Frame index into the table at #R$CFB2
+R $B69E I:B' Non-zero to draw the frame flipped horizontally
+R $B69E I:C' Horizontal start offset within the sprite
 @ $B69E label=draw_crash
 C $B69E,2 E = 128  -- horz position/offset?
 C $B6A0,6 Turn index into offset into unknown_cfb2 (BC = A * 3)
@@ -8573,10 +8585,10 @@ R $B6D6 I:C (byte width - 1) if flipping, 0 if not
 R $B6D6 I:D Vertical position (rows)
 R $B6D6 I:E Horizontal position (pixels)
 R $B6D6 I:HL Address of bitmap data
-R $B6D6 I:B' ?
-R $B6D6 I:C' 0 ?
+R $B6D6 I:B' Non-zero to draw the sprite flipped horizontally
+R $B6D6 I:C' Horizontal start offset within the sprite
 R $B6D6 I:D' ?
-R $B6D6 I:E' Byte width ?
+R $B6D6 I:E' Sprite row stride in bytes
 @ $B6D6 label=draw_masked_sprite_rel_car
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
@@ -9267,7 +9279,7 @@ C $BC36,3 spawn_accumulator   = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
-D $BC3E Copies 240 x ? pixels from the back buffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
+D $BC3E Copies 240 x 128 pixels from the back buffer to the screen. This is thinner than the real screen due to the main gameplay area's left and right black borders: each row is copied as 16 bytes then 14. It then sets up the attributes, scrolling the sky and ground colour boundary by the horizon delta of the frame before, and painting the smash-o-meter's six attribute rows at $5962 once a perp has been sighted.
 R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
 R $BC3E #R$F220.
 @ $BC3E label=send_playfield
@@ -9982,7 +9994,8 @@ C $C2E1,2 Next scanline ?
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
 c $C2E7 Subroutine of draw_road
-D $C2E7 This seems to get called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
+D $C2E7 Fills the road edge position tables for a section where the road is narrowing or widening, interpolating the edge x positions between two height table entries in Bresenham fashion and writing them through an SP-based pointer.
+D $C2E7 It is called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
 R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
 R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
@@ -13002,7 +13015,7 @@ C $ED49,2 Loop while no keys are pressed
 C $ED4B,2 Restart routine
 c $ED4D Keyscan
 D $ED4D Used by the routine at #R$ED6D.
-R $ED4D O:D Key half-row number in bits 0..2, key in bits 3+ [or is it inverted?] or $FF if no keys pressed
+R $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing the key definition table uses, so the result can be stored straight into it. $FF when no single key was identified: no key down, two half-rows active, or two keys in one half-row
 R $ED4D O:F Z clear if keys are pressed, Z set otherwise
 @ $ED4D label=redefine_keyscan
 C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
