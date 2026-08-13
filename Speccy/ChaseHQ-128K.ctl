@@ -5149,6 +5149,7 @@ C $9CBF,1 DE++
 C $9CC0,1 *DE = A
 C $9CC1,1 Return
 c $9CC2 Increments score in proportion to current speed
+D $9CC2 The low byte of speed is rotated using the carry out of the high byte, halved twice, then BCD corrected with any remaining carry folded in. What comes out is the low pair of BCD digits of the increment; the higher pairs are zero.
 D $9CC2 Used by the routine at #R$8401.
 @ $9CC2 label=speed_score
 C $9CC2,3 Load speed into #REGhl
@@ -5531,10 +5532,15 @@ C $9F77,31 Transfer eight more rows
 C $9F96,1 Move to next column
 C $9F97,1 Bank
 C $9F98,1 Return
-c $9F99 Another draw string entry point?
+c $9F99 Draw a NUL-terminated string with a specified style
+D $9F99 Adapter entry point: it reorders the registers into the layout the string loop expects and supplies the constant attribute stride of 32 bytes, one attribute row.
 D $9F99 Used by the routine at #R$8E6C.
-R $9F99 I:A ...
+R $9F99 I:A Attribute byte written at each character cell
 R $9F99 I:BC Attribute address
+R $9F99 I:DE Back buffer address of the first character cell
+R $9F99 I:HL String data, NUL terminated
+R $9F99 I:A' Draw style, as taken by #R$9FB4
+R $9F99 O:HL Address of the byte after the NUL terminator
 @ $9F99 label=draw_string_with_style
 C $9F99,1 Push attribute address
 C $9F9A,1 Bank
@@ -5549,7 +5555,8 @@ C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
 @ $9FA6 label=*draw_string_core
 C $9FA6,8 Load a byte and isolate the text part
 C $9FAE,6 Was bit 7 set?, quit if so, otherwise loop
-c $9FB4 Draws a character (to buffer or screen?)
+c $9FB4 Draw one character, to the screen or to the back buffer
+D $9FB4 Maps the ASCII character to a glyph index, then dispatches on the style in #REGa' to one of six render modes: 1 = single height, straight to the screen with the ZX scanline row advance; 2 = single height to the back buffer, nine scanlines being a blank, seven glyph rows and a blank; 3 = double height to the back buffer, each glyph row drawn on two consecutive scanlines; 4 and 5 = the inverted forms of 2 and 3; 0 = double height drawn as separate four- and three-row passes with a column advance between them. The attribute byte goes to one attribute row for the single-height styles and to two for the double-height ones.
 D $9FB4 Input font definitions are only seven rows high so gaps are left when drawing.
 D $9FB4 Used by the routine at #R$9F99.
 R $9FB4 I:A Character to draw (ASCII)
@@ -5558,7 +5565,7 @@ R $9FB4 I:A' Rendering type (double height, invert, etc.)
 R $9FB4 I:C' Attribute
 R $9FB4 I:DE' Stride
 R $9FB4 I:HL' Attribute address
-R $9FB4 O:HL ...
+R $9FB4 O:HL' Attribute address moved on past the character
 R $9FB4 O:DE Screen address moved to next column
 @ $9FB4 label=draw_char
 C $9FB4,4 If it's not a space character, goto dc_not_space with #REGa reduced
@@ -6757,8 +6764,12 @@ C $A8C5,3 Set lowest = 1, highest = 2
 C $A8C8,1 Return if zero (2 lanes left aligned)
 C $A8C9,3 Set lowest = 3, highest = 4
 C $A8CC,1 Return
-c $A8CD Hazard handler routine?
-D $A8CD Triggered at road fork.
+c $A8CD Update one traffic hazard
+D $A8CD Called once a frame for each traffic car: it clamps the car's target lane to the lanes the road offers at its position, slides the car toward that lane and deals with a collision against the hero car.
+D $A8CD If perp_caught_phase or dont_spawn_cars is set the car is pushed off screen instead, by setting its speed word to $01FF.
+D $A8CD The two lane bytes are distinct: IX[17] is the lane the car occupies now and IX[18] the lane it is heading for. #R$A89C returns the lowest and highest lanes in use at the car's road position -- the range narrows at a fork -- and it is IX[18] that gets clamped to it. While the two disagree, IX[5] slides +/-5 a frame toward the lane's column in #R$A7E7; on arrival IX[17] is set to IX[18] and the car has changed lane.
+D $A8CD If IX[7] is non-zero the collision engine has hit this car: the slot is freed, the overtake bonus is cleared and #R$A4B8 is called to apply the crash penalty.
+R $A8CD I:IX Hazard slot to update
 @ $A8CD label=hazard_handler
 C $A8CD,6 Jump if perp_caught_phase > 0
 C $A8D3,6 Check dont_spawn_cars flag
@@ -6768,23 +6779,22 @@ C $A8DD,4 IX[13] = $FF
 @ $A8E1 label=hzh_clamp_lanes
 C $A8E1,3 Load buffer offset (distance from camera) required for next call
 C $A8E4,3 Call get_spawn_lanes
-N $A8E7 Hazard's IX[17] must be a lane value here.
-C $A8E7,3 Read (current? minimum?) lane
-C $A8EA,6 If A < B IX[18] = B  -- set min lane if less than get_spawn_lanes' min. It's odd that it's setting IX[18] here and not IX[17].
+C $A8E7,3 Read the lane the car occupies now
+C $A8EA,6 If A < B IX[18] = B  -- clamp the target lane up to get_spawn_lanes' minimum. IX[18] is the target lane, which is why IX[17] is left alone here
 @ $A8F0 label=hzh_clamp_max_lane
-C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
+C $A8F0,8 If A > C IX[18] = C  -- clamp the target lane down to get_spawn_lanes' maximum
 @ $A8F8 label=hzh_test_chosen_lane
-C $A8F8,3 Read back the chosen lane
-C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
-C $A900,2 Shift min lane?
+C $A8F8,3 Read back the target lane
+C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- already in the target lane, nothing to slide
+C $A900,2 Stash this comparison's carry in #REGb's bottom bit. #REGb's own value (the minimum lane) is finished with
 @ $A902 ssub=LD HL,hazard_pos_speed - 1
 C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
 C $A905,1 C = A  -- copy chosen lane to C
 C $A906,2 Compute HL[A]
 N $A908 breakpoint hit here seemingly when the right hand side narrows and there's a barrier
 C $A908,3 A = IX[5]  e.g. $A19C[5]
-C $A90B,2 test bottom bit? top bit? could be testing sign
-C $A90D,2 jump if clear
+C $A90B,2 Recover the carry stashed at #R$A900: set when the target lane is left of the current one
+C $A90D,2 Jump to slide right if it is to the right
 C $A90F,2 A -= 5
 C $A911,1 CP *HL   -- comparing (IX[5] - 5) to entry from A7E7 table
 C $A912,2 jump if (IX[5] - 5) > entry
@@ -7881,7 +7891,8 @@ C $B1D8,3 Speed threshold 695
 C $B1DB,1 Save it
 C $B1DC,2 Reduce speed by threshold
 C $B1DE,1 Restore it
-C $B1DF,2 Jump if speed < 695  -- surely always the case?!
+C $B1DF,2 Jump if speed < 695, which it always is. #R$B1EC caps the stored speed at 511, the largest acceleration any path above adds is 63 and the pitch term here adds at most 1, so the speed cannot exceed 575 by this point
+C $B1E1,1 Unreachable: restore the pre-increment speed
 @ $B1E2 label=mhc_b1e2
 C $B1E2,2 Set inclined to 3
 @ $B1E4 label=mhc_set_inclined
@@ -8507,11 +8518,12 @@ C $B674,1 A = D
 C $B675,3 E = A + 127 -- horizontal position
 C $B678,2 Set vertical position to 119
 C $B67A,2 Exit via #R$B6D6 (draw part using car_y)
-c $B67C Likely NOT just drawing the cherry
+c $B67C Draw the cherry light on the car roof
+D $B67C Picks the light's sprite frame, then draws it via #R$B699. The base flicker comes from the bottom bit of the half rate counter. Once turn_speed reaches #REGb the light switches to its turned frames: #REGc is added once when the car is upright and twice when flip_car is set, so the turned frames come in left and right pairs.
 D $B67C Used by the routine at #R$B318.
-R $B67C I:A ? (seems to always be zero)
-R $B67C I:B ? (gets compared to turn_speed) e.g. 1
-R $B67C I:C ? (used wrt flipping)           e.g. 2
+R $B67C I:A Base frame index into the cherry light sprites
+R $B67C I:B Lowest turn_speed that selects the turned frames, e.g. 1
+R $B67C I:C Frame delta added once, or twice when flipped, e.g. 2
 @ $B67C label=draw_cherry_light
 C $B67C,7 Take the bottom bit of the half rate counter_C (counts 0/1/2/3 then repeats) and add it to #REGa
 C $B683,1 Bank A
@@ -11331,9 +11343,13 @@ C $CD21,3 Loop to bct_loop_ccb3 while #REGb > 0
 C $CD24,3 Exit via bct_exit
 N $CD27 This is identical to the preceding sequence starting at #R$CD14, so could be removed if #R$CD11 instead just jumped over #R$CD13.
 @ $CD27 label=bct_endbit_C
-c $CD3A Seems to build the height table at $E300 and $E336
+c $CD3A Build the per-row height tables at $E300 and $E336
+D $CD3A Called once a frame from the main loop. It reads the road buffer's height channel and the perspective Y scale table, and produces three things.
+D $CD3A The loop at #R$CD64 walks 21 rows of the height channel, accumulating the incline seen so far in #REGc. Each row's perspective scale is multiplied by the magnitude of that accumulator using the shift-and-add routine at #R$CD84, negating the multiplier when the accumulator is negative, and added to the row's base scale entry. The results are written to $E300 onwards, with $A0 left as a sentinel after the twenty-first.
+D $CD3A The loop at #R$CDC0 copies those 21 entries to $E336, tracking a running minimum that starts at 96, so the copy never rises above the closest road point seen so far.
+D $CD3A Finally the accumulator is rounded down to a multiple of 8 and stored at $E34B, and the difference from the previous frame's value at $E34C. The latter is written by walking the pointer off the end of the height table rather than by a direct store, so it is invisible to a search for $E34C. update_screen scrolls the sky and ground colour boundary from $E34D, which lags that delta by a frame.
 D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
-N $CD3A Point #REGiy at the road buffer's height data. (The "unpacked map height data"?)
+N $CD3A Point #REGiy at the road buffer's height data.
 @ $CD3A label=build_height_table
 C $CD3A,3 Set the high byte of #REGiy to road buffer memory region ($EExx)
 C $CD3D,3 Load road_buffer_offset into #REGa
@@ -13553,8 +13569,9 @@ C $F395,1 Advance to next byte of sample data
 C $F396,1 Decrement sample data counter
 C $F397,5 Loop to plsp_1 while sample data remains
 C $F39C,3 Exit via relocated reset_paging_128k
-c $F39F Phase 4 of catching the perp - likely plays the success music
-D $F39F Lives at $???? when relocated.
+c $F39F Phase 4 of catching the perp - plays the success music
+D $F39F Waits until the overlay frame delay reaches 42, then silences the audio, clears the siren flag, resets the turbo effect countdown to 1 and asks bank 3 for the success music. It falls through into call_bank_3_128k with $C006 in #REGhl.
+D $F39F Lives at $8193 when relocated, $720C below the address here, the same offset as #R$F414 to $8208 and #R$F3E2 to $81D6.
 @ $F39F label=handle_perp_caught_128k
 C $F39F,6 Return if overlay frame delay < 42
 C $F3A5,3 Call silence_audio_hook
@@ -13582,7 +13599,8 @@ C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
 C $F3DC,3 Restore registers but swap source and destination around
 C $F3DF,2 Copy 4096 bytes from $F000 to $B000
 C $F3E1,1 Return
-c $F3E2 Page in/out a RAM bank?
+c $F3E2 Replay the four 4K windows at $C000 through the engine sound routine
+D $F3E2 Not a paging routine, despite the label and the call sites' comments. It walks four 4096-byte windows from $C000 up. Each window is copied down to $B000, setup_engine_sfx is entered at $8209 with the engine speed set up, the window is replayed a byte at a time by the LDI loop at #R$F3FD with a write back to the source, the relocated reset_paging_128k at $8208 restores the pager, and the window is copied back from $B000.
 @ $F3E2 label=page_128k
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
