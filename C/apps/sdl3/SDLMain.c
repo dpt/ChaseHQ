@@ -123,9 +123,17 @@
  * lead time before playback catches up to avoid repeated re-anchors -- each
  * one is an audible stutter, and it happens often enough during dense speech
  * playback to sound like scratchiness.
+ *
+ * This cuts both ways: the cushion is also how long the AY and beeper hold
+ * their last state after the queue runs dry, so an over-large value turns
+ * every starve into a long low chug rather than a short click. It was 120ms
+ * while the browser build starved constantly (a 512-frame main-thread
+ * ScriptProcessorNode, plus a per-sample mutex on that same thread); with
+ * both of those fixed the starves should be rare enough that a cushion only
+ * modestly above desktop's is enough.
  */
 #ifdef __EMSCRIPTEN__
-#define AY_REPLAY_CUSHION_NS (120000000ULL)
+#define AY_REPLAY_CUSHION_NS (50000000ULL)
 #else
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
 #endif
@@ -232,6 +240,15 @@ typedef struct chq_sdl_state
   struct
   {
     int             volume; // output volume, percent, VOLUME_MIN..VOLUME_MAX
+
+    /* Rate the AY is emulated at and the replay cursor counts in. Taken from
+     * the opened device rather than fixed at AY_SAMPLE_RATE so SDL has no
+     * resampling to do: SDL3's Emscripten backend forces the device to the
+     * browser's audioContext.sampleRate (48kHz on most Windows machines) and
+     * that resample would otherwise run on the same main thread as the
+     * ScriptProcessorNode callback and the render frame.
+     */
+    int             sample_rate;
 
     slopay_chip_t  *ay;
     slopay_chip_reg_t ay_latched_reg; // register selected by last port_AY_REGISTER write
@@ -638,6 +655,13 @@ static void chq_ay_out_handler(uint16_t  port,
  * Instead the level is integrated over the sample period (a box filter):
  * the returned value is BEEPER_AMPLITUDE scaled by the fraction of the
  * period the speaker spent high.
+ *
+ * Caller holds audio.queue_mutex. It is taken once per callback rather than
+ * once per sample because SDL3's Emscripten backend runs this on the main
+ * browser thread, which cannot Atomics.wait -- a contended lock spin-waits
+ * there, and the game Worker contends heavily during speech playback (three
+ * AY writes per nibble). 44kHz of lock traffic on the thread that also runs
+ * the render frame is what starves the ScriptProcessorNode.
  */
 static int chq_apply_due_audio_events(chq_sdl_state_t *state)
 {
@@ -646,8 +670,6 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
   Uint64 level_ns; // start of the current beeper level within the period
   Uint64 high_ns;  // time spent high within the period
   int    beeper;
-
-  SDL_LockMutex(state->audio.queue_mutex);
 
   if (state->audio.queue_head == state->audio.queue_tail)
   {
@@ -677,10 +699,10 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
      */
     start_ns = state->audio.replay_anchor_ns +
                ((state->audio.samples_played - state->audio.replay_anchor_sample) *
-                1000000000ULL) / AY_SAMPLE_RATE;
+                1000000000ULL) / (Uint64) state->audio.sample_rate;
     end_ns   = state->audio.replay_anchor_ns +
                ((state->audio.samples_played + 1 - state->audio.replay_anchor_sample) *
-                1000000000ULL) / AY_SAMPLE_RATE;
+                1000000000ULL) / (Uint64) state->audio.sample_rate;
 
     level_ns = start_ns;
     high_ns  = 0;
@@ -719,8 +741,6 @@ static int chq_apply_due_audio_events(chq_sdl_state_t *state)
                     (end_ns - start_ns));
   }
 
-  SDL_UnlockMutex(state->audio.queue_mutex);
-
   return state->audio.speaker_muted ? 0 : beeper;
 }
 
@@ -758,6 +778,11 @@ static void chq_audio_callback(void            *opaque,
 
   NOT_USED(total_amount);
 
+  // The device is opened (and, on Emscripten, its ScriptProcessorNode
+  // connected) before the AY is created at the device's own rate.
+  if (state->audio.ay == NULL)
+    return;
+
   framebytes = 2 * (int) sizeof(*buf);
 
   while (additional_amount > 0)
@@ -767,6 +792,9 @@ static void chq_audio_callback(void            *opaque,
       npairs = NELEMS(buf) / 2;
     if (npairs <= 0)
       break;
+
+    // One lock for the whole chunk; see chq_apply_due_audio_events.
+    SDL_LockMutex(state->audio.queue_mutex);
 
     for (i = 0; i < npairs; i++)
     {
@@ -794,6 +822,8 @@ static void chq_audio_callback(void            *opaque,
       buf[i * 2 + 1] = CLAMP(right, INT16_MIN, INT16_MAX);
       state->audio.samples_played++;
     }
+
+    SDL_UnlockMutex(state->audio.queue_mutex);
 
     chunkbytes = npairs * framebytes;
     SDL_PutAudioStreamData(stream, buf, chunkbytes);
@@ -2053,10 +2083,6 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   if (state->zx == NULL)
     return 0;
 
-  state->audio.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
-  if (state->audio.ay == NULL)
-    return 0;
-
   state->audio.queue_mutex = SDL_CreateMutex();
   if (state->audio.queue_mutex == NULL)
   {
@@ -2071,31 +2097,27 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
     return 0;
   }
 
-  /* Conv: force mono output. The chip defaults to ABC stereo separation
-   * (left = A+B, right = B+C), which sounds right-heavy or left-heavy
-   * depending on which channels a given tune favours; we don't know whether
-   * this game's music assumes ABC, ACB, or no separation at all, so mono
-   * sidesteps the question. Volume is turned down from the chip's own
-   * default (10%) as three channels plus envelope can otherwise clip loud.
-   */
-  slopay_chip_set_stereo_mode(state->audio.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
-  slopay_chip_set_volume(state->audio.ay, AY_VOLUME_PCT);
-
   {
     SDL_AudioSpec desired = {0};
+    SDL_AudioSpec device;
 
     desired.freq     = AY_SAMPLE_RATE;
     desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
 
 #ifdef __EMSCRIPTEN__
-    /* Conv: Emscripten's default audio callback buffer (2048 samples, ~46ms)
-     * is larger than the game thread can reliably stay queued ahead of, so
-     * chq_apply_due_audio_events runs the event queue dry mid-buffer and
-     * re-anchors (with its 30ms cushion) several times a second -- audible as
-     * scratchiness. Ask for a smaller buffer so each callback pull is small
-     * enough for the producer to keep up with. */
-    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "256");
+    /* Conv: SDL3's Emscripten audio backend is not an AudioWorklet -- it is a
+     * ScriptProcessorNode (SDL_emscriptenaudio.c, ProvidesOwnCallbackThread),
+     * so this callback runs on the *main browser thread*, interleaved with
+     * emscripten_set_main_loop's game/render frame. Any frame that runs long
+     * underruns the node, which drains the event queue and forces a
+     * re-anchor -- audible as a low chugging buzz.
+     *
+     * The backend doubles whatever this hint asks for
+     * (SDL_GetDefaultSampleFramesFromFreq(freq) * 2), so ask for a large
+     * buffer: latency is the only thing traded away, and there is no
+     * separate audio thread for a small buffer to help keep fed. */
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "2048");
 #endif
 
     state->audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
@@ -2108,8 +2130,44 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
       return 0;
     }
 
-    SDL_ResumeAudioStreamDevice(state->audio.stream);
+    /* Match the stream's source rate to whatever the device actually opened
+     * at, so SDL has no resampling to do in the callback. The device rate is
+     * not negotiable on every backend -- Emscripten forces it to
+     * audioContext.sampleRate -- and the resampler would run on the same
+     * main browser thread as the ScriptProcessorNode callback. The AY is
+     * then emulated at that rate directly and the replay cursor counts
+     * sample periods in it (see chq_apply_due_audio_events).
+     */
+    state->audio.sample_rate = AY_SAMPLE_RATE;
+    if (SDL_GetAudioDeviceFormat(SDL_GetAudioStreamDevice(state->audio.stream),
+                                 &device, NULL) &&
+        device.freq >= 8000 && device.freq <= 192000)
+    {
+      state->audio.sample_rate = device.freq;
+    }
+
+    if (state->audio.sample_rate != desired.freq)
+    {
+      desired.freq = state->audio.sample_rate;
+      SDL_SetAudioStreamFormat(state->audio.stream, &desired, NULL);
+    }
   }
+
+  state->audio.ay = slopay_chip_create(AY_CLOCK_FREQ, state->audio.sample_rate);
+  if (state->audio.ay == NULL)
+    return 0;
+
+  /* Conv: force mono output. The chip defaults to ABC stereo separation
+   * (left = A+B, right = B+C), which sounds right-heavy or left-heavy
+   * depending on which channels a given tune favours; we don't know whether
+   * this game's music assumes ABC, ACB, or no separation at all, so mono
+   * sidesteps the question. Volume is turned down from the chip's own
+   * default (10%) as three channels plus envelope can otherwise clip loud.
+   */
+  slopay_chip_set_stereo_mode(state->audio.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
+  slopay_chip_set_volume(state->audio.ay, AY_VOLUME_PCT);
+
+  SDL_ResumeAudioStreamDevice(state->audio.stream);
 
   /* Bring up the starting backend. A CRT request that cannot be met falls
    * back to the plain renderer rather than failing to start; only losing
