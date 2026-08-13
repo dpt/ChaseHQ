@@ -3113,12 +3113,15 @@ C $88C6,7 Call keyscan until keys are pressed (ignoring quit)
 C $88CD,7 Call keyscan until keys are released (debounce)
 C $88D4,1 Return
 c $88D5 Clears the game screen attributes to zero
+D $88D5 The 512 attribute bytes at $5900 cover the lower 16 character rows: the first is zeroed and an LDIR then rolls that zero across the rest of the block.
 D $88D5 Used by the routines at #R$8014 and #R$88E2.
 @ $88D5 label=clear_playfield_attrs
 c $88E2 Clears the game screen attributes and the game screen to zero
+D $88E2 Calls #R$88D5 for the attributes, then clears the 4096 bitmap bytes at $4800 — again the lower 16 character rows — with a second rolling LDIR fill.
 D $88E2 Used by the routine at #R$BDC1.
 @ $88E2 label=clear_playfield
 c $88F2 Starts a sound effect
+D $88F2 The request is accepted when no effect is currently playing (priority zero) or when the incoming priority is at least as high as the current one. A lower number means higher precedence, so 1 outranks everything.
 D $88F2 Used by the routines at #R$8401, #R$8903, #R$9BCF, #R$A399, #R$A637, #R$A8CD, #R$AC3C, #R$B063 and #R$B318.
 R $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C.
 R $88F2 I:C Priority. Lower priority effects will take precedence.
@@ -3130,6 +3133,7 @@ C $88FA,4 Store sfx_index
 C $88FE,4 Store sfx_priority
 C $8902,1 Return
 c $8903 Drives sound effects
+D $8903 Called once per frame. Outside a tunnel it ORs the two passed-object triggers together and queues effect 7 ("tit") if either is set. It then calls the engine, regular and audio-register hooks. Finally, if sfx_index is non-zero it indexes the four-byte entries of the table at #R$893C, clears the index and the priority, and calls the entry's routine with the entry's two argument bytes in #REGde.
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
@@ -3175,6 +3179,7 @@ W $8958,4,2
 N $895C Effect 9 - Time running out low ("bow")
 W $895C,4,2
 c $8960 Crash sound effect
+D $8960 Walks the 93-byte waveform table at #R$897C. Each byte is played bit by bit: the inner loop runs #REGd times, driving the EAR bit from the byte's top bit and rotating the byte left in place each time. Since the table is rotated where it sits, successive calls play a different waveform.
 R $8960 I:D Inner loop count
 @ $8960 label=sfx_crash
 C $8960,3 #REGhl -> Effect data table
@@ -3196,6 +3201,7 @@ C $897B,1 Return
 @ $897C label=sfx_crash_table
 B $897C,93,8*11,5 Effect data table
 c $89D9 "Thud" sound effect
+D $89D9 Steps through the 32-byte table at #R$89EF. Each byte gives a number of output pulses to emit at the current EAR level; the level is toggled after each group. #REGd sets the delay between pulses, so a larger value gives a lower pitch.
 D $89D9 The game uses a delay multiplier of 8 for car landings and 3 for hazard hits.
 R $89D9 I:D Delay multiplier value
 @ $89D9 label=sfx_thud
@@ -3243,6 +3249,7 @@ C $8A2F,3 Loop while inner loop counter > 0
 C $8A32,3 Loop while duty factor > 0
 C $8A35,1 Return
 c $8A36 "Bip" or "Bow" sound effect
+D $8A36 Twenty outer iterations, each a burst of five inner steps. The on-phase delay is #REGc, counting down from 20, and the off-phase is 24 - #REGc, so the pitch falls as the effect plays. #REGd is reloaded from #REGe at every step.
 D $8A36 The game uses $78 or $C8 for both args.
 R $8A36 I:D Delay at start
 R $8A36 I:E Same as #REGd
@@ -3264,6 +3271,14 @@ N $8A56 This entry point is used by the routine at #R$83B5.
 C $8A56,1 Return
 c $8A57 Handle perp caught
 D $8A57 This handles slowing cars down to a stop when the perp has been caught. It also calculates and displays the bonus score.
+D $8A57 It is a state machine over perp_caught_phase, advancing at most one phase per frame:
+D $8A57 0 - not in the catch sequence; returns at once.
+D $8A57 1 - steers the perp to x=35 and closes on the hero car. When they are close enough both stop and the phase advances.
+D $8A57 2 - moves the hero car up and to the left so that it pulls in front of the perp, nudging fast_counter to keep the road scrolling. Advances once the car has reached its final position.
+D $8A57 3 - waits four frames, then shows the arrest overlay.
+D $8A57 4 - works out the stage bonus (stage number * 100,000, or a tenth of that on a retry) and the time-remaining bonus, formats them into the score messages and shows the score overlay.
+D $8A57 5 - starts a forward fade.
+D $8A57 6 - silences audio, increments wanted_stage_number and drops the return address so that control resumes at #R$8401 for the next stage.
 @ $8A57 label=handle_perp_caught
 C $8A57,5 Return if perp_caught_phase is zero
 C $8A5C,4 Jump to #R$8B8D if it's currently one
@@ -3494,6 +3509,7 @@ N $8C35 This entry point is used by the routine at #R$8C3A.
 C $8C35,4 Set the speed of the perp's car to #REGde
 C $8C39,1 Return
 c $8C3A Fully smashed
+D $8C3A Called once the smash counter is maxed out and the perp has been disabled. It starts the pull-over sequence, raises the "stop" hand, cuts the player's control down to pause and quit, shows the "OK! PULL OVER CREEP!" overlay and sets the perp to its scripted post-arrest speed.
 D $8C3A Used by the routine at #R$B4F0.
 @ $8C3A label=fully_smashed
 C $8C3A,5 Start the pull over sequence (perp_caught_phase = 1)
@@ -3580,6 +3596,8 @@ W $8D83,2,2 Attribute address
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
 c $8D8F Drives transitions (the fade between scenes)
+D $8D8F Dispatches on transition_control: 1, 2 and 3 hand straight over to #R$8E91, #R$8E42 and #R$8E29 respectively. 4 is the fade proper, which draws eight pairs of back-buffer stripes per frame by ORing a mask into the pixels, stepping the mask pointer on by the per-frame stride until the frame count runs out.
+D $8D8F Three self-modified operands hold the state: the frame count at $8DA1, the mask pointer at $8DBB and the stride at $8DB1. All three are set up by #R$8DF9.
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
 C $8D8F,3 Load transition_control
@@ -3631,6 +3649,7 @@ C $8DF2,2 Move to next start address
 C $8DF4,4 Loop
 C $8DF8,1 Return
 c $8DF9 Sets up a transition (the fade between scenes)
+D $8DF9 Picks one of the four three-byte entries in the forward ($EC00) or reverse ($EC0C) half of the table at random and plants its frame count and mask pointer, along with the stride passed in, into the three self-modified operands #R$8D8F reads.
 D $8DF9 Used by the routines at #R$8014, #R$8401, #R$858C, #R$873C, #R$87DC, #R$8A57 and #R$F220.
 R $8DF9 I:A $08 or $F8 to animate forwards or backwards respectively.
 @ $8DF9 label=setup_transition
@@ -3649,7 +3668,7 @@ C $8E17,1 Load first byte from entry
 C $8E18,3 Self modify "LD A,x" at #R$8DA0 to load A
 C $8E1B,4 DE = wordat(++HL)
 C $8E1F,4 Set transition animation start address
-C $8E23,2 4 frames of animation? 4 states?
+C $8E23,2 Set transition_control to 4 (the fade case in #R$8D8F)
 C $8E25,3 transition_control = A
 C $8E28,1 Return
 c $8E29 Spreads each playfield row's attribute rightwards from column 1
