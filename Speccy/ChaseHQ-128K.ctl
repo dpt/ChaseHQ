@@ -8867,9 +8867,10 @@ C $B8C3,8 Change horizon_level by (B,A)
 C $B8CB,1 Retrieve the accumulator built at #R$B8AD. #REGa is that total from here on, not the step count #R$B8C1 left
 C $B8CC,5 horizon_y_step += A
 C $B8D1,1 Return
-c $B8D2 Horizon stuff / Car jumping stuff
-D $B8D2 Called from read_map
-R $B8D2 Used by the routine at #R$BDFB.
+c $B8D2 Updates the per-frame road level state
+D $B8D2 Called once a frame from read_map. It touches six things in order:
+D $B8D2 The horizon level moves by the accumulated incline step, then the accumulator is reset. The next height byte is read from the road buffer and halved to give the new incline. The frontmost height byte gives the pitch used to animate the car. A crest in the road launches the car into a jump, with the jump parameters chosen from a table. The new curvature byte, negated when the other fork is being taken, gives the horizon curve index and moves the horizon x scroll. Last, the difference between the old and the new curvature becomes this frame's steering correction and the curvature counters are reset.
+D $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=update_road_level
 C $B8D2,4 B = horizon_y_accum  -- set by scroll_horizon
 C $B8D6,2 C = 0   -- clear a flag perhaps
@@ -9023,8 +9024,10 @@ C $B9ED,3 horizon_scroll_sub = 0
 C $B9F0,3 curvature_ticks = 0
 C $B9F3,1 Return
 c $B9F4 Lays out the road
-D $B9F4 Reads in (expanded out) lane data then...
-R $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
+D $B9F4 Called once a frame from read_map. It scans up to 20 lane data entries looking for a fork marker, a byte where (byte & $E1) == $E1, and takes one of two paths.
+D $B9F4 No fork: build the curve table for a straight road, then fill 104 entries each of the centre, centre right and centre left x-position tables by interpolating between the left and right tables that are already populated.
+D $B9F4 Fork: record which fork the player is taking, start the chatter, advance the spawn accumulator and the fork distance, then build the curve table twice, once per half of the road, moving road_pos temporarily for each. The fork loop runs as many iterations as the height at the fork calls for and the remaining entries are filled by falling into the non-fork path.
+D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
 C $B9F4,3 Load road_buffer_offset.lo into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset (wrapping around)
@@ -9199,6 +9202,8 @@ C $BB5E,4 Jump to lr_exit if A is zero
 C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
 c $BB69 Handle exiting from a road fork
+D $BB69 Returns at once unless the high byte of fork_distance is non-zero, so nothing happens until the fork has been travelled far enough.
+D $BB69 fork_taken then picks the left or the right exit: the five road data stream pointers - curvature, height, lanes, hazards and side objects - are pointed at that branch's exit tables and the per-command handlers for each stream are wired up through lookup_map_goto. 32 curvature bytes are filled with the turn type, 32 lane bytes with the lane type and 32 object bytes are zeroed. All the fork and road counters are reset last, so the engine goes back to rendering a single road.
 D $BB69 Used by the routine at #R$8401.
 N $BB69 When fork_distance exceeds 255 we can proceed.
 @ $BB69 label=exit_fork
@@ -9388,7 +9393,8 @@ C $BDBD,3 Restore original #REGsp (self modified at start of routine)
 C $BDC0,1 Return
 c $BDC1 Clears the playfield then sets its attributes
 D $BDC1 The playfield is the lower two thirds of the screen - where the action happens.
-R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
+D $BDC1 #R$88E2 clears it, then the bitmap is reset to $FF and three bands of attributes are laid in: two rows of plain sky, three rows of bright sky and eleven rows of the stage's ground colour. Both edge columns of every playfield row are then stamped black on black, which hides the road overdraw at the screen borders.
+D $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
 @ $BDC1 label=set_playfield_attrs
 C $BDC1,3 Call clear_playfield
 C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
@@ -9399,6 +9405,8 @@ C $BDE3,9 Clear the next 11 rows to the current ground colour
 C $BDEC,14 Clear the edges of the game screen to black on black
 C $BDFA,1 Return
 c $BDFB Map reader
+D $BDFB Resets this frame's sound effect triggers and the allow-spawning counter, then works out how many times to advance the cyclic road buffer.
+D $BDFB At normal speed, meaning the high byte of the speed is zero, the buffer advances once only when the fast counter overflows after the speed has been added to it. At high speed, meaning that high byte is odd, the buffer is advanced once before the addition and a second time if the addition overflows. The advancing itself, and the decoding of each data channel, is left to #R$BE1F.
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,1 Prepare to clear
@@ -9752,6 +9760,11 @@ C $C0D7,2 Set flag to allow car spawning
 C $C0D9,5 Increment allow_spawning by #REGa (which should be 0 or 1)
 C $C0DE,3 Exit via check_hazard_collisions/#R$AD0D
 c $C0E1 Set up the tunnel
+D $C0E1 Three cases, chosen by the tunnel visible flag and the in-tunnel flag.
+D $C0E1 Neither set: no tunnel yet, so the tunnel sound effect is cleared, the two CALLs into #R$C15B are NOPped out and the routine returns.
+D $C0E1 In a tunnel but not yet marked visible: adjacent pairs of the centre x-position table are scanned inwards from the near rows, counting the steps until the values converge. That count becomes the tunnel distance, the tunnel visible flag is set to 2 and the code falls through to arm the hooks.
+D $C0E1 Already visible: the scan is skipped and the hooks are armed straight away.
+D $C0E1 Arming the hooks means patching a CALL opcode back over the two NOPs, and the far wall mode is set to the in-tunnel flag inverted.
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C0E1 label=prepare_tunnel
 C $C0E1,3 Read 'LD A,x' @ #R$C160 (in draw_tunnel)
@@ -9811,6 +9824,7 @@ C $C154,6 Write CALL draw_tunnel to #R$8FA7
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by #R$8F82 etc. when that's self modified to call here.
+D $C15B It draws the entrance, the interior and the far wall into the back buffer for the current road scanline, in three fill phases from back to front, each using the PUSH table trick. The main body fills from the left edge and from the right; the transition rows fill from the right only, with #REGc set to $0F so every row is masked; and the far wall fills from the right only, at a depth set by the far wall mode. The horizontal extents of the fills come from the centre right and left x-position tables, which give the columns of the two tunnel walls.
 R $C15B I:IY e.g. $E315 buffer
 @ $C15B label=draw_tunnel
 C $C15B,2 Load #REGiy's low byte -- it's a size/distance value
@@ -10212,6 +10226,7 @@ C $C44D,1 Stack DE
 C $C44E,2 Loop
 C $C450,2 Jump to exit
 c $C452 Draws the road
+D $C452 The main entry point for road drawing. It clears the on-dirt-track, tunnel visible and in-tunnel flags, sets the edge thickness to 3 and computes the initial horizon counter as 96 minus the second height table entry. The stripe phase comes from the lane data buffer offset: bit 0 gives the XOR base and bit 1 the initial stripe state. With the stripe parameters set it falls into #R$C4AD to render the road row by row.
 D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=draw_road
 C $C452,4 Self modify #REGsp restore instruction
@@ -10772,6 +10787,7 @@ C $C8AC,15 Write 30 bytes of sky pixels
 C $C8BB,3 Loop
 c $C8BE Builds a pre-shifted version of the backdrop horizon bitmap
 D $C8BE 80x24 pixels = 240 bytes
+D $C8BE The stage's backdrop bitmap is copied, then rotated right in place by one nibble per row using RRD, which passes the low nibble of each byte on to the next. The result is the variant used when the horizontal scroll offset falls half a byte between two whole byte positions.
 D $C8BE Used by the routine at #R$87DC.
 @ $C8BE label=pre_shift_backdrop
 C $C8BE,3 Point at source bitmap
@@ -10795,7 +10811,11 @@ C $C8DE,1 Decrement row counter
 C $C8DF,3 Loop while rows remain
 C $C8E2,1 Return
 c $C8E3 Forked road plotting
+D $C8E3 Called from #R$C452 when the road is in a fork. It mirrors the structure of draw_road but drives five screen zones - left verge, left road, middle verge, right road, right verge - rather than three, reading the zone widths from the six x-position tables at $E8xx-$EDxx at each scanline.
+D $C8E3 The EXX on entry banks draw_road's own #REGd, #REGe, #REGb, #REGc and #REGl into the main registers: they hold the fill pattern, the horizon scanline counter, the back buffer address and the row index, the same values #R$C2E7 is handed. Ten self modified operands are then copied out of draw_road's SM bytes into the local ones at $CA9D to $CB65. Which of the two inner loops runs depends on whether the banked #REGb is zero: zero takes the zero-fill path at #R$C923, non-zero the five zone path at #R$C963.
 D $C8E3 Used by the routine at #R$C452.
+R $C8E3 I:IX Road buffer lanes pointer
+R $C8E3 I:IY Height table pointer; advanced once per block
 @ $C8E3 label=draw_forked_road
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
