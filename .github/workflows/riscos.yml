@@ -8,6 +8,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
     branches: ["**"]
+    paths:
+      - 'C/**'
+      - '.github/workflows/riscos.yml'
 
 permissions:
   contents: read
@@ -16,7 +19,30 @@ env:
   COMPONENT_NAME: ChaseHQ
 
 jobs:
+  # ponytail: tag pushes must always build (they drive `release` below), so the
+  # paths filter can't live on the `push` trigger itself - it would also gate
+  # tags. Compute it as a job output instead, skip it entirely for tags, and
+  # gate build-riscos on either "is a tag" or "this job says C/ changed".
+  changes:
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    outputs:
+      c: ${{ steps.filter.outputs.c }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            c:
+              - 'C/**'
+              - '.github/workflows/riscos.yml'
+
   build-riscos:
+    needs: changes
+    if: |
+      always() &&
+      (github.ref_type == 'tag' || github.event_name == 'pull_request' || needs.changes.outputs.c == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:

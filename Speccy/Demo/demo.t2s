@@ -1,0 +1,5 @@
+../../demo.tzx
+--start 32768
+--sim-load-config machine=48
+--sim-load-config finish-tape=1
+--sim-load-config accelerator=rom,paul-owens
