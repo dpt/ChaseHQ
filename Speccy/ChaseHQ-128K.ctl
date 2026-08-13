@@ -6060,6 +6060,9 @@ B $A384,7,7 X
 B $A38B,7,7 Y
 B $A392,7,7 Z
 c $A399 Checks for scenery collisions
+D $A399 Called every frame to see whether the hero car has left the road or hit something at the roadside.
+D $A399 If the fork is visible and the fork countdown has reached zero the whole job is handed to #R$A4F6. Otherwise the last two entries of the centre x-position table say whether the car is on the road, half off it or fully off, and that becomes off_road and the crash spin. Inside a tunnel going off the road means hitting a wall, and the high byte of road_pos picks which one.
+D $A399 Last, the right and then the left object IDs are read from the road buffer, their collision widths looked up, and #R$A4B8 is called if the car's horizontal position falls inside the object's zone.
 D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_scenery_collisions
 C $A399,3 HL = $0048
@@ -6209,7 +6212,10 @@ C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
 E $A399 FALLTHROUGH
 c $A4B8 Scenery was hit
+D $A4B8 Sets up the crash state after hitting scenery or a tunnel wall. It returns at once if the car is already crashed, so a second hit during the spin does nothing. The spin speed starts at the greater of 24 and speed/16 + 16, and the speed the car decays to is the lesser of the current speed and the cap passed in #REGa'. The crash flags, the flip direction, the delay counter, the spin speed and that speed cap are then written out, the last two by self modifying #R$B357 and #R$B32F.
 D $A4B8 Used by the routines at #R$A399, #R$A637 and #R$A8CD.
+R $A4B8 I:A Flip flag: 0 for the right hand side, 1 for the left
+R $A4B8 I:A' Speed cap: the crash starts at the lower of this and the current speed
 @ $A4B8 label=scenery_hit
 C $A4B8,3 Load address of the x in 'LD A,x' @ #R$B325 (crashed flag)
 C $A4BB,2 Set flags
@@ -6232,8 +6238,11 @@ C $A4EC,2 HL -= DE
 @ $A4F2 label=sch_exit
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
-c $A4F6 Fork completed
+c $A4F6 Checks for scenery collisions at a road fork
+D $A4F6 The variant of #R$A399 used once the fork is visible and the fork countdown has reached zero. Off-road is judged from the left and fork-right x-position tables rather than the centre ones, and the only object tested is the short pole on the side of the fork the player did not take.
 D $A4F6 Used by the routine at #R$A399.
+R $A4F6 I:HL' Road position minimum, inherited from #R$A399 and stored as is
+R $A4F6 I:DE' Road position maximum, inherited from #R$A399 and stored as is
 @ $A4F6 label=check_fork_scenery_collisions
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
@@ -6289,6 +6298,8 @@ C $A573,1 Bank
 C $A574,2 A = 1  -- perhaps a left hand flag
 C $A576,3 Exit via csc_hit_scenery
 c $A579 Lays out roadside objects
+D $A579 Two passes over up to 21 road slots. The first walks object_positions and turns the run of per-slot sizes into running totals, so each entry ends up holding where that slot's strip of objects starts.
+D $A579 The second reads the lanes byte for each slot from the road buffer and pushes a left and right pair of 16-bit x positions onto a stack growing down from $EB00. Bits 1 and 0 of the lane offset choose the table the left boundary comes from and bits 7 to 2 choose the one for the right; fork slots use the centre and centre right tables directly.
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=layout_objects
 C $A579,3 Load address of object_positions
@@ -6388,7 +6399,8 @@ C $A608,2 Loop lo_fork_loop while #REGb > 0
 @ $A60A label=lo_return
 C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
-c $A60E Counters
+c $A60E Cycles the three frame counters
+D $A60E Called once a frame. anim_counter cycles 0 to 3 every frame and frame_toggle alternates 0 and 1. The RET Z after the XOR bails out on the frames where frame_toggle becomes zero, so slow_anim_counter only cycles 0 to 3 on every other frame.
 D $A60E Used by the routines at #R$8401 and #R$852A.
 @ $A60E label=cycle_counters
 C $A60E,8 Cycle #R$A234 0-1-2-3
@@ -6648,6 +6660,8 @@ B $A7EF,4,4 used when perp is sighted
 > $A7F3 ; a7f0, a7f1, a7ec, a7ef is used by $a875
 > $A7F3 ; a7ea by $A866
 c $A7F3 Spawns cars
+D $A7F3 A new traffic car goes into an empty hazard slot each time the self modified spawn counter reaches zero. Nothing happens while perp_caught_phase or dont_spawn_cars is set, or while allow_spawning is zero. The counter comes down by allow_spawning, 1 or 2, per call; when it fires the next delay is taken from car_spawn_delay plus a random 0 to 15, and 25 more once the perp has been sighted.
+D $A7F3 The five non-perp hazard slots are then walked for a free one. If three or more vehicles are already out it gives up. Otherwise the template is copied into the slot, a random lane is picked and clamped to the road, the starting horizontal position and speed come from hazard_pos_speed, and a random car bitmap is assigned - avoiding the one that looks like the perp once the perp has been sighted.
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 N $A7F3 Return without spawning anything if perp_caught_phase is non-zero or the dont_spawn_cars flag is set.
 @ $A7F3 label=spawn_cars
@@ -6741,6 +6755,7 @@ C $A892,9 Set hazard's LOD address to #REGhl (IX+9)
 C $A89B,1 Return
 c $A89C Returns the range of lanes that cars or hazards should spawn within
 D $A89C Returning (1,1) means that cars will only spawn in the leftmost lane; returning (3,4) makes them spawn in the third or fourth lane; and so on.
+D $A89C The lanes byte at the given road buffer offset decides. (1,4) is a four lane road, a dirt track or a fork; (1,3) a three lane road or a tunnel; (2,4) a three lane road biased right; (1,2) a two lane road biased left; and (3,4) a two lane road biased right.
 R $A89C I:C Additional lanes buffer offset (e.g. 20)
 R $A89C O:B Lowest lane
 R $A89C O:C Highest lane
@@ -6835,6 +6850,7 @@ C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 Effect 3 (car crash), Priority 2
 C $A952,3 Call start_sfx
 c $A955 Chooses random dirt and stones (not tumbleweeds though)
+D $A955 One particle is set up per frame on dirt track sections, and nothing happens unless both on_dirt_track and allow_spawning are non-zero. The sign of a random byte picks the type, 1 for a stone and 2 for dirt, and a second random byte gives the horizontal position. Both go into the particle table at $ED28 and the three self modified flags that drive the laying out and drawing of the particles are set to 1.
 D $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=choose_dirt_and_stones
 C $A955,5 Return if on_dirt_track is zero
@@ -6956,6 +6972,8 @@ C $AA34,1 Return if no carry
 C $AA35,3 Exit via draw_object_left_width_entrypt
 c $AA38 Draw the helicopter
 D $AA38 #R$AB89 (in drive_helicopter) self modifies #R$8FA4 to call this.
+D $AA38 It returns unless the counter is 3, the only distance at which the helicopter is drawn. The rotor position comes from multiplying the top three bits of fast_counter by the difference between two adjacent object_positions entries, halving the high byte of the product. The body's y offset is the vertical base less the lower of those two entries. Five body parts are then drawn in a loop and the rotor is drawn separately, using the self modified rotor position.
+D $AA38 Note that #REGiy addresses the height table, but the two bytes read as #REGiy+$4E and #REGiy+$4F land well past the end of it, past the clamped heights, past the horizon values and one spare byte, in the object_positions buffer at $E34F that #R$A579 fills.
 R $AA38 I:B Counter
 R $AA38 I:IY Somewhere in the $E315 buffer
 @ $AA38 label=draw_helicopter
@@ -7023,6 +7041,8 @@ C $AAC1,1 A += B
 C $AAC2,1 Return if no carry
 C $AAC3,3 Exit via draw_object_left_width_entrypt
 c $AAC6 Move the helicopter
+D $AAC6 Advances the helicopter's position and animation, or returns at once when helicopter_control is zero. The height descends 2 pixels a frame towards 97. The animation frame cycles 0 to 3 and the horizontal swing direction is negated each time it wraps, the direction accumulating into an offset which, added to the height, is the vertical base the drawing routine uses.
+D $AAC6 The horizontal position moves by however far road_pos has moved since last frame, then steps 8 pixels a frame towards the centre target - normally 112, the middle of the screen, though #R$AB33 sets it to -56 to fly the helicopter off the side of the screen - clamping rather than overshooting.
 D $AAC6 Used by the routine at #R$8401.
 @ $AAC6 label=move_helicopter
 C $AAC6,5 Return if helicopter_control is zero
@@ -7073,7 +7093,10 @@ C $AB2A,1 Restore AF
 C $AB2E,1 Put #REGde centre value into #REGhl
 C $AB2F,3 Self modify 'LD BC' @ #R$AA94
 C $AB32,1 Return
-c $AB33 Helicopter
+c $AB33 Drives the helicopter event sequence
+D $AB33 A state machine on helicopter_control, which returns at once when zero.
+D $AB33 1: point the centre target at -56, off the side of the screen, so #R$AAC6 flies the helicopter away, and move to state 2. 2: departing - wait while the horizontal position is still on screen, then switch the helicopter off once it has gone negative. 3: turning left - initialise the self modified fields, play the pilot's chatter, set the centre target to 112 and move to state 5. 4: turning right, as state 3 but with the other chatter. 5 and above are not used yet and return at once.
+D $AB33 While the helicopter is on, #R$8FA4 is self modified into a CALL to #R$AA38; when it goes off, that is patched back to NOPs.
 D $AB33 Used by the routine at #R$8401.
 @ $AB33 label=drive_helicopter
 C $AB33,5 Return if helicopter_control is zero
@@ -7122,6 +7145,9 @@ C $AB96,3 helicopter_control = A
 C $AB99,1 Return
 c $AB9A Spawn hazards
 D $AB9A Spawns hittable hazards in the road, like barriers and tumbleweeds.
+D $AB9A Nothing happens while allow_spawning is zero. The spawning distance is 20 minus allow_spawning, so 18 or 19, and if the road buffer's hazard byte at that offset is zero nothing is spawned.
+D $AB9A That byte is the map command less 3, so it reads: 0 stop, 1/2/3 tumbleweeds left/right/both, 4/5/6 barriers left/right/both. Four or more therefore means a barrier: the heavier hittable variant is selected and 3 subtracted, folding the barrier codes onto the same three placements as the tumbleweeds.
+D $AB9A What is left decides count and placement. 1 puts one obstacle at x=50, 2 puts one at x=220 and 3 puts a pair, at x=70 and 180 for tumbleweeds or x=80 and 160 for barriers. Barriers become a triple at x=32, 86 and 140 when inhibit_collision_detection is set. That flag is raised at #R$875C when the perp escapes, and it makes #R$AD0D return at once, so the triple only ever appears where nothing can be hit.
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $AB9A label=spawn_hazards
 C $AB9A,5 Return if allow_spawning is zero
@@ -7275,6 +7301,7 @@ B $ACDB,40,8 #R$AC94 uses this
 W $AD03,10,2 #R$AC53 uses this
 c $AD0D Checks for hazard collisions
 D $AD0D Called continuously.
+D $AD0D All six hazard slots are walked, skipping unused ones. A slot whose flags are $FF is also skipped while the high byte of its lateral distance is non-zero, meaning it is too far to the side to be hit this frame. Otherwise, if the hazard is within a distance of 20 and #R$AD51 says it was hit, the slot's own hit handler is called - though not if the flags have already been set to $FF by an earlier hit.
 D $AD0D Used by the routine at #R$BDFB.
 @ $AD0D label=check_hazard_collisions
 C $AD0D,5 Return if the inhibit_collision_detection flag is set
@@ -7313,12 +7340,14 @@ C $AD4C,2 Move to next hazard
 C $AD4E,2 Loop
 C $AD50,1 Return
 c $AD51 Hazard collision
+D $AD51 Returns 1, and arms the hazard's hit timer, only if all of these hold: the hit timer is zero, so this hazard is not still in its cooldown; the horizontal clip is zero, so the hazard is fully on screen; the distance is under the threshold, 2 or 3 depending on the hazard's flags; the sign of fast_counter passes the speed gate for that distance; and the horizontal position overlaps the car's zone, $68 to $8F.
+D $AD51 The hit timer written is the severity: 1 for a glancing blow at close range, up to 4 for a strike dead centre.
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:D Initialised to zero (when return value is required)
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
-R $AD51 O:L Hazard[2]
-R $AD51 O:H Hazard[3]
+R $AD51 O:L Hazard[2]. #R$AE7A, the only caller that could use it, discards it: it writes horz_pos and horz_clip before the CALL and never reads them back
+R $AD51 O:H Hazard[3]. Discarded likewise
 @ $AD51 label=check_collision
 C $AD51,5 Return if hit counter is non-zero
 N $AD56 Otherwise we're... ?
@@ -7359,6 +7388,7 @@ C $AD9D,2 D = 1  -- perhaps a "was hit" flag
 C $AD9F,1 Return
 c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
+D $ADA0 n_hazards is zeroed, then all six slots are walked and the active ones passed to #R$ADBE, which advances the hazard's distance, projects it into perspective, inserts it into the depth sorted draw list and fires its hit handler.
 D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=advance_hazards
 C $ADA0,4 n_hazards = 0
@@ -7512,8 +7542,12 @@ C $AEC7,1 *HL = D
 @ $AEC8 label=ah_call_handler
 C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
-c $AECF This entry point is used by the routine at #R$8F5F.
+c $AECF Draws the hazard sprites at one depth
+D $AECF Called once per depth as #R$8F5F walks the depth sorted draw list, and returns at once unless the first word of the draw table matches the current distance. For each hazard at that depth the bitmap comes from the level of detail table, the screen x position is worked out from the hazard's horizontal position and clip, and the sprite is drawn by the left or right hand object plotter.
+D $AECF A hazard whose flags are $FF is the perp car. Its position is also saved into the self modified fields #R$B01C uses, and then the floating "HERE!" arrow is drawn while smash_level is under 5, the fire overlays once smash_level reaches 4, and trailing smoke for smash_level 1 to 3.
 D $AECF Used by the routine at #R$8F5F.
+R $AECF I:B Current draw depth; must match the draw table entry
+R $AECF I:IY Pointer into the height table
 @ $AECF label=draw_hazard_sprites
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
