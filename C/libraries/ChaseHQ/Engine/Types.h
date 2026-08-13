@@ -29,7 +29,8 @@
 #define ZXATTRS(addr)    TWOBYTES(addr)
 #define CHQBACKBUF(addr) TWOBYTES(addr)
 
-#define EOS (1<<7) // End of String - string terminator bit
+/* End of String - terminator bit */
+#define EOS (1<<7)
 
 /* print_character header byte bit 7: 0 = double-height shaded glyph,
  * 1 = single-height flat glyph. Not a hardware ZX attribute bit. */

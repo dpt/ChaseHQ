@@ -41,7 +41,7 @@ typedef struct high_score_row
   u8 score[8];      /* $C408: ASCII score digits, most significant first */
   u8 stage_code[3]; /* $C414: e.g. " 1 ", "ALL" */
   u8 retry_digit;   /* $C41C: ASCII '1'-'3' (or higher in test-mode data) */
-  u8 name[3];        /* $C41F: 3-character initials */
+  u8 name[3];       /* $C41F: 3-character initials */
 } high_score_row_t;
 
 #define HIGH_SCORE_TABLE_ROWS (10)
@@ -56,36 +56,36 @@ typedef struct high_score_row
  */
 typedef struct title_tune_channel
 {
-  u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
-  const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
-  const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
-  const u8  *pattern_base;           // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
-  u16        pattern_len;            // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
-  u16        phrase_table_offset;    // +$05/+$06 byte offset from pattern_data_ptr to the current phrase-pointer-table entry; starts at 2 (immediately past the 2-byte header) and advances by 2 or 3 per table word (advance_channel_phrase)
-  u16        slide_accum;            // +$07/+$08 accumulated portamento/slide value
-  const u8  *pitch_offset_default;   // +$09/+$0A default/loop-start pitch-offset sequence pointer
-  const u8  *pitch_offset_cur;       // +$0B/+$0C current pitch-offset sequence pointer
-  s8         slide_step;             // +$0D signed per-tick portamento step
-  u8         slide_countdown;        // +$0E portamento reload countdown
-  u8         envelope_speed;         // +$0F envelope-step reload value
-  u8         row_wait;               // +$10 per-row wait countdown; also doubles as the channel enable flag (start_tune sets it to 1)
-  u8         row_wait_reload;        // +$11 reload value for row_wait, set by the row-duration pattern command
-  u8         note_index;             // +$12 current note index (post-transpose)
-  u8         volume;                 // +$13 volume/envelope amplitude; returned to caller
-  const u8  *envelope_shape_default; // +$14/$15 default/base envelope-shape table pointer, reloaded into envelope_shape_ptr on every note
-  const u8  *envelope_shape_ptr;     // +$16/+$17 envelope shape table pointer
-  u8         envelope_amplitude;     // +$18 current envelope amplitude
-  u8         envelope_step_counter;  // +$19 envelope-step counter; 0 = due for reload
-  u8         vibrato_depth;          // +$1A vibrato depth * 2
-  u8         vibrato_increment;      // +$1B vibrato per-tick increment
-  u8         vibrato_phase;          // +$1C vibrato triangle-wave phase counter
-  u8         flags;                  // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
-  u8         slide_update_flag;      // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
-  u8         mute_pending;           // +$1F bit7 = one-shot mute-transition gate
-  u8         transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index; also reset to 0, or set from an inline phrase-table override, by advance_channel_phrase
-  u8         phrase_repeat_count;    // +$21 decrementing repeat count for the phrase currently held in phrase_ptr; 0 means due for a new phrase-table lookup (advance_channel_phrase); reset to 0 by start_tune
-  const u8  *phrase_ptr;             // +$22/+$23 pattern-stream cursor for the phrase most recently activated by a repeating (marker==2) phrase-table entry; reused while phrase_repeat_count is still counting down (advance_channel_phrase)
-  u8         mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
+  u8        status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
+  const u8 *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
+  const u8 *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
+  const u8 *pattern_base;           // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
+  u16       pattern_len;            // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
+  u16       phrase_table_offset;    // +$05/+$06 byte offset from pattern_data_ptr to the current phrase-pointer-table entry; starts at 2 (immediately past the 2-byte header) and advances by 2 or 3 per table word (advance_channel_phrase)
+  u16       slide_accum;            // +$07/+$08 accumulated portamento/slide value
+  const u8 *pitch_offset_default;   // +$09/+$0A default/loop-start pitch-offset sequence pointer
+  const u8 *pitch_offset_cur;       // +$0B/+$0C current pitch-offset sequence pointer
+  s8        slide_step;             // +$0D signed per-tick portamento step
+  u8        slide_countdown;        // +$0E portamento reload countdown
+  u8        envelope_speed;         // +$0F envelope-step reload value
+  u8        row_wait;               // +$10 per-row wait countdown; also doubles as the channel enable flag (start_tune sets it to 1)
+  u8        row_wait_reload;        // +$11 reload value for row_wait, set by the row-duration pattern command
+  u8        note_index;             // +$12 current note index (post-transpose)
+  u8        volume;                 // +$13 volume/envelope amplitude; returned to caller
+  const u8 *envelope_shape_default; // +$14/$15 default/base envelope-shape table pointer, reloaded into envelope_shape_ptr on every note
+  const u8 *envelope_shape_ptr;     // +$16/+$17 envelope shape table pointer
+  u8        envelope_amplitude;     // +$18 current envelope amplitude
+  u8        envelope_step_counter;  // +$19 envelope-step counter; 0 = due for reload
+  u8        vibrato_depth;          // +$1A vibrato depth * 2
+  u8        vibrato_increment;      // +$1B vibrato per-tick increment
+  u8        vibrato_phase;          // +$1C vibrato triangle-wave phase counter
+  u8        flags;                  // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
+  u8        slide_update_flag;      // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
+  u8        mute_pending;           // +$1F bit7 = one-shot mute-transition gate
+  u8        transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index; also reset to 0, or set from an inline phrase-table override, by advance_channel_phrase
+  u8        phrase_repeat_count;    // +$21 decrementing repeat count for the phrase currently held in phrase_ptr; 0 means due for a new phrase-table lookup (advance_channel_phrase); reset to 0 by start_tune
+  const u8 *phrase_ptr;             // +$22/+$23 pattern-stream cursor for the phrase most recently activated by a repeating (marker==2) phrase-table entry; reused while phrase_repeat_count is still counting down (advance_channel_phrase)
+  u8        mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
 }
 title_tune_channel_t;
 
@@ -262,7 +262,7 @@ struct chq_bank3_state
      */
     const u8 *script_ptr;
 
-    // $F837: drum-sample slot 1 busy flag (0 = idle, 1 = armed/busy).
+    /* $F837: drum-sample slot 1 busy flag (0 = idle, 1 = armed/busy). */
     u8        slot1_busy;
 
     /* $F842: slot 1 countdown/selector byte -- doubles as the countdown
@@ -290,7 +290,7 @@ struct chq_bank3_state
      */
     u8        sample_active;
 
-    // $F853: current read position in the sample-selector byte stream.
+    /* $F853: current read position in the sample-selector byte stream. */
     const u8 *stream_ptr;
 
     /* $F85E: reload source for stream_ptr, set by stst_load_sfx_script/

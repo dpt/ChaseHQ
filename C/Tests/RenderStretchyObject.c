@@ -252,7 +252,8 @@ int main(int argc, char **argv)
       return 1;
     }
     fprintf(stderr, "auto-picked row %d\n", row);
-  } else if (row < 0 || row > 19)
+  }
+  else if (row < 0 || row > 19)
   {
     usage(argv[0]);
     chq_destroy(state);
@@ -304,7 +305,8 @@ int main(int argc, char **argv)
       chq_destroy(state);
       return 1;
     }
-  } else
+  }
+  else
   {
     out = stdout;
   }

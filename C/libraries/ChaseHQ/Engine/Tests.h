@@ -66,8 +66,9 @@ void chq_test_draw_road(chqstate_t *state);
  * parameters for fill_pattern (0), horizon (0), DEbackbuf (0x0100), and Lrow
  * (0xFF).
  */
-void chq_test_draw_road_lanes_change(chqstate_t *state, u8 lane_flags,
-                                     int height_offset);
+void chq_test_draw_road_lanes_change(chqstate_t *state,
+                                     u8          lane_flags,
+                                     int         height_offset);
 
 /*
  * draw_stretchy_object_left/right already have external linkage in
@@ -75,12 +76,16 @@ void chq_test_draw_road_lanes_change(chqstate_t *state, u8 lane_flags,
  * just have no declaration outside it. Declared here, not in ChaseHQ.h,
  * because only test/tool code needs to call them directly.
  */
-void draw_stretchy_object_left(chqstate_t *state, int B_depth,
-                               const void *DE_arg, const s16 *IX_xpos,
-                               const u8 *IY_height);
-void draw_stretchy_object_right(chqstate_t *state, int B_depth,
-                                const void *DE_arg, const s16 *IX_xpos,
-                                const u8 *IY_height);
+void draw_stretchy_object_left(chqstate_t *state,
+                               int         B_depth,
+                               const void *DE_arg,
+                               const s16  *IX_xpos,
+                               const u8   *IY_height);
+void draw_stretchy_object_right(chqstate_t *state,
+                               int         B_depth,
+                               const void *DE_arg,
+                               const s16  *IX_xpos,
+                               const u8   *IY_height);
 
 /** Start bank 3 title tune A_tune (titlescr_start_tune) -- must be called
  *  once before chq_test_run_title_tune, matching run_title_screen's own

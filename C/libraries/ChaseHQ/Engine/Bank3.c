@@ -48,7 +48,6 @@
 #include "Bank3State.h"
 
 #include "Bank3.h"
-#include "Tests.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -7215,7 +7214,8 @@ static void compute_glyph_geometry(u8                     B_y,
     B_clamped           = B_y;
     out->A_excess       = 0;    /* unused: carry_initial skips the row-offset walk */
     out->carry_initial  = 1;
-  } else
+  }
+  else
   {
     B_clamped           = 0x6F;
     out->A_excess       = (u8) (B_y - 0x6F);
@@ -8936,7 +8936,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * strip the marker bit. */
     HL_offset_ptr = IX_channel->pitch_offset_default;
     A_offset_byte &= (u8) ~SEQ_END_BIT;
-  } else
+  }
+  else
   {
     /* $EEDF: JP P taken (10). */
     state->speccy->logtime(state->speccy, 10);
@@ -10196,7 +10197,8 @@ drum_dispatch_entry:
     A &= ~0x80;
     state->bank3->drums.slot1_countdown = 1;
     state->bank3->drums.slot2_busy      = 1;
-  } else
+  }
+  else
   {
     /* $F86D JR Z,$F87B taken (12). */
     state->speccy->logtime(state->speccy, 12);
@@ -10456,7 +10458,8 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
        * facade's out() rather than by logtime. The yield budget must count the
        * full 74 or it lets ~16% too many rows through per frame. */
       frame_tstates += 63 + 11;
-    } while (--i > 0);
+    }
+    while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);
