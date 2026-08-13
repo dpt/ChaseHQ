@@ -73,7 +73,7 @@ typedef struct chq_app
     int escape_installed;
     int have_caret;
     unsigned int pending_actions;
-    unsigned int stamps[MAXSTAMPS];
+    unsigned int stamps[MAX_STAMPS];
     int nstamps;
     chq_host_clock_t clock;
     zxspectrum_t *zx;
@@ -211,7 +211,7 @@ static void native_stamp(void *opaque)
     chq_app_t *app;
 
     app = opaque;
-    if (app->nstamps < MAXSTAMPS)
+    if (app->nstamps < MAX_STAMPS)
         app->stamps[app->nstamps++] = chq_host_monotonic_time();
 }
 
@@ -794,7 +794,7 @@ static int native_sleep(int duration, void *opaque)
     if (app->nstamps > 0)
         app->nstamps--;
 
-    clock_rate = app->mode_128k ? CPU_CLOCK_128K : CPU_CLOCK_48K;
+    clock_rate = app->mode_128k ? Z80_CLOCK_128K : Z80_CLOCK_48K;
     now = chq_host_monotonic_time();
     ticks = chq_host_advance_clock(&app->clock,
                                    (unsigned int) duration,

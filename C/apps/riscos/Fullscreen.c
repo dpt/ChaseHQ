@@ -326,7 +326,7 @@ static int native_sleep(int duration, void *opaque)
     now = chq_host_monotonic_time();
     ticks = chq_host_advance_clock(&app->clock,
                                    (uint32_t) duration,
-                                   CPU_CLOCK_128K, now);
+                                   Z80_CLOCK_128K, now);
     if (ticks != 0)
     {
         while (!fullscreen_escape &&

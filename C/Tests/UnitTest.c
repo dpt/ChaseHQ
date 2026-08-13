@@ -66,7 +66,7 @@ static int g_stamp_depth;
 static void fake_stamp(zxspectrum_t *s)
 {
   NOT_USED(s);
-  assert(g_stamp_depth < MAXSTAMPS);
+  assert(g_stamp_depth < MAX_STAMPS);
   g_stamp_depth++;
 }
 

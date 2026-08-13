@@ -137,7 +137,9 @@
 
 /* How far the game thread may fall behind its schedule before the backlog is
  * written off rather than caught up. Roughly the four 20ms frames the pacing
- * loop was originally built around; see chq_sleep_handler.
+ * loop was originally built around; see chq_sleep_handler. The RISC OS host
+ * caps the same backlog with CHQ_MAX_LAG_FRAMES, counted in centisecond ticks
+ * rather than wall-clock seconds.
  */
 #define CHQ_MAX_LAG_SECS (0.08)
 
@@ -240,7 +242,7 @@ typedef struct chq_sdl_state
 
   int               speed;      // game speed, percent, SPEED_MIN..SPEED_MAX
 
-  Uint64            stamps[MAXSTAMPS]; // SDL_GetTicksNS() values
+  Uint64            stamps[MAX_STAMPS]; // SDL_GetTicksNS() values
   int               nstamps;
 
   /* Absolute monotonic-clock deadline for the next sleep, advanced by each
@@ -412,8 +414,8 @@ static void chq_stamp_handler(void *opaque)
   chq_sdl_state_t *state = opaque;
 
   // Stack timestamps as they arrive
-  assert(state->nstamps < MAXSTAMPS);
-  if (state->nstamps >= MAXSTAMPS)
+  assert(state->nstamps < MAX_STAMPS);
+  if (state->nstamps >= MAX_STAMPS)
     return;
   state->stamps[state->nstamps++] = SDL_GetTicksNS();
 }
@@ -461,8 +463,8 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
      * independent of this loop) -- the two drift ~1.3% apart.
      */
     const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K)
-                                     ? (double) CPU_CLOCK_128K
-                                     : (double) CPU_CLOCK_48K;
+                                     ? (double) Z80_CLOCK_128K
+                                     : (double) Z80_CLOCK_48K;
 
     Uint64         nowNs;
     double         nowSecs;
@@ -586,8 +588,8 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
 {
   const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K)
-                                     ? (double) CPU_CLOCK_128K
-                                     : (double) CPU_CLOCK_48K;
+                                     ? (double) Z80_CLOCK_128K
+                                     : (double) Z80_CLOCK_48K;
   const double nsPerTstate   = 1.0e9 / tstatesPerSec;
   Uint64       now_ns;
   Uint64       event_ns;

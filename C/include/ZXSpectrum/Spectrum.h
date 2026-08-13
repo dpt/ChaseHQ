@@ -136,12 +136,17 @@ enum
 #define SCREEN_END_ADDRESS              (SCREEN_START_ADDRESS + SCREEN_LENGTH - 1)
 #define SCREEN_ATTRIBUTES_END_ADDRESS   SCREEN_END_ADDRESS
 
-/* Z80 clock rates, in T-states per second. The 128K machine's clock is
- * slightly faster than the 48K's, which is why the two models' frame periods
- * differ (69888 vs 70908 T-states) despite both running at 50Hz. */
+/* Timing */
 
-#define CPU_CLOCK_48K                   (3500000U)
-#define CPU_CLOCK_128K                  (3546900U)
+/**
+ * Z80 clock rates, in T-states per second.
+ *
+ * The 128K machine's clock is slightly faster than the 48K's, which is why the
+ * two models' frame periods differ (69888 vs 70908 T-states) despite both
+ * running at 50Hz.
+ */
+#define Z80_CLOCK_48K                   (3500000U)
+#define Z80_CLOCK_128K                  (3546900U)
 
 /**
  * The current state of the machine.
@@ -199,6 +204,8 @@ typedef uint32_t zxclock_t;
 typedef uint64_t zxclock_t;
 #endif
 
+/* Facade/host synchronisation */
+
 /**
  * Depth of the stamp()/sleep() nesting tracked by the facade and by each
  * host's own timestamp stack.
@@ -207,7 +214,7 @@ typedef uint64_t zxclock_t;
  * assert rather than grow, and an unbalanced stamp shows up as a crash in the
  * offending build rather than as silently wrong audio timing.
  */
-#define MAXSTAMPS (4)
+#define MAX_STAMPS                      (4)
 
 /**
  * The current state of the machine.
