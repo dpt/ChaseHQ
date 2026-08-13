@@ -1,6 +1,7 @@
 b $C000 [Stage 5] Horizon graphic
 B $C000,240,8
 b $C0F0 [Stage 5] Per-stage data
+@ $C0F0 label=stage5
 W $C0F0,2,2 [$C8CE] Address of perp's mugshot (attributes)
 W $C0F2,2,2 [out-of-bounds] Address of pilot's mugshot (bitmap)
 W $C0F4,2,2 [$D470] Screen attributes used for the ground colour (a pair of matching bytes)
@@ -44,6 +45,7 @@ W $C133,2,2 [$C7A4] Address of loop section, right-side objects
 W $C135,2,2 [$C6ED] Address of loop section, left-side objects
 W $C137,2,2 [$C6D0] Address of loop section, hazards
 b $C139 [Stage 5] Nancy's perp description
+@ $C139 label=stage5_perp_description
 B $C139,1,1 Character identifier (0/1/2/3 = Pilot/Nancy/Raymond/Tony)
 W $C13A,2,2 [$C145] Perp description pointer
 W $C13C,2,2 [$C16D] Perp description pointer
