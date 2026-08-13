@@ -89,7 +89,7 @@ b $6DF5 [Stage 4] Pilot's mugshot (identical to retail bank6 $EFF5)
 b $705A Pointer/index table entries (count and address pairs) indexing frames of the Perp's mugshot at $7063
 b $7063 [Stage 5] Perp's mugshot (identical to retail bank7 $D295)
 s $73EE Zero-fill (744 bytes)
-b $76D6 Identical to retail bank5 $F6D6 (not yet disassembled there)
+b $76D6 Identical to retail fixed $F6D6
 T $779B,30,29:n1 "'YCHASE H.Q. MONITORING SYSTEM"
 T $77BD,5,4:n1 "YTUNE"
 T $77C5,8,7:n1 "bZVOLUME"
@@ -110,7 +110,7 @@ c $84A6 Cornering sound effect (identical to retail fixed $8A1B)
 c $84E2 Same routine as retail fixed $8204 (Generates engine noise (48K)); differs only in an embedded address literal (data lives at a different offset in this build)
 c $8520 Generates engine noise (48K) (identical to retail fixed $8242)
 c $8536 Sets up an oscillating sprite position/attribute value (writes $9CFF/$9D06-$9D08); used by other init routines
-c $855C Identical to retail bank0 $F271 (not yet disassembled there)
+c $855C Identical to retail fixed $F271
 c $8575 Continues the oscillator setup from L855C, writing wobble parameters to $9CFF/$9D01/$9D06
 c $86BB Handle perp caught (identical to retail fixed $8B19)
 c $87B9 Same routine as retail fixed $8C17 (Handle perp caught); differs only in an embedded address literal (data lives at a different offset in this build)
@@ -276,34 +276,34 @@ c $B1BF Clears horizon state bytes then interpolates perspective heights via SP-
 c $B218 Copies the back buffer at $F000 to the screen (and sets attributes) (identical to retail fixed $BC49)
 c $B393 Clears the playfield then sets its attributes (identical to retail fixed $BDC4)
 c $B3CE Updates horizon/scenery state ($9D28-$9D5C) and attribute bytes from curvature, feeding LB5E3
-c $B5B2 Identical to retail bank0 $C08C (not yet disassembled there)
+c $B5B2 Identical to retail fixed $C08C
 c $B5E3 Accumulates into $9D40 then drives car-part collision/perspective calculations feeding LB732
-c $B6A3 Identical to retail bank0 $C39F (not yet disassembled there)
-c $B6B9 Same routine as retail bank0 $C3B5 (not yet disassembled there); differs only in an embedded address literal
-c $B6DF Identical to retail bank0 $C3DB (not yet disassembled there)
-c $B6FD Same routine as retail bank0 $C3F9 (not yet disassembled there); differs only in an embedded address literal
-c $B709 Identical to retail bank0 $C405 (not yet disassembled there)
+c $B6A3 Identical to retail fixed $C39F
+c $B6B9 Same routine as retail fixed $C3B5; differs only in an embedded address literal
+c $B6DF Identical to retail fixed $C3DB
+c $B6FD Same routine as retail fixed $C3F9; differs only in an embedded address literal
+c $B709 Identical to retail fixed $C405
 c $B732 Bresenham-style perspective/edge interpolation for hazard rendering, including a self-modifying stub and per-frame setup entry
-c $B89F Identical to retail bank0 $C5F9 (not yet disassembled there)
-c $B8E7 Stub feeding the routine at LB8EA (identical to retail bank0 $C644)
-c $B8EA Identical to retail bank0 $C644 (not yet disassembled there)
-c $B930 Identical to retail bank0 $C68A (not yet disassembled there)
+c $B89F Identical to retail fixed $C5F9
+c $B8E7 Stub feeding the routine at LB8EA (identical to retail fixed $C644)
+c $B8EA Identical to retail fixed $C644
+c $B930 Identical to retail fixed $C68A
 c $B95F Horizon-scroll/curvature toggling and animation-frame counter driver
-c $BA1B Identical to retail bank0 $C7DA (not yet disassembled there)
-c $BA3C Same routine as retail bank0 $C7FB (not yet disassembled there); differs only in an embedded address literal
-c $BA62 Identical to retail bank0 $C821 (not yet disassembled there)
-c $BAD6 Identical to retail bank0 $C895 (not yet disassembled there)
-c $BAFF Identical to retail bank0 $C8BE (not yet disassembled there)
+c $BA1B Identical to retail fixed $C7DA
+c $BA3C Same routine as retail fixed $C7FB; differs only in an embedded address literal
+c $BA62 Identical to retail fixed $C821
+c $BAD6 Identical to retail fixed $C895
+c $BAFF Identical to retail fixed $C8BE
 c $BB23 Initialises horizon-scroll offset tables, called by LB1BF, feeding LBB6C
-c $BB6C Identical to retail bank0 $CC1E (not yet disassembled there)
-c $BBC1 Same routine as retail bank0 $CC73 (not yet disassembled there); differs only in an embedded address literal
-c $BC10 Identical to retail bank0 $CCC2 (not yet disassembled there)
-c $BC2C Same routine as retail bank0 $CCDE (not yet disassembled there); differs only in an embedded address literal
-c $BC49 Identical to retail bank0 $CCFB (not yet disassembled there)
-c $BC72 Same routine as retail bank0 $CD24 (not yet disassembled there); differs only in an embedded address literal
-c $BCCA Identical to retail bank0 $CD7C (not yet disassembled there)
-c $BD08 Same routine as retail bank0 $CDBA (not yet disassembled there); differs only in an embedded address literal
-c $BD13 Identical to retail bank0 $CDC5 (not yet disassembled there)
+c $BB6C Identical to retail fixed $CC1E
+c $BBC1 Same routine as retail fixed $CC73; differs only in an embedded address literal
+c $BC10 Identical to retail fixed $CCC2
+c $BC2C Same routine as retail fixed $CCDE; differs only in an embedded address literal
+c $BC49 Identical to retail fixed $CCFB
+c $BC72 Same routine as retail fixed $CD24; differs only in an embedded address literal
+c $BCCA Identical to retail fixed $CD7C
+c $BD08 Same routine as retail fixed $CDBA; differs only in an embedded address literal
+c $BD13 Identical to retail fixed $CDC5
 c $BD3A Options-menu driver: keyscans for menu selections, displays option text via LC452, drives demo/chatter modes
 B $BD3A,289,289
 T $BE5B,41,40:n1 "WELCOME TO THE 'SINCLAIR USER' MEGA TAPE."
@@ -385,7 +385,7 @@ B $C342,2,2
 T $C344,17,16:n1 "PPRESS ANY KEY..."
 B $C355,2,2
 T $C357,9,8:n1 "MHOPTIONS"
-c $C361 Identical to retail bank0 $E9EF (not yet disassembled there)
+c $C361 Identical to retail fixed $E9EF
 B $C361,1,1
 T $C362,21,20:n1 "H1. SINCLAIR JOYSTICK"
 B $C377,2,2
@@ -417,42 +417,42 @@ T $C43F,13,12:n1 "PTURBO......."
 c $C452 Stub feeding the print-string loop at LC455
 c $C455 Print-string loop: prints each character at (HL) until the terminator is printed (identical to retail bank3 $FD9F)
 c $C47B Tail-call glue between LC455_1 and LC47E
-c $C47E Identical to retail bank0 $EC20 (not yet disassembled there)
+c $C47E Identical to retail fixed $EC20
 c $C4C2 Computes a character glyph offset into the $9D66 table, feeding LC4CB
 c $C4CB Prints a single character: unpacks its position and blits the glyph bitmap to screen (identical to retail bank3 $FE15)
 c $C4EA Carry-check glue feeding LC4EC_0
 c $C4EC Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop) (identical to retail bank7 $E37E)
 c $C508 Attribute row-clear helper feeding LC517
-c $C517 Identical to retail bank0 $ECB7 (not yet disassembled there)
+c $C517 Identical to retail fixed $ECB7
 c $C556 Menu-item scroll/highlight animation, part of the options-menu machinery
 c $C58C Scans the keyboard matrix for a single currently-held key (identical to retail bank3 $FF0C)
 c $C5B1 Wait-for-key-selection loop for the options menu, calls LC58C
 c $C5D9 Waits for a fresh single keypress, rejecting ambiguous or empty scans (identical to retail bank3 $FF56); the routine ends around $C618, followed by an embedded keyboard-layout label string ("B N M SYSPH J K L ENY U I O P 6 7 8 9 0 5 4 3 2 1 T R E W Q G F D S A V C X Z CP#") used by the redefine-keys option
 T $C618,81 "B N M SYSPH J K L ENY U I O P 6 7 8 9 0 5 4 3 2 1 T R E W Q G F D S A V C X Z CP#"
-c $C672 Identical to retail bank0 $EE38 (not yet disassembled there)
-c $C694 Same routine as retail bank0 $EE5A (not yet disassembled there); differs only in an embedded address literal
+c $C672 Identical to retail fixed $EE38
+c $C694 Same routine as retail fixed $EE5A; differs only in an embedded address literal
 c $C770 Drum sample players (identical to retail bank7 $F8CD)
 c $C78B Tail-branch glue between LC770 and LC694_18
-c $C798 Identical to retail bank0 $EF5E (not yet disassembled there)
+c $C798 Identical to retail fixed $EF5E
 b $C906 Data block at F8F5 (identical to retail bank7 $F9F9)
 c $C92E Menu-item dispatch checking key/(HL) then falling to LC694_18; followed by an embedded data table
-c $C94C Identical to retail bank0 $F111 (not yet disassembled there)
+c $C94C Identical to retail fixed $F111
 c $CA5C Data table feeding LCA6E
-c $CA6E Identical to retail bank0 $CE00 (not yet disassembled there)
+c $CA6E Identical to retail fixed $CE00
 c $CAA1 Data table feeding LCABB
-c $CABB Identical to retail bank0 $CE4B (not yet disassembled there)
+c $CABB Identical to retail fixed $CE4B
 c $CB4B Data table; misdisassembles as OUT/CALL instructions, not real code
-c $CC20 Identical to retail bank0 $CFB2 (not yet disassembled there)
+c $CC20 Identical to retail fixed $CFB2
 c $CC99 Data table feeding LCCAD
-c $CCAD Identical to retail bank0 $D03F (not yet disassembled there)
+c $CCAD Identical to retail fixed $D03F
 c $DE4A Data table feeding LCCAD/LDE59
-c $DE59 Identical to retail bank0 $E364 (not yet disassembled there)
+c $DE59 Identical to retail fixed $E364
 c $DEE7 Data table; misdisassembles as garbage instructions
-c $DEFF Identical to retail bank0 $E8A6 (not yet disassembled there)
+c $DEFF Identical to retail fixed $E8A6
 c $DF57 Data table (mixed byte values, not code)
-c $E100 Identical to retail bank0 $E400 (not yet disassembled there)
+c $E100 Identical to retail fixed $E400
 s $E510 Zero-fill (21 bytes)
-c $E525 Identical to retail bank0 $F5C3 (not yet disassembled there)
+c $E525 Identical to retail fixed $F5C3
 s $EE60 Zero-fill (32 bytes)
 i $EE80 Leftover/padding RAM content; not part of any tape block
 c $F000 Paul Owens protection loader
