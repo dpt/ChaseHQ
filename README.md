@@ -55,3 +55,4 @@ shortcuts.
 - My previous Speccy disassembly project:
   https://github.com/dpt/The-Great-Escape
 - ...and rebuild: https://github.com/dpt/The-Great-Escape-in-C
+- My AY-8912 emulator: https://github.com/dpt/SlopAY
