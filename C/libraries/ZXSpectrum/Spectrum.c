@@ -90,28 +90,12 @@ static void zxbox_maximise(zxbox_t *b)
   b->y1 = INT_MAX;
 }
 
-/* Return true if a is later than b on the virtual clock. */
-static int zxclock_is_after(zxclock_t a, zxclock_t b)
-{
-#ifdef __riscos
-  return (zxclock_t) (a - b) < (zxclock_t) 0x80000000U;
-#else
-  return a > b;
-#endif
-}
-
 /* Return true if box can hold (width,height) at (0,0). */
 static int zxbox_exceeds(const zxbox_t *b, int width, int height)
 {
   return (b->x0 <= 0)     && (b->y0 <= 0)      &&
          (b->x1 >= width) && (b->y1 >= height);
 }
-
-/* Depth of the stamp()/sleep() nesting the clock tracks. Matches the host's
- * own timestamp stack (MAXSTAMPS in the SDL app); both assert rather than
- * grow, so an unbalanced stamp shows up as a crash in the offending build
- * rather than as silently wrong audio timing. */
-#define MAXSTAMPS (4)
 
 /* Return the union in 'c' of boxes 'a' and 'b'. */
 static void zxbox_union(const zxbox_t *a, const zxbox_t *b, zxbox_t *c)
@@ -124,6 +108,18 @@ static void zxbox_union(const zxbox_t *a, const zxbox_t *b, zxbox_t *c)
 
 /* ----------------------------------------------------------------------- */
 
+/* Return true if a is later than b on the virtual clock. */
+static int zxclock_is_after(zxclock_t a, zxclock_t b)
+{
+#ifdef __riscos
+  return (zxclock_t) (a - b) < (zxclock_t) 0x80000000U;
+#else
+  return a > b;
+#endif
+}
+
+/* ----------------------------------------------------------------------- */
+
 typedef struct zxspectrum_private
 {
   zxspectrum_t    pub;
@@ -132,7 +128,7 @@ typedef struct zxspectrum_private
   unsigned int    prev_border;
 
   zxclock_t       tstates; // virtual Z80 clock; game thread only (see logtime)
-  zxclock_t       stamp_tstates[MAXSTAMPS]; // clock at each open stamp()
+  zxclock_t       stamp_tstates[MAX_STAMPS]; // clock at each open stamp()
   int             nstamps;
 
   int             monochrome;
@@ -285,10 +281,10 @@ static void zx_draw(zxspectrum_t *state, const zxbox_t *dirty)
     int     linear_y;
 
     /* Clamp the dirty rectangle to the screen dimensions. */
-    box.x0 = CLAMP(dirty->x0, 0, 255);
-    box.y0 = CLAMP(dirty->y0, 0, 191);
-    box.x1 = CLAMP(dirty->x1, 1, 256);
-    box.y1 = CLAMP(dirty->y1, 1, 192);
+    box.x0 = CLAMP(dirty->x0, 0, SCREEN_WIDTH  - 1);
+    box.y0 = CLAMP(dirty->y0, 0, SCREEN_HEIGHT - 1);
+    box.x1 = CLAMP(dirty->x1, 1, SCREEN_WIDTH);
+    box.y1 = CLAMP(dirty->y1, 1, SCREEN_HEIGHT);
 
     /* Divide down the x coordinates to get byte-sized quantities. */
     box.x0 = (box.x0    ) >> 3; /* divide to 0..31 rounding down */
@@ -298,7 +294,7 @@ static void zx_draw(zxspectrum_t *state, const zxbox_t *dirty)
 
     /* Convert y coordinates into screen space - (0,0) is top left. */
     height = box.y1 - box.y0;
-    box.y0 = 192 - box.y1;
+    box.y0 = SCREEN_HEIGHT - box.y1;
     box.y1 = box.y0 + height;
 
     for (linear_y = box.y0; linear_y < box.y1; linear_y++)
@@ -307,8 +303,8 @@ static void zx_draw(zxspectrum_t *state, const zxbox_t *dirty)
       unsigned int tmp = (linear_y ^ (linear_y >> 3)) & 7;
       int          y   = linear_y ^ (tmp | (tmp << 3));
 
-      memcpy(&prv->screen_copy.pixels[y * 32 + box.x0],
-             &prv->pub.screen.pixels[y * 32 + box.x0],
+      memcpy(&prv->screen_copy.pixels[y * SCREEN_BITMAP_ROWBYTES + box.x0],
+             &prv->pub.screen.pixels[y * SCREEN_BITMAP_ROWBYTES + box.x0],
              width);
     }
 
@@ -318,8 +314,10 @@ static void zx_draw(zxspectrum_t *state, const zxbox_t *dirty)
 
     for (linear_y = box.y0; linear_y < box.y1; linear_y++)
     {
-      memcpy(&prv->screen_copy.attributes[linear_y * 32 + box.x0],
-             &prv->pub.screen.attributes[linear_y * 32 + box.x0],
+      int offset = linear_y * SCREEN_ATTRIBUTES_ROWBYTES + box.x0;
+
+      memcpy(&prv->screen_copy.attributes[offset],
+             &prv->pub.screen.attributes[offset],
              width);
     }
 
@@ -340,8 +338,8 @@ static void zx_stamp(zxspectrum_t *state)
   /* Remember where the virtual clock stood, so the matching zx_sleep can
    * close the segment out on it. Stamps nest, so this is a stack, the same
    * shape and depth as the host's own wall-clock one. */
-  assert(prv->nstamps < MAXSTAMPS);
-  if (prv->nstamps < MAXSTAMPS)
+  assert(prv->nstamps < MAX_STAMPS);
+  if (prv->nstamps < MAX_STAMPS)
     prv->stamp_tstates[prv->nstamps++] = prv->tstates;
 
   prv->config.stamp(prv->config.opaque);

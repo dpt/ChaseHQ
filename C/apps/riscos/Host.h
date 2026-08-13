@@ -22,9 +22,9 @@
     (SCREEN_WIDTH * SCREEN_HEIGHT / 2 + 1024)
 #define CHQ_SPRITE_MODE_INDEXED4   (27)
 #define CHQ_TRANSLATION_WORDS      (256)
-#define CHQ_CLOCK_48K              (3500000U)
-#define CHQ_CLOCK_128K             (3546900U)
 #define CHQ_CLOCK_TICKS_SECOND     (100U)
+/* Same ~4-frame catch-up budget as SDLMain.c's CHQ_MAX_LAG_SECS, counted in
+ * centisecond ticks rather than wall-clock seconds. */
 #define CHQ_MAX_LAG_FRAMES         (4U)
 #define CHQ_MODE_SELECTOR_HEAD     (5)
 #define CHQ_MODE_DEPTH_4BPP        (2)

@@ -128,7 +128,8 @@ if(SDL3_FOUND)
     target_link_options(ChaseHQ PRIVATE
       "-sUSE_SDL=3" "-pthread" "-sPTHREAD_POOL_SIZE=4"
       "-sINITIAL_MEMORY=67108864" "-sEXIT_RUNTIME=0"
-      "-sAUDIO_WORKLET=1" "-sWASM_WORKERS=1"
+      # ponytail: no AUDIO_WORKLET/WASM_WORKERS -- SDL3's Emscripten audio
+      # backend is a main-thread ScriptProcessorNode and never uses them.
       "--shell-file=${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
     set_target_properties(ChaseHQ PROPERTIES LINK_DEPENDS
       "${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")

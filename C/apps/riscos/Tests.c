@@ -155,13 +155,13 @@ int main(int argc, char **argv)
           "translation-table plot action");
 
     memset(&host_clock, 0, sizeof(host_clock));
-    check(chq_host_advance_clock(&host_clock, CHQ_CLOCK_128K / 100,
-                                 CHQ_CLOCK_128K, 1000) == 1 &&
+    check(chq_host_advance_clock(&host_clock, Z80_CLOCK_128K / 100,
+                                 Z80_CLOCK_128K, 1000) == 1 &&
           host_clock.valid && host_clock.deadline == 1001,
           "host clock first deadline");
     host_clock.deadline = 900;
-    check(chq_host_advance_clock(&host_clock, CHQ_CLOCK_128K / 100,
-                                 CHQ_CLOCK_128K, 1000) == 1 &&
+    check(chq_host_advance_clock(&host_clock, Z80_CLOCK_128K / 100,
+                                 Z80_CLOCK_128K, 1000) == 1 &&
           host_clock.deadline == 996,
           "host clock lag cap");
     check(chq_host_time_is_before(0xFFFFFFF0U, 0x00000020U),
