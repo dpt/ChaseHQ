@@ -48,8 +48,6 @@
 /* Configuration
  *
  */
-#define GAMEWIDTH          (256)
-#define GAMEHEIGHT         (192)
 #define BORDER              (16)
 
 #define SCALE_DEFAULT        (4)
@@ -83,7 +81,6 @@
 #define CHQ_CRT_SHADER       (0)
 #endif
 
-#define MAXSTAMPS            (4) // max depth of timestamps stack
 #define MAXDIRTYRECTS        (8) // max dirty rects captured per frame before we coalesce to full-screen
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
@@ -190,12 +187,12 @@ static const chq_CRT_params_t crt_tuned_params = {
 
 static int chq_window_width(int scale)
 {
-  return (GAMEWIDTH + BORDER * 2) * scale;
+  return (SCREEN_WIDTH + BORDER * 2) * scale;
 }
 
 static int chq_window_height(int scale)
 {
-  return (GAMEHEIGHT + BORDER * 2) * scale;
+  return (SCREEN_HEIGHT + BORDER * 2) * scale;
 }
 
 // -----------------------------------------------------------------------------
@@ -359,7 +356,7 @@ typedef struct chq_sdl_state
      */
     char            osd_text[32];
     Uint64          osd_shown_at_ms;
-    u8              osd_mask[GAMEWIDTH * GAMEHEIGHT]; // scratch buffer for chq_render_osd_mask
+    u8              osd_mask[SCREEN_WIDTH * SCREEN_HEIGHT]; // scratch buffer for chq_render_osd_mask
   }
   video;
 
@@ -463,7 +460,9 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
      * the AY chip's own tone pitch (computed from its own fixed clock,
      * independent of this loop) -- the two drift ~1.3% apart.
      */
-    const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
+    const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K)
+                                     ? (double) CPU_CLOCK_128K
+                                     : (double) CPU_CLOCK_48K;
 
     Uint64         nowNs;
     double         nowSecs;
@@ -586,7 +585,9 @@ static void chq_audio_queue_push(chq_sdl_state_t       *state,
 // comment in chq_sdl_state_t.
 static Uint64 chq_tstates_to_ns(chq_sdl_state_t *state, zxclock_t tstates)
 {
-  const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
+  const double tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K)
+                                     ? (double) CPU_CLOCK_128K
+                                     : (double) CPU_CLOCK_48K;
   const double nsPerTstate   = 1.0e9 / tstatesPerSec;
   Uint64       now_ns;
   Uint64       event_ns;
@@ -954,7 +955,7 @@ static int chq_renderer_create(chq_sdl_state_t *state)
   state->video.texture = SDL_CreateTexture(state->video.renderer,
                                            SDL_PIXELFORMAT_ABGR8888,
                                            SDL_TEXTUREACCESS_STREAMING,
-                                           GAMEWIDTH, GAMEHEIGHT);
+                                           SCREEN_WIDTH, SCREEN_HEIGHT);
   if (state->video.texture == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
@@ -1041,7 +1042,7 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
      */
     chq_renderer_destroy(state);
     if (chq_CRT_shader_create(&state->video.crt, state->video.window,
-                              GAMEWIDTH, GAMEHEIGHT))
+                              SCREEN_WIDTH, SCREEN_HEIGHT))
     {
       state->video.crt_enabled = 1;
       return 1;
@@ -1070,7 +1071,7 @@ static int chq_set_crt_enabled(chq_sdl_state_t *state, int enable)
       goto crt_unavailable;
 
     if (chq_CRT_shader_create(&state->video.crt, state->video.window,
-                              GAMEWIDTH, GAMEHEIGHT))
+                              SCREEN_WIDTH, SCREEN_HEIGHT))
     {
       state->video.crt_enabled = 1;
       return 1;
@@ -1211,7 +1212,7 @@ static int chq_osd_visit(chq_sdl_state_t *state, int dx, int dy,
           continue;
 
         gx = CHQ_OSD_MARGIN + col * (CHQ_OSD_GLYPH_W + CHQ_OSD_GLYPH_GAP) + bit;
-        gy = GAMEHEIGHT - CHQ_OSD_MARGIN - CHQ_OSD_GLYPH_H * 2 + row * 2;
+        gy = SCREEN_HEIGHT - CHQ_OSD_MARGIN - CHQ_OSD_GLYPH_H * 2 + row * 2;
         plot(ctx, gx + dx, gy + dy);
         plot(ctx, gx + dx, gy + 1 + dy);
       }
@@ -1312,25 +1313,25 @@ static void chq_osd_plot_mask_outline(void *vctx, int gx, int gy)
 {
   u8 *mask = vctx;
 
-  if (gx >= 0 && gx < GAMEWIDTH && gy >= 0 && gy < GAMEHEIGHT && mask[gy * GAMEWIDTH + gx] == 0)
-    mask[gy * GAMEWIDTH + gx] = 2;
+  if (gx >= 0 && gx < SCREEN_WIDTH && gy >= 0 && gy < SCREEN_HEIGHT && mask[gy * SCREEN_WIDTH + gx] == 0)
+    mask[gy * SCREEN_WIDTH + gx] = 2;
 }
 
 static void chq_osd_plot_mask_fill(void *vctx, int gx, int gy)
 {
   u8 *mask = vctx;
 
-  if (gx >= 0 && gx < GAMEWIDTH && gy >= 0 && gy < GAMEHEIGHT)
-    mask[gy * GAMEWIDTH + gx] = 1;
+  if (gx >= 0 && gx < SCREEN_WIDTH && gy >= 0 && gy < SCREEN_HEIGHT)
+    mask[gy * SCREEN_WIDTH + gx] = 1;
 }
 
-/* Fills state->video.osd_mask, a GAMEWIDTH*GAMEHEIGHT byte mask (0 = empty,
+/* Fills state->video.osd_mask, a SCREEN_WIDTH*SCREEN_HEIGHT byte mask (0 = empty,
  * 1 = lit OSD pixel, 2 = black outline pixel, top-down, same layout as the
  * converted screen buffer chq_CRT_shader_render uploads) for the CRT
  * shader path to composite directly into its staging buffer, since that
  * path has no SDL_Renderer to draw rects with. The mask lives in
  * chq_sdl_state_t rather than as a per-call stack buffer -- at
- * GAMEWIDTH*GAMEHEIGHT bytes (~49KB) that's substantial to put on the
+ * SCREEN_WIDTH*SCREEN_HEIGHT bytes (~49KB) that's substantial to put on the
  * stack of chq_sdl_main_loop every frame. Outline is stamped before the
  * fill so fill pixels always win where the two overlap. Returns 0 if the
  * OSD isn't active (mask left untouched).
@@ -1345,7 +1346,7 @@ static int chq_render_osd_mask(chq_sdl_state_t *state)
                                       chq_osd_plot_mask_fill, mask);
 }
 
-/* Builds a GAMEWIDTH*GAMEHEIGHT ABGR8888 debug view of the game's raw $F000
+/* Builds a SCREEN_WIDTH*SCREEN_HEIGHT ABGR8888 debug view of the game's raw $F000
  * backbuffer for the F12 toggle. Its address format is not the hardware
  * screen's interleave; per draw_object_clipped's comment (Main.c, DE_backbuf
  * assembly), backbuffer addresses pack as 0b1111LLLLRRRCCCCC -- scanline
@@ -1358,7 +1359,7 @@ static int chq_render_osd_mask(chq_sdl_state_t *state)
  */
 static const uint32_t *chq_build_backbuffer_pixels(chq_sdl_state_t *state)
 {
-  static uint32_t pixels[GAMEWIDTH * GAMEHEIGHT];
+  static uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   const u8       *backbuf;
   int             bbwidth, bbheight, rowbytes, linear_y, col;
 
@@ -1367,19 +1368,19 @@ static const uint32_t *chq_build_backbuffer_pixels(chq_sdl_state_t *state)
 
   /* The buffer is shorter than the screen (128 rows vs 192) and covers the
    * playfield, which sits at the bottom of the screen -- so top-align its
-   * row 0 to display row (GAMEHEIGHT - bbheight), not display row 0. */
-  for (linear_y = 0; linear_y < GAMEHEIGHT; linear_y++)
+   * row 0 to display row (SCREEN_HEIGHT - bbheight), not display row 0. */
+  for (linear_y = 0; linear_y < SCREEN_HEIGHT; linear_y++)
   {
-    int buf_y = linear_y - (GAMEHEIGHT - bbheight);
+    int buf_y = linear_y - (SCREEN_HEIGHT - bbheight);
     int y     = (buf_y & 0x0F) * 8 + ((buf_y >> 4) & 0x07);
 
-    for (col = 0; col < GAMEWIDTH; col++)
+    for (col = 0; col < SCREEN_WIDTH; col++)
     {
       int on;
 
       on = buf_y >= 0 && buf_y < bbheight &&
            (backbuf[y * rowbytes + col / 8] & (0x80 >> (col % 8))) != 0;
-      pixels[linear_y * GAMEWIDTH + col] = on ? 0xFF000000u : 0xFFFFFFFFu;
+      pixels[linear_y * SCREEN_WIDTH + col] = on ? 0xFF000000u : 0xFFFFFFFFu;
     }
   }
 
@@ -1806,8 +1807,8 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
 
     rect.x = (float) x;
     rect.y = (float) y;
-    rect.w = (float) (GAMEWIDTH  * scale);
-    rect.h = (float) (GAMEHEIGHT * scale);
+    rect.w = (float) (SCREEN_WIDTH  * scale);
+    rect.h = (float) (SCREEN_HEIGHT * scale);
 
     SDL_SetRenderDrawColor(state->video.renderer, 0xFF, 0x00, 0x00, 0xFF); // red: full-screen refresh
     chq_render_thick_rect(state->video.renderer, &rect);
@@ -1821,7 +1822,7 @@ static void chq_draw_dirty_overlay(chq_sdl_state_t *state, int x, int y)
 
     // box is bottom-left origin; flip to the window's top-down space.
     rect.x = (float) (x + box->x0 * scale);
-    rect.y = (float) (y + (GAMEHEIGHT - box->y1) * scale);
+    rect.y = (float) (y + (SCREEN_HEIGHT - box->y1) * scale);
     rect.w = (float) ((box->x1 - box->x0) * scale);
     rect.h = (float) ((box->y1 - box->y0) * scale);
 
@@ -1961,8 +1962,8 @@ static void chq_sdl_main_loop(void *opaque)
   if (CHQ_FLAG_TEST(state, CHQ_FLAG_QUIT))
     return;
 
-  w = GAMEWIDTH  * state->video.scale;
-  h = GAMEHEIGHT * state->video.scale;
+  w = SCREEN_WIDTH  * state->video.scale;
+  h = SCREEN_HEIGHT * state->video.scale;
   SDL_GetWindowSize(state->video.window, &ww, &wh);
   x = (ww - w) / 2; // centred; equals BORDER*scale in windowed mode, letterboxes in fullscreen
   y = (wh - h) / 2;
@@ -1977,7 +1978,7 @@ static void chq_sdl_main_loop(void *opaque)
                        chq_build_backbuffer_pixels(state) : NULL;
 
     chq_CRT_shader_render(&state->video.crt, state->video.window, state->zx,
-                          x, y, w, h, GAMEWIDTH, GAMEHEIGHT,
+                          x, y, w, h, SCREEN_WIDTH, SCREEN_HEIGHT,
                           &state->video.crt_params,
                           osd_active ? state->video.osd_mask : NULL,
                           override_pixels);
@@ -1998,7 +1999,7 @@ static void chq_sdl_main_loop(void *opaque)
     {
       const uint32_t *pixels = chq_build_backbuffer_pixels(state);
 
-      SDL_UpdateTexture(state->video.texture, NULL, pixels, GAMEWIDTH * (int) sizeof(uint32_t));
+      SDL_UpdateTexture(state->video.texture, NULL, pixels, SCREEN_WIDTH * (int) sizeof(uint32_t));
     }
     else
     {
@@ -2100,8 +2101,8 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
    * the plain renderer takes an ABGR8888 texture to suit (see
    * chq_renderer_create).
    */
-  zxconfig.width        = GAMEWIDTH / 8;
-  zxconfig.height       = GAMEHEIGHT / 8;
+  zxconfig.width        = SCREEN_WIDTH / 8;
+  zxconfig.height       = SCREEN_HEIGHT / 8;
   zxconfig.opaque       = state;
   zxconfig.draw         = &chq_draw_handler;
   zxconfig.stamp        = &chq_stamp_handler;

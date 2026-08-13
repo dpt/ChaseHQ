@@ -90,28 +90,12 @@ static void zxbox_maximise(zxbox_t *b)
   b->y1 = INT_MAX;
 }
 
-/* Return true if a is later than b on the virtual clock. */
-static int zxclock_is_after(zxclock_t a, zxclock_t b)
-{
-#ifdef __riscos
-  return (zxclock_t) (a - b) < (zxclock_t) 0x80000000U;
-#else
-  return a > b;
-#endif
-}
-
 /* Return true if box can hold (width,height) at (0,0). */
 static int zxbox_exceeds(const zxbox_t *b, int width, int height)
 {
   return (b->x0 <= 0)     && (b->y0 <= 0)      &&
          (b->x1 >= width) && (b->y1 >= height);
 }
-
-/* Depth of the stamp()/sleep() nesting the clock tracks. Matches the host's
- * own timestamp stack (MAXSTAMPS in the SDL app); both assert rather than
- * grow, so an unbalanced stamp shows up as a crash in the offending build
- * rather than as silently wrong audio timing. */
-#define MAXSTAMPS (4)
 
 /* Return the union in 'c' of boxes 'a' and 'b'. */
 static void zxbox_union(const zxbox_t *a, const zxbox_t *b, zxbox_t *c)
@@ -120,6 +104,18 @@ static void zxbox_union(const zxbox_t *a, const zxbox_t *b, zxbox_t *c)
   c->y0 = MIN(a->y0, b->y0);
   c->x1 = MAX(a->x1, b->x1);
   c->y1 = MAX(a->y1, b->y1);
+}
+
+/* ----------------------------------------------------------------------- */
+
+/* Return true if a is later than b on the virtual clock. */
+static int zxclock_is_after(zxclock_t a, zxclock_t b)
+{
+#ifdef __riscos
+  return (zxclock_t) (a - b) < (zxclock_t) 0x80000000U;
+#else
+  return a > b;
+#endif
 }
 
 /* ----------------------------------------------------------------------- */

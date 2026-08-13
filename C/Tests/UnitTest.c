@@ -57,18 +57,16 @@ static void fake_draw(zxspectrum_t *s, const zxbox_t *dirty)
   NOT_USED(dirty);
 }
 
-/* Mirrors the host's fixed-depth timestamp stack (MAXSTAMPS in SDLMain.c): the
- * host asserts on a stamp() that is never slept out, so every engine path any
- * test drives must pair the two. Modelled here so the imbalance fails in the
- * test binary rather than after four title-screen scenes in the real app. */
-#define FAKE_MAXSTAMPS (4)
-
+/* Models the host's fixed-depth timestamp stack: the host asserts on a stamp()
+ * that is never slept out, so every engine path any test drives must pair the
+ * two. Modelled here so the imbalance fails in the test binary rather than
+ * after four title-screen scenes in the real app. */
 static int g_stamp_depth;
 
 static void fake_stamp(zxspectrum_t *s)
 {
   NOT_USED(s);
-  assert(g_stamp_depth < FAKE_MAXSTAMPS);
+  assert(g_stamp_depth < MAXSTAMPS);
   g_stamp_depth++;
 }
 
