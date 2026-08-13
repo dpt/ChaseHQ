@@ -4792,6 +4792,7 @@ B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
 c $9945 Start chatter
+D $9945 If chatter is already running and its priority is at least as high as the one asked for, the request is dropped without a word. Otherwise the new block pointer is stored and the state machine is reset to its starting state.
 D $9945 Used by the routines at #R$8401, #R$858C, #R$873C, #R$8876, #R$9BCF, #R$A637, #R$A8CD, #R$AB33, #R$B063, #R$B4F0 and #R$B9F4.
 R $9945 I:A Message priority: must be higher than the stored priority for the message to take effect
 R $9945 I:HL Address of message set
@@ -4808,6 +4809,9 @@ C $995C,4 chatter_delay = 0
 C $9960,4 chatter_state = 1 (start chatter)
 C $9964,1 Return
 c $9965 Runs chatter, mugshots and noise effect
+D $9965 A four state machine, stepped once a frame.
+D $9965 1, starting: move to state 2, clear the message line and start the noise-in effect. 2, running: drive the noise effect while it is still counting down, otherwise advance the message cursor, blinking it, or read the next chatter command - stop, pause, or a new message block. 3, stopping: count the noise counter down, and on expiry go idle and wipe the face attributes to black. 0, idle: blink a space cursor off screen, which is purely cosmetic.
+D $9965 A screen draw is triggered at the end of every call.
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
 C $9965,3 Load chatter_state
@@ -4867,6 +4871,7 @@ C $99E4,3 Call clear_message_line
 C $99E7,2 Set noise effect counter to 4
 C $99E9,3 Exit via drive_noise_effect
 c $99EC Shows the chatter - the alerts and remarks from the game's characters
+D $99EC The current chatter block is walked, skipping $FC bytes, each of which is a random command that picks one of three sub-blocks. The first byte that is not $FC identifies who is speaking: 0 the pilot, 1 Nancy, 2 Raymond, 3 Tony. Their face is plotted at (176,8) and the message is then queued.
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
 C $99EC,3 Load current chatter block pointer
@@ -4926,6 +4931,7 @@ C $9A4D,4 Increment and store message_x
 C $9A51,3 Update next_character
 C $9A54,1 Return
 c $9A55 Noise in/out effect used for mugshots
+D $9A55 The counter comes down by one and is stored back. Reaching zero means the effect is over, so #R$99EC is called to reveal the face and the message; otherwise the routine falls through and draws the next frame of static.
 D $9A55 Used by the routine at #R$9965.
 R $9A55 I:A Noise effect counter
 @ $9A55 label=drive_noise_effect
@@ -4969,6 +4975,7 @@ C $9AA7,1 Move to start of next row
 C $9AA8,2 Loop while rows remain
 C $9AAA,1 Return
 c $9AAB Plots a face on the screen
+D $9AAB 160 bytes of bitmap are copied to the real screen a scanline at a time, then the routine falls into plot_face_attributes, which writes the 4 by 5 block of colour that follows the bitmap. #REGde is always $4036 in practice.
 D $9AAB Used by the routine at #R$99EC.
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
 R $9AAB I:DE Address of screen location (real screen)
@@ -5055,6 +5062,7 @@ C $9BA1,2 Decrement row counter
 C $9BA3,3 Loop while rows remain
 C $9BA6,1 Return
 c $9BA7 Clear the whole message line
+D $9BA7 Six scanlines are wiped, each by the rolling LDIR trick: the first byte is zeroed and copied along the next 29, 30 bytes in all. Note that $45C1 itself is part of the line - it is the left byte of the first character, which plots to $45C1 and $45C2 - so a version that started at $45C2 would leave a sliver of the last message behind until something else drew over it.
 D $9BA7 Used by the routines at #R$9965 and #R$99EC.
 @ $9BA7 label=clear_message_line
 C $9BA7,3 Point #REGhl at screen coordinate (8,53)
@@ -5072,7 +5080,8 @@ C $9BCB,3 Loop while rows remain to clear
 C $9BCE,1 Return
 c $9BCF Handle "time up", countdown and continue.
 D $9BCF This function handles timed events. When 15s or less remain then Nancy warns that our heroes are running of time. When they do run out of time, and sufficient credits remain, a 10s coundown timer and restart query are presented along with a tick-tock sound effect. If restart is initiated the game is part reset and continues.
-R $9BCF Used by the routine at #R$8401.
+D $9BCF It is a five state machine. 0: count the time down every 15 frames, warn at 15 seconds left, and at zero suppress the player's input and move to state 1. 1: wait for the hero car to stop, then move to state 2. 2: if there are credits left, take one, show the 10 second continue countdown and move to state 3. 3: tick the countdown with the bip-bow effect twice a second; FIRE resets the mission and restarts, and running out quits. 4: the quit is already under way, so do nothing.
+D $9BCF Used by the routine at #R$8401.
 @ $9BCF label=check_time_up
 C $9BCF,5 Return if perp_caught_phase > 0
 C $9BD4,6 Return if transition_control == 4 -- don't check while transitions are running
@@ -5257,7 +5266,8 @@ C $9D2C,1 *HL = A
 C $9D2D,1 Return
 c $9D2E Calculate overtake bonus
 D $9D2E The bonus is 200 for each overtaken car and is reset on crashes.
-R $9D2E Used by the routine at #R$8401.
+D $9D2E One iteration runs per pending overtake. Each advances the BCD accumulator by 2, up to a limit of $80, and passes it to #R$9CD6 as the middle digit pair, so the bonus awarded is the accumulator times 100: $02 gives 200, $04 gives 400 and so on. The counter is cleared once they have all been paid.
+D $9D2E Used by the routine at #R$8401.
 @ $9D2E label=calc_overtake_bonus
 C $9D2E,5 If overtake_bonus_counter is zero then return
 C $9D33,1 Set iterations to no. of overtakes
@@ -5359,6 +5369,7 @@ C $9DF7,19 Toggle attribute byte on five successive locations
 C $9E0A,4 Move to next attribute row
 C $9E0E,3 Repeat for four rows
 c $9E11 Draws the turbo sprites and updates the displayed speed, time, distance and score
+D $9E11 Three parts. First one 2 by 14 back buffer sprite per remaining turbo boost, at successive column offsets; the last one uses the current frame of the spin animation and the rest use frame 0, the resting position. Then the speed, which is scaled from the internal 0 to 511 by 82% before the ten thousands, thousands and hundreds digits are extracted and plotted. Last the time, distance and score digit groups, each drawn by the same shared routine.
 D $9E11 Used by the routine at #R$9D51.
 @ $9E11 label=plot_turbos_and_digits
 C $9E11,6 If no turbo boosts remain, jump to plot_scores_only
