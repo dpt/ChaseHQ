@@ -5965,24 +5965,24 @@ B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 B $A257,1,1 Unused
 @ $A258 label=incline
 B $A258,1,1 Road incline $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is descending
-@ $A259 label=var_a259
-B $A259,1,1 Used by #R$B92B
-@ $A25A label=var_a25a
-B $A25A,1,1 Changes often? when the backdrop Y changes. (0/1/2?)
-@ $A25B label=var_a25b
-B $A25B,1,1 Changes often? when the backdrop Y changes. ($00/$55/$7F/$AA/?)
+@ $A259 label=prev_road_height
+B $A259,1,1 Previous frame's road height, which #R$B92B subtracts to get the incline
+@ $A25A label=horizon_y_accum
+B $A25A,1,1 Horizon movement accumulated from changes in incline; goes 0, 1, 2
+@ $A25B label=horizon_y_step
+B $A25B,1,1 Amount the horizon moves vertically each frame
 @ $A25C label=current_curvature
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
-@ $A25D label=horizon_a25d
-B $A25D,1,1 Seems to be added to the index for the horizon_table. Saw: 8/16/24.
+@ $A25D label=horizon_curve_index
+B $A25D,1,1 Index into #R$B828 for the horizon. Saw: 8/16/24
 @ $A25E label=horizon_x_scroll
 B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
 @ $A25F label=horizontal_adjust
 W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road. It's mainly zero but occasionally gets set to one. +ve shifts the hero car left, -ve shifts it right.
-@ $A261 label=var_a261
-B $A261,1,1 Used by #R$B297  -- horizon scroll related e.g. 0 if no motion /$3F/$BD/$7F
-@ $A262 label=var_a262
-B $A262,1,1 Used by #R$B284  -- horizon scroll related e.g. 0 if no motion /1/2/3
+@ $A261 label=horizon_scroll_sub
+B $A261,1,1 Fractional part of the horizon's horizontal scroll, used by #R$B297. 0 when there is no motion
+@ $A262 label=curvature_ticks
+B $A262,1,1 Frames elapsed on the current curve, pacing the horizon scroll in #R$B284. 0 when there is no motion
 @ $A263 label=right_turn
 B $A263,1,1 Right turning force (0..36)
 @ $A264 label=left_turn
@@ -7988,7 +7988,7 @@ N $B265 Positive scroll => scroll horizon left.
 C $B265,3 #R$B828 - 1: the curvature magnitude added next is 1-based, so curvature 1 selects the first byte
 C $B268,1 BC = A  -- B is zero at this point
 C $B269,1 HL += BC
-C $B26A,3 A = var_a261
+C $B26A,3 A = horizon_scroll_sub
 C $B26D,1 C = A
 C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
@@ -8003,7 +8003,7 @@ C $B27E,2 Jump to mhc_b277_loop (above)
 @ $B280 label=mhc_b280
 C $B280,1 A = B
 C $B281,3 Jump to mhc_b295 if A is zero
-C $B284,3 HL = var_a262
+C $B284,3 HL = curvature_ticks
 C $B287,1 A += *HL
 C $B288,1 *HL = A
 C $B289,3 A = B * 3
@@ -8015,7 +8015,7 @@ C $B293,2 A = -A
 @ $B295 label=mhc_b295
 C $B295,1 C = A
 C $B296,1 Bank the scroll amount just copied to #REGc into #REGa'. #R$B854 in scroll_horizon reads it back; nothing between here and there executes EX AF,AF', so it survives. Only written when this path is reached, i.e. curvature is non-zero and ticks have elapsed
-C $B297,3 var_a261 = A  [the value unbanked by the EX above]
+C $B297,3 horizon_scroll_sub = A  [the value unbanked by the EX above]
 N $B29A No curvature - No scroll required?
 @ $B29A label=mhc_straight_road
 C $B29A,4 HL = horizontal_adjust + BC
@@ -8766,7 +8766,7 @@ B $B828,32,8
 c $B848 Scroll the horizon
 D $B848 Returns immediately when the speed is zero. Otherwise two independent sections run.
 D $B848 Horizontal (#R$B854): when current_curvature is non-zero, picks a pair of bytes out of #R$B828 using an index built from the curvature and the top bits of the speed, counts horizon_x_scroll down, and on reaching zero reloads it and steps the horizon's horizontal shift (#R$C7E8) by the table's signed step, wrapping to stay in 0..19.
-D $B848 Vertical (#R$B889): with a non-zero incline, works out how many ticks have passed since the last vertical step, converts that to a movement using the per-incline rate from #R$B828, applies it to horizon_level and carries the remainders in var_a25a and var_a25b.
+D $B848 Vertical (#R$B889): with a non-zero incline, works out how many ticks have passed since the last vertical step, converts that to a movement using the per-incline rate from #R$B828, applies it to horizon_level and carries the remainders in horizon_y_accum and horizon_y_step.
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
 R $B848 I:A' The scroll amount move_hero_car banked at #R$B296, consumed by #R$B857; only meaningful when current_curvature is non-zero
 R $B848 O:A' Zeroed at #R$B889 then used as the routine's own accumulator
@@ -8781,7 +8781,7 @@ C $B854,1 Bank current_curvature into #REGa', unbanking the scroll amount move_h
 C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
 N $B857 #REGa here is move_hero_car's scroll amount, unbanked by the EX above.
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
-C $B85C,8 BC = horizon_a25d + A
+C $B85C,8 BC = horizon_curve_index + A
 C $B864,3 32 byte horizon scroll rate table at #R$B828
 C $B867,1 HL += BC
 C $B868,3 Two separate bytes, not a word: #REGb is the reload value for horizon_x_scroll (#R$B871) and #REGc the signed step applied to the shift (#R$B873)
@@ -8818,7 +8818,7 @@ C $B896,2 A = -A
 C $B898,3 #R$B828 - 1: the incline magnitude added next is 1-based, so incline 1 selects the first byte
 C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
-C $B89D,8 A = fast_counter - var_a25b
+C $B89D,8 A = fast_counter - horizon_y_step
 C $B8A5,1 Set flags
 C $B8A6,1 Return if zero
 C $B8A7,1 C = *HL  -- loading from horizon table
@@ -8830,7 +8830,7 @@ C $B8AC,3 Add the rate to the accumulator kept in #REGa', which was zeroed at #R
 C $B8AF,2 Loop
 @ $B8B1 label=sh_b8b1_exit
 C $B8B1,3 Return if B is zero
-C $B8B4,5 var_a25a += A
+C $B8B4,5 horizon_y_accum += A
 N $B8B9 Sign extend the step count using the downhill flag #R$B895 put in #REGe.
 C $B8B9,1 A = B  [the number of steps counted above]
 C $B8BA,2 Move the downhill flag into carry
@@ -8843,13 +8843,13 @@ N $B8C3 Adjust horizon_level by (B,A).
 @ $B8C3 label=sh_set_horizon
 C $B8C3,8 Change horizon_level by (B,A)
 C $B8CB,1 Retrieve the accumulator built at #R$B8AD. #REGa is that total from here on, not the step count #R$B8C1 left
-C $B8CC,5 var_a25b += A
+C $B8CC,5 horizon_y_step += A
 C $B8D1,1 Return
 c $B8D2 Horizon stuff / Car jumping stuff
 D $B8D2 Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=update_road_level
-C $B8D2,4 B = var_a25a  -- set by scroll_horizon
+C $B8D2,4 B = horizon_y_accum  -- set by scroll_horizon
 C $B8D6,2 C = 0   -- clear a flag perhaps
 C $B8D8,3 Load incline ($FD..$03 = climbing..descending)
 C $B8DB,1 Set flags
@@ -8858,7 +8858,7 @@ N $B8DF Otherwise road climbing (negative value).
 C $B8DF,2 A = -A  -- make positive $FD..$FF => 3..1
 C $B8E1,1 C++     -- set flag to 1
 @ $B8E2 label=url_incline_set
-C $B8E2,1 A -= B (B is copy of var_a25a, not used again)
+C $B8E2,1 A -= B (B is copy of horizon_y_accum, not used again)
 C $B8E3,2 Jump if zero
 @ $B8E5 label=url_incline_was_nonzero
 C $B8E5,2 C is 0 or 1, so put into carry
@@ -8876,7 +8876,7 @@ C $B8F3,3 Store horizon_level
 C $B8F6,3 Load road_buffer_offset.lo into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
-C $B8FE,7 Zero var_a25b and var_a25a
+C $B8FE,7 Zero horizon_y_step and horizon_y_accum
 C $B905,3 A = (height byte) >> 1
 C $B908,3 Jump if positive (or zero?)
 C $B90B,1 A++
@@ -8899,8 +8899,8 @@ C $B925,2 B = 0
 @ $B927 label=url_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
-C $B92B,3 Load address of var_a259
-C $B92E,1 Read var_a259
+C $B92B,3 Load address of prev_road_height
+C $B92E,1 Read prev_road_height
 C $B92F,1 Set flags
 C $B930,3 Jump if positive (or zero)
 N $B933 Else negative.
@@ -8958,7 +8958,7 @@ C $B99F,2 A = -A  -- make positive
 @ $B9A1 label=url_b9a1
 C $B9A1,1 D = A -- this doesn't appear to be used
 C $B9A2,2 A *= 4
-C $B9A4,3 horizon_a25d = A
+C $B9A4,3 horizon_curve_index = A
 C $B9A7,1 B = A
 C $B9A8,6 Jump if horizon_x_scroll is non-zero
 C $B9AE,3 Load speed into #REGhl
@@ -8972,7 +8972,7 @@ C $B9C1,1 A = *HL
 @ $B9C2 label=url_set_x_scroll
 C $B9C2,3 horizon_x_scroll = A
 @ $B9C5 label=url_b9c5
-C $B9C5,3 A = var_a262
+C $B9C5,3 A = curvature_ticks
 C $B9C8,3 BC = A
 C $B9CB,1 Unbank current curvature
 C $B9CC,1 Set flags
@@ -8997,8 +8997,8 @@ C $B9E7,1 C = A
 C $B9E8,4 Set horizontal_adjust to BC (this shifts the car left/right if +ve/-ve)
 @ $B9EC label=url_b9ec
 C $B9EC,1 A = 0
-C $B9ED,3 var_a261 = 0
-C $B9F0,3 var_a262 = 0
+C $B9ED,3 horizon_scroll_sub = 0
+C $B9F0,3 curvature_ticks = 0
 C $B9F3,1 Return
 c $B9F4 Lays out the road
 D $B9F4 Reads in (expanded out) lane data then...
@@ -12498,8 +12498,9 @@ B $E2F8,2,2 3 Lanes R for 10 units
 B $E2FA,2,2 3-4 Widening R for 2 units
 B $E2FC,2,2 4 Lanes for 12 units
 B $E2FE,2,2 Escape, Command 1 (Fork End)
-b $E300 Data block at E300 - height table?
-@ $E300 label=table_e300
+b $E300 Per-row height table
+D $E300 #R$CD3A writes 21 entries here each frame, from $E301, with $A0 left as a sentinel after the last. Each is the screen row that road slice is drawn at.
+@ $E300 label=height_table
 B $E300,1,1
 S $E301,31,$1F
 b $E320 Data block at E320
@@ -12509,10 +12510,12 @@ b $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
 b $E34B Horizon values
-D $E34B These bytes all seem to affect the horizon height when meddled with.
-B $E34B,1,1 set to 8 by #R$880A
-B $E34C,1,1 set to 0 by #R$8810
-B $E34D,1,1 set to 0 by #R$8812
+D $E34B These drive the per-frame sky and ground colour boundary in #R$BD5A. $E34B is the previous frame's rounded minimum height, $E34C the delta from it to this frame's, always a multiple of 8, and $E34D that delta a frame later.
+D $E34B #R$CD3A writes $E34B and $E34C by running the height table pointer off the end of the table at #R$CDD1, so neither shows up in a search for their addresses. #R$BD5A reads $E34D to decide whether to move the boundary and $E34C for how far to move it next frame.
+@ $E34B label=horizon_attr
+B $E34B,1,1 Previous rounded minimum height, set to 8 by #R$880A
+B $E34C,1,1 This frame's delta, set to 0 by #R$8810
+B $E34D,1,1 Last frame's delta, set to 0 by #R$8812
 u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
