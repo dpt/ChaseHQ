@@ -4478,9 +4478,11 @@ N $953C Otherwise have to compensate 1111 field.
 C $953C,3 Undo carry
 C $953F,3 Continue
 c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
+D $9542 The back buffer pointer is advanced by the byte width so that the rows fill right to left, then the odd or even width inner loop is chosen as in #R$949C. Each byte is bit reversed through the flip table before it is stored, which is what mirrors the sprite.
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
 R $9542 I:HL Address in back buffer to plot at
+R $9542 I:B' Height in rows
 R $9542 I:DE' Stride of bitmap data in bytes
 R $9542 I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
@@ -7711,6 +7713,8 @@ D $B059 Note: $B057 is used to refer to this table
 @ $B059 label=table_b059
 W $B059,10,2
 c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment; turning
+D $B063 Called every frame to advance the hero car's physical state. While the car is airborne the jump counter feeds the pitch and the vertical position from the jump table. The boost timer, the smoke counter and the gear change lockout are counted down here too.
+D $B063 The speed limit is computed from the gear, the boost and whether the car is off road, corrected by the pitch when the car is inclined, then the speed is clamped to 0..511. Left and right turning forces accumulate from the user's input and are capped against the current speed. Curvature scroll ticks become a road_pos delta. The last two things written are turn_speed (0/1/2) and flip_car, which the sprite renderer reads.
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
 C $B063,2 Load jump counter. Self modified by #R$8827 and #R$B965. Highest is 8.
@@ -8077,6 +8081,8 @@ C $B311,2 Return if zero
 C $B313,4 cornering = 0  -- reset cornering if jumping
 C $B317,1 Return
 c $B318 Animates the hero car
+D $B318 Called every frame after #R$B063. It runs the crash spin: while the crashed flag is set the speed decays by a quarter each frame, the flag is cleared once the speed falls below the crash speed threshold, and the spin position advances by the crash spin speed. The road position is then clamped to its minimum and maximum, and the perp caught animation phase is driven.
+D $B318 The drawing is delegated: #R$B549 for the debris, #R$B457 for the "stop" hand, #R$B58E for the car itself and, when cornering or boosting, #R$B648 for the smoke.
 D $B318 Used by the routines at #R$8401 and #R$852A.
 @ $B318 label=animate_hero_car
 C $B318,7 Jump to #R$B325 if speed != 0
@@ -8238,7 +8244,8 @@ C $B44D,3 Call draw_smoke - for the right hand side
 C $B450,3 A' = 1  -- flip?
 C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
-c $B457 Routine at B457
+c $B457 Draws the "stop" hand shown when the perp is caught
+D $B457 Three cases, chosen by hand_flag. Zero returns at once and draws nothing. Any other value bar one draws the static hand, frame 36 or 37, through #R$B69E. One is the animating case: a two speed delay counter steps through seven animation frames, the cherry light is switched on at the final frame, and one or two hand sprites are drawn per tick through #R$B699.
 D $B457 Used by the routine at #R$B318.
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
@@ -8347,6 +8354,8 @@ C $B543,1 Otherwise set smash_level to 6
 C $B544,4 Set smash_level to #REGc
 C $B548,1 Return
 c $B549 Draws the debris animation
+D $B549 Three pieces of debris fly off when the perp is rammed. The frame counter counts down from 9 and the routine returns without drawing anything once it reaches zero.
+D $B549 Each of the three sub-tables holds a piece counter cycling 0..3 followed by a nine entry table of y/x positions. The counter picks the bitmap frame, 12 bytes per frame, and the current frame offset picks the y/x pair. Each piece is drawn 6 bytes by 1 row, masked, through #R$B6DD.
 D $B549 Used by the routine at #R$B318.
 @ $B549 label=draw_debris
 C $B549,2 Load <self modified> frame counter  -- this is set to 9 to start the animation
@@ -8382,6 +8391,7 @@ C $B58A,1 Restore #REGbc (iterations)
 C $B58B,2 Loop to dd_loop
 C $B58D,1 Return
 c $B58E Draws the car
+D $B58E The shadow goes down first, 56 pixels wide at y=120. The body index, 0..8, comes from the turn speed, the wobble in #REGb and the pitch; that indexes the car parts table. The back buffer address is computed from the adjusted y and the body is drawn by #R$949C or, when flip_car is set, #R$9542. The windscreen, the wheels and the two side panels follow, each through #R$B627.
 D $B58E Used by the routine at #R$B318.
 R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
 R $B58E I:B 0/3 to make the car wobble when off-road.
@@ -8454,6 +8464,7 @@ C $B621,2 Set (horz pos in px) to 96 if flipped
 C $B623,2 Jump if flipped
 C $B625,2 Set (horz pos in px) to 144 if not flipped [then fall through]
 c $B627 Draws a car part
+D $B627 One part is the shadow, the windscreen, the wheels or a side panel. The y-offset and the row count come from the graphic def, the part's y is subtracted from the car's y and #R$B6D6 does the drawing. flip_car picks the start offset in #REGc': zero when unflipped, byte width minus one when flipped. The returned pointer is the following graphic def, so callers chain the parts together.
 D $B627 Used by the routine at #R$B58E.
 R $B627 I:C Byte width
 R $B627 I:D Y/Vertical position (in rows)
@@ -8621,8 +8632,10 @@ D $B716 This routine doesn't flip sprites; instead use #R$B76C (below) for that.
 R $B716 I:B Number of source data rows (loop counter)
 R $B716 I:DE Source data stride in byte pairs (e.g. 10 for 40px wide)
 R $B716 I:HL Source data (bitmap, mask byte pairs)
+R $B716 I:IX Where in #R$B729 to start the row. The table holds eight load-mask-store steps of six bytes each; entering it (8 - byte width) * 6 bytes in draws one pair per byte of width, then falls through to the scanline advance. #R$B701 does the arithmetic.
 R $B716 I:B' 15 (mask used at #R$B75B)
 R $B716 I:HL' Destination address
+R $B716 O:HL' Destination address of the last row drawn
 @ $B716 label=plot_masked_sprite
 C $B716,4 Save #REGsp to be restored on exit
 C $B71A,2 Start
@@ -8666,7 +8679,13 @@ N $B765 Otherwise have to compensate 1111 field.
 C $B765,4 Put back the bit stolen since BAAA field was zero
 C $B769,3 Loop
 c $B76C Masked sprite plotter which flips
+D $B76C This moves the destination on by the byte width so that the second entry point starts at the right hand edge of the sprite, then falls into #R$B770, which draws right to left.
 D $B76C Used by the routine at #R$92E1.
+R $B76C I:A Byte width
+R $B76C I:HL Destination address of the left hand edge of the sprite
+R $B76C I:B' Number of source data rows (loop counter)
+R $B76C I:E' Source data stride in bytes
+R $B76C I:HL' Source data (bitmap, mask byte pairs)
 @ $B76C label=plot_masked_sprite_flipped
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
@@ -8722,10 +8741,13 @@ N $B7E8 Otherwise have to compensate 1111 field.
 C $B7E8,4 Put back the bit stolen since BAAA field was zero
 C $B7EC,3 Loop (not resetting)
 c $B7EF Masked + inverted sprite plotter
+D $B7EF Used when barriers are turned upside down. It works out the address of the last row of the bitmap, (rows - 1) * stride + base, negates the stride and calls #R$B724, so the bitmap is consumed in reverse row order. Seen with #REGbc' = $0704, seven rows of four byte stride, and #REGhl' pointing at the four-lane barrier bitmap.
 D $B7EF Used by the routine at #R$92E1.
-R $B7EF I:BC'
-R $B7EF I:HL'
-R $B7EF I:E' this value is multiplied
+R $B7EF I:A Byte width
+R $B7EF I:HL Destination address of the first, topmost, row
+R $B7EF I:B' Number of source data rows (loop counter)
+R $B7EF I:E' Source data stride in bytes, positive; negated here
+R $B7EF I:HL' Source data (bitmap, mask byte pairs)
 @ $B7EF label=plot_masked_sprite_inverted
 C $B7EF,4 Self modify #R$B71F - exit of plot_masked_sprite to be #REGsp to be restored on exit
 C $B7F3,4 Point #REGix at pms_jumptable
