@@ -5,9 +5,15 @@ on:
   push:
     branches: ["**"]
     tags: ["v*"]
+    paths:
+      - 'C/**'
+      - '.github/workflows/riscos.yml'
   pull_request:
     types: [opened, reopened, synchronize]
     branches: ["**"]
+    paths:
+      - 'C/**'
+      - '.github/workflows/riscos.yml'
 
 permissions:
   contents: read
