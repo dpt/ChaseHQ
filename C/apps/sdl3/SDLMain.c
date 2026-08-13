@@ -138,6 +138,21 @@
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
 #endif
 
+/* How far the game thread may fall behind its schedule before the backlog is
+ * written off rather than caught up. Roughly the four 20ms frames the pacing
+ * loop was originally built around; see chq_sleep_handler.
+ */
+#define CHQ_MAX_LAG_SECS (0.08)
+
+/* Waits shorter than this are skipped and left on the deadline for the next
+ * call to honour. Nothing on this host can time a sub-millisecond wait: the
+ * sleep rounds up to Atomics.wait's ~1ms floor, and a busy-wait is worse
+ * still, because the clock it polls only moves in coarse steps and so
+ * overshoots by however long the step is. Deferring costs nothing and the
+ * debt is never lost, so the long-run rate stays right.
+ */
+#define CHQ_MIN_WAIT_SECS (0.002)
+
 // -----------------------------------------------------------------------------
 
 // All effects disabled: 0.0f knobs off, 1.0f leaves brightness/contrast/
@@ -449,7 +464,6 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
      * independent of this loop) -- the two drift ~1.3% apart.
      */
     const double   tstatesPerSec = CHQ_FLAG_TEST(state, CHQ_FLAG_MODE_128K) ? 3546900.0 : 3.5e6;
-    const double   maxLagFrames  = 4.0; // cap catch-up burst after a stall/pause
 
     Uint64         nowNs;
     double         nowSecs;
@@ -483,17 +497,36 @@ static int chq_sleep_handler(int durationTStates, void *opaque)
     {
       state->next_deadline += duration;
 
-      // Behind by more than a few frames (paused, breakpoint, host stall) --
-      // don't try to fast-forward through the whole backlog.
-      if (state->next_deadline < nowSecs - duration * maxLagFrames)
-        state->next_deadline = nowSecs - duration * maxLagFrames;
+      /* Behind by a long way (paused, breakpoint, host stall) -- don't try to
+       * fast-forward through the whole backlog.
+       *
+       * The cap is an absolute span, not a multiple of 'duration'. It used to
+       * be four times whatever the caller asked for, which reads sensibly for
+       * the 20ms frame sleeps it was written against (80ms of catch-up) but
+       * scales with the request: play_speech_128k asks for
+       * SPEECH_NIBBLE_TSTATES, 126us, which shrank the budget to 504us. Any
+       * stall longer than that -- and under emscripten the host clock's own
+       * granularity is longer than that -- moved the deadline forward and
+       * discarded the debt, so the game clock quietly lost time it could
+       * never claw back. Sampled sound played back around twelve times slow.
+       */
+      if (state->next_deadline < nowSecs - CHQ_MAX_LAG_SECS)
+        state->next_deadline = nowSecs - CHQ_MAX_LAG_SECS;
     }
 
     if (state->next_deadline > nowSecs)
     {
       double delay = state->next_deadline - nowSecs; // seconds
 
-      SDL_DelayNS((Uint64) (delay * 1e9));
+      /* Anything this short is left on the deadline rather than waited for.
+       * play_speech_128k asks for SPEECH_NIBBLE_TSTATES (447 T-states, 126us)
+       * between nibbles, far below what the host can time; trying to honour
+       * each one individually overshoots every time. Skipping lets the
+       * nibbles run back to back and the accumulated debt trips a wait that
+       * is long enough to be honoured accurately.
+       */
+      if (delay >= CHQ_MIN_WAIT_SECS)
+        SDL_DelayNS((Uint64) (delay * 1e9));
     }
   }
 
@@ -2104,21 +2137,6 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
     desired.freq     = AY_SAMPLE_RATE;
     desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
-
-#ifdef __EMSCRIPTEN__
-    /* Conv: SDL3's Emscripten audio backend is not an AudioWorklet -- it is a
-     * ScriptProcessorNode (SDL_emscriptenaudio.c, ProvidesOwnCallbackThread),
-     * so this callback runs on the *main browser thread*, interleaved with
-     * emscripten_set_main_loop's game/render frame. Any frame that runs long
-     * underruns the node, which drains the event queue and forces a
-     * re-anchor -- audible as a low chugging buzz.
-     *
-     * The backend doubles whatever this hint asks for
-     * (SDL_GetDefaultSampleFramesFromFreq(freq) * 2), so ask for a large
-     * buffer: latency is the only thing traded away, and there is no
-     * separate audio thread for a small buffer to help keep fed. */
-    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "2048");
-#endif
 
     state->audio.stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                                    &desired,
