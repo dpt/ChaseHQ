@@ -428,6 +428,7 @@ c $C556 Menu-item scroll/highlight animation, part of the options-menu machinery
 c $C58C Scans the keyboard matrix for a single currently-held key (identical to retail bank3 $FF0C)
 c $C5B1 Wait-for-key-selection loop for the options menu, calls LC58C
 c $C5D9 Waits for a fresh single keypress, rejecting ambiguous or empty scans (identical to retail bank3 $FF56); the routine ends around $C618, followed by an embedded keyboard-layout label string ("B N M SYSPH J K L ENY U I O P 6 7 8 9 0 5 4 3 2 1 T R E W Q G F D S A V C X Z CP#") used by the redefine-keys option
+T $C618,81 "B N M SYSPH J K L ENY U I O P 6 7 8 9 0 5 4 3 2 1 T R E W Q G F D S A V C X Z CP#"
 c $C672 Identical to retail bank0 $EE38 (not yet disassembled there)
 c $C694 Same routine as retail bank0 $EE5A (not yet disassembled there); differs only in an embedded address literal
 c $C770 Drum sample players (identical to retail bank7 $F8CD)
