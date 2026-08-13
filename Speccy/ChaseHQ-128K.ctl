@@ -3640,7 +3640,8 @@ C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
 C $8E25,3 transition_control = A
 C $8E28,1 Return
-c $8E29 Fills the playfield attribute bytes leftwards from column 1
+c $8E29 Spreads each playfield row's attribute rightwards from column 1
+D $8E29 The caller, #R$A4B8 for instance, has already set the attribute at column 1 of every row; this copies it across the 28 columns to its right, one row at a time, with a rolling LDIR that copies each row's first byte over the rest of the row. After 16 rows transition_control is set to stop.
 D $8E29 Used by the routines at #R$8876, #R$8A57 and #R$8D8F.
 @ $8E29 label=fill_attributes
 C $8E29,3 Screen attribute position (1,8)
@@ -3656,6 +3657,8 @@ C $8E3C,2 Loop until it hits zero
 C $8E3E,3 transition_control = 0
 C $8E41,1 Return
 c $8E42 Draw overlay messages
+D $8E42 Reveals a list of overlay message blocks - the arrest bonus screen, for one - a message at a time. Each call draws the messages revealed so far, then counts the delay down; when it hits zero a fresh delay is read from the message stream and the count goes up by one, so one more message appears next call. That continues until the stop sentinel is reached, at which point transition_control is taken from the byte before the sentinel to trigger whatever comes next.
+D $8E42 The state is held in the code itself: the #REGhl at #R$8E45 is the base message pointer, the #REGb at #R$8E46 the current count and the delay is the operand at #R$8E4A.
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
 @ $8E42 label=draw_overlay_messages
 C $8E42,3 Load address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
@@ -3679,6 +3682,7 @@ C $8E64,2 Loop to dom_loop
 C $8E66,5 transition_control = HL[-1]
 C $8E6B,1 Return
 c $8E6C Print a message
+D $8E6C The six byte header holds the attribute byte, the back buffer destination and the screen attribute address; the NUL terminated string follows it and is rendered by #R$9F99. The pointer returned is the byte after the NUL, so callers can chain one message block onto the next.
 D $8E6C Used by the routines at #R$8014, #R$8258, #R$865A, #R$8E42 and #R$F220.
 R $8E6C I:A Flags byte
 R $8E6C I:HL -> as yet unnamed message structure
@@ -3710,6 +3714,7 @@ C $8E8B,5 Modify 'LD B,x' @ #R$8E45 to be 1
 C $8E90,1 Return
 c $8E91 Draws the three mugshots to the back buffer when perp is caught
 D $8E91 Each mugshot's bitmap address is the start of attributes or: the byte after the final byte of bitmap data.
+D $8E91 The three faces are 4 by 5 characters, 32 by 40 pixels: the perp's, taken from the stage data, then Tony's and Raymond's from the faces bitmap. Each is drawn from the end of its bitmap upwards by #R$8EB7. The routine then falls into #R$8E42.
 D $8E91 Used by the routine at #R$8D8F.
 @ $8E91 label=draw_mugshots
 C $8E91,3 Load end address + 1 of perp's mugshot bitmap into #REGhl
@@ -3726,6 +3731,7 @@ C $8EAF,3 Screen position (200,104)
 C $8EB2,3 Draw
 C $8EB5,2 Exit via draw_overlay_messages
 c $8EB7 Draws a mugshot to the back buffer
+D $8EB7 160 bytes, 32 by 5 pixels, are copied backwards from the byte before the attributes down into the back buffer, four at a time: four LDDs write one four byte slice across the width of the face, then the back buffer pointer steps to the previous scanline. The PUSH HL and POP HL keep the attributes pointer, which is still needed when the copy finishes and the routine falls into plot_face_attributes.
 D $8EB7 Used by the routine at #R$8E91.
 R $8EB7 I:BC Screen position (used for attributes)
 R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
@@ -3756,6 +3762,8 @@ C $8EE0,3 Loop
 C $8EE3,1 Restore address of mugshot attributes
 C $8EE4,3 Exit via plot_face_attributes
 c $8EE7 Draw the smash bar
+D $8EE7 The bar runs down the right hand edge of the playfield and is drawn bottom to top in three sections: two solid rows of border, then one three row segment per smash counter unit - two dashed rows and a solid gap - then solid rows for whatever height is left over.
+D $8EE7 It returns without drawing anything, so the bar is invisible, while the perp has not been sighted or once the perp has been stopped.
 D $8EE7 Used by the routine at #R$8401.
 @ $8EE7 label=draw_smash_bar
 C $8EE7,5 Return if the perp has not yet been sighted
@@ -3820,6 +3828,7 @@ C $8F59,3 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 C $8F5C,2 Loop while iterations remain
 C $8F5E,1 Return
 c $8F5F Draws anything that's not the road or the hero car
+D $8F5F That means the roadside scenery - signs, poles, trees, barriers - the arrow floating over the perp's car, overhead structures like bridges, and the hazard cars through #R$AECF. The height table and the clamped heights are first adjusted by +32 to turn road buffer coordinates into screen ones, then the object table for the current road section is walked and each object drawn through the callback for its type.
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $8F5F label=draw_scene_objects
 C $8F5F,3 Point #REGhl at (something above the stack)
@@ -3931,7 +3940,12 @@ C $904B,4 Restore IX, HL, BC
 C $904F,3 Continue
 c $9052 Draws overhead graphics
 D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
+D $9052 #R$916C is called first if the second x-position entry is zero. The perspective y-scale for the current row gives the vertical offset, and the depth set pair index is the depth less one, capped at 9. The x-position entries either side of the current position then say whether the object is visible and how far it is clipped. The deck itself is drawn a row at a time: each depth has a row count and one solid fill byte per row, and every row is a single colour fill across the clipped width.
 D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (Stage 3)
+R $9052 I:B Depth scale index, which also picks the pair entry, 0 to 9
+R $9052 I:DE Address of the stretchy object descriptors
+R $9052 I:IX Pointer into the centre x-position table for this object slot
+R $9052 I:IY Pointer into the height table for this object slot
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
 C $9056,3 A = IX[1]  -- buffer offset/distance
@@ -4019,9 +4033,12 @@ C $9162,3 Continue if it didn't roll over
 C $9165,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9169,3 Loop
 c $916C Draws stretchy objects, such as trees
+D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CE and #R$9244 - then drops into the common stretchy object code.
 D $916C Used by the routine at #R$9052.
-R $916C I:B ? value that affects scaling
+R $916C I:B Depth index of the object
 R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stretchy_shortpole/#R$7E05)
+R $916C I:IX X-position table pointer
+R $916C I:IY Height table pointer
 N $916C Entry point for left hand objects.
 @ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
@@ -4134,7 +4151,11 @@ C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $924A,3 Loop to dso_loop_perhaps
 c $924D Draws tunnel lights (and possibly other bitmaps)
-R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
+D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 as the drawing callback and dispatches to the common tunnel light code with PUSH HL / RET.
+R $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx address; the routine is skipped if it's >= 16
+R $924D I:DE Depth set pointer for the light object
+R $924D I:IX X-position table pointer
+R $924D I:IY Height table pointer
 @ $924D label=draw_tunnel_light_left
 C $924D,3 HL = $9279
 @ $9252 label=draw_tunnel_light_right
@@ -4157,10 +4178,11 @@ C $926F,8 A = (A>>2) - A
 C $9277,1 Return via earlier PUSH
 c $9278 Draws objects (left hand version)
 D $9278 Called via dispatch at #R$901B.
-D $9278 Used to draw turn signs, tunnel lights, ... what else?
-R $9278 I:B ?
+D $9278 Used to draw turn signs, lamp posts and the like. It is the plain case: XOR A sets a column offset of zero and falls into #R$9279, which does the work.
+R $9278 I:B Depth index of the object
 R $9278 I:DE Address of arg, e.g. $6B0C
-R $9278 I:IX ?
+R $9278 I:IX X-position table pointer
+R $9278 I:IY Height table pointer
 @ $9278 label=draw_object_left
 C $9278,1 A = 0
 @ $9279 label=draw_object_left_entrypt
@@ -4204,9 +4226,10 @@ C $92DA,1 A++
 C $92DB,2 C = 0
 C $92DE,3 Exit via draw_object_common_flipped
 c $92E1 Draws objects (right hand version)
-R $92E1 I:B ?
-R $92E1 I:IX ?
-R $92E1 I:IY ?
+D $92E1 The right hand counterpart of #R$9278: XOR A sets a column offset of zero and falls into #R$92E2.
+R $92E1 I:B Depth index of the object
+R $92E1 I:IX X-position table pointer
+R $92E1 I:IY Height table pointer
 R $92E1 I:DE Address of arg, e.g. $6B0C
 @ $92E1 label=draw_object_right
 C $92E1,1 A = 0
