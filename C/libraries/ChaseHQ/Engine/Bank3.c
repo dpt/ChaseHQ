@@ -6973,7 +6973,8 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
     memset(attrs, attribute_BRIGHT_CYAN_OVER_BLACK, 28); attrs += 28; /* Conv: memset replaces loop */
     *attrs++ = attribute_BLACK_OVER_BLACK;
     *attrs++ = attribute_BLACK_OVER_BLACK;
-  } while (--c);
+  }
+  while (--c);
 
   update_whole_playfield_full_width(state); /* Conv: added -- also covers the
                                                * leftmost column, in case the
@@ -7043,7 +7044,8 @@ static void compute_glyph_blit_params_fg(chqstate_t *state,
       g.HL_src += g.C_width_select * 2;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
-    } while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
+    }
+    while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
   }
 
   blit_masked_sprite_dispatch_fg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
@@ -7332,7 +7334,8 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
       g.HL_src += E_stride;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
-    } while (--A_skip_pairs != 0);
+    }
+    while (--A_skip_pairs != 0);
   }
 
   blit_masked_sprite_dispatch_bg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
@@ -7447,7 +7450,8 @@ static void blit_glyph_rows(chqstate_t *state,
       H++;
       advance_glyph_scanline(&H, &L);
     }
-  } while (--B_height_pairs);
+  }
+  while (--B_height_pairs);
 }
 
 /**
@@ -7646,10 +7650,12 @@ static void clear_playfield_buffer(chqstate_t *state)
     {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
-    } while (--B_scanline);
+    }
+    while (--B_scanline);
     H  = 0x48;
     L += 0x20;
-  } while (L <= 0xFF);
+  }
+  while (L <= 0xFF);
   L &= 0xFF;
   H  = 0x50;
 
@@ -7659,10 +7665,12 @@ static void clear_playfield_buffer(chqstate_t *state)
     {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
-    } while (--B_scanline);
+    }
+    while (--B_scanline);
     H  = 0x50;
     L += 0x20;
-  } while (L < 0xA0);
+  }
+  while (L < 0xA0);
 }
 
 #define SEQ_END_BIT (0x80) /* bit7: tested via (s8) < 0; cleared via &~ to recover the payload */
@@ -8117,7 +8125,8 @@ static void titlescr_write_ay_registers(chqstate_t *state)
     speccy->logtime(speccy, 56);
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
-  } while (--reg >= 0);
+  }
+  while (--reg >= 0);
 
   /* $ECE2: RET -- pairs with the CALL overhead billed at the call site
    * inside titlescr_ay_music. */
@@ -8144,7 +8153,8 @@ static void titlescr_silence_ay(chqstate_t *state)
   {
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, 0);
-  } while (--reg >= 0);
+  }
+  while (--reg >= 0);
 
   /* $ECFF-$ED0A: belt-and-braces re-write of register 7 (mixer) = 0. */
   speccy->out(speccy, port_AY_REGISTER, AY_REG_MIXER);
@@ -9076,7 +9086,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
           state->speccy->logtime(state->speccy, 23 + 12);
         else
           state->speccy->logtime(state->speccy, 23 + 7);
-      } while (A_shift_test <= 0xFF);
+      }
+      while (A_shift_test <= 0xFF);
     }
     else
     {
@@ -9559,7 +9570,8 @@ static void play_success_music(chqstate_t *state)
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state);
-  } while (--B_wait);
+  }
+  while (--B_wait);
 }
 
 /**
@@ -10573,8 +10585,10 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
         /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
       }
-    } while (--D_inner > 0);
-  } while (--E_duration > 0);
+    }
+    while (--D_inner > 0);
+  }
+  while (--E_duration > 0);
 }
 
 /**
@@ -10664,7 +10678,8 @@ poll: /* $FBAB omd_service_and_read_keys */
     run_title_tune(state);
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-  } while (A_key_mask == 0);
+  }
+  while (A_key_mask == 0);
 
   if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
     HL_ctrl_list = sinclair_joystick_keys;
@@ -10716,7 +10731,8 @@ shared_tail:
     /* $FC00 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
     /* debounce: wait for the selection key to be released before proceeding */
-  } while (A_key_mask != 0);
+  }
+  while (A_key_mask != 0);
 
   stop_music_and_silence(state);
 
@@ -10779,7 +10795,8 @@ static u8 detect_kempston_joystick(chqstate_t *state)
       return 0;
 
     run_title_tune(state);
-  } while (--B_count);
+  }
+  while (--B_count);
 
   return 1;
 }
@@ -10973,7 +10990,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
     }
 
     terminator = *HL_shape++ & EOS;
-  } while (!terminator);
+  }
+  while (!terminator);
 
   return HL_shape;
 }
@@ -11062,18 +11080,21 @@ static void redefine_keys_screen(chqstate_t *state)
 
         /* $FECA XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
         A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
-      } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for any key to be released */
+      }
+      while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for any key to be released */
 
       read_new_key_definition(state, &DE_screen, B_remaining, C_control_index);
 
       C_control_index++;
-    } while (--B_remaining != 0);
+    }
+    while (--B_remaining != 0);
 
     B_wait = 0x14;
     do
     {
       run_title_tune(state);
-    } while (--B_wait != 0);
+    }
+    while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
       if (state->bank3->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
@@ -11092,7 +11113,8 @@ static void redefine_keys_screen(chqstate_t *state)
 
       /* $FF02 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
       A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
-    } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
+    }
+    while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
   }
 }
 
@@ -11144,7 +11166,8 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
       {
         A_code -= 8;
         SRL(H_bits);
-      } while (!carry);
+      }
+      while (!carry);
 
       if (H_bits != 0)
         return 1; /* $FF23 RET NZ: more than one bit held in this row */
@@ -11154,7 +11177,8 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
 
     E_row_value--;
     RLC(B_port_hi);
-  } while (carry);
+  }
+  while (carry);
 
   *D_key_code_out = D_key_code; /* $FF2A-$FF2B CP A / RET (Z always set here) */
   return 0;

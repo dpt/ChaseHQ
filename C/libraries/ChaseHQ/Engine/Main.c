@@ -16636,7 +16636,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
         // $BF09 - Fork end command (1)
         DE_lanes_ptr = state->rm.lanes_fork_end_ptr;
         break;
-default:
+      default:
         // $BEF5 - Split command (2)
         state->rm.leftfork_lanes  = wordat(DE_lanes_ptr + 0);
         state->rm.rightfork_lanes = wordat(DE_lanes_ptr + 2);

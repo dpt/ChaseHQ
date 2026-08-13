@@ -1514,7 +1514,7 @@ struct chqstate
 
   /* $F000: Off-screen buffer the playfield is composed in before being sent to
    * the screen */
-  u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
+  u8        backbuffer[BACKBUFFER_LENGTH];
 
   /* $EC01-$F224: Title-screen tune engine and options-menu state (128K bank 3
    * only)

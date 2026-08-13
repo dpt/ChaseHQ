@@ -501,7 +501,7 @@ static void run_script(chqstate_t *state)
       es_handler_draw_score(state);
       continue;
 
-default:
+    default:
       /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
        * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
       HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
@@ -637,7 +637,7 @@ static const u8 *z80addrtochatterblk(u16 addr)
     return &chatterblk_nancy_congratulates[0];
   case CHATTERBLK_PRESS_GEAR_ADDR:
     return &chatterblk_press_gear[0];
-default:
+  default:
     assert(0);
     return NULL;
   }
@@ -853,7 +853,8 @@ static void render_text_common(chqstate_t *state, const u8 **script)
     A_char = raw & (u8) ~EOS;
     plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
     HL_script++;
-  } while ((raw & EOS) == 0);
+  }
+  while ((raw & EOS) == 0);
 
   *script = HL_script;
 }
@@ -2198,7 +2199,8 @@ static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data)
       RLC(*HL_data); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
       speccy->logtime(speccy, 63);
-    } while (--i > 0);
+    }
+    while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);

@@ -181,8 +181,6 @@
 #define BACKBUFFER_LENGTH          (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
 #define BACKBUFFER_START_ADDRESS   (0xF000)
 #define BACKBUFFER_END_ADDRESS     (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
-// Padding amount for when flushing out memory scribblers.
-#define BACKBUFFER_OVERFLOW        (0)
 
 /* ----------------------------------------------------------------------- */
 
