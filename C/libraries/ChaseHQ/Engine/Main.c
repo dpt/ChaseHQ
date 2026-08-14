@@ -21132,7 +21132,10 @@ static void redefine_keys_48k(chqstate_t *state)
  * \param[out] D_keydef_out Receives the packed keydef: bits 7..3 = key column
  *                          (0..4), bits 2..0 = keyboard half-row (0..7); $FF if
  *                          no single key was identified. (was D)
- * \return                  Non-zero if a key is pressed; zero otherwise.
+ * \return                  Non-zero when the scan was ambiguous -- two
+ *                          half-rows active, or two keys in one half-row -- in
+ *                          which case [D_keydef_out] is not meaningful. Zero
+ *                          when at most one key was identified.
  */
 static u8 redefine_keyscan(chqstate_t *state, u8 *D_keydef_out)
 {
@@ -21200,7 +21203,7 @@ rk_pressed: /* $ED5B, $ED64 */
 /**
  * $ED6D: Define a single key
  *
- * Waits until redefine_keyscan reports a key press, checks the keydef has not
+ * Waits for an unambiguous key press, checks the keydef has not
  * already been assigned, records it in temp_keydefs[C_index - 1], looks up
  * the key name from key_names[], draws it on screen at [DE_screen] and
  * advances the screen address to the next row. If [B_index] == 4 (the
