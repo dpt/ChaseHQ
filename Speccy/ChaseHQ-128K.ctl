@@ -2948,7 +2948,7 @@ C $86E5,3 Loop dp_get_command
 C $86E8,2 Four messages to print
 C $86EA,3 Load address of pregame_messages
 @ $86ED label=dp_print_string
-C $86ED,2 Flags TBD
+C $86ED,2 Style 4 (single height, inverted) for print_message
 C $86EF,1 print_message expects a flags byte at the start, which it skips, so fake one here
 C $86F0,3 Call print_message
 C $86F3,2 Loop to dp_print_string while #REGb > 0
@@ -3682,7 +3682,7 @@ C $8E29,3 Screen attribute position (1,8)
 C $8E2C,2 Clear #REGb for #REGc to be set in a moment
 C $8E2E,2 16 rows of attributes
 C $8E30,2 Destination address
-C $8E32,2 28 bytes to copy (why isn't this 29?)
+C $8E32,2 28 bytes to copy: the source column is already set, so 28 writes fill columns 2..29, giving 29 filled columns
 C $8E34,1 Dest++
 C $8E35,2 Fill by 'rolling'
 C $8E37,4 Skip four (32 wide - 28)
@@ -4884,7 +4884,7 @@ C $99A6,1 Go back 1
 C $99A7,1 Load the character for when we call plot_mini_font*
 C $99A8,2 Clear any string terminator bit
 C $99AA,4 A = message_x - 1
-C $99AE,2 Rotate chatter_delay (testing the bottom bit but why? flashing cursor?)
+C $99AE,2 Rotate chatter_delay's bottom bit into carry: it selects the cursor-on or cursor-off variant, so the block cursor blinks at half the typing rate
 N $99B0 Could JP $9989 here instead.
 C $99B0,3 Exit via plot_mini_font_cursor_on if carry set
 C $99B3,3 Otherwise exit via plot_mini_font_cursor_off
@@ -6605,7 +6605,7 @@ C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 Read current_lane from IX[18]
 C $A6FF,3 Jump to pb_min_lane_set/#R$A707 if current_lane >= min_lane
 N $A702 Otherwise the (perp?) needs to move right to stay on the road.
-C $A702,2 Move right by two lanes [why two?]
+C $A702,2 Move right by two lanes: stepping two lands the perp inside the legal band rather than on its boundary, where the next random walk could step straight back out
 C $A704,3 Update current_lane
 @ $A707 label=pb_min_lane_set
 C $A707,5 Jump to pb_reread_current_lane/#R$A711 if current_lane <= max_lane
@@ -7304,9 +7304,9 @@ C $AC16,3 Load address of #R$AC3C routine
 C $AC19,6 Store to #REGix+11
 N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
-C $AC23,5 Copy flag/value TBD from hazard table
+C $AC23,5 Copy the collision box width, IX[8], used by the bounding box overlap test in check_collision
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
-C $AC31,3 IX[5] = B TBD -- passed in, setup before sh_find_free calls
+C $AC31,3 IX[5] = position across the road, 0 (left) to 255 (right) -- passed in, set up before sh_find_free calls
 C $AC34,3 IX[1] = C  -- buffer offset/distance
 C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
@@ -8324,8 +8324,8 @@ C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_hero_car
 C $B421,6 Jump if cherry_light is zero
 N $B427 Draw the cherry light.
-C $B427,1 A = 0  -- parameter TBD
-C $B428,3 BC = $0102  -- parameters TBD
+C $B427,1 Base frame index 0
+C $B428,3 Turn the light from a turn_speed of 1, shifting the frame by 2 per turn step
 C $B42B,3 Call draw_cherry_light
 N $B42E Check to see if smoke needs drawing.
 @ $B42E label=ahc_need_smoke
