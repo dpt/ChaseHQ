@@ -48,7 +48,6 @@
 #include "Bank3State.h"
 
 #include "Bank3.h"
-#include "Tests.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -139,8 +138,8 @@ typedef struct tune
 /* $D462-$EB9D: title_glyph_bitmap_NNN -- glyph/sprite bitmap data (car, truck, logo
  * letters), one array per title_glyph_table entry below. */
 
-/** $D462: glyph 0 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_000[112] = {
+/** $D462: glyph 0 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_000[4 * 1 * 28 * 1] = {
   ________, ______XX, XXXXXX__, ________,
   ________, __XXXX__, ______XX, ________,
   ________, XX______, ________, XX______,
@@ -171,8 +170,8 @@ static const pixel_t title_glyph_bitmap_000[112] = {
   ____XXXX, XXXXXXXX, X_______, ________,
 };
 
-/** $D4D2: glyph 1 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_001[112] = {
+/** $D4D2: glyph 1 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_001[4 * 1 * 28 * 1] = {
   ________, ________, XXXXXXXX, ________,
   ________, ____XXXX, ________, XX______,
   ________, __XX____, ________, __XX____,
@@ -203,8 +202,8 @@ static const pixel_t title_glyph_bitmap_001[112] = {
   ______XX, XXXXXXXX, XXX_____, ________,
 };
 
-/** $D542: glyph 2 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_002[112] = {
+/** $D542: glyph 2 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_002[4 * 1 * 28 * 1] = {
   ________, ________, __XXXXXX, XX______,
   ________, ______XX, XX______, __XX____,
   ________, ____XX__, ________, ____XX__,
@@ -235,8 +234,8 @@ static const pixel_t title_glyph_bitmap_002[112] = {
   ________, XXXXXXXX, XXXXX___, ________,
 };
 
-/** $D5B2: glyph 3 bitmap (140 bytes, 14 row-pairs x 5 width-bytes). */
-static const pixel_t title_glyph_bitmap_003[140] = {
+/** $D5B2: glyph 3 bitmap (140 bytes, 28 rows x 5 width-bytes). */
+static const pixel_t title_glyph_bitmap_003[5 * 1 * 28 * 1] = {
   ________, ________, ____XXXX, XXXX____, ________,
   ________, ________, XXXX____, ____XX__, ________,
   ________, ______XX, ________, ______XX, ________,
@@ -267,8 +266,8 @@ static const pixel_t title_glyph_bitmap_003[140] = {
   ________, __XXXXXX, XXXXXXX_, ________, ________,
 };
 
-/** $D63E: glyph 4 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_004[112] = {
+/** $D63E: glyph 4 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_004[4 * 1 * 28 * 1] = {
   ________, _XXXXXXX, X____XXX, XXXXX___,
   ________, XX______, _X__X___, ____XX__,
   ________, X_______, X___X___, _____X__,
@@ -299,8 +298,8 @@ static const pixel_t title_glyph_bitmap_004[112] = {
   _XXXXXXX, _____XXX, XXXXX___, ________,
 };
 
-/** $D6AE: glyph 5 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_005[112] = {
+/** $D6AE: glyph 5 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_005[4 * 1 * 28 * 1] = {
   ________, ___XXXXX, XXX____X, XXXXXXX_,
   ________, __XX____, ___X__X_, ______XX,
   ________, __X_____, __X___X_, _______X,
@@ -331,8 +330,8 @@ static const pixel_t title_glyph_bitmap_005[112] = {
   ___XXXXX, XX_____X, XXXXXXX_, ________,
 };
 
-/** $D71E: glyph 6 bitmap (140 bytes, 14 row-pairs x 5 width-bytes). */
-static const pixel_t title_glyph_bitmap_006[140] = {
+/** $D71E: glyph 6 bitmap (140 bytes, 28 rows x 5 width-bytes). */
+static const pixel_t title_glyph_bitmap_006[5 * 1 * 28 * 1] = {
   ________, _____XXX, XXXXX___, _XXXXXXX, X_______,
   ________, ____XX__, _____X__, X_______, XX______,
   ________, ____X___, ____X___, X_______, _X______,
@@ -363,8 +362,8 @@ static const pixel_t title_glyph_bitmap_006[140] = {
   _____XXX, XXXX____, _XXXXXXX, X_______, ________,
 };
 
-/** $D7AA: glyph 7 bitmap (140 bytes, 14 row-pairs x 5 width-bytes). */
-static const pixel_t title_glyph_bitmap_007[140] = {
+/** $D7AA: glyph 7 bitmap (140 bytes, 28 rows x 5 width-bytes). */
+static const pixel_t title_glyph_bitmap_007[5 * 1 * 28 * 1] = {
   ________, _______X, XXXXXXX_, ___XXXXX, XXX_____,
   ________, ______XX, _______X, __X_____, __XX____,
   ________, ______X_, ______X_, __X_____, ___X____,
@@ -395,8 +394,8 @@ static const pixel_t title_glyph_bitmap_007[140] = {
   _______X, XXXXXX__, ___XXXXX, XXX_____, ________,
 };
 
-/** $D836: glyph 8 bitmap (84 bytes, 14 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_008[84] = {
+/** $D836: glyph 8 bitmap (84 bytes, 28 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_008[3 * 1 * 28 * 1] = {
   ________, ______XX, XXXXXX__,
   ________, ______X_, ____XX__,
   ________, _____X__, _____X__,
@@ -427,8 +426,8 @@ static const pixel_t title_glyph_bitmap_008[84] = {
   XXXXXXX_, _____XXX, XXXXX___,
 };
 
-/** $D88A: glyph 9 bitmap (84 bytes, 14 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_009[84] = {
+/** $D88A: glyph 9 bitmap (84 bytes, 28 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_009[3 * 1 * 28 * 1] = {
   ________, ________, XXXXXXXX,
   ________, ________, X_____XX,
   ________, _______X, _______X,
@@ -459,8 +458,8 @@ static const pixel_t title_glyph_bitmap_009[84] = {
   __XXXXXX, X______X, XXXXXXX_,
 };
 
-/** $D8DE: glyph 10 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_010[112] = {
+/** $D8DE: glyph 10 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_010[4 * 1 * 28 * 1] = {
   ________, ________, __XXXXXX, XX______,
   ________, ________, __X_____, XX______,
   ________, ________, _X______, _X______,
@@ -491,8 +490,8 @@ static const pixel_t title_glyph_bitmap_010[112] = {
   ____XXXX, XXX_____, _XXXXXXX, X_______,
 };
 
-/** $D94E: glyph 11 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_011[112] = {
+/** $D94E: glyph 11 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_011[4 * 1 * 28 * 1] = {
   ________, ________, ____XXXX, XXXX____,
   ________, ________, ____X___, __XX____,
   ________, ________, ___X____, ___X____,
@@ -523,8 +522,8 @@ static const pixel_t title_glyph_bitmap_011[112] = {
   ______XX, XXXXX___, ___XXXXX, XXX_____,
 };
 
-/** $D9BE: glyph 12 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_012[112] = {
+/** $D9BE: glyph 12 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_012[4 * 1 * 28 * 1] = {
   ________, ______XX, XXXXXX__, ________,
   ________, __XXXX__, ______XX, ________,
   ________, XX______, ________, XX______,
@@ -555,8 +554,8 @@ static const pixel_t title_glyph_bitmap_012[112] = {
   ____XXXX, XXXXXXXX, X_______, ________,
 };
 
-/** $DA2E: glyph 13 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_013[112] = {
+/** $DA2E: glyph 13 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_013[4 * 1 * 28 * 1] = {
   ________, ________, XXXXXXXX, ________,
   ________, ____XXXX, ________, XX______,
   ________, __XX____, ________, __XX____,
@@ -587,8 +586,8 @@ static const pixel_t title_glyph_bitmap_013[112] = {
   ______XX, XXXXXXXX, XXX_____, ________,
 };
 
-/** $DA9E: glyph 14 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_014[112] = {
+/** $DA9E: glyph 14 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_014[4 * 1 * 28 * 1] = {
   ________, ________, __XXXXXX, XX______,
   ________, ______XX, XX______, __XX____,
   ________, ____XX__, ________, ____XX__,
@@ -619,8 +618,8 @@ static const pixel_t title_glyph_bitmap_014[112] = {
   ________, XXXXXXXX, XXXXX___, ________,
 };
 
-/** $DB0E: glyph 15 bitmap (140 bytes, 14 row-pairs x 5 width-bytes). */
-static const pixel_t title_glyph_bitmap_015[140] = {
+/** $DB0E: glyph 15 bitmap (140 bytes, 28 rows x 5 width-bytes). */
+static const pixel_t title_glyph_bitmap_015[5 * 1 * 28 * 1] = {
   ________, ________, ____XXXX, XXXX____, ________,
   ________, ________, XXXX____, ____XX__, ________,
   ________, ______XX, ________, ______XX, ________,
@@ -651,8 +650,8 @@ static const pixel_t title_glyph_bitmap_015[140] = {
   ________, __XXXXXX, XXXXXXX_, ________, ________,
 };
 
-/** $DB9A: glyph 16 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_016[112] = {
+/** $DB9A: glyph 16 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_016[4 * 1 * 28 * 1] = {
   ________, _XXXXXXX, XXXXXXXX, XX______,
   ________, XX______, _______X, X_______,
   ________, X_______, ________, X_______,
@@ -683,8 +682,8 @@ static const pixel_t title_glyph_bitmap_016[112] = {
   _XXXXXXX, XXXXXXXX, ________, ________,
 };
 
-/** $DC0A: glyph 17 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_017[112] = {
+/** $DC0A: glyph 17 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_017[4 * 1 * 28 * 1] = {
   ________, ___XXXXX, XXXXXXXX, XXXX____,
   ________, __XX____, ________, _XX_____,
   ________, __X_____, ________, __X_____,
@@ -715,8 +714,8 @@ static const pixel_t title_glyph_bitmap_017[112] = {
   ___XXXXX, XXXXXXXX, XX______, ________,
 };
 
-/** $DC7A: glyph 18 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_018[112] = {
+/** $DC7A: glyph 18 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_018[4 * 1 * 28 * 1] = {
   ________, _____XXX, XXXXXXXX, XXXXXX__,
   ________, ____XX__, ________, ___XX___,
   ________, ____X___, ________, ____X___,
@@ -747,8 +746,8 @@ static const pixel_t title_glyph_bitmap_018[112] = {
   _____XXX, XXXXXXXX, XXXX____, ________,
 };
 
-/** $DCEA: glyph 19 bitmap (112 bytes, 14 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_019[112] = {
+/** $DCEA: glyph 19 bitmap (112 bytes, 28 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_019[4 * 1 * 28 * 1] = {
   ________, _______X, XXXXXXXX, XXXXXXXX,
   ________, ______XX, ________, _____XX_,
   ________, ______X_, ________, ______X_,
@@ -779,8 +778,8 @@ static const pixel_t title_glyph_bitmap_019[112] = {
   _______X, XXXXXXXX, XXXXXX__, ________,
 };
 
-/** $DD5A: glyph 20 bitmap (128 bytes, 16 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_020[128] = {
+/** $DD5A: glyph 20 bitmap (128 bytes, 32 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_020[4 * 1 * 32 * 1] = {
   ________, ______XX, XXXXXX__, ________,
   ________, __XXXX__, ______XX, ________,
   ________, XX______, ________, XX______,
@@ -815,8 +814,8 @@ static const pixel_t title_glyph_bitmap_020[128] = {
   ________, _____XXX, XXXX____, ________,
 };
 
-/** $DDDA: glyph 21 bitmap (128 bytes, 16 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_021[128] = {
+/** $DDDA: glyph 21 bitmap (128 bytes, 32 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_021[4 * 1 * 32 * 1] = {
   ________, ________, XXXXXXXX, ________,
   ________, ____XXXX, ________, XX______,
   ________, __XX____, ________, __XX____,
@@ -851,8 +850,8 @@ static const pixel_t title_glyph_bitmap_021[128] = {
   ________, _______X, XXXXXX__, ________,
 };
 
-/** $DE5A: glyph 22 bitmap (128 bytes, 16 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_022[128] = {
+/** $DE5A: glyph 22 bitmap (128 bytes, 32 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_022[4 * 1 * 32 * 1] = {
   ________, ________, __XXXXXX, XX______,
   ________, ______XX, XX______, __XX____,
   ________, ____XX__, ________, ____XX__,
@@ -887,8 +886,8 @@ static const pixel_t title_glyph_bitmap_022[128] = {
   ________, ________, _XXXXXXX, ________,
 };
 
-/** $DEDA: glyph 23 bitmap (160 bytes, 16 row-pairs x 5 width-bytes). */
-static const pixel_t title_glyph_bitmap_023[160] = {
+/** $DEDA: glyph 23 bitmap (160 bytes, 32 rows x 5 width-bytes). */
+static const pixel_t title_glyph_bitmap_023[5 * 1 * 32 * 1] = {
   ________, ________, ____XXXX, XXXX____, ________,
   ________, ________, XXXX____, ____XX__, ________,
   ________, ______XX, ________, ______XX, ________,
@@ -923,8 +922,8 @@ static const pixel_t title_glyph_bitmap_023[160] = {
   ________, ________, ___XXXXX, XX______, ________,
 };
 
-/** $DF7A: glyph 24 bitmap (16 bytes, 4 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_024[16] = {
+/** $DF7A: glyph 24 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_024[2 * 1 * 8 * 1] = {
   __XXXXXX, X_______,
   _X_X_X__, XX______,
   _XX_XXX_, _X______,
@@ -935,8 +934,8 @@ static const pixel_t title_glyph_bitmap_024[16] = {
   _XXXXXXX, ________,
 };
 
-/** $DF8A: glyph 25 bitmap (16 bytes, 4 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_025[16] = {
+/** $DF8A: glyph 25 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_025[2 * 1 * 8 * 1] = {
   ____XXXX, XXX_____,
   ___X_X_X, __XX____,
   ___XX_XX, X__X____,
@@ -947,8 +946,8 @@ static const pixel_t title_glyph_bitmap_025[16] = {
   ___XXXXX, XX______,
 };
 
-/** $DF9A: glyph 26 bitmap (16 bytes, 4 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_026[16] = {
+/** $DF9A: glyph 26 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_026[2 * 1 * 8 * 1] = {
   ______XX, XXXXX___,
   _____X_X, _X__XX__,
   _____XX_, XXX__X__,
@@ -959,8 +958,8 @@ static const pixel_t title_glyph_bitmap_026[16] = {
   _____XXX, XXXX____,
 };
 
-/** $DFAA: glyph 27 bitmap (16 bytes, 4 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_027[16] = {
+/** $DFAA: glyph 27 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_027[2 * 1 * 8 * 1] = {
   ________, XXXXXXX_,
   _______X, _X_X__XX,
   _______X, X_XXX__X,
@@ -971,8 +970,8 @@ static const pixel_t title_glyph_bitmap_027[16] = {
   _______X, XXXXXX__,
 };
 
-/** $DFBA: glyph 28 bitmap (78 bytes, 13 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_028[78] = {
+/** $DFBA: glyph 28 bitmap (78 bytes, 26 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_028[3 * 1 * 26 * 1] = {
   ________, ________, _XXXXXXX,
   ________, ________, _X_____X,
   ________, ________, X______X,
@@ -1001,8 +1000,8 @@ static const pixel_t title_glyph_bitmap_028[78] = {
   XXXXXXX_, _____XXX, XXXXX___,
 };
 
-/** $E008: glyph 29 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_029[80] = {
+/** $E008: glyph 29 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_029[4 * 1 * 20 * 1] = {
   ________, ________, _______X, XXXXXX__,
   ________, ________, ______X_, ____XX__,
   ________, ________, ____XX__, ____X___,
@@ -1025,8 +1024,8 @@ static const pixel_t title_glyph_bitmap_029[80] = {
   XXXXXXX_, ______XX, XXXXX___, ________,
 };
 
-/** $E058: glyph 30 bitmap (72 bytes, 9 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_030[72] = {
+/** $E058: glyph 30 bitmap (72 bytes, 18 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_030[4 * 1 * 18 * 1] = {
   ________, ________, ________, _XXXXXX_,
   ________, ________, _______X, X____XX_,
   ________, ________, ______X_, _____X__,
@@ -1047,8 +1046,8 @@ static const pixel_t title_glyph_bitmap_030[72] = {
   XXXXXXX_, ______XX, XXXXX___, ________,
 };
 
-/** $E0A0: glyph 31 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_031[60] = {
+/** $E0A0: glyph 31 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_031[3 * 1 * 20 * 1] = {
   ________, _XXXXXXX, X_______,
   _______X, X_______, _XX_____,
   ______X_, __X_X_X_, X__X____,
@@ -1071,8 +1070,8 @@ static const pixel_t title_glyph_bitmap_031[60] = {
   ___XXXXX, XXXXX___, ________,
 };
 
-/** $E0DC: glyph 32 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_032[60] = {
+/** $E0DC: glyph 32 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_032[3 * 1 * 20 * 1] = {
   ________, ___XXXXX, XXX_____,
   ________, _XX_____, ___XX___,
   ________, X___X_X_, X_X__X__,
@@ -1095,8 +1094,8 @@ static const pixel_t title_glyph_bitmap_032[60] = {
   _____XXX, XXXXXXX_, ________,
 };
 
-/** $E118: glyph 33 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_033[80] = {
+/** $E118: glyph 33 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_033[4 * 1 * 20 * 1] = {
   ________, _____XXX, XXXXX___, ________,
   ________, ___XX___, _____XX_, ________,
   ________, __X___X_, X_X_X__X, ________,
@@ -1119,8 +1118,8 @@ static const pixel_t title_glyph_bitmap_033[80] = {
   _______X, XXXXXXXX, X_______, ________,
 };
 
-/** $E168: glyph 34 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_034[80] = {
+/** $E168: glyph 34 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_034[4 * 1 * 20 * 1] = {
   ________, _______X, XXXXXXX_, ________,
   ________, _____XX_, _______X, X_______,
   ________, ____X___, X_X_X_X_, _X______,
@@ -1143,8 +1142,8 @@ static const pixel_t title_glyph_bitmap_034[80] = {
   ________, _XXXXXXX, XXX_____, ________,
 };
 
-/** $E1B8: glyph 35 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_035[28] = {
+/** $E1B8: glyph 35 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_035[2 * 1 * 14 * 1] = {
   _____XXX, XXX_____,
   ____X___, __XX____,
   ___X_X_X, _X_X____,
@@ -1161,8 +1160,8 @@ static const pixel_t title_glyph_bitmap_035[28] = {
   _XXXXXXX, ________,
 };
 
-/** $E1D4: glyph 36 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_036[28] = {
+/** $E1D4: glyph 36 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_036[2 * 1 * 14 * 1] = {
   _______X, XXXXX___,
   ______X_, ____XX__,
   _____X_X, _X_X_X__,
@@ -1179,8 +1178,8 @@ static const pixel_t title_glyph_bitmap_036[28] = {
   ___XXXXX, XX______,
 };
 
-/** $E1F0: glyph 37 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_037[28] = {
+/** $E1F0: glyph 37 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_037[2 * 1 * 14 * 1] = {
   ________, _XXXXXX_,
   ________, X_____XX,
   _______X, _X_X_X_X,
@@ -1197,8 +1196,8 @@ static const pixel_t title_glyph_bitmap_037[28] = {
   _____XXX, XXXX____,
 };
 
-/** $E20C: glyph 38 bitmap (42 bytes, 7 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_038[42] = {
+/** $E20C: glyph 38 bitmap (42 bytes, 14 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_038[3 * 1 * 14 * 1] = {
   ________, ___XXXXX, X_______,
   ________, __X_____, XX______,
   ________, _X_X_X_X, _X______,
@@ -1215,8 +1214,8 @@ static const pixel_t title_glyph_bitmap_038[42] = {
   _______X, XXXXXX__, ________,
 };
 
-/** $E236: glyph 39 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_039[8] = {
+/** $E236: glyph 39 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_039[1 * 1 * 8 * 1] = {
   __XXXX__,
   _X__X_X_,
   _X_X_XX_,
@@ -1227,8 +1226,8 @@ static const pixel_t title_glyph_bitmap_039[8] = {
   _XXXX___,
 };
 
-/** $E23E: glyph 40 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_040[16] = {
+/** $E23E: glyph 40 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_040[2 * 1 * 8 * 1] = {
   ____XXXX, ________,
   ___X__X_, X_______,
   ___X_X_X, X_______,
@@ -1239,8 +1238,8 @@ static const pixel_t title_glyph_bitmap_040[16] = {
   ___XXXX_, ________,
 };
 
-/** $E24E: glyph 41 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_041[16] = {
+/** $E24E: glyph 41 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_041[2 * 1 * 8 * 1] = {
   ______XX, XX______,
   _____X__, X_X_____,
   _____X_X, _XX_____,
@@ -1251,8 +1250,8 @@ static const pixel_t title_glyph_bitmap_041[16] = {
   _____XXX, X_______,
 };
 
-/** $E25E: glyph 42 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_042[16] = {
+/** $E25E: glyph 42 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_042[2 * 1 * 8 * 1] = {
   ________, XXXX____,
   _______X, __X_X___,
   _______X, _X_XX___,
@@ -1263,8 +1262,8 @@ static const pixel_t title_glyph_bitmap_042[16] = {
   _______X, XXX_____,
 };
 
-/** $E26E: glyph 43 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_043[60] = {
+/** $E26E: glyph 43 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_043[3 * 1 * 20 * 1] = {
   ______XX, XXXX____, XXXXX___,
   ______X_, ___X___X, _____X__,
   _____X_X, _X_X___X, _X_X_X__,
@@ -1287,8 +1286,8 @@ static const pixel_t title_glyph_bitmap_043[60] = {
   _XXXX___, __XXXXX_, ________,
 };
 
-/** $E2AA: glyph 44 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_044[60] = {
+/** $E2AA: glyph 44 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_044[3 * 1 * 20 * 1] = {
   ________, XXXXXX__, __XXXXX_,
   ________, X____X__, _X_____X,
   _______X, _X_X_X__, _X_X_X_X,
@@ -1311,8 +1310,8 @@ static const pixel_t title_glyph_bitmap_044[60] = {
   ___XXXX_, ____XXXX, X_______,
 };
 
-/** $E2E6: glyph 45 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_045[80] = {
+/** $E2E6: glyph 45 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_045[4 * 1 * 20 * 1] = {
   ________, __XXXXXX, ____XXXX, X_______,
   ________, __X____X, ___X____, _X______,
   ________, _X_X_X_X, ___X_X_X, _X______,
@@ -1335,8 +1334,8 @@ static const pixel_t title_glyph_bitmap_045[80] = {
   _____XXX, X_____XX, XXX_____, ________,
 };
 
-/** $E336: glyph 46 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_046[80] = {
+/** $E336: glyph 46 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_046[4 * 1 * 20 * 1] = {
   ________, ____XXXX, XX____XX, XXX_____,
   ________, ____X___, _X___X__, ___X____,
   ________, ___X_X_X, _X___X_X, _X_X____,
@@ -1359,8 +1358,8 @@ static const pixel_t title_glyph_bitmap_046[80] = {
   _______X, XXX_____, XXXXX___, ________,
 };
 
-/** $E386: glyph 47 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_047[28] = {
+/** $E386: glyph 47 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_047[2 * 1 * 14 * 1] = {
   ____XXX_, __XXX___,
   ____X_XX, _XXX_X__,
   ___X_XX_, _XX_XX__,
@@ -1377,8 +1376,8 @@ static const pixel_t title_glyph_bitmap_047[28] = {
   _XX____X, X_______,
 };
 
-/** $E3A2: glyph 48 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_048[28] = {
+/** $E3A2: glyph 48 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_048[2 * 1 * 14 * 1] = {
   ______XX, X___XXX_,
   ______X_, XX_XXX_X,
   _____X_X, X__XX_XX,
@@ -1395,8 +1394,8 @@ static const pixel_t title_glyph_bitmap_048[28] = {
   ___XX___, _XX_____,
 };
 
-/** $E3BE: glyph 49 bitmap (42 bytes, 7 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_049[42] = {
+/** $E3BE: glyph 49 bitmap (42 bytes, 14 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_049[3 * 1 * 14 * 1] = {
   ________, XXX___XX, X_______,
   ________, X_XX_XXX, _X______,
   _______X, _XX__XX_, XX______,
@@ -1413,8 +1412,8 @@ static const pixel_t title_glyph_bitmap_049[42] = {
   _____XX_, ___XX___, ________,
 };
 
-/** $E3E8: glyph 50 bitmap (42 bytes, 7 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_050[42] = {
+/** $E3E8: glyph 50 bitmap (42 bytes, 14 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_050[3 * 1 * 14 * 1] = {
   ________, __XXX___, XXX_____,
   ________, __X_XX_X, XX_X____,
   ________, _X_XX__X, X_XX____,
@@ -1431,8 +1430,8 @@ static const pixel_t title_glyph_bitmap_050[42] = {
   _______X, X____XX_, ________,
 };
 
-/** $E412: glyph 51 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_051[8] = {
+/** $E412: glyph 51 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_051[1 * 1 * 8 * 1] = {
   __XX__XX,
   __XX_X_X,
   _XX_X_XX,
@@ -1443,8 +1442,8 @@ static const pixel_t title_glyph_bitmap_051[8] = {
   _X___X__,
 };
 
-/** $E41A: glyph 52 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_052[16] = {
+/** $E41A: glyph 52 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_052[2 * 1 * 8 * 1] = {
   ____XX__, XX______,
   ____XX_X, _X______,
   ___XX_X_, XX______,
@@ -1455,8 +1454,8 @@ static const pixel_t title_glyph_bitmap_052[16] = {
   ___X___X, ________,
 };
 
-/** $E42A: glyph 53 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_053[16] = {
+/** $E42A: glyph 53 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_053[2 * 1 * 8 * 1] = {
   ______XX, __XX____,
   ______XX, _X_X____,
   _____XX_, X_XX____,
@@ -1467,8 +1466,8 @@ static const pixel_t title_glyph_bitmap_053[16] = {
   _____X__, _X______,
 };
 
-/** $E43A: glyph 54 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_054[16] = {
+/** $E43A: glyph 54 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_054[2 * 1 * 8 * 1] = {
   ________, XX__XX__,
   ________, XX_X_X__,
   _______X, X_X_XX__,
@@ -1479,8 +1478,8 @@ static const pixel_t title_glyph_bitmap_054[16] = {
   _______X, ___X____,
 };
 
-/** $E44A: glyph 55 bitmap (40 bytes, 10 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_055[40] = {
+/** $E44A: glyph 55 bitmap (40 bytes, 20 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_055[2 * 1 * 20 * 1] = {
   ________, __XXXXXX,
   ________, _XX____X,
   ________, _X_X_X_X,
@@ -1503,8 +1502,8 @@ static const pixel_t title_glyph_bitmap_055[40] = {
   XXXXX___, _XXXXXX_,
 };
 
-/** $E472: glyph 56 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_056[60] = {
+/** $E472: glyph 56 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_056[3 * 1 * 20 * 1] = {
   ________, ____XXXX, XX______,
   ________, ___XX___, _X______,
   ________, ___X_X_X, _X______,
@@ -1527,8 +1526,8 @@ static const pixel_t title_glyph_bitmap_056[60] = {
   __XXXXX_, ___XXXXX, X_______,
 };
 
-/** $E4AE: glyph 57 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_057[60] = {
+/** $E4AE: glyph 57 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_057[3 * 1 * 20 * 1] = {
   ________, ______XX, XXXX____,
   ________, _____XX_, ___X____,
   ________, _____X_X, _X_X____,
@@ -1551,8 +1550,8 @@ static const pixel_t title_glyph_bitmap_057[60] = {
   ____XXXX, X____XXX, XXX_____,
 };
 
-/** $E4EA: glyph 58 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_058[60] = {
+/** $E4EA: glyph 58 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_058[3 * 1 * 20 * 1] = {
   ________, ________, XXXXXX__,
   ________, _______X, X____X__,
   ________, _______X, _X_X_X__,
@@ -1575,8 +1574,8 @@ static const pixel_t title_glyph_bitmap_058[60] = {
   ______XX, XXX____X, XXXXX___,
 };
 
-/** $E526: glyph 59 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_059[28] = {
+/** $E526: glyph 59 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_059[2 * 1 * 14 * 1] = {
   ______XX, XX______,
   ______X_, _X______,
   _____X_X, _X______,
@@ -1593,8 +1592,8 @@ static const pixel_t title_glyph_bitmap_059[28] = {
   XXX___XX, X_______,
 };
 
-/** $E542: glyph 60 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_060[28] = {
+/** $E542: glyph 60 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_060[2 * 1 * 14 * 1] = {
   ________, XXXX____,
   ________, X__X____,
   _______X, _X_X____,
@@ -1611,8 +1610,8 @@ static const pixel_t title_glyph_bitmap_060[28] = {
   __XXX___, XXX_____,
 };
 
-/** $E55E: glyph 61 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_061[28] = {
+/** $E55E: glyph 61 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_061[2 * 1 * 14 * 1] = {
   ________, __XXXX__,
   ________, __X__X__,
   ________, _X_X_X__,
@@ -1629,8 +1628,8 @@ static const pixel_t title_glyph_bitmap_061[28] = {
   ____XXX_, __XXX___,
 };
 
-/** $E57A: glyph 62 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_062[28] = {
+/** $E57A: glyph 62 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_062[2 * 1 * 14 * 1] = {
   ________, ____XXXX,
   ________, ____X__X,
   ________, ___X_X_X,
@@ -1647,8 +1646,8 @@ static const pixel_t title_glyph_bitmap_062[28] = {
   ______XX, X___XXX_,
 };
 
-/** $E596: glyph 63 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_063[8] = {
+/** $E596: glyph 63 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_063[1 * 1 * 8 * 1] = {
   ___XX___,
   __XXX___,
   __XXX___,
@@ -1659,8 +1658,8 @@ static const pixel_t title_glyph_bitmap_063[8] = {
   XX_XX___,
 };
 
-/** $E59E: glyph 64 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_064[8] = {
+/** $E59E: glyph 64 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_064[1 * 1 * 8 * 1] = {
   _____XX_,
   ____XXX_,
   ____XXX_,
@@ -1671,8 +1670,8 @@ static const pixel_t title_glyph_bitmap_064[8] = {
   __XX_XX_,
 };
 
-/** $E5A6: glyph 65 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_065[16] = {
+/** $E5A6: glyph 65 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_065[2 * 1 * 8 * 1] = {
   _______X, X_______,
   ______XX, X_______,
   ______XX, X_______,
@@ -1683,8 +1682,8 @@ static const pixel_t title_glyph_bitmap_065[16] = {
   ____XX_X, X_______,
 };
 
-/** $E5B6: glyph 66 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_066[16] = {
+/** $E5B6: glyph 66 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_066[2 * 1 * 8 * 1] = {
   ________, _XX_____,
   ________, XXX_____,
   ________, XXX_____,
@@ -1695,8 +1694,8 @@ static const pixel_t title_glyph_bitmap_066[16] = {
   ______XX, _XX_____,
 };
 
-/** $E5C6: glyph 67 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_067[60] = {
+/** $E5C6: glyph 67 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_067[3 * 1 * 20 * 1] = {
   ________, XXXXXXXX, XX______,
   ______XX, ________, __XX____,
   ______X_, _X_X_X_X, _X__X___,
@@ -1719,8 +1718,8 @@ static const pixel_t title_glyph_bitmap_067[60] = {
   ___XXXXX, XXXXX___, ________,
 };
 
-/** $E602: glyph 68 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_068[60] = {
+/** $E602: glyph 68 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_068[3 * 1 * 20 * 1] = {
   ________, __XXXXXX, XXXX____,
   ________, XX______, ____XX__,
   ________, X__X_X_X, _X_X__X_,
@@ -1743,8 +1742,8 @@ static const pixel_t title_glyph_bitmap_068[60] = {
   _____XXX, XXXXXXX_, ________,
 };
 
-/** $E63E: glyph 69 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_069[80] = {
+/** $E63E: glyph 69 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_069[4 * 1 * 20 * 1] = {
   ________, ____XXXX, XXXXXX__, ________,
   ________, __XX____, ______XX, ________,
   ________, __X__X_X, _X_X_X__, X_______,
@@ -1767,8 +1766,8 @@ static const pixel_t title_glyph_bitmap_069[80] = {
   _______X, XXXXXXXX, X_______, ________,
 };
 
-/** $E68E: glyph 70 bitmap (80 bytes, 10 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_070[80] = {
+/** $E68E: glyph 70 bitmap (80 bytes, 20 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_070[4 * 1 * 20 * 1] = {
   ________, ______XX, XXXXXXXX, ________,
   ________, ____XX__, ________, XX______,
   ________, ____X__X, _X_X_X_X, __X_____,
@@ -1791,8 +1790,8 @@ static const pixel_t title_glyph_bitmap_070[80] = {
   ________, _XXXXXXX, XXX_____, ________,
 };
 
-/** $E6DE: glyph 71 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_071[28] = {
+/** $E6DE: glyph 71 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_071[2 * 1 * 14 * 1] = {
   ______XX, XX______,
   ___XXX_X, _XXX____,
   __X_X_X_, X_X_____,
@@ -1809,8 +1808,8 @@ static const pixel_t title_glyph_bitmap_071[28] = {
   _XXXXXXX, ________,
 };
 
-/** $E6FA: glyph 72 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_072[28] = {
+/** $E6FA: glyph 72 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_072[2 * 1 * 14 * 1] = {
   ________, XXXX____,
   _____XXX, _X_XXX__,
   ____X_X_, X_X_X___,
@@ -1827,8 +1826,8 @@ static const pixel_t title_glyph_bitmap_072[28] = {
   ___XXXXX, XX______,
 };
 
-/** $E716: glyph 73 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_073[28] = {
+/** $E716: glyph 73 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_073[2 * 1 * 14 * 1] = {
   ________, __XXXX__,
   _______X, XX_X_XXX,
   ______X_, X_X_X_X_,
@@ -1845,8 +1844,8 @@ static const pixel_t title_glyph_bitmap_073[28] = {
   _____XXX, XXXX____,
 };
 
-/** $E732: glyph 74 bitmap (42 bytes, 7 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_074[42] = {
+/** $E732: glyph 74 bitmap (42 bytes, 14 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_074[3 * 1 * 14 * 1] = {
   ________, ____XXXX, ________,
   ________, _XXX_X_X, XX______,
   ________, X_X_X_X_, X_______,
@@ -1863,8 +1862,8 @@ static const pixel_t title_glyph_bitmap_074[42] = {
   _______X, XXXXXX__, ________,
 };
 
-/** $E75C: glyph 75 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_075[8] = {
+/** $E75C: glyph 75 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_075[1 * 1 * 8 * 1] = {
   __XXXX__,
   __XXXXX_,
   _XXX____,
@@ -1875,8 +1874,8 @@ static const pixel_t title_glyph_bitmap_075[8] = {
   _XXXX___,
 };
 
-/** $E764: glyph 76 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_076[16] = {
+/** $E764: glyph 76 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_076[2 * 1 * 8 * 1] = {
   ____XXXX, ________,
   ____XXXX, X_______,
   ___XXX__, ________,
@@ -1887,8 +1886,8 @@ static const pixel_t title_glyph_bitmap_076[16] = {
   ___XXXX_, ________,
 };
 
-/** $E774: glyph 77 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_077[16] = {
+/** $E774: glyph 77 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_077[2 * 1 * 8 * 1] = {
   ______XX, XX______,
   ______XX, XXX_____,
   _____XXX, ________,
@@ -1899,8 +1898,8 @@ static const pixel_t title_glyph_bitmap_077[16] = {
   _____XXX, X_______,
 };
 
-/** $E784: glyph 78 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_078[16] = {
+/** $E784: glyph 78 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_078[2 * 1 * 8 * 1] = {
   ________, XXXX____,
   ________, XXXXX___,
   _______X, XX______,
@@ -1911,8 +1910,8 @@ static const pixel_t title_glyph_bitmap_078[16] = {
   _______X, XXX_____,
 };
 
-/** $E794: glyph 79 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_079[60] = {
+/** $E794: glyph 79 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_079[3 * 1 * 20 * 1] = {
   _______X, XXXXXXXX, XX______,
   ______X_, ________, _X______,
   ______X_, _X_X_X_X, _X______,
@@ -1935,8 +1934,8 @@ static const pixel_t title_glyph_bitmap_079[60] = {
   XXXXXXXX, XXXX____, ________,
 };
 
-/** $E7D0: glyph 80 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_080[60] = {
+/** $E7D0: glyph 80 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_080[3 * 1 * 20 * 1] = {
   ________, _XXXXXXX, XXXX____,
   ________, X_______, ___X____,
   ________, X__X_X_X, _X_X____,
@@ -1959,8 +1958,8 @@ static const pixel_t title_glyph_bitmap_080[60] = {
   __XXXXXX, XXXXXX__, ________,
 };
 
-/** $E80C: glyph 81 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_081[60] = {
+/** $E80C: glyph 81 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_081[3 * 1 * 20 * 1] = {
   ________, ___XXXXX, XXXXXX__,
   ________, __X_____, _____X__,
   ________, __X__X_X, _X_X_X__,
@@ -1983,8 +1982,8 @@ static const pixel_t title_glyph_bitmap_081[60] = {
   ____XXXX, XXXXXXXX, ________,
 };
 
-/** $E848: glyph 82 bitmap (60 bytes, 10 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_082[60] = {
+/** $E848: glyph 82 bitmap (60 bytes, 20 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_082[3 * 1 * 20 * 1] = {
   ________, _____XXX, XXXXXXXX,
   ________, ____X___, _______X,
   ________, ____X__X, _X_X_X_X,
@@ -2007,8 +2006,8 @@ static const pixel_t title_glyph_bitmap_082[60] = {
   ______XX, XXXXXXXX, XX______,
 };
 
-/** $E884: glyph 83 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_083[28] = {
+/** $E884: glyph 83 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_083[2 * 1 * 14 * 1] = {
   ____XXXX, XXXX____,
   ____X_X_, X_X_____,
   ___X_X_X, _XX_____,
@@ -2025,8 +2024,8 @@ static const pixel_t title_glyph_bitmap_083[28] = {
   XXXXXXX_, ________,
 };
 
-/** $E8A0: glyph 84 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_084[28] = {
+/** $E8A0: glyph 84 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_084[2 * 1 * 14 * 1] = {
   ______XX, XXXXXX__,
   ______X_, X_X_X___,
   _____X_X, _X_XX___,
@@ -2043,8 +2042,8 @@ static const pixel_t title_glyph_bitmap_084[28] = {
   __XXXXXX, X_______,
 };
 
-/** $E8BC: glyph 85 bitmap (28 bytes, 7 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_085[28] = {
+/** $E8BC: glyph 85 bitmap (28 bytes, 14 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_085[2 * 1 * 14 * 1] = {
   ________, XXXXXXXX,
   ________, X_X_X_X_,
   _______X, _X_X_XX_,
@@ -2061,8 +2060,8 @@ static const pixel_t title_glyph_bitmap_085[28] = {
   ____XXXX, XXX_____,
 };
 
-/** $E8D8: glyph 86 bitmap (42 bytes, 7 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_086[42] = {
+/** $E8D8: glyph 86 bitmap (42 bytes, 14 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_086[3 * 1 * 14 * 1] = {
   ________, __XXXXXX, XX______,
   ________, __X_X_X_, X_______,
   ________, _X_X_X_X, X_______,
@@ -2079,8 +2078,8 @@ static const pixel_t title_glyph_bitmap_086[42] = {
   ______XX, XXXXX___, ________,
 };
 
-/** $E902: glyph 87 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_087[8] = {
+/** $E902: glyph 87 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_087[1 * 1 * 8 * 1] = {
   __XXXX__,
   __XXX___,
   _XX_____,
@@ -2091,8 +2090,8 @@ static const pixel_t title_glyph_bitmap_087[8] = {
   XXX_____,
 };
 
-/** $E90A: glyph 88 bitmap (8 bytes, 4 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_088[8] = {
+/** $E90A: glyph 88 bitmap (8 bytes, 8 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_088[1 * 1 * 8 * 1] = {
   ____XXXX,
   ____XXX_,
   ___XX___,
@@ -2103,8 +2102,8 @@ static const pixel_t title_glyph_bitmap_088[8] = {
   __XXX___,
 };
 
-/** $E912: glyph 89 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_089[16] = {
+/** $E912: glyph 89 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_089[2 * 1 * 8 * 1] = {
   ______XX, XX______,
   ______XX, X_______,
   _____XX_, ________,
@@ -2115,8 +2114,8 @@ static const pixel_t title_glyph_bitmap_089[16] = {
   ____XXX_, ________,
 };
 
-/** $E922: glyph 90 bitmap (16 bytes, 4 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_090[16] = {
+/** $E922: glyph 90 bitmap (16 bytes, 8 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_090[2 * 1 * 8 * 1] = {
   ________, XXXX____,
   ________, XXX_____,
   _______X, X_______,
@@ -2127,8 +2126,8 @@ static const pixel_t title_glyph_bitmap_090[16] = {
   ______XX, X_______,
 };
 
-/** $E932: glyph 91 bitmap (72 bytes, 12 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_091[72] = {
+/** $E932: glyph 91 bitmap (72 bytes, 24 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_091[3 * 1 * 24 * 1] = {
   ________, XXXXXXXX, X_______,
   ______XX, ________, _XX_____,
   _____X__, X_X_X_X_, X__X____,
@@ -2155,8 +2154,8 @@ static const pixel_t title_glyph_bitmap_091[72] = {
   ________, __XXXXX_, ________,
 };
 
-/** $E97A: glyph 92 bitmap (72 bytes, 12 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_092[72] = {
+/** $E97A: glyph 92 bitmap (72 bytes, 24 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_092[3 * 1 * 24 * 1] = {
   ________, __XXXXXX, XXX_____,
   ________, XX______, ___XX___,
   _______X, __X_X_X_, X_X__X__,
@@ -2183,8 +2182,8 @@ static const pixel_t title_glyph_bitmap_092[72] = {
   ________, ____XXXX, X_______,
 };
 
-/** $E9C2: glyph 93 bitmap (72 bytes, 12 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_093[72] = {
+/** $E9C2: glyph 93 bitmap (72 bytes, 24 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_093[3 * 1 * 24 * 1] = {
   ________, ____XXXX, XXXXX___,
   ________, __XX____, _____XX_,
   ________, _X__X_X_, X_X_X__X,
@@ -2211,8 +2210,8 @@ static const pixel_t title_glyph_bitmap_093[72] = {
   ________, ______XX, XXX_____,
 };
 
-/** $EA0A: glyph 94 bitmap (96 bytes, 12 row-pairs x 4 width-bytes). */
-static const pixel_t title_glyph_bitmap_094[96] = {
+/** $EA0A: glyph 94 bitmap (96 bytes, 24 rows x 4 width-bytes). */
+static const pixel_t title_glyph_bitmap_094[4 * 1 * 24 * 1] = {
   ________, ______XX, XXXXXXX_, ________,
   ________, ____XX__, _______X, X_______,
   ________, ___X__X_, X_X_X_X_, _X______,
@@ -2239,8 +2238,8 @@ static const pixel_t title_glyph_bitmap_094[96] = {
   ________, ________, XXXXX___, ________,
 };
 
-/** $EA6A: glyph 95 bitmap (32 bytes, 8 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_095[32] = {
+/** $EA6A: glyph 95 bitmap (32 bytes, 16 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_095[2 * 1 * 16 * 1] = {
   _____XXX, XXX_____,
   ____X___, ___XX___,
   ___X__X_, X_X_X___,
@@ -2259,8 +2258,8 @@ static const pixel_t title_glyph_bitmap_095[32] = {
   ______XX, X_______,
 };
 
-/** $EA8A: glyph 96 bitmap (32 bytes, 8 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_096[32] = {
+/** $EA8A: glyph 96 bitmap (32 bytes, 16 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_096[2 * 1 * 16 * 1] = {
   _______X, XXXXX___,
   ______X_, _____XX_,
   _____X__, X_X_X_X_,
@@ -2279,8 +2278,8 @@ static const pixel_t title_glyph_bitmap_096[32] = {
   ________, XXX_____,
 };
 
-/** $EAAA: glyph 97 bitmap (48 bytes, 8 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_097[48] = {
+/** $EAAA: glyph 97 bitmap (48 bytes, 16 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_097[3 * 1 * 16 * 1] = {
   ________, _XXXXXX_, ________,
   ________, X______X, X_______,
   _______X, __X_X_X_, X_______,
@@ -2299,8 +2298,8 @@ static const pixel_t title_glyph_bitmap_097[48] = {
   ________, __XXX___, ________,
 };
 
-/** $EADA: glyph 98 bitmap (48 bytes, 8 row-pairs x 3 width-bytes). */
-static const pixel_t title_glyph_bitmap_098[48] = {
+/** $EADA: glyph 98 bitmap (48 bytes, 16 rows x 3 width-bytes). */
+static const pixel_t title_glyph_bitmap_098[3 * 1 * 16 * 1] = {
   ________, ___XXXXX, X_______,
   ________, __X_____, _XX_____,
   ________, _X__X_X_, X_X_____,
@@ -2319,8 +2318,8 @@ static const pixel_t title_glyph_bitmap_098[48] = {
   ________, ____XXX_, ________,
 };
 
-/** $EB0A: glyph 99 bitmap (10 bytes, 5 row-pairs x 1 width-bytes). */
-static const pixel_t title_glyph_bitmap_099[10] = {
+/** $EB0A: glyph 99 bitmap (10 bytes, 10 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_099[1 * 1 * 10 * 1] = {
   __XXXXX_,
   __XX_XXX,
   _XX___XX,
@@ -2333,8 +2332,8 @@ static const pixel_t title_glyph_bitmap_099[10] = {
   ____XX__,
 };
 
-/** $EB14: glyph 100 bitmap (20 bytes, 5 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_100[20] = {
+/** $EB14: glyph 100 bitmap (20 bytes, 10 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_100[2 * 1 * 10 * 1] = {
   ____XXXX, X_______,
   ____XX_X, XX______,
   ___XX___, XX______,
@@ -2347,8 +2346,8 @@ static const pixel_t title_glyph_bitmap_100[20] = {
   ______XX, ________,
 };
 
-/** $EB28: glyph 101 bitmap (20 bytes, 5 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_101[20] = {
+/** $EB28: glyph 101 bitmap (20 bytes, 10 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_101[2 * 1 * 10 * 1] = {
   ______XX, XXX_____,
   ______XX, _XXX____,
   _____XX_, __XX____,
@@ -2361,8 +2360,8 @@ static const pixel_t title_glyph_bitmap_101[20] = {
   ________, XX______,
 };
 
-/** $EB3C: glyph 102 bitmap (20 bytes, 5 row-pairs x 2 width-bytes). */
-static const pixel_t title_glyph_bitmap_102[20] = {
+/** $EB3C: glyph 102 bitmap (20 bytes, 10 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_102[2 * 1 * 10 * 1] = {
   ________, XXXXX___,
   ________, XX_XXX__,
   _______X, X___XX__,
@@ -2375,8 +2374,8 @@ static const pixel_t title_glyph_bitmap_102[20] = {
   ________, __XX____,
 };
 
-/** $EB50: glyph 103 bitmap (6 bytes, 3 row-pairs x 7 width-bytes). */
-static const pixel_t title_glyph_bitmap_103[6] = {
+/** $EB50: glyph 103 bitmap (6 bytes, 6 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_103[1 * 1 * 6 * 1] = {
   _XXXXX__,
   X_XX__X_,
   XXXXX_X_,
@@ -2385,8 +2384,8 @@ static const pixel_t title_glyph_bitmap_103[6] = {
   _XXXXX__,
 };
 
-/** $EB56: glyph 104 bitmap (12 bytes, 3 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_104[12] = {
+/** $EB56: glyph 104 bitmap (12 bytes, 6 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_104[2 * 1 * 6 * 1] = {
   ___XXXXX, ________,
   __X_XX__, X_______,
   __XXXXX_, X_______,
@@ -2395,8 +2394,8 @@ static const pixel_t title_glyph_bitmap_104[12] = {
   ___XXXXX, ________,
 };
 
-/** $EB62: glyph 105 bitmap (12 bytes, 3 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_105[12] = {
+/** $EB62: glyph 105 bitmap (12 bytes, 6 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_105[2 * 1 * 6 * 1] = {
   _____XXX, XX______,
   ____X_XX, __X_____,
   ____XXXX, X_X_____,
@@ -2405,8 +2404,8 @@ static const pixel_t title_glyph_bitmap_105[12] = {
   _____XXX, XX______,
 };
 
-/** $EB6E: glyph 106 bitmap (12 bytes, 3 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_106[12] = {
+/** $EB6E: glyph 106 bitmap (12 bytes, 6 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_106[2 * 1 * 6 * 1] = {
   _______X, XXXX____,
   ______X_, XX__X___,
   ______XX, XXX_X___,
@@ -2415,58 +2414,58 @@ static const pixel_t title_glyph_bitmap_106[12] = {
   _______X, XXXX____,
 };
 
-/** $EB7A: glyph 107 bitmap (4 bytes, 2 row-pairs x 7 width-bytes). */
-static const pixel_t title_glyph_bitmap_107[4] = {
+/** $EB7A: glyph 107 bitmap (4 bytes, 4 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_107[1 * 1 * 4 * 1] = {
   _XXXX___,
   X_X_X___,
   XXXXX___,
   _XXX____,
 };
 
-/** $EB7E: glyph 108 bitmap (4 bytes, 2 row-pairs x 7 width-bytes). */
-static const pixel_t title_glyph_bitmap_108[4] = {
+/** $EB7E: glyph 108 bitmap (4 bytes, 4 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_108[1 * 1 * 4 * 1] = {
   ___XXXX_,
   __X_X_X_,
   __XXXXX_,
   ___XXX__,
 };
 
-/** $EB82: glyph 109 bitmap (8 bytes, 2 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_109[8] = {
+/** $EB82: glyph 109 bitmap (8 bytes, 4 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_109[2 * 1 * 4 * 1] = {
   _____XXX, X_______,
   ____X_X_, X_______,
   ____XXXX, X_______,
   _____XXX, ________,
 };
 
-/** $EB8A: glyph 110 bitmap (8 bytes, 2 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_110[8] = {
+/** $EB8A: glyph 110 bitmap (8 bytes, 4 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_110[2 * 1 * 4 * 1] = {
   _______X, XXX_____,
   ______X_, X_X_____,
   ______XX, XXX_____,
   _______X, XX______,
 };
 
-/** $EB92: glyph 111 bitmap (2 bytes, 1 row-pairs x 7 width-bytes). */
-static const pixel_t title_glyph_bitmap_111[2] = {
+/** $EB92: glyph 111 bitmap (2 bytes, 2 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_111[1 * 1 * 2 * 1] = {
   XXX_____,
   XX______,
 };
 
-/** $EB94: glyph 112 bitmap (2 bytes, 1 row-pairs x 7 width-bytes). */
-static const pixel_t title_glyph_bitmap_112[2] = {
+/** $EB94: glyph 112 bitmap (2 bytes, 2 rows x 1 width-bytes). */
+static const pixel_t title_glyph_bitmap_112[1 * 1 * 2 * 1] = {
   __XXX___,
   __XX____,
 };
 
-/** $EB96: glyph 113 bitmap (4 bytes, 1 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_113[4] = {
+/** $EB96: glyph 113 bitmap (4 bytes, 2 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_113[2 * 1 * 2 * 1] = {
   ____XXX_, ________,
   ____XX__, ________,
 };
 
-/** $EB9A: glyph 114 bitmap (4 bytes, 1 row-pairs x 6 width-bytes). */
-static const pixel_t title_glyph_bitmap_114[4] = {
+/** $EB9A: glyph 114 bitmap (4 bytes, 2 rows x 2 width-bytes). */
+static const pixel_t title_glyph_bitmap_114[2 * 1 * 2 * 1] = {
   ______XX, X_______,
   ______XX, ________,
 };
@@ -6974,7 +6973,8 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
     memset(attrs, attribute_BRIGHT_CYAN_OVER_BLACK, 28); attrs += 28; /* Conv: memset replaces loop */
     *attrs++ = attribute_BLACK_OVER_BLACK;
     *attrs++ = attribute_BLACK_OVER_BLACK;
-  } while (--c);
+  }
+  while (--c);
 
   update_whole_playfield_full_width(state); /* Conv: added -- also covers the
                                                * leftmost column, in case the
@@ -7044,7 +7044,8 @@ static void compute_glyph_blit_params_fg(chqstate_t *state,
       g.HL_src += g.C_width_select * 2;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
-    } while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
+    }
+    while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
   }
 
   blit_masked_sprite_dispatch_fg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
@@ -7215,7 +7216,8 @@ static void compute_glyph_geometry(u8                     B_y,
     B_clamped           = B_y;
     out->A_excess       = 0;    /* unused: carry_initial skips the row-offset walk */
     out->carry_initial  = 1;
-  } else
+  }
+  else
   {
     B_clamped           = 0x6F;
     out->A_excess       = (u8) (B_y - 0x6F);
@@ -7332,7 +7334,8 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
       g.HL_src += E_stride;
       if (--g.B_height_pairs == 0)
         return; /* entirely off-screen -- draw nothing */
-    } while (--A_skip_pairs != 0);
+    }
+    while (--A_skip_pairs != 0);
   }
 
   blit_masked_sprite_dispatch_bg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
@@ -7447,7 +7450,8 @@ static void blit_glyph_rows(chqstate_t *state,
       H++;
       advance_glyph_scanline(&H, &L);
     }
-  } while (--B_height_pairs);
+  }
+  while (--B_height_pairs);
 }
 
 /**
@@ -7646,10 +7650,12 @@ static void clear_playfield_buffer(chqstate_t *state)
     {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
-    } while (--B_scanline);
+    }
+    while (--B_scanline);
     H  = 0x48;
     L += 0x20;
-  } while (L <= 0xFF);
+  }
+  while (L <= 0xFF);
   L &= 0xFF;
   H  = 0x50;
 
@@ -7659,10 +7665,12 @@ static void clear_playfield_buffer(chqstate_t *state)
     {
       memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
       H++;
-    } while (--B_scanline);
+    }
+    while (--B_scanline);
     H  = 0x50;
     L += 0x20;
-  } while (L < 0xA0);
+  }
+  while (L < 0xA0);
 }
 
 #define SEQ_END_BIT (0x80) /* bit7: tested via (s8) < 0; cleared via &~ to recover the payload */
@@ -8117,7 +8125,8 @@ static void titlescr_write_ay_registers(chqstate_t *state)
     speccy->logtime(speccy, 56);
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
-  } while (--reg >= 0);
+  }
+  while (--reg >= 0);
 
   /* $ECE2: RET -- pairs with the CALL overhead billed at the call site
    * inside titlescr_ay_music. */
@@ -8144,7 +8153,8 @@ static void titlescr_silence_ay(chqstate_t *state)
   {
     speccy->out(speccy, port_AY_REGISTER, reg);
     speccy->out(speccy, port_AY_DATA, 0);
-  } while (--reg >= 0);
+  }
+  while (--reg >= 0);
 
   /* $ECFF-$ED0A: belt-and-braces re-write of register 7 (mixer) = 0. */
   speccy->out(speccy, port_AY_REGISTER, AY_REG_MIXER);
@@ -8936,7 +8946,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * strip the marker bit. */
     HL_offset_ptr = IX_channel->pitch_offset_default;
     A_offset_byte &= (u8) ~SEQ_END_BIT;
-  } else
+  }
+  else
   {
     /* $EEDF: JP P taken (10). */
     state->speccy->logtime(state->speccy, 10);
@@ -9075,7 +9086,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
           state->speccy->logtime(state->speccy, 23 + 12);
         else
           state->speccy->logtime(state->speccy, 23 + 7);
-      } while (A_shift_test <= 0xFF);
+      }
+      while (A_shift_test <= 0xFF);
     }
     else
     {
@@ -9558,7 +9570,8 @@ static void play_success_music(chqstate_t *state)
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state);
-  } while (--B_wait);
+  }
+  while (--B_wait);
 }
 
 /**
@@ -10196,7 +10209,8 @@ drum_dispatch_entry:
     A &= ~0x80;
     state->bank3->drums.slot1_countdown = 1;
     state->bank3->drums.slot2_busy      = 1;
-  } else
+  }
+  else
   {
     /* $F86D JR Z,$F87B taken (12). */
     state->speccy->logtime(state->speccy, 12);
@@ -10456,7 +10470,8 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
        * facade's out() rather than by logtime. The yield budget must count the
        * full 74 or it lets ~16% too many rows through per frame. */
       frame_tstates += 63 + 11;
-    } while (--i > 0);
+    }
+    while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);
@@ -10570,8 +10585,10 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
         /* $FA52: JR Z taken; DEC D; JR NZ (12+4+12) */
         speccy->logtime(speccy, 28);
       }
-    } while (--D_inner > 0);
-  } while (--E_duration > 0);
+    }
+    while (--D_inner > 0);
+  }
+  while (--E_duration > 0);
 }
 
 /**
@@ -10661,7 +10678,8 @@ poll: /* $FBAB omd_service_and_read_keys */
     run_title_tune(state);
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-  } while (A_key_mask == 0);
+  }
+  while (A_key_mask == 0);
 
   if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
     HL_ctrl_list = sinclair_joystick_keys;
@@ -10713,7 +10731,8 @@ shared_tail:
     /* $FC00 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
     /* debounce: wait for the selection key to be released before proceeding */
-  } while (A_key_mask != 0);
+  }
+  while (A_key_mask != 0);
 
   stop_music_and_silence(state);
 
@@ -10776,7 +10795,8 @@ static u8 detect_kempston_joystick(chqstate_t *state)
       return 0;
 
     run_title_tune(state);
-  } while (--B_count);
+  }
+  while (--B_count);
 
   return 1;
 }
@@ -10970,7 +10990,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
     }
 
     terminator = *HL_shape++ & EOS;
-  } while (!terminator);
+  }
+  while (!terminator);
 
   return HL_shape;
 }
@@ -11059,18 +11080,21 @@ static void redefine_keys_screen(chqstate_t *state)
 
         /* $FECA XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
         A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
-      } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for any key to be released */
+      }
+      while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for any key to be released */
 
       read_new_key_definition(state, &DE_screen, B_remaining, C_control_index);
 
       C_control_index++;
-    } while (--B_remaining != 0);
+    }
+    while (--B_remaining != 0);
 
     B_wait = 0x14;
     do
     {
       run_title_tune(state);
-    } while (--B_wait != 0);
+    }
+    while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
       if (state->bank3->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
@@ -11089,7 +11113,8 @@ static void redefine_keys_screen(chqstate_t *state)
 
       /* $FF02 XOR A / IN A,($FE): all half-rows at once, i.e. any key. */
       A_key_mask = (u8) (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
-    } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
+    }
+    while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
   }
 }
 
@@ -11141,7 +11166,8 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
       {
         A_code -= 8;
         SRL(H_bits);
-      } while (!carry);
+      }
+      while (!carry);
 
       if (H_bits != 0)
         return 1; /* $FF23 RET NZ: more than one bit held in this row */
@@ -11151,7 +11177,8 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
 
     E_row_value--;
     RLC(B_port_hi);
-  } while (carry);
+  }
+  while (carry);
 
   *D_key_code_out = D_key_code; /* $FF2A-$FF2B CP A / RET (Z always set here) */
   return 0;

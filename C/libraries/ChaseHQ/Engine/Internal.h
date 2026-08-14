@@ -181,8 +181,6 @@
 #define BACKBUFFER_LENGTH          (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
 #define BACKBUFFER_START_ADDRESS   (0xF000)
 #define BACKBUFFER_END_ADDRESS     (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
-// Padding amount for when flushing out memory scribblers.
-#define BACKBUFFER_OVERFLOW        (0)
 
 /* ----------------------------------------------------------------------- */
 
@@ -284,18 +282,18 @@
 /* 48K music engine note bytes: shared by music_data (CommonData.c) and
  * es_music_data (Bank7.c). See play_music_48k (Main.c) / es_play_music_48k
  * (Bank7.c) for the byte-level decode these are built from. */
-#define NOTE_DELAY(ticks) (ticks) // ticks between notes, reloaded into note_delay
-#define NOTE_INST_MASK    (0x07)
-#define NOTE_DRUM2_VAL    (1)
-#define NOTE_DRUM1_VAL    (2)
-#define NOTE_NOISE_VAL    (3)
-#define NOTE_DRUM2(param) (((param) << 3) | NOTE_DRUM2_VAL)
-#define NOTE_DRUM1(param) (((param) << 3) | NOTE_DRUM1_VAL)
-#define NOTE_NOISE(param) (((param) << 3) | NOTE_NOISE_VAL)
-#define NOTE_SILENCE      (0)
-#define NOTE_XDELAY_FLAG  (0x80)
-#define NOTE_XDELAY(note) ((note) | NOTE_XDELAY_FLAG) // adds a one-tick extra delay
-#define NOTE_END          (1) // sentinel: advance to the next pattern
+#define NOTE_DELAY(ticks)            (ticks) // ticks between notes, reloaded into note_delay
+#define NOTE_INST_MASK               (0x07)
+#define NOTE_DRUM2_VAL               (1)
+#define NOTE_DRUM1_VAL               (2)
+#define NOTE_NOISE_VAL               (3)
+#define NOTE_DRUM2(param)            (((param) << 3) | NOTE_DRUM2_VAL)
+#define NOTE_DRUM1(param)            (((param) << 3) | NOTE_DRUM1_VAL)
+#define NOTE_NOISE(param)            (((param) << 3) | NOTE_NOISE_VAL)
+#define NOTE_SILENCE                 (0)
+#define NOTE_XDELAY_FLAG             (0x80)
+#define NOTE_XDELAY(note)            ((note) | NOTE_XDELAY_FLAG) // adds a one-tick extra delay
+#define NOTE_END                     (1) // sentinel: advance to the next pattern
 
 /* ----------------------------------------------------------------------- */
 
@@ -425,8 +423,9 @@ typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX_hazard);
 
 typedef u8 chatterpriority_t;
 
-void start_chatter(chqstate_t *state, chatterpriority_t priority,
-                    const u8 *chatterblk);
+void start_chatter(chqstate_t       *state,
+                   chatterpriority_t priority,
+                   const u8         *chatterblk);
 
 typedef struct session session_t;
 
@@ -435,7 +434,8 @@ typedef struct carpart
   u8             y;
   u8             rows;
   const pixel_t *bitmap;
-} carpart_t;
+}
+carpart_t;
 
 typedef struct carsmokeframe
 {
@@ -444,21 +444,24 @@ typedef struct carsmokeframe
   u8             unflipped_x;
   u8             flipped_x;
   const pixel_t *bitmap;
-} carsmokeframe_t;
+}
+carsmokeframe_t;
 
 typedef struct carframe
 {
-  u8        y;
-  u8        x;
-  u8        index;
-} carframe_t;
+  u8 y;
+  u8 x;
+  u8 index;
+}
+carframe_t;
 
 typedef struct caradornment
 {
   u8             height;
   u8             width;
   const pixel_t *bitmap;
-} caradornment_t;
+}
+caradornment_t;
 
 /* ----------------------------------------------------------------------- */
 

@@ -318,7 +318,8 @@ typedef struct
   u8        chan_b_vol;
   u8        chan_c_vol;
   u8        env_fine;
-} ay_register_cache_t;
+}
+ay_register_cache_t;
 
 /* ----------------------------------------------------------------------- */
 
@@ -415,7 +416,8 @@ struct chqstate
 
     /* $8251: (SM in play_engine_sfx_48k) Length of the engine tone's on phase */
     u8        on_cycle;
-  } engine_sfx;
+  }
+  engine_sfx;
 
   /* $824B-$825D: (SM in attract_mode_128k, relocated) Attract mode screen
    * state */
@@ -434,7 +436,8 @@ struct chqstate
      * place by refresh_best_officers so the attract-mode "BEST OFFICERS"
      * rows track the live high-score table. */
     u8        best_officers[163];
-  } attract_mode_128k;
+  }
+  attract_mode_128k;
 
   /* $8277: (SM in attract_mode_48k) Rotating bit pattern deciding which attract
    * messages are drawn this frame */
@@ -465,7 +468,8 @@ struct chqstate
 
     /* $86C9: (SM in draw_pregame) Direction the pregame artwork slides in from */
     u8        direction;
-  } draw_pregame;
+  }
+  draw_pregame;
 
   /* $897C: Crash sound effect waveform
    *
@@ -508,7 +512,8 @@ struct chqstate
 
     /* $8DBB: (SM in transition) Dither mask table driving the current fade */
     const u8 *mask;
-  } transition;
+  }
+  transition;
 
   /* $8E43-$8E49: (SM in draw_overlay_messages) Overlay message reveal state
    *
@@ -528,7 +533,8 @@ struct chqstate
     /* $8E49: (SM in draw_overlay_messages) Frames left before the next character
      * is revealed */
     u8        delay;
-  } overlay;
+  }
+  overlay;
 
   /* $8F82-$8FA7: (SM in draw_scene_objects) Per-frame scenery draw enables */
   struct
@@ -543,7 +549,8 @@ struct chqstate
     /* $8FA7: (SM in draw_scene_objects) Enables drawing of the second tunnel
      * mouth */
     u8        draw_tunnel_2;
-  } dee;
+  }
+  dee;
 
   /* $90F1-$9115: (SM in draw_overhead) Geometry of the overhead structure
    * being drawn */
@@ -556,7 +563,8 @@ struct chqstate
     /* $9115: (SM in draw_overhead) Width of the overhead structure's deck span,
      * in words */
     u8        span_width_words;
-  } overhead;
+  }
+  overhead;
 
   /* $933D-$946F: (SM in draw_object_clipped) Sprite plot parameters
    *
@@ -615,7 +623,8 @@ struct chqstate
     /* $946F: (SM in draw_object_clipped) Row count for the mask's second plot
      * call */
     u8        mask_rows_2nd;
-  } doc;
+  }
+  doc;
 
   /* $9618: Pseudo-random number generator state */
   u8        rng_seed[3];
@@ -645,7 +654,8 @@ struct chqstate
 
     /* $963C: Frames left on the effect; bit 0 also selects the cursor style */
     u8        counter;
-  } noise;
+  }
+  noise;
 
   /* $963D: Chatter state machine phase */
   u8        chatter_state;
@@ -674,7 +684,8 @@ struct chqstate
      *       this field.
      */
     u8        remaining_subseconds;
-  } tick;
+  }
+  tick;
 
   /* $9D51: Bonus figure rendered as text for the score screen */
   char      bonus_string[6];
@@ -956,18 +967,19 @@ struct chqstate
   struct
   {
     /* $A68F: (SM in perp_behaviour) Set while the perp is changing lane */
-    u8        changing_lane;
+    u8      changing_lane;
 
     /* $A69B: (SM in perp_behaviour) Frames left in the perp's lane change */
-    u8        lane_change_timer;
+    u8      lane_change_timer;
 
     /* $A73E: (SM in perp_behaviour) Frames left before the perp next reacts */
-    u8        delay;
+    u8      delay;
 
     /* $A749: (SM in perp_behaviour) Delay before the perp lets the player close
      * in */
-    u8        approach_timer;
-  } pb;
+    u8      approach_timer;
+  }
+  pb;
 
   /* $A804: (SM in spawn_cars) Frames left before the next NPC car is spawned */
   u8        sc_spawn_counter;
@@ -980,12 +992,13 @@ struct chqstate
   struct
   {
     /* $A9DE: (SM in draw_dirt_and_stones) Enables draw_dirt_and_stones */
-    u8        enabled;
+    u8      enabled;
 
     /* $A9E2: (SM in draw_dirt_and_stones) Byte cursor into the $ED28 particle
      * table */
-    u8       *particle;
-  } ddas;
+    u8     *particle;
+  }
+  ddas;
 
   /* $AA5A-$AA8C: (SM in draw_helicopter) Helicopter drawing position */
   struct
@@ -995,14 +1008,15 @@ struct chqstate
      * Swing offset plus height, minus the per-distance object position when
      * drawn.
      */
-    u8        vert_base;
+    u8      vert_base;
 
     /* $AA76: (SM in draw_helicopter) Vertical offset of the helicopter's swing */
-    u8        y_offset;
+    u8      y_offset;
 
     /* $AA8C: (SM in draw_helicopter) Animation phase of the rotor */
-    u8        rotor_pos;
-  } dheli;
+    u8      rotor_pos;
+  }
+  dheli;
 
   /* $AA94: (SM in draw_helicopter) Helicopter's horizontal position
    *
@@ -1032,7 +1046,8 @@ struct chqstate
     /* $AB06: (SM in move_helicopter) Vertical centre of the flight path: 112
      * normally, -56 during the exit sequence */
     s16       centre_y;
-  } mh;
+  }
+  mh;
 
   /* $AE70: (SM in advance_hazard) Left edge of the road at the hazard's
    * distance */
@@ -1066,7 +1081,8 @@ struct chqstate
     /* $B02C: (SM in draw_hazard_sprites) Screen column of the hazard being
      * drawn */
     u8        horz_pos;
-  } dhs;
+  }
+  dhs;
 
   /* $B063-$B079: (SM in move_hero_car) Hero car jump state */
   struct
@@ -1076,7 +1092,8 @@ struct chqstate
 
     /* $B079: (SM in move_hero_car) Current entry in the jump trajectory table */
     const s8 *jump_data;
-  } mhc;
+  }
+  mhc;
 
   /* $B325-$B478: (SM in animate_hero_car) Hero car crash and hand animation
    * state */
@@ -1122,7 +1139,8 @@ struct chqstate
     /* $B478: (SM in animate_hero_car) Frames left on the current hand animation
      * step; reloads to 2, or 3 on step 2, as ahc.hand_step advances */
     u8        hand_delay;
-  } ahc;
+  }
+  ahc;
 
   /* $B4F0: (SM in smash) Cycles the damage sprite shown as the perp's car is
    * smashed */
@@ -1142,7 +1160,8 @@ struct chqstate
     /* $B570: (SM in draw_debris) Offset of the current frame within the debris
      * subtable */
     u16       frame_offset;
-  } dd;
+  }
+  dd;
 
   /* $B5AA-$B5AF: (SM in draw_hero_car) Hero car sprite selection */
   struct
@@ -1154,7 +1173,8 @@ struct chqstate
     /* $B5AF: (SM in draw_hero_car) Car's pitch: 0, 3 or 6 = level, nose up, nose
      * down */
     u8        pitch;
-  } dhc;
+  }
+  dhc;
 
   /* $BB8B-$C0BB: (SM in rm_cycle_buffer_offset and read_map) Map stream
    * bookkeeping
@@ -1245,7 +1265,8 @@ struct chqstate
 
     /* $C0BB: (SM in read_map) Enables scrolling of the dirt particle layer */
     u8        scroll_dirt_particles;
-  } rm;
+  }
+  rm;
 
   /* $C15D-$C2B8: (SM in draw_tunnel) Tunnel drawing state */
   struct
@@ -1271,7 +1292,8 @@ struct chqstate
     /* $C2B8: (SM in draw_tunnel) Selects how the far wall of the tunnel is
      * drawn */
     u8        far_wall_mode;
-  } dt;
+  }
+  dt;
 
   /* $C56C-$C88F: (SM in draw_road) Road drawing state
    *
@@ -1352,7 +1374,8 @@ struct chqstate
 
     /* $C88F: (SM in draw_road) Set while the car is inside a tunnel */
     u8        in_tunnel;
-  } dr;
+  }
+  dr;
 
   /* $CE0C-$CE32: Three 13-byte smoke animation buffers, indexed 0..2 */
   u8        smokes[3][13];
@@ -1426,7 +1449,8 @@ struct chqstate
      * tracks.
      */
     s16       fork_right[128];
-  } xpos;
+  }
+  xpos;
 
   /* $EE00: Circular buffer of road slices between the car and the horizon */
   u8        road_buffer[256];
@@ -1485,11 +1509,12 @@ struct chqstate
      * A mutable copy of a template, as drum1.
      */
     u8        drum2[108];
-  } music;
+  }
+  music;
 
   /* $F000: Off-screen buffer the playfield is composed in before being sent to
    * the screen */
-  u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
+  u8        backbuffer[BACKBUFFER_LENGTH];
 
   /* $EC01-$F224: Title-screen tune engine and options-menu state (128K bank 3
    * only)
@@ -1527,7 +1552,8 @@ struct chqstate
      * actually reaches $B296 (current_curvature != 0 and ticks elapsed).
      */
     u8        curvature_scroll;
-  } shadow;
+  }
+  shadow;
 };
 
 #endif /* CHASEHQ_STATE_H */

@@ -501,7 +501,7 @@ static void run_script(chqstate_t *state)
       es_handler_draw_score(state);
       continue;
 
-default:
+    default:
       /* Unrecognised command: skool $E251 resets HL to the CHATTER(0x5C78)
        * command rather than stopping -- see ES_SCRIPT_RESET_OFFSET. */
       HL_script = &state->bank7->es_script[ES_SCRIPT_RESET_OFFSET];
@@ -637,7 +637,7 @@ static const u8 *z80addrtochatterblk(u16 addr)
     return &chatterblk_nancy_congratulates[0];
   case CHATTERBLK_PRESS_GEAR_ADDR:
     return &chatterblk_press_gear[0];
-default:
+  default:
     assert(0);
     return NULL;
   }
@@ -853,7 +853,8 @@ static void render_text_common(chqstate_t *state, const u8 **script)
     A_char = raw & (u8) ~EOS;
     plot_char(state, A_char, D_scr, &E_scr, H_attr, &L_attr, C_attr);
     HL_script++;
-  } while ((raw & EOS) == 0);
+  }
+  while ((raw & EOS) == 0);
 
   *script = HL_script;
 }
@@ -1038,7 +1039,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
    * fill). Row counts vary per frame (37/35/34/32) -- sizes taken verbatim
    * from skool label boundaries. */
   /** $F381: bitmap_handshake_1 */
-  static const pixel_t bitmap_handshake_1[296] = {
+  static const pixel_t bitmap_handshake_1[8 * 1 * 37 * 1] = {
     XX______, ________, ________, ________, ________, ________, ________, ________,
     XXXX____, ________, ________, ________, ________, ________, ________, ________,
     XXXXXX__, ________, ________, ________, ________, ________, ________, _______X,
@@ -1079,7 +1080,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F4A9: bitmap_handshake_2 */
-  static const pixel_t bitmap_handshake_2[280] = {
+  static const pixel_t bitmap_handshake_2[8 * 1 * 35 * 1] = {
     XX______, ________, ________, ________, ________, ________, ________, _______X,
     XXXXX___, ________, ________, ________, ________, ________, ________, _____XXX,
     XXXXXXXX, ________, ________, ________, ________, ________, ________, ____XXXX,
@@ -1118,7 +1119,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F5C1: bitmap_handshake_3 */
-  static const pixel_t bitmap_handshake_3[272] = {
+  static const pixel_t bitmap_handshake_3[8 * 1 * 34 * 1] = {
     XX______, ________, ________, ________, ________, ________, ________, _____XXX,
     XXXXX___, ________, ________, ________, ________, ________, ________, ____XXXX,
     XXXXXXXX, X_______, ________, ________, ________, ________, ________, ___XXXXX,
@@ -1156,7 +1157,7 @@ static void es_handler_handshake_advance(chqstate_t *state)
   };
 
   /** $F6D1: bitmap_handshake_4 */
-  static const pixel_t bitmap_handshake_4[256] = {
+  static const pixel_t bitmap_handshake_4[8 * 1 * 32 * 1] = {
     XXXXX___, ________, ________, ________, ________, ________, ________, ___XXXXX,
     XXXXXXXX, XX______, ________, ________, ________, ________, ________, __XXXXXX,
     XXXXXXXX, XXXXXX__, ________, ________, ________, ________, ________, XXXXXXXX,
@@ -1505,7 +1506,7 @@ static const u8 *z80addrtoendshot(u16 addr)
    * skool's label boundaries, not recomputed from the nominal 104x64
    * dimensions. */
   /** $60E1: bitmap_endshot_1 */
-  static const pixel_t bitmap_endshot_1[936] = {
+  static const pixel_t bitmap_endshot_1[13 * 1 * 64 * 1 + 13 * 8] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X___, _______X, ___X_X_X, _XXXXXXX, XXXXXXXX,
     X_X_X_XX, _X_X_XXX, XXX__XX_, XXX_XXXX, _X_X__XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X__, ________, X_X_X_XX, XXXXXXXX, XXXXXXXX,
     X__X_XX_, X_XX_XXX, ___XXXXX, ___XXXXX, _X_X__X_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX_X_, X______X, _X_X_XXX, XXXXXX_X, _XXXXXXX,
@@ -1581,7 +1582,7 @@ static const u8 *z80addrtoendshot(u16 addr)
   };
 
   /** $6489: bitmap_endshot_2 */
-  static const pixel_t bitmap_endshot_2[936] = {
+  static const pixel_t bitmap_endshot_2[13 * 1 * 64 * 1 + 13 * 8] = {
     XXXXXXXX, XXX_X_X_, X_X_____, X_X_____, ________, ________, ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _X______, ___X____,
     XXXXXXXX, XX_X_X_X, _X______, _X_X____, ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_____, X____X_X,
     XXXXXXXX, XXX_XXXX, X_X_X___, X_XX____, ________, ________, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX____X_, ____X_X_,
@@ -1657,7 +1658,7 @@ static const u8 *z80addrtoendshot(u16 addr)
   };
 
   /** $6831: bitmap_endshot_3 */
-  static const pixel_t bitmap_endshot_3[936] = {
+  static const pixel_t bitmap_endshot_3[13 * 1 * 64 * 1 + 13 * 8] = {
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
     ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________, ________,
@@ -1742,7 +1743,7 @@ static const u8 *z80addrtoendshot(u16 addr)
    *       label (handshake_1, $F381: $C0,$00,$00,$00,$00,$00,$00,$00).
    *       Reproduced verbatim below rather than zero-padding.
    */
-  static const pixel_t bitmap_endshot_4[936] = {
+  static const pixel_t bitmap_endshot_4[13 * 1 * 64 * 1 + 13 * 8] = {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, X_XXX_XX, __XX____, X__XXXXX, XXXXXXXX, __XXXXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, XXXXX_XX, _X_X____, XX_XXXXX, XXXXXXXX, __XXXXXX, _XXXX___, _____XXX, XXXX____, ____X___,
     XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_XXXX, XXXXX_XX, __XX____, X_X_X_X_, X_X_X_XX, ___X_X_X, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2198,7 +2199,8 @@ static void es_playdrum_go(chqstate_t *state, int D_length, u8 *HL_data)
       RLC(*HL_data); /* rotate sample byte in place */
       /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
       speccy->logtime(speccy, 63);
-    } while (--i > 0);
+    }
+    while (--i > 0);
     HL_data++;
     /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
     speccy->logtime(speccy, 46);

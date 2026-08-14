@@ -428,7 +428,8 @@ slopay_chip_sample_t slopay_chip_get_sample(slopay_chip_t *ay)
     {
       /* ACB: left = A + C */
       left_sum = mixed[0] + mixed[2];
-    } else
+    }
+    else
     {
       /* ABC: left = A + B */
       left_sum = mixed[0] + mixed[1];
@@ -436,7 +437,8 @@ slopay_chip_sample_t slopay_chip_get_sample(slopay_chip_t *ay)
 
     output_l = left_sum / 2;
     output_r = right_sum / 2;
-  } else
+  }
+  else
   {
     const int mono_sum = mixed[0] + mixed[1] + mixed[2];
     output_l = output_r = mono_sum / 3;
