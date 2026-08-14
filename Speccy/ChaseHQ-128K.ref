@@ -42,6 +42,8 @@ Stage2Graphics=[Stage 2] (graphics specific to stage 2)
 Stage3Graphics=[Stage 3] (graphics specific to stage 3)
 Stage4Graphics=[Stage 4] (graphics specific to stage 4)
 Stage5Graphics=[Stage 5] (graphics specific to stage 5)
+TitleGraphics=[Title screen] (the animated title screen, bank 3)
+EndScreenGraphics=[End screen] (the end-of-game results screen, bank 7)
 
 [Titles]
 CommonGraphics=Common Graphics
@@ -52,6 +54,8 @@ Stage2Graphics=Stage 2 Graphics
 Stage3Graphics=Stage 3 Graphics
 Stage4Graphics=Stage 4 Graphics
 Stage5Graphics=Stage 5 Graphics
+TitleGraphics=Title Screen Graphics
+EndScreenGraphics=End Screen Graphics
 
 [Index]
 Game
@@ -72,6 +76,8 @@ Stage3Graphics
 Stage4Graphics
 Stage5Graphics
 CommonGraphics
+TitleGraphics
+EndScreenGraphics
 
 [Page:MapFormat]
 PageContent=#INCLUDE(PageContent:MapFormatX)
@@ -254,6 +260,12 @@ PageContent=#INCLUDE(PageContent:Stage5Graphics)
 
 [Page:CommonGraphics]
 PageContent=#INCLUDE(PageContent:CommonGraphics)
+
+[Page:TitleGraphics]
+PageContent=#INCLUDE(PageContent:TitleGraphics)
+
+[Page:EndScreenGraphics]
+PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 
 [PageContent:Stage1Graphics]
 #CALL(graphic($5C00,80,24,0,1))
@@ -586,6 +598,43 @@ PageContent=#INCLUDE(PageContent:CommonGraphics)
 #CALL(graphic($DAB5,16,5,1,1,7))
 #CALL(graphic($DAC9,16,4,1,1,7))
 #CALL(graphic($DAD9,16,4,1,1,7))
+
+[PageContent:TitleGraphics]
+#CALL(graphic($D462,32,28,0,1,3))
+#CALL(graphic($D4D2,32,28,0,1,3))
+#CALL(graphic($D542,32,28,0,1,3))
+#CALL(graphic($D5B2,40,28,0,1,3))
+#CALL(graphic($D63E,32,28,0,1,3))
+#CALL(graphic($D6AE,32,28,0,1,3))
+#CALL(graphic($D71E,40,28,0,1,3))
+#CALL(graphic($D7AA,40,28,0,1,3))
+#CALL(graphic($D836,24,28,0,1,3))
+#CALL(graphic($D88A,24,28,0,1,3))
+#CALL(graphic($D8DE,32,28,0,1,3))
+#CALL(graphic($D94E,32,28,0,1,3))
+#CALL(graphic($D9BE,32,28,0,1,3))
+#CALL(graphic($DA2E,32,28,0,1,3))
+#CALL(graphic($DA9E,32,28,0,1,3))
+#CALL(graphic($DB0E,40,28,0,1,3))
+#CALL(graphic($DB9A,32,28,0,1,3))
+#CALL(graphic($DC0A,32,28,0,1,3))
+#CALL(graphic($DC7A,32,28,0,1,3))
+#CALL(graphic($DCEA,32,28,0,1,3))
+#CALL(graphic($DD5A,32,32,0,1,3))
+#CALL(graphic($DDDA,32,32,0,1,3))
+#CALL(graphic($DE5A,32,32,0,1,3))
+#CALL(graphic($DEDA,40,32,0,1,3))
+#CALL(graphic($DF7A,16,8,0,1,3))
+#CALL(graphic($DF8A,16,8,0,1,3))
+#CALL(graphic($DF9A,16,8,0,1,3))
+#CALL(graphic($DFAA,16,8,0,1,3))
+#CALL(graphic($DFBA,24,26,0,1,3))
+
+[PageContent:EndScreenGraphics]
+#CALL(endshot($E4E1,7))
+#CALL(endshot($E889,7))
+#CALL(endshot($EC31,7))
+#CALL(endshot($EFE1,7))
 #CALL(graphic($F381,64,37,0,0,7))
 #CALL(graphic($F4A9,64,35,0,0,7))
 #CALL(graphic($F5C1,64,34,0,0,7))

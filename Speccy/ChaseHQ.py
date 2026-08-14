@@ -843,7 +843,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             page=page,
         )
 
-    def endshot(self, cwd, bitmapbase: int):
+    def endshot(self, cwd, bitmapbase: int, page=None):
         """Decode an end-game shot at the specified snapshot address."""
         return self._build_frame(
             cwd,
@@ -854,6 +854,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             interleaved=0,
             invert=0,
             nframes=1,
+            page=page,
         )
 
     def _herocarpart(
