@@ -13261,19 +13261,23 @@ T $EE08,10,10 $FB
 T $EE12,10,10 $FD
 T $EE1C,10,10 $FE
 b $EE26 Sinclair joystick input scheme
+D $EE26 Five keydefs -- Gear, Accelerate, Brake, Left and Right -- packed the way #R$ED4D returns them: half-row number in bits 0..2, key in bits 3 and up. #R$E953 copies them over the first five bytes of #R$EE38.
 @ $EE26 label=sinclair_joy
 B $EE26,5,5
 b $EE2B Cursor joystick input scheme
+D $EE2B The same five keydefs as #R$EE26 in the same packed form, mapped to the cursor keys, and copied by the same code at #R$E953.
 @ $EE2B label=cursor_joy
 B $EE2B,5,5
 b $EE30 Keydefs for "SHOCKED<ENTER>"
 @ $EE30 label=shocked
 B $EE30,8,8
 b $EE38 Temporary keydefs
+D $EE38 Eight packed keydefs staged here before #R$E95C distributes them: the first five (Gear, Accelerate, Brake, Left, Right) go to $A0D2 and the last three (Quit, Pause, Turbo) to $A0CD. They are filled either wholesale by #R$E953 copying a joystick scheme over the first five, or one key at a time by #R$ECF3.
 @ $EE38 label=temp_keydefs
 B $EE38,8,8
 c $EE40 Interrupt setup
 D $EE40 Used by the routine at #R$E8FE.
+D $EE40 Fills the 257-byte vector table at $FD00 with $FE so that every vector points at $FEFE, writes a "JP #R$EF19" there, then sets I to $FD and selects interrupt mode 2. Every interrupt from here on runs the handler at #R$EF19.
 D $EE40 See http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/interrupts
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
@@ -13295,6 +13299,7 @@ C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
 c $EE5E Reset music
 D $EE5E Used by the routine at #R$E8FE.
+D $EE5E Clears the three self-modified operands that carry music state from frame to frame -- the drum-playing flag at #R$EF0E, the extra-delay byte at #R$EF01 and the first-call flag at #R$EEA3 -- then restarts the pattern list at #R$F0FE by jumping into #R$EE78.
 @ $EE5E label=reset_music
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
@@ -13304,6 +13309,7 @@ C $EE68,3 Load address of music patterns
 C $EE6B,3 Jump to next_pattern_at_addr
 c $EE6E Setup the next music pattern
 D $EE6E Used by the routine at #R$EE9E.
+D $EE6E Decrements the repeat count held in the operand at #R$EE6F and returns while repeats remain. On zero it falls into np_next, which reads the next (repetitions, data offset) pair from the pattern list, self-modifies the repeat count and the pattern pointer, and points playback at the music data that starts at #R$F111. A repeat count of $FF ends the list: np_restart follows the address word stored after it and starts over.
 N $EE6E Keep playing current pattern until this counter becomes zero.
 @ $EE6E label=next_pattern
 C $EE6E,2 Load number of pattern repetitions. Self modified by #R$EE7E, and below.
@@ -13333,6 +13339,7 @@ C $EE98,4 HL = wordat(HL); HL++
 C $EE9C,2 Jump to next_pattern_at_addr
 c $EE9E Play menu music (48K mode only)
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
+D $EE9E One tick of the 48K music driver. Every path ends at pm_wait_for_interrupt (#R$EF13), which spins until the 50Hz interrupt fires -- that is what paces one call to one frame. The first call primes playback; later calls decrement the note delay and, when it expires, fetch the next byte of the pattern stream. A byte of 1 terminates the pattern and calls #R$EE6E. Otherwise bit 7 requests one tick of extra delay, bits 0..2 select the instrument (0 = silence, 1 = #R$EF22, 2 = playdrum_1 at #R$EF29, 3 = #R$F0C6) and bits 3..6 are the argument handed to it in #REGa.
 @ $EE9E label=play_music_48k
 C $EE9E,4 Clear <interrupt flag> at #R$EF13
 C $EEA2,2 Counter, self modified by #R$EEA8 below
@@ -13406,6 +13413,7 @@ C $EF20,1 Enable interrupts
 C $EF21,1 Return
 c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
+D $EF22 Two entry points share one loop: #R$EF22 plays drum 2 (108 bytes at #R$F05A) and playdrum_1 (#R$EF29) plays drum 1 (252 bytes at #R$EF5E). playdrum_start stores #REGa into the loop counter operand at #R$EF3A and raises the drum-playing flag at #R$EF0E. Each sample byte is played most significant bit first as a speaker level on port $FE, rotating in place -- but only #REGa bits are taken from a byte before the pointer moves on, so the speed value is both the bit count and the resampling step, and 1 runs through the sample eight times faster than 8. The loop hands control back to the music driver as soon as the interrupt flag at #R$EF14 is set, and clears the drum-playing flag when the sample runs out.
 R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
 C $EF22,3 Load address of drum 2 data
@@ -13452,6 +13460,7 @@ B $EF5E,252,8*31,4 Drum 1 sample/data
 B $F05A,108,8*13,4 Drum 2 sample/data
 c $F0C6 White noise generator
 D $F0C6 Used by the routine at #R$EE9E.
+D $F0C6 Each of the #REGe outer ticks runs 50 noise steps. A step adds 3 to the first byte of rng_seed, subtracts 141 from the second, adds the two together, rotates the sum left and adds it to the third seed byte rotated right, then taps bit 4 of the result. When the tap is set the speaker is driven high after a delay of (24 - #REGe) iterations and low again #REGe iterations later, so the duration sets the pulse width -- and hence the timbre -- as well as the length of the burst.
 R $F0C6 I:A Duration (3 or 9 in practice)
 @ $F0C6 label=play_noise
 C $F0C6,1 Set #REGe to duration counter
@@ -13492,6 +13501,7 @@ C $F0F8,1 Decrement duration counter
 C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Exit via pm_wait_for_interrupt
 b $F0FE Music patterns
+D $F0FE One (repetitions, data offset) pair per pattern, read by #R$EE78: the repetition count self-modifies the counter at #R$EE6F and the offset is added to #R$F111 to find that pattern's music data. $FF ends the list, and the address word that follows it -- #R$F100 -- is where playback restarts, so the first pattern is an intro that plays once and is never returned to.
 @ $F0FE label=music_patterns
 @ $F100 label=mp_restart
 B $F0FE,16,2 Patterns (repetitions, data offset)
@@ -13546,6 +13556,7 @@ W $F24F,2,2 Level 6: Source at $E000, Paging from bank 7
 > $F251 ; C4 would be (1773450 / 16) / 424 = ~261.41Hz
 c $F251 Start the siren sound effect (128K)
 D $F251 Lives at $8045 when relocated.
+D $F251 Presets the AY register soft copies for the two-tone siren: channel A fine pitch 140, channel A volume 14 and channel B volume 12. $AA seeds the rotating pattern that #R$F269 steps the pitch by, and doubles as the "siren on" flag in $A239.
 @ $F251 label=start_siren_128k
 C $F251,5 Store 140 to channel A fine pitch (~792Hz)
 C $F256,5 Store 14 to channel A volume (4-bit)
@@ -13645,6 +13656,7 @@ C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
 c $F2FA Play turbo sound effect
 D $F2FA Lives at $80EE when relocated.
+D $F2FA Called once a frame. When turbo_sfx_noise_pitch is zero the turbo is not sounding and control passes straight to #R$F2B6; when it is 1 the routine returns without touching the AY. Otherwise the noise pitch soft copy at $A219 is decremented in place and echoed, plus 10, into the channel C pitch, with tone and noise C enabled at volume 13 -- a burst that descends in pitch as the counter falls. When it reaches zero pts_stop disables tone and noise C, clears turbo_sfx_noise_pitch and leaves through #R$F2B6 so that the engine takes the channel back.
 @ $F2FA label=play_engine_or_turbo_sfx_128k
 C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_noise_pitch is zero
 C $F300,1 Decrement noise pitch
@@ -13799,17 +13811,22 @@ C $F410,1 Restore iterations
 C $F411,2 Loop to f3e8_loop
 C $F413,1 Return
 c $F414 Reset the paging register
+D $F414 Lives at $8208 when relocated.
+D $F414 Writes zero to the paging register at port $7FFD, restoring the default 128K layout: ROM 0, RAM bank 0 paged in at $C000 and screen 0 displayed.
 @ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 c $F41B Attract mode (128K)
+D $F41B Lives at $820F when relocated.
+D $F41B Runs the bouncy logo in bank 3, sets up the attract stage, then loops a frame at a time over #R$852A and #R$8D8F. Each frame flashes either "ENTER FOR OPTIONS" or "PRESS GEAR" -- whichever depends on whether the controls have been chosen yet -- four frames on and four off, driven by the rotating byte at #R$F458. ENTER re-enters bank 3 at the input selection menu; FIRE leaves for #R$9C79 and the game.
+D $F41B A countdown in the operand at #R$F46A paces the overlays. It starts at 2 and drops by one each time transition_control falls back to zero: 1 shows the credits at #R$F4B9, 0 shows the best officers table at $F51B, and -1 starts a forward transition -- after which the next pass restarts the whole sequence from the bouncy logo.
 @ $F41B label=attract_mode_128k
 C $F41B,3 Entry point for title animations
 C $F41E,3 Call relocated call_bank_3_128k
 C $F421,2 Return if #REGa is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
-C $F429,5 var or self modify or ..?
+C $F429,5 Set the overlay countdown at #R$F46A to 2
 C $F42E,6 Set speed to $190
 @ $F434 label=am1_loop
 C $F434,3 Call drive_attract_demo
@@ -13827,18 +13844,25 @@ C $F44F,1 Complement value so it's active-high
 C $F450,1 Shift ENTER's flag out to carry
 C $F451,3 Load entry point for keyboard/joystick selection menu
 C $F454,2 Jump if ENTER was pressed
-C $F459,1 -- why load A then shift? self modified?
+C $F456,1 #REGhl -> messages
+C $F457,6 Rotate the blink pattern and self modify #R$F458 with it -- $F0 gives four frames on, four off
+C $F45D,2 Skip the message on the blank half of the blink
 C $F460,3 Call print_message
 @ $F463 label=f463_128k
 C $F463,6 If transition_control != 0 jump
-C $F469,2 -- smells like self modified
+C $F469,2 Overlay countdown. Self modified by #R$F42B above and #R$F470 below
+C $F46B,1 Set flags
+C $F46C,3 Restart attract mode once the countdown has gone negative
 C $F46F,1 A--
-C $F470,3 self modifying?
+C $F470,3 Self modify #R$F469 above
+C $F473,3 Jump to f47d_128k while the countdown is not negative
 C $F476,2 Forward transition
 C $F478,3 Call setup_transition
+C $F47B,2 Jump to f488_128k
 @ $F47D label=f47d_128k
-C $F47D,3 -- must be messages ptr below ($8208+165 means ?)
-C $F482,3 -- must be messages ptr below ($8208+263 means ?)
+C $F47D,3 -> credits messages at #R$F4B9
+C $F480,2 Jump to f485_128k unless the countdown reached zero
+C $F482,3 -> best officers table at $F51B
 @ $F485 label=f485_128k
 C $F485,3 Call setup_overlay_messages
 @ $F488 label=f488_128k
