@@ -1714,11 +1714,14 @@ B $DAC9,16,4 Bitmap data (masked) 4 bytes x 4
 B $DAD9,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 b $DAE9 [Stage 5] Unidentified data (gap before end screen)
 B $DAE9,1303,8*162,7
-c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
+c $E000 Show the end screen
+D $E000 Runs the end-of-game results screen: clears the playfield, starts the beatbox and this bank's own interrupt-driven music and script engine, then loops driving the script, the current frame-advance handler and drive_chatter until the fire key has been pressed twice -- once to skip ahead to the congratulations script, once more to leave.
+D $E000 The whole bank has already been paged in and copied down to $5C00..$7BFF, so every address here reads $8400 lower at run time ($E000 runs at $5C00). This routine then performs a second, inner relocation of its own: the 768 bytes at $F7EF (bank7_reset_music onwards) are copied to $F300, which is why the calls below target $F300 and $F340 rather than the bank addresses the code was assembled at.
+D $E000 The five bytes at $A16D..$A171 are the engine's state: the script pointer ($A16D/$A16E), the input mask ($A16F), the script frame countdown ($A170) and the keyscan divider ($A171).
 @ $E000 label=show_end_screen
 C $E000,3 Call es_clear
-C $E003,3 source $F7EF
-C $E006,3 in (backbuffer?)
+C $E003,3 Source $F7EF, the reset_music/play_music_48k block
+C $E006,3 Destination of the inner relocation
 C $E009,3 768 bytes
 C $E00C,2 Copy
 N $E00E $A16D = $5CFE [$E0FE here]
@@ -1743,7 +1746,9 @@ C $E03E,3 Call keyscan
 C $E041,4 Loop while key not pressed
 C $E045,4 AND user input with user input mask
 C $E049,2 Jump if masked key remains pressed
-C $E04B,1 Increment mask? Odd - probably not
+C $E04B,1 A is zero here, so this sets it to 1
+C $E04C,3 Mark the first fire press as consumed
+C $E04F,3 Run the script on the next frame
 C $E052,6 Set script data pointer to $5DE3 [$E1E3]
 C $E058,3 Call drive_chatter_stop
 C $E05B,3 Call keyscan
@@ -1954,9 +1959,9 @@ c $F7EF Reset music
 D $F7EF Almost the same as #R$EE5E@main
 @ $F7EF label=bank7_reset_music
 C $F7EF,1 A = 0
-C $F7F0,3 Self modify '...'  -- clear <drum is playing> flag
-C $F7F3,3 Self modify '...'  -- in ?
-C $F7F6,3 Self modify '...'  -- in ?
+C $F7F0,3 Self modify #R$F8A4 -- clear the <drum is playing> flag
+C $F7F3,3 Self modify #R$F897 -- clear the extra delay counter
+C $F7F6,3 Self modify #R$F839 -- clear the <playback started> flag
 C $F7F9,3 Load address of music patterns
 C $F7FC,3 Jump to (np_start_at_hl)
 c $F7FF Setup the next music pattern
@@ -1980,9 +1985,9 @@ C $F817,2 #REGbc = #REGc
 C $F819,3 Load address of base of music data
 C $F81C,1 Combine with offset
 C $F81D,2 A = *HL++ -- load first byte of music data
-C $F81F,3 Self modify R$???? (first byte of pattern)
-C $F822,3 Self modify R$???? (first byte of pattern)
-C $F825,3 Self modify R$???? (addr of second music data byte in pattern)
+C $F81F,3 Self modify #R$F850 (delay reload, first byte of pattern)
+C $F822,3 Self modify #R$F844 (delay counter, first byte of pattern)
+C $F825,3 Self modify #R$F860 (addr of second music data byte in pattern)
 C $F828,1 Return
 @ $F829 label=b7np_restart
 C $F829,4 HL = wordat(HL); HL++
@@ -1990,23 +1995,24 @@ C $F82D,2 Jump to b7np_start_at_hl
 c $F82F Play menu music (48K mode only)
 D $F82F Almost the same as #R$EE9E@main.
 @ $F82F label=b7_play_music_48k
-C $F82F,4 Clear <interrupt flag> at R$????
-C $F833,3 counter?
+C $F82F,4 Clear the <interrupt flag> at #R$F8AA
+C $F833,3 Load the end screen's input mask
 C $F836,1 Set flags
-C $F837,2 Jump to ???? is non-zero
-C $F839,2 Counter, self-modified by #R$F83F below
+C $F837,2 Play nothing more once the player has pressed fire
+C $F839,2 <Playback started> flag, self modified by #R$F83F below
 C $F83B,1 Set flags
-C $F83E,4 Otherwise increment and self modify R$????
-C $F842,2 Jump to R$????
+C $F83C,2 Jump to b7pm_delay_1 if playback is already running
+C $F83E,4 Otherwise mark playback started by self modifying #R$F839 above
+C $F842,2 Jump to b7pm_reset_pattern
 @ $F844 label=b7pm_delay_1
-C $F844,2 Self modified by R$????, cycles 5,4?,3,2,1  (set to first music data byte)
+C $F844,2 Note delay counter. Self modified by #R$F822 above and by #R$F84A, #R$F852, #R$F877 and #R$F89F below
 C $F846,1 Decrement and set flags
 C $F847,3 Jump to b7pm_delay_complete if zero
-C $F84A,3 Self modify 'LD A' @ R$???? above  (store decremented)
+C $F84A,3 Self modify #R$F844 above (store the decremented value)
 C $F84D,3 Jump to b7pm_zero_or_456
 @ $F850 label=b7pm_delay_complete
-C $F850,2 Self modified by R$????  (set to first music data byte - value for when resetting)
-C $F852,3 Self modify 'LD A' @ R$???? above  (reset it)
+C $F850,2 Delay reload value. Self modified by #R$F81F above with the first byte of the pattern
+C $F852,3 Self modify #R$F844 above (reload the delay counter)
 C $F855,3 Self modified below, cycles $F12x .. $F2xx ish  <addr of next music byte>
 N $F858 Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is argument, iii is instrument index)
 @ $F858 label=b7pm_loop
@@ -2015,8 +2021,8 @@ C $F859,1 Temporarily decrement for testing (will undo later)
 C $F85A,3 Jump to pm_continue_pattern if the byte is NOT 1 - the terminating byte of the music data
 C $F85D,3 Call bank7_next_pattern ($F310 when reloc, $F7FF here)
 @ $F860 label=b7pm_reset_pattern
-C $F860,3 Self modified by R$????  (set to address of second music data byte)
-C $F863,3 *$???? = HL  (Resetting <addr of next music byte> above when we loop)
+C $F860,3 Self modified by #R$F825 above with the address of the second music data byte
+C $F863,3 Self modify #R$F855 above, restarting the pattern
 C $F866,3 Loop
 @ $F869 label=b7pm_continue_pattern
 C $F869,1 Advance
@@ -2026,8 +2032,8 @@ C $F86E,4 Jump if music byte < 128
 N $F872 A byte of the form 0b1aaaaiii (1 is delay bit)
 C $F872,2 Isolate delay bit
 C $F874,1 Bank
-C $F875,5 Self modify 'LD A' @ R$????  (setting <delay data byte thing> to 1)
-C $F87A,3 Self modify 'LD A' @ R$???? below
+C $F875,5 Self modify #R$F844 above, setting the note delay counter to 1
+C $F87A,3 Self modify #R$F897 below, flagging the extra delay
 C $F87D,1 Unbank
 N $F87E A byte now of the form 0b0aaaaiii
 @ $F87E label=b7pm_play_inst
@@ -2036,32 +2042,32 @@ C $F87F,2 Extract bottom 3 instrument bits  -- must be the command
 C $F881,2 Jump to pm_zero_or_456 if they're zero
 C $F883,1 Save the instrument
 C $F884,7 Extract the four argument bits
-C $F88B,4 Jump to R$???? if instrument is 1  -- drum 2
-C $F88F,4 Jump to R$???? if instrument is 2  -- drum 1
-C $F893,4 Jump to R$???? if instrument is 3  -- noise
+C $F88B,4 Jump to b7_playdrum_X (#R$F8B9) if instrument is 1 -- drum 2
+C $F88F,4 Jump to b7_playdrum_Y (#R$F8C0) if instrument is 2 -- drum 1
+C $F893,4 Jump to b7_play_noise (#R$F9F3) if instrument is 3 -- noise
 @ $F897 label=b7pm_zero_or_456
-C $F897,2 Self modified by R$???? above, R$???? below  (set to <delay data byte thing>)
+C $F897,2 Extra delay counter. Self modified by #R$F7F3 and #R$F87A above and by #R$F8A3 below
 C $F899,1 Set flags
-C $F89A,2 Jump to pm_start_drums if zero (no delay)
-C $F89C,4 Self modify 'LD A' @ R$????  (decrementing initial delay counter)
-C $F8A0,4 Self modify 'LD A' @ R$???? above
+C $F89A,2 Jump to b7pm_start_drums if zero (no delay)
+C $F89C,4 Self modify #R$F844 above, decrementing the note delay counter
+C $F8A0,4 Self modify #R$F897 above, decrementing the extra delay counter
 @ $F8A4 label=b7pm_start_drums
-C $F8A4,2 Load <drum is playing flag>  -- Self modified by R$????
+C $F8A4,2 <Drum is playing> flag. Self modified by #R$F7F0 above and by #R$F8CA and #R$F8EF below
 C $F8A6,1 Decrement
 C $F8A7,3 Jump to b7pd_bank_go if zero  -- resuming?
 @ $F8AA label=b7pm_wait_for_interrupt
 C $F8AA,5 Loop while waiting for this <interrupt flag> to be set
 C $F8AF,1 Return
 c $F8B0 Interrupt entry point
-D $F8B0 R$???? builds a table at $FD00 containing 257 occurrences of $FE. Address $FEFE contains a JP $???? to here.
+D $F8B0 bank7_setup_interrupts (#R$F7D1) builds a table at $FD00 containing 257 occurrences of $FE, then plants a JP $F3C1 at $FEFE -- $F3C1 being this routine's address once the bank has been relocated.
 @ $F8B0 label=b7_interrupt_entry
 C $F8B0,1 Preserve registers
-C $F8B1,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ R$????
+C $F8B1,5 Set the <interrupt flag> to $FF by self modifying #R$F8AA
 C $F8B6,1 Restore registers
 C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
-D $F8B9 Used by the routine at R$????.
+D $F8B9 Used by #R$F82F.
 R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
@@ -2071,13 +2077,13 @@ C $F8BE,2 Jump to es_playdrum_go
 C $F8C0,3 Load address of drum Y data
 C $F8C3,2 160 sample bytes
 @ $F8C5 label=es_playdrum_go
-C $F8C5,3 Self modify 'LD B' @ R$???? <speed value> to be #REGa as passed in
-C $F8C8,5 Self modify 'LD A' @ R$???? <drum is playing flag> to be 1
+C $F8C5,3 Self modify #R$F8D0 below, setting the <speed value> to #REGa as passed in
+C $F8C8,5 Self modify #R$F8A4 above, setting the <drum is playing> flag to 1
 C $F8CD,2 Jump to b7pd_go
 @ $F8CF label=b7pd_bank_go
 C $F8CF,1 Bank
 @ $F8D0 label=b7pd_go
-C $F8D0,2 <speed value> iterations -- Self modified by R$????
+C $F8D0,2 <speed value> iterations. Self modified by #R$F8C5 above
 @ $F8D2 label=b7pd_loop
 C $F8D2,2 Set speaker flag
 C $F8D4,1 Delay
@@ -2090,19 +2096,74 @@ C $F8DF,2 Loop to pd_loop while #REGb
 C $F8E1,1 Move to next sample byte
 C $F8E2,1 Decrement sample bytes remaining
 C $F8E3,2 Jump to pd_end_of_sample if no bytes remain
-C $F8E5,3 Read A from 'LD A' @ R$????  -- <interrupt flag>
+C $F8E5,3 Read A from the <interrupt flag> at #R$F8AA
 C $F8E8,1 Set flags
 C $F8E9,3 Loop to pd_go if clear
 C $F8EC,1 Otherwise unbank
 C $F8ED,1 Return
 @ $F8EE label=b7pd_end_of_sample
-C $F8EE,4 Self modify 'LD A' @ R$???? <drum is playing flag> to be 0 -- zeroed when playing stops
+C $F8EE,4 Self modify #R$F8A4 above, clearing the <drum is playing> flag now that the sample has finished
 C $F8F2,3 Jump to pm_wait_for_interrupt
-b $F8F5 Data block at F8F5
+b $F8F5 Drum 2 sample
+D $F8F5 94 bytes of 1-bit PCM, played by b7_playdrum_X (#R$F8B9). The player rotates each byte in place with RLC (HL), so a sample interrupted part way through is left rotated until eight further rotations bring it back round.
 @ $F8F5 label=b7_drum2
-B $F8F5,94,8*11,6 Drum ? sample/data
-B $F953,162,2,8 }?
-B $F9F5,248,8
+B $F8F5,94,8*11,6 Drum 2 sample
+b $F953 Drum 1 sample
+D $F953 160 bytes of 1-bit PCM, played by b7_playdrum_Y (#R$F8C0) and rotated in place the same way as #R$F8F5.
+@ $F953 label=b7_drum1
+B $F953,160,2,8*19,6 Drum 1 sample
+c $F9F3 White noise generator
+D $F9F3 Bank 7's own copy of #R$F0C6@main, byte for byte identical to it apart from the two references to the <interrupt flag>, which point at this bank's copy at #R$F8AA rather than the main bank's. Reached as instrument 3 from #R$F893.
+D $F9F3 The disassembler took these 56 bytes for data; they are code.
+R $F9F3 I:A Duration (3 or 9 in practice)
+@ $F9F3 label=b7_play_noise
+C $F9F3,1 Set #REGe to duration counter
+@ $F9F4 label=b7n_outer_loop
+C $F9F4,2 Set #REGd to inner counter 50
+@ $F9F6 label=b7n_loop
+C $F9F6,3 Point at rng_seed
+C $F9F9,3 Increment first byte of rng_seed by 3
+C $F9FC,1 Load it into #REGb
+C $F9FD,1 Advance to second byte of rng_seed
+N $F9FE Note that this is a different order of operations than in rng/#R$961B@main.
+C $F9FE,4 Subtract 141 from second byte of rng_seed
+C $FA02,1 Add first and second rng_seed bytes together
+C $FA03,1 Advance to third byte of seed
+C $FA04,1 Rotate #REGa left by 1
+C $FA05,2 Rotate third byte of seed right by 1
+C $FA07,1 Add it to #REGa
+C $FA08,1 Write it back
+C $FA09,2 Take a tap off at bit 4
+C $FA0B,2 Jump to b7n_continue if zero
+@ $FA0D label=b7n_make_noise
+C $FA0D,4 Delay for (24 - #REGe) iterations
+@ $FA11 label=b7n_delay_loop_1
+C $FA11,2 Delay
+C $FA13,4 Set EAR + MIC bits
+C $FA17,1 Delay for #REGe iterations
+@ $FA18 label=b7n_delay_loop_2
+C $FA18,2 Delay
+C $FA1A,3 Clear EAR + MIC bits
+@ $FA1D label=b7n_continue
+C $FA1D,1 Decrement inner counter
+C $FA1E,2 Jump to b7n_loop if non-zero
+N $FA20 The same dead interrupt check the main bank's copy carries: AND A clears carry, so the RET C below is never taken.
+C $FA20,3 Read A from the <interrupt flag> at #R$F8AA
+C $FA23,1 Set flags
+C $FA24,1 Bug: Carry is cleared by AND A so this makes no sense
+C $FA25,1 Decrement duration counter
+C $FA26,2 Jump to b7n_outer_loop if non-zero
+C $FA28,3 Exit via b7pm_wait_for_interrupt (#R$F8AA)
+b $FA2B End screen music patterns
+D $FA2B Ten (repetition count, data offset) pairs terminated by $FF, then a restart pointer. #R$F7EF points the engine at this table and #R$F7FF walks it; each offset indexes #R$FA42. The restart pointer holds $F54E, which is #R$FA3D once the bank has been relocated -- the last pair -- so the tune plays through once and then repeats its final pattern.
+@ $FA2B label=b7_music_patterns
+B $FA2B,20,2,8*2,2 Repetition count, data offset
+B $FA3F,1,1 End of patterns
+W $FA40,2,2 Restart at #R$FA3D
+b $FA42 End screen music data
+D $FA42 The byte streams the patterns index into, in the same 0bdaaaaiii form the in-game engine uses: bit 7 is an extra delay flag, bits 6-3 are the instrument argument and bits 2-0 the instrument (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise). A byte of 1 ends a pattern. The first byte of each stream is the note delay, not a note.
+@ $FA42 label=b7_music_data
+B $FA42,171,3,8
 B $FAED,3,3 }
 b $FAF0 Bank 7 tail (unidentified)
 B $FAF0,1296,8
