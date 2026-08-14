@@ -5236,7 +5236,7 @@ C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $9CC8,1 Merge carry into LSB of speed [Wrong end? RRA intended?]
 C $9CC9,4 Divide by four
 C $9CCD,1 [Needless move]
-C $9CCE,2 Add carry in, perhaps for rounding?
+C $9CCE,2 Add carry in -- the bit shifted out by the second SRL, which rounds the divide by four to nearest
 C $9CD0,1 BCD correction
 C $9CD1,3 Zero high part of score increment
 C $9CD4,2 Exit via increment_score
@@ -8205,12 +8205,12 @@ N $B32A Crashed.
 C $B32A,3 cornering = A (which is non-zero here)
 C $B32D,1 Preserve speed
 C $B32E,3 BC = <self modified>  -- set when crashed by #R$A4F2
-C $B331,2 Speed minus whatever BC holds?
+C $B331,2 Compare speed against the crash exit threshold
 C $B333,1 Restore speed
-C $B334,2 Jump to #R$B349 if speed < ?
+C $B334,2 Jump to #R$B349 if speed is below the threshold
 @ $B336 label=ahc_speed_greater
 C $B336,8 Divide speed by four (#REGd becomes zero since game max speed is 511)
-C $B33E,2 A |= 3  -- perhaps rounding up
+C $B33E,2 A |= 3  -- the decay is never less than 3, so it cannot stall at low speed
 C $B340,1 E = A
 C $B341,2 HL -= DE  -- overall expr is  new_speed = (speed - ((speed / 4) | 3))
 C $B343,2 Jump to #R$B349 if equal
@@ -8521,17 +8521,17 @@ C $B5AD,4 A = C (0/1/2, turn speed argument) + B (car wobble argument) + <self m
 C $B5B1,6 If A >= 9 A -= 9  -- clamping
 @ $B5B7 label=dc_draw_middle
 C $B5B7,13 Point #REGhl at hero_car_parts[A] (rows/entries are 20 bytes wide)
-C $B5C4,1 Preserve car vertical position (only in D - anything in E?)
+C $B5C4,1 Preserve car vertical position. Only #REGd is wanted, but the Z80 has no 8-bit push, so #REGe rides along. The restored #REGe is overwritten with 104 at $B5FE before anything reads it
 C $B5C5,7 A = D - car_y - hero_car_part.y  [car_y is the shift value used when a perp is caught] -- D here is (117 - car jump offset) from earlier
 C $B5CC,1 Preserve #REGa
-C $B5CD,5 D = (A & $F) | $F0  -- sign extending?
+C $B5CD,5 D = (A & $F) | $F0  -- high byte of the back buffer plot address: the row within the character cell, in page $F0
 C $B5D2,1 Restore #REGa
-C $B5D3,6 E = (A & $70) * 2 + 13  -- computes horizontal position somehow
+C $B5D3,6 E = (A & $70) * 2 + 13  -- low byte of the same address: the character row scaled by the 32-byte row stride, plus column 13, where the car is drawn
 C $B5D9,1 Advance to hero_car_part.rows
 C $B5DA,1 Read rows
 C $B5DB,1 Advance to hero_car_part.address
 C $B5DC,2 Read low byte of address
-C $B5DE,1 Preserve HL  [saving halfway through the address seems weird]
+C $B5DE,1 Preserve HL. The LD H,(HL) below reads through HL and destroys it, so this is the last moment it is still a table pointer. It addresses the final byte of this 4-byte entry, so the INC after the POP lands on the next entry
 C $B5DF,1 Preserve #REGde [back buffer plot address]
 C $B5E0,1 Read high byte of address
 C $B5E1,1 #REGhl now holds address of bitmap data
@@ -8550,7 +8550,7 @@ C $B5F8,3 Call plot_sprite_flipped
 @ $B5FB label=dc_cont
 C $B5FB,1 Restore HL [points at second byte of hero_car_part address field]
 C $B5FC,1 Restore DE [car vertical position]
-C $B5FD,1 Advance to ?
+C $B5FD,1 Advance to the next hero_car_part entry
 N $B5FE Draw the windscreen
 C $B5FE,2 Set (horz pos in px) to 104
 C $B600,2 Set (byte width) to 5
@@ -8679,10 +8679,10 @@ R $B69E I:A Frame index into the table at #R$CFB2
 R $B69E I:B' Non-zero to draw the frame flipped horizontally
 R $B69E I:C' Horizontal start offset within the sprite
 @ $B69E label=draw_crash
-C $B69E,2 E = 128  -- horz position/offset?
-C $B6A0,6 Turn index into offset into unknown_cfb2 (BC = A * 3)
-C $B6A6,4 HL = #R$CFB2 + BC  -> unknown_cfb2[index]  -- Point #REGhl at element
-C $B6AA,5 D = *HL++ + 121  -- presumably the vertical position/offset
+C $B69E,2 E = 128  -- base horizontal position; the frame's own offset is added at #R$B6AF
+C $B6A0,6 Turn index into offset into car_frames (BC = A * 3)
+C $B6A6,4 HL = #R$CFB2 + BC  -> car_frames[index]  -- Point #REGhl at element
+C $B6AA,5 D = *HL++ + 121  -- the frame's vertical position, biased by 121 to give a screen row
 C $B6AF,4 E += *HL++ -- add to horz position/offset
 C $B6B3,1 Load offset into car_adornments
 C $B6B4,4 Point #REGhl at (car_adornments + BC)
@@ -8808,7 +8808,7 @@ C $B77C,3 Multiply by 8  -- length of jump table sequences
 C $B77F,5 Add to IX
 C $B784,2 HL = $EFxx
 C $B786,1 Bank
-C $B787,2 DE' = $00xx  -- unsure why
+C $B787,2 DE' = $00xx  -- the caller passes the row stride in E' alone, so D' must be cleared before the ADD HL,DE at #R$B795 steps the source on by one row
 C $B789,2 goto pmsf_start
 @ $B78B label=pmsf_reset_next
 @ $B78D label=pmsf_next
@@ -8983,7 +8983,7 @@ D $B8D2 The horizon level moves by the accumulated incline step, then the accumu
 D $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=update_road_level
 C $B8D2,4 B = horizon_y_accum  -- set by scroll_horizon
-C $B8D6,2 C = 0   -- clear a flag perhaps
+C $B8D6,2 C = 0   -- records the sign of the incline, so that #R$B8E5 can restore it after the arithmetic below
 C $B8D8,3 Load incline ($FD..$03 = climbing..descending)
 C $B8DB,1 Set flags
 C $B8DC,3 Jump if road descending (positive value)
@@ -10654,7 +10654,7 @@ C $C6A8,2 *DE = A | *HL
 C $C6AA,1 Unbank
 @ $C6AB label=dr_c6ab
 C $C6AB,1 L--
-C $C6AC,1 C--  -- possible loop counter
+C $C6AC,1 C--  -- road row counter
 C $C6AD,3 Jump to <self modified> if non-zero
 C $C6B0,1 Swap
 C $C6B1,1 B = A
@@ -10666,12 +10666,12 @@ C $C6B6,3 Write it back
 C $C6B9,3 Jump if non-zero
 @ $C6BC label=dr_stripe_perhaps_off
 C $C6BC,2 Load <self modified> fill pattern
-C $C6BE,2 Exclusive or with $55  -- toggling the stripe fill pattern?
+C $C6BE,2 Exclusive or with $55  -- flips the chequerboard fill pattern to its opposite phase
 C $C6C0,3 Self modify above
-C $C6C3,1 Keep a copy of the stripe fill pattern  -- follow this through
+C $C6C3,1 Keep a copy of the stripe fill pattern for the rows drawn below
 N $C6C4 This causes the road edge stripes.
 C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651  -- switch between adjacent edge graphics (that are 32 bytes each)
-C $C6CC,1 ?advance past a mask byte (guess)?
+C $C6CC,1 The right hand edge reads the same 4-byte record one byte along: its solid byte comes first and its masked pair second, mirroring the left hand edge
 C $C6CD,3 Self modify 'ADD A,x' @ #R$C698
 C $C6D0,8 Toggle <self modified> bits of 'ADD A,x' @ #R$C677
 @ $C6D8 label=dr_stripe_perhaps_on
@@ -10691,7 +10691,7 @@ C $C6F0,2 Jump if zero
 C $C6F2,1 A = C
 C $C6F3,3 Self modify 'ADD A,x' @ #R$C677
 @ $C6F6 label=dr_c6f6
-C $C6F6,8 Increment x in 'ADD A,x' @ #R$C651 by 64  -- next road edge graphic?
+C $C6F6,8 Increment x in 'ADD A,x' @ #R$C651 by 64  -- steps on to the next pair of edge variants, since #R$C6C7 toggles between the two members of a pair
 C $C6FE,5 Self modify 'LD A,x' @ #R$C6D8 to be 5
 N $C703 Sampled IY = $E301..$E315
 @ $C703 label=dr_edge_width_handled
@@ -11864,8 +11864,8 @@ W $CFAA,2,2 -> Turbo smoke plume data frame 3
 W $CFAC,4,2
 W $CFB0,2,2 -> Turbo smoke plume data frame 4
 b $CFB2 Car graphic anim/adornment table
-D $CFB2 TBD Groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into car_adornments.
-@ $CFB2 label=unknown_cfb2
+D $CFB2 Groups of 3 bytes ref'd by #R$B6A6, one per animation frame: vertical position (biased by 121 to give a screen row), horizontal offset (added to a base of 128) and byte offset into car_adornments.
+@ $CFB2 label=car_frames
 B $CFB2,3,3 Cherry light
 B $CFB5,3,3 Flashing cherry light
 B $CFB8,3,3 Cherry light
