@@ -301,6 +301,7 @@ D $5C00 #HTML[#CALL(graphic($5C00,80,24,0,1))]
 @ $5C00 label=bitmap_horizon
 B $5C00,240,8 Horizon backdrop (80x24). Non-masked, inverted, bitmap data. Varies per stage.
 b $5CF0 [Stage 1] Per-stage data
+D $5CF0 Every stage lays out the same descriptor $F0 bytes into its data block, so once #R$8014 has loaded a stage to $5C00 the game reads these fields at fixed addresses -- #R$BD78 taking the ground colour from $5CF4 is the pattern.
 @ $5CF0 label=addrof_perp_mugshot_attributes
 W $5CF0,2,2 Address of Ralph's mugshot attributes
 @ $5CF2 label=addrof_perp_mugshot_bitmap
@@ -386,6 +387,7 @@ W $5D35,2,2 -> Loop section, left-side objects @ #R$6294
 @ $5D37 ssub=DEFW map_loop_hazards - 1
 W $5D37,2,2 -> Loop section, hazards @ #R$6277
 b $5D39 [Stage 1] Nancy's perp description
+D $5D39 A chatter block: a speaker byte, then one address word per line of speech, then $FE to pause and a final word naming the block to run next -- here the three-way acknowledgement at #R$98BD. $FF ends a block instead. Each stage supplies its own, reached through the per-stage descriptor at #R$5CF0.
 @ $5D39 label=perp_description
 B $5D39,1,1 Nancy ($01)
 W $5D3A,2,2 Points at "THIS IS NANCY..."
@@ -403,28 +405,29 @@ T $5D95,42,41:n1 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
 @ $5DBF label=perp_description_4
 T $5DBF,46,45:n1 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
 b $5DED [Stage 1] Arrest messages
+D $5DED An overlay message list for #R$8E7E: a leading delay byte, then one block per line made of a delay, a character style (2 = single height, 3 = double), an attribute, a back buffer address and an attribute address, followed by the text itself with bit 7 set on the last character. The text is drawn black on black and revealed by the attribute transition, which is why every attribute byte here is zero. A delay followed by $00 ends the list.
 @ $5DED label=arrest_messages
-B $5DED,1,1 Frame delay until first message?
-B $5DEE,1,1 Frame delay until next message?
-B $5DEF,1,1 Flags (?)
+B $5DED,1,1 Frame delay before the first message
+B $5DEE,1,1 Frame delay until next message
+B $5DEF,1,1 Character style (single height)
 B $5DF0,1,1 Attribute (black)
 W $5DF1,2,2 Back buffer address
 W $5DF3,2,2 Attribute address
 T $5DF5,27,26:n1 "OK! YOU ARE UNDER ARREST ON"
-B $5E10,1,1 Frame delay until next message?
-B $5E11,1,1 Flags (?)
+B $5E10,1,1 Frame delay until next message
+B $5E11,1,1 Character style (single height)
 B $5E12,1,1 Attribute (black)
 W $5E13,2,2 Back buffer address
 W $5E15,2,2 Attribute address
 T $5E17,26,25:n1 "SUSPICION OF FIRST DEGREE "
-B $5E31,1,1 Frame delay until next message?
-B $5E32,1,1 Flags (?)
+B $5E31,1,1 Frame delay until next message
+B $5E32,1,1 Character style (single height)
 B $5E33,1,1 Attribute (black)
 W $5E34,2,2 Back buffer address
 W $5E36,2,2 Attribute address
 T $5E38,6,5:n1 "MURDER"
-B $5E3E,1,1 Frame delay until next message?
-B $5E3F,1,1 End marker?
+B $5E3E,1,1 Frame delay until next message
+B $5E3F,1,1 End of list
 b $5E40 [Stage 1] Graphics definitions
 D $5E40 All are stored inverted except where noted.
 D $5E40 Hittable hazards: tumbleweed and barrier.
@@ -2396,6 +2399,7 @@ W $81CE,2,2 Screen position (88,128)
 W $81D0,2,2 Screen attribute position (11,16)
 T $81D2,11,10:n1 "PRESS  GEAR"
 b $81DD [Messages] Start of stage chatter
+D $81DD Chatter blocks in the same format as #R$98A9: $FC picks at random from the three block addresses that follow it, and each of those blocks is a speaker byte, a string address and $FF to stop.
 @ $81DD label=start_stage_chatter
 B $81DD,1,1 Three-way random choice ($FC)
 W $81DE,2,2 -> Tony: "GIDDY UP BOY!" <STOP>
@@ -4551,7 +4555,14 @@ C $955E,2 Add it to #REGix to complete the jump target
 C $9560,2 Point #REGde at table of flipped bytes at $EF00
 C $9562,1 Bank
 E $9542 FALLTHROUGH
-c $9565 Routine at 9565
+c $9565 Plot a horizontally flipped sprite, even byte widths
+D $9565 The even-width half of #R$9542, reached by falling through it; nothing else calls it. Each row is read as byte pairs through #REGsp, bit reversed through the flip table and stored right to left, then #REGhl steps back a row and #REGde advances the bitmap pointer by the stride. #R$9553 has already picked the entry point into the unrolled table at #R$9575, skipping (4 - #REGa) of its five 9-byte plot operations so that exactly the sprite's width is written. The caller's #REGsp is restored from the operand self modified at #R$954B.
+R $9565 I:IX Entry point into the plot operation table at #R$9575
+R $9565 I:DE Flip table of bit-reversed bytes, high byte only
+R $9565 I:HL Address in back buffer to plot at, already advanced to the end of the first row
+R $9565 I:B' Height in rows
+R $9565 I:DE' Stride of bitmap data in bytes
+R $9565 I:HL' Address of bitmap data
 @ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
@@ -4703,6 +4714,7 @@ T $9857,34,33:n1 "ONE MORE TRY FOR BEING A GOOD BOY!"
 T $9879,34,33:n1 "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 T $989B,14,13:n1 "SEE YOU LATER."
 b $98A9 In-game chatter structures
+D $98A9 Each block starts with a speaker byte -- 0 Pilot, 1 Nancy, 2 Raymond, 3 Tony -- followed by an address word per line of speech. Three command bytes stand in for a string address: $FC picks the next block at random from the address words that follow it, $FE pauses and then runs the block named by the word after it, and $FF ends the block.
 @ $98A9 label=pilot_turn_left_chatter
 B $98A9,1,1 Pilot ($00)
 W $98AA,2,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
@@ -12468,6 +12480,7 @@ B $E1E5,1,1 Flags
 B $E1E6,1,1 Height (pixels)
 W $E1E7,2,2 Bitmap
 b $E1E9 Referenced by graphic entry 1 and 10
+D $E1E9 A depth set: the address of a level-of-detail table (#R$E1FF here) followed by ten (depth, offset) pairs running from nearest to furthest. The offset is a byte offset into that table, which holds 7-byte entries of width, flags, height and the two bitmap addresses -- so $00, $07 and $0E select the first, second and third level of detail.
 @ $E1E9 label=tunnellight
 W $E1E9,2,2
 B $E1EB,20,2
@@ -13508,6 +13521,7 @@ B $F0FE,16,2 Patterns (repetitions, data offset)
 B $F10E,1,1 End marker
 W $F10F,2,2 Pattern restart address
 b $F111 Music data
+D $F111 The byte stream #R$EE9E plays, one pattern after another. Each byte is 0bdaaaaiii: bits 0..2 select the instrument, bits 3..6 are its argument and bit 7 asks for one tick of extra delay. A byte of 1 ends the pattern. #R$EE78 finds a pattern by adding the offset held in #R$F0FE to this address.
 @ $F111 label=music_data
 B $F111,41,8*5,1 Pattern data A
 B $F13A,3,3 Pattern data B
