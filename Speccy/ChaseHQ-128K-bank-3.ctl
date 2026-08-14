@@ -165,7 +165,7 @@ C $C217,6 $40 is the "blank" marker -> store as a full stop
 C $C22A,1 Store the final character into the row
 C $C22F,2 $C9 = RET opcode
 C $C231,3 Patch $C2F2 to RET, ending the entry loop in #R$C06E
-C $C234,3 Common routine outside this bank (confirm sound?)
+C $C234,3 Wait for the keyboard to clear (#R$ED0B@main)
 C $C23B,3 Run one more entry frame (see #R$C155)
 N $C23E Redraw the cursor cells one final time ($C23E-$C251), mirroring $C172-$C18D above.
 C $C255,3 See #R$F7D6, called with A=2
@@ -444,8 +444,8 @@ C $C717,3 ($C9 = constant velocity)
 C $C71A,1 ($CA = decelerate X, via #R$D272@bank1)
 C $C71E,1 ($CB = decelerate Y)
 C $C722,1 ($CC = accelerate X)
-C $C726,1 ($CD = ? -- accelerate/decelerate variant)
-C $C72A,1 ($CE = ? -- accelerate/decelerate variant)
+C $C726,1 ($CD = accelerate X, variant c -- positive speed, counting up)
+C $C72A,1 ($CE = accelerate X, variant b -- positive speed, counting down)
 C $C72E,1 ($CF = "wait N frames": falls through to the
 C $C72F,2 countdown decrement below)
 @ $C731 label=oss_countdown
@@ -523,7 +523,7 @@ C $C896,1 range actually only needs $5800-$59FF -- treat as
 C $C897,3 a plain memset)
 C $C89C,3 ...clear the bitmap $4800-$57FF (leaving $4000-
 C $C89F,3 $47FF, the top screen third, untouched here)
-N $C8A9 Clear the bitmap/attributes (#R$C890) then set the border attribute rows ($5900-$59FF) to a fixed pattern: black border rows top/bottom (2 bytes each) sandwiching 28 rows of attribute $45 (flashing? -- bit 7 set, paper/ink from bits 0-5) per attribute-cell column, repeated across all 16 columns.
+N $C8A9 Clear the bitmap/attributes (#R$C890) then set the border attribute rows ($5900-$59FF) to a fixed pattern: black border rows top/bottom (2 bytes each) sandwiching 28 rows of attribute $45 (BRIGHT cyan on black: bit 6 set, ink 5, paper 0) per attribute-cell column, repeated across all 16 columns.
 @ $C8A9 label=clear_and_fill_border_attrs
 C $C8AF,2 16 columns
 C $C8B2,1 2 black rows

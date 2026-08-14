@@ -75,9 +75,9 @@ T $C212,26,25:n1 "SUSPICION OF SELLING DRUGS"
 B $C22C,1,1 Frame delay until next message
 B $C22D,1,1 Stop
 b $C22E [Stage 3] Hittable hazards
-B $C22E,1,1 ?id
+B $C22E,1,1 Collision width
 W $C22F,2,2 [$D64F] Address of LODs
-B $C231,1,1 ?id
+B $C231,1,1 Collision width
 W $C232,2,2 [$D6BF] Address of LODs
 b $C234 [Stage 3] Object graphic definitions (right)
 N $C234 Graphic definition for object 1 - TUNNEL_LIGHT
@@ -1717,9 +1717,9 @@ T $E1FF,23,22:n1 "SUSPICION OF KIDNAPPING"
 B $E216,1,1 Frame delay until next message
 B $E217,1,1 Stop
 b $E218 [Stage 4] Hittable hazards
-B $E218,1,1 ?id
+B $E218,1,1 Collision width
 W $E219,2,2 [$F4D8] Address of LODs
-B $E21B,1,1 ?id
+B $E21B,1,1 Collision width
 W $E21C,2,2 [$F615] Address of LODs
 b $E21E [Stage 4] Object graphic definitions (right)
 N $E21E Graphic definition for object 1 - TUNNEL_LIGHT
@@ -2090,7 +2090,7 @@ B $E470,1,1 3 Lanes L            [|||]  {81} for 8 units
 B $E471,1,1
 B $E472,1,1 Tunnel start                {45} for 102 units
 B $E473,1,1
-B $E474,1,1 Tunnel cont/end?            {59} for 2 units
+B $E474,1,1 Tunnel exit                 {59} for 2 units
 B $E475,1,1
 B $E476,1,1 3 Lanes L            [|||]  {81} for 18 units
 B $E477,1,1
@@ -2174,7 +2174,7 @@ B $E4F0,1,1 3 Lanes L            [|||]  {81} for 20 units
 B $E4F1,1,1
 B $E4F2,1,1 Tunnel start                {45} for 52 units
 B $E4F3,1,1
-B $E4F4,1,1 Tunnel cont/end?            {59} for 2 units
+B $E4F4,1,1 Tunnel exit                 {59} for 2 units
 B $E4F5,1,1
 B $E4F6,1,1 3 Lanes L            [|||]  {81} for 10 units
 B $E4F7,1,1

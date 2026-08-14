@@ -82,9 +82,9 @@ B $C23E,1,1 Frame delay until next message
 B $C23F,1,1 Stop
 b $C240 [Stage 1] Hittable hazards
 @ $C240 label=stage1_hittable_object_defs
-B $C240,1,1 ?id
+B $C240,1,1 Collision width
 W $C241,2,2 [$D182] Address of LODs
-B $C243,1,1 ?id
+B $C243,1,1 Collision width
 W $C244,2,2 [$D1F2] Address of LODs
 b $C246 [Stage 1] Object graphic definitions (right)
 N $C246 Graphic definition for object 1 - TUNNEL_LIGHT
@@ -810,7 +810,7 @@ B $C5A9,1,1 3 Lanes L            [|||]  {81} for 12 units
 B $C5AA,1,1
 B $C5AB,1,1 Tunnel start                {45} for 102 units
 B $C5AC,1,1
-B $C5AD,1,1 Tunnel cont/end?            {59} for 2 units
+B $C5AD,1,1 Tunnel exit                 {59} for 2 units
 B $C5AE,1,1
 B $C5AF,1,1 3 Lanes L            [|||]  {81} for 18 units
 B $C5B0,1,1
@@ -1951,9 +1951,9 @@ T $E207,27,26:n1 "SUSPICION OF ARMED ROBBERY."
 B $E222,1,1 Frame delay until next message
 B $E223,1,1 Stop
 b $E224 [Stage 2] Hittable hazards
-B $E224,1,1 ?id
+B $E224,1,1 Collision width
 W $E225,2,2 [$FA0F] Address of LODs
-B $E227,1,1 ?id
+B $E227,1,1 Collision width
 W $E228,2,2 [$FA0F] Address of LODs
 b $E22A [Stage 2] Object graphic definitions (right)
 N $E22A Graphic definition for object 1 - TUNNEL_LIGHT
@@ -2532,7 +2532,7 @@ B $E565,1,1 3 Lanes L            [|||]  {81} for 8 units
 B $E566,1,1
 B $E567,1,1 Tunnel start                {45} for 44 units
 B $E568,1,1
-B $E569,1,1 Tunnel cont/end?            {59} for 2 units
+B $E569,1,1 Tunnel exit                 {59} for 2 units
 B $E56A,1,1
 B $E56B,1,1 3 Lanes L            [|||]  {81} for 40 units
 B $E56C,1,1
@@ -2655,7 +2655,7 @@ B $E633,1,1 3 Lanes L            [|||]  {81} for 10 units
 B $E634,1,1
 B $E635,1,1 Tunnel start                {45} for 122 units
 B $E636,1,1
-B $E637,1,1 Tunnel cont/end?            {59} for 2 units
+B $E637,1,1 Tunnel exit                 {59} for 2 units
 B $E638,1,1
 B $E639,1,1 3 Lanes L            [|||]  {81} for 10 units
 B $E63A,1,1

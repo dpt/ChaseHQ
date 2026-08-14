@@ -81,9 +81,9 @@ T $C231,6,5:n1 "MURDER"
 B $C237,1,1 Frame delay until next message
 B $C238,1,1 Stop
 b $C239 [Stage 5] Hittable hazards
-B $C239,1,1 ?id
+B $C239,1,1 Collision width
 W $C23A,2,2 [$D620] Address of LODs
-B $C23C,1,1 ?id
+B $C23C,1,1 Collision width
 W $C23D,2,2 [$D620] Address of LODs
 b $C23F [Stage 5] Object graphic definitions (right)
 N $C23F Graphic definition for object 1 - TUNNEL_LIGHT
@@ -437,7 +437,7 @@ B $C47A,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
 B $C47B,1,1
 B $C47C,1,1 Tunnel start                {45} for 20 units
 B $C47D,1,1
-B $C47E,1,1 Tunnel cont/end?            {59} for 2 units
+B $C47E,1,1 Tunnel exit                 {59} for 2 units
 B $C47F,1,1
 B $C480,1,1 3 Lanes L            [|||]  {81} for 4 units
 B $C481,1,1
@@ -553,7 +553,7 @@ B $C542,1,1 3 Lanes L            [|||]  {81} for 124 units
 B $C543,1,1
 B $C544,1,1 Tunnel start                {45} for 20 units
 B $C545,1,1
-B $C546,1,1 Tunnel cont/end?            {59} for 2 units
+B $C546,1,1 Tunnel exit                 {59} for 2 units
 B $C547,1,1
 B $C548,1,1 3 Lanes L            [|||]  {81} for 2 units
 B $C549,1,1
@@ -659,7 +659,7 @@ B $C618,1,1 3 Lanes L            [|||]  {81} for 12 units
 B $C619,1,1
 B $C61A,1,1 Tunnel start                {45} for 102 units
 B $C61B,1,1
-B $C61C,1,1 Tunnel cont/end?            {59} for 2 units
+B $C61C,1,1 Tunnel exit                 {59} for 2 units
 B $C61D,1,1
 B $C61E,1,1 3 Lanes L            [|||]  {81} for 18 units
 B $C61F,1,1
@@ -1799,7 +1799,7 @@ c $E20A Command interpreter (confirmed live by trace-end-screen.log: reads scrip
 @ $E20A label=run_script
 C $E20A,3 Load script pointer
 @ $E20D label=rs_loop
-C $E20D,1 Load a command? byte
+C $E20D,1 Load the next script command
 C $E20E,1 Advance script program counter
 C $E20F,4 If command == 1 goto es_clear_then_draw_frame
 C $E213,4 If command == 2 goto es_draw_frame_common
@@ -1852,14 +1852,18 @@ D $E3B7 The entry point the HANDSHAKE script command dispatches to ($5FB7 in the
 @ $E3B7 label=es_handler_handshake
 C $E3B7,3 Call es_handler_glyph_fade_b [#R$E472]
 @ $E3BA label=es_handler_handshake_advance
-c $E42E Glyph-plot routine (draws a character/digit into the (backbuffer/screen?); called via the interpreter's self-modified $E030 dispatch)
+c $E42E Sweep the playfield attributes toward their target colours
+D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
+R $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not
+R $E42E masked back into their 3-bit fields, so a field that reaches its target
+R $E42E exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
 C $E433,1 Return when bit set
 C $E434,3 Middle band of attributes
 C $E437,3 Backbuffer
-C $E43A,2 Testing BRIGHT bit?
+C $E43A,4 Leave the cell alone if BRIGHT is set
 @ $E452 label=e452
 c $E46D Fade the glyph attribute band out
 D $E46D Two thin wrappers over one tail: #R$E46D gates on $5C6D and #R$E472 on $5C6C. The tail rotates the gate byte and returns unless the bit rotated out was set, so each gate runs the fade on alternate calls. When it does run it sweeps the same 512 attribute cells es_attribute_fade_in covers, taking one off each cell's ink and one unit off its paper, both stopping at zero.
@@ -1889,7 +1893,7 @@ C $E4B4,16 Scanline increment
 C $E4C4,1 Restore counter
 C $E4C5,2 Loop while counter
 C $E4C7,1 Restore destination
-C $E4C8,9 Form attribute address?
+C $E4C8,9 Turn the destination's high byte into the matching backbuffer attribute address
 C $E4D1,2 8 rows of attributes
 @ $E4D3 label=e4d3_loop
 C $E4D3,5 Copy 13 attribute bytes
@@ -2054,7 +2058,7 @@ C $F8A0,4 Self modify #R$F897 above, decrementing the extra delay counter
 @ $F8A4 label=b7pm_start_drums
 C $F8A4,2 <Drum is playing> flag. Self modified by #R$F7F0 above and by #R$F8CA and #R$F8EF below
 C $F8A6,1 Decrement
-C $F8A7,3 Jump to b7pd_bank_go if zero  -- resuming?
+C $F8A7,3 Jump to b7pd_bank_go if a sample was interrupted part way through, resuming it
 @ $F8AA label=b7pm_wait_for_interrupt
 C $F8AA,5 Loop while waiting for this <interrupt flag> to be set
 C $F8AF,1 Return
