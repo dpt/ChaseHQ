@@ -5,10 +5,20 @@
 [Page:Changelog]
 SectionType=BulletPoints
 
-[Changelog:20240307]
+[Changelog:20260814]
 Fourth release
 
-- TBD
+- Nearly all hedged/TBD comments resolved; the road drawing code is now documented too
+
+- All five 128K banks fully labelled and cross-referenced
+
+- Stage, title and end-screen graphics given their own index pages
+
+- $E300-$EDFF memory map rewritten to match the C port's state layout
+
+- Added a scaffold disassembly for the Megatape 23 demo build
+
+- Added a road map text format and compiler for editing stage data by hand
 
 [Changelog:20231102]
 Third release
