@@ -163,11 +163,8 @@
 > $4000 ; TODO
 > $4000 ; ----
 > $4000 ; - Decode all stages' level data (see CHQStage.py)
-> $4000 ; - Decode the music data at $F111
 > $4000 ; - Disassemble the Chase HQ demo version
 > $4000 ; - Is the $8008 area used at all?
-> $4000 ; - Stretchy streetlamps etc. encoding
-> $4000 ; - $E34B block is what?
 > $4000 ; - Stripy tunnel fills
 > $4000 ;
 @ $4000 org
@@ -1150,27 +1147,27 @@ N $6EB5 Bitmap: Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL(graphic($6EB5,16,7,1,1))]
 @ $6EB5 label=bitmap_barrier_4s
 B $6EB5,28,4 Masked bitmap data
+N $6ED1 A stretchy object descriptor: one (height type, part address) pair per segment, drawn bottom to top, ending at a height type of 1. The height type tells #R$9174 how tall to draw that segment: 2 takes the height from the bitmap itself (its width in bytes, less 2) and never scales it, while 3 to 10 take a fraction of the perspective scale for the object's current depth - 150, 50, 112.5, 37.5, 75, 25, 100 and 200 per cent respectively. Each part address points at a stretchy graphic part: an LOD table address followed by ten (depth, bitmap offset) pairs.
 @ $6ED1 label=stretchy_streetlamp_right
-B $6ED1,1,1
+B $6ED1,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6ED2,2,2
-B $6ED4,1,1
+B $6ED4,1,1 Height 50% of the perspective scale
 W $6ED5,2,2
-B $6ED7,1,1
+B $6ED7,1,1 Height 112.5% of the perspective scale
 W $6ED8,2,2
-N $6EDA 0 => draws loads 1 => draws none  (1 is terminator) 2 => draws it once 3 => draws at least 3/4 4+ => draws none
-B $6EDA,1,1 flag meaning draw once, or repeat, or?
+B $6EDA,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6EDB,2,2 top
-B $6EDD,1,1 terminator
+B $6EDD,1,1 Terminator
 @ $6EDE label=stretchy_streetlamp_left
-B $6EDE,1,1
+B $6EDE,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6EDF,2,2
-B $6EE1,1,1
+B $6EE1,1,1 Height 50% of the perspective scale
 W $6EE2,2,2
-B $6EE4,1,1
+B $6EE4,1,1 Height 112.5% of the perspective scale
 W $6EE5,2,2
-B $6EE7,1,1
+B $6EE7,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6EE8,2,2
-B $6EEA,1,1
+B $6EEA,1,1 Terminator
 @ $6EEB label=streetlamptop_right
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,2
@@ -1273,22 +1270,22 @@ N $6FD0 #HTML[#CALL(graphic($6FD0,16,3,1,1))]
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
 @ $6FDC label=stretchy_telegraphpole_right
-B $6FDC,1,1
+B $6FDC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6FDD,2,2
-B $6FDF,1,1
+B $6FDF,1,1 Height 112.5% of the perspective scale
 W $6FE0,2,2
-B $6FE2,1,1
+B $6FE2,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6FE3,2,2
-B $6FE5,1,1
+B $6FE5,1,1 Terminator
 N $6FE6 Referenced by graphic entry 16
 @ $6FE6 label=stretchy_telegraphpole_left
-B $6FE6,1,1
+B $6FE6,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6FE7,2,2
-B $6FE9,1,1
+B $6FE9,1,1 Height 112.5% of the perspective scale
 W $6FEA,2,2
-B $6FEC,1,1
+B $6FEC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $6FED,2,2
-B $6FEF,1,1
+B $6FEF,1,1 Terminator
 @ $6FF0 label=telegraphpoletop_left
 W $6FF0,2,2
 B $6FF2,20,2
@@ -1360,25 +1357,27 @@ N $70E6 Top of telegraph pole (16x4) pre-shifted and masked
 N $70E6 #HTML[#CALL(graphic($70E6,16,4,1,1))]
 @ $70E6 label=bitmap_telegraphpoletop_5s
 B $70E6,8,8 Masked bitmap data
+B $70EE,8,8
 @ $70F6 label=stretchy_tree_right
-B $70EE,9,8,1
+B $70F6,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $70F7,2,2 trunk + ground shadow
-B $70F9,1,1
+B $70F9,1,1 Height 37.5% of the perspective scale
 W $70FA,2,2
-B $70FC,1,1
+B $70FC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $70FD,2,2
-B $70FF,1,1
+B $70FF,1,1 Height 112.5% of the perspective scale
 W $7100,2,2
-B $7102,1,1
+B $7102,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $7103,2,2
+B $7105,1,1 Terminator
 @ $7106 label=stretchy_tree_left
-B $7105,2,1
+B $7106,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $7107,2,2
-B $7109,1,1
+B $7109,1,1 Height 37.5% of the perspective scale
 W $710A,2,2
-B $710C,1,1
+B $710C,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $710D,2,2
-B $710F,1,1
+B $710F,1,1 Terminator
 @ $7110 label=tree_7110
 W $7110,2,2 -> tree_lods
 B $7112,20,2
@@ -2008,11 +2007,11 @@ B $7DF1,20,4 Attribute data for above
 b $7E05 [Graphics] Street lamps etc.
 D $7E05 Used for both left and right variations.
 @ $7E05 label=stretchy_shortpole
-B $7E05,1,1
+B $7E05,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $7E06,2,2
-B $7E08,1,1
+B $7E08,1,1 Height 50% of the perspective scale
 W $7E09,2,2
-B $7E0B,1,1 1 => end
+B $7E0B,1,1 Terminator
 @ $7E0C label=shortpole_bottom
 W $7E0C,2,2 -> streetlampbody_bitmaps
 B $7E0E,20,2
@@ -3043,7 +3042,7 @@ C $8801,1 Restore data pointer
 N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
 N $8807 Pre-shift the backdrop image.
 N $880A Set backdrop position in horizon table (used to draw attributes).
-C $880A,6 $E34B = 8  -- perhaps a relative value
+C $880A,6 $E34B = 8. Only the first call to #R$CD3A reads this, as the previous rounded minimum height it subtracts from to get the first frame's delta
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
 N $8813 Disable the helicopter and tunnel drawing calls in draw_scene_objects.
@@ -4071,7 +4070,7 @@ c $916C Draws stretchy objects, such as trees
 D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CE and #R$9244 - then drops into the common stretchy object code.
 D $916C Used by the routine at #R$9052.
 R $916C I:B Depth index of the object
-R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stretchy_shortpole/#R$7E05)
+R $916C I:DE Address of the object's stretchy object descriptor (e.g. stretchy_shortpole/#R$7E05)
 R $916C I:IX X-position table pointer
 R $916C I:IY Height table pointer
 N $916C Entry point for left hand objects.
@@ -5864,7 +5863,7 @@ B $A16F,1,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed,
 @ $A170 label=turbos
 B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
 @ $A171 label=horizon_level
-W $A171,2,2 The horizon level. Seems to be relative.
+W $A171,2,2 Height of the horizon, accumulated by #R$B848 from the road's incline and signed by the direction of travel. Read a byte at a time: the high byte is the horizon's row, the low byte its sub-row phase.
 @ $A173 label=perp_halt_counter
 B $A173,1,1 A counter decremented while slowing down the caught perp. This is set to 20 by #$87ED then decremented by #R$8BC6.
 @ $A174 label=displayed_gear
@@ -9470,9 +9469,9 @@ C $BD53,4 Update buffer address
 C $BD57,3 Copy more
 @ $BD5A label=ds_attributes
 C $BD5A,6 Don't update the attributes if the level intro screen is being shown
-C $BD60,4 Seems to be related to the horizon level
-C $BD64,2 Read $E34D
-C $BD66,1 Write $E34D
+C $BD60,4 A = this frame's horizon delta, in multiples of 8 pixels, written by #R$CD3A
+C $BD64,2 E = last frame's delta, the one this call acts on
+C $BD66,1 Hold this frame's delta over for the next call
 C $BD67,4 Jump to exit check if E is zero
 C $BD6B,3 E = A * 4
 C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
