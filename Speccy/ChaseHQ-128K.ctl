@@ -7254,7 +7254,7 @@ C $ABC8,1 *HL = 0  -- D is zero here
 C $ABC9,1 A = E
 C $ABCA,2 Is it 3?
 C $ABCC,2 Jump if non-zero
-N $ABCE Use inhibit_collision_detection to choose between two or three barriers? Seems odd
+N $ABCE Three barriers rather than two whenever collision detection is switched off. $875C sets inhibit_collision_detection for the perp escape sequence, so the three-barrier arrangement is only ever placed when none of them can be driven into.
 C $ABCE,3 Load inhibit_collision_detection
 C $ABD1,1 Set flags
 C $ABD2,2 Jump to sh_add_two_barriers if zero, otherwise add three
@@ -7759,7 +7759,7 @@ C $AFF6,2 It became zero, reset to 5
 C $AFF8,1 *HL = A
 C $AFF9,1 Copy counter to #REGe
 C $AFFA,1 HL++
-N $AFFB some added value to animation index? perhaps a speed factor?
+N $AFFB The self modified byte is the smoke burst's base frame, added to the counter to give the animation index. An index above 5 means this particle is not visible yet.
 C $AFFB,2 A = <self modified by #R$AEDE>
 C $AFFD,1 C = A
 C $AFFE,1 D = A
@@ -7917,8 +7917,8 @@ C $B110,3 Set max speed for when both wheels off-road (110 => ~90?)
 C $B113,1 Clear carry
 C $B114,2 16-bit subtract only for result in flags
 C $B116,2 Restore current speed saved earlier
-C $B118,2 Jump if current speed (HL) < max speed (DE)  -- don't reduce speed?
-N $B11A This seems to be reducing the speed by a pseudorandom value when we're off-road. If it's NOPped out then going offroad will cause max speed.
+C $B118,2 Jump if current speed (HL) < max speed (DE)  -- already within the off-road cap, so nothing to shed
+N $B11A Decelerate in proportion to speed while off-road: the delta is speed / 32, kept to four bits and forced to at least 1, then negated. If it's NOPped out then going offroad will cause max speed.
 @ $B11A label=mhc_offroad_reduce_speed
 C $B11A,1 Current speed low byte
 C $B11B,2 Bottom bit of #REGh moves to carry
@@ -12731,7 +12731,7 @@ D $E540 This is the table of 96 words (being 10^x or similar function), used for
 @ $E540 label=inward_bend_table
 W $E540,192,2
 b $E600 Road/object animation tables
-D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. E6B0 and E760 used in regular driving... Have only seen a single byte in each row accessed ($E6BB etc.) IGNORE THAT S.A. was leading me astray. 8 animation frames? Set the values to zero you get the road fully flush against the RHS.
+D $E600 Three perspective tables of 8 rows by 22 bytes: persp_y_scale, persp_x_scale_right and persp_x_delta_left. The row is a speed band, taken from the top three bits of fast_counter, and the column is one of the 22 depth slots, nearest first. Setting the values to zero puts the road fully flush against the right hand side.
 R $E600 vertical = lower moves values UP
 @ $E600 label=persp_y_scale
 B $E600,176,22
@@ -12970,7 +12970,7 @@ T $EAC0,12,11:n1 "PAUSE......."
 B $EACC,1,1 Attribute: Bright green ink over black + Single height bit
 W $EACD,2,2 Screen position (72,176)
 T $EACF,12,11:n1 "TURBO......."
-B $EADB,1,1 Probably a stop marker
+B $EADB,1,1 Terminator: #R$EBFF stops when it reads a zero attribute byte, so this ends the key redefinition block
 @ $EADC label=messages_key_string
 B $EADC,5,5 Used to draw key names when defined.
 @ $EAE1 label=messages_test_mode
