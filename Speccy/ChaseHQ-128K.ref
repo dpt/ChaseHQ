@@ -269,6 +269,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 
 [PageContent:Stage1Graphics]
 #CALL(graphic($5C00,80,24,0,1))
+#CALL(graphic($C000,80,24,0,1,1))
 #CALL(face($638A))
 #CALL(graphic($64BC,48,30,0,1))
 #CALL(graphic($6570,40,22,0,1))
@@ -361,6 +362,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($7630,24,1,1,1))
 
 [PageContent:Stage2Graphics]
+#CALL(graphic($E000,80,24,0,1,1))
 #CALL(face($E84B,1))
 #CALL(graphic($E97D,48,29,0,1,1))
 #CALL(graphic($EA2B,32,19,0,1,1))
@@ -413,6 +415,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($FAD2,16,7,1,1,1))
 
 [PageContent:Stage3Graphics]
+#CALL(graphic($C000,80,24,0,1,6))
 #CALL(face($C82C,6))
 #CALL(graphic($C95E,48,30,0,1,6))
 #CALL(graphic($CA12,32,20,0,1,6))
@@ -479,6 +482,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($DAE0,16,4,1,1,6))
 
 [PageContent:Stage4Graphics]
+#CALL(graphic($E000,80,24,0,1,6))
 #CALL(face($E73E,6))
 #CALL(graphic($E870,48,30,0,1,6))
 #CALL(graphic($E924,32,22,0,1,6))
@@ -543,6 +547,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($FA07,16,13,1,1,6))
 
 [PageContent:Stage5Graphics]
+#CALL(graphic($C000,80,24,0,1,7))
 #CALL(face($C82E,7))
 #CALL(graphic($C960,48,30,0,1,7))
 #CALL(graphic($CA14,40,22,0,1,7))

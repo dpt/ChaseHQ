@@ -1,5 +1,6 @@
 b $C000 [Stage 1] Horizon graphic
 D $C000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+N $C000 #HTML[#CALL(graphic($C000,80,24,0,1))]
 @ $C000 label=stage1_backdrop
 B $C000,240,8
 b $C0F0 [Stage 1] Per-stage data
@@ -1940,6 +1941,7 @@ B $D70D,72,6 Bitmap data 6 bytes x 12
 B $D755,2219,8*277,3
 b $E000 [Stage 2] Horizon graphic
 D $E000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+N $E000 #HTML[#CALL(graphic($E000,80,24,0,1))]
 @ $E000 label=stage2_backdrop
 B $E000,240,5,8*29,3
 b $E0F0 [Stage 2] Per-stage data
