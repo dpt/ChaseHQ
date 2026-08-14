@@ -9526,8 +9526,8 @@ C $BE02,3 Clear allow_spawning
 C $BE05,3 Load address of fast_counter
 C $BE08,4 Load speed
 C $BE0C,1 Copy bottom byte of speed
-C $BE0D,4 If speed <= 255 then jump
-N $BE11 Otherwise we're going fast. This seems to cause the buffer to be processed twice as often as when in slow mode.
+C $BE0D,4 Jump if bit 0 of the speed's high byte is clear. In practice D is 0 or 1, so this is a "speed < 256" test
+N $BE11 Otherwise we're going fast. The buffer is cycled once here unconditionally, and again below if accumulating the speed into fast_counter carries, so a fast frame can advance the road twice.
 C $BE11,2 Preserve registers over next call
 C $BE13,3 Call rm_cycle_buffer_offset/#R$BE1F
 C $BE16,2 Restore
@@ -9834,7 +9834,7 @@ C $C091,2 Jump to rm_hazard_loop_continue if no carry - hazard is not vehicle
 N $C093 Overtook a car.
 C $C093,1 Increment overtake counter
 C $C094,2 Jump to rm_hazard_loop_continue
-N $C096 This gets hit all the time when the road is moving... but not in attract mode! Perhaps perp specific?
+N $C096 Not perp specific: every occupied hazard slot has its distance decremented here each time the road buffer cycles, so this runs whenever hazards are in play.
 @ $C096 label=rm_decrement_distance
 C $C096,8 Decrement the low byte of the distance
 C $C09E,2 If the decrement carried (went 0 -> 255) jump to rm_decrement_distance_high_byte
@@ -9861,7 +9861,7 @@ C $C0CA,2 HL -= 2
 C $C0CC,2 DE -= 2
 C $C0CE,2 *DE-- = *HL--; BC--
 C $C0D0,2 *DE-- = *HL--; BC--
-N $C0D2 This seems to get hit in the dirt track section.
+N $C0D2 Reached when the dirt/stones scroll flag is set: it shifts the fork x-position buffer down by one entry so the particles travel with the road.
 C $C0D2,3 Loop to rm_c0ca while B != 0 (LDD sets P/V if BC != 0)
 C $C0D5,2 *++HL = 0  (since B is zero)
 @ $C0D7 label=rm_allow_car_spawning
@@ -10383,7 +10383,7 @@ C $C4B9,2 Turn left hand road position (1..3) into table high byte ($E8..$EA)
 C $C4BB,3 Self modify 'LD H,x' @ #R$C642
 C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
 C $C4C1,1 Copy
-C $C4C2,2 Shift bit 7 of lanes byte into carry (a flag, undetermined at this point, but perhaps the dirt track flag)
+C $C4C2,2 Shift bit 7 of lanes byte into carry. With bit 6 clear it means a 3-lane or 3/4-lane-change section; with bit 6 set it separates dirt track and forked road (bit 7 set) from tunnel (clear)
 C $C4C4,2 Test former bit 6; is set for tunnel or for dirt track (carry preserved)
 C $C4C6,2 Jump to dr_special_road if set
 N $C4C8 If bit 6 was clear then it's a normal road (not tunnel, dirt track or forked road).
@@ -10603,8 +10603,7 @@ C $C64D,2 Bottom three bits select the row number 0..7
 C $C64F,2 Turn into a scanline offset (4 bytes per row)
 C $C651,2 Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
 C $C653,1 Set #REGhl to road edge marking address
-N $C654 Top five bits select screen buffer addr?
-N $C654 If I break this it seems to affect the left hand side only.
+N $C654 The top five bits of the x position give the byte column within the 32-byte back buffer row, which is why breaking this only moves the left hand edge.
 C $C654,8 E = ((index >> 3) & 31) + B
 N $C65C AND-OR masking here. #REGde is address of screen buffer byte. #REGhl is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
 C $C65C,1 Read a screen buffer byte
@@ -10664,7 +10663,7 @@ C $C6B2,2 Load <self modified>  -- loads (<lanes data offset> & 1)
 C $C6B4,2 Toggle the road stripe state
 C $C6B6,3 Write it back
 C $C6B9,3 Jump if non-zero
-@ $C6BC label=dr_stripe_perhaps_off
+@ $C6BC label=dr_flip_stripe_patterns
 C $C6BC,2 Load <self modified> fill pattern
 C $C6BE,2 Exclusive or with $55  -- flips the chequerboard fill pattern to its opposite phase
 C $C6C0,3 Self modify above
@@ -10674,7 +10673,7 @@ C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651  -- switch between adjacent e
 C $C6CC,1 The right hand edge reads the same 4-byte record one byte along: its solid byte comes first and its masked pair second, mirroring the left hand edge
 C $C6CD,3 Self modify 'ADD A,x' @ #R$C698
 C $C6D0,8 Toggle <self modified> bits of 'ADD A,x' @ #R$C677
-@ $C6D8 label=dr_stripe_perhaps_on
+@ $C6D8 label=dr_edge_thickness
 C $C6D8,2 Load <self modified> edge width value
 C $C6DA,1 Decrement it
 C $C6DB,3 Self modify 'LD A' above @ #R$C6D8 to be new #REGa
