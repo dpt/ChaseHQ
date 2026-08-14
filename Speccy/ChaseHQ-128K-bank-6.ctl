@@ -153,7 +153,8 @@ B $C282,1,1 Hit coord max (nearest)
 B $C283,1,1 How far to push hero car away if hit
 W $C284,2,2 [$D9E0] Argument for routine passed in #REGde
 W $C286,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
-b $C288 [Stage 3] Map curvature data
+b $C288 [Stage 3] Map curvature data (start section)
+@ $C288 label=stage3_map_start_curvature
 B $C288,1,1 Curve Straight for 65 units
 B $C289,4,4
 B $C28D,1,1 Curve Right for 136 units
@@ -172,14 +173,16 @@ B $C2A6,1,1 <Esc> Split
 B $C2A7,1,1
 W $C2A8,2,2 [$C3F4] Left target
 W $C2AA,2,2 [$C4D8] Right target
-b $C2AC [Stage 3] Map height data
+b $C2AC [Stage 3] Map height data (start section)
+@ $C2AC label=stage3_map_start_height
 B $C2AC,1,1 Level Road for 400 units
 B $C2AD,26,8*3,2
 B $C2C7,1,1 <Esc> Split
 B $C2C8,1,1
 W $C2C9,2,2 [$C409] Left target
 W $C2CB,2,2 [$C4EF] Right target
-b $C2CD [Stage 3] Map lanes data
+b $C2CD [Stage 3] Map lanes data (start section)
+@ $C2CD label=stage3_map_start_lanes
 B $C2CD,1,1 3 Lanes R             [|||] {82} for 60 units
 B $C2CE,1,1
 B $C2CF,1,1 3-4 Widening R       [\|||] {9E} for 2 units
@@ -190,7 +193,8 @@ B $C2D5,1,1 <Esc> Split
 B $C2D6,1,1
 W $C2D7,2,2 [$C44B] Left target
 W $C2D9,2,2 [$C504] Right target
-b $C2DB [Stage 3] Map hazards data
+b $C2DB [Stage 3] Map hazards data (start section)
+@ $C2DB label=stage3_map_start_hazards
 B $C2DB,1,1 Wait for 193 units
 B $C2DC,1,1 Disable Car Spawning
 B $C2DD,1,1
@@ -202,7 +206,8 @@ B $C2E2,1,1 <Esc> Split
 B $C2E3,1,1
 W $C2E4,2,2 [$C455] Left target
 W $C2E6,2,2 [$C510] Right target
-b $C2E8 [Stage 3] Map left object data
+b $C2E8 [Stage 3] Map left object data (start section)
+@ $C2E8 label=stage3_map_start_leftobjs
 B $C2E8,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 28 units
 B $C2E9,27,8*3,3
 B $C304,1,1 TELEGRAPH_POLE for 1 units
@@ -267,7 +272,8 @@ B $C366,1,1 <Esc> Split
 B $C367,1,1
 W $C368,2,2 [$C46F] Left target
 W $C36A,2,2 [$C518] Right target
-b $C36C [Stage 3] Map right object data
+b $C36C [Stage 3] Map right object data (start section)
+@ $C36C label=stage3_map_start_rightobjs
 B $C36C,1,1 TOWER_BLOCK for 1 units
 B $C36D,1,1 EMPTY for 3 units
 B $C36E,1,1 TOWER_BLOCK for 1 units
@@ -328,7 +334,8 @@ B $C3EE,1,1 <Esc> Split
 B $C3EF,1,1
 W $C3F0,2,2 [$C4A9] Left target
 W $C3F2,2,2 [$C54B] Right target
-b $C3F4 [Stage 3] Map curvature data
+b $C3F4 [Stage 3] Map curvature data (left section)
+@ $C3F4 label=stage3_map_left_curvature
 B $C3F4,1,1 Curve Straight for 51 units
 B $C3F5,3,3
 B $C3F8,1,1 Curve Right for 49 units
@@ -344,7 +351,8 @@ B $C404,1,1
 B $C405,1,1 <Esc> Jump
 B $C406,1,1
 W $C407,2,2 [$C58A] Target
-b $C409 [Stage 3] Map height data
+b $C409 [Stage 3] Map height data (left section)
+@ $C409 label=stage3_map_left_height
 B $C409,1,1 Level Road for 20 units
 B $C40A,1,1
 B $C40B,1,1 Going Up 3 for 5 units
@@ -410,7 +418,8 @@ B $C446,1,1 Level Road for 11 units
 B $C447,1,1 <Esc> Jump
 B $C448,1,1
 W $C449,2,2 [$C5A0] Target
-b $C44B [Stage 3] Map lanes data
+b $C44B [Stage 3] Map lanes data (left section)
+@ $C44B label=stage3_map_left_lanes
 B $C44B,1,1 4 Lanes              [||||] {00} for 20 units
 B $C44C,1,1
 B $C44D,1,1 4 Lanes dirt track   [||||] {C1} for 178 units
@@ -420,7 +429,8 @@ B $C450,1,1
 B $C451,1,1 <Esc> Jump
 B $C452,1,1
 W $C453,2,2 [$C5B6] Target
-b $C455 [Stage 3] Map hazards data
+b $C455 [Stage 3] Map hazards data (left section)
+@ $C455 label=stage3_map_left_hazards
 B $C455,1,1 Wait for 10 units
 B $C456,1,1 Start Spawning HAZARD_2 Both Sides
 B $C457,1,1
@@ -446,7 +456,8 @@ B $C46A,1,1 Wait for 4 units
 B $C46B,1,1 <Esc> Jump
 B $C46C,1,1
 W $C46D,2,2 [$C5C4] Target
-b $C46F [Stage 3] Map left object data
+b $C46F [Stage 3] Map left object data (left section)
+@ $C46F label=stage3_map_left_leftobjs
 B $C46F,1,1 EMPTY for 10 units
 B $C470,1,1 SHORT_POLE for 1 units
 B $C471,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 10 units
@@ -482,7 +493,8 @@ B $C4A4,1,1 TELEGRAPH_POLE for 1 units
 B $C4A5,1,1 <Esc> Jump
 B $C4A6,1,1
 W $C4A7,2,2 [$C5C9] Target
-b $C4A9 [Stage 3] Map right object data
+b $C4A9 [Stage 3] Map right object data (left section)
+@ $C4A9 label=stage3_map_left_rightobjs
 B $C4A9,1,1 EMPTY for 2 units
 B $C4AA,1,1 SPEED_LIMIT_SIGN for 1 units
 B $C4AB,1,1 EMPTY for 5 units
@@ -507,7 +519,8 @@ B $C4D3,1,1 EMPTY for 8 units
 B $C4D4,1,1 <Esc> Jump
 B $C4D5,1,1
 W $C4D6,2,2 [$C620] Target
-b $C4D8 [Stage 3] Map curvature data
+b $C4D8 [Stage 3] Map curvature data (right section)
+@ $C4D8 label=stage3_map_right_curvature
 B $C4D8,1,1 Curve Straight for 8 units
 B $C4D9,1,1 Curve Left for 7 units
 B $C4DA,1,1 Curve Left Hard for 37 units
@@ -529,7 +542,8 @@ B $C4EA,1,1
 B $C4EB,1,1 <Esc> Jump
 B $C4EC,1,1
 W $C4ED,2,2 [$C58A] Target
-b $C4EF [Stage 3] Map height data
+b $C4EF [Stage 3] Map height data (right section)
+@ $C4EF label=stage3_map_right_height
 B $C4EF,1,1 Going Up 5 for 42 units
 B $C4F0,2,2
 B $C4F2,1,1 Going Up 3 for 1 units
@@ -541,7 +555,8 @@ B $C4F8,8,8
 B $C500,1,1 <Esc> Jump
 B $C501,1,1
 W $C502,2,2 [$C5A0] Target
-b $C504 [Stage 3] Map lanes data
+b $C504 [Stage 3] Map lanes data (right section)
+@ $C504 label=stage3_map_right_lanes
 B $C504,1,1 4 Lanes              [||||] {00} for 56 units
 B $C505,1,1
 B $C506,1,1 4-3 Narrowing R      [/|||] {8E} for 134 units
@@ -553,7 +568,8 @@ B $C50B,1,1
 B $C50C,1,1 <Esc> Jump
 B $C50D,1,1
 W $C50E,2,2 [$C5B6] Target
-b $C510 [Stage 3] Map hazards data
+b $C510 [Stage 3] Map hazards data (right section)
+@ $C510 label=stage3_map_right_hazards
 B $C510,1,1 Wait for 10 units
 B $C511,1,1 Enable Car Spawning
 B $C512,1,1
@@ -561,7 +577,8 @@ B $C513,1,1 Wait for 95 units
 B $C514,1,1 <Esc> Jump
 B $C515,1,1
 W $C516,2,2 [$C5C4] Target
-b $C518 [Stage 3] Map left object data
+b $C518 [Stage 3] Map left object data (right section)
+@ $C518 label=stage3_map_right_leftobjs
 B $C518,1,1 EMPTY for 6 units
 B $C519,1,1 SPEED_LIMIT_SIGN for 1 units
 B $C51A,1,1 Alternating (TOWER_BLOCK, EMPTY) for 10 units
@@ -586,7 +603,8 @@ B $C545,2,2
 B $C547,1,1 <Esc> Jump
 B $C548,1,1
 W $C549,2,2 [$C5C9] Target
-b $C54B [Stage 3] Map right object data
+b $C54B [Stage 3] Map right object data (right section)
+@ $C54B label=stage3_map_right_rightobjs
 B $C54B,1,1 EMPTY for 6 units
 B $C54C,1,1 SPEED_LIMIT_SIGN for 1 units
 B $C54D,1,1 Alternating (TOWER_BLOCK, EMPTY) for 14 units
@@ -629,7 +647,8 @@ B $C585,1,1 EMPTY for 4 units
 B $C586,1,1 <Esc> Jump
 B $C587,1,1
 W $C588,2,2 [$C620] Target
-b $C58A [Stage 3] Map curvature data
+b $C58A [Stage 3] Map curvature data (merge section)
+@ $C58A label=stage3_map_merge_curvature
 B $C58A,1,1 Curve Straight for 61 units
 B $C58B,4,4
 B $C58F,1,1 Curve Left for 31 units
@@ -646,7 +665,8 @@ B $C59B,1,1 Curve Straight for 6 units
 B $C59C,1,1 <Esc> Jump
 B $C59D,1,1
 W $C59E,2,2 [$C677] Target
-b $C5A0 [Stage 3] Map height data
+b $C5A0 [Stage 3] Map height data (merge section)
+@ $C5A0 label=stage3_map_merge_height
 B $C5A0,1,1 Going Up 3 for 1 units
 B $C5A1,1,1 Going Up 5 for 1 units
 B $C5A2,1,1 Going Up 7 for 6 units
@@ -666,7 +686,8 @@ B $C5AF,3,3
 B $C5B2,1,1 <Esc> Jump
 B $C5B3,1,1
 W $C5B4,2,2 [$C69D] Target
-b $C5B6 [Stage 3] Map lanes data
+b $C5B6 [Stage 3] Map lanes data (merge section)
+@ $C5B6 label=stage3_map_merge_lanes
 B $C5B6,1,1 4 Lanes              [||||] {00} for 8 units
 B $C5B7,1,1
 B $C5B8,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -680,12 +701,14 @@ B $C5BF,1,1
 B $C5C0,1,1 <Esc> Jump
 B $C5C1,1,1
 W $C5C2,2,2 [$C6DC] Target
-b $C5C4 [Stage 3] Map hazards data
+b $C5C4 [Stage 3] Map hazards data (merge section)
+@ $C5C4 label=stage3_map_merge_hazards
 B $C5C4,1,1 Wait for 96 units
 B $C5C5,1,1 <Esc> Jump
 B $C5C6,1,1
 W $C5C7,2,2 [$C6FC] Target
-b $C5C9 [Stage 3] Map left object data
+b $C5C9 [Stage 3] Map left object data (merge section)
+@ $C5C9 label=stage3_map_merge_leftobjs
 B $C5C9,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 80 units
 B $C5CA,80,8
 B $C61A,1,1 OVERHEAD_BRIDGE for 13 units
@@ -693,7 +716,8 @@ B $C61B,1,1 EMPTY for 3 units
 B $C61C,1,1 <Esc> Jump
 B $C61D,1,1
 W $C61E,2,2 [$C71F] Target
-b $C620 [Stage 3] Map right object data
+b $C620 [Stage 3] Map right object data (merge section)
+@ $C620 label=stage3_map_merge_rightobjs
 B $C620,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 80 units
 B $C621,80,8
 B $C671,1,1 OVERHEAD_BRIDGE for 13 units
@@ -701,7 +725,8 @@ B $C672,1,1 EMPTY for 3 units
 B $C673,1,1 <Esc> Jump
 B $C674,1,1
 W $C675,2,2 [$C7AD] Target
-b $C677 [Stage 3] Map curvature data
+b $C677 [Stage 3] Map curvature data (loop section)
+@ $C677 label=stage3_map_loop_curvature
 B $C677,1,1 Curve Straight for 20 units
 B $C678,1,1
 B $C679,1,1 Curve Right Hard for 45 units
@@ -725,7 +750,8 @@ B $C694,5,5
 B $C699,1,1 <Esc> Loop
 B $C69A,1,1
 W $C69B,2,2 [$C677] Target
-b $C69D [Stage 3] Map height data
+b $C69D [Stage 3] Map height data (loop section)
+@ $C69D label=stage3_map_loop_height
 B $C69D,1,1 Level Road for 14 units
 B $C69E,1,1 Going Up 1 for 1 units
 B $C69F,1,1 Going Up 3 for 40 units
@@ -773,7 +799,8 @@ B $C6D7,1,1
 B $C6D8,1,1 <Esc> Loop
 B $C6D9,1,1
 W $C6DA,2,2 [$C69D] Target
-b $C6DC [Stage 3] Map lanes data
+b $C6DC [Stage 3] Map lanes data (loop section)
+@ $C6DC label=stage3_map_loop_lanes
 B $C6DC,1,1 4 Lanes              [||||] {00} for 82 units
 B $C6DD,1,1
 B $C6DE,1,1 4-3 Narrowing R      [/|||] {8E} for 8 units
@@ -805,7 +832,8 @@ B $C6F7,1,1
 B $C6F8,1,1 <Esc> Loop
 B $C6F9,1,1
 W $C6FA,2,2 [$C6DC] Target
-b $C6FC [Stage 3] Map hazards data
+b $C6FC [Stage 3] Map hazards data (loop section)
+@ $C6FC label=stage3_map_loop_hazards
 B $C6FC,1,1 Wait for 18 units
 B $C6FD,1,1 Start Spawning HAZARD_2 Left
 B $C6FE,1,1
@@ -840,7 +868,8 @@ B $C71A,1,1 Wait for 3 units
 B $C71B,1,1 <Esc> Loop
 B $C71C,1,1
 W $C71D,2,2 [$C6FC] Target
-b $C71F [Stage 3] Map left object data
+b $C71F [Stage 3] Map left object data (loop section)
+@ $C71F label=stage3_map_loop_leftobjs
 B $C71F,1,1 EMPTY for 4 units
 B $C720,1,1 SPEED_LIMIT_SIGN for 1 units
 B $C721,1,1 Alternating (TOWER_BLOCK, EMPTY) for 24 units
@@ -887,7 +916,8 @@ B $C7A8,1,1 EMPTY for 3 units
 B $C7A9,1,1 <Esc> Loop
 B $C7AA,1,1
 W $C7AB,2,2 [$C71F] Target
-b $C7AD [Stage 3] Map right object data
+b $C7AD [Stage 3] Map right object data (loop section)
+@ $C7AD label=stage3_map_loop_rightobjs
 B $C7AD,1,1 EMPTY for 4 units
 B $C7AE,1,1 SPEED_LIMIT_SIGN for 1 units
 B $C7AF,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 24 units
@@ -1831,7 +1861,8 @@ B $E296,1,1 Hit coord max (nearest)
 B $E297,1,1 How far to push hero car away if hit
 W $E298,2,2 [$F7FF] Argument for routine passed in #REGde
 W $E29A,2,2 [out-of-bounds] Address of routine draw_object_left
-b $E29C [Stage 4] Map curvature data
+b $E29C [Stage 4] Map curvature data (start section)
+@ $E29C label=stage4_map_start_curvature
 B $E29C,1,1 Curve Straight for 54 units
 B $E29D,3,3
 B $E2A0,1,1 Curve Right Hard for 11 units
@@ -1859,7 +1890,8 @@ B $E2BE,1,1 <Esc> Split
 B $E2BF,1,1
 W $E2C0,2,2 [$E442] Left target
 W $E2C2,2,2 [$E4C4] Right target
-b $E2C4 [Stage 4] Map height data
+b $E2C4 [Stage 4] Map height data (start section)
+@ $E2C4 label=stage4_map_start_height
 B $E2C4,1,1 Level Road for 40 units
 B $E2C5,2,2
 B $E2C7,1,1 Going Up 3 for 2 units
@@ -1907,14 +1939,16 @@ B $E2FE,1,1 <Esc> Split
 B $E2FF,1,1
 W $E300,2,2 [$E45A] Left target
 W $E302,2,2 [$E4DA] Right target
-b $E304 [Stage 4] Map lanes data
+b $E304 [Stage 4] Map lanes data (start section)
+@ $E304 label=stage4_map_start_lanes
 B $E304,1,1 4 Lanes              [||||] {00} for 400 units
 B $E305,3,3
 B $E308,1,1 <Esc> Split
 B $E309,1,1
 W $E30A,2,2 [$E46C] Left target
 W $E30C,2,2 [$E4EC] Right target
-b $E30E [Stage 4] Map hazards data
+b $E30E [Stage 4] Map hazards data (start section)
+@ $E30E label=stage4_map_start_hazards
 B $E30E,1,1 Wait for 31 units
 B $E30F,1,1 Start Spawning HAZARD_1 Both Sides
 B $E310,1,1
@@ -1953,7 +1987,8 @@ B $E330,1,1 <Esc> Split
 B $E331,1,1
 W $E332,2,2 [$E480] Left target
 W $E334,2,2 [$E500] Right target
-b $E336 [Stage 4] Map left object data
+b $E336 [Stage 4] Map left object data (start section)
+@ $E336 label=stage4_map_start_leftobjs
 B $E336,1,1 Alternating (STREET_LAMP, EMPTY) for 20 units
 B $E337,19,8*2,3
 B $E34A,1,1 Alternating (STREET_LAMP, FAR_COLUMN) for 4 units
@@ -2008,7 +2043,8 @@ B $E3C8,1,1 <Esc> Split
 B $E3C9,1,1
 W $E3CA,2,2 [$E48B] Left target
 W $E3CC,2,2 [$E50B] Right target
-b $E3CE [Stage 4] Map right object data
+b $E3CE [Stage 4] Map right object data (start section)
+@ $E3CE label=stage4_map_start_rightobjs
 B $E3CE,1,1 Alternating (STREET_LAMP, EMPTY) for 6 units
 B $E3CF,5,5
 B $E3D4,1,1 STREET_LAMP for 1 units
@@ -2052,7 +2088,8 @@ B $E43C,1,1 <Esc> Split
 B $E43D,1,1
 W $E43E,2,2 [$E4B4] Left target
 W $E440,2,2 [$E54D] Right target
-b $E442 [Stage 4] Map curvature data
+b $E442 [Stage 4] Map curvature data (left section)
+@ $E442 label=stage4_map_left_curvature
 B $E442,1,1 Curve Straight for 35 units
 B $E443,2,2
 B $E445,1,1 Curve Left Hard for 12 units
@@ -2075,13 +2112,15 @@ B $E455,1,1 Curve Straight for 11 units
 B $E456,1,1 <Esc> Jump
 B $E457,1,1
 W $E458,2,2 [$E577] Target
-b $E45A [Stage 4] Map height data
+b $E45A [Stage 4] Map height data (left section)
+@ $E45A label=stage4_map_left_height
 B $E45A,1,1 Level Road for 204 units
 B $E45B,13,8,5
 B $E468,1,1 <Esc> Jump
 B $E469,1,1
 W $E46A,2,2 [$E59A] Target
-b $E46C [Stage 4] Map lanes data
+b $E46C [Stage 4] Map lanes data (left section)
+@ $E46C label=stage4_map_left_lanes
 B $E46C,1,1 4 Lanes              [||||] {00} for 2 units
 B $E46D,1,1
 B $E46E,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -2101,7 +2140,8 @@ B $E47B,1,1
 B $E47C,1,1 <Esc> Jump
 B $E47D,1,1
 W $E47E,2,2 [$E5D3] Target
-b $E480 [Stage 4] Map hazards data
+b $E480 [Stage 4] Map hazards data (left section)
+@ $E480 label=stage4_map_left_hazards
 B $E480,1,1 Wait for 10 units
 B $E481,1,1 Stop helicopter
 B $E482,1,1
@@ -2112,7 +2152,8 @@ B $E486,1,1 Wait for 90 units
 B $E487,1,1 <Esc> Jump
 B $E488,1,1
 W $E489,2,2 [$E5FB] Target
-b $E48B [Stage 4] Map left object data
+b $E48B [Stage 4] Map left object data (left section)
+@ $E48B label=stage4_map_left_leftobjs
 B $E48B,1,1 EMPTY for 2 units
 B $E48C,1,1 STREET_LAMP for 1 units
 B $E48D,1,1 EMPTY for 1 units
@@ -2127,7 +2168,8 @@ B $E4AC,4,4
 B $E4B0,1,1 <Esc> Jump
 B $E4B1,1,1
 W $E4B2,2,2 [$E624] Target
-b $E4B4 [Stage 4] Map right object data
+b $E4B4 [Stage 4] Map right object data (left section)
+@ $E4B4 label=stage4_map_left_rightobjs
 B $E4B4,1,1 EMPTY for 2 units
 B $E4B5,1,1 STREET_LAMP for 1 units
 B $E4B6,1,1 EMPTY for 1 units
@@ -2140,7 +2182,8 @@ B $E4BE,2,2
 B $E4C0,1,1 <Esc> Jump
 B $E4C1,1,1
 W $E4C2,2,2 [$E6B7] Target
-b $E4C4 [Stage 4] Map curvature data
+b $E4C4 [Stage 4] Map curvature data (right section)
+@ $E4C4 label=stage4_map_right_curvature
 B $E4C4,1,1 Curve Straight for 12 units
 B $E4C5,1,1 Curve Left for 8 units
 B $E4C6,1,1 Curve Left Hard for 16 units
@@ -2159,13 +2202,15 @@ B $E4D3,3,3
 B $E4D6,1,1 <Esc> Jump
 B $E4D7,1,1
 W $E4D8,2,2 [$E577] Target
-b $E4DA [Stage 4] Map height data
+b $E4DA [Stage 4] Map height data (right section)
+@ $E4DA label=stage4_map_right_height
 B $E4DA,1,1 Level Road for 202 units
 B $E4DB,13,8,5
 B $E4E8,1,1 <Esc> Jump
 B $E4E9,1,1
 W $E4EA,2,2 [$E59A] Target
-b $E4EC [Stage 4] Map lanes data
+b $E4EC [Stage 4] Map lanes data (right section)
+@ $E4EC label=stage4_map_right_lanes
 B $E4EC,1,1 4 Lanes              [||||] {00} for 88 units
 B $E4ED,1,1
 B $E4EE,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -2185,7 +2230,8 @@ B $E4FB,1,1
 B $E4FC,1,1 <Esc> Jump
 B $E4FD,1,1
 W $E4FE,2,2 [$E5D3] Target
-b $E500 [Stage 4] Map hazards data
+b $E500 [Stage 4] Map hazards data (right section)
+@ $E500 label=stage4_map_right_hazards
 B $E500,1,1 Wait for 10 units
 B $E501,1,1 Enable Car Spawning
 B $E502,1,1
@@ -2196,7 +2242,8 @@ B $E506,1,1 Wait for 55 units
 B $E507,1,1 <Esc> Jump
 B $E508,1,1
 W $E509,2,2 [$E5FB] Target
-b $E50B [Stage 4] Map left object data
+b $E50B [Stage 4] Map left object data (right section)
+@ $E50B label=stage4_map_right_leftobjs
 B $E50B,1,1 Alternating (PILE_OF_ROCKS, EMPTY) for 20 units
 B $E50C,19,8*2,3
 B $E51F,1,1 PILE_OF_ROCKS for 1 units
@@ -2220,7 +2267,8 @@ B $E548,1,1 STREET_LAMP for 3 units
 B $E549,1,1 <Esc> Jump
 B $E54A,1,1
 W $E54B,2,2 [$E624] Target
-b $E54D [Stage 4] Map right object data
+b $E54D [Stage 4] Map right object data (right section)
+@ $E54D label=stage4_map_right_rightobjs
 B $E54D,1,1 Alternating (TURN_SIGN_POINTING_LEFT, EMPTY) for 10 units
 B $E54E,10,8,2
 B $E558,1,1 TURN_SIGN_POINTING_LEFT for 13 units
@@ -2236,7 +2284,8 @@ B $E572,1,1 STREET_LAMP for 40 units
 B $E573,1,1 <Esc> Jump
 B $E574,1,1
 W $E575,2,2 [$E6B7] Target
-b $E577 [Stage 4] Map curvature data
+b $E577 [Stage 4] Map curvature data (loop section)
+@ $E577 label=stage4_map_loop_curvature
 B $E577,1,1 Curve Straight for 67 units
 B $E578,4,4
 B $E57C,1,1 Curve Left for 14 units
@@ -2259,7 +2308,8 @@ B $E590,6,6
 B $E596,1,1 <Esc> Loop
 B $E597,1,1
 W $E598,2,2 [$E577] Target
-b $E59A [Stage 4] Map height data
+b $E59A [Stage 4] Map height data (loop section)
+@ $E59A label=stage4_map_loop_height
 B $E59A,1,1 Level Road for 14 units
 B $E59B,1,1 Going Up 3 for 2 units
 B $E59C,1,1 Going Up 5 for 2 units
@@ -2298,7 +2348,8 @@ B $E5C2,13,8,5
 B $E5CF,1,1 <Esc> Loop
 B $E5D0,1,1
 W $E5D1,2,2 [$E59A] Target
-b $E5D3 [Stage 4] Map lanes data
+b $E5D3 [Stage 4] Map lanes data (loop section)
+@ $E5D3 label=stage4_map_loop_lanes
 B $E5D3,1,1 4 Lanes              [||||] {00} for 306 units
 B $E5D4,3,3
 B $E5D7,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -2336,7 +2387,8 @@ B $E5F6,1,1
 B $E5F7,1,1 <Esc> Loop
 B $E5F8,1,1
 W $E5F9,2,2 [$E5D3] Target
-b $E5FB [Stage 4] Map hazards data
+b $E5FB [Stage 4] Map hazards data (loop section)
+@ $E5FB label=stage4_map_loop_hazards
 B $E5FB,1,1 Wait for 32 units
 B $E5FC,1,1 Start Spawning HAZARD_1 Left
 B $E5FD,1,1
@@ -2377,7 +2429,8 @@ B $E61F,1,1 Wait for 12 units
 B $E620,1,1 <Esc> Loop
 B $E621,1,1
 W $E622,2,2 [$E5FB] Target
-b $E624 [Stage 4] Map left object data
+b $E624 [Stage 4] Map left object data (loop section)
+@ $E624 label=stage4_map_loop_leftobjs
 B $E624,1,1 Alternating (STREET_LAMP, EMPTY) for 12 units
 B $E625,11,8,3
 B $E630,1,1 STREET_LAMP for 1 units
@@ -2422,7 +2475,8 @@ B $E6B2,1,1 NEAR_COLUMN for 6 units
 B $E6B3,1,1 <Esc> Loop
 B $E6B4,1,1
 W $E6B5,2,2 [$E624] Target
-b $E6B7 [Stage 4] Map right object data
+b $E6B7 [Stage 4] Map right object data (loop section)
+@ $E6B7 label=stage4_map_loop_rightobjs
 B $E6B7,1,1 Alternating (FAR_COLUMN, EMPTY) for 4 units
 B $E6B8,5,5
 B $E6BD,1,1 FAR_COLUMN for 19 units

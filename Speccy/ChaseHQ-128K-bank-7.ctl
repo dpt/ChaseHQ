@@ -171,7 +171,8 @@ B $C29B,1,1 Hit coord max (nearest)
 B $C29C,1,1 How far to push hero car away if hit
 W $C29D,2,2 [$D9D9] Argument for routine passed in #REGde
 W $C29F,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
-b $C2A1 [Stage 5] Map curvature data
+b $C2A1 [Stage 5] Map curvature data (start section)
+@ $C2A1 label=stage5_map_start_curvature
 B $C2A1,1,1 Curve Straight for 50 units
 B $C2A2,3,3
 B $C2A5,1,1 Curve Left Hard for 21 units
@@ -200,7 +201,8 @@ B $C2C3,1,1 <Esc> Split
 B $C2C4,1,1
 W $C2C5,2,2 [$C513] Left target
 W $C2C7,2,2 [$C455] Right target
-b $C2C9 [Stage 5] Map height data
+b $C2C9 [Stage 5] Map height data (start section)
+@ $C2C9 label=stage5_map_start_height
 B $C2C9,1,1 Level Road for 40 units
 B $C2CA,2,2
 B $C2CC,1,1 Going Up 3 for 2 units
@@ -230,7 +232,8 @@ B $C2F5,1,1 <Esc> Split
 B $C2F6,1,1
 W $C2F7,2,2 [$C526] Left target
 W $C2F9,2,2 [$C468] Right target
-b $C2FB [Stage 5] Map lanes data
+b $C2FB [Stage 5] Map lanes data (start section)
+@ $C2FB label=stage5_map_start_lanes
 B $C2FB,1,1 2 Lanes R              [||] {03} for 36 units
 B $C2FC,1,1
 B $C2FD,1,1 2-3 Widening R        [\||] {1F} for 2 units
@@ -245,7 +248,8 @@ B $C307,1,1 <Esc> Split
 B $C308,1,1
 W $C309,2,2 [$C53E] Left target
 W $C30B,2,2 [$C47A] Right target
-b $C30D [Stage 5] Map hazards data
+b $C30D [Stage 5] Map hazards data (start section)
+@ $C30D label=stage5_map_start_hazards
 B $C30D,1,1 Wait for 20 units
 B $C30E,1,1 Start Spawning HAZARD_2 Right
 B $C30F,1,1
@@ -275,7 +279,8 @@ B $C326,1,1 <Esc> Split
 B $C327,1,1
 W $C328,2,2 [$C552] Left target
 W $C32A,2,2 [$C492] Right target
-b $C32C [Stage 5] Map left object data
+b $C32C [Stage 5] Map left object data (start section)
+@ $C32C label=stage5_map_start_leftobjs
 B $C32C,1,1 Alternating (CACTUS, EMPTY) for 16 units
 B $C32D,15,8,7
 B $C33C,1,1 CACTUS for 1 units
@@ -328,7 +333,8 @@ B $C3CC,1,1 <Esc> Split
 B $C3CD,1,1
 W $C3CE,2,2 [$C560] Left target
 W $C3D0,2,2 [$C49A] Right target
-b $C3D2 [Stage 5] Map right object data
+b $C3D2 [Stage 5] Map right object data (start section)
+@ $C3D2 label=stage5_map_start_rightobjs
 B $C3D2,1,1 EMPTY for 1 units
 B $C3D3,1,1 DOUBLE_STREET_LAMP for 1 units
 B $C3D4,1,1 EMPTY for 3 units
@@ -412,7 +418,8 @@ B $C44F,1,1 <Esc> Split
 B $C450,1,1
 W $C451,2,2 [$C5A3] Left target
 W $C453,2,2 [$C4DD] Right target
-b $C455 [Stage 5] Map curvature data
+b $C455 [Stage 5] Map curvature data (right section)
+@ $C455 label=stage5_map_right_curvature
 B $C455,1,1 Curve Straight for 40 units
 B $C456,2,2
 B $C458,1,1 Curve Left Hard for 41 units
@@ -426,13 +433,15 @@ B $C463,1,1
 B $C464,1,1 <Esc> Jump
 B $C465,1,1
 W $C466,2,2 [$C5E3] Target
-b $C468 [Stage 5] Map height data
+b $C468 [Stage 5] Map height data (right section)
+@ $C468 label=stage5_map_right_height
 B $C468,1,1 Level Road for 198 units
 B $C469,13,8,5
 B $C476,1,1 <Esc> Jump
 B $C477,1,1
 W $C478,2,2 [$C5F8] Target
-b $C47A [Stage 5] Map lanes data
+b $C47A [Stage 5] Map lanes data (right section)
+@ $C47A label=stage5_map_right_lanes
 B $C47A,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
 B $C47B,1,1
 B $C47C,1,1 Tunnel start                {45} for 20 units
@@ -456,7 +465,8 @@ B $C48D,1,1
 B $C48E,1,1 <Esc> Jump
 B $C48F,1,1
 W $C490,2,2 [$C614] Target
-b $C492 [Stage 5] Map hazards data
+b $C492 [Stage 5] Map hazards data (right section)
+@ $C492 label=stage5_map_right_hazards
 B $C492,1,1 Wait for 10 units
 B $C493,1,1 Enable Car Spawning
 B $C494,1,1
@@ -464,7 +474,8 @@ B $C495,1,1 Wait for 89 units
 B $C496,1,1 <Esc> Jump
 B $C497,1,1
 W $C498,2,2 [$C628] Target
-b $C49A [Stage 5] Map left object data
+b $C49A [Stage 5] Map left object data (right section)
+@ $C49A label=stage5_map_right_leftobjs
 B $C49A,1,1 EMPTY for 2 units
 B $C49B,1,1 TUNNEL_LIGHT for 10 units
 B $C49C,1,1 Alternating (CACTUS, EMPTY) for 14 units
@@ -494,7 +505,8 @@ B $C4D8,1,1 EMPTY for 2 units
 B $C4D9,1,1 <Esc> Jump
 B $C4DA,1,1
 W $C4DB,2,2 [$C62D] Target
-b $C4DD [Stage 5] Map right object data
+b $C4DD [Stage 5] Map right object data (right section)
+@ $C4DD label=stage5_map_right_rightobjs
 B $C4DD,1,1 EMPTY for 2 units
 B $C4DE,1,1 TUNNEL_LIGHT for 10 units
 B $C4DF,1,1 Alternating (CACTUS, EMPTY) for 8 units
@@ -517,7 +529,8 @@ B $C50E,1,1 EMPTY for 2 units
 B $C50F,1,1 <Esc> Jump
 B $C510,1,1
 W $C511,2,2 [$C651] Target
-b $C513 [Stage 5] Map curvature data
+b $C513 [Stage 5] Map curvature data (left section)
+@ $C513 label=stage5_map_left_curvature
 B $C513,1,1 Curve Straight for 12 units
 B $C514,1,1 Curve Left Hard for 43 units
 B $C515,2,2
@@ -530,7 +543,8 @@ B $C51F,3,3
 B $C522,1,1 <Esc> Jump
 B $C523,1,1
 W $C524,2,2 [$C5E3] Target
-b $C526 [Stage 5] Map height data
+b $C526 [Stage 5] Map height data (left section)
+@ $C526 label=stage5_map_left_height
 B $C526,1,1 Level Road for 168 units
 B $C527,11,8,3
 B $C532,1,1 Going Up 3 for 1 units
@@ -544,7 +558,8 @@ B $C539,1,1
 B $C53A,1,1 <Esc> Jump
 B $C53B,1,1
 W $C53C,2,2 [$C5F8] Target
-b $C53E [Stage 5] Map lanes data
+b $C53E [Stage 5] Map lanes data (left section)
+@ $C53E label=stage5_map_left_lanes
 B $C53E,1,1 4 Lanes              [||||] {00} for 40 units
 B $C53F,1,1
 B $C540,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -564,7 +579,8 @@ B $C54D,1,1
 B $C54E,1,1 <Esc> Jump
 B $C54F,1,1
 W $C550,2,2 [$C614] Target
-b $C552 [Stage 5] Map hazards data
+b $C552 [Stage 5] Map hazards data (left section)
+@ $C552 label=stage5_map_left_hazards
 B $C552,1,1 Wait for 10 units
 B $C553,1,1 Enable Car Spawning
 B $C554,1,1
@@ -578,7 +594,8 @@ B $C55B,1,1 Wait for 79 units
 B $C55C,1,1 <Esc> Jump
 B $C55D,1,1
 W $C55E,2,2 [$C628] Target
-b $C560 [Stage 5] Map left object data
+b $C560 [Stage 5] Map left object data (left section)
+@ $C560 label=stage5_map_left_leftobjs
 B $C560,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 22 units
 B $C561,22,8*2,6
 B $C577,1,1 OVERHEAD_BRIDGE for 3 units
@@ -594,7 +611,8 @@ B $C59E,1,1 DOUBLE_STREET_LAMP for 1 units
 B $C59F,1,1 <Esc> Jump
 B $C5A0,1,1
 W $C5A1,2,2 [$C62D] Target
-b $C5A3 [Stage 5] Map right object data
+b $C5A3 [Stage 5] Map right object data (left section)
+@ $C5A3 label=stage5_map_left_rightobjs
 B $C5A3,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 22 units
 B $C5A4,22,8*2,6
 B $C5BA,1,1 OVERHEAD_BRIDGE for 3 units
@@ -607,7 +625,8 @@ B $C5DE,1,1 EMPTY for 5 units
 B $C5DF,1,1 <Esc> Jump
 B $C5E0,1,1
 W $C5E1,2,2 [$C651] Target
-b $C5E3 [Stage 5] Map curvature data
+b $C5E3 [Stage 5] Map curvature data (merge section)
+@ $C5E3 label=stage5_map_merge_curvature
 B $C5E3,1,1 Curve Straight for 35 units
 B $C5E4,2,2
 B $C5E6,1,1 Curve Left Hard for 12 units
@@ -623,7 +642,8 @@ B $C5F2,2,2
 B $C5F4,1,1 <Esc> Jump
 B $C5F5,1,1
 W $C5F6,2,2 [$C65C] Target
-b $C5F8 [Stage 5] Map height data
+b $C5F8 [Stage 5] Map height data (merge section)
+@ $C5F8 label=stage5_map_merge_height
 B $C5F8,1,1 Going Down 5 for 15 units
 B $C5F9,1,1 Going Down 3 for 3 units
 B $C5FA,1,1 Level Road for 4 units
@@ -650,7 +670,8 @@ B $C60E,2,2
 B $C610,1,1 <Esc> Jump
 B $C611,1,1
 W $C612,2,2 [$C684] Target
-b $C614 [Stage 5] Map lanes data
+b $C614 [Stage 5] Map lanes data (merge section)
+@ $C614 label=stage5_map_merge_lanes
 B $C614,1,1 4 Lanes              [||||] {00} for 44 units
 B $C615,1,1
 B $C616,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -670,12 +691,14 @@ B $C623,1,1
 B $C624,1,1 <Esc> Jump
 B $C625,1,1
 W $C626,2,2 [$C6BB] Target
-b $C628 [Stage 5] Map hazards data
+b $C628 [Stage 5] Map hazards data (merge section)
+@ $C628 label=stage5_map_merge_hazards
 B $C628,1,1 Wait for 93 units
 B $C629,1,1 <Esc> Jump
 B $C62A,1,1
 W $C62B,2,2 [$C6D1] Target
-b $C62D [Stage 5] Map left object data
+b $C62D [Stage 5] Map left object data (merge section)
+@ $C62D label=stage5_map_merge_leftobjs
 B $C62D,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 24 units
 B $C62E,24,8
 B $C646,1,1 TELEGRAPH_POLE for 3 units
@@ -686,13 +709,15 @@ B $C64C,1,1 EMPTY for 12 units
 B $C64D,1,1 <Esc> Jump
 B $C64E,1,1
 W $C64F,2,2 [$C6EE] Target
-b $C651 [Stage 5] Map right object data
+b $C651 [Stage 5] Map right object data (merge section)
+@ $C651 label=stage5_map_merge_rightobjs
 B $C651,1,1 EMPTY for 93 units
 B $C652,6,6
 B $C658,1,1 <Esc> Jump
 B $C659,1,1
 W $C65A,2,2 [$C7A5] Target
-b $C65C [Stage 5] Map curvature data
+b $C65C [Stage 5] Map curvature data (loop section)
+@ $C65C label=stage5_map_loop_curvature
 B $C65C,1,1 Curve Straight for 40 units
 B $C65D,2,2
 B $C65F,1,1 Curve Left Hard for 41 units
@@ -720,7 +745,8 @@ B $C67C,4,4
 B $C680,1,1 <Esc> Loop
 B $C681,1,1
 W $C682,2,2 [$C65C] Target
-b $C684 [Stage 5] Map height data
+b $C684 [Stage 5] Map height data (loop section)
+@ $C684 label=stage5_map_loop_height
 B $C684,1,1 Level Road for 132 units
 B $C685,8,8
 B $C68D,1,1 Going Down 3 for 2 units
@@ -761,7 +787,8 @@ B $C6B5,2,2
 B $C6B7,1,1 <Esc> Loop
 B $C6B8,1,1
 W $C6B9,2,2 [$C684] Target
-b $C6BB [Stage 5] Map lanes data
+b $C6BB [Stage 5] Map lanes data (loop section)
+@ $C6BB label=stage5_map_loop_lanes
 B $C6BB,1,1 4 Lanes              [||||] {00} for 368 units
 B $C6BC,3,3
 B $C6BF,1,1 4-3 Narrowing R      [/|||] {8E} for 36 units
@@ -781,7 +808,8 @@ B $C6CC,1,1
 B $C6CD,1,1 <Esc> Loop
 B $C6CE,1,1
 W $C6CF,2,2 [$C6BB] Target
-b $C6D1 [Stage 5] Map hazards data
+b $C6D1 [Stage 5] Map hazards data (loop section)
+@ $C6D1 label=stage5_map_loop_hazards
 B $C6D1,1,1 Wait for 13 units
 B $C6D2,1,1 Start Spawning HAZARD_2 Both Sides
 B $C6D3,1,1
@@ -810,7 +838,8 @@ B $C6E9,1,1 Wait for 40 units
 B $C6EA,1,1 <Esc> Loop
 B $C6EB,1,1
 W $C6EC,2,2 [$C6D1] Target
-b $C6EE [Stage 5] Map left object data
+b $C6EE [Stage 5] Map left object data (loop section)
+@ $C6EE label=stage5_map_loop_leftobjs
 B $C6EE,1,1 Alternating (DOUBLE_STREET_LAMP, EMPTY) for 12 units
 B $C6EF,11,8,3
 B $C6FA,1,1 DOUBLE_STREET_LAMP for 1 units
@@ -845,7 +874,8 @@ B $C79A,7,7
 B $C7A1,1,1 <Esc> Loop
 B $C7A2,1,1
 W $C7A3,2,2 [$C6EE] Target
-b $C7A5 [Stage 5] Map right object data
+b $C7A5 [Stage 5] Map right object data (loop section)
+@ $C7A5 label=stage5_map_loop_rightobjs
 B $C7A5,1,1 Alternating (CACTUS, EMPTY) for 6 units
 B $C7A6,6,6
 B $C7AC,1,1 CACTUS for 7 units
