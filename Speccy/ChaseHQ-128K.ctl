@@ -6154,7 +6154,7 @@ C $A3AA,3 Exit via check_fork_scenery_collisions if zero
 N $A3AD Currently forking.
 C $A3AD,1 Decrement the fork_countdown value
 C $A3AE,1 Return if zero  -- can't collide immediately before fork?
-N $A3AF Check left hand side of car. This reads the position of the road from generated data at $EAFE. The values as seen in the debugger vibrate so it's hard to tell exactly what the buffer is. Presumably it's a dual-use buffer and I need to know what it's being used for at this instant to make a clear statement here.
+N $A3AF Check left hand side of car. $EAFE and $EAFC are the last two words of the page #R$A579 fills: the left and right hand x-positions for the nearest road slice, pushed in that order from $EB00 downwards. They are rewritten every frame, which is why they vibrate in the debugger. They say where a roadside object on each side would stand, not that one is there.
 @ $A3AF label=csc_fork_not_visible_or_fork_in_progress
 C $A3AF,3 Read signed word at $EAFE
 N $A3B2 When car off road left       ~  176 When car half off road left  ~  133 When car in lane 1           ~  85 When car in lane 2           ~  38 When car in lane 3           ~ -36 When car in lane 4           ~ -84 When car half off road right ~ -153 When car off road right      ~ -186
@@ -6169,10 +6169,10 @@ C $A3CC,2 Jump to csc_store_off_road if HL < 133 (note: INC A doesn't affect car
 C $A3CE,1 A++  -- A == 2 => fully off-road
 C $A3CF,2 Jump to csc_store_off_road
 @ $A3D1 label=csc_clear_trigger_lane_change_sfx
-C $A3D1,4 trigger_left_hand_passed_object_sfx = 0  -- offroad/sfx flag perhaps?
+C $A3D1,4 trigger_left_hand_passed_object_sfx = 0. Reached only when the car is alongside the left hand object, which stops the passed-object sound effect from firing
 N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2 ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
 @ $A3D5 label=csc_check_right_hand
-C $A3D5,3 Read signed word at $EAFC [ how is this different to $EAFE? ]
+C $A3D5,3 Read signed word at $EAFC -- the right hand x-position for the nearest slice, where #R$A3AF read the left
 C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
 C $A3DA,2 Init value for trigger_right_hand_passed_object_sfx  -- this must stop the passed object sfx from playing
 C $A3DC,2 Jump to #R$A3FA if non-zero
@@ -6195,8 +6195,8 @@ C $A405,3 Load road_buffer_offset.lo into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
 C $A40A,3 Point #REGhl at road buffer lanes data
 C $A40D,1 Read lane data byte
-C $A40E,2 Test bit 6  -- tunnel bits perhaps?
-C $A410,2 Jump if clear
+C $A40E,2 Test bit 6 -- clear for plain road, set for a tunnel,
+C $A410,2 a fork or a dirt track. Jump if clear
 C $A412,1 Test bit 7
 C $A413,2 Jump if set
 N $A415 We arrive here if we're far into the tunnel.
@@ -6357,8 +6357,9 @@ C $A549,1 D = B
 C $A54A,3 HL = *$EAFE
 C $A54D,5 Return if HL >= BC
 C $A552,3 Return if HL < DE
-C $A555,2 A = $8C
-C $A558,1 A = 0  -- perhaps a right hand flag
+C $A555,2 A = $8C  -- the speed cap #R$A4B8 takes in #REGa'
+C $A557,1 Bank
+C $A558,1 A = 0  -- flip right, per #R$A4B8's #REGa
 C $A559,3 Exit via csc_hit_scenery
 @ $A55C label=fc_a55c
 C $A55C,3 HL = *$5D02
@@ -6369,9 +6370,9 @@ C $A565,1 D = B
 C $A566,3 HL = *$EAFC
 C $A569,5 Return if HL < BC
 C $A56E,3 Return if HL >= DE
-C $A571,2 A = $8C
+C $A571,2 A = $8C  -- the speed cap #R$A4B8 takes in #REGa'
 C $A573,1 Bank
-C $A574,2 A = 1  -- perhaps a left hand flag
+C $A574,2 A = 1  -- flip left, per #R$A4B8's #REGa
 C $A576,3 Exit via csc_hit_scenery
 c $A579 Lays out roadside objects
 D $A579 Two passes over up to 21 road slots. The first walks object_positions and turns the run of per-slot sizes into running totals, so each entry ends up holding where that slot's strip of objects starts.
@@ -6409,10 +6410,10 @@ C $A5A6,1 Set iterations to fork_countdown
 C $A5A7,1 Read a lanes byte
 C $A5A8,1 Bank
 C $A5A9,1 Copy lanes byte to #REGe
-N $A5AA L = ~(IY[0] * 2) -- this doubles then complements, not sure why yet.
+N $A5AA L = ~(IY[0] * 2). The doubling is the 16-bit stride of the x-position tables and the complement reverses the direction of travel through them: for a slot depth of N the pair of bytes read is the word at index 127 - N, counting back from the far end of the 128-entry table. ~(2N) is always odd, which is why the reads below take the high byte first and step down to the low one.
 C $A5AA,3 Read from current index in object_positions array
-C $A5AD,1 Double it
-C $A5AE,1 Complement it
+C $A5AD,1 Double it for the 16-bit table stride
+C $A5AE,1 Complement to index back from the end of the table
 C $A5AF,1 Move result to #REGl
 N $A5B0 Read left hand offset bits (0+1).
 C $A5B0,1 Copy lanes byte to #REGa
@@ -6463,7 +6464,7 @@ C $A5F1,2 Jump to lo_return if zero  [no fork, or not about to fork?]
 C $A5F3,1 Set iterations to above
 C $A5F4,2 Set up to read from $EBxx
 @ $A5F6 label=lo_fork_loop
-C $A5F6,6 L = ~(IY[0] * 2)  -- still not sure why we invert then double
+C $A5F6,6 L = ~(IY[0] * 2), the same reversed word index as #R$A5A7 forms
 C $A5FC,1 Step back by 256 to read from $EAxx (centre table)
 C $A5FD,3 Load #REGde from table (reading high byte first)
 C $A600,1 Store left hand value
