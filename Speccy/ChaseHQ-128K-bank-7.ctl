@@ -1,4 +1,6 @@
 b $C000 [Stage 5] Horizon graphic
+D $C000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+@ $C000 label=stage5_backdrop
 B $C000,240,8
 b $C0F0 [Stage 5] Per-stage data
 @ $C0F0 label=stage5
@@ -906,6 +908,7 @@ B $C82A,1,1 <Esc> Loop
 B $C82B,1,1
 W $C82C,2,2 [$C7A5] Target
 b $C82E [Stage 5] Perp's mugshot
+@ $C82E label=stage5_perp_face
 B $C82E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E2 LOD table for "Car A (the perp's car)"
@@ -1852,6 +1855,8 @@ C $E24B,3 If command == 12 goto ...
 C $E24E,3 If command == 13 goto $E256
 C $E254,2 Loop
 @ $E256 label=es_handler_draw_score
+N $E2B2 Command 12: start chatter using a block pointer taken from the script.
+@ $E2B2 label=es_handler_chatter
 @ $E2CD label=es_set_dispatch
 C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
@@ -1860,7 +1865,13 @@ N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile bli
 @ $E2D9 label=es_clear_then_draw_frame
 C $E2DA,3 Call $E49C (buffer zeroing thing)
 @ $E2DE label=es_draw_frame_common
-@ $E328 label=e328
+N $E2F0 Command 11: clear the backbuffer, then render a run of text.
+@ $E2F0 label=es_handler_render_text
+N $E2F5 Command 10: render a run of text without clearing first. Reads a colour byte and a destination word from the script, then plots characters until one is found with its top bit set.
+@ $E2F5 label=es_render_text_common
+N $E31F Render one end-screen character at double height. A space advances both cursors by a column and draws nothing.
+@ $E31F label=es_plot_char
+@ $E328 label=es_plot_char_glyph
 N $E381 This entry point is used by the routine at #R$E3A5.
 b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
 N $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte: ; -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly

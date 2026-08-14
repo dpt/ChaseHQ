@@ -1,4 +1,6 @@
 b $C000 [Stage 3] Horizon graphic
+D $C000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+@ $C000 label=stage3_backdrop
 B $C000,240,8
 b $C0F0 [Stage 3] Per-stage data
 @ $C0F0 label=stage3
@@ -957,6 +959,7 @@ B $C828,1,1 <Esc> Loop
 B $C829,1,1
 W $C82A,2,2 [$C7AD] Target
 b $C82C [Stage 3] Perp's mugshot
+@ $C82C label=stage3_perp_face
 B $C82C,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CC,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E0 LOD table for "Car A (the perp's car)"
@@ -1671,6 +1674,8 @@ B $DAD0,16,4 Bitmap data (masked) 4 bytes x 4
 B $DAE0,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 B $DAF0,1296,8
 b $E000 [Stage 4] Horizon graphic
+D $E000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+@ $E000 label=stage4_backdrop
 B $E000,240,8
 b $E0F0 [Stage 4] Per-stage data
 @ $E0F0 label=stage4
@@ -2517,6 +2522,7 @@ B $E73A,1,1 <Esc> Loop
 B $E73B,1,1
 W $E73C,2,2 [$E6B7] Target
 b $E73E [Stage 4] Perp's mugshot
+@ $E73E label=stage4_perp_face
 B $E73E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $E7DE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $E7F2 LOD table for "Car A (the perp's car)"
@@ -2644,6 +2650,7 @@ B $EC07,39,3 Bitmap data 3 bytes x 13
 B $EC2E,32,4 Bitmap data (masked) 4 bytes x 8
 B $EC4E,32,8
 b $EC6E [Stage 4] Helicopter data 1
+@ $EC6E label=stage4_heli_table_frame0
 W $EC6E,2,2 [$ECAA] ptr
 W $EC70,2,2 [$EC8F] ptr
 W $EC72,2,2 [$EC86] ptr
@@ -2651,6 +2658,7 @@ W $EC74,2,2 [$ECB3] ptr
 W $EC76,2,2 [$ECBC] ptr
 W $EC78,2,2 [$ECD7] ptr
 b $EC7A [Stage 4] Helicopter data 2
+@ $EC7A label=stage4_heli_table_frame1
 W $EC7A,2,2 [$ECAA] ptr
 W $EC7C,2,2 [$ECA1] ptr
 W $EC7E,2,2 [$EC98] ptr
@@ -2755,6 +2763,7 @@ B $EE51,28,4 Bitmap data (masked) 4 bytes x 7
 B $EE6D,100,10 Bitmap data (masked) 10 bytes x 10
 B $EED1,100,10 Bitmap data (masked) 10 bytes x 10
 b $EF35 [Stage 4] Pilot's mugshot
+@ $EF35 label=stage4_pilot_mugshot
 B $EF35,160,4 Bitmap data for the pilot's mugshot (32x40). Stored top-down.
 B $EFD5,20,4 Attribute data for the pilot's mugshot (4x5). Stored top-down.
 N $EFE9 Stretchy graphic
