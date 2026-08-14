@@ -1388,28 +1388,28 @@ B $CEF2,2,2 Bitmap data (masked) 2 bytes x 1
 B $CEF4,2,2 Pre-shifted bitmap data (masked) 2 bytes x 1
 N $CEF6 draw_object_left/right graphic data
 W $CEF6,2,2 [$CF22] LOD ptr
-W $CEF8,2,2 TBD
-W $CEFA,2,2 TBD
-W $CEFC,2,2 TBD
-W $CEFE,2,2 TBD
-W $CF00,2,2 TBD
-W $CF02,2,2 TBD
-W $CF04,2,2 TBD
-W $CF06,2,2 TBD
-W $CF08,2,2 TBD
-W $CF0A,2,2 TBD
+W $CEF8,2,2 Depth $24, bitmap at +$00
+W $CEFA,2,2 Depth $1C, bitmap at +$00
+W $CEFC,2,2 Depth $18, bitmap at +$07
+W $CEFE,2,2 Depth $18, bitmap at +$07
+W $CF00,2,2 Depth $14, bitmap at +$0E
+W $CF02,2,2 Depth $14, bitmap at +$0E
+W $CF04,2,2 Depth $14, bitmap at +$15
+W $CF06,2,2 Depth $10, bitmap at +$15
+W $CF08,2,2 Depth $10, bitmap at +$1C
+W $CF0A,2,2 Depth $10, bitmap at +$1C
 N $CF0C draw_object_left/right graphic data
 W $CF0C,2,2 [$CF22] LOD ptr
-W $CF0E,2,2 TBD
-W $CF10,2,2 TBD
-W $CF12,2,2 TBD
-W $CF14,2,2 TBD
-W $CF16,2,2 TBD
-W $CF18,2,2 TBD
-W $CF1A,2,2 TBD
-W $CF1C,2,2 TBD
-W $CF1E,2,2 TBD
-W $CF20,2,2 TBD
+W $CF0E,2,2 Depth $24, bitmap at +$23
+W $CF10,2,2 Depth $1C, bitmap at +$23
+W $CF12,2,2 Depth $18, bitmap at +$2A
+W $CF14,2,2 Depth $18, bitmap at +$2A
+W $CF16,2,2 Depth $14, bitmap at +$31
+W $CF18,2,2 Depth $14, bitmap at +$31
+W $CF1A,2,2 Depth $14, bitmap at +$38
+W $CF1C,2,2 Depth $10, bitmap at +$38
+W $CF1E,2,2 Depth $10, bitmap at +$3F
+W $CF20,2,2 Depth $10, bitmap at +$3F
 N $CF22 LOD table for "non-stretchy"
 N $CF22 LOD
 B $CF22,1,1 Width (bytes)
@@ -1562,49 +1562,49 @@ B $D287,18,2 Bitmap data 2 bytes x 9
 B $D299,28,4 Bitmap data (masked) 4 bytes x 7
 B $D2B5,28,4 Pre-shifted bitmap data (masked) 4 bytes x 7
 N $D2D1 Stretchy graphic
-B $D2D1,1,1 ?index
+B $D2D1,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D2D2,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2D4,1,1 ?index
+B $D2D4,1,1 Height 50% of the perspective scale
 W $D2D5,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2D7,1,1 ?index
+B $D2D7,1,1 Height 112.5% of the perspective scale
 W $D2D8,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2DA,1,1 ?index
+B $D2DA,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D2DB,2,2 [$D2EB] Pointer to stretchy_graphic_part
 B $D2DD,1,1 Terminator
 N $D2DE Stretchy graphic
-B $D2DE,1,1 ?index
+B $D2DE,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D2DF,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2E1,1,1 ?index
+B $D2E1,1,1 Height 50% of the perspective scale
 W $D2E2,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2E4,1,1 ?index
+B $D2E4,1,1 Height 112.5% of the perspective scale
 W $D2E5,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D2E7,1,1 ?index
+B $D2E7,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D2E8,2,2 [$D301] Pointer to stretchy_graphic_part
 B $D2EA,1,1 Terminator
 N $D2EB Stretchy graphic part
 W $D2EB,2,2 [$D317] LOD ptr
-W $D2ED,2,2 TBD
-W $D2EF,2,2 TBD
-W $D2F1,2,2 TBD
-W $D2F3,2,2 TBD
-W $D2F5,2,2 TBD
-W $D2F7,2,2 TBD
-W $D2F9,2,2 TBD
-W $D2FB,2,2 TBD
-W $D2FD,2,2 TBD
-W $D2FF,2,2 TBD
+W $D2ED,2,2 Depth $10, bitmap at +$02
+W $D2EF,2,2 Depth $08, bitmap at +$02
+W $D2F1,2,2 Depth $08, bitmap at +$09
+W $D2F3,2,2 Depth $08, bitmap at +$09
+W $D2F5,2,2 Depth $04, bitmap at +$10
+W $D2F7,2,2 Depth $04, bitmap at +$10
+W $D2F9,2,2 Depth $08, bitmap at +$17
+W $D2FB,2,2 Depth $08, bitmap at +$17
+W $D2FD,2,2 Depth $04, bitmap at +$1E
+W $D2FF,2,2 Depth $04, bitmap at +$1E
 N $D301 Stretchy graphic part
 W $D301,2,2 [$D33A] LOD ptr
-W $D303,2,2 TBD
-W $D305,2,2 TBD
-W $D307,2,2 TBD
-W $D309,2,2 TBD
-W $D30B,2,2 TBD
-W $D30D,2,2 TBD
-W $D30F,2,2 TBD
-W $D311,2,2 TBD
-W $D313,2,2 TBD
-W $D315,2,2 TBD
+W $D303,2,2 Depth $18, bitmap at +$02
+W $D305,2,2 Depth $10, bitmap at +$02
+W $D307,2,2 Depth $10, bitmap at +$09
+W $D309,2,2 Depth $10, bitmap at +$09
+W $D30B,2,2 Depth $0C, bitmap at +$10
+W $D30D,2,2 Depth $0C, bitmap at +$10
+W $D30F,2,2 Depth $10, bitmap at +$17
+W $D311,2,2 Depth $10, bitmap at +$17
+W $D313,2,2 Depth $0C, bitmap at +$1E
+W $D315,2,2 Depth $0C, bitmap at +$1E
 N $D317 LOD table for "stretchy"
 N $D317 LOD
 B $D317,1,1 Width (bytes)
@@ -1676,45 +1676,45 @@ B $D3B4,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 B $D3C4,12,4 Bitmap data (masked) 4 bytes x 3
 B $D3D0,12,4 Pre-shifted bitmap data (masked) 4 bytes x 3
 N $D3DC Stretchy graphic
-B $D3DC,1,1 ?index
+B $D3DC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D3DD,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D3DF,1,1 ?index
+B $D3DF,1,1 Height 112.5% of the perspective scale
 W $D3E0,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D3E2,1,1 ?index
+B $D3E2,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D3E3,2,2 [$D406] Pointer to stretchy_graphic_part
 B $D3E5,1,1 Terminator
 N $D3E6 Stretchy graphic
-B $D3E6,1,1 ?index
+B $D3E6,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D3E7,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D3E9,1,1 ?index
+B $D3E9,1,1 Height 112.5% of the perspective scale
 W $D3EA,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D3EC,1,1 ?index
+B $D3EC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D3ED,2,2 [$D3F0] Pointer to stretchy_graphic_part
 B $D3EF,1,1 Terminator
 N $D3F0 Stretchy graphic part
 W $D3F0,2,2 [$D41C] LOD ptr
-W $D3F2,2,2 TBD
-W $D3F4,2,2 TBD
-W $D3F6,2,2 TBD
-W $D3F8,2,2 TBD
-W $D3FA,2,2 TBD
-W $D3FC,2,2 TBD
-W $D3FE,2,2 TBD
-W $D400,2,2 TBD
-W $D402,2,2 TBD
-W $D404,2,2 TBD
+W $D3F2,2,2 Depth $20, bitmap at +$02
+W $D3F4,2,2 Depth $18, bitmap at +$02
+W $D3F6,2,2 Depth $10, bitmap at +$09
+W $D3F8,2,2 Depth $10, bitmap at +$09
+W $D3FA,2,2 Depth $0C, bitmap at +$10
+W $D3FC,2,2 Depth $0C, bitmap at +$10
+W $D3FE,2,2 Depth $10, bitmap at +$17
+W $D400,2,2 Depth $10, bitmap at +$17
+W $D402,2,2 Depth $0C, bitmap at +$1E
+W $D404,2,2 Depth $0C, bitmap at +$1E
 N $D406 Stretchy graphic part
 W $D406,2,2 [$D41C] LOD ptr
-W $D408,2,2 TBD
-W $D40A,2,2 TBD
-W $D40C,2,2 TBD
-W $D40E,2,2 TBD
-W $D410,2,2 TBD
-W $D412,2,2 TBD
-W $D414,2,2 TBD
-W $D416,2,2 TBD
-W $D418,2,2 TBD
-W $D41A,2,2 TBD
+W $D408,2,2 Depth $20, bitmap at +$02
+W $D40A,2,2 Depth $18, bitmap at +$02
+W $D40C,2,2 Depth $10, bitmap at +$09
+W $D40E,2,2 Depth $10, bitmap at +$09
+W $D410,2,2 Depth $0C, bitmap at +$10
+W $D412,2,2 Depth $0C, bitmap at +$10
+W $D414,2,2 Depth $08, bitmap at +$17
+W $D416,2,2 Depth $08, bitmap at +$17
+W $D418,2,2 Depth $04, bitmap at +$1E
+W $D41A,2,2 Depth $04, bitmap at +$1E
 N $D41C LOD table for "stretchy"
 N $D41C LOD
 B $D41C,1,1 Width (bytes)
@@ -1755,85 +1755,85 @@ B $D4C2,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
 B $D4D6,16,4 Bitmap data (masked) 4 bytes x 4
 B $D4E6,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 N $D4F6 Stretchy graphic
-B $D4F6,1,1 ?index
+B $D4F6,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D4F7,2,2 [$D510] Pointer to stretchy_graphic_part
-B $D4F9,1,1 ?index
+B $D4F9,1,1 Height 37.5% of the perspective scale
 W $D4FA,2,2 [$D526] Pointer to stretchy_graphic_part
-B $D4FC,1,1 ?index
+B $D4FC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D4FD,2,2 [$D53C] Pointer to stretchy_graphic_part
-B $D4FF,1,1 ?index
+B $D4FF,1,1 Height 112.5% of the perspective scale
 W $D500,2,2 [$D552] Pointer to stretchy_graphic_part
-B $D502,1,1 ?index
+B $D502,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D503,2,2 [$D568] Pointer to stretchy_graphic_part
 B $D505,1,1 Terminator
 N $D506 Stretchy graphic
-B $D506,1,1 ?index
+B $D506,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D507,2,2 [$D53C] Pointer to stretchy_graphic_part
-B $D509,1,1 ?index
+B $D509,1,1 Height 37.5% of the perspective scale
 W $D50A,2,2 [$D552] Pointer to stretchy_graphic_part
-B $D50C,1,1 ?index
+B $D50C,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D50D,2,2 [$D568] Pointer to stretchy_graphic_part
 B $D50F,1,1 Terminator
 N $D510 Stretchy graphic part
 W $D510,2,2 [$D57E] LOD ptr
-W $D512,2,2 TBD
-W $D514,2,2 TBD
-W $D516,2,2 TBD
-W $D518,2,2 TBD
-W $D51A,2,2 TBD
-W $D51C,2,2 TBD
-W $D51E,2,2 TBD
-W $D520,2,2 TBD
-W $D522,2,2 TBD
-W $D524,2,2 TBD
+W $D512,2,2 Depth $1C, bitmap at +$17
+W $D514,2,2 Depth $14, bitmap at +$17
+W $D516,2,2 Depth $10, bitmap at +$2C
+W $D518,2,2 Depth $10, bitmap at +$2C
+W $D51A,2,2 Depth $0C, bitmap at +$41
+W $D51C,2,2 Depth $0C, bitmap at +$41
+W $D51E,2,2 Depth $0C, bitmap at +$5D
+W $D520,2,2 Depth $08, bitmap at +$5D
+W $D522,2,2 Depth $08, bitmap at +$AA
+W $D524,2,2 Depth $08, bitmap at +$AA
 N $D526 Stretchy graphic part
 W $D526,2,2 [$D57E] LOD ptr
-W $D528,2,2 TBD
-W $D52A,2,2 TBD
-W $D52C,2,2 TBD
-W $D52E,2,2 TBD
-W $D530,2,2 TBD
-W $D532,2,2 TBD
-W $D534,2,2 TBD
-W $D536,2,2 TBD
-W $D538,2,2 TBD
-W $D53A,2,2 TBD
+W $D528,2,2 Depth $34, bitmap at +$10
+W $D52A,2,2 Depth $2C, bitmap at +$10
+W $D52C,2,2 Depth $20, bitmap at +$87
+W $D52E,2,2 Depth $20, bitmap at +$87
+W $D530,2,2 Depth $14, bitmap at +$8E
+W $D532,2,2 Depth $14, bitmap at +$8E
+W $D534,2,2 Depth $14, bitmap at +$56
+W $D536,2,2 Depth $10, bitmap at +$56
+W $D538,2,2 Depth $08, bitmap at +$A3
+W $D53A,2,2 Depth $08, bitmap at +$A3
 N $D53C Stretchy graphic part
 W $D53C,2,2 [$D57E] LOD ptr
-W $D53E,2,2 TBD
-W $D540,2,2 TBD
-W $D542,2,2 TBD
-W $D544,2,2 TBD
-W $D546,2,2 TBD
-W $D548,2,2 TBD
-W $D54A,2,2 TBD
-W $D54C,2,2 TBD
-W $D54E,2,2 TBD
-W $D550,2,2 TBD
+W $D53E,2,2 Depth $1C, bitmap at +$09
+W $D540,2,2 Depth $14, bitmap at +$09
+W $D542,2,2 Depth $10, bitmap at +$25
+W $D544,2,2 Depth $10, bitmap at +$25
+W $D546,2,2 Depth $0C, bitmap at +$3A
+W $D548,2,2 Depth $0C, bitmap at +$3A
+W $D54A,2,2 Depth $0C, bitmap at +$4F
+W $D54C,2,2 Depth $08, bitmap at +$4F
+W $D54E,2,2 Depth $08, bitmap at +$9C
+W $D550,2,2 Depth $08, bitmap at +$9C
 N $D552 Stretchy graphic part
 W $D552,2,2 [$D57E] LOD ptr
-W $D554,2,2 TBD
-W $D556,2,2 TBD
-W $D558,2,2 TBD
-W $D55A,2,2 TBD
-W $D55C,2,2 TBD
-W $D55E,2,2 TBD
-W $D560,2,2 TBD
-W $D562,2,2 TBD
-W $D564,2,2 TBD
-W $D566,2,2 TBD
+W $D554,2,2 Depth $1C, bitmap at +$02
+W $D556,2,2 Depth $14, bitmap at +$02
+W $D558,2,2 Depth $10, bitmap at +$1E
+W $D55A,2,2 Depth $10, bitmap at +$1E
+W $D55C,2,2 Depth $0C, bitmap at +$33
+W $D55E,2,2 Depth $0C, bitmap at +$33
+W $D560,2,2 Depth $0C, bitmap at +$48
+W $D562,2,2 Depth $08, bitmap at +$48
+W $D564,2,2 Depth $08, bitmap at +$95
+W $D566,2,2 Depth $08, bitmap at +$95
 N $D568 Stretchy graphic part
 W $D568,2,2 [$D57E] LOD ptr
-W $D56A,2,2 TBD
-W $D56C,2,2 TBD
-W $D56E,2,2 TBD
-W $D570,2,2 TBD
-W $D572,2,2 TBD
-W $D574,2,2 TBD
-W $D576,2,2 TBD
-W $D578,2,2 TBD
-W $D57A,2,2 TBD
-W $D57C,2,2 TBD
+W $D56A,2,2 Depth $1C, bitmap at +$64
+W $D56C,2,2 Depth $14, bitmap at +$64
+W $D56E,2,2 Depth $10, bitmap at +$6B
+W $D570,2,2 Depth $10, bitmap at +$6B
+W $D572,2,2 Depth $0C, bitmap at +$72
+W $D574,2,2 Depth $0C, bitmap at +$72
+W $D576,2,2 Depth $0C, bitmap at +$79
+W $D578,2,2 Depth $08, bitmap at +$79
+W $D57A,2,2 Depth $08, bitmap at +$80
+W $D57C,2,2 Depth $08, bitmap at +$80
 N $D57E LOD table for "stretchy"
 N $D57E LOD
 B $D57E,1,1 Width (bytes)
@@ -3186,131 +3186,131 @@ B $F05D,157,8*19,5
 B $F0FA,3,3 Attribute data for the pilot's mugshot (4x5). Stored top-down.
 B $F0FD,17,8*2,1
 N $F10E Stretchy graphic
-B $F10E,1,1 ?index
+B $F10E,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F10F,2,2 [$F11B] Pointer to stretchy_graphic_part
-B $F111,1,1 ?index
+B $F111,1,1 Height 112.5% of the perspective scale
 W $F112,2,2 [$F131] Pointer to stretchy_graphic_part
-B $F114,1,1 ?index
+B $F114,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F115,2,2 [$F147] Pointer to stretchy_graphic_part
-B $F117,1,1 ?index
+B $F117,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F118,2,2 [$F15D] Pointer to stretchy_graphic_part
 B $F11A,1,1 Terminator
 N $F11B Stretchy graphic part
 W $F11B,2,2 [$F1D8] LOD ptr
-W $F11D,2,2 TBD
-W $F11F,2,2 TBD
-W $F121,2,2 TBD
-W $F123,2,2 TBD
-W $F125,2,2 TBD
-W $F127,2,2 TBD
-W $F129,2,2 TBD
-W $F12B,2,2 TBD
-W $F12D,2,2 TBD
-W $F12F,2,2 TBD
+W $F11D,2,2 Depth $00, bitmap at +$17
+W $F11F,2,2 Depth $00, bitmap at +$17
+W $F121,2,2 Depth $00, bitmap at +$33
+W $F123,2,2 Depth $00, bitmap at +$33
+W $F125,2,2 Depth $00, bitmap at +$4F
+W $F127,2,2 Depth $00, bitmap at +$4F
+W $F129,2,2 Depth $F8, bitmap at +$6B
+W $F12B,2,2 Depth $F8, bitmap at +$6B
+W $F12D,2,2 Depth $F8, bitmap at +$87
+W $F12F,2,2 Depth $F8, bitmap at +$87
 N $F131 Stretchy graphic part
 W $F131,2,2 [$F1D8] LOD ptr
-W $F133,2,2 TBD
-W $F135,2,2 TBD
-W $F137,2,2 TBD
-W $F139,2,2 TBD
-W $F13B,2,2 TBD
-W $F13D,2,2 TBD
-W $F13F,2,2 TBD
-W $F141,2,2 TBD
-W $F143,2,2 TBD
-W $F145,2,2 TBD
+W $F133,2,2 Depth $10, bitmap at +$10
+W $F135,2,2 Depth $10, bitmap at +$10
+W $F137,2,2 Depth $10, bitmap at +$2C
+W $F139,2,2 Depth $10, bitmap at +$2C
+W $F13B,2,2 Depth $10, bitmap at +$48
+W $F13D,2,2 Depth $10, bitmap at +$48
+W $F13F,2,2 Depth $08, bitmap at +$64
+W $F141,2,2 Depth $08, bitmap at +$64
+W $F143,2,2 Depth $08, bitmap at +$80
+W $F145,2,2 Depth $08, bitmap at +$80
 N $F147 Stretchy graphic part
 W $F147,2,2 [$F1D8] LOD ptr
-W $F149,2,2 TBD
-W $F14B,2,2 TBD
-W $F14D,2,2 TBD
-W $F14F,2,2 TBD
-W $F151,2,2 TBD
-W $F153,2,2 TBD
-W $F155,2,2 TBD
-W $F157,2,2 TBD
-W $F159,2,2 TBD
-W $F15B,2,2 TBD
+W $F149,2,2 Depth $08, bitmap at +$09
+W $F14B,2,2 Depth $08, bitmap at +$09
+W $F14D,2,2 Depth $10, bitmap at +$25
+W $F14F,2,2 Depth $10, bitmap at +$25
+W $F151,2,2 Depth $08, bitmap at +$41
+W $F153,2,2 Depth $08, bitmap at +$41
+W $F155,2,2 Depth $00, bitmap at +$5D
+W $F157,2,2 Depth $00, bitmap at +$5D
+W $F159,2,2 Depth $00, bitmap at +$79
+W $F15B,2,2 Depth $00, bitmap at +$79
 N $F15D Stretchy graphic part
 W $F15D,2,2 [$F1D8] LOD ptr
-W $F15F,2,2 TBD
-W $F161,2,2 TBD
-W $F163,2,2 TBD
-W $F165,2,2 TBD
-W $F167,2,2 TBD
-W $F169,2,2 TBD
-W $F16B,2,2 TBD
-W $F16D,2,2 TBD
-W $F16F,2,2 TBD
-W $F171,2,2 TBD
+W $F15F,2,2 Depth $18, bitmap at +$02
+W $F161,2,2 Depth $18, bitmap at +$02
+W $F163,2,2 Depth $18, bitmap at +$1E
+W $F165,2,2 Depth $18, bitmap at +$1E
+W $F167,2,2 Depth $10, bitmap at +$3A
+W $F169,2,2 Depth $10, bitmap at +$3A
+W $F16B,2,2 Depth $08, bitmap at +$56
+W $F16D,2,2 Depth $08, bitmap at +$56
+W $F16F,2,2 Depth $08, bitmap at +$72
+W $F171,2,2 Depth $08, bitmap at +$72
 N $F173 Stretchy graphic
-B $F173,1,1 ?index
+B $F173,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F174,2,2 [$F180] Pointer to stretchy_graphic_part
-B $F176,1,1 ?index
+B $F176,1,1 Height 112.5% of the perspective scale
 W $F177,2,2 [$F196] Pointer to stretchy_graphic_part
-B $F179,1,1 ?index
+B $F179,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F17A,2,2 [$F1AC] Pointer to stretchy_graphic_part
-B $F17C,1,1 ?index
+B $F17C,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F17D,2,2 [$F1C2] Pointer to stretchy_graphic_part
 B $F17F,1,1 Terminator
 N $F180 Stretchy graphic part
 W $F180,2,2 [$F264] LOD ptr
-W $F182,2,2 TBD
-B $F184,1,1 TBD
+W $F182,2,2 Depth $08, bitmap at +$17
+B $F184,1,1 Depth $08, bitmap at +$17
 B $F185,1,1
-W $F186,2,2 TBD
-W $F188,2,2 TBD
-W $F18A,2,2 TBD
-B $F18C,1,1 TBD
+W $F186,2,2 Depth $08, bitmap at +$33
+W $F188,2,2 Depth $08, bitmap at +$33
+W $F18A,2,2 Depth $00, bitmap at +$4F
+B $F18C,1,1 Depth $00, bitmap at +$4F
 B $F18D,1,1
-W $F18E,2,2 TBD
-W $F190,2,2 TBD
-W $F192,2,2 TBD
-B $F194,1,1 TBD
+W $F18E,2,2 Depth $00, bitmap at +$6B
+W $F190,2,2 Depth $00, bitmap at +$6B
+W $F192,2,2 Depth $00, bitmap at +$87
+B $F194,1,1 Depth $00, bitmap at +$87
 B $F195,1,1
 N $F196 Stretchy graphic part
 W $F196,2,2 [$F264] LOD ptr
-W $F198,2,2 TBD
-W $F19A,2,2 TBD
-B $F19C,1,1 TBD
+W $F198,2,2 Depth $10, bitmap at +$10
+W $F19A,2,2 Depth $10, bitmap at +$10
+B $F19C,1,1 Depth $10, bitmap at +$2C
 B $F19D,1,1
-W $F19E,2,2 TBD
-W $F1A0,2,2 TBD
-W $F1A2,2,2 TBD
-B $F1A4,1,1 TBD
+W $F19E,2,2 Depth $10, bitmap at +$2C
+W $F1A0,2,2 Depth $08, bitmap at +$48
+W $F1A2,2,2 Depth $08, bitmap at +$48
+B $F1A4,1,1 Depth $08, bitmap at +$64
 B $F1A5,1,1
-W $F1A6,2,2 TBD
-W $F1A8,2,2 TBD
-W $F1AA,2,2 TBD
+W $F1A6,2,2 Depth $08, bitmap at +$64
+W $F1A8,2,2 Depth $08, bitmap at +$80
+W $F1AA,2,2 Depth $08, bitmap at +$80
 N $F1AC Stretchy graphic part
 W $F1AC,2,2 [$F264] LOD ptr
-W $F1AE,2,2 TBD
-W $F1B0,2,2 TBD
-W $F1B2,2,2 TBD
-B $F1B4,1,1 TBD
+W $F1AE,2,2 Depth $10, bitmap at +$09
+W $F1B0,2,2 Depth $10, bitmap at +$09
+W $F1B2,2,2 Depth $18, bitmap at +$25
+B $F1B4,1,1 Depth $18, bitmap at +$25
 B $F1B5,1,1
-W $F1B6,2,2 TBD
-W $F1B8,2,2 TBD
-W $F1BA,2,2 TBD
-B $F1BC,1,1 TBD
+W $F1B6,2,2 Depth $08, bitmap at +$41
+W $F1B8,2,2 Depth $08, bitmap at +$41
+W $F1BA,2,2 Depth $08, bitmap at +$5D
+B $F1BC,1,1 Depth $08, bitmap at +$5D
 B $F1BD,1,1
-W $F1BE,2,2 TBD
-W $F1C0,2,2 TBD
+W $F1BE,2,2 Depth $08, bitmap at +$79
+W $F1C0,2,2 Depth $08, bitmap at +$79
 N $F1C2 Stretchy graphic part
 W $F1C2,2,2 [$F264] LOD ptr
-B $F1C4,1,1 TBD
+B $F1C4,1,1 Depth $20, bitmap at +$02
 B $F1C5,1,1
-W $F1C6,2,2 TBD
-W $F1C8,2,2 TBD
-W $F1CA,2,2 TBD
-B $F1CC,1,1 TBD
+W $F1C6,2,2 Depth $20, bitmap at +$02
+W $F1C8,2,2 Depth $20, bitmap at +$1E
+W $F1CA,2,2 Depth $20, bitmap at +$1E
+B $F1CC,1,1 Depth $10, bitmap at +$3A
 B $F1CD,1,1
-W $F1CE,2,2 TBD
-W $F1D0,2,2 TBD
-W $F1D2,2,2 TBD
-B $F1D4,1,1 TBD
+W $F1CE,2,2 Depth $10, bitmap at +$3A
+W $F1D0,2,2 Depth $10, bitmap at +$56
+W $F1D2,2,2 Depth $10, bitmap at +$56
+B $F1D4,1,1 Depth $10, bitmap at +$72
 B $F1D5,1,1
-W $F1D6,2,2 TBD
+W $F1D6,2,2 Depth $10, bitmap at +$72
 N $F1D8 LOD table for "stretchy"
 N $F1D8 LOD
 B $F1D8,1,1 Width (bytes)
@@ -3388,217 +3388,217 @@ B $F3CD,160,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,
 B $F46D,8,7,1 Bitmap data 7 bytes x 8
 B $F475,148,8*18,4
 N $F509 Stretchy graphic
-B $F509,1,1 ?index
+B $F509,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F50A,2,2 [$F555] Pointer to stretchy_graphic_part
-B $F50C,1,1 ?index
+B $F50C,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F50D,2,2 [$F56B] Pointer to stretchy_graphic_part
-B $F50F,1,1 ?index
+B $F50F,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F510,2,2 [$F56B] Pointer to stretchy_graphic_part
-B $F512,1,1 ?index
+B $F512,1,1 Height 50% of the perspective scale
 W $F513,2,2 [$F581] Pointer to stretchy_graphic_part
-B $F515,1,1 ?index
+B $F515,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F516,2,2 [$F597] Pointer to stretchy_graphic_part
-B $F518,1,1 ?index
+B $F518,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F519,2,2 [$F597] Pointer to stretchy_graphic_part
-B $F51B,1,1 ?index
+B $F51B,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F51C,2,2 [$F5AD] Pointer to stretchy_graphic_part
-B $F51E,1,1 ?index
+B $F51E,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F51F,2,2 [$F5C3] Pointer to stretchy_graphic_part
-B $F521,1,1 ?index
+B $F521,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F522,2,2 [$F5D9] Pointer to stretchy_graphic_part
 B $F524,1,1 Terminator
 N $F525 Stretchy graphic
-B $F525,1,1 ?index
+B $F525,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F526,2,2 [$F555] Pointer to stretchy_graphic_part
-B $F528,1,1 ?index
+B $F528,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F529,2,2 [$F5EF] Pointer to stretchy_graphic_part
-B $F52B,1,1 ?index
+B $F52B,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F52C,2,2 [$F5EF] Pointer to stretchy_graphic_part
-B $F52E,1,1 ?index
+B $F52E,1,1 Height 50% of the perspective scale
 W $F52F,2,2 [$F605] Pointer to stretchy_graphic_part
-B $F531,1,1 ?index
+B $F531,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F532,2,2 [$F61B] Pointer to stretchy_graphic_part
-B $F534,1,1 ?index
+B $F534,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F535,2,2 [$F61B] Pointer to stretchy_graphic_part
-B $F537,1,1 ?index
+B $F537,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F538,2,2 [$F631] Pointer to stretchy_graphic_part
-B $F53A,1,1 ?index
+B $F53A,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F53B,2,2 [$F647] Pointer to stretchy_graphic_part
-B $F53D,1,1 ?index
+B $F53D,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F53E,2,2 [$F65D] Pointer to stretchy_graphic_part
 B $F540,1,1 Terminator
 N $F541 Stretchy graphic
-B $F541,1,1 ?index
+B $F541,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F542,2,2 [$F5AD] Pointer to stretchy_graphic_part
-B $F544,1,1 ?index
+B $F544,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F545,2,2 [$F5C3] Pointer to stretchy_graphic_part
-B $F547,1,1 ?index
+B $F547,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F548,2,2 [$F5D9] Pointer to stretchy_graphic_part
 B $F54A,1,1 Terminator
 N $F54B Stretchy graphic
-B $F54B,1,1 ?index
+B $F54B,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F54C,2,2 [$F631] Pointer to stretchy_graphic_part
-B $F54E,1,1 ?index
+B $F54E,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F54F,2,2 [$F647] Pointer to stretchy_graphic_part
-B $F551,1,1 ?index
+B $F551,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F552,2,2 [$F65D] Pointer to stretchy_graphic_part
 B $F554,1,1 Terminator
 N $F555 Stretchy graphic part
 W $F555,2,2 [$F673] LOD ptr
-W $F557,2,2 TBD
-W $F559,2,2 TBD
-W $F55B,2,2 TBD
-W $F55D,2,2 TBD
-W $F55F,2,2 TBD
-W $F561,2,2 TBD
-W $F563,2,2 TBD
-W $F565,2,2 TBD
-W $F567,2,2 TBD
-W $F569,2,2 TBD
+W $F557,2,2 Depth $1C, bitmap at +$02
+W $F559,2,2 Depth $14, bitmap at +$02
+W $F55B,2,2 Depth $10, bitmap at +$1E
+W $F55D,2,2 Depth $10, bitmap at +$1E
+W $F55F,2,2 Depth $0C, bitmap at +$3A
+W $F561,2,2 Depth $0C, bitmap at +$3A
+W $F563,2,2 Depth $0C, bitmap at +$56
+W $F565,2,2 Depth $08, bitmap at +$56
+W $F567,2,2 Depth $08, bitmap at +$C6
+W $F569,2,2 Depth $08, bitmap at +$C6
 N $F56B Stretchy graphic part
 W $F56B,2,2 [$F673] LOD ptr
-W $F56D,2,2 TBD
-W $F56F,2,2 TBD
-W $F571,2,2 TBD
-W $F573,2,2 TBD
-W $F575,2,2 TBD
-W $F577,2,2 TBD
-W $F579,2,2 TBD
-W $F57B,2,2 TBD
-W $F57D,2,2 TBD
-W $F57F,2,2 TBD
+W $F56D,2,2 Depth $2C, bitmap at +$72
+W $F56F,2,2 Depth $24, bitmap at +$72
+W $F571,2,2 Depth $18, bitmap at +$87
+W $F573,2,2 Depth $18, bitmap at +$87
+W $F575,2,2 Depth $0C, bitmap at +$9C
+W $F577,2,2 Depth $0C, bitmap at +$9C
+W $F579,2,2 Depth $0C, bitmap at +$B1
+W $F57B,2,2 Depth $08, bitmap at +$B1
+W $F57D,2,2 Depth $08, bitmap at +$CD
+W $F57F,2,2 Depth $08, bitmap at +$CD
 N $F581 Stretchy graphic part
 W $F581,2,2 [$F673] LOD ptr
-W $F583,2,2 TBD
-W $F585,2,2 TBD
-W $F587,2,2 TBD
-W $F589,2,2 TBD
-W $F58B,2,2 TBD
-W $F58D,2,2 TBD
-W $F58F,2,2 TBD
-W $F591,2,2 TBD
-W $F593,2,2 TBD
-W $F595,2,2 TBD
+W $F583,2,2 Depth $2C, bitmap at +$79
+W $F585,2,2 Depth $24, bitmap at +$79
+W $F587,2,2 Depth $18, bitmap at +$8E
+W $F589,2,2 Depth $18, bitmap at +$8E
+W $F58B,2,2 Depth $0C, bitmap at +$A3
+W $F58D,2,2 Depth $0C, bitmap at +$A3
+W $F58F,2,2 Depth $0C, bitmap at +$B8
+W $F591,2,2 Depth $08, bitmap at +$B8
+W $F593,2,2 Depth $08, bitmap at +$D4
+W $F595,2,2 Depth $08, bitmap at +$D4
 N $F597 Stretchy graphic part
 W $F597,2,2 [$F673] LOD ptr
-W $F599,2,2 TBD
-W $F59B,2,2 TBD
-W $F59D,2,2 TBD
-W $F59F,2,2 TBD
-W $F5A1,2,2 TBD
-W $F5A3,2,2 TBD
-W $F5A5,2,2 TBD
-W $F5A7,2,2 TBD
-W $F5A9,2,2 TBD
-W $F5AB,2,2 TBD
+W $F599,2,2 Depth $2C, bitmap at +$80
+W $F59B,2,2 Depth $24, bitmap at +$80
+W $F59D,2,2 Depth $18, bitmap at +$95
+W $F59F,2,2 Depth $18, bitmap at +$95
+W $F5A1,2,2 Depth $0C, bitmap at +$AA
+W $F5A3,2,2 Depth $0C, bitmap at +$AA
+W $F5A5,2,2 Depth $0C, bitmap at +$BF
+W $F5A7,2,2 Depth $08, bitmap at +$BF
+W $F5A9,2,2 Depth $08, bitmap at +$DB
+W $F5AB,2,2 Depth $08, bitmap at +$DB
 N $F5AD Stretchy graphic part
 W $F5AD,2,2 [$F673] LOD ptr
-W $F5AF,2,2 TBD
-W $F5B1,2,2 TBD
-W $F5B3,2,2 TBD
-W $F5B5,2,2 TBD
-W $F5B7,2,2 TBD
-W $F5B9,2,2 TBD
-W $F5BB,2,2 TBD
-W $F5BD,2,2 TBD
-W $F5BF,2,2 TBD
-W $F5C1,2,2 TBD
+W $F5AF,2,2 Depth $24, bitmap at +$09
+W $F5B1,2,2 Depth $1C, bitmap at +$09
+W $F5B3,2,2 Depth $18, bitmap at +$25
+W $F5B5,2,2 Depth $18, bitmap at +$25
+W $F5B7,2,2 Depth $0C, bitmap at +$41
+W $F5B9,2,2 Depth $0C, bitmap at +$41
+W $F5BB,2,2 Depth $0C, bitmap at +$5D
+W $F5BD,2,2 Depth $08, bitmap at +$5D
+W $F5BF,2,2 Depth $08, bitmap at +$E2
+W $F5C1,2,2 Depth $08, bitmap at +$E2
 N $F5C3 Stretchy graphic part
 W $F5C3,2,2 [$F673] LOD ptr
-W $F5C5,2,2 TBD
-W $F5C7,2,2 TBD
-W $F5C9,2,2 TBD
-W $F5CB,2,2 TBD
-W $F5CD,2,2 TBD
-W $F5CF,2,2 TBD
-W $F5D1,2,2 TBD
-W $F5D3,2,2 TBD
-W $F5D5,2,2 TBD
-W $F5D7,2,2 TBD
+W $F5C5,2,2 Depth $1C, bitmap at +$10
+W $F5C7,2,2 Depth $14, bitmap at +$10
+W $F5C9,2,2 Depth $10, bitmap at +$2C
+W $F5CB,2,2 Depth $10, bitmap at +$2C
+W $F5CD,2,2 Depth $04, bitmap at +$48
+W $F5CF,2,2 Depth $04, bitmap at +$48
+W $F5D1,2,2 Depth $0C, bitmap at +$64
+W $F5D3,2,2 Depth $08, bitmap at +$64
+W $F5D5,2,2 Depth $08, bitmap at +$E9
+W $F5D7,2,2 Depth $08, bitmap at +$E9
 N $F5D9 Stretchy graphic part
 W $F5D9,2,2 [$F673] LOD ptr
-W $F5DB,2,2 TBD
-W $F5DD,2,2 TBD
-W $F5DF,2,2 TBD
-W $F5E1,2,2 TBD
-W $F5E3,2,2 TBD
-W $F5E5,2,2 TBD
-W $F5E7,2,2 TBD
-W $F5E9,2,2 TBD
-W $F5EB,2,2 TBD
-W $F5ED,2,2 TBD
+W $F5DB,2,2 Depth $24, bitmap at +$17
+W $F5DD,2,2 Depth $1C, bitmap at +$17
+W $F5DF,2,2 Depth $18, bitmap at +$33
+W $F5E1,2,2 Depth $18, bitmap at +$33
+W $F5E3,2,2 Depth $0C, bitmap at +$4F
+W $F5E5,2,2 Depth $0C, bitmap at +$4F
+W $F5E7,2,2 Depth $0C, bitmap at +$6B
+W $F5E9,2,2 Depth $08, bitmap at +$6B
+W $F5EB,2,2 Depth $08, bitmap at +$F0
+W $F5ED,2,2 Depth $08, bitmap at +$F0
 N $F5EF Stretchy graphic part
 W $F5EF,2,2 [$F673] LOD ptr
-W $F5F1,2,2 TBD
-W $F5F3,2,2 TBD
-W $F5F5,2,2 TBD
-W $F5F7,2,2 TBD
-W $F5F9,2,2 TBD
-W $F5FB,2,2 TBD
-W $F5FD,2,2 TBD
-W $F5FF,2,2 TBD
-W $F601,2,2 TBD
-W $F603,2,2 TBD
+W $F5F1,2,2 Depth $2C, bitmap at +$72
+W $F5F3,2,2 Depth $24, bitmap at +$72
+W $F5F5,2,2 Depth $18, bitmap at +$87
+W $F5F7,2,2 Depth $18, bitmap at +$87
+W $F5F9,2,2 Depth $14, bitmap at +$9C
+W $F5FB,2,2 Depth $14, bitmap at +$9C
+W $F5FD,2,2 Depth $14, bitmap at +$B1
+W $F5FF,2,2 Depth $10, bitmap at +$B1
+W $F601,2,2 Depth $08, bitmap at +$CD
+W $F603,2,2 Depth $08, bitmap at +$CD
 N $F605 Stretchy graphic part
 W $F605,2,2 [$F673] LOD ptr
-W $F607,2,2 TBD
-W $F609,2,2 TBD
-W $F60B,2,2 TBD
-W $F60D,2,2 TBD
-W $F60F,2,2 TBD
-W $F611,2,2 TBD
-W $F613,2,2 TBD
-W $F615,2,2 TBD
-W $F617,2,2 TBD
-W $F619,2,2 TBD
+W $F607,2,2 Depth $2C, bitmap at +$79
+W $F609,2,2 Depth $24, bitmap at +$79
+W $F60B,2,2 Depth $18, bitmap at +$8E
+W $F60D,2,2 Depth $18, bitmap at +$8E
+W $F60F,2,2 Depth $14, bitmap at +$A3
+W $F611,2,2 Depth $14, bitmap at +$A3
+W $F613,2,2 Depth $14, bitmap at +$B8
+W $F615,2,2 Depth $10, bitmap at +$B8
+W $F617,2,2 Depth $08, bitmap at +$D4
+W $F619,2,2 Depth $08, bitmap at +$D4
 N $F61B Stretchy graphic part
 W $F61B,2,2 [$F673] LOD ptr
-W $F61D,2,2 TBD
-W $F61F,2,2 TBD
-W $F621,2,2 TBD
-W $F623,2,2 TBD
-W $F625,2,2 TBD
-W $F627,2,2 TBD
-W $F629,2,2 TBD
-W $F62B,2,2 TBD
-W $F62D,2,2 TBD
-W $F62F,2,2 TBD
+W $F61D,2,2 Depth $2C, bitmap at +$80
+W $F61F,2,2 Depth $24, bitmap at +$80
+W $F621,2,2 Depth $18, bitmap at +$95
+W $F623,2,2 Depth $18, bitmap at +$95
+W $F625,2,2 Depth $14, bitmap at +$AA
+W $F627,2,2 Depth $14, bitmap at +$AA
+W $F629,2,2 Depth $14, bitmap at +$BF
+W $F62B,2,2 Depth $10, bitmap at +$BF
+W $F62D,2,2 Depth $08, bitmap at +$DB
+W $F62F,2,2 Depth $08, bitmap at +$DB
 N $F631 Stretchy graphic part
 W $F631,2,2 [$F673] LOD ptr
-W $F633,2,2 TBD
-W $F635,2,2 TBD
-W $F637,2,2 TBD
-W $F639,2,2 TBD
-W $F63B,2,2 TBD
-W $F63D,2,2 TBD
-W $F63F,2,2 TBD
-W $F641,2,2 TBD
-W $F643,2,2 TBD
-W $F645,2,2 TBD
+W $F633,2,2 Depth $1C, bitmap at +$09
+W $F635,2,2 Depth $14, bitmap at +$09
+W $F637,2,2 Depth $08, bitmap at +$25
+W $F639,2,2 Depth $08, bitmap at +$25
+W $F63B,2,2 Depth $0C, bitmap at +$41
+W $F63D,2,2 Depth $0C, bitmap at +$41
+W $F63F,2,2 Depth $0C, bitmap at +$5D
+W $F641,2,2 Depth $08, bitmap at +$5D
+W $F643,2,2 Depth $08, bitmap at +$E2
+W $F645,2,2 Depth $08, bitmap at +$E2
 N $F647 Stretchy graphic part
 W $F647,2,2 [$F673] LOD ptr
-W $F649,2,2 TBD
-W $F64B,2,2 TBD
-W $F64D,2,2 TBD
-W $F64F,2,2 TBD
-W $F651,2,2 TBD
-W $F653,2,2 TBD
-W $F655,2,2 TBD
-W $F657,2,2 TBD
-W $F659,2,2 TBD
-W $F65B,2,2 TBD
+W $F649,2,2 Depth $1C, bitmap at +$10
+W $F64B,2,2 Depth $14, bitmap at +$10
+W $F64D,2,2 Depth $08, bitmap at +$2C
+W $F64F,2,2 Depth $08, bitmap at +$2C
+W $F651,2,2 Depth $0C, bitmap at +$48
+W $F653,2,2 Depth $0C, bitmap at +$48
+W $F655,2,2 Depth $0C, bitmap at +$64
+W $F657,2,2 Depth $08, bitmap at +$64
+W $F659,2,2 Depth $08, bitmap at +$E9
+W $F65B,2,2 Depth $08, bitmap at +$E9
 N $F65D Stretchy graphic part
 W $F65D,2,2 [$F673] LOD ptr
-W $F65F,2,2 TBD
-W $F661,2,2 TBD
-W $F663,2,2 TBD
-W $F665,2,2 TBD
-W $F667,2,2 TBD
-W $F669,2,2 TBD
-W $F66B,2,2 TBD
-W $F66D,2,2 TBD
-W $F66F,2,2 TBD
-W $F671,2,2 TBD
+W $F65F,2,2 Depth $1C, bitmap at +$17
+W $F661,2,2 Depth $14, bitmap at +$17
+W $F663,2,2 Depth $08, bitmap at +$33
+W $F665,2,2 Depth $08, bitmap at +$33
+W $F667,2,2 Depth $0C, bitmap at +$4F
+W $F669,2,2 Depth $0C, bitmap at +$4F
+W $F66B,2,2 Depth $0C, bitmap at +$6B
+W $F66D,2,2 Depth $08, bitmap at +$6B
+W $F66F,2,2 Depth $08, bitmap at +$F0
+W $F671,2,2 Depth $08, bitmap at +$F0
 N $F673 LOD table for "stretchy"
 N $F673 LOD
 B $F673,1,1 Width (bytes)
@@ -3821,54 +3821,54 @@ B $F7D5,19,8*2,3
 B $F7E8,5,3,2 Bitmap data 3 bytes x 4
 B $F7ED,293,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,5
 N $F912 Stretchy graphic
-B $F912,1,1 ?index
+B $F912,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F913,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F915,1,1 ?index
+B $F915,1,1 Height 50% of the perspective scale
 W $F916,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F918,1,1 ?index
+B $F918,1,1 Height 112.5% of the perspective scale
 W $F919,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F91B,1,1 ?index
+B $F91B,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F91C,2,2 [$F92C] Pointer to stretchy_graphic_part
 B $F91E,1,1 Terminator
 N $F91F Stretchy graphic
-B $F91F,1,1 ?index
+B $F91F,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F920,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F922,1,1 ?index
+B $F922,1,1 Height 50% of the perspective scale
 W $F923,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F925,1,1 ?index
+B $F925,1,1 Height 112.5% of the perspective scale
 W $F926,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $F928,1,1 ?index
+B $F928,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $F929,2,2 [$F942] Pointer to stretchy_graphic_part
 B $F92B,1,1 Terminator
 N $F92C Stretchy graphic part
 W $F92C,2,2 [$F958] LOD ptr
-W $F92E,2,2 TBD
-W $F930,2,2 TBD
-W $F932,2,2 TBD
-B $F934,1,1 TBD
+W $F92E,2,2 Depth $18, bitmap at +$02
+W $F930,2,2 Depth $10, bitmap at +$02
+W $F932,2,2 Depth $08, bitmap at +$09
+B $F934,1,1 Depth $08, bitmap at +$09
 B $F935,1,1
-W $F936,2,2 TBD
-W $F938,2,2 TBD
-W $F93A,2,2 TBD
-B $F93C,1,1 TBD
+W $F936,2,2 Depth $0C, bitmap at +$10
+W $F938,2,2 Depth $0C, bitmap at +$10
+W $F93A,2,2 Depth $08, bitmap at +$17
+B $F93C,1,1 Depth $08, bitmap at +$17
 B $F93D,1,1
-W $F93E,2,2 TBD
-W $F940,2,2 TBD
+W $F93E,2,2 Depth $04, bitmap at +$1E
+W $F940,2,2 Depth $04, bitmap at +$1E
 N $F942 Stretchy graphic part
 W $F942,2,2 [$F958] LOD ptr
-B $F944,1,1 TBD
+B $F944,1,1 Depth $18, bitmap at +$02
 B $F945,1,1
-W $F946,2,2 TBD
-W $F948,2,2 TBD
-W $F94A,2,2 TBD
-B $F94C,1,1 TBD
+W $F946,2,2 Depth $10, bitmap at +$02
+W $F948,2,2 Depth $10, bitmap at +$09
+W $F94A,2,2 Depth $10, bitmap at +$09
+B $F94C,1,1 Depth $0C, bitmap at +$10
 B $F94D,1,1
-W $F94E,2,2 TBD
-W $F950,2,2 TBD
-W $F952,2,2 TBD
-B $F954,1,1 TBD
+W $F94E,2,2 Depth $0C, bitmap at +$10
+W $F950,2,2 Depth $08, bitmap at +$17
+W $F952,2,2 Depth $08, bitmap at +$17
+B $F954,1,1 Depth $0C, bitmap at +$1E
 B $F955,1,1
-W $F956,2,2 TBD
+W $F956,2,2 Depth $0C, bitmap at +$1E
 N $F958 LOD table for "stretchy"
 N $F958 LOD
 B $F958,1,1 Width (bytes)
