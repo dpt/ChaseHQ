@@ -97,7 +97,7 @@ C $C0B0,1 Write the attempt-number digit into the row
 C $C0B1,3 HL += 3
 C $C0B4,3 Remember this position
 C $C0B7,5 Write two static full stops ("..")
-C $C0BD,2 A third full stop with bit 7 set -- likely the flash attribute variant, used as a blinking name-entry cursor
+C $C0BD,2 A third full stop with bit 7 set, terminating the row's 3-character name field (see #R$C3AF) with placeholder text before the player's initials overwrite it
 C $C0BF,1 Restore the row counter (banked at $C06F)
 C $C0C0,3 Save the row counter
 C $C0C3,1 B = row counter
@@ -120,8 +120,14 @@ C $C130,3 Clear a flag/self-modified byte at $C2F2
 C $C133,3 See #R$F82F
 C $C136,3 See #R$C2B1
 C $C139,3 See #R$C16A
+C $C13C,8 Recomputes to a constant $9F every pass, so JR NZ is always taken here -- this loop can only actually end via a side effect inside one of the three CALLs above (e.g. popping this return address), not via this test
+C $C144,2 $C9 = RET opcode
+C $C146,3 Self-modify $C2F2 to RET, ending the entry loop
 @ $C149 label=ihe_entry_loop
-C $C13C,25 Recomputes to a constant $9F every pass, so JR NZ is always taken here -- this loop can only actually end via a side effect inside one of the three CALLs above (e.g. popping this return address), not via this test $C9 = RET opcode Self-modify $C2F2 to RET Handle one frame of name entry (see below) See #R$C16A See #R$F82F Loop -- exits via a side effect inside a callee
+C $C149,3 Handle one frame of name entry (see #R$C155)
+C $C14C,3 See #R$C16A
+C $C14F,3 See #R$F82F
+C $C152,3 Loop -- exits via a side effect inside a callee
 N $C155 This entry point is used by the routine at #R$C16A.
 @ $C155 label=name_entry_frame
 C $C155,3 HL -> a saved (DE) pair, likely the current cursor/
@@ -366,8 +372,8 @@ N $C567 $C567: the 6-entry stage-code table indexed by #R$C06E ($C09F) to fill e
 T $C567,18,3
 B $C579,6,6 Padding
 B $C57F,31,8*3,7
-c $C59E Title-screen driver: picks a scene, sets up the objects and drives the attract-mode wait loop
-D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and "PRESS GEAR TO PLAY" once controls have been selected -- #R$8001@main), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
+c $C59E Pick a title-screen scene and enter the attract-mode wait loop
+D $C59E Picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and "PRESS GEAR TO PLAY" once controls have been selected -- #R$8001@main), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
 R $C59E Used by the routines at #R$C000 and #R$FBC8.
 @ $C59E label=run_title_screen
 C $C59E,3 Clear the screen bitmap and attribute buffers
@@ -378,16 +384,16 @@ C $C5C7,1 Save chosen scene table pointer
 C $C5C8,3 Draw the copyright/credits text block ($CC50)
 C $C5CE,13 Zero the whole $BB00-$BB4F object array (9 records x 9 bytes -- see #R$C705 for field layout)
 C $C5DB,39 Copy the 5-byte-per-object scene table (pointed to by the popped HL) into the 9 object records, one object per iteration, reordering into fields: script pointer low/high (+$07/+$08), then two more bytes into +$06 and +$04/+$05
-C $C602,3 (not traced in detail here -- appears unrelated setup, e.g. sound/interrupt state)
+C $C602,3 Set up interrupts (see #R$F7AA)
 C $C605,3 Draw the first animation frame before entering the wait loop, so the scene is visible immediately
 C $C608,3 Draw the "PRESS ENTER FOR OPTIONS" text block ($CC9D), unconditionally
 C $C60E,3 If controls have already been selected (#R$8001@main, set by the options menu)...
 C $C612,3 ...also draw the "PRESS GEAR TO PLAY" text block (#R$CC88)
-C $C619,3 (not traced -- likely sound-related)
+C $C619,3 See #R$F7D6, called with A=0
 C $C61D,1 Sync to the next interrupt before the wait loop
 N $C61E Attract-mode wait loop: animates the current scene once per interrupt and polls for coin-insert / fire / any-key input to start the game or jump to a fresh title screen. Re-entered every frame via #R$C61E; #R$C59E is re-run (new scene) when a key other than fire is pressed.
 @ $C61E label=titlescr_wait_loop
-C $C61E,3 Per-frame service call (not traced -- likely sound or sprite bookkeeping)
+C $C61E,3 Call titlescr_music (see #R$F82F)
 C $C621,3 If a flag is already set, skip straight to the
 C $C624,1 fire-button check (demo/attract cycle already
 C $C625,2 running, don't replay the tune-wait below)
@@ -419,7 +425,7 @@ C $C696,3 Push $8011 as an extra "credit awarded" flag/value
 C $C699,1 for the shared tail below
 @ $C69A label=titlescr_refresh_name_table
 C $C69A,1 Entry point also reached directly after the ~180- frame attract-tune wait (#R$C61E), without the $8011 flag push above
-C $C69C,3 (not traced -- likely a sound/ROM-switch helper)
+C $C69C,3 Stop any playing tune and silence the AY chip (see #R$ED0B)
 C $C69F,35 Copy the 3 preset high-score name/rank rows from $C403 into the work buffer pointed to by ($800A), 3 times (A = 3), each copy split into 15+7+6 bytes with 2-byte gaps skipped between segments
 C $C6C2,1 Discard the flag/counter pushed by the caller
 N $C6C4 Per-frame animation driver: waits for the next interrupt, draws the 6 "foreground" objects (records 0-5 of the $BB00 array) via #R$C8C5, steps the object animation scripts (#R$C705), clears the playfield bitmap (#R$CC04), then draws the 3 "background" objects (records 6-8) via the alternate blitter #R$C94F. Loops forever in the ordinary case, but #R$C705 (via #R$C746's $D2 "end of script" handling, `POP HL : RET` with no matching PUSH) will pop this loop's own return address as data and RET again beneath it, unwinding straight out of this self-loop back to #R$C6C4's *caller* (#R$C605's own continuation) the moment any object's script reaches $D2 -- see #R$C746. This is the normal exit: whichever scene object's script ends first stops the whole per-frame animation and hands control back to run_title_screen, which is what starts the tune and enters the (non-animating) attract-mode wait loop. #R$C93C / #R$C9D3-style RET-via-restored-SP inside the blitters is a separate, unrelated mechanism (aborting one partially off-screen glyph draw, not this loop). Uses EXX around each #R$C8C5/#R$C94F call: the object record's script pointer (B/C) and screen-position byte (L) are loaded into the shadow registers so the blitter can use HL/DE/BC freely without disturbing the loop's own IX/DE/B state in the main set.
@@ -943,9 +949,9 @@ b $D462 Title-screen logo letter bitmaps (C, H, A, S, E, Q and punctuation)
 N $D462 #HTML[#CALL(graphic($D462,32,28,0,0))]
 B $D462,112,4 Bitmap: "C" 32x28
 N $D4D2 #HTML[#CALL(graphic($D4D2,32,28,0,0))]
-B $D4D2,112,4 Bitmap: "C" 32x28 shifted right 4?
+B $D4D2,112,4 Bitmap: "C" 32x28 shifted right
 N $D542 #HTML[#CALL(graphic($D542,32,28,0,0))]
-B $D542,112,4 Bitmap: "C" 32x28 shifted right 8?
+B $D542,112,4 Bitmap: "C" 32x28 shifted right again
 N $D5B2 #HTML[#CALL(graphic($D5B2,40,28,0,0))]
 B $D5B2,140,5 Bitmap: "C" 40x28
 N $D63E #HTML[#CALL(graphic($D63E,32,28,0,0))]
@@ -1246,8 +1252,9 @@ R $EFAF $EFBC onward: an AY tone-period lookup table (2 bytes/entry, one per
 R $EFAF note), indexed by note number via #R$EE9E ($EEF1 LD HL,$EFBC).
 N $EFAF Further sub-tables referenced elsewhere in this driver, contents not decoded byte-by-byte (raw lookup data, not algorithmic): $F07C (indexed pointer table, see #R$EE5A), $F123 (indexed pointer table, see #R$EE7E). $F225 onward: the per-tune channel-pointer table used by #R$EB9E, 7 bytes/entry -- see #R$EB9E for the layout.
 B $EFAF,511,8*63,7
-c $F1AE Phrase-pointer table walker for a channel's pattern stream, reached via the computed jump at #R$ED33 (pattern command byte $87). Traced mechanically below (explicit instruction lengths, to avoid the auto-disassembler misreading the DD-prefixed IX-offset forms). Confirmed against a working build (see #R$EE9E's C translation, advance_channel_phrase). The phrase-pointer table read from $F1D5 onward is a sequence of little-endian words, each either a literal marker or a raw address: marker $0000 means the table is exhausted (restart from this channel's own header word); marker $0001 is followed by a 1-byte transpose override then another table word; marker $0002 is followed by a 1-byte repeat count and a 2-byte pointer (a "repeating" phrase); anything else is a plain phrase-pointer word, used directly.
-D $F1AE Used by the routine at #R$EC71.
+c $F1AE Phrase-pointer table walker for a channel's pattern stream
+D $F1AE Reached via the computed jump at #R$ED33 (pattern command byte $87). Traced mechanically below (explicit instruction lengths, to avoid the auto-disassembler misreading the DD-prefixed IX-offset forms). Confirmed against a working build (see #R$EE9E's C translation, advance_channel_phrase). The phrase-pointer table read from $F1D5 onward is a sequence of little-endian words, each either a literal marker or a raw address: marker $0000 means the table is exhausted (restart from this channel's own header word); marker $0001 is followed by a 1-byte transpose override then another table word; marker $0002 is followed by a 1-byte repeat count and a 2-byte pointer (a "repeating" phrase); anything else is a plain phrase-pointer word, used directly.
+R $F1AE Used by the routine at #R$EC71.
 @ $F1AE label=advance_channel_phrase
 C $F1AE,3 BC = (IX+$05)/(IX+$06), this channel's byte offset into its own phrase-pointer table
 @ $F1B4 label=acph_repeat_loop
@@ -1296,7 +1303,7 @@ b $F225 Per-tune channel-pointer table and pattern/phrase byte data
 D $F225 $F225-$F240 (28 bytes, 7 bytes/entry): the per-tune channel-pointer table used by #R$EB9E, see #R$EB9E for the layout. $F241 onward: pattern/phrase byte streams and per-channel phrase-pointer tables referenced by #R$F1AE and the channel tracker records set up by #R$EB9E; not decoded byte-by-byte.
 B $F225,1413,8*176,5
 c $F7AA Sets up the classic ZX Spectrum IM2 "257-byte table" interrupt vector trick
-D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
+D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, the CPU always resolves it to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
 R $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.
 @ $F7AA label=setup_im2_interrupt_table
 c $F7C7 Set up interrupts and run the success jingle
@@ -1492,7 +1499,7 @@ D $FF2C Duplicate check ($FF3D-$FF48): compares the new key code against the C-1
 R $FF2C Store ($FF4C-$FF52): the new key code is written to $FFF6+C (i.e.
 R $FF2C $FFF7 for control 1, ... $ FFFE for control 8) -- the growing list
 R $FF2C used by the duplicate check above and read back by #R$FEE2-$FEF1.
-N $FF2C Name lookup ($FF53-$FF68): the scan-matrix key code (bits 0-2 = column/bit-within-row 0-4, bits 3+ = row 0-7, from #R$FF0C) is unpacked into row and bit, then re-combined as index = 5*bit + row (a column-major layout, not row-major) to index the 2-bytes/entry name table at #R$FF95. Print ($FF6D-$FF7F): the looked-up character and a second byte (with bit 7 forced set, presumably an attribute/terminator flag for the string printer) are written into a 2-character scratch buffer at $FD97-$FD9B alongside the caller's screen address (DE), then #R$FDA4 prints it. Column advance ($FF82-$FF94): restores the caller's screen address and steps it on by $20 (one label column); on overflow (E wraps past $FF) also bumps D by 8 to drop down a pixel row. The same step is applied unconditionally once more when the caller's remaining loop count B is exactly 4 (#R$FF87-$FF8A) -- the extra step that wraps from the first row of 4 control labels to the second row of 4. Used by the routine at #R$FEA9.
+N $FF2C Name lookup ($FF53-$FF68): the scan-matrix key code (bits 0-2 = column/bit-within-row 0-4, bits 3+ = row 0-7, from #R$FF0C) is unpacked into row and bit, then re-combined as index = 5*bit + row (a column-major layout, not row-major) to index the 2-bytes/entry name table at #R$FF95. Print ($FF6D-$FF7F): the looked-up entry's two characters are copied into a 2-character scratch buffer at $FD97-$FD9B alongside the caller's screen address (DE), with bit 7 forced on the second (the string terminator consumed by #R$FDA4's own BIT 7 test -- see #R$FF95: usually a space, but a real second letter for the spelled-out SYMBOL SHIFT/SPACE/ENTER/CAPS SHIFT codes), then #R$FDA4 prints it. Column advance ($FF82-$FF94): restores the caller's screen address and steps it on by $20 (one label column); on overflow (E wraps past $FF) also bumps D by 8 to drop down a pixel row. The same step is applied unconditionally once more when the caller's remaining loop count B is exactly 4 (#R$FF87-$FF8A) -- the extra step that wraps from the first row of 4 control labels to the second row of 4. Used by the routine at #R$FEA9.
 @ $FF2C label=read_new_key_definition
 @ $FF8B label=advance_key_label_column
 b $FF95 Key-name lookup table for the "redefine keys" screen, plus joystick key-lists

@@ -1042,11 +1042,11 @@ N $6CFE Turn right sign (16x13) pre-shifted
 N $6CFE #HTML[#CALL(graphic($6CFE,16,13,1,1))]
 @ $6CFE label=bitmap_turnsign_5s
 B $6CFE,52,2 Masked bitmap data
-N $6D32 Turn right sign (16x10) unused?
+N $6D32 Turn right sign (16x10), unused
 N $6D32 #HTML[#CALL(graphic($6D32,16,10,1,1))]
 @ $6D32 label=bitmap_turnsign_6
 B $6D32,40,4 Masked bitmap data
-N $6D5A Turn right sign (16x10) pre-shifted, unused?
+N $6D5A Turn right sign (16x10) pre-shifted, unused
 N $6D5A #HTML[#CALL(graphic($6D5A,16,10,1,1))]
 @ $6D5A label=bitmap_turnsign_6s
 B $6D5A,40,4 Masked bitmap data
@@ -2210,10 +2210,11 @@ B $8001,1,1 [128K] Attract mode message cycle. Used by #R$F437. When zero shows 
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 @ $8006 label=retry_count
-B $8006,1,1 0 for first attempt, 1 if second, 2 if final. [Used for bonuses only?]
+B $8006,1,1 0 for first attempt, 1 if second, 2 if final. Used only to cut the level-clear and "Break?" bonuses to a tenth on a retry.
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
-u $8008 Unused, except for $800E-$8010: those three bytes ($C3,$D6,$A0) decode as `JP $A0D6` (keyscan) -- a disguised instruction hiding inside this "unused" data block. CALL $800E is therefore equivalent to CALL $A0D6; see bank 3's $C647 and $C1D7 for its two callers.
+u $8008 Unused, apart from a disguised JP hidden at $800E-$8010
+D $8008 Those three bytes ($C3,$D6,$A0) decode as `JP $A0D6` (keyscan) -- a disguised instruction hiding inside this "unused" data block. CALL $800E is therefore equivalent to CALL $A0D6; see bank 3's $C647 and $C1D7 for its two callers.
 B $8008,8,8 Can't see any consistent use of these.
 B $8010,4,4
 c $8014 Load a stage
@@ -2621,7 +2622,7 @@ N $840B Run the end screen.
 C $840B,3 Call the end screen animation routine
 C $840E,5 Reset (wanted) stage to 1
 C $8413,5 Call load_stage
-C $8418,2 Set (wanted) stage to 6   [not sure why]
+C $8418,2 Set (wanted) stage back to 6, so the next call to main_loop re-enters the end screen instead of starting stage 1's gameplay
 C $841A,1 Return
 N $841B Run the main game loop.
 @ $841B label=ml_not_credits
@@ -2836,9 +2837,9 @@ C $8612,1 Set flags
 C $8613,2 Self modified counter
 N $8615 Use sign of the random value to enlarge or reduce the apparent meter level.
 C $8615,3 Jump to enlarge case if random value is positive
-C $8618,2 Decrement counter [Why use SUB here?]
+C $8618,2 Decrement counter -- SUB, not DEC A, because JR NC below tests the carry flag DEC A wouldn't set
 C $861A,2 Jump if >= 0
-C $861C,2 Increment counter [Why use ADD here?]
+C $861C,2 Increment counter -- ADD mirrors the SUB above for symmetry; INC A would work equally well since carry isn't tested here
 C $861E,4 Jump if < 8
 C $8622,1 Decrement counter (max out at 7)
 C $8623,3 Self modify counter in #R$8613
@@ -2850,9 +2851,9 @@ C $862F,1 Set flags
 C $8630,2 Self modified counter
 N $8632 Use sign of the random value to enlarge or reduce the apparent meter level.
 C $8632,3 Jump to enlarge case if random value is positive
-C $8635,2 Decrement counter [Why use SUB here?]
+C $8635,2 Decrement counter -- SUB, not DEC A, because JR NC below tests the carry flag DEC A wouldn't set
 C $8637,2 Jump if >= 0
-C $8639,2 Increment counter [Why use ADD here?]
+C $8639,2 Increment counter -- ADD mirrors the SUB above for symmetry; INC A would work equally well since carry isn't tested here
 C $863B,4 Jump if < 8
 C $863F,1 Decrement counter (max out at 7)
 C $8640,3 Self modify counter in #R$8630
@@ -3330,7 +3331,7 @@ N $8AA4 Otherwise the car's in the correct position now.
 C $8AA4,1 Move $126 in #REGde to #REGhl
 @ $8AA5 label=hpc_set_road_pos
 C $8AA5,3 road_pos = #REGhl
-N $8AA8 Not sure why we're changing fast_counter here.
+N $8AA8 Nudge fast_counter to keep the road scrolling while normal speed updates are paused for this cutscene.
 C $8AA8,5 A = fast_counter + 32
 C $8AAD,1 Return if result > 255
 C $8AAE,3 fast_counter = A
@@ -3908,14 +3909,14 @@ C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8FAA,4 Restore IX, HL, BC
 C $8FAE,1 Fetch from right side objs data
-C $8FAF,3 Jump to right hand stuff if non-zero [why not a CALL?]
+C $8FAF,3 Jump to right hand stuff if non-zero -- a JR because dee_right_hand_stuff exits via JP, not RET, so CALL would leave a stale return address on the stack
 N $8FB2 ...
 @ $8FB2 label=dee_continue_after_right_hand_done
 C $8FB2,4 Advance #REGix by 2
 C $8FB6,3 Advance #REGhl by 32 (wrapping!)
 C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9
 C $8FBA,1 Set flags
-C $8FBB,2 Jump to #R$9023 if non-zero  -- left hand stuff, it will jump back here so I'm not sure why it's not a CALL
+C $8FBB,2 Jump to #R$9023 if non-zero -- left hand stuff, which jumps back here via JP, not RET, so CALL would leave a stale return address on the stack
 @ $8FBD label=dee_continue_after_left_hand_done
 C $8FBD,4 Advance #REGix by 2
 C $8FC1,4 Advance #REGhl by -33 (wrapping!)
@@ -4197,8 +4198,8 @@ C $9242,1 B = A
 C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $924A,3 Loop to dso_next_object
-c $924D Draws tunnel lights (and possibly other bitmaps)
-D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 as the drawing callback and dispatches to the common tunnel light code with PUSH HL / RET.
+c $924D Draws tunnel lights via the shared draw_object_left/right drawing code
+D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 (draw_object_left_entrypt) as the drawing callback and dispatches to the common object-drawing code with PUSH HL / RET.
 R $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx address; the routine is skipped if it's >= 16
 R $924D I:DE Depth set pointer for the light object
 R $924D I:IX X-position table pointer
@@ -5097,7 +5098,7 @@ C $9B35,5 Is it '!'? glyph ID = 28; goto have_glyph_id
 C $9B3A,5 Is it ' '? glyph ID = 29; goto have_glyph_id
 C $9B3F,5 Is it '''? glyph ID = 30; goto have_glyph_id
 C $9B44,4 Is it >= ';'? goto have_ascii
-C $9B48,4 C += A - 47 -- not convinced this is ever used
+C $9B48,4 C += A - 47 -- assigns glyph IDs 31-40 to '0'-'9'. No chatter message string contains a digit and the scoreboard uses #R$9FA3 instead, so this path is dead
 @ $9B4C label=pmf_have_glyph_id
 C $9B4C,3 Turn the glyph ID in #REGc into ASCII in #REGa
 @ $9B4F label=pmf_have_ascii
@@ -5133,7 +5134,7 @@ C $9BB9,16 Move to next scanline
 C $9BCA,1 Decrement row counter
 C $9BCB,3 Loop while rows remain to clear
 C $9BCE,1 Return
-c $9BCF Handle "time up", countdown and continue.
+c $9BCF Handle "time up", countdown and continue
 D $9BCF This function handles timed events. When 15s or less remain then Nancy warns that our heroes are running of time. When they do run out of time, and sufficient credits remain, a 10s coundown timer and restart query are presented along with a tick-tock sound effect. If restart is initiated the game is part reset and continues.
 D $9BCF It is a five state machine. 0: count the time down every 15 frames, warn at 15 seconds left, and at zero suppress the player's input and move to state 1. 1: wait for the hero car to stop, then move to state 2. 2: if there are credits left, take one, show the 10 second continue countdown and move to state 3. 3: tick the countdown with the bip-bow effect twice a second; FIRE resets the mission and restarts, and running out quits. 4: the quit is already under way, so do nothing.
 D $9BCF Used by the routine at #R$8401.
@@ -6224,7 +6225,7 @@ C $A423,3 Exit via scenery_hit
 C $A426,3 HL = 209
 C $A429,3 DE = 405
 C $A42C,1 Unbank from #R$A39F
-C $A42D,1 Set flags [A is ?]
+C $A42D,1 Set flags -- A is still road_pos high byte, loaded before the jump in; EXX doesn't touch AF
 C $A42E,2 C = 1
 C $A432,1 C = 2
 @ $A433 label=csc_hit_tunnel_wall
@@ -6634,7 +6635,7 @@ C $A719,4 Compare horizontal position IX[5] with table value
 N $A71D #REGc is the changing-lane flag: 1 while the perp is still moving toward its target lane, 0 once it has arrived. The position is bumped by +/-10 a frame until it does.
 C $A71D,2 Set flag indicating we're changing lane
 @ $A71F label=pb_check_low
-C $A71F,4 Jump with C==1 if horizontal position <= table value [is this meaning left or right?]
+C $A71F,4 Jump with C==1 if horizontal position <= table value Carry means horizontal position < table value, i.e. we're left of target; A72E checks moving right
 C $A723,4 Jump with C==1 if horizontal position - 10 carried -- at lower limit?
 C $A727,1 Compare with table value (again)
 C $A728,2 Jump with C==1 if (horizontal position - 10) was >= table value
@@ -6708,7 +6709,7 @@ C $A79A,2 200 when not boosting
 C $A79C,2 Jump if not boosting
 C $A79E,2 230 when boosting
 @ $A7A0 label=pb_not_boosting
-C $A7A0,1 Bank value chosen; Unbank other [which is?]
+C $A7A0,1 Bank the chosen value (200 or 230) for later; A now holds whatever was banked before this exchange, not the chosen value
 C $A7A1,3 Call scenery_hit
 C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E  -- a value set when crashed
 C $A7A7,4 Add 40 to it
@@ -6946,7 +6947,7 @@ C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Generate a random byte
 @ $A96C label=cdas_store
 C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
-C $A96D,3 Generate a random byte [could be a position?]
+C $A96D,3 Generate a random byte -- the entry's position byte; see #R$A97E
 C $A970,2 Store that random byte
 C $A972,2 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
@@ -7008,7 +7009,7 @@ C $A9D1,1 C = A
 C $A9D3,1 HL += BC
 C $A9D7,4 DE = wordat(HL); HL += 2
 C $A9DB,3 Jump to ldas_loop1_continue
-c $A9DE Dust/Stones stuff
+c $A9DE Draws one stone or dirt particle
 D $A9DE Draws one stone or dirt particle a call, from the positions #R$A97E worked out. Returns at once when the self modified enable flag is zero, which is what stops stones and dirt from rendering.
 D $A9DE It reads the current entry through the particle pointer. A zero type byte means the slot is inactive and only advances the pointer. Otherwise the type byte picks the stones or the dust sprite table, #REGb is clamped to 10 and halved for a level of detail index, and the particle is drawn at the x position in the entry.
 D $A9DE Used by the routine at #R$8F5F.
@@ -7134,7 +7135,7 @@ D $AAC6 Used by the routine at #R$8401.
 @ $AAC6 label=move_helicopter
 C $AAC6,5 Return if helicopter_control is zero
 N $AACB Helicopter descends while moving to height 97 (smaller = lower).
-C $AACB,2 A = <self modified>  -- Self modified by #R$AAD3 below [target vert pos?]
+C $AACB,2 A = <self modified>  -- Self modified by #R$AAD3 below; current vertical position, descending 2px per call toward the target height of 97
 C $AACD,4 Jump to #R$AAD6 if A == 97
 C $AAD1,2 Descend by 2 pixels
 C $AAD3,3 Self modify #R$AACB above
@@ -7852,8 +7853,7 @@ C $B076,3 Call start_sfx
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
 C $B079,3 Point #REGhl at entry in jump(ing) table. Self modified by #R$B96C and #R$B092. Default is $B055.
-C $B07C,1 off_road = 0
-C $B07D,3 }
+C $B07C,4 off_road = 0
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 N $B088 The low bytes of the hero_car_jump_table entries are the car's pitch (0/3/6).
 C $B088,5 Self modify the 'ADD A,x' at #$B5AF to load the car's pitch
@@ -7894,7 +7894,7 @@ C $B0D0,2 Smoke time remaining
 C $B0D2,2 Jump if low gear
 C $B0D4,3 Set smoke counter
 @ $B0D7 label=mhc_b0d7
-C $B0D7,2 Decrement A  [why write it as a SUB 1?]
+C $B0D7,2 Decrement A -- SUB, not DEC A, because JR C below tests the carry flag DEC A wouldn't set
 C $B0D9,2 Jump if negative result
 C $B0DB,3 gear_lockout = A
 @ $B0DE label=mhc_b0de
@@ -8006,7 +8006,7 @@ N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
 N $B1B7 HL = new speed
 @ $B1B7 label=mhc_speed_set
-C $B1B7,5 A = inclined_counter - 1  (hasn't used DEC A here... possibly left for tweaking)
+C $B1B7,5 A = inclined_counter - 1  (SUB, not DEC A, because the JR NC below tests the carry flag DEC A wouldn't set)
 C $B1BC,2 Jump if A is now >= 0
 N $B1BE "inclined" counter went -ve
 C $B1BE,3 A = $B5B0  -- read self modified value in draw_hero_car that sets the car's pitch (0/3/6)
@@ -8181,8 +8181,8 @@ C $B2E3,2 A = 1
 C $B2E5,3 cornering = A
 C $B2E8,8 road_pos += HL  [must be a delta]
 C $B2F0,2 D = 1  -- flip flag
-C $B2F2,1 A = E  -- E is?
-C $B2F3,1 Set flags [why are some ORs and some ANDs?]
+C $B2F2,1 A = E  -- E holds half the (right_turn - left_turn) delta set at mhc_b2bb
+C $B2F3,1 Set flags -- OR A and AND A are equivalent here (both test sign/zero and clear carry); the choice is stylistic
 C $B2F4,3 Jump if positive
 C $B2F7,1 D--  -- flip flag -> 0
 C $B2F8,2 A = -A
@@ -8388,7 +8388,7 @@ C $B473,3 Exit via #R$B69E
 N $B476 Start the animation.
 @ $B476 label=ahc_hand_flag_one
 C $B476,2 C = <self modified>  zeroed in start_chase
-C $B478,2 A = <self modified>  [could be animation frame?]  -- gets set to 2
+C $B478,2 A = <self modified>  -- a frame delay counter for the hand animation, gets set to 2
 C $B47A,1 Decrement counter
 C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
 C $B47E,2 Jump to ahc_b493 if A != 0
@@ -8640,7 +8640,7 @@ C $B660,1 Load low byte
 C $B661,1 Advance
 C $B662,1 Load high byte
 C $B663,1 Finalise
-N $B664 blah
+N $B664 Work out whether to draw the flipped (left) or normal (right) exhaust.
 C $B664,1 Preserve (sizes ?)
 C $B665,1 Bank
 C $B666,1 unbanking a flip flag?
@@ -9578,7 +9578,7 @@ C $BE60,4 Load address of right route's curvature data
 C $BE64,3 Self modify 'LD HL,$xxxx' @ #R$BBC1 to load the address
 C $BE67,3 HL = #R$E2C6 -> forked road left curvature data
 C $BE6A,2 Jump to rm_read_curvature
-N $BE6C Handle a command byte of one: TBD.
+N $BE6C Handle a command byte of one: use the default (self-modified) map curvature address.
 @ $BE6C label=rm_curvature_one_command
 C $BE6C,3 HL = <map curvature address> -- Self modified by #R$BBCC
 C $BE6F,2 Jump to rm_read_curvature
@@ -11177,7 +11177,7 @@ C $CABF,3 A = A (rotate right through carry) 3
 C $CAC2,3 A = (A & 31) + B
 C $CAC5,1 E = A
 C $CAC6,2 *DE++ = *HL++, BC--
-N $CAC8 AND-OR masking here?
+N $CAC8 AND-OR masking here.
 C $CAC8,2 A = *DE & *HL
 C $CACA,1 L++
 C $CACB,1 A |= *HL
@@ -11200,7 +11200,7 @@ C $CADF,1 A = E
 C $CAE0,3 A = A (rotate right through carry) 3
 C $CAE3,3 A = (A & 31) + B
 C $CAE6,1 E = A
-N $CAE7 AND-OR masking here?
+N $CAE7 AND-OR masking here.
 C $CAE7,2 A = *DE & *HL
 C $CAE9,1 L++
 C $CAEA,1 A |= *HL
@@ -11248,7 +11248,7 @@ C $CB23,3 A = (A & 31) + B
 C $CB26,1 E = A
 C $CB27,2 *DE++ = *HL++, BC--
 C $CB29,1 A = *DE
-C $CB2A,1 A &= *HL    [AND-OR masking?]
+C $CB2A,1 A &= *HL    -- AND-OR masking
 C $CB2B,1 L++
 C $CB2C,1 A |= *HL
 C $CB2D,1 *DE = A
@@ -11315,7 +11315,7 @@ C $CBBB,1 A += C
 C $CBBC,5 Jump if zero or negative
 C $CBC1,1 C = A
 C $CBC2,3 Exit via #R$C915
-c $CBC5 Routine at CBC5
+c $CBC5 Selects the near or far backdrop fill continuation by threshold
 D $CBC5 Used by the routine at #R$C95A.
 N $CBC5 This gets hit during road forks.
 @ $CBC5 label=backdrop_fill_dispatch
@@ -11323,7 +11323,7 @@ C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
 c $CBCE Builds road curvature tables
-D $CBCE Possibly just for one section of the road at a time. Used by the routine at #R$B9F4.
+D $CBCE Builds the table for one section of road at a time; #R$B9F4 (layout_road) calls it multiple times per invocation, once for each section (main road, fork branches).
 N $CBCE This gets hit during road forks (where the roads bend outwards).
 @ $CBCE label=build_curve_table_forked
 C $CBCE,3 Load two table high-bytes: $EE, $EC
@@ -11619,8 +11619,7 @@ C $CDD2,1 *HL = C
 C $CDD3,1 HL++  (wrapping around)
 C $CDD4,1 *HL = A
 C $CDD5,1 Return
-c $CDD6 Multiplier
-D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with rounding, on exit.
+c $CDD6 Multiplies C by the top three bits of A, then divides by 8 with rounding
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
 R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
 R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE

@@ -10,10 +10,10 @@ W $C0F4,2,2 [$D470] Screen attributes used for the ground colour (a pair of matc
 W $C0F6,2,2 [$C22E] Address of table of LODs for tumbleweeds, barriers.
 W $C0F8,2,2 [$C230] (points at a handler address)
 W $C0FA,2,2 [$C22D] Address of right hand graphics entry/entries (-7 bytes)
-W $C0FC,2,2 [$C242] (points at a handler address)
+W $C0FC,2,2 [$C242] Address of right hand SHORT_POLE graphics entry (object 3)
 W $C0FE,2,2 [$C25A] (points at a handler address)
 W $C100,2,2 [$C257] Address of left hand graphics entry/entries (-7 bytes)
-W $C102,2,2 [$C26C] (points at a handler address)
+W $C102,2,2 [$C26C] Address of left hand SHORT_POLE graphics entry (object 3)
 W $C104,2,2 [$C139] Address of Nancy's perp description
 W $C106,2,2 [$C1E8] Address of arrest messages
 W $C108,2,2 [out-of-bounds] Helicopter data 1
@@ -28,8 +28,8 @@ W $C116,2,2 [$C934] Address of LOD of Car D (a Lambo in S1)
 W $C118,2,2 [$C8E0] Address of LOD of Car E (a generic car in S1)
 b $C11A [Stage 3] Per-stage difficulty settings
 B $C11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $C11B,1,1 Smash config parameter TBD
-B $C11C,1,1 Smash config parameter TBD
+B $C11B,1,1 Base for the perp's lane-change timer (perp_lane_change_base, Main.c:10093); reset value adds rng & 31
+B $C11C,1,1 Base for the perp's approach timer (perp_approach_base, Main.c:10243); reset value adds rng & 15
 w $C11D [Stage 3] Per-stage setup data
 W $C11D,2,2 road_pos
 W $C11F,2,2 [$C287] Address of start stretch, curvature
@@ -959,8 +959,8 @@ B $C828,1,1 <Esc> Loop
 B $C829,1,1
 W $C82A,2,2 [$C7AD] Target
 b $C82C [Stage 3] Perp's mugshot
-@ $C82C label=stage3_perp_face
 N $C82C #HTML[#CALL(face($C82C))]
+@ $C82C label=stage3_perp_face
 B $C82C,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CC,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E0 LOD table for "Car A (the perp's car)"
@@ -1749,10 +1749,10 @@ W $E0F4,2,2 [out-of-bounds] Screen attributes used for the ground colour (a pair
 W $E0F6,2,2 [$E218] Address of table of LODs for tumbleweeds, barriers.
 W $E0F8,2,2 [$E21A] (points at a handler address)
 W $E0FA,2,2 [$E217] Address of right hand graphics entry/entries (-7 bytes)
-W $E0FC,2,2 [$E22C] (points at a handler address)
+W $E0FC,2,2 [$E22C] Address of right hand SHORT_POLE graphics entry (object 3)
 W $E0FE,2,2 [$E259] (points at a handler address)
 W $E100,2,2 [$E256] Address of left hand graphics entry/entries (-7 bytes)
-W $E102,2,2 [$E26B] (points at a handler address)
+W $E102,2,2 [$E26B] Address of left hand SHORT_POLE graphics entry (object 3)
 W $E104,2,2 [$E139] Address of Nancy's perp description
 W $E106,2,2 [$E1D5] Address of arrest messages
 W $E108,2,2 [$EC6E] Helicopter data 1
@@ -1767,8 +1767,8 @@ W $E116,2,2 [$E846] Address of LOD of Car D (a Lambo in S1)
 W $E118,2,2 [$E7F2] Address of LOD of Car E (a generic car in S1)
 b $E11A [Stage 4] Per-stage difficulty settings
 B $E11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $E11B,1,1 Smash config parameter TBD
-B $E11C,1,1 Smash config parameter TBD
+B $E11B,1,1 Base for the perp's lane-change timer (perp_lane_change_base, Main.c:10093); reset value adds rng & 31
+B $E11C,1,1 Base for the perp's approach timer (perp_approach_base, Main.c:10243); reset value adds rng & 15
 w $E11D [Stage 4] Per-stage setup data
 W $E11D,2,2 road_pos
 W $E11F,2,2 [$E29B] Address of start stretch, curvature
@@ -2586,8 +2586,8 @@ B $E73A,1,1 <Esc> Loop
 B $E73B,1,1
 W $E73C,2,2 [$E6B7] Target
 b $E73E [Stage 4] Perp's mugshot
-@ $E73E label=stage4_perp_face
 N $E73E #HTML[#CALL(face($E73E))]
+@ $E73E label=stage4_perp_face
 B $E73E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $E7DE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $E7F2 LOD table for "Car A (the perp's car)"
@@ -2851,8 +2851,8 @@ B $EE6D,100,10 Bitmap data (masked) 10 bytes x 10
 N $EED1 #HTML[#CALL(graphic($EED1,40,10,1,1))]
 B $EED1,100,10 Bitmap data (masked) 10 bytes x 10
 b $EF35 [Stage 4] Pilot's mugshot
-@ $EF35 label=stage4_pilot_mugshot
 N $EF35 #HTML[#CALL(face($EF35))]
+@ $EF35 label=stage4_pilot_mugshot
 B $EF35,160,4 Bitmap data for the pilot's mugshot (32x40). Stored top-down.
 B $EFD5,20,4 Attribute data for the pilot's mugshot (4x5). Stored top-down.
 N $EFE9 Stretchy graphic

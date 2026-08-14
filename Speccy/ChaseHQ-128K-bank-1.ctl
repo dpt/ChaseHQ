@@ -28,8 +28,8 @@ W $C116,2,2 [$C83E] Address of LOD of Car D (a Lambo in S1)
 W $C118,2,2 [$C892] Address of LOD of Car E (a generic car in S1)
 b $C11A [Stage 1] Per-stage difficulty settings
 B $C11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $C11B,1,1 Smash config parameter TBD
-B $C11C,1,1 Smash config parameter TBD
+B $C11B,1,1 Base for the perp's lane-change delay; a random 0-31 is added when the timer reloads
+B $C11C,1,1 Base for the perp's approach-speed delay; a random 0-15 is added when the timer reloads
 w $C11D [Stage 1] Per-stage setup data
 W $C11D,2,2 road_pos
 W $C11F,2,2 [$C2C3] Address of start stretch, curvature
@@ -1175,8 +1175,8 @@ B $C786,1,1 <Esc> Loop
 B $C787,1,1
 W $C788,2,2 [$C714] Target
 b $C78A [Stage 1] Perp's mugshot
-@ $C78A label=stage1_perp_face
 N $C78A #HTML[#CALL(face($C78A))]
+@ $C78A label=stage1_perp_face
 B $C78A,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C82A,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C83E LOD table for "Car B (a Lambo in S1)"
@@ -1964,14 +1964,14 @@ B $E10C,1,1 [out-of-bounds] Address of LOD of Hazard (stone/dust)
 B $E10D,1,1
 W $E10E,2,2 [out-of-bounds] Address of LOD of Hazard (stone/dust)
 W $E110,2,2 [$E8FF] Address of LOD of Car A (the perp's car)
-W $E112,2,2 [$E953] Address of LOD of Car B (a Lambo in S1)
-W $E114,2,2 [$E929] Address of LOD of Car C (a truck in S1)
-W $E116,2,2 [$E953] Address of LOD of Car D (a Lambo in S1)
-W $E118,2,2 [$E8FF] Address of LOD of Car E (a generic car in S1)
+W $E112,2,2 [$E953] Address of LOD of Car B (a Lambo in S2)
+W $E114,2,2 [$E929] Address of LOD of Car C (a truck in S2)
+W $E116,2,2 [$E953] Address of LOD of Car D (a Lambo in S2)
+W $E118,2,2 [$E8FF] Address of LOD of Car E (a generic car in S2)
 b $E11A [Stage 2] Per-stage difficulty settings
 B $E11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $E11B,1,1 Smash config parameter TBD
-B $E11C,1,1 Smash config parameter TBD
+B $E11B,1,1 Base for the perp's lane-change delay; a random 0-31 is added when the timer reloads
+B $E11C,1,1 Base for the perp's approach-speed delay; a random 0-15 is added when the timer reloads
 w $E11D [Stage 2] Per-stage setup data
 W $E11D,2,2 road_pos
 W $E11F,2,2 [$E28B] Address of start stretch, curvature
@@ -3015,8 +3015,8 @@ B $E847,1,1 <Esc> Loop
 B $E848,1,1
 W $E849,2,2 [$E79B] Target
 b $E84B [Stage 2] Perp's mugshot
-@ $E84B label=stage2_perp_face
 N $E84B #HTML[#CALL(face($E84B))]
+@ $E84B label=stage2_perp_face
 B $E84B,2,2 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $E84D,158,8*19,6
 B $E8EB,2,2 Attribute data for the perp's mugshot (4x5). Stored top-down.
@@ -3058,7 +3058,7 @@ B $E923,1,1 Flags
 B $E924,1,1 Height (pixels)
 W $E925,2,2 [$EA9E] Bitmap address
 W $E927,2,2 [$EABE] Pre-shifted bitmap address
-N $E929 LOD table for "Car C (a truck in S1)"
+N $E929 LOD table for "Car C (a truck in S2)"
 N $E929 LOD
 B $E929,1,1 Width (bytes)
 B $E92A,1,1 Flags
@@ -3095,7 +3095,7 @@ B $E94D,1,1 Flags
 B $E94E,1,1 Height (pixels)
 W $E94F,2,2 [$EC17] Bitmap address
 W $E951,2,2 [$EC37] Pre-shifted bitmap address
-N $E953 LOD table for "Car B (a Lambo in S1)"
+N $E953 LOD table for "Car B (a Lambo in S2)"
 N $E953 LOD
 B $E953,1,1 Width (bytes)
 B $E954,1,1 Flags
@@ -3307,8 +3307,8 @@ N $EFF6 #HTML[#CALL(graphic($EFF6,40,10,1,1))]
 B $EFF6,7,7 Bitmap data (masked) 10 bytes x 10
 B $EFFD,93,8*11,5
 b $F05A [Stage 2] Pilot's mugshot
-@ $F05A label=stage2_pilot_mugshot
 N $F05A #HTML[#CALL(face($F05A))]
+@ $F05A label=stage2_pilot_mugshot
 B $F05A,3,3 Bitmap data for the pilot's mugshot (32x40). Stored top-down.
 B $F05D,157,8*19,5
 B $F0FA,3,3 Attribute data for the pilot's mugshot (4x5). Stored top-down.

@@ -14,6 +14,6 @@ b $E9CC Sample: "Your time's up"
 B $E9CC,2750,8*343,6
 b $F48A Sample: Start noise
 B $F48A,2780,8*347,4
-B $FF66,21,8*2,5 Looks truncated
+B $FF66,21,8*2,5 Trailing 21 bytes beyond the played sample length ($F48A-$FF65, 2780 bytes -- see SAMPLE_START): values stay close to $77, fading to near-silence before the unused $00 fill at $FF7B
 u $FF7B Unused
 B $FF7B,133,8*16,5

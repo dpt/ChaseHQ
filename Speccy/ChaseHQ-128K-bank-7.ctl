@@ -908,8 +908,8 @@ B $C82A,1,1 <Esc> Loop
 B $C82B,1,1
 W $C82C,2,2 [$C7A5] Target
 b $C82E [Stage 5] Perp's mugshot
-@ $C82E label=stage5_perp_face
 N $C82E #HTML[#CALL(face($C82E))]
+@ $C82E label=stage5_perp_face
 B $C82E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E2 LOD table for "Car A (the perp's car)"
@@ -1883,7 +1883,8 @@ B $E13A,6,6
 W $E140,2,2 bitmap_endshot_4
 @ $E1E3 label=possible_data_block_e1e3
 B $E142,200,13,8*18,4*2,8*4,3
-c $E20A Command interpreter (confirmed live by trace-end-screen.log: reads script bytes via $A16D, dispatches on a DEC A/JP Z chain; self-modifies the CALL operand at $E030 (live addr $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran)
+c $E20A Command interpreter
+D $E20A Confirmed live by trace-end-screen.log: reads script bytes via $A16D and dispatches on a DEC A/JP Z chain. Self-modifies the CALL operand at $E030 (live address $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran.
 @ $E20A label=run_script
 C $E20A,3 Load script pointer
 @ $E20D label=rs_loop
@@ -1915,8 +1916,9 @@ N $E2B2 Command 12: start chatter using a block pointer taken from the script.
 @ $E2CD label=es_set_dispatch
 C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
-c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
-N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
+c $E2D9 Interpreter handler: draw graphic frame
+D $E2D9 Reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop.
+D $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy.
 @ $E2D9 label=es_clear_then_draw_frame
 C $E2DA,3 Call $E49C (buffer zeroing thing)
 @ $E2DE label=es_draw_frame_common
@@ -1928,8 +1930,9 @@ N $E31F Render one end-screen character at double height. A space advances both 
 @ $E31F label=es_plot_char
 @ $E328 label=es_plot_char_glyph
 N $E381 This entry point is used by the routine at #R$E3A5.
-b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
-N $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte: ; -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly
+b $E3A5 Handshake animation frame-advance table
+D $E3A5 Looked up as (row_count,source_ptr) using $A172 mod 6 as frame index, LDIRed to screen $48AC with third-boundary row-wrap arithmetic; $A172 then increments/wraps for the next call. Code resumes at $E3B7 after the table.
+D $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly.
 @ $E3A5 label=handshake_table
 B $E3A5,1,1
 W $E3A6,2,2 37, handshake_1
@@ -1976,13 +1979,13 @@ C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
-D $E4A9 I:HL Address of image to plot
+D $E4A9 I:HL Address of image to plot DE Destination address in the screen
 @ $E4A9 label=draw_endshot
 C $E4A9,1 Preserve destination in screen
 C $E4AA,2 Counter = 64 rows
 C $E4AC,1 Preserve counter
 C $E4AD,3 13 bytes to transfer
-C $E4B0,1 Perverve destination
+C $E4B0,1 Preserve destination
 C $E4B1,2 Copy
 C $E4B3,1 Restore destination
 C $E4B4,16 Scanline increment
@@ -1997,7 +2000,7 @@ C $E4D8,5 DE += 19  (a gap value - 13+19 = 32)
 C $E4DD,1 A--
 C $E4DE,2 Loop
 C $E4E0,1 Return
-b $E4E1 [Graphics] Images
+b $E4E1 [Graphics] End-game montage shots
 D $E4E1 $60E1 once relocated.
 N $E4E1 End-game montage shot 1 (104x64)
 N $E4E1 #HTML[#CALL(endshot($E4E1))]
@@ -2263,7 +2266,6 @@ W $FA40,2,2 Restart at #R$FA3D
 b $FA42 End screen music data
 D $FA42 The byte streams the patterns index into, in the same 0bdaaaaiii form the in-game engine uses: bit 7 is an extra delay flag, bits 6-3 are the instrument argument and bits 2-0 the instrument (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise). A byte of 1 ends a pattern. The first byte of each stream is the note delay, not a note.
 @ $FA42 label=b7_music_data
-B $FA42,171,3,8
-B $FAED,3,3 }
+B $FA42,174,3,8*21,3
 b $FAF0 Bank 7 tail (unidentified)
 B $FAF0,1296,8
