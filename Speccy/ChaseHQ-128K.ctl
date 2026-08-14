@@ -5871,7 +5871,7 @@ B $A174,1,1 Low/high gear flag.
 @ $A175 label=score_digits
 B $A175,8,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A17D label=time_sixteenths
-B $A17D,1,1 Seems to be a 1/16ths second counter. Counts from $F to $0. #R$A17E is decremented when it hits zero.
+B $A17D,1,1 Frames left in the current second of the countdown. Counts from $F to $0, and #R$A17E is decremented when it hits zero.
 @ $A17E label=time_bcd
 B $A17E,1,1 Time remaining. Stored as BCD.
 @ $A17F label=time_digits
@@ -5883,25 +5883,24 @@ B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 N $A188 Table of spawned vehicles and/or objects
-N $A188 Each entry is 20 bytes long. The first entry is the perp. There are six entries in total.
-N $A188 Hazard structure layout:
-N $A188 +0 (byte) is $FF if this hazard is used, $00 otherwise
-N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when the perp is getting further away, decrements otherwise.
-N $A188 +2 (byte) is horizontal position (relative?)
-N $A188 +3 (byte) TBD
-N $A188 +4 (byte) TBD. seems to count fast while the perp is escaping. distance low-low byte?
-N $A188 +5 (byte) is horizontal position on the road (observed values: 5..216 left..right)
-N $A188 +6 (byte) TBD
-N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_behaviour, goes high when the perp is smashed into
-N $A188 +8 (byte) gets copied from the hazards table
-N $A188 +9 (word) address of LOD
-N $A188 +11 (word) address of hit handler routine
-N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
-N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced. $ff if unused. $80 for vehicles. 0+ for hazards.
-N $A188 +16 (byte) TBD
-N $A188 +17 (byte) used by hazard_hit, indexes table #R$ACDB, set with a minimum lane. For the perp this is the high byte of the distance.
-N $A188 +18 (byte) TBD used by hazard_hit, set with a lane, likely current lane
-N $A188 +19 (byte) TBD used by hazard_hit
+N $A188 A hazard is anything on the road: a moving object like the perp or an NPC car, or a fixed one like a barrier or a tumbleweed. Six slots of 20 bytes each. Slot 0 is always the perp car; #R$A7F3 and #R$AB9A allocate from slots 1 to 5 by scanning for the first with +0 clear. The Z80 always reaches these fields as (IX+n), never by absolute address, which is why the layout is given as byte offsets.
+N $A188 +0 (byte) Slot allocation flag: $FF when used, $00 when free. #R$ADBE clears it once the object has passed the camera.
+N $A188 +1 (byte) Approach counter, running 21 down to 0 as the object nears. Advanced by the whole-units part of +13 each frame. #R$ADBE retires the slot once it reaches 23 and only draws the object below 20. It doubles as the low byte of the road-buffer column while the object is drawn, and #R$A637 reads the perp's copy as a road-buffer offset when comparing hazard positions.
+N $A188 +2 (byte) Horizontal screen position: the low byte of the computed road X.
+N $A188 +3 (byte) Horizontal clip flag: the high byte of that same X. Zero means on screen, negative clipped off the left edge, positive clipped off the right. #R$AD51 rejects any hazard whose clip byte is non-zero, and the plot routine picks its entry point from the sign.
+N $A188 +4 (byte) Fractional part of the approach distance. Decremented each frame by the low byte of +13, and each borrow carries into +1. It is also the multiplicand for the perspective column at +6, so it doubles as the sub-row depth within the current distance step.
+N $A188 +5 (byte) Position across the road, 0 to 255 left to right (observed values 5..216). #R$A8CD slides it five units a frame toward the lane position at +18, which is what makes a traffic car drift between lanes rather than jump.
+N $A188 +6 (byte) Perspective-scaled column, (+4 * height delta) >> 8, recomputed each frame by #R$ADBE. It selects the sprite's column and the road-edge row the object is drawn against, less the wobble at +16.
+N $A188 +7 (byte) Hit sequence timer. Zero when nothing is happening, positive while a vehicle hit is in progress, negative for the perp's post-hit cooldown: #R$A637 sets it to $FC (-4) and counts back up to zero, ignoring input meanwhile.
+N $A188 +8 (byte) Collision box width, used for the bounding-box overlap test in #R$AD51.
+N $A188 +9 (word) Address of the object's bitmap table (the LOD). #R$A7F3 overwrites it with a random vehicle from the stage's table.
+N $A188 +11 (word) Address of the hit handler called once per frame by #R$ADBE after the object is drawn: #R$A637 for the perp, #R$A8CD for traffic and #R$AC3C for barriers and tumbleweeds.
+N $A188 +13 (word) Fixed-point approach rate. The high byte is whole distance units per frame, added to +1; the low byte is fractional units per frame, subtracted from +4, where each borrow carries a further unit into +1. #R$AC3C decays it by 1/32 a frame while an object wobbles away from a collision.
+N $A188 +15 (byte) What kind of object this is, and how far through a hit it is. $80 marks a spawned vehicle and $FF the perp, so bit 7 set means "is a vehicle", which is how #R$A7F3 counts the traffic already on screen. For a static hazard it is the hit state machine instead: 0 untouched, 2 wobbling, 1 finished.
+N $A188 +16 (byte) Horizontal wobble offset during a hit, indexed out of #R$ACDB by #R$AC3C and subtracted from +6 as the object is drawn, so a struck barrier shudders and settles.
+N $A188 +17 (byte) Lane index, or for the perp the high byte of +1. For a traffic car it is the lane currently occupied, which #R$A637 compares against its own lane to decide whether to swerve. While a static hazard is being hit it is reused again, as the running index into #R$ACDB.
+N $A188 +18 (byte) Target lane, or the wobble countdown. #R$A8CD slides +5 toward this lane's position until the two agree; for a hazard mid-wobble it is instead the frame countdown, and the effect ends when it reaches zero.
+N $A188 +19 (byte) Sprite plot mode: 0 normal, 1 inverted. #R$AC3C toggles it every frame of the wobble, flipping the sprite vertically to fake a barrier tumbling.
 @ $A188 label=hazard_0
 @ $A19C label=hazard_1
 @ $A1B0 label=hazard_2
@@ -5938,7 +5937,7 @@ N $A221 Affects collision detection on the left hand side.
 @ $A221 label=inhibit_collision_detection
 B $A221,1,1 #R$ABCE, #R$AD0D reads
 @ $A222 label=n_hazards
-B $A222,1,1 Seems to be a count of visible cars+hazards.
+B $A222,1,1 Number of hazard slots currently in use.
 @ $A223 label=displayed_stage
 B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 N $A224 0 => no helicopter 1 => moves to left 2 => bobs around in the air 3/4 => moves from left 5 => bobs around in the air
@@ -6054,7 +6053,7 @@ B $A25C,1,1 This holds the road curvature byte at the position of the hero car. 
 @ $A25D label=horizon_curve_index
 B $A25D,1,1 Index into #R$B828 for the horizon. Saw: 8/16/24
 @ $A25E label=horizon_x_scroll
-B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
+B $A25E,1,1 Horizon scroll phase, counting down 4-3-2-1 / 3-2-1 / 2-1 while the road curves. Reloaded from #R$B828 by #R$B848.
 @ $A25F label=horizontal_adjust
 W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road. It's mainly zero but occasionally gets set to one. +ve shifts the hero car left, -ve shifts it right.
 @ $A261 label=horizon_scroll_sub
