@@ -58,26 +58,27 @@ T $C16D,41,40:n1 "EMERGENCY HERE. THE EASTERN BLOC SPY FROM"
 T $C196,42,41:n1 "WASHINGTON IS FLEEING TOWARDS THE SUBURBS."
 T $C1C0,38,37:n1 "THE TARGET VEHICLE IS UNKNOWN... OVER."
 b $C1E6 [Stage 5] Arrest messages
-B $C1E6,1,1 ?frame delay until first message
-B $C1E7,1,1 ?frame delay until next message
-B $C1E8,1,1 Flags
+D $C1E6 An overlay message list: a leading delay byte, then one block per line made of a delay, a character style (2 = single height, 3 = double), an attribute, a back buffer address and an attribute address, followed by the text with bit 7 set on its last character. The text is drawn black on black and revealed by the attribute transition, which is why every attribute byte here is zero. A delay followed by $00 ends the list.
+B $C1E6,1,1 Frame delay until first message
+B $C1E7,1,1 Frame delay until next message
+B $C1E8,1,1 Character style (single height)
 B $C1E9,1,1 Attribute
 W $C1EA,2,2 Back buffer address
 W $C1EC,2,2 Attribute address
 T $C1EE,27,26:n1 "OK! YOU ARE UNDER ARREST ON"
-B $C209,1,1 ?frame delay until next message
-B $C20A,1,1 Flags
+B $C209,1,1 Frame delay until next message
+B $C20A,1,1 Character style (single height)
 B $C20B,1,1 Attribute
 W $C20C,2,2 Back buffer address
 W $C20E,2,2 Attribute address
 T $C210,26,25:n1 "SUSPICION OF ESPIONAGE AND"
-B $C22A,1,1 ?frame delay until next message
-B $C22B,1,1 Flags
+B $C22A,1,1 Frame delay until next message
+B $C22B,1,1 Character style (single height)
 B $C22C,1,1 Attribute
 W $C22D,2,2 Back buffer address
 W $C22F,2,2 Attribute address
 T $C231,6,5:n1 "MURDER"
-B $C237,1,1 ?frame delay until next message
+B $C237,1,1 Frame delay until next message
 B $C238,1,1 Stop
 b $C239 [Stage 5] Hittable hazards
 B $C239,1,1 ?id
