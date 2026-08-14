@@ -8424,6 +8424,8 @@ C $B4E1,6 Toggle the left light's brightness
 C $B4E7,6 Show the "SIGHTING OF TARGET VEHICLE" message
 C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
+D $B4F0 Called each time the hero car rams the perp. It steps the debris sub-table selector on one place of four, resets the debris frame counter to 9 and increments smash_counter. Twenty hits finish the perp off via #R$8C3A; nineteen brings on Raymond's "ONE MORE TIME". smash_level, which drives the smash-o-meter, is then derived from smash_counter by a ladder of thresholds at 1, 4, 7, 11, 14 and 17 hits.
+D $B4F0 There is no direct caller: #R$A7F3 pushes this address onto the stack as the perp's collision handler.
 @ $B4F0 label=smash
 C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
 N $B4F8 Setup debris_table entry in draw_debris
@@ -8697,7 +8699,7 @@ R $B6D6 I:E Horizontal position (pixels)
 R $B6D6 I:HL Address of bitmap data
 R $B6D6 I:B' Non-zero to draw the sprite flipped horizontally
 R $B6D6 I:C' Horizontal start offset within the sprite
-R $B6D6 I:D' ?
+R $B6D6 I:D' Not an input. #R$B714 zeroes it as the high byte of the stride
 R $B6D6 I:E' Sprite row stride in bytes
 @ $B6D6 label=draw_masked_sprite_rel_car
 C $B6D6,7 Subtract car_y from vertical position
@@ -12730,6 +12732,7 @@ N $E760 affects horizontal too = lower moves the road LEFT earlier bytes affect 
 @ $E760 label=persp_x_delta_left
 B $E760,176,22
 c $E810 Called once the memory map has been setup
+D $E810 Clears the 128K mode flag and enters the common start-up path with a relocation count of three.
 @ $E810 label=entry_48k
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
@@ -12817,6 +12820,9 @@ N $E8CE #HTML[#CALL(graphic($E8CE,8,6*8,0,0))]
 @ $E8CE label=diamond_transition_mask
 B $E8CE,48,8
 c $E8FE "Stop the tape" handler (48K mode only)
+D $E8FE Sets up interrupts and music, clears the screen and shows the "STOP THE TAPE" / "PRESS ANY KEY" prompt. After a key press and release it draws the input selection menu.
+D $E8FE Five choices are offered. 1 and 2 copy a fixed five-key scheme for the Sinclair or cursor joystick into temp_keydefs; 3 is accepted only after ten consecutive identical reads of the Kempston port, an unstable reading meaning no interface is fitted, in which case the menu is redrawn; 4 keeps whatever temp_keydefs already holds; 5 runs #R$ECF3 and comes back to the menu.
+D $E8FE Whichever is picked, the scheme is installed into the Kempston flag and the live key definitions, and the player is warned the choice cannot be changed afterwards. N returns to the menu, Y clears the screen and returns.
 D $E8FE Used by the routine at #R$E810.
 @ $E8FE label=stop_the_tape_48k
 C $E8FE,3 Call setup_interrupts
@@ -12998,12 +13004,14 @@ W $EBDF,2,2 Screen position (40,160)
 T $EBE1,21,20:n1 "PRESS YES(Y) OR NO(N)"
 B $EBF6,1,1
 c $EBF7 Renders strings until it hits a NUL byte
+D $EBF7 Calls #R$EBFF repeatedly, each call returning the address of the next record, until the byte at the start of the next record is zero. The check follows the draw, so a list always renders at least one string.
 D $EBF7 Used by the routines at #R$E90F and #R$ECF3.
 @ $EBF7 label=menu_draw_strings
 C $EBF7,3 Call menu_draw_string
 C $EBFA,3 If the next byte's zero then return
 C $EBFD,2 Otherwise loop
 c $EBFF Renders a string
+D $EBFF The top bit of the attribute byte is the double-height flag; it is shifted out into the carry and banked in #REGf' before the character loop starts, so that #R$EC2C can test it per character.
 D $EBFF Used by the routines at #R$EBF7 and #R$ED6D.
 R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string)
 R $EBFF O:HL Address of next unconsumed byte
@@ -13102,12 +13110,14 @@ C $ECD7,1 Advance cursor
 C $ECD8,1 Unbank
 C $ECD9,1 Return
 c $ECDA Clears the screen
+D $ECDA Zeroes the 512 attribute bytes at $5900 and the 4096 bitmap bytes at $4800, that is the lower two thirds of the display. The same job as #R$88E2, but called from the start-up and menu paths rather than from the game.
 D $ECDA Used by the routines at #R$E90F and #R$ECF3.
 @ $ECDA label=clear_screen
 C $ECDA,12 Wipe bottom 2/3rds of attributes
 C $ECE6,12 Wipe bottom 2/3rds of pixels
 C $ECF2,1 Return
 c $ECF3 Runs the redefine keys screen (48K mode only)
+D $ECF3 Draws the prompt list, then takes eight key presses in turn through #R$ED6D, each one recorded in temp_keydefs and named on screen. Once all eight are in, the sequence is compared against the bytes at #R$EE30: if it spells "SHOCKED" plus ENTER, test mode is switched on and a confirmation screen is shown.
 D $ECF3 Used by the routine at #R$E90F.
 @ $ECF3 label=redefine_keys_48k
 C $ECF3,3 Clear the screen
@@ -13158,9 +13168,10 @@ C $ED47,2 Discard any non-key flags
 C $ED49,2 Loop while no keys are pressed
 C $ED4B,2 Restart routine
 c $ED4D Keyscan
+D $ED4D Scans all eight keyboard half-rows in turn. A half-row with exactly one key down yields that key's packed definition; anything more ambiguous makes the routine return early with Z clear.
 D $ED4D Used by the routine at #R$ED6D.
-R $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing the key definition table uses, so the result can be stored straight into it. $FF when no single key was identified: no key down, two half-rows active, or two keys in one half-row
-R $ED4D O:F Z clear if keys are pressed, Z set otherwise
+R $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing the key definition table uses, so the result can be stored straight into it. $FF if no key was down. Only meaningful when Z is set
+R $ED4D O:F Z set when at most one key was identified, so #REGd can be trusted. Z clear when the scan was ambiguous: two half-rows active, or two keys in one half-row
 @ $ED4D label=redefine_keyscan
 C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
 C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
@@ -13171,8 +13182,7 @@ C $ED55,1 Complement the value returned to change it from active-low to active-h
 C $ED56,2 Discard any non-key flags
 C $ED58,2 Jump to next iteration if no keys were pressed
 N $ED5A Keys were pressed.
-C $ED5A,1 ?If #REGd's 255 here we're okay. anything else causes an exit
-C $ED5B,1 Return if #REGd is non-zero
+C $ED5A,2 Only $FF, meaning no key found yet, leaves Z set; anything else means a second half-row is active so give up
 C $ED5C,1 Copy key flags to #REGh
 C $ED5D,1 Copy key and row counters to #REGa
 C $ED5E,2 Decrement key counter bitfield in #REGa
@@ -13185,16 +13195,19 @@ C $ED67,2 Rotate the half-row selector ($FE -> $FD -> $FB -> .. -> $7F)
 C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
 C $ED6B,2 Set Z
 c $ED6D Defines a single key
+D $ED6D Waits for an unambiguous key press, rejects it if that key is already in use, stores it in temp_keydefs, then looks the key's two-character name up in #R$EDD6 and draws it at #REGde. The screen address is advanced by one character row on the way out, and by two when #REGb is 4, which is the gap in the middle of the printed list.
 D $ED6D Used by the routine at #R$ECF3.
+R $ED6D I:B Position in the eight-key list, counting down from 8. 4 inserts the extra row gap
 R $ED6D I:C Index of key to define
-R $ED6D I:DE ...
+R $ED6D I:DE Screen address at which the key name is drawn
+R $ED6D O:DE Screen address of the next row
 @ $ED6D label=define_a_key
 C $ED6D,2 Preserve #REGde, #REGbc
 @ $ED6F label=dak_loop1
 C $ED6F,3 Call play_music_48k
 C $ED72,3 Call redefine_keyscan
-C $ED75,2 ?Loop until a key ISN'T pressed
-C $ED77,3 ?No keys were pressed
+C $ED75,2 Loop while the scan was ambiguous
+C $ED77,3 Loop while no key at all was down ($FF)
 C $ED7A,1 D--
 C $ED7B,1 A = D
 C $ED7C,2 Retrieve index in #REGc
