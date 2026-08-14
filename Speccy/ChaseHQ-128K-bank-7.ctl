@@ -1,6 +1,9 @@
 b $C000 [Stage 5] Horizon graphic
+D $C000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+@ $C000 label=stage5_backdrop
 B $C000,240,8
 b $C0F0 [Stage 5] Per-stage data
+@ $C0F0 label=stage5
 W $C0F0,2,2 [$C8CE] Address of perp's mugshot (attributes)
 W $C0F2,2,2 [out-of-bounds] Address of pilot's mugshot (bitmap)
 W $C0F4,2,2 [$D470] Screen attributes used for the ground colour (a pair of matching bytes)
@@ -44,6 +47,7 @@ W $C133,2,2 [$C7A4] Address of loop section, right-side objects
 W $C135,2,2 [$C6ED] Address of loop section, left-side objects
 W $C137,2,2 [$C6D0] Address of loop section, hazards
 b $C139 [Stage 5] Nancy's perp description
+@ $C139 label=stage5_perp_description
 B $C139,1,1 Character identifier (0/1/2/3 = Pilot/Nancy/Raymond/Tony)
 W $C13A,2,2 [$C145] Perp description pointer
 W $C13C,2,2 [$C16D] Perp description pointer
@@ -56,31 +60,32 @@ T $C16D,41,40:n1 "EMERGENCY HERE. THE EASTERN BLOC SPY FROM"
 T $C196,42,41:n1 "WASHINGTON IS FLEEING TOWARDS THE SUBURBS."
 T $C1C0,38,37:n1 "THE TARGET VEHICLE IS UNKNOWN... OVER."
 b $C1E6 [Stage 5] Arrest messages
-B $C1E6,1,1 ?frame delay until first message
-B $C1E7,1,1 ?frame delay until next message
-B $C1E8,1,1 Flags
+D $C1E6 An overlay message list: a leading delay byte, then one block per line made of a delay, a character style (2 = single height, 3 = double), an attribute, a back buffer address and an attribute address, followed by the text with bit 7 set on its last character. The text is drawn black on black and revealed by the attribute transition, which is why every attribute byte here is zero. A delay followed by $00 ends the list.
+B $C1E6,1,1 Frame delay until first message
+B $C1E7,1,1 Frame delay until next message
+B $C1E8,1,1 Character style (single height)
 B $C1E9,1,1 Attribute
 W $C1EA,2,2 Back buffer address
 W $C1EC,2,2 Attribute address
 T $C1EE,27,26:n1 "OK! YOU ARE UNDER ARREST ON"
-B $C209,1,1 ?frame delay until next message
-B $C20A,1,1 Flags
+B $C209,1,1 Frame delay until next message
+B $C20A,1,1 Character style (single height)
 B $C20B,1,1 Attribute
 W $C20C,2,2 Back buffer address
 W $C20E,2,2 Attribute address
 T $C210,26,25:n1 "SUSPICION OF ESPIONAGE AND"
-B $C22A,1,1 ?frame delay until next message
-B $C22B,1,1 Flags
+B $C22A,1,1 Frame delay until next message
+B $C22B,1,1 Character style (single height)
 B $C22C,1,1 Attribute
 W $C22D,2,2 Back buffer address
 W $C22F,2,2 Attribute address
 T $C231,6,5:n1 "MURDER"
-B $C237,1,1 ?frame delay until next message
+B $C237,1,1 Frame delay until next message
 B $C238,1,1 Stop
 b $C239 [Stage 5] Hittable hazards
-B $C239,1,1 ?id
+B $C239,1,1 Collision width
 W $C23A,2,2 [$D620] Address of LODs
-B $C23C,1,1 ?id
+B $C23C,1,1 Collision width
 W $C23D,2,2 [$D620] Address of LODs
 b $C23F [Stage 5] Object graphic definitions (right)
 N $C23F Graphic definition for object 1 - TUNNEL_LIGHT
@@ -168,7 +173,8 @@ B $C29B,1,1 Hit coord max (nearest)
 B $C29C,1,1 How far to push hero car away if hit
 W $C29D,2,2 [$D9D9] Argument for routine passed in #REGde
 W $C29F,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
-b $C2A1 [Stage 5] Map curvature data
+b $C2A1 [Stage 5] Map curvature data (start section)
+@ $C2A1 label=stage5_map_start_curvature
 B $C2A1,1,1 Curve Straight for 50 units
 B $C2A2,3,3
 B $C2A5,1,1 Curve Left Hard for 21 units
@@ -197,7 +203,8 @@ B $C2C3,1,1 <Esc> Split
 B $C2C4,1,1
 W $C2C5,2,2 [$C513] Left target
 W $C2C7,2,2 [$C455] Right target
-b $C2C9 [Stage 5] Map height data
+b $C2C9 [Stage 5] Map height data (start section)
+@ $C2C9 label=stage5_map_start_height
 B $C2C9,1,1 Level Road for 40 units
 B $C2CA,2,2
 B $C2CC,1,1 Going Up 3 for 2 units
@@ -227,7 +234,8 @@ B $C2F5,1,1 <Esc> Split
 B $C2F6,1,1
 W $C2F7,2,2 [$C526] Left target
 W $C2F9,2,2 [$C468] Right target
-b $C2FB [Stage 5] Map lanes data
+b $C2FB [Stage 5] Map lanes data (start section)
+@ $C2FB label=stage5_map_start_lanes
 B $C2FB,1,1 2 Lanes R              [||] {03} for 36 units
 B $C2FC,1,1
 B $C2FD,1,1 2-3 Widening R        [\||] {1F} for 2 units
@@ -242,7 +250,8 @@ B $C307,1,1 <Esc> Split
 B $C308,1,1
 W $C309,2,2 [$C53E] Left target
 W $C30B,2,2 [$C47A] Right target
-b $C30D [Stage 5] Map hazards data
+b $C30D [Stage 5] Map hazards data (start section)
+@ $C30D label=stage5_map_start_hazards
 B $C30D,1,1 Wait for 20 units
 B $C30E,1,1 Start Spawning HAZARD_2 Right
 B $C30F,1,1
@@ -272,7 +281,8 @@ B $C326,1,1 <Esc> Split
 B $C327,1,1
 W $C328,2,2 [$C552] Left target
 W $C32A,2,2 [$C492] Right target
-b $C32C [Stage 5] Map left object data
+b $C32C [Stage 5] Map left object data (start section)
+@ $C32C label=stage5_map_start_leftobjs
 B $C32C,1,1 Alternating (CACTUS, EMPTY) for 16 units
 B $C32D,15,8,7
 B $C33C,1,1 CACTUS for 1 units
@@ -325,7 +335,8 @@ B $C3CC,1,1 <Esc> Split
 B $C3CD,1,1
 W $C3CE,2,2 [$C560] Left target
 W $C3D0,2,2 [$C49A] Right target
-b $C3D2 [Stage 5] Map right object data
+b $C3D2 [Stage 5] Map right object data (start section)
+@ $C3D2 label=stage5_map_start_rightobjs
 B $C3D2,1,1 EMPTY for 1 units
 B $C3D3,1,1 DOUBLE_STREET_LAMP for 1 units
 B $C3D4,1,1 EMPTY for 3 units
@@ -409,7 +420,8 @@ B $C44F,1,1 <Esc> Split
 B $C450,1,1
 W $C451,2,2 [$C5A3] Left target
 W $C453,2,2 [$C4DD] Right target
-b $C455 [Stage 5] Map curvature data
+b $C455 [Stage 5] Map curvature data (right section)
+@ $C455 label=stage5_map_right_curvature
 B $C455,1,1 Curve Straight for 40 units
 B $C456,2,2
 B $C458,1,1 Curve Left Hard for 41 units
@@ -423,18 +435,20 @@ B $C463,1,1
 B $C464,1,1 <Esc> Jump
 B $C465,1,1
 W $C466,2,2 [$C5E3] Target
-b $C468 [Stage 5] Map height data
+b $C468 [Stage 5] Map height data (right section)
+@ $C468 label=stage5_map_right_height
 B $C468,1,1 Level Road for 198 units
 B $C469,13,8,5
 B $C476,1,1 <Esc> Jump
 B $C477,1,1
 W $C478,2,2 [$C5F8] Target
-b $C47A [Stage 5] Map lanes data
+b $C47A [Stage 5] Map lanes data (right section)
+@ $C47A label=stage5_map_right_lanes
 B $C47A,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
 B $C47B,1,1
 B $C47C,1,1 Tunnel start                {45} for 20 units
 B $C47D,1,1
-B $C47E,1,1 Tunnel cont/end?            {59} for 2 units
+B $C47E,1,1 Tunnel exit                 {59} for 2 units
 B $C47F,1,1
 B $C480,1,1 3 Lanes L            [|||]  {81} for 4 units
 B $C481,1,1
@@ -453,7 +467,8 @@ B $C48D,1,1
 B $C48E,1,1 <Esc> Jump
 B $C48F,1,1
 W $C490,2,2 [$C614] Target
-b $C492 [Stage 5] Map hazards data
+b $C492 [Stage 5] Map hazards data (right section)
+@ $C492 label=stage5_map_right_hazards
 B $C492,1,1 Wait for 10 units
 B $C493,1,1 Enable Car Spawning
 B $C494,1,1
@@ -461,7 +476,8 @@ B $C495,1,1 Wait for 89 units
 B $C496,1,1 <Esc> Jump
 B $C497,1,1
 W $C498,2,2 [$C628] Target
-b $C49A [Stage 5] Map left object data
+b $C49A [Stage 5] Map left object data (right section)
+@ $C49A label=stage5_map_right_leftobjs
 B $C49A,1,1 EMPTY for 2 units
 B $C49B,1,1 TUNNEL_LIGHT for 10 units
 B $C49C,1,1 Alternating (CACTUS, EMPTY) for 14 units
@@ -491,7 +507,8 @@ B $C4D8,1,1 EMPTY for 2 units
 B $C4D9,1,1 <Esc> Jump
 B $C4DA,1,1
 W $C4DB,2,2 [$C62D] Target
-b $C4DD [Stage 5] Map right object data
+b $C4DD [Stage 5] Map right object data (right section)
+@ $C4DD label=stage5_map_right_rightobjs
 B $C4DD,1,1 EMPTY for 2 units
 B $C4DE,1,1 TUNNEL_LIGHT for 10 units
 B $C4DF,1,1 Alternating (CACTUS, EMPTY) for 8 units
@@ -514,7 +531,8 @@ B $C50E,1,1 EMPTY for 2 units
 B $C50F,1,1 <Esc> Jump
 B $C510,1,1
 W $C511,2,2 [$C651] Target
-b $C513 [Stage 5] Map curvature data
+b $C513 [Stage 5] Map curvature data (left section)
+@ $C513 label=stage5_map_left_curvature
 B $C513,1,1 Curve Straight for 12 units
 B $C514,1,1 Curve Left Hard for 43 units
 B $C515,2,2
@@ -527,7 +545,8 @@ B $C51F,3,3
 B $C522,1,1 <Esc> Jump
 B $C523,1,1
 W $C524,2,2 [$C5E3] Target
-b $C526 [Stage 5] Map height data
+b $C526 [Stage 5] Map height data (left section)
+@ $C526 label=stage5_map_left_height
 B $C526,1,1 Level Road for 168 units
 B $C527,11,8,3
 B $C532,1,1 Going Up 3 for 1 units
@@ -541,7 +560,8 @@ B $C539,1,1
 B $C53A,1,1 <Esc> Jump
 B $C53B,1,1
 W $C53C,2,2 [$C5F8] Target
-b $C53E [Stage 5] Map lanes data
+b $C53E [Stage 5] Map lanes data (left section)
+@ $C53E label=stage5_map_left_lanes
 B $C53E,1,1 4 Lanes              [||||] {00} for 40 units
 B $C53F,1,1
 B $C540,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -550,7 +570,7 @@ B $C542,1,1 3 Lanes L            [|||]  {81} for 124 units
 B $C543,1,1
 B $C544,1,1 Tunnel start                {45} for 20 units
 B $C545,1,1
-B $C546,1,1 Tunnel cont/end?            {59} for 2 units
+B $C546,1,1 Tunnel exit                 {59} for 2 units
 B $C547,1,1
 B $C548,1,1 3 Lanes L            [|||]  {81} for 2 units
 B $C549,1,1
@@ -561,7 +581,8 @@ B $C54D,1,1
 B $C54E,1,1 <Esc> Jump
 B $C54F,1,1
 W $C550,2,2 [$C614] Target
-b $C552 [Stage 5] Map hazards data
+b $C552 [Stage 5] Map hazards data (left section)
+@ $C552 label=stage5_map_left_hazards
 B $C552,1,1 Wait for 10 units
 B $C553,1,1 Enable Car Spawning
 B $C554,1,1
@@ -575,7 +596,8 @@ B $C55B,1,1 Wait for 79 units
 B $C55C,1,1 <Esc> Jump
 B $C55D,1,1
 W $C55E,2,2 [$C628] Target
-b $C560 [Stage 5] Map left object data
+b $C560 [Stage 5] Map left object data (left section)
+@ $C560 label=stage5_map_left_leftobjs
 B $C560,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 22 units
 B $C561,22,8*2,6
 B $C577,1,1 OVERHEAD_BRIDGE for 3 units
@@ -591,7 +613,8 @@ B $C59E,1,1 DOUBLE_STREET_LAMP for 1 units
 B $C59F,1,1 <Esc> Jump
 B $C5A0,1,1
 W $C5A1,2,2 [$C62D] Target
-b $C5A3 [Stage 5] Map right object data
+b $C5A3 [Stage 5] Map right object data (left section)
+@ $C5A3 label=stage5_map_left_rightobjs
 B $C5A3,1,1 Alternating (OVERHEAD_BRIDGE, EMPTY) for 22 units
 B $C5A4,22,8*2,6
 B $C5BA,1,1 OVERHEAD_BRIDGE for 3 units
@@ -604,7 +627,8 @@ B $C5DE,1,1 EMPTY for 5 units
 B $C5DF,1,1 <Esc> Jump
 B $C5E0,1,1
 W $C5E1,2,2 [$C651] Target
-b $C5E3 [Stage 5] Map curvature data
+b $C5E3 [Stage 5] Map curvature data (merge section)
+@ $C5E3 label=stage5_map_merge_curvature
 B $C5E3,1,1 Curve Straight for 35 units
 B $C5E4,2,2
 B $C5E6,1,1 Curve Left Hard for 12 units
@@ -620,7 +644,8 @@ B $C5F2,2,2
 B $C5F4,1,1 <Esc> Jump
 B $C5F5,1,1
 W $C5F6,2,2 [$C65C] Target
-b $C5F8 [Stage 5] Map height data
+b $C5F8 [Stage 5] Map height data (merge section)
+@ $C5F8 label=stage5_map_merge_height
 B $C5F8,1,1 Going Down 5 for 15 units
 B $C5F9,1,1 Going Down 3 for 3 units
 B $C5FA,1,1 Level Road for 4 units
@@ -647,7 +672,8 @@ B $C60E,2,2
 B $C610,1,1 <Esc> Jump
 B $C611,1,1
 W $C612,2,2 [$C684] Target
-b $C614 [Stage 5] Map lanes data
+b $C614 [Stage 5] Map lanes data (merge section)
+@ $C614 label=stage5_map_merge_lanes
 B $C614,1,1 4 Lanes              [||||] {00} for 44 units
 B $C615,1,1
 B $C616,1,1 4-3 Narrowing L      [|||\] {BD} for 2 units
@@ -656,7 +682,7 @@ B $C618,1,1 3 Lanes L            [|||]  {81} for 12 units
 B $C619,1,1
 B $C61A,1,1 Tunnel start                {45} for 102 units
 B $C61B,1,1
-B $C61C,1,1 Tunnel cont/end?            {59} for 2 units
+B $C61C,1,1 Tunnel exit                 {59} for 2 units
 B $C61D,1,1
 B $C61E,1,1 3 Lanes L            [|||]  {81} for 18 units
 B $C61F,1,1
@@ -667,12 +693,14 @@ B $C623,1,1
 B $C624,1,1 <Esc> Jump
 B $C625,1,1
 W $C626,2,2 [$C6BB] Target
-b $C628 [Stage 5] Map hazards data
+b $C628 [Stage 5] Map hazards data (merge section)
+@ $C628 label=stage5_map_merge_hazards
 B $C628,1,1 Wait for 93 units
 B $C629,1,1 <Esc> Jump
 B $C62A,1,1
 W $C62B,2,2 [$C6D1] Target
-b $C62D [Stage 5] Map left object data
+b $C62D [Stage 5] Map left object data (merge section)
+@ $C62D label=stage5_map_merge_leftobjs
 B $C62D,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 24 units
 B $C62E,24,8
 B $C646,1,1 TELEGRAPH_POLE for 3 units
@@ -683,13 +711,15 @@ B $C64C,1,1 EMPTY for 12 units
 B $C64D,1,1 <Esc> Jump
 B $C64E,1,1
 W $C64F,2,2 [$C6EE] Target
-b $C651 [Stage 5] Map right object data
+b $C651 [Stage 5] Map right object data (merge section)
+@ $C651 label=stage5_map_merge_rightobjs
 B $C651,1,1 EMPTY for 93 units
 B $C652,6,6
 B $C658,1,1 <Esc> Jump
 B $C659,1,1
 W $C65A,2,2 [$C7A5] Target
-b $C65C [Stage 5] Map curvature data
+b $C65C [Stage 5] Map curvature data (loop section)
+@ $C65C label=stage5_map_loop_curvature
 B $C65C,1,1 Curve Straight for 40 units
 B $C65D,2,2
 B $C65F,1,1 Curve Left Hard for 41 units
@@ -717,7 +747,8 @@ B $C67C,4,4
 B $C680,1,1 <Esc> Loop
 B $C681,1,1
 W $C682,2,2 [$C65C] Target
-b $C684 [Stage 5] Map height data
+b $C684 [Stage 5] Map height data (loop section)
+@ $C684 label=stage5_map_loop_height
 B $C684,1,1 Level Road for 132 units
 B $C685,8,8
 B $C68D,1,1 Going Down 3 for 2 units
@@ -758,7 +789,8 @@ B $C6B5,2,2
 B $C6B7,1,1 <Esc> Loop
 B $C6B8,1,1
 W $C6B9,2,2 [$C684] Target
-b $C6BB [Stage 5] Map lanes data
+b $C6BB [Stage 5] Map lanes data (loop section)
+@ $C6BB label=stage5_map_loop_lanes
 B $C6BB,1,1 4 Lanes              [||||] {00} for 368 units
 B $C6BC,3,3
 B $C6BF,1,1 4-3 Narrowing R      [/|||] {8E} for 36 units
@@ -778,7 +810,8 @@ B $C6CC,1,1
 B $C6CD,1,1 <Esc> Loop
 B $C6CE,1,1
 W $C6CF,2,2 [$C6BB] Target
-b $C6D1 [Stage 5] Map hazards data
+b $C6D1 [Stage 5] Map hazards data (loop section)
+@ $C6D1 label=stage5_map_loop_hazards
 B $C6D1,1,1 Wait for 13 units
 B $C6D2,1,1 Start Spawning HAZARD_2 Both Sides
 B $C6D3,1,1
@@ -807,7 +840,8 @@ B $C6E9,1,1 Wait for 40 units
 B $C6EA,1,1 <Esc> Loop
 B $C6EB,1,1
 W $C6EC,2,2 [$C6D1] Target
-b $C6EE [Stage 5] Map left object data
+b $C6EE [Stage 5] Map left object data (loop section)
+@ $C6EE label=stage5_map_loop_leftobjs
 B $C6EE,1,1 Alternating (DOUBLE_STREET_LAMP, EMPTY) for 12 units
 B $C6EF,11,8,3
 B $C6FA,1,1 DOUBLE_STREET_LAMP for 1 units
@@ -842,7 +876,8 @@ B $C79A,7,7
 B $C7A1,1,1 <Esc> Loop
 B $C7A2,1,1
 W $C7A3,2,2 [$C6EE] Target
-b $C7A5 [Stage 5] Map right object data
+b $C7A5 [Stage 5] Map right object data (loop section)
+@ $C7A5 label=stage5_map_loop_rightobjs
 B $C7A5,1,1 Alternating (CACTUS, EMPTY) for 6 units
 B $C7A6,6,6
 B $C7AC,1,1 CACTUS for 7 units
@@ -873,6 +908,8 @@ B $C82A,1,1 <Esc> Loop
 B $C82B,1,1
 W $C82C,2,2 [$C7A5] Target
 b $C82E [Stage 5] Perp's mugshot
+N $C82E #HTML[#CALL(face($C82E))]
+@ $C82E label=stage5_perp_face
 B $C82E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E2 LOD table for "Car A (the perp's car)"
@@ -986,137 +1023,152 @@ B $C95A,1,1 Flags
 B $C95B,1,1 Height (pixels)
 W $C95C,2,2 [$CE51] Bitmap address
 W $C95E,2,2 [$CE71] Pre-shifted bitmap address
+N $C960 #HTML[#CALL(graphic($C960,48,30,0,1))]
 B $C960,180,6 Bitmap data 6 bytes x 30
+N $CA14 #HTML[#CALL(graphic($CA14,40,22,0,1))]
 B $CA14,110,5 Bitmap data 5 bytes x 22
+N $CA82 #HTML[#CALL(graphic($CA82,24,15,0,1))]
 B $CA82,45,3 Bitmap data 3 bytes x 15
+N $CAAF #HTML[#CALL(graphic($CAAF,24,8,1,1))]
 B $CAAF,48,6 Bitmap data (masked) 6 bytes x 8
+N $CADF #HTML[#CALL(graphic($CADF,24,8,1,1))]
 B $CADF,48,6 Pre-shifted bitmap data (masked) 6 bytes x 8
+N $CB0F #HTML[#CALL(graphic($CB0F,48,39,0,1))]
 B $CB0F,234,6 Bitmap data 6 bytes x 39
+N $CBF9 #HTML[#CALL(graphic($CBF9,40,29,0,1))]
 B $CBF9,145,5 Bitmap data 5 bytes x 29
+N $CC8A #HTML[#CALL(graphic($CC8A,24,20,0,1))]
 B $CC8A,60,3 Bitmap data 3 bytes x 20
+N $CCC6 #HTML[#CALL(graphic($CCC6,16,12,1,1))]
 B $CCC6,48,4 Bitmap data (masked) 4 bytes x 12
+N $CCF6 #HTML[#CALL(graphic($CCF6,16,12,1,1))]
 B $CCF6,48,4 Pre-shifted bitmap data (masked) 4 bytes x 12
+N $CD26 #HTML[#CALL(graphic($CD26,48,30,0,1))]
 B $CD26,180,6 Bitmap data 6 bytes x 30
+N $CDDA #HTML[#CALL(graphic($CDDA,32,20,0,1))]
 B $CDDA,80,4 Bitmap data 4 bytes x 20
+N $CE2A #HTML[#CALL(graphic($CE2A,24,13,0,1))]
 B $CE2A,39,3 Bitmap data 3 bytes x 13
+N $CE51 #HTML[#CALL(graphic($CE51,16,8,1,1))]
 B $CE51,32,4 Bitmap data (masked) 4 bytes x 8
+N $CE71 #HTML[#CALL(graphic($CE71,16,8,1,1))]
 B $CE71,32,4 Pre-shifted bitmap data (masked) 4 bytes x 8
 N $CE91 Stretchy graphic
-B $CE91,1,1 ?index
+B $CE91,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CE92,2,2 [$CE9E] Pointer to stretchy_graphic_part
-B $CE94,1,1 ?index
+B $CE94,1,1 Height 112.5% of the perspective scale
 W $CE95,2,2 [$CEB4] Pointer to stretchy_graphic_part
-B $CE97,1,1 ?index
+B $CE97,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CE98,2,2 [$CECA] Pointer to stretchy_graphic_part
-B $CE9A,1,1 ?index
+B $CE9A,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CE9B,2,2 [$CEE0] Pointer to stretchy_graphic_part
 B $CE9D,1,1 Terminator
 N $CE9E Stretchy graphic part
 W $CE9E,2,2 [$CF5B] LOD ptr
-W $CEA0,2,2 TBD
-W $CEA2,2,2 TBD
-W $CEA4,2,2 TBD
-W $CEA6,2,2 TBD
-W $CEA8,2,2 TBD
-W $CEAA,2,2 TBD
-W $CEAC,2,2 TBD
-W $CEAE,2,2 TBD
-W $CEB0,2,2 TBD
-W $CEB2,2,2 TBD
+W $CEA0,2,2 Depth $00, bitmap at +$17
+W $CEA2,2,2 Depth $00, bitmap at +$17
+W $CEA4,2,2 Depth $00, bitmap at +$33
+W $CEA6,2,2 Depth $00, bitmap at +$33
+W $CEA8,2,2 Depth $00, bitmap at +$4F
+W $CEAA,2,2 Depth $00, bitmap at +$4F
+W $CEAC,2,2 Depth $F8, bitmap at +$6B
+W $CEAE,2,2 Depth $F8, bitmap at +$6B
+W $CEB0,2,2 Depth $F8, bitmap at +$87
+W $CEB2,2,2 Depth $F8, bitmap at +$87
 N $CEB4 Stretchy graphic part
 W $CEB4,2,2 [$CF5B] LOD ptr
-W $CEB6,2,2 TBD
-W $CEB8,2,2 TBD
-W $CEBA,2,2 TBD
-W $CEBC,2,2 TBD
-W $CEBE,2,2 TBD
-W $CEC0,2,2 TBD
-W $CEC2,2,2 TBD
-W $CEC4,2,2 TBD
-W $CEC6,2,2 TBD
-W $CEC8,2,2 TBD
+W $CEB6,2,2 Depth $10, bitmap at +$10
+W $CEB8,2,2 Depth $10, bitmap at +$10
+W $CEBA,2,2 Depth $10, bitmap at +$2C
+W $CEBC,2,2 Depth $10, bitmap at +$2C
+W $CEBE,2,2 Depth $10, bitmap at +$48
+W $CEC0,2,2 Depth $10, bitmap at +$48
+W $CEC2,2,2 Depth $08, bitmap at +$64
+W $CEC4,2,2 Depth $08, bitmap at +$64
+W $CEC6,2,2 Depth $08, bitmap at +$80
+W $CEC8,2,2 Depth $08, bitmap at +$80
 N $CECA Stretchy graphic part
 W $CECA,2,2 [$CF5B] LOD ptr
-W $CECC,2,2 TBD
-W $CECE,2,2 TBD
-W $CED0,2,2 TBD
-W $CED2,2,2 TBD
-W $CED4,2,2 TBD
-W $CED6,2,2 TBD
-W $CED8,2,2 TBD
-W $CEDA,2,2 TBD
-W $CEDC,2,2 TBD
-W $CEDE,2,2 TBD
+W $CECC,2,2 Depth $08, bitmap at +$09
+W $CECE,2,2 Depth $08, bitmap at +$09
+W $CED0,2,2 Depth $10, bitmap at +$25
+W $CED2,2,2 Depth $10, bitmap at +$25
+W $CED4,2,2 Depth $08, bitmap at +$41
+W $CED6,2,2 Depth $08, bitmap at +$41
+W $CED8,2,2 Depth $00, bitmap at +$5D
+W $CEDA,2,2 Depth $00, bitmap at +$5D
+W $CEDC,2,2 Depth $00, bitmap at +$79
+W $CEDE,2,2 Depth $00, bitmap at +$79
 N $CEE0 Stretchy graphic part
 W $CEE0,2,2 [$CF5B] LOD ptr
-W $CEE2,2,2 TBD
-W $CEE4,2,2 TBD
-W $CEE6,2,2 TBD
-W $CEE8,2,2 TBD
-W $CEEA,2,2 TBD
-W $CEEC,2,2 TBD
-W $CEEE,2,2 TBD
-W $CEF0,2,2 TBD
-W $CEF2,2,2 TBD
-W $CEF4,2,2 TBD
+W $CEE2,2,2 Depth $18, bitmap at +$02
+W $CEE4,2,2 Depth $18, bitmap at +$02
+W $CEE6,2,2 Depth $18, bitmap at +$1E
+W $CEE8,2,2 Depth $18, bitmap at +$1E
+W $CEEA,2,2 Depth $10, bitmap at +$3A
+W $CEEC,2,2 Depth $10, bitmap at +$3A
+W $CEEE,2,2 Depth $08, bitmap at +$56
+W $CEF0,2,2 Depth $08, bitmap at +$56
+W $CEF2,2,2 Depth $08, bitmap at +$72
+W $CEF4,2,2 Depth $08, bitmap at +$72
 N $CEF6 Stretchy graphic
-B $CEF6,1,1 ?index
+B $CEF6,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CEF7,2,2 [$CF03] Pointer to stretchy_graphic_part
-B $CEF9,1,1 ?index
+B $CEF9,1,1 Height 112.5% of the perspective scale
 W $CEFA,2,2 [$CF19] Pointer to stretchy_graphic_part
-B $CEFC,1,1 ?index
+B $CEFC,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CEFD,2,2 [$CF2F] Pointer to stretchy_graphic_part
-B $CEFF,1,1 ?index
+B $CEFF,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $CF00,2,2 [$CF45] Pointer to stretchy_graphic_part
 B $CF02,1,1 Terminator
 N $CF03 Stretchy graphic part
 W $CF03,2,2 [$CFE7] LOD ptr
-W $CF05,2,2 TBD
-W $CF07,2,2 TBD
-W $CF09,2,2 TBD
-W $CF0B,2,2 TBD
-W $CF0D,2,2 TBD
-W $CF0F,2,2 TBD
-W $CF11,2,2 TBD
-W $CF13,2,2 TBD
-W $CF15,2,2 TBD
-W $CF17,2,2 TBD
+W $CF05,2,2 Depth $08, bitmap at +$17
+W $CF07,2,2 Depth $08, bitmap at +$17
+W $CF09,2,2 Depth $08, bitmap at +$33
+W $CF0B,2,2 Depth $08, bitmap at +$33
+W $CF0D,2,2 Depth $00, bitmap at +$4F
+W $CF0F,2,2 Depth $00, bitmap at +$4F
+W $CF11,2,2 Depth $00, bitmap at +$6B
+W $CF13,2,2 Depth $00, bitmap at +$6B
+W $CF15,2,2 Depth $00, bitmap at +$87
+W $CF17,2,2 Depth $00, bitmap at +$87
 N $CF19 Stretchy graphic part
 W $CF19,2,2 [$CFE7] LOD ptr
-W $CF1B,2,2 TBD
-W $CF1D,2,2 TBD
-W $CF1F,2,2 TBD
-W $CF21,2,2 TBD
-W $CF23,2,2 TBD
-W $CF25,2,2 TBD
-W $CF27,2,2 TBD
-W $CF29,2,2 TBD
-W $CF2B,2,2 TBD
-W $CF2D,2,2 TBD
+W $CF1B,2,2 Depth $10, bitmap at +$10
+W $CF1D,2,2 Depth $10, bitmap at +$10
+W $CF1F,2,2 Depth $10, bitmap at +$2C
+W $CF21,2,2 Depth $10, bitmap at +$2C
+W $CF23,2,2 Depth $08, bitmap at +$48
+W $CF25,2,2 Depth $08, bitmap at +$48
+W $CF27,2,2 Depth $08, bitmap at +$64
+W $CF29,2,2 Depth $08, bitmap at +$64
+W $CF2B,2,2 Depth $08, bitmap at +$80
+W $CF2D,2,2 Depth $08, bitmap at +$80
 N $CF2F Stretchy graphic part
 W $CF2F,2,2 [$CFE7] LOD ptr
-W $CF31,2,2 TBD
-W $CF33,2,2 TBD
-W $CF35,2,2 TBD
-W $CF37,2,2 TBD
-W $CF39,2,2 TBD
-W $CF3B,2,2 TBD
-W $CF3D,2,2 TBD
-W $CF3F,2,2 TBD
-W $CF41,2,2 TBD
-W $CF43,2,2 TBD
+W $CF31,2,2 Depth $10, bitmap at +$09
+W $CF33,2,2 Depth $10, bitmap at +$09
+W $CF35,2,2 Depth $18, bitmap at +$25
+W $CF37,2,2 Depth $18, bitmap at +$25
+W $CF39,2,2 Depth $08, bitmap at +$41
+W $CF3B,2,2 Depth $08, bitmap at +$41
+W $CF3D,2,2 Depth $08, bitmap at +$5D
+W $CF3F,2,2 Depth $08, bitmap at +$5D
+W $CF41,2,2 Depth $08, bitmap at +$79
+W $CF43,2,2 Depth $08, bitmap at +$79
 N $CF45 Stretchy graphic part
 W $CF45,2,2 [$CFE7] LOD ptr
-W $CF47,2,2 TBD
-W $CF49,2,2 TBD
-W $CF4B,2,2 TBD
-W $CF4D,2,2 TBD
-W $CF4F,2,2 TBD
-W $CF51,2,2 TBD
-W $CF53,2,2 TBD
-W $CF55,2,2 TBD
-W $CF57,2,2 TBD
-W $CF59,2,2 TBD
+W $CF47,2,2 Depth $20, bitmap at +$02
+W $CF49,2,2 Depth $20, bitmap at +$02
+W $CF4B,2,2 Depth $20, bitmap at +$1E
+W $CF4D,2,2 Depth $20, bitmap at +$1E
+W $CF4F,2,2 Depth $10, bitmap at +$3A
+W $CF51,2,2 Depth $10, bitmap at +$3A
+W $CF53,2,2 Depth $10, bitmap at +$56
+W $CF55,2,2 Depth $10, bitmap at +$56
+W $CF57,2,2 Depth $10, bitmap at +$72
+W $CF59,2,2 Depth $10, bitmap at +$72
 N $CF5B LOD table for "stretchy"
 N $CF5B LOD
 B $CF5B,1,1 Width (bytes)
@@ -1181,44 +1233,50 @@ B $D005,1,1 Height (pixels)
 W $D006,2,2 [$D14B] Bitmap address
 W $D008,2,2 [$D14B] Pre-shifted bitmap address
 B $D00A,105,8*13,1
+N $D073 #HTML[#CALL(graphic($D073,40,8,0,1))]
 B $D073,40,5 Bitmap data 5 bytes x 8
+N $D09B #HTML[#CALL(graphic($D09B,56,8,0,1))]
 B $D09B,56,7 Bitmap data 7 bytes x 8
+N $D0D3 #HTML[#CALL(graphic($D0D3,56,8,0,1))]
 B $D0D3,56,7 Bitmap data 7 bytes x 8
+N $D10B #HTML[#CALL(graphic($D10B,64,8,0,1))]
 B $D10B,64,8 Bitmap data 8 bytes x 8
+N $D14B #HTML[#CALL(graphic($D14B,24,4,0,1))]
 B $D14B,12,3 Bitmap data 3 bytes x 4
 B $D157,153,8*19,1
+N $D1F0 #HTML[#CALL(graphic($D1F0,56,8,0,1))]
 B $D1F0,56,7 Bitmap data 7 bytes x 8
 B $D228,100,8*12,4
 N $D28C Stretchy graphic
-B $D28C,1,1 ?index
+B $D28C,1,1 Height 150% of the perspective scale
 W $D28D,2,2 [$D293] Pointer to stretchy_graphic_part
-B $D28F,1,1 ?index
+B $D28F,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D290,2,2 [$D2A9] Pointer to stretchy_graphic_part
 B $D292,1,1 Terminator
 N $D293 Stretchy graphic part
 W $D293,2,2 [$D2BF] LOD ptr
-W $D295,2,2 TBD
-W $D297,2,2 TBD
-W $D299,2,2 TBD
-W $D29B,2,2 TBD
-W $D29D,2,2 TBD
-W $D29F,2,2 TBD
-W $D2A1,2,2 TBD
-W $D2A3,2,2 TBD
-W $D2A5,2,2 TBD
-W $D2A7,2,2 TBD
+W $D295,2,2 Depth $24, bitmap at +$02
+W $D297,2,2 Depth $1C, bitmap at +$02
+W $D299,2,2 Depth $18, bitmap at +$09
+W $D29B,2,2 Depth $18, bitmap at +$09
+W $D29D,2,2 Depth $14, bitmap at +$10
+W $D29F,2,2 Depth $14, bitmap at +$10
+W $D2A1,2,2 Depth $14, bitmap at +$17
+W $D2A3,2,2 Depth $10, bitmap at +$17
+W $D2A5,2,2 Depth $10, bitmap at +$17
+W $D2A7,2,2 Depth $10, bitmap at +$17
 N $D2A9 Stretchy graphic part
 W $D2A9,2,2 [$D2BF] LOD ptr
-W $D2AB,2,2 TBD
-W $D2AD,2,2 TBD
-W $D2AF,2,2 TBD
-W $D2B1,2,2 TBD
-W $D2B3,2,2 TBD
-W $D2B5,2,2 TBD
-W $D2B7,2,2 TBD
-W $D2B9,2,2 TBD
-W $D2BB,2,2 TBD
-W $D2BD,2,2 TBD
+W $D2AB,2,2 Depth $24, bitmap at +$1E
+W $D2AD,2,2 Depth $1C, bitmap at +$1E
+W $D2AF,2,2 Depth $18, bitmap at +$25
+W $D2B1,2,2 Depth $18, bitmap at +$25
+W $D2B3,2,2 Depth $14, bitmap at +$2C
+W $D2B5,2,2 Depth $14, bitmap at +$2C
+W $D2B7,2,2 Depth $14, bitmap at +$33
+W $D2B9,2,2 Depth $10, bitmap at +$33
+W $D2BB,2,2 Depth $10, bitmap at +$33
+W $D2BD,2,2 Depth $10, bitmap at +$33
 N $D2BF LOD table for "stretchy"
 N $D2BF LOD
 B $D2BF,1,1 Width (bytes)
@@ -1269,37 +1327,37 @@ B $D2F2,1,1 Height (pixels)
 W $D2F3,2,2 [$D612] Bitmap address
 W $D2F5,2,2 [$D612] Pre-shifted bitmap address
 N $D2F7 Stretchy graphic
-B $D2F7,1,1 ?index
+B $D2F7,1,1 Height 150% of the perspective scale
 W $D2F8,2,2 [$D2FE] Pointer to stretchy_graphic_part
-B $D2FA,1,1 ?index
+B $D2FA,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D2FB,2,2 [$D332] Pointer to stretchy_graphic_part
 B $D2FD,1,1 Terminator
 N $D2FE Stretchy graphic part
 W $D2FE,2,2 [$D348] LOD ptr
-W $D300,2,2 TBD
-W $D302,2,2 TBD
-W $D304,2,2 TBD
-W $D306,2,2 TBD
-W $D308,2,2 TBD
-W $D30A,2,2 TBD
-W $D30C,2,2 TBD
-W $D30E,2,2 TBD
-W $D310,2,2 TBD
-W $D312,2,2 TBD
+W $D300,2,2 Depth $24, bitmap at +$02
+W $D302,2,2 Depth $1C, bitmap at +$02
+W $D304,2,2 Depth $18, bitmap at +$09
+W $D306,2,2 Depth $18, bitmap at +$09
+W $D308,2,2 Depth $14, bitmap at +$10
+W $D30A,2,2 Depth $14, bitmap at +$10
+W $D30C,2,2 Depth $14, bitmap at +$17
+W $D30E,2,2 Depth $10, bitmap at +$17
+W $D310,2,2 Depth $10, bitmap at +$17
+W $D312,2,2 Depth $10, bitmap at +$17
 N $D314 Bitmap data 3 bytes x 10
 B $D314,30,8*3,6
 N $D332 Stretchy graphic part
 W $D332,2,2 [$D348] LOD ptr
-W $D334,2,2 TBD
-W $D336,2,2 TBD
-W $D338,2,2 TBD
-W $D33A,2,2 TBD
-W $D33C,2,2 TBD
-W $D33E,2,2 TBD
-W $D340,2,2 TBD
-W $D342,2,2 TBD
-W $D344,2,2 TBD
-W $D346,2,2 TBD
+W $D334,2,2 Depth $24, bitmap at +$1E
+W $D336,2,2 Depth $1C, bitmap at +$1E
+W $D338,2,2 Depth $18, bitmap at +$25
+W $D33A,2,2 Depth $18, bitmap at +$25
+W $D33C,2,2 Depth $14, bitmap at +$2C
+W $D33E,2,2 Depth $14, bitmap at +$2C
+W $D340,2,2 Depth $14, bitmap at +$33
+W $D342,2,2 Depth $10, bitmap at +$33
+W $D344,2,2 Depth $10, bitmap at +$33
+W $D346,2,2 Depth $10, bitmap at +$33
 N $D348 LOD table for "stretchy"
 N $D348 LOD
 B $D348,1,1 Width (bytes)
@@ -1349,16 +1407,23 @@ B $D37A,1,1 Flags
 B $D37B,1,1 Height (pixels)
 W $D37C,2,2 [$D601] Bitmap address
 W $D37E,2,2 [$D601] Pre-shifted bitmap address
+N $D380 #HTML[#CALL(graphic($D380,32,16,0,1))]
 B $D380,64,4 Bitmap data 4 bytes x 16
+N $D3C0 #HTML[#CALL(graphic($D3C0,32,24,0,1))]
 B $D3C0,96,4 Bitmap data 4 bytes x 24
 B $D420,24,8
+N $D438 #HTML[#CALL(graphic($D438,32,16,0,1))]
 B $D438,64,4 Bitmap data 4 bytes x 16
+N $D478 #HTML[#CALL(graphic($D478,32,24,0,1))]
 B $D478,96,4 Bitmap data 4 bytes x 24
 B $D4D8,111,8*13,7
+N $D547 #HTML[#CALL(graphic($D547,24,12,0,1))]
 B $D547,36,3 Bitmap data 3 bytes x 12
 B $D56B,106,8*13,2
+N $D5D5 #HTML[#CALL(graphic($D5D5,16,8,0,1))]
 B $D5D5,16,2 Bitmap data 2 bytes x 8
 B $D5E5,41,8*5,1
+N $D60E #HTML[#CALL(graphic($D60E,8,4,0,1))]
 B $D60E,4,1 Bitmap data 1 bytes x 4
 B $D612,14,8,6
 N $D620 LOD table for "hittable hazard"
@@ -1398,115 +1463,120 @@ B $D644,1,1 Flags
 B $D645,1,1 Height (pixels)
 W $D646,2,2 [$D6C7] Bitmap address
 W $D648,2,2 [$D6E3] Pre-shifted bitmap address
+N $D64A #HTML[#CALL(graphic($D64A,32,17,0,1))]
 B $D64A,68,4 Bitmap data 4 bytes x 17
+N $D68E #HTML[#CALL(graphic($D68E,24,13,0,1))]
 B $D68E,39,3 Bitmap data 3 bytes x 13
+N $D6B5 #HTML[#CALL(graphic($D6B5,16,9,0,1))]
 B $D6B5,18,2 Bitmap data 2 bytes x 9
+N $D6C7 #HTML[#CALL(graphic($D6C7,16,7,1,1))]
 B $D6C7,28,4 Bitmap data (masked) 4 bytes x 7
+N $D6E3 #HTML[#CALL(graphic($D6E3,16,7,1,1))]
 B $D6E3,28,4 Pre-shifted bitmap data (masked) 4 bytes x 7
 N $D6FF Stretchy graphic
-B $D6FF,1,1 ?index
+B $D6FF,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D700,2,2 [$D719] Pointer to stretchy_graphic_part
-B $D702,1,1 ?index
+B $D702,1,1 Height 25% of the perspective scale
 W $D703,2,2 [$D72F] Pointer to stretchy_graphic_part
-B $D705,1,1 ?index
+B $D705,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D706,2,2 [$D75B] Pointer to stretchy_graphic_part
-B $D708,1,1 ?index
+B $D708,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D709,2,2 [$D787] Pointer to stretchy_graphic_part
 B $D70B,1,1 Terminator
 N $D70C Stretchy graphic
-B $D70C,1,1 ?index
+B $D70C,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D70D,2,2 [$D719] Pointer to stretchy_graphic_part
-B $D70F,1,1 ?index
+B $D70F,1,1 Height 25% of the perspective scale
 W $D710,2,2 [$D745] Pointer to stretchy_graphic_part
-B $D712,1,1 ?index
+B $D712,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D713,2,2 [$D771] Pointer to stretchy_graphic_part
-B $D715,1,1 ?index
+B $D715,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D716,2,2 [$D79D] Pointer to stretchy_graphic_part
 B $D718,1,1 Terminator
 N $D719 Stretchy graphic part
 W $D719,2,2 [$D7B3] LOD ptr
-W $D71B,2,2 TBD
-W $D71D,2,2 TBD
-W $D71F,2,2 TBD
-W $D721,2,2 TBD
-W $D723,2,2 TBD
-W $D725,2,2 TBD
-W $D727,2,2 TBD
-W $D729,2,2 TBD
-W $D72B,2,2 TBD
-W $D72D,2,2 TBD
+W $D71B,2,2 Depth $1C, bitmap at +$02
+W $D71D,2,2 Depth $14, bitmap at +$02
+W $D71F,2,2 Depth $10, bitmap at +$17
+W $D721,2,2 Depth $10, bitmap at +$17
+W $D723,2,2 Depth $0C, bitmap at +$2C
+W $D725,2,2 Depth $0C, bitmap at +$2C
+W $D727,2,2 Depth $0C, bitmap at +$56
+W $D729,2,2 Depth $08, bitmap at +$56
+W $D72B,2,2 Depth $08, bitmap at +$56
+W $D72D,2,2 Depth $08, bitmap at +$56
 N $D72F Stretchy graphic part
 W $D72F,2,2 [$D7B3] LOD ptr
-W $D731,2,2 TBD
-W $D733,2,2 TBD
-W $D735,2,2 TBD
-W $D737,2,2 TBD
-W $D739,2,2 TBD
-W $D73B,2,2 TBD
-W $D73D,2,2 TBD
-W $D73F,2,2 TBD
-W $D741,2,2 TBD
-W $D743,2,2 TBD
+W $D731,2,2 Depth $1C, bitmap at +$48
+W $D733,2,2 Depth $14, bitmap at +$48
+W $D735,2,2 Depth $10, bitmap at +$1E
+W $D737,2,2 Depth $10, bitmap at +$1E
+W $D739,2,2 Depth $0C, bitmap at +$33
+W $D73B,2,2 Depth $0C, bitmap at +$33
+W $D73D,2,2 Depth $0C, bitmap at +$5D
+W $D73F,2,2 Depth $08, bitmap at +$5D
+W $D741,2,2 Depth $08, bitmap at +$5D
+W $D743,2,2 Depth $08, bitmap at +$5D
 N $D745 Stretchy graphic part
 W $D745,2,2 [$D7B3] LOD ptr
-W $D747,2,2 TBD
-W $D749,2,2 TBD
-W $D74B,2,2 TBD
-W $D74D,2,2 TBD
-W $D74F,2,2 TBD
-W $D751,2,2 TBD
-W $D753,2,2 TBD
-W $D755,2,2 TBD
-W $D757,2,2 TBD
-W $D759,2,2 TBD
+W $D747,2,2 Depth $24, bitmap at +$48
+W $D749,2,2 Depth $1C, bitmap at +$48
+W $D74B,2,2 Depth $18, bitmap at +$1E
+W $D74D,2,2 Depth $18, bitmap at +$1E
+W $D74F,2,2 Depth $0C, bitmap at +$33
+W $D751,2,2 Depth $0C, bitmap at +$33
+W $D753,2,2 Depth $14, bitmap at +$5D
+W $D755,2,2 Depth $10, bitmap at +$5D
+W $D757,2,2 Depth $10, bitmap at +$5D
+W $D759,2,2 Depth $10, bitmap at +$5D
 N $D75B Stretchy graphic part
 W $D75B,2,2 [$D7B3] LOD ptr
-W $D75D,2,2 TBD
-W $D75F,2,2 TBD
-W $D761,2,2 TBD
-W $D763,2,2 TBD
-W $D765,2,2 TBD
-W $D767,2,2 TBD
-W $D769,2,2 TBD
-W $D76B,2,2 TBD
-W $D76D,2,2 TBD
-W $D76F,2,2 TBD
+W $D75D,2,2 Depth $1C, bitmap at +$09
+W $D75F,2,2 Depth $14, bitmap at +$09
+W $D761,2,2 Depth $10, bitmap at +$4F
+W $D763,2,2 Depth $10, bitmap at +$4F
+W $D765,2,2 Depth $0C, bitmap at +$3A
+W $D767,2,2 Depth $0C, bitmap at +$3A
+W $D769,2,2 Depth $0C, bitmap at +$5D
+W $D76B,2,2 Depth $08, bitmap at +$5D
+W $D76D,2,2 Depth $08, bitmap at +$5D
+W $D76F,2,2 Depth $08, bitmap at +$5D
 N $D771 Stretchy graphic part
 W $D771,2,2 [$D7B3] LOD ptr
-W $D773,2,2 TBD
-W $D775,2,2 TBD
-W $D777,2,2 TBD
-W $D779,2,2 TBD
-W $D77B,2,2 TBD
-W $D77D,2,2 TBD
-W $D77F,2,2 TBD
-W $D781,2,2 TBD
-W $D783,2,2 TBD
-W $D785,2,2 TBD
+W $D773,2,2 Depth $1C, bitmap at +$09
+W $D775,2,2 Depth $14, bitmap at +$09
+W $D777,2,2 Depth $10, bitmap at +$4F
+W $D779,2,2 Depth $10, bitmap at +$4F
+W $D77B,2,2 Depth $0C, bitmap at +$3A
+W $D77D,2,2 Depth $0C, bitmap at +$3A
+W $D77F,2,2 Depth $14, bitmap at +$5D
+W $D781,2,2 Depth $10, bitmap at +$5D
+W $D783,2,2 Depth $10, bitmap at +$5D
+W $D785,2,2 Depth $10, bitmap at +$5D
 N $D787 Stretchy graphic part
 W $D787,2,2 [$D7B3] LOD ptr
-W $D789,2,2 TBD
-W $D78B,2,2 TBD
-W $D78D,2,2 TBD
-W $D78F,2,2 TBD
-W $D791,2,2 TBD
-W $D793,2,2 TBD
-W $D795,2,2 TBD
-W $D797,2,2 TBD
-W $D799,2,2 TBD
-W $D79B,2,2 TBD
+W $D789,2,2 Depth $24, bitmap at +$10
+W $D78B,2,2 Depth $1C, bitmap at +$10
+W $D78D,2,2 Depth $10, bitmap at +$25
+W $D78F,2,2 Depth $10, bitmap at +$25
+W $D791,2,2 Depth $0C, bitmap at +$41
+W $D793,2,2 Depth $0C, bitmap at +$41
+W $D795,2,2 Depth $0C, bitmap at +$64
+W $D797,2,2 Depth $08, bitmap at +$64
+W $D799,2,2 Depth $08, bitmap at +$64
+W $D79B,2,2 Depth $08, bitmap at +$64
 N $D79D Stretchy graphic part
 W $D79D,2,2 [$D7B3] LOD ptr
-W $D79F,2,2 TBD
-W $D7A1,2,2 TBD
-W $D7A3,2,2 TBD
-W $D7A5,2,2 TBD
-W $D7A7,2,2 TBD
-W $D7A9,2,2 TBD
-W $D7AB,2,2 TBD
-W $D7AD,2,2 TBD
-W $D7AF,2,2 TBD
-W $D7B1,2,2 TBD
+W $D79F,2,2 Depth $24, bitmap at +$10
+W $D7A1,2,2 Depth $1C, bitmap at +$10
+W $D7A3,2,2 Depth $18, bitmap at +$25
+W $D7A5,2,2 Depth $18, bitmap at +$25
+W $D7A7,2,2 Depth $0C, bitmap at +$41
+W $D7A9,2,2 Depth $0C, bitmap at +$41
+W $D7AB,2,2 Depth $14, bitmap at +$64
+W $D7AD,2,2 Depth $10, bitmap at +$64
+W $D7AF,2,2 Depth $10, bitmap at +$64
+W $D7B1,2,2 Depth $10, bitmap at +$64
 N $D7B3 LOD table for "stretchy"
 N $D7B3 LOD
 B $D7B3,1,1 Width (bytes)
@@ -1539,56 +1609,61 @@ B $D7D1,1,1 Height (pixels)
 W $D7D2,2,2 [$D85C] Bitmap address
 W $D7D4,2,2 [$D85C] Pre-shifted bitmap address
 B $D7D6,70,8*8,6
+N $D81C #HTML[#CALL(graphic($D81C,24,4,0,1))]
 B $D81C,12,3 Bitmap data 3 bytes x 4
+N $D828 #HTML[#CALL(graphic($D828,24,13,0,1))]
 B $D828,39,3 Bitmap data 3 bytes x 13
+N $D84F #HTML[#CALL(graphic($D84F,8,7,0,1))]
 B $D84F,7,1 Bitmap data 1 bytes x 7
+N $D856 #HTML[#CALL(graphic($D856,16,3,0,1))]
 B $D856,6,2 Bitmap data 2 bytes x 3
+N $D85C #HTML[#CALL(graphic($D85C,8,2,0,1))]
 B $D85C,2,1 Bitmap data 1 bytes x 2
 B $D85E,116,8*14,4
 N $D8D2 Stretchy graphic
-B $D8D2,1,1 ?index
+B $D8D2,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D8D3,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8D5,1,1 ?index
+B $D8D5,1,1 Height 50% of the perspective scale
 W $D8D6,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8D8,1,1 ?index
+B $D8D8,1,1 Height 112.5% of the perspective scale
 W $D8D9,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8DB,1,1 ?index
+B $D8DB,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D8DC,2,2 [$D8EC] Pointer to stretchy_graphic_part
 B $D8DE,1,1 Terminator
 N $D8DF Stretchy graphic
-B $D8DF,1,1 ?index
+B $D8DF,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D8E0,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8E2,1,1 ?index
+B $D8E2,1,1 Height 50% of the perspective scale
 W $D8E3,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8E5,1,1 ?index
+B $D8E5,1,1 Height 112.5% of the perspective scale
 W $D8E6,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D8E8,1,1 ?index
+B $D8E8,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D8E9,2,2 [$D902] Pointer to stretchy_graphic_part
 B $D8EB,1,1 Terminator
 N $D8EC Stretchy graphic part
 W $D8EC,2,2 [$D918] LOD ptr
-W $D8EE,2,2 TBD
-W $D8F0,2,2 TBD
-W $D8F2,2,2 TBD
-W $D8F4,2,2 TBD
-W $D8F6,2,2 TBD
-W $D8F8,2,2 TBD
-W $D8FA,2,2 TBD
-W $D8FC,2,2 TBD
-W $D8FE,2,2 TBD
-W $D900,2,2 TBD
+W $D8EE,2,2 Depth $18, bitmap at +$02
+W $D8F0,2,2 Depth $10, bitmap at +$02
+W $D8F2,2,2 Depth $08, bitmap at +$09
+W $D8F4,2,2 Depth $08, bitmap at +$09
+W $D8F6,2,2 Depth $0C, bitmap at +$10
+W $D8F8,2,2 Depth $0C, bitmap at +$10
+W $D8FA,2,2 Depth $08, bitmap at +$17
+W $D8FC,2,2 Depth $08, bitmap at +$17
+W $D8FE,2,2 Depth $04, bitmap at +$1E
+W $D900,2,2 Depth $04, bitmap at +$1E
 N $D902 Stretchy graphic part
 W $D902,2,2 [$D918] LOD ptr
-W $D904,2,2 TBD
-W $D906,2,2 TBD
-W $D908,2,2 TBD
-W $D90A,2,2 TBD
-W $D90C,2,2 TBD
-W $D90E,2,2 TBD
-W $D910,2,2 TBD
-W $D912,2,2 TBD
-W $D914,2,2 TBD
-W $D916,2,2 TBD
+W $D904,2,2 Depth $18, bitmap at +$02
+W $D906,2,2 Depth $10, bitmap at +$02
+W $D908,2,2 Depth $10, bitmap at +$09
+W $D90A,2,2 Depth $10, bitmap at +$09
+W $D90C,2,2 Depth $0C, bitmap at +$10
+W $D90E,2,2 Depth $0C, bitmap at +$10
+W $D910,2,2 Depth $08, bitmap at +$17
+W $D912,2,2 Depth $08, bitmap at +$17
+W $D914,2,2 Depth $0C, bitmap at +$1E
+W $D916,2,2 Depth $0C, bitmap at +$1E
 N $D918 LOD table for "stretchy"
 N $D918 LOD
 B $D918,1,1 Width (bytes)
@@ -1620,56 +1695,64 @@ B $D935,1,1 Flags
 B $D936,1,1 Height (pixels)
 W $D937,2,2 [$D9B7] Bitmap address
 W $D939,2,2 [$D9C3] Pre-shifted bitmap address
+N $D93B #HTML[#CALL(graphic($D93B,40,8,0,1))]
 B $D93B,40,5 Bitmap data 5 bytes x 8
+N $D963 #HTML[#CALL(graphic($D963,32,6,0,1))]
 B $D963,24,4 Bitmap data 4 bytes x 6
+N $D97B #HTML[#CALL(graphic($D97B,24,4,0,1))]
 B $D97B,12,3 Bitmap data 3 bytes x 4
+N $D987 #HTML[#CALL(graphic($D987,24,4,0,1))]
 B $D987,12,3 Pre-shifted bitmap data 3 bytes x 4
+N $D993 #HTML[#CALL(graphic($D993,24,3,1,1))]
 B $D993,18,6 Bitmap data (masked) 6 bytes x 3
+N $D9A5 #HTML[#CALL(graphic($D9A5,24,3,1,1))]
 B $D9A5,18,6 Pre-shifted bitmap data (masked) 6 bytes x 3
+N $D9B7 #HTML[#CALL(graphic($D9B7,16,2,1,1))]
 B $D9B7,8,4 Bitmap data (masked) 4 bytes x 2
 B $D9BF,4,4
+N $D9C3 #HTML[#CALL(graphic($D9C3,16,2,1,1))]
 B $D9C3,8,4 Pre-shifted bitmap data (masked) 4 bytes x 2
 B $D9CB,4,4
 N $D9CF Stretchy graphic
-B $D9CF,1,1 ?index
+B $D9CF,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D9D0,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D9D2,1,1 ?index
+B $D9D2,1,1 Height 112.5% of the perspective scale
 W $D9D3,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D9D5,1,1 ?index
+B $D9D5,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D9D6,2,2 [$D9F9] Pointer to stretchy_graphic_part
 B $D9D8,1,1 Terminator
 N $D9D9 Stretchy graphic
-B $D9D9,1,1 ?index
+B $D9D9,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D9DA,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D9DC,1,1 ?index
+B $D9DC,1,1 Height 112.5% of the perspective scale
 W $D9DD,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
-B $D9DF,1,1 ?index
+B $D9DF,1,1 Fixed height (bitmap width - 2), no perspective scaling
 W $D9E0,2,2 [$D9E3] Pointer to stretchy_graphic_part
 B $D9E2,1,1 Terminator
 N $D9E3 Stretchy graphic part
 W $D9E3,2,2 [$DA0F] LOD ptr
-W $D9E5,2,2 TBD
-W $D9E7,2,2 TBD
-W $D9E9,2,2 TBD
-W $D9EB,2,2 TBD
-W $D9ED,2,2 TBD
-W $D9EF,2,2 TBD
-W $D9F1,2,2 TBD
-W $D9F3,2,2 TBD
-W $D9F5,2,2 TBD
-W $D9F7,2,2 TBD
+W $D9E5,2,2 Depth $20, bitmap at +$02
+W $D9E7,2,2 Depth $18, bitmap at +$02
+W $D9E9,2,2 Depth $10, bitmap at +$09
+W $D9EB,2,2 Depth $10, bitmap at +$09
+W $D9ED,2,2 Depth $0C, bitmap at +$10
+W $D9EF,2,2 Depth $0C, bitmap at +$10
+W $D9F1,2,2 Depth $10, bitmap at +$17
+W $D9F3,2,2 Depth $10, bitmap at +$17
+W $D9F5,2,2 Depth $0C, bitmap at +$1E
+W $D9F7,2,2 Depth $0C, bitmap at +$1E
 N $D9F9 Stretchy graphic part
 W $D9F9,2,2 [$DA0F] LOD ptr
-W $D9FB,2,2 TBD
-W $D9FD,2,2 TBD
-W $D9FF,2,2 TBD
-W $DA01,2,2 TBD
-W $DA03,2,2 TBD
-W $DA05,2,2 TBD
-W $DA07,2,2 TBD
-W $DA09,2,2 TBD
-W $DA0B,2,2 TBD
-W $DA0D,2,2 TBD
+W $D9FB,2,2 Depth $20, bitmap at +$02
+W $D9FD,2,2 Depth $18, bitmap at +$02
+W $D9FF,2,2 Depth $10, bitmap at +$09
+W $DA01,2,2 Depth $10, bitmap at +$09
+W $DA03,2,2 Depth $0C, bitmap at +$10
+W $DA05,2,2 Depth $0C, bitmap at +$10
+W $DA07,2,2 Depth $08, bitmap at +$17
+W $DA09,2,2 Depth $08, bitmap at +$17
+W $DA0B,2,2 Depth $04, bitmap at +$1E
+W $DA0D,2,2 Depth $04, bitmap at +$1E
 N $DA0F LOD table for "stretchy"
 N $DA0F LOD
 B $DA0F,1,1 Width (bytes)
@@ -1701,21 +1784,32 @@ B $DA2C,1,1 Flags
 B $DA2D,1,1 Height (pixels)
 W $DA2E,2,2 [$DAC9] Bitmap address
 W $DA30,2,2 [$DAD9] Pre-shifted bitmap address
+N $DA32 #HTML[#CALL(graphic($DA32,24,13,0,1))]
 B $DA32,39,3 Bitmap data 3 bytes x 13
+N $DA59 #HTML[#CALL(graphic($DA59,24,10,0,1))]
 B $DA59,30,3 Bitmap data 3 bytes x 10
+N $DA77 #HTML[#CALL(graphic($DA77,24,7,0,1))]
 B $DA77,21,3 Bitmap data 3 bytes x 7
+N $DA8C #HTML[#CALL(graphic($DA8C,24,7,0,1))]
 B $DA8C,21,3 Pre-shifted bitmap data 3 bytes x 7
+N $DAA1 #HTML[#CALL(graphic($DAA1,16,5,1,1))]
 B $DAA1,20,4 Bitmap data (masked) 4 bytes x 5
+N $DAB5 #HTML[#CALL(graphic($DAB5,16,5,1,1))]
 B $DAB5,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
+N $DAC9 #HTML[#CALL(graphic($DAC9,16,4,1,1))]
 B $DAC9,16,4 Bitmap data (masked) 4 bytes x 4
+N $DAD9 #HTML[#CALL(graphic($DAD9,16,4,1,1))]
 B $DAD9,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 b $DAE9 [Stage 5] Unidentified data (gap before end screen)
 B $DAE9,1303,8*162,7
-c $E000 End screen (raw first pass, undecoded) This is mapped to $5C00..$7BFF.
+c $E000 Show the end screen
+D $E000 Runs the end-of-game results screen: clears the playfield, starts the beatbox and this bank's own interrupt-driven music and script engine, then loops driving the script, the current frame-advance handler and drive_chatter until the fire key has been pressed twice -- once to skip ahead to the congratulations script, once more to leave.
+D $E000 The whole bank has already been paged in and copied down to $5C00..$7BFF, so every address here reads $8400 lower at run time ($E000 runs at $5C00). This routine then performs a second, inner relocation of its own: the 768 bytes at $F7EF (bank7_reset_music onwards) are copied to $F300, which is why the calls below target $F300 and $F340 rather than the bank addresses the code was assembled at.
+D $E000 The five bytes at $A16D..$A171 are the engine's state: the script pointer ($A16D/$A16E), the input mask ($A16F), the script frame countdown ($A170) and the keyscan divider ($A171).
 @ $E000 label=show_end_screen
 C $E000,3 Call es_clear
-C $E003,3 source $F7EF
-C $E006,3 in (backbuffer?)
+C $E003,3 Source $F7EF, the reset_music/play_music_48k block
+C $E006,3 Destination of the inner relocation
 C $E009,3 768 bytes
 C $E00C,2 Copy
 N $E00E $A16D = $5CFE [$E0FE here]
@@ -1740,7 +1834,9 @@ C $E03E,3 Call keyscan
 C $E041,4 Loop while key not pressed
 C $E045,4 AND user input with user input mask
 C $E049,2 Jump if masked key remains pressed
-C $E04B,1 Increment mask? Odd - probably not
+C $E04B,1 A is zero here, so this sets it to 1
+C $E04C,3 Mark the first fire press as consumed
+C $E04F,3 Run the script on the next frame
 C $E052,6 Set script data pointer to $5DE3 [$E1E3]
 C $E058,3 Call drive_chatter_stop
 C $E05B,3 Call keyscan
@@ -1787,11 +1883,12 @@ B $E13A,6,6
 W $E140,2,2 bitmap_endshot_4
 @ $E1E3 label=possible_data_block_e1e3
 B $E142,200,13,8*18,4*2,8*4,3
-c $E20A Command interpreter (confirmed live by trace-end-screen.log: reads script bytes via $A16D, dispatches on a DEC A/JP Z chain; self-modifies the CALL operand at $E030 (live addr $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran)
+c $E20A Command interpreter
+D $E20A Confirmed live by trace-end-screen.log: reads script bytes via $A16D and dispatches on a DEC A/JP Z chain. Self-modifies the CALL operand at $E030 (live address $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran.
 @ $E20A label=run_script
 C $E20A,3 Load script pointer
 @ $E20D label=rs_loop
-C $E20D,1 Load a command? byte
+C $E20D,1 Load the next script command
 C $E20E,1 Advance script program counter
 C $E20F,4 If command == 1 goto es_clear_then_draw_frame
 C $E213,4 If command == 2 goto es_draw_frame_common
@@ -1814,18 +1911,28 @@ C $E24B,3 If command == 12 goto ...
 C $E24E,3 If command == 13 goto $E256
 C $E254,2 Loop
 @ $E256 label=es_handler_draw_score
+N $E2B2 Command 12: start chatter using a block pointer taken from the script.
+@ $E2B2 label=es_handler_chatter
 @ $E2CD label=es_set_dispatch
 C $E2CD,3 Update script pointer
 C $E2D4,4 Store func ptr in E031
-c $E2D9 Interpreter handler: draw graphic frame (reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop)
-N $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy
+c $E2D9 Interpreter handler: draw graphic frame
+D $E2D9 Reads a byte then a word pointer from the script -- e.g. one of the bitmap_endshot_N pointers at $E104 onward -- calls draw_endshot to blit it, then rejoins run_script's loop.
+D $E2D9 draw_endshot ($E4A9) is the montage-shot blitter, not a generic tile blit -- 64-row bitmap copy plus attribute copy.
 @ $E2D9 label=es_clear_then_draw_frame
 C $E2DA,3 Call $E49C (buffer zeroing thing)
 @ $E2DE label=es_draw_frame_common
-@ $E328 label=e328
+N $E2F0 Command 11: clear the backbuffer, then render a run of text.
+@ $E2F0 label=es_handler_render_text
+N $E2F5 Command 10: render a run of text without clearing first. Reads a colour byte and a destination word from the script, then plots characters until one is found with its top bit set.
+@ $E2F5 label=es_render_text_common
+N $E31F Render one end-screen character at double height. A space advances both cursors by a column and draws nothing.
+@ $E31F label=es_plot_char
+@ $E328 label=es_plot_char_glyph
 N $E381 This entry point is used by the routine at #R$E3A5.
-b $E3A5 Handshake animation frame-advance: looks up (row_count,source_ptr) from the table below using $A172 mod 6 as frame index, LDIRs the row to screen $48AC with third-boundary row-wrap arithmetic, then increments/wraps $A172 for next call; code resumes at $E3B7 after the table
-N $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte: ; -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly
+b $E3A5 Handshake animation frame-advance table
+D $E3A5 Looked up as (row_count,source_ptr) using $A172 mod 6 as frame index, LDIRed to screen $48AC with third-boundary row-wrap arithmetic; $A172 then increments/wraps for the next call. Code resumes at $E3B7 after the table.
+D $E3A5 18-byte table, 6 entries x 3 bytes (row_count:1, source_ptr:2 LE); auto-disassembled as bogus instructions by earlier passes because it sits inline in the code stream. Decoded and verified byte-for-byte -- a ping-pong sequence (grip closes 1->4, reopens 4->2) confirming the handshake_N row counts exactly.
 @ $E3A5 label=handshake_table
 B $E3A5,1,1
 W $E3A6,2,2 37, handshake_1
@@ -1839,39 +1946,53 @@ B $E3B1,1,1
 W $E3B2,2,2 34, handshake_3
 B $E3B4,1,1
 W $E3B5,2,2 35, handshake_2
-c $E3B7 Routine at E3B7
+c $E3B7 Fade the glyph attribute band, then advance the handshake
+D $E3B7 The entry point the HANDSHAKE script command dispatches to ($5FB7 in the relocated dispatch table). It fades the band one step by calling es_handler_glyph_fade_b at #R$E472 -- $6072 once relocated -- then falls into es_handler_handshake_advance. The RESET HANDSHAKE and HANDSHAKE AGAIN commands enter at $5FBA instead, skipping the fade.
 @ $E3B7 label=es_handler_handshake
-c $E42E Glyph-plot routine (draws a character/digit into the (backbuffer/screen?); called via the interpreter's self-modified $E030 dispatch)
+C $E3B7,3 Call es_handler_glyph_fade_b [#R$E472]
+@ $E3BA label=es_handler_handshake_advance
+c $E42E Sweep the playfield attributes toward their target colours
+D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
+R $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not
+R $E42E masked back into their 3-bit fields, so a field that reaches its target
+R $E42E exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
 C $E433,1 Return when bit set
 C $E434,3 Middle band of attributes
 C $E437,3 Backbuffer
-C $E43A,2 Testing BRIGHT bit?
+C $E43A,4 Leave the cell alone if BRIGHT is set
 @ $E452 label=e452
-c $E46D Routine at E46D
+c $E46D Fade the glyph attribute band out
+D $E46D Two thin wrappers over one tail: #R$E46D gates on $5C6D and #R$E472 on $5C6C. The tail rotates the gate byte and returns unless the bit rotated out was set, so each gate runs the fade on alternate calls. When it does run it sweeps the same 512 attribute cells es_attribute_fade_in covers, taking one off each cell's ink and one unit off its paper, both stopping at zero.
+D $E46D The bytes are masked down to their ink and paper fields and re-combined, so BRIGHT and FLASH are dropped from every cell the fade touches.
 @ $E46D label=es_handler_glyph_fade_c
+C $E46D,3 Gate on $5C6D
+C $E470,2 Jump to es_attribute_fade_out
 @ $E472 label=es_handler_glyph_fade_b
+C $E472,3 Gate on $5C6C
+@ $E475 label=es_attribute_fade_out
+C $E475,2 Rotate the gate byte
 @ $E499 label=es_clear
 C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
-D $E4A9 I:HL Address of image to plot
+D $E4A9 I:HL Address of image to plot DE Destination address in the screen
 @ $E4A9 label=draw_endshot
 C $E4A9,1 Preserve destination in screen
 C $E4AA,2 Counter = 64 rows
 C $E4AC,1 Preserve counter
 C $E4AD,3 13 bytes to transfer
-C $E4B0,1 Perverve destination
+C $E4B0,1 Preserve destination
 C $E4B1,2 Copy
 C $E4B3,1 Restore destination
 C $E4B4,16 Scanline increment
 C $E4C4,1 Restore counter
 C $E4C5,2 Loop while counter
 C $E4C7,1 Restore destination
-C $E4C8,9 Form attribute address?
+C $E4C8,9 Turn the destination's high byte into the matching backbuffer attribute address
 C $E4D1,2 8 rows of attributes
 @ $E4D3 label=e4d3_loop
 C $E4D3,5 Copy 13 attribute bytes
@@ -1879,7 +2000,7 @@ C $E4D8,5 DE += 19  (a gap value - 13+19 = 32)
 C $E4DD,1 A--
 C $E4DE,2 Loop
 C $E4E0,1 Return
-b $E4E1 [Graphics] Images
+b $E4E1 [Graphics] End-game montage shots
 D $E4E1 $60E1 once relocated.
 N $E4E1 End-game montage shot 1 (104x64)
 N $E4E1 #HTML[#CALL(endshot($E4E1))]
@@ -1941,9 +2062,9 @@ c $F7EF Reset music
 D $F7EF Almost the same as #R$EE5E@main
 @ $F7EF label=bank7_reset_music
 C $F7EF,1 A = 0
-C $F7F0,3 Self modify '...'  -- clear <drum is playing> flag
-C $F7F3,3 Self modify '...'  -- in ?
-C $F7F6,3 Self modify '...'  -- in ?
+C $F7F0,3 Self modify #R$F8A4 -- clear the <drum is playing> flag
+C $F7F3,3 Self modify #R$F897 -- clear the extra delay counter
+C $F7F6,3 Self modify #R$F839 -- clear the <playback started> flag
 C $F7F9,3 Load address of music patterns
 C $F7FC,3 Jump to (np_start_at_hl)
 c $F7FF Setup the next music pattern
@@ -1967,9 +2088,9 @@ C $F817,2 #REGbc = #REGc
 C $F819,3 Load address of base of music data
 C $F81C,1 Combine with offset
 C $F81D,2 A = *HL++ -- load first byte of music data
-C $F81F,3 Self modify R$???? (first byte of pattern)
-C $F822,3 Self modify R$???? (first byte of pattern)
-C $F825,3 Self modify R$???? (addr of second music data byte in pattern)
+C $F81F,3 Self modify #R$F850 (delay reload, first byte of pattern)
+C $F822,3 Self modify #R$F844 (delay counter, first byte of pattern)
+C $F825,3 Self modify #R$F860 (addr of second music data byte in pattern)
 C $F828,1 Return
 @ $F829 label=b7np_restart
 C $F829,4 HL = wordat(HL); HL++
@@ -1977,23 +2098,24 @@ C $F82D,2 Jump to b7np_start_at_hl
 c $F82F Play menu music (48K mode only)
 D $F82F Almost the same as #R$EE9E@main.
 @ $F82F label=b7_play_music_48k
-C $F82F,4 Clear <interrupt flag> at R$????
-C $F833,3 counter?
+C $F82F,4 Clear the <interrupt flag> at #R$F8AA
+C $F833,3 Load the end screen's input mask
 C $F836,1 Set flags
-C $F837,2 Jump to ???? is non-zero
-C $F839,2 Counter, self-modified by #R$F83F below
+C $F837,2 Play nothing more once the player has pressed fire
+C $F839,2 <Playback started> flag, self modified by #R$F83F below
 C $F83B,1 Set flags
-C $F83E,4 Otherwise increment and self modify R$????
-C $F842,2 Jump to R$????
+C $F83C,2 Jump to b7pm_delay_1 if playback is already running
+C $F83E,4 Otherwise mark playback started by self modifying #R$F839 above
+C $F842,2 Jump to b7pm_reset_pattern
 @ $F844 label=b7pm_delay_1
-C $F844,2 Self modified by R$????, cycles 5,4?,3,2,1  (set to first music data byte)
+C $F844,2 Note delay counter. Self modified by #R$F822 above and by #R$F84A, #R$F852, #R$F877 and #R$F89F below
 C $F846,1 Decrement and set flags
 C $F847,3 Jump to b7pm_delay_complete if zero
-C $F84A,3 Self modify 'LD A' @ R$???? above  (store decremented)
+C $F84A,3 Self modify #R$F844 above (store the decremented value)
 C $F84D,3 Jump to b7pm_zero_or_456
 @ $F850 label=b7pm_delay_complete
-C $F850,2 Self modified by R$????  (set to first music data byte - value for when resetting)
-C $F852,3 Self modify 'LD A' @ R$???? above  (reset it)
+C $F850,2 Delay reload value. Self modified by #R$F81F above with the first byte of the pattern
+C $F852,3 Self modify #R$F844 above (reload the delay counter)
 C $F855,3 Self modified below, cycles $F12x .. $F2xx ish  <addr of next music byte>
 N $F858 Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is argument, iii is instrument index)
 @ $F858 label=b7pm_loop
@@ -2002,8 +2124,8 @@ C $F859,1 Temporarily decrement for testing (will undo later)
 C $F85A,3 Jump to pm_continue_pattern if the byte is NOT 1 - the terminating byte of the music data
 C $F85D,3 Call bank7_next_pattern ($F310 when reloc, $F7FF here)
 @ $F860 label=b7pm_reset_pattern
-C $F860,3 Self modified by R$????  (set to address of second music data byte)
-C $F863,3 *$???? = HL  (Resetting <addr of next music byte> above when we loop)
+C $F860,3 Self modified by #R$F825 above with the address of the second music data byte
+C $F863,3 Self modify #R$F855 above, restarting the pattern
 C $F866,3 Loop
 @ $F869 label=b7pm_continue_pattern
 C $F869,1 Advance
@@ -2013,8 +2135,8 @@ C $F86E,4 Jump if music byte < 128
 N $F872 A byte of the form 0b1aaaaiii (1 is delay bit)
 C $F872,2 Isolate delay bit
 C $F874,1 Bank
-C $F875,5 Self modify 'LD A' @ R$????  (setting <delay data byte thing> to 1)
-C $F87A,3 Self modify 'LD A' @ R$???? below
+C $F875,5 Self modify #R$F844 above, setting the note delay counter to 1
+C $F87A,3 Self modify #R$F897 below, flagging the extra delay
 C $F87D,1 Unbank
 N $F87E A byte now of the form 0b0aaaaiii
 @ $F87E label=b7pm_play_inst
@@ -2023,32 +2145,32 @@ C $F87F,2 Extract bottom 3 instrument bits  -- must be the command
 C $F881,2 Jump to pm_zero_or_456 if they're zero
 C $F883,1 Save the instrument
 C $F884,7 Extract the four argument bits
-C $F88B,4 Jump to R$???? if instrument is 1  -- drum 2
-C $F88F,4 Jump to R$???? if instrument is 2  -- drum 1
-C $F893,4 Jump to R$???? if instrument is 3  -- noise
+C $F88B,4 Jump to b7_playdrum_X (#R$F8B9) if instrument is 1 -- drum 2
+C $F88F,4 Jump to b7_playdrum_Y (#R$F8C0) if instrument is 2 -- drum 1
+C $F893,4 Jump to b7_play_noise (#R$F9F3) if instrument is 3 -- noise
 @ $F897 label=b7pm_zero_or_456
-C $F897,2 Self modified by R$???? above, R$???? below  (set to <delay data byte thing>)
+C $F897,2 Extra delay counter. Self modified by #R$F7F3 and #R$F87A above and by #R$F8A3 below
 C $F899,1 Set flags
-C $F89A,2 Jump to pm_start_drums if zero (no delay)
-C $F89C,4 Self modify 'LD A' @ R$????  (decrementing initial delay counter)
-C $F8A0,4 Self modify 'LD A' @ R$???? above
+C $F89A,2 Jump to b7pm_start_drums if zero (no delay)
+C $F89C,4 Self modify #R$F844 above, decrementing the note delay counter
+C $F8A0,4 Self modify #R$F897 above, decrementing the extra delay counter
 @ $F8A4 label=b7pm_start_drums
-C $F8A4,2 Load <drum is playing flag>  -- Self modified by R$????
+C $F8A4,2 <Drum is playing> flag. Self modified by #R$F7F0 above and by #R$F8CA and #R$F8EF below
 C $F8A6,1 Decrement
-C $F8A7,3 Jump to b7pd_bank_go if zero  -- resuming?
+C $F8A7,3 Jump to b7pd_bank_go if a sample was interrupted part way through, resuming it
 @ $F8AA label=b7pm_wait_for_interrupt
 C $F8AA,5 Loop while waiting for this <interrupt flag> to be set
 C $F8AF,1 Return
 c $F8B0 Interrupt entry point
-D $F8B0 R$???? builds a table at $FD00 containing 257 occurrences of $FE. Address $FEFE contains a JP $???? to here.
+D $F8B0 bank7_setup_interrupts (#R$F7D1) builds a table at $FD00 containing 257 occurrences of $FE, then plants a JP $F3C1 at $FEFE -- $F3C1 being this routine's address once the bank has been relocated.
 @ $F8B0 label=b7_interrupt_entry
 C $F8B0,1 Preserve registers
-C $F8B1,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ R$????
+C $F8B1,5 Set the <interrupt flag> to $FF by self modifying #R$F8AA
 C $F8B6,1 Restore registers
 C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
-D $F8B9 Used by the routine at R$????.
+D $F8B9 Used by #R$F82F.
 R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
@@ -2058,13 +2180,13 @@ C $F8BE,2 Jump to es_playdrum_go
 C $F8C0,3 Load address of drum Y data
 C $F8C3,2 160 sample bytes
 @ $F8C5 label=es_playdrum_go
-C $F8C5,3 Self modify 'LD B' @ R$???? <speed value> to be #REGa as passed in
-C $F8C8,5 Self modify 'LD A' @ R$???? <drum is playing flag> to be 1
+C $F8C5,3 Self modify #R$F8D0 below, setting the <speed value> to #REGa as passed in
+C $F8C8,5 Self modify #R$F8A4 above, setting the <drum is playing> flag to 1
 C $F8CD,2 Jump to b7pd_go
 @ $F8CF label=b7pd_bank_go
 C $F8CF,1 Bank
 @ $F8D0 label=b7pd_go
-C $F8D0,2 <speed value> iterations -- Self modified by R$????
+C $F8D0,2 <speed value> iterations. Self modified by #R$F8C5 above
 @ $F8D2 label=b7pd_loop
 C $F8D2,2 Set speaker flag
 C $F8D4,1 Delay
@@ -2077,19 +2199,73 @@ C $F8DF,2 Loop to pd_loop while #REGb
 C $F8E1,1 Move to next sample byte
 C $F8E2,1 Decrement sample bytes remaining
 C $F8E3,2 Jump to pd_end_of_sample if no bytes remain
-C $F8E5,3 Read A from 'LD A' @ R$????  -- <interrupt flag>
+C $F8E5,3 Read A from the <interrupt flag> at #R$F8AA
 C $F8E8,1 Set flags
 C $F8E9,3 Loop to pd_go if clear
 C $F8EC,1 Otherwise unbank
 C $F8ED,1 Return
 @ $F8EE label=b7pd_end_of_sample
-C $F8EE,4 Self modify 'LD A' @ R$???? <drum is playing flag> to be 0 -- zeroed when playing stops
+C $F8EE,4 Self modify #R$F8A4 above, clearing the <drum is playing> flag now that the sample has finished
 C $F8F2,3 Jump to pm_wait_for_interrupt
-b $F8F5 Data block at F8F5
+b $F8F5 Drum 2 sample
+D $F8F5 94 bytes of 1-bit PCM, played by b7_playdrum_X (#R$F8B9). The player rotates each byte in place with RLC (HL), so a sample interrupted part way through is left rotated until eight further rotations bring it back round.
 @ $F8F5 label=b7_drum2
-B $F8F5,94,8*11,6 Drum ? sample/data
-B $F953,162,2,8 }?
-B $F9F5,248,8
-B $FAED,3,3 }
+B $F8F5,94,8*11,6 Drum 2 sample
+b $F953 Drum 1 sample
+D $F953 160 bytes of 1-bit PCM, played by b7_playdrum_Y (#R$F8C0) and rotated in place the same way as #R$F8F5.
+@ $F953 label=b7_drum1
+B $F953,160,2,8*19,6 Drum 1 sample
+c $F9F3 White noise generator
+D $F9F3 Bank 7's own copy of #R$F0C6@main, byte for byte identical to it apart from the two references to the <interrupt flag>, which point at this bank's copy at #R$F8AA rather than the main bank's. Reached as instrument 3 from #R$F893.
+D $F9F3 The disassembler took these 56 bytes for data; they are code.
+R $F9F3 I:A Duration (3 or 9 in practice)
+@ $F9F3 label=b7_play_noise
+C $F9F3,1 Set #REGe to duration counter
+@ $F9F4 label=b7n_outer_loop
+C $F9F4,2 Set #REGd to inner counter 50
+@ $F9F6 label=b7n_loop
+C $F9F6,3 Point at rng_seed
+C $F9F9,3 Increment first byte of rng_seed by 3
+C $F9FC,1 Load it into #REGb
+C $F9FD,1 Advance to second byte of rng_seed
+N $F9FE Note that this is a different order of operations than in rng/#R$961B@main.
+C $F9FE,4 Subtract 141 from second byte of rng_seed
+C $FA02,1 Add first and second rng_seed bytes together
+C $FA03,1 Advance to third byte of seed
+C $FA04,1 Rotate #REGa left by 1
+C $FA05,2 Rotate third byte of seed right by 1
+C $FA07,1 Add it to #REGa
+C $FA08,1 Write it back
+C $FA09,2 Take a tap off at bit 4
+C $FA0B,2 Jump to b7n_continue if zero
+@ $FA0D label=b7n_make_noise
+C $FA0D,4 Delay for (24 - #REGe) iterations
+@ $FA11 label=b7n_delay_loop_1
+C $FA11,2 Delay
+C $FA13,4 Set EAR + MIC bits
+C $FA17,1 Delay for #REGe iterations
+@ $FA18 label=b7n_delay_loop_2
+C $FA18,2 Delay
+C $FA1A,3 Clear EAR + MIC bits
+@ $FA1D label=b7n_continue
+C $FA1D,1 Decrement inner counter
+C $FA1E,2 Jump to b7n_loop if non-zero
+N $FA20 The same dead interrupt check the main bank's copy carries: AND A clears carry, so the RET C below is never taken.
+C $FA20,3 Read A from the <interrupt flag> at #R$F8AA
+C $FA23,1 Set flags
+C $FA24,1 Bug: Carry is cleared by AND A so this makes no sense
+C $FA25,1 Decrement duration counter
+C $FA26,2 Jump to b7n_outer_loop if non-zero
+C $FA28,3 Exit via b7pm_wait_for_interrupt (#R$F8AA)
+b $FA2B End screen music patterns
+D $FA2B Ten (repetition count, data offset) pairs terminated by $FF, then a restart pointer. #R$F7EF points the engine at this table and #R$F7FF walks it; each offset indexes #R$FA42. The restart pointer holds $F54E, which is #R$FA3D once the bank has been relocated -- the last pair -- so the tune plays through once and then repeats its final pattern.
+@ $FA2B label=b7_music_patterns
+B $FA2B,20,2,8*2,2 Repetition count, data offset
+B $FA3F,1,1 End of patterns
+W $FA40,2,2 Restart at #R$FA3D
+b $FA42 End screen music data
+D $FA42 The byte streams the patterns index into, in the same 0bdaaaaiii form the in-game engine uses: bit 7 is an extra delay flag, bits 6-3 are the instrument argument and bits 2-0 the instrument (0 = silence, 1 = drum 2, 2 = drum 1, 3 = noise). A byte of 1 ends a pattern. The first byte of each stream is the note delay, not a note.
+@ $FA42 label=b7_music_data
+B $FA42,174,3,8*21,3
 b $FAF0 Bank 7 tail (unidentified)
 B $FAF0,1296,8

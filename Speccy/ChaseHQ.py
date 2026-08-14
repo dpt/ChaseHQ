@@ -282,6 +282,24 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     def init(self):
         self.font = {}
         self.decoders = ChaseHQDecoders()
+        self._bank_snapshots = {}
+
+    def _get_bank_snapshot(self, page: int):
+        """
+        Return the reconstructed snapshot for the given 128K RAM bank page,
+        parsing that bank's own skool file (via the OtherCode source
+        declared in the ref file) the first time it is requested.
+
+        Each bank is paged into the same $C000-$FFFF window as every other
+        bank, so decoding a bank-2..5 graphic from self.snapshot (the main
+        disassembly's snapshot) would read whatever the main context has at
+        that address, not the bank's actual bytes.
+        """
+        if page not in self._bank_snapshots:
+            code_id = f"bank{page}"
+            source = dict(self.other_code)[code_id]["Source"]
+            self._bank_snapshots[page] = self.parser.clone(source).snapshot
+        return self._bank_snapshots[page]
 
     def decode_pregame_screen(self, cwd, base):
         self.decoders.decode_pregame_screen(self.snapshot, base)
@@ -657,6 +675,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         stride=None,
         interleaved=False,
         invert=False,
+        snapshot=None,
     ):
         """
         Decode snapshot memory to UDGs.
@@ -669,9 +688,13 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         :param int stride: Stride of graphic in bytes (calculated if not given)
         :param bool interleaved: Whether graphic is stored interleaved
         :param bool invert: Whether graphic is stored inverted
+        :param snapshot: Snapshot to decode from (defaults to self.snapshot)
         :return: (List of UDGs, Next bitmap base, Next attribute base)
         :rtype: tuple
         """
+
+        if snapshot is None:
+            snapshot = self.snapshot
 
         # The first byte is mask; data comes second.
         if interleaved:
@@ -692,17 +715,17 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             udg_array.append([])
             for x in range(width_bytes):
                 addr = bitmapbase + (y * stride * 8) + (x * mask_bytes)
-                udg_data = self.snapshot[
+                udg_data = snapshot[
                     addr + data_offset : addr + data_offset + stride * 8 : stride
                 ]
                 if interleaved:
-                    udg_mask = self.snapshot[
+                    udg_mask = snapshot[
                         addr + mask_offset : addr + mask_offset + stride * 8 : stride
                     ]
                 else:
                     udg_mask = None
                 if attrbase:
-                    attr = self.snapshot[attrbase + y * stride + x]
+                    attr = snapshot[attrbase + y * stride + x]
                 udg = Udg(attr=attr, data=udg_data, mask=udg_mask)
                 if invert:
                     udg.flip(flip=2)
@@ -716,7 +739,16 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         )
 
     def _build_frame(
-        self, cwd, bitmapbase, attrbase, width, height, interleaved, invert, nframes
+        self,
+        cwd,
+        bitmapbase,
+        attrbase,
+        width,
+        height,
+        interleaved,
+        invert,
+        nframes,
+        page=None,
     ):
         """
         Decode snapshot memory to a static or animated graphic.
@@ -729,6 +761,10 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         :param bool interleaved: Whether graphic is stored interleaved
         :param bool invert: Whether graphic is stored inverted
         :param int nframes: Number of frames in the animation
+        :param int page: 128K RAM bank page to decode from, if not the
+            current disassembly context's own snapshot. Every bank pages
+            into the same $C000-$FFFF window, so bitmapbase alone does not
+            identify the source bytes, or the output filename, uniquely.
         :return: (Decoded image)
         :rtype: (skoolkit image)
         """
@@ -739,11 +775,20 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             mask_type = 0
         frames = []
 
+        snapshot = self._get_bank_snapshot(page) if page else None
         tbitmapbase = bitmapbase
         tattrbase = attrbase
         for f in range(nframes):
             (udg_array, tbitmapbase, tattrbase) = self._decode_snapshot_to_udgs(
-                cwd, tbitmapbase, tattrbase, width, height, None, interleaved, invert
+                cwd,
+                tbitmapbase,
+                tattrbase,
+                width,
+                height,
+                None,
+                interleaved,
+                invert,
+                snapshot,
             )
             y = len(udg_array) * 8 - height if invert else 0
             frame = Frame(
@@ -755,10 +800,21 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
                 height=height * scale,
             )
             frames.append(frame)
-        if nframes == 1:
-            fname = f"{{ScreenshotImagePath}}/graphic-{bitmapbase:4x}"
+        # Every bank's own asm pages decode from their own (correctly paged)
+        # snapshot via self.code_id already, but without a tag here their
+        # images would still collide on disk with any other bank that has
+        # a bitmap at the same address, since every bank pages into the
+        # same $C000-$FFFF window.
+        if page:
+            bank_tag = f"bank{page}-"
+        elif self.code_id != "main":
+            bank_tag = f"{self.code_id}-"
         else:
-            fname = f"{{ScreenshotImagePath}}/anim-{bitmapbase:4x}"
+            bank_tag = ""
+        if nframes == 1:
+            fname = f"{{ScreenshotImagePath}}/graphic-{bank_tag}{bitmapbase:4x}"
+        else:
+            fname = f"{{ScreenshotImagePath}}/anim-{bank_tag}{bitmapbase:4x}"
         return self.handle_image(frames, fname, cwd)
 
     def anim(self, cwd, bitmapbase, width, height, interleaved, invert, nframes):
@@ -767,13 +823,13 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             cwd, bitmapbase, None, width, height, interleaved, invert, nframes
         )
 
-    def graphic(self, cwd, bitmapbase, width, height, interleaved, invert):
+    def graphic(self, cwd, bitmapbase, width, height, interleaved, invert, page=None):
         """Decode a static graphic at the specified snapshot address."""
         return self._build_frame(
-            cwd, bitmapbase, None, width, height, interleaved, invert, nframes=1
+            cwd, bitmapbase, None, width, height, interleaved, invert, 1, page
         )
 
-    def face(self, cwd, bitmapbase: int):
+    def face(self, cwd, bitmapbase: int, page=None):
         """Decode a mugshot at the specified snapshot address."""
         return self._build_frame(
             cwd,
@@ -784,9 +840,10 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             interleaved=0,
             invert=0,
             nframes=1,
+            page=page,
         )
 
-    def endshot(self, cwd, bitmapbase: int):
+    def endshot(self, cwd, bitmapbase: int, page=None):
         """Decode an end-game shot at the specified snapshot address."""
         return self._build_frame(
             cwd,
@@ -797,6 +854,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             interleaved=0,
             invert=0,
             nframes=1,
+            page=page,
         )
 
     def _herocarpart(
