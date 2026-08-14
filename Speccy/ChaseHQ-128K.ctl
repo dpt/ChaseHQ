@@ -4105,12 +4105,12 @@ C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
 C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stretchy_shortpole + 0
 C $91AC,1 Return if count byte was 1 (terminator)
 C $91AD,1 Advance past count byte
-C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_bottom
+C $91AE,4 Read address of the depth set to #REGde, e.g. shortpole_bottom
 C $91B2,4 Preserve HL, IX, BC
 C $91B6,1 Swap
 C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_bitmaps
-N $91BA This seems to be a 0..9 value that selects from the table.
-C $91BA,4 HL += <self modified>  -- by #R$91A0, this is the table offset from earlier
+N $91BA The self modified value is the byte offset of one (depth, offset) pair within the depth set's table of ten, computed at #R$919A as min(depth, 10) * 2 - 1.
+C $91BA,4 HL += <self modified>  -- by $91A0, this is the table offset from earlier
 N $91BE HL now points to an entry in the table. Load it. sampled DE = $717E (-> tree_lods), HL = $713E (first of a byte pair)
 C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
@@ -4124,7 +4124,7 @@ C $91C9,2 HL -= 2
 C $91CB,1 Preserve BC
 C $91CC,1 B = A
 C $91CD,3 Call <self modified>  -- callback
-@ $91D0 label=dso_loop_perhaps
+@ $91D0 label=dso_next_object
 C $91D0,1 Restore BC
 C $91D1,3 C += B
 C $91D4,3 Restore IX, HL
@@ -4183,7 +4183,7 @@ C $923E,3 Self modify 'LD A,x' @ #R$93C0 to load 2
 C $9242,1 B = A
 C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $924A,3 Loop to dso_loop_perhaps
+C $924A,3 Loop to dso_next_object
 c $924D Draws tunnel lights (and possibly other bitmaps)
 D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 as the drawing callback and dispatches to the common tunnel light code with PUSH HL / RET.
 R $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx address; the routine is skipped if it's >= 16
@@ -5344,7 +5344,7 @@ T $9D5B,6,6 "STAGE n" message shown in the score area
 B $9D61,1,1 #R$9D61 writes the current stage number here in ASCII.
 N $9D62 This entry point is used by the routines at #R$8401, #R$873C and #R$87DC.
 @ $9D62 label=update_scoreboard
-C $9D62,3 Check if stage has changed  -- perhaps reset to zero by stage loads?
+C $9D62,3 Check if stage has changed. #R$87DC zeroes this when it initialises a stage, forcing a redraw
 C $9D65,3 Avoid work if previously updated
 C $9D68,3 Load <wanted_stage_number>
 C $9D6B,2 Add 48 to make it a digit then $80 to terminate the string
@@ -5815,7 +5815,7 @@ B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
 @ $A13B label=start_speech_cycle
-B $A13B,1,1 Used by #R$8424  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
+B $A13B,1,1 Used by #R$8424. Starts at 4 and cycles 3, 2, 1 with each restart of the game, varying the speech sample played at stage start
 @ $A13C label=overtake_bonus_bcd
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
@@ -5869,7 +5869,7 @@ B $A173,1,1 A counter decremented while slowing down the caught perp. This is se
 @ $A174 label=displayed_gear
 B $A174,1,1 Low/high gear flag.
 @ $A175 label=score_digits
-B $A175,8,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
+B $A175,8,8 Score digits. One digit per byte, least significant first. A cache of what is on screen, so that unchanged digits are not replotted.
 @ $A17D label=time_sixteenths
 B $A17D,1,1 Frames left in the current second of the countdown. Counts from $F to $0, and #R$A17E is decremented when it hits zero.
 @ $A17E label=time_bcd
