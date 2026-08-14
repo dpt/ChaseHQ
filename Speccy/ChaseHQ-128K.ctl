@@ -7457,8 +7457,8 @@ C $AD93,1 E--
 C $AD94,4 Jump if A < 120
 C $AD98,2 E += 2
 @ $AD9A label=ccl_exit
-C $AD9A,3 IX[7] (hit counter) = E
-C $AD9D,2 D = 1  -- perhaps a "was hit" flag
+C $AD9A,3 IX[7] (hit_timer) = E -- 1 for a glancing blow, 2 normal, 4 for a dead centre strike
+C $AD9D,2 D = 1  -- the collision return value. #REGd doubles as the no-hit value the caller preloads and as the hit flag set here
 C $AD9F,1 Return
 c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
@@ -8480,7 +8480,7 @@ C $B55B,3 Load value <self modified by #R$B503>  -- an entry in #R$CE33
 C $B55E,1 Preserve #REGbc (iterations)
 C $B55F,4 Load address of debris sub-table into #REGde (e.g. #R$CE4B)
 C $B563,1 Preserve #REGhl (table addr)
-N $B564 First subtable byte seems to be a 0..3 counter
+N $B564 The first sub-table byte is this piece's own 0..3 frame counter; the 9 y/x pairs that follow are its positions, indexed by the debris frame offset.
 C $B564,5 Cycle this byte 0-1-2-3
 C $B569,6 Multiply it by 12 (stride of bitmap_debris_1/2/3/4)
 C $B56F,1 Advance to next byte in table
@@ -9339,7 +9339,7 @@ C $BB93,1 Bank
 C $BB94,3 Self modified by #R$BE5C to be the left route's curvature data
 C $BB97,3 Self modified by #R$BEAE to be the left route's height data
 C $BB9A,3 Self modified by #R$BEF9 to be the left route's lanes data
-C $BB9D,2 A = 64  -- additional offset into road buffer (presumably left objects)
+C $BB9D,2 A = 64  -- added to the lanes offset below, so the stream cleared at #R$BC0C is the left objects one (64 + 64 = 128)
 C $BB9F,2 Jump to ef_set_handlers
 N $BBA1 Set up right route.
 @ $BBA1 label=ef_right
@@ -9359,7 +9359,7 @@ C $BBC0,1 Bank
 C $BBC1,3 Self modified by #R$BE62 to be the right route's curvature data
 C $BBC4,3 Self modified by #R$BEB6 to be the right route's height data
 C $BBC7,3 Self modified by #R$BF01 to be the right route's lanes data
-C $BBCA,2 A = 32  -- additional offset into road buffer (presumably right objects)
+C $BBCA,2 A = 32  -- added to the lanes offset below, so the stream cleared at #R$BC0C is the right objects one (64 + 32 = 96)
 @ $BBCC label=ef_set_handlers
 C $BBCC,3 Self modify rm_curvature_one_command handler
 C $BBCF,4 Self modify rm_height_one_command handler
@@ -9393,9 +9393,9 @@ C $BC06,2 32 iterations
 C $BC08,1 Store
 C $BC09,1 Advance
 C $BC0A,2 Loop
-N $BC0C Zero the 32 bytes at #REGhl + 64 + #REGc (the additional offset that was setup earlier). This seems to be objects.
+N $BC0C Zero the 32 bytes at #REGhl + 64 + #REGc (the additional offset that was setup earlier). The road buffer holds six 32-byte streams in the order curvature, height, lanes, right objects, left objects, hazards, so this clears the objects stream on the inside of the fork being entered.
 C $BC0C,1 get offset
-C $BC0D,1 Point #REGhl at (?) bytes
+C $BC0D,1 Point #REGhl at the objects bytes
 C $BC0E,1 E = 0, since B is zero
 C $BC0F,2 32 iterations
 @ $BC11 label=ef_set_objects_loop
@@ -11658,7 +11658,7 @@ N $CE3F 1,2,5
 W $CE3F,6,2
 N $CE45 3,4,1
 W $CE45,6,2
-N $CE4B First byte seems to be a counter 0..3
+N $CE4B Each sub-table opens with a 0..3 counter selecting one of the four bitmap_debris frames, followed by nine y/x position pairs.
 @ $CE4B label=debris_subtable_1
 B $CE4B,1,1 Counter
 B $CE4C,18,18
