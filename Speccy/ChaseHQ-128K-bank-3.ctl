@@ -1004,92 +1004,92 @@ N $DFAA #HTML[#CALL(graphic($DFAA,16,8,0,0))]
 B $DFAA,16,2 Bitmap: "." 16x8
 N $DFBA #HTML[#CALL(graphic($DFBA,24,26,0,0))]
 B $DFBA,78,3 Bitmap: "A" 24x26
-B $E008,80,8 Bitmap
-B $E058,72,8 Bitmap
-B $E0A0,60,8*7,4 Bitmap
-B $E0DC,60,8*7,4 Bitmap
-B $E118,80,8 Bitmap
-B $E168,80,8 Bitmap
-B $E1B8,28,8*3,4 Bitmap
-B $E1D4,28,8*3,4 Bitmap
-B $E1F0,28,8*3,4 Bitmap
-B $E20C,42,8*5,2 Bitmap
-B $E236,8,8 Bitmap
-B $E23E,16,8 Bitmap
-B $E24E,16,8 Bitmap
-B $E25E,16,8 Bitmap
-B $E26E,60,8*7,4 Bitmap
-B $E2AA,60,8*7,4 Bitmap
-B $E2E6,80,8 Bitmap
-B $E336,80,8 Bitmap
-B $E386,28,8*3,4 Bitmap
-B $E3A2,28,8*3,4 Bitmap
-B $E3BE,42,8*5,2 Bitmap
-B $E3E8,42,8*5,2 Bitmap
-B $E412,8,8 Bitmap
-B $E41A,16,8 Bitmap
-B $E42A,16,8 Bitmap
-B $E43A,16,8 Bitmap
-B $E44A,40,8 Bitmap
-B $E472,60,8*7,4 Bitmap
-B $E4AE,60,8*7,4 Bitmap
-B $E4EA,60,8*7,4 Bitmap
-B $E526,28,8*3,4 Bitmap
-B $E542,28,8*3,4 Bitmap
-B $E55E,28,8*3,4 Bitmap
-B $E57A,28,8*3,4 Bitmap
-B $E596,8,8 Bitmap
-B $E59E,8,8 Bitmap
-B $E5A6,16,8 Bitmap
-B $E5B6,16,8 Bitmap
-B $E5C6,60,8*7,4 Bitmap
-B $E602,60,8*7,4 Bitmap
-B $E63E,80,8 Bitmap
-B $E68E,80,8 Bitmap
-B $E6DE,28,8*3,4 Bitmap
-B $E6FA,28,8*3,4 Bitmap
-B $E716,28,8*3,4 Bitmap
-B $E732,42,8*5,2 Bitmap
-B $E75C,8,8 Bitmap
-B $E764,16,8 Bitmap
-B $E774,16,8 Bitmap
-B $E784,16,8 Bitmap
-B $E794,60,8*7,4 Bitmap
-B $E7D0,60,8*7,4 Bitmap
-B $E80C,60,8*7,4 Bitmap
-B $E848,60,8*7,4 Bitmap
-B $E884,28,8*3,4 Bitmap
-B $E8A0,28,8*3,4 Bitmap
-B $E8BC,28,8*3,4 Bitmap
-B $E8D8,42,8*5,2 Bitmap
-B $E902,8,8 Bitmap
-B $E90A,8,8 Bitmap
-B $E912,16,8 Bitmap
-B $E922,16,8 Bitmap
-B $E932,72,8 Bitmap
-B $E97A,72,8 Bitmap
-B $E9C2,72,8 Bitmap
-B $EA0A,96,8 Bitmap
-B $EA6A,32,8 Bitmap
-B $EA8A,32,8 Bitmap
-B $EAAA,48,8 Bitmap
-B $EADA,48,8 Bitmap
-B $EB0A,10,8,2 Bitmap
-B $EB14,20,8*2,4 Bitmap
-B $EB28,20,8*2,4 Bitmap
-B $EB3C,20,8*2,4 Bitmap
-B $EB50,6,6 Bitmap
-B $EB56,12,8,4 Bitmap
-B $EB62,12,8,4 Bitmap
-B $EB6E,12,8,4 Bitmap
-B $EB7A,4,4 Bitmap
-B $EB7E,4,4 Bitmap
-B $EB82,8,8 Bitmap
-B $EB8A,8,8 Bitmap
-B $EB92,2,2 Bitmap
-B $EB94,2,2 Bitmap
-B $EB96,4,4 Bitmap
-B $EB9A,4,4 Bitmap
+B $E008,80,8 Bitmap: title-logo glyph 32x20
+B $E058,72,8 Bitmap: title-logo glyph 32x18
+B $E0A0,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E0DC,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E118,80,8 Bitmap: title-logo glyph 32x20
+B $E168,80,8 Bitmap: title-logo glyph 32x20
+B $E1B8,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E1D4,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E1F0,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E20C,42,8*5,2 Bitmap: title-logo glyph 24x14
+B $E236,8,8 Bitmap: title-logo glyph 8x8
+B $E23E,16,8 Bitmap: title-logo glyph 16x8
+B $E24E,16,8 Bitmap: title-logo glyph 16x8
+B $E25E,16,8 Bitmap: title-logo glyph 16x8
+B $E26E,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E2AA,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E2E6,80,8 Bitmap: title-logo glyph 32x20
+B $E336,80,8 Bitmap: title-logo glyph 32x20
+B $E386,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E3A2,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E3BE,42,8*5,2 Bitmap: title-logo glyph 24x14
+B $E3E8,42,8*5,2 Bitmap: title-logo glyph 24x14
+B $E412,8,8 Bitmap: title-logo glyph 8x8
+B $E41A,16,8 Bitmap: title-logo glyph 16x8
+B $E42A,16,8 Bitmap: title-logo glyph 16x8
+B $E43A,16,8 Bitmap: title-logo glyph 16x8
+B $E44A,40,8 Bitmap: title-logo glyph 16x20
+B $E472,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E4AE,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E4EA,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E526,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E542,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E55E,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E57A,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E596,8,8 Bitmap: title-logo glyph 8x8
+B $E59E,8,8 Bitmap: title-logo glyph 8x8
+B $E5A6,16,8 Bitmap: title-logo glyph 16x8
+B $E5B6,16,8 Bitmap: title-logo glyph 16x8
+B $E5C6,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E602,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E63E,80,8 Bitmap: title-logo glyph 32x20
+B $E68E,80,8 Bitmap: title-logo glyph 32x20
+B $E6DE,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E6FA,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E716,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E732,42,8*5,2 Bitmap: title-logo glyph 24x14
+B $E75C,8,8 Bitmap: title-logo glyph 8x8
+B $E764,16,8 Bitmap: title-logo glyph 16x8
+B $E774,16,8 Bitmap: title-logo glyph 16x8
+B $E784,16,8 Bitmap: title-logo glyph 16x8
+B $E794,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E7D0,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E80C,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E848,60,8*7,4 Bitmap: title-logo glyph 24x20
+B $E884,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E8A0,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E8BC,28,8*3,4 Bitmap: title-logo glyph 16x14
+B $E8D8,42,8*5,2 Bitmap: title-logo glyph 24x14
+B $E902,8,8 Bitmap: title-logo glyph 8x8
+B $E90A,8,8 Bitmap: title-logo glyph 8x8
+B $E912,16,8 Bitmap: title-logo glyph 16x8
+B $E922,16,8 Bitmap: title-logo glyph 16x8
+B $E932,72,8 Bitmap: title-logo glyph 24x24
+B $E97A,72,8 Bitmap: title-logo glyph 24x24
+B $E9C2,72,8 Bitmap: title-logo glyph 24x24
+B $EA0A,96,8 Bitmap: title-logo glyph 32x24
+B $EA6A,32,8 Bitmap: title-logo glyph 16x16
+B $EA8A,32,8 Bitmap: title-logo glyph 16x16
+B $EAAA,48,8 Bitmap: title-logo glyph 24x16
+B $EADA,48,8 Bitmap: title-logo glyph 24x16
+B $EB0A,10,8,2 Bitmap: title-logo glyph 8x10
+B $EB14,20,8*2,4 Bitmap: title-logo glyph 16x10
+B $EB28,20,8*2,4 Bitmap: title-logo glyph 16x10
+B $EB3C,20,8*2,4 Bitmap: title-logo glyph 16x10
+B $EB50,6,6 Bitmap: title-logo glyph 56x6
+B $EB56,12,8,4 Bitmap: title-logo glyph 48x6
+B $EB62,12,8,4 Bitmap: title-logo glyph 48x6
+B $EB6E,12,8,4 Bitmap: title-logo glyph 48x6
+B $EB7A,4,4 Bitmap: title-logo glyph 56x4
+B $EB7E,4,4 Bitmap: title-logo glyph 56x4
+B $EB82,8,8 Bitmap: title-logo glyph 48x4
+B $EB8A,8,8 Bitmap: title-logo glyph 48x4
+B $EB92,2,2 Bitmap: title-logo glyph 56x2
+B $EB94,2,2 Bitmap: title-logo glyph 56x2
+B $EB96,4,4 Bitmap: title-logo glyph 48x2
+B $EB9A,4,4 Bitmap: title-logo glyph 48x2
 c $EB9E Start playing a tune (AY-3-8912 music driver)
 D $EB9E A = tune number. Looks up the tune's 7-byte entry (index = A*7, via the ADD A,A / ADD A,C doubling sequence at #R$EBA7-#R$EBAB) in the table at #R$F225@bank1: 1 tempo/speed byte followed by 3 x 2-byte pattern-data pointers, one per channel. Uses that entry to initialise the 3 channel-tracker records at $EC01/$EC26/$EC4B (37 bytes each, stride $25 -- offsets used elsewhere in this sound driver: +$00 note/status, +$01/+$02 pattern pointer, +$03/+$04 envelope or effect pointer, +$05 initial speed, +$06 counter, +$10 enable flag, +$1D/+$1F/+$20/+$21 misc playback state) before flagging the tune active via $F223 for the per-frame service routine at #R$EC71.
 R $EB9E The per-channel effect/envelope pointer (+$01/+$02) is not read from
