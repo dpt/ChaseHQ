@@ -102,25 +102,38 @@
 > $4000 ; $5C00..$76EF is the per-stage data:
 > $4000 ; - $5C00..$5CEF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
-> $4000 ; $E300..$E316 is a height table (22? bytes long)
-> $4000 ; $E336..      is TBD
+> $4000 ; $E300..$E31F is the road slice height table: [0] is a $60 sentinel, [1..21]
+> $4000 ;              are the perspective heights and [22] is an $A0 terminator
+> $4000 ; $E320..$E335 is the per-depth curvature adjustment table (22 bytes), built by
+> $4000 ;              build_curve_table
+> $4000 ; $E336..$E34A is the running minimum clamp of the height table, built by
+> $4000 ;              build_height_table
+> $4000 ; $E34B..$E34D is the horizon attribute scroll state: previous rounded Cmin,
+> $4000 ;              this frame's delta and last frame's delta
+> $4000 ; $E34F..$E363 is the screen position of the object at each road slice
 > $4000 ; $E410..$E4CF is a road edge/markings table
 > $4000 ; $E4D0..$E4FF is road lane markings
 > $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
-> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
-> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
-> $4000 ; $E900        is a curvature? table
-> $4000 ; $E930..$E9FF is 104? words for road drawing (centre left)
+> $4000 ; .
+> $4000 ; Each of the six road boundaries owns one page, holding the boundary's
+> $4000 ; horizontal pixel position as one word per screen row, 0..127. Only the
+> $4000 ; visible depth range is ever filled, so the low entries of each page are free
+> $4000 ; and other data is packed into them.
+> $4000 ; .
+> $4000 ; $E830..$E8FF is the left outer edge, the verge/road boundary
+> $4000 ; $E930..$E9FF is the left inner edge, centre left
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
-> $4000 ; $EA30..$EAFF is 104? words for road drawing (centre)
+> $4000 ; $EA30..$EAFF is the road centre line
 > $4000 ; $EB00..$EB27 is the square zoom-in mask
-> $4000 ; $EB30..$EBFF is 104? words for road drawing (centre right)
-> $4000 ; $EC00..$EC2F is TBD (transition uses this)
-> $4000 ; $EC30..$ECFF is 104? words for road drawing (right)
-> $4000 ; $ED00..$ED?? is a curvature table?
+> $4000 ; $EB30..$EBFF is the right inner edge, centre right
+> $4000 ; $EC00..$EC17 is the transition table copied from #R$E88E: four three-byte
+> $4000 ;              forward entries at $EC00 then four reverse ones at $EC0C
+> $4000 ; $EC30..$ECFF is the right outer edge, the road/verge boundary
+> $4000 ; $ED00..$ED27 is stack space
 > $4000 ; $ED28        is the stack (growing downwards)
-> $4000 ; $ED30..$EDFF is (possibly another 104? word road drawing buffer)
+> $4000 ; $ED30..$EDFF is the right fork's right outer edge, also used for the dirt and
+> $4000 ;              stone layout on dirt tracks
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
