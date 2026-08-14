@@ -960,6 +960,7 @@ B $C829,1,1
 W $C82A,2,2 [$C7AD] Target
 b $C82C [Stage 3] Perp's mugshot
 @ $C82C label=stage3_perp_face
+N $C82C #HTML[#CALL(face($C82C))]
 B $C82C,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $C8CC,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $C8E0 LOD table for "Car A (the perp's car)"
@@ -1073,20 +1074,35 @@ B $C958,1,1 Flags
 B $C959,1,1 Height (pixels)
 W $C95A,2,2 [$CD85] Bitmap address
 W $C95C,2,2 [$CDBB] Pre-shifted bitmap address
+N $C95E #HTML[#CALL(graphic($C95E,48,30,0,1))]
 B $C95E,180,6 Bitmap data 6 bytes x 30
+N $CA12 #HTML[#CALL(graphic($CA12,32,20,0,1))]
 B $CA12,80,4 Bitmap data 4 bytes x 20
+N $CA62 #HTML[#CALL(graphic($CA62,24,13,0,1))]
 B $CA62,39,3 Bitmap data 3 bytes x 13
+N $CA89 #HTML[#CALL(graphic($CA89,16,8,1,1))]
 B $CA89,32,4 Bitmap data (masked) 4 bytes x 8
+N $CAA9 #HTML[#CALL(graphic($CAA9,16,8,1,1))]
 B $CAA9,32,4 Pre-shifted bitmap data (masked) 4 bytes x 8
+N $CAC9 #HTML[#CALL(graphic($CAC9,48,29,0,1))]
 B $CAC9,174,6 Bitmap data 6 bytes x 29
+N $CB77 #HTML[#CALL(graphic($CB77,32,19,0,1))]
 B $CB77,76,4 Bitmap data 4 bytes x 19
+N $CBC3 #HTML[#CALL(graphic($CBC3,24,14,0,1))]
 B $CBC3,42,3 Bitmap data 3 bytes x 14
+N $CBED #HTML[#CALL(graphic($CBED,16,8,1,1))]
 B $CBED,32,4 Bitmap data (masked) 4 bytes x 8
+N $CC0D #HTML[#CALL(graphic($CC0D,16,8,1,1))]
 B $CC0D,32,4 Pre-shifted bitmap data (masked) 4 bytes x 8
+N $CC2D #HTML[#CALL(graphic($CC2D,48,31,0,1))]
 B $CC2D,186,6 Bitmap data 6 bytes x 31
+N $CCE7 #HTML[#CALL(graphic($CCE7,40,22,0,1))]
 B $CCE7,110,5 Bitmap data 5 bytes x 22
+N $CD55 #HTML[#CALL(graphic($CD55,24,16,0,1))]
 B $CD55,48,3 Bitmap data 3 bytes x 16
+N $CD85 #HTML[#CALL(graphic($CD85,24,9,1,1))]
 B $CD85,54,6 Bitmap data (masked) 6 bytes x 9
+N $CDBB #HTML[#CALL(graphic($CDBB,24,9,1,1))]
 B $CDBB,54,6 Pre-shifted bitmap data (masked) 6 bytes x 9
 N $CDF1 LOD table for "Hazard (stone/dust)"
 N $CDF1 LOD
@@ -1162,16 +1178,27 @@ B $CE3F,1,1 Flags
 B $CE40,1,1 Height (pixels)
 W $CE41,2,2 [$CE9D] Bitmap address
 W $CE43,2,2 [$CE9F] Pre-shifted bitmap address
+N $CE45 #HTML[#CALL(graphic($CE45,16,5,1,1))]
 B $CE45,20,4 Bitmap data (masked) 4 bytes x 5
+N $CE59 #HTML[#CALL(graphic($CE59,16,4,1,1))]
 B $CE59,16,4 Bitmap data (masked) 4 bytes x 4
+N $CE69 #HTML[#CALL(graphic($CE69,16,4,1,1))]
 B $CE69,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
+N $CE79 #HTML[#CALL(graphic($CE79,16,3,1,1))]
 B $CE79,12,4 Bitmap data (masked) 4 bytes x 3
+N $CE85 #HTML[#CALL(graphic($CE85,16,3,1,1))]
 B $CE85,12,4 Pre-shifted bitmap data (masked) 4 bytes x 3
+N $CE91 #HTML[#CALL(graphic($CE91,8,2,1,1))]
 B $CE91,4,2 Bitmap data (masked) 2 bytes x 2
+N $CE95 #HTML[#CALL(graphic($CE95,8,2,1,1))]
 B $CE95,4,2 Pre-shifted bitmap data (masked) 2 bytes x 2
+N $CE99 #HTML[#CALL(graphic($CE99,8,1,1,1))]
 B $CE99,2,2 Bitmap data (masked) 2 bytes x 1
+N $CE9B #HTML[#CALL(graphic($CE9B,8,1,1,1))]
 B $CE9B,2,2 Pre-shifted bitmap data (masked) 2 bytes x 1
+N $CE9D #HTML[#CALL(graphic($CE9D,8,1,1,1))]
 B $CE9D,2,2 Bitmap data (masked) 2 bytes x 1
+N $CE9F #HTML[#CALL(graphic($CE9F,8,1,1,1))]
 B $CE9F,2,2 Pre-shifted bitmap data (masked) 2 bytes x 1
 N $CEA1 Stretchy graphic
 B $CEA1,1,1 Fixed height (bitmap width - 2), no perspective scaling
@@ -1249,14 +1276,19 @@ B $CF0B,1,1 Height (pixels)
 W $CF0C,2,2 [$D262] Bitmap address
 W $CF0E,2,2 [$D262] Pre-shifted bitmap address
 B $CF10,91,8*11,3
+N $CF6B #HTML[#CALL(graphic($CF6B,64,32,0,1))]
 B $CF6B,256,8 Bitmap data 8 bytes x 32
 B $D06B,64,8
+N $D0AB #HTML[#CALL(graphic($D0AB,48,25,0,1))]
 B $D0AB,150,6 Bitmap data 6 bytes x 25
 B $D141,60,8*7,4
+N $D17D #HTML[#CALL(graphic($D17D,40,20,0,1))]
 B $D17D,100,5 Bitmap data 5 bytes x 20
 B $D1E1,45,8*5,5
+N $D20E #HTML[#CALL(graphic($D20E,32,14,0,1))]
 B $D20E,56,4 Bitmap data 4 bytes x 14
 B $D246,28,8*3,4
+N $D262 #HTML[#CALL(graphic($D262,24,11,0,1))]
 B $D262,33,3 Bitmap data 3 bytes x 11
 B $D283,56,8
 N $D2BB Stretchy graphic
@@ -1419,16 +1451,23 @@ B $D3A9,1,1 Flags
 B $D3AA,1,1 Height (pixels)
 W $D3AB,2,2 [$D630] Bitmap address
 W $D3AD,2,2 [$D630] Pre-shifted bitmap address
+N $D3AF #HTML[#CALL(graphic($D3AF,32,16,0,1))]
 B $D3AF,64,4 Bitmap data 4 bytes x 16
+N $D3EF #HTML[#CALL(graphic($D3EF,32,24,0,1))]
 B $D3EF,96,4 Bitmap data 4 bytes x 24
 B $D44F,24,8
+N $D467 #HTML[#CALL(graphic($D467,32,16,0,1))]
 B $D467,64,4 Bitmap data 4 bytes x 16
+N $D4A7 #HTML[#CALL(graphic($D4A7,32,24,0,1))]
 B $D4A7,96,4 Bitmap data 4 bytes x 24
 B $D507,111,8*13,7
+N $D576 #HTML[#CALL(graphic($D576,24,12,0,1))]
 B $D576,36,3 Bitmap data 3 bytes x 12
 B $D59A,106,8*13,2
+N $D604 #HTML[#CALL(graphic($D604,16,8,0,1))]
 B $D604,16,2 Bitmap data 2 bytes x 8
 B $D614,41,8*5,1
+N $D63D #HTML[#CALL(graphic($D63D,8,4,0,1))]
 B $D63D,4,1 Bitmap data 1 bytes x 4
 B $D641,14,8,6
 N $D64F LOD table for "hittable hazard"
@@ -1468,9 +1507,13 @@ B $D673,1,1 Flags
 B $D674,1,1 Height (pixels)
 W $D675,2,2 [$D6B8] Bitmap address
 W $D677,2,2 [$D6B8] Pre-shifted bitmap address
+N $D679 #HTML[#CALL(graphic($D679,16,16,0,1))]
 B $D679,32,2 Bitmap data 2 bytes x 16
+N $D699 #HTML[#CALL(graphic($D699,16,11,0,1))]
 B $D699,22,2 Bitmap data 2 bytes x 11
+N $D6AF #HTML[#CALL(graphic($D6AF,8,9,0,1))]
 B $D6AF,9,1 Bitmap data 1 bytes x 9
+N $D6B8 #HTML[#CALL(graphic($D6B8,8,7,0,1))]
 B $D6B8,7,1 Bitmap data 1 bytes x 7
 N $D6BF LOD table for "hittable hazard"
 N $D6BF LOD
@@ -1509,10 +1552,15 @@ B $D6E3,1,1 Flags
 B $D6E4,1,1 Height (pixels)
 W $D6E5,2,2 [$D766] Bitmap address
 W $D6E7,2,2 [$D782] Pre-shifted bitmap address
+N $D6E9 #HTML[#CALL(graphic($D6E9,32,17,0,1))]
 B $D6E9,68,4 Bitmap data 4 bytes x 17
+N $D72D #HTML[#CALL(graphic($D72D,24,13,0,1))]
 B $D72D,39,3 Bitmap data 3 bytes x 13
+N $D754 #HTML[#CALL(graphic($D754,16,9,0,1))]
 B $D754,18,2 Bitmap data 2 bytes x 9
+N $D766 #HTML[#CALL(graphic($D766,16,7,1,1))]
 B $D766,28,4 Bitmap data (masked) 4 bytes x 7
+N $D782 #HTML[#CALL(graphic($D782,16,7,1,1))]
 B $D782,28,4 Pre-shifted bitmap data (masked) 4 bytes x 7
 N $D79E Stretchy graphic
 B $D79E,1,1 Fixed height (bitmap width - 2), no perspective scaling
@@ -1585,13 +1633,21 @@ B $D7FB,1,1 Flags
 B $D7FC,1,1 Height (pixels)
 W $D7FD,2,2 [$D98E] Bitmap address
 W $D7FF,2,2 [$D9B2] Pre-shifted bitmap address
+N $D801 #HTML[#CALL(graphic($D801,24,27,0,1))]
 B $D801,81,3 Bitmap data 3 bytes x 27
+N $D852 #HTML[#CALL(graphic($D852,16,20,0,1))]
 B $D852,40,2 Bitmap data 2 bytes x 20
+N $D87A #HTML[#CALL(graphic($D87A,24,15,1,1))]
 B $D87A,90,6 Bitmap data (masked) 6 bytes x 15
+N $D8D4 #HTML[#CALL(graphic($D8D4,24,15,1,1))]
 B $D8D4,90,6 Pre-shifted bitmap data (masked) 6 bytes x 15
+N $D92E #HTML[#CALL(graphic($D92E,16,12,1,1))]
 B $D92E,48,4 Bitmap data (masked) 4 bytes x 12
+N $D95E #HTML[#CALL(graphic($D95E,16,12,1,1))]
 B $D95E,48,4 Pre-shifted bitmap data (masked) 4 bytes x 12
+N $D98E #HTML[#CALL(graphic($D98E,16,9,1,1))]
 B $D98E,36,4 Bitmap data (masked) 4 bytes x 9
+N $D9B2 #HTML[#CALL(graphic($D9B2,16,9,1,1))]
 B $D9B2,36,4 Pre-shifted bitmap data (masked) 4 bytes x 9
 N $D9D6 Stretchy graphic
 B $D9D6,1,1 Fixed height (bitmap width - 2), no perspective scaling
@@ -1664,13 +1720,21 @@ B $DA33,1,1 Flags
 B $DA34,1,1 Height (pixels)
 W $DA35,2,2 [$DAD0] Bitmap address
 W $DA37,2,2 [$DAE0] Pre-shifted bitmap address
+N $DA39 #HTML[#CALL(graphic($DA39,24,13,0,1))]
 B $DA39,39,3 Bitmap data 3 bytes x 13
+N $DA60 #HTML[#CALL(graphic($DA60,24,10,0,1))]
 B $DA60,30,3 Bitmap data 3 bytes x 10
+N $DA7E #HTML[#CALL(graphic($DA7E,24,7,0,1))]
 B $DA7E,21,3 Bitmap data 3 bytes x 7
+N $DA93 #HTML[#CALL(graphic($DA93,24,7,0,1))]
 B $DA93,21,3 Pre-shifted bitmap data 3 bytes x 7
+N $DAA8 #HTML[#CALL(graphic($DAA8,16,5,1,1))]
 B $DAA8,20,4 Bitmap data (masked) 4 bytes x 5
+N $DABC #HTML[#CALL(graphic($DABC,16,5,1,1))]
 B $DABC,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
+N $DAD0 #HTML[#CALL(graphic($DAD0,16,4,1,1))]
 B $DAD0,16,4 Bitmap data (masked) 4 bytes x 4
+N $DAE0 #HTML[#CALL(graphic($DAE0,16,4,1,1))]
 B $DAE0,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
 B $DAF0,1296,8
 b $E000 [Stage 4] Horizon graphic
@@ -2523,6 +2587,7 @@ B $E73B,1,1
 W $E73C,2,2 [$E6B7] Target
 b $E73E [Stage 4] Perp's mugshot
 @ $E73E label=stage4_perp_face
+N $E73E #HTML[#CALL(face($E73E))]
 B $E73E,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
 B $E7DE,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
 N $E7F2 LOD table for "Car A (the perp's car)"
@@ -2636,17 +2701,29 @@ B $E86A,1,1 Flags
 B $E86B,1,1 Height (pixels)
 W $E86C,2,2 [$EC2E] Bitmap address
 W $E86E,2,2 [$EC2E] Pre-shifted bitmap address
+N $E870 #HTML[#CALL(graphic($E870,48,30,0,1))]
 B $E870,180,6 Bitmap data 6 bytes x 30
+N $E924 #HTML[#CALL(graphic($E924,32,22,0,1))]
 B $E924,88,4 Bitmap data 4 bytes x 22
+N $E97C #HTML[#CALL(graphic($E97C,16,12,0,1))]
 B $E97C,24,2 Bitmap data 2 bytes x 12
+N $E994 #HTML[#CALL(graphic($E994,16,8,1,1))]
 B $E994,32,4 Bitmap data (masked) 4 bytes x 8
+N $E9B4 #HTML[#CALL(graphic($E9B4,16,8,1,1))]
 B $E9B4,32,4 Pre-shifted bitmap data (masked) 4 bytes x 8
+N $E9D4 #HTML[#CALL(graphic($E9D4,48,30,0,1))]
 B $E9D4,180,6 Bitmap data 6 bytes x 30
+N $EA88 #HTML[#CALL(graphic($EA88,32,22,0,1))]
 B $EA88,88,4 Bitmap data 4 bytes x 22
+N $EAE0 #HTML[#CALL(graphic($EAE0,24,15,0,1))]
 B $EAE0,45,3 Bitmap data 3 bytes x 15
+N $EB0D #HTML[#CALL(graphic($EB0D,48,29,0,1))]
 B $EB0D,174,6 Bitmap data 6 bytes x 29
+N $EBBB #HTML[#CALL(graphic($EBBB,32,19,0,1))]
 B $EBBB,76,4 Bitmap data 4 bytes x 19
+N $EC07 #HTML[#CALL(graphic($EC07,24,13,0,1))]
 B $EC07,39,3 Bitmap data 3 bytes x 13
+N $EC2E #HTML[#CALL(graphic($EC2E,16,8,1,1))]
 B $EC2E,32,4 Bitmap data (masked) 4 bytes x 8
 B $EC4E,32,8
 b $EC6E [Stage 4] Helicopter data 1
@@ -2751,19 +2828,31 @@ B $ECE1,1,1 Flags
 B $ECE2,1,1 Height (pixels)
 W $ECE3,2,2 [$EED1] Bitmap address
 W $ECE5,2,2 [$EED1] Pre-shifted bitmap address
+N $ECE7 #HTML[#CALL(graphic($ECE7,56,16,0,1))]
 B $ECE7,112,7 Bitmap data 7 bytes x 16
+N $ED57 #HTML[#CALL(graphic($ED57,24,7,0,1))]
 B $ED57,21,3 Bitmap data 3 bytes x 7
+N $ED6C #HTML[#CALL(graphic($ED6C,56,16,0,1))]
 B $ED6C,112,7 Bitmap data 7 bytes x 16
+N $EDDC #HTML[#CALL(graphic($EDDC,24,7,0,1))]
 B $EDDC,21,3 Bitmap data 3 bytes x 7
+N $EDF1 #HTML[#CALL(graphic($EDF1,24,10,1,1))]
 B $EDF1,60,6 Bitmap data (masked) 6 bytes x 10
+N $EE2D #HTML[#CALL(graphic($EE2D,16,3,1,1))]
 B $EE2D,12,4 Bitmap data (masked) 4 bytes x 3
+N $EE39 #HTML[#CALL(graphic($EE39,8,7,1,1))]
 B $EE39,14,2 Bitmap data (masked) 2 bytes x 7
+N $EE47 #HTML[#CALL(graphic($EE47,8,5,1,1))]
 B $EE47,10,2 Bitmap data (masked) 2 bytes x 5
+N $EE51 #HTML[#CALL(graphic($EE51,16,7,1,1))]
 B $EE51,28,4 Bitmap data (masked) 4 bytes x 7
+N $EE6D #HTML[#CALL(graphic($EE6D,40,10,1,1))]
 B $EE6D,100,10 Bitmap data (masked) 10 bytes x 10
+N $EED1 #HTML[#CALL(graphic($EED1,40,10,1,1))]
 B $EED1,100,10 Bitmap data (masked) 10 bytes x 10
 b $EF35 [Stage 4] Pilot's mugshot
 @ $EF35 label=stage4_pilot_mugshot
+N $EF35 #HTML[#CALL(face($EF35))]
 B $EF35,160,4 Bitmap data for the pilot's mugshot (32x40). Stored top-down.
 B $EFD5,20,4 Attribute data for the pilot's mugshot (4x5). Stored top-down.
 N $EFE9 Stretchy graphic
@@ -2886,10 +2975,15 @@ B $F09F,1,1 Height (pixels)
 W $F0A0,2,2 [$F19C] Bitmap address
 W $F0A2,2,2 [$F19C] Pre-shifted bitmap address
 B $F0A4,70,8*8,6
+N $F0EA #HTML[#CALL(graphic($F0EA,56,10,0,1))]
 B $F0EA,70,7 Bitmap data 7 bytes x 10
+N $F130 #HTML[#CALL(graphic($F130,40,8,0,1))]
 B $F130,40,5 Bitmap data 5 bytes x 8
+N $F158 #HTML[#CALL(graphic($F158,56,4,0,1))]
 B $F158,28,7 Bitmap data 7 bytes x 4
+N $F174 #HTML[#CALL(graphic($F174,40,8,0,1))]
 B $F174,40,5 Bitmap data 5 bytes x 8
+N $F19C #HTML[#CALL(graphic($F19C,40,3,0,1))]
 B $F19C,15,5 Bitmap data 5 bytes x 3
 B $F1AB,175,8*21,7
 N $F25A Stretchy graphic
@@ -3028,10 +3122,15 @@ B $F32C,1,1 Height (pixels)
 W $F32D,2,2 [$F420] Bitmap address
 W $F32F,2,2 [$F420] Pre-shifted bitmap address
 B $F331,105,8*13,1
+N $F39A #HTML[#CALL(graphic($F39A,48,12,0,1))]
 B $F39A,72,6 Bitmap data 6 bytes x 12
+N $F3E2 #HTML[#CALL(graphic($F3E2,40,5,0,1))]
 B $F3E2,25,5 Bitmap data 5 bytes x 5
+N $F3FB #HTML[#CALL(graphic($F3FB,32,4,0,1))]
 B $F3FB,16,4 Bitmap data 4 bytes x 4
+N $F40B #HTML[#CALL(graphic($F40B,24,7,0,1))]
 B $F40B,21,3 Bitmap data 3 bytes x 7
+N $F420 #HTML[#CALL(graphic($F420,32,12,0,1))]
 B $F420,48,4 Bitmap data 4 bytes x 12
 B $F450,136,8
 N $F4D8 LOD table for "hittable hazard"
@@ -3071,13 +3170,21 @@ B $F4FC,1,1 Flags
 B $F4FD,1,1 Height (pixels)
 W $F4FE,2,2 [$F601] Bitmap address
 W $F500,2,2 [$F60B] Pre-shifted bitmap address
+N $F502 #HTML[#CALL(graphic($F502,24,21,0,1))]
 B $F502,63,3 Bitmap data 3 bytes x 21
+N $F541 #HTML[#CALL(graphic($F541,16,16,0,1))]
 B $F541,32,2 Bitmap data 2 bytes x 16
+N $F561 #HTML[#CALL(graphic($F561,16,11,1,1))]
 B $F561,44,4 Bitmap data (masked) 4 bytes x 11
+N $F58D #HTML[#CALL(graphic($F58D,16,11,1,1))]
 B $F58D,44,4 Pre-shifted bitmap data (masked) 4 bytes x 11
+N $F5B9 #HTML[#CALL(graphic($F5B9,16,9,1,1))]
 B $F5B9,36,4 Bitmap data (masked) 4 bytes x 9
+N $F5DD #HTML[#CALL(graphic($F5DD,16,9,1,1))]
 B $F5DD,36,4 Pre-shifted bitmap data (masked) 4 bytes x 9
+N $F601 #HTML[#CALL(graphic($F601,8,5,1,1))]
 B $F601,10,2 Bitmap data (masked) 2 bytes x 5
+N $F60B #HTML[#CALL(graphic($F60B,8,5,1,1))]
 B $F60B,10,2 Pre-shifted bitmap data (masked) 2 bytes x 5
 N $F615 LOD table for "hittable hazard"
 N $F615 LOD
@@ -3116,10 +3223,15 @@ B $F639,1,1 Flags
 B $F63A,1,1 Height (pixels)
 W $F63B,2,2 [$F6BC] Bitmap address
 W $F63D,2,2 [$F6D8] Pre-shifted bitmap address
+N $F63F #HTML[#CALL(graphic($F63F,32,17,0,1))]
 B $F63F,68,4 Bitmap data 4 bytes x 17
+N $F683 #HTML[#CALL(graphic($F683,24,13,0,1))]
 B $F683,39,3 Bitmap data 3 bytes x 13
+N $F6AA #HTML[#CALL(graphic($F6AA,16,9,0,1))]
 B $F6AA,18,2 Bitmap data 2 bytes x 9
+N $F6BC #HTML[#CALL(graphic($F6BC,16,7,1,1))]
 B $F6BC,28,4 Bitmap data (masked) 4 bytes x 7
+N $F6D8 #HTML[#CALL(graphic($F6D8,16,7,1,1))]
 B $F6D8,28,4 Pre-shifted bitmap data (masked) 4 bytes x 7
 N $F6F4 Stretchy graphic
 B $F6F4,1,1 Fixed height (bitmap width - 2), no perspective scaling
@@ -3227,13 +3339,21 @@ B $F77A,1,1 Flags
 B $F77B,1,1 Height (pixels)
 W $F77C,2,2 [$F7E7] Bitmap address
 W $F77E,2,2 [$F7F3] Pre-shifted bitmap address
+N $F780 #HTML[#CALL(graphic($F780,32,8,0,1))]
 B $F780,32,4 Bitmap data 4 bytes x 8
+N $F7A0 #HTML[#CALL(graphic($F7A0,24,5,0,1))]
 B $F7A0,15,3 Bitmap data 3 bytes x 5
+N $F7AF #HTML[#CALL(graphic($F7AF,24,4,0,1))]
 B $F7AF,12,3 Bitmap data 3 bytes x 4
+N $F7BB #HTML[#CALL(graphic($F7BB,24,4,0,1))]
 B $F7BB,12,3 Pre-shifted bitmap data 3 bytes x 4
+N $F7C7 #HTML[#CALL(graphic($F7C7,16,4,1,1))]
 B $F7C7,16,4 Bitmap data (masked) 4 bytes x 4
+N $F7D7 #HTML[#CALL(graphic($F7D7,16,4,1,1))]
 B $F7D7,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
+N $F7E7 #HTML[#CALL(graphic($F7E7,16,3,1,1))]
 B $F7E7,12,4 Bitmap data (masked) 4 bytes x 3
+N $F7F3 #HTML[#CALL(graphic($F7F3,16,3,1,1))]
 B $F7F3,12,4 Pre-shifted bitmap data (masked) 4 bytes x 3
 N $F7FF draw_object_left/right graphic data
 W $F7FF,2,2 [$F82B] LOD ptr
@@ -3320,10 +3440,16 @@ B $F86B,1,1 Flags
 B $F86C,1,1 Height (pixels)
 W $F86D,2,2 [$F9D3] Bitmap address
 W $F86F,2,2 [$FA07] Pre-shifted bitmap address
+N $F871 #HTML[#CALL(graphic($F871,32,40,0,1))]
 B $F871,160,4 Bitmap data 4 bytes x 40
+N $F911 #HTML[#CALL(graphic($F911,24,30,0,1))]
 B $F911,90,3 Bitmap data 3 bytes x 30
+N $F96B #HTML[#CALL(graphic($F96B,16,20,0,1))]
 B $F96B,40,2 Bitmap data 2 bytes x 20
+N $F993 #HTML[#CALL(graphic($F993,16,16,1,1))]
 B $F993,64,4 Bitmap data (masked) 4 bytes x 16
+N $F9D3 #HTML[#CALL(graphic($F9D3,16,13,1,1))]
 B $F9D3,52,4 Bitmap data (masked) 4 bytes x 13
+N $FA07 #HTML[#CALL(graphic($FA07,16,13,1,1))]
 B $FA07,52,4 Pre-shifted bitmap data (masked) 4 bytes x 13
 B $FA3B,1477,8*184,5

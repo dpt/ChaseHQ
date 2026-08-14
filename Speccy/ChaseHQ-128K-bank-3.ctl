@@ -940,34 +940,63 @@ B $D45E,1,1 Height/2
 B $D45F,1,1 Width in bytes
 W $D460,2,2 Bitmap pointer
 b $D462 Title-screen logo letter bitmaps (C, H, A, S, E, Q and punctuation)
+N $D462 #HTML[#CALL(graphic($D462,32,28,0,1))]
 B $D462,112,4 Bitmap: "C" 32x28
+N $D4D2 #HTML[#CALL(graphic($D4D2,32,28,0,1))]
 B $D4D2,112,4 Bitmap: "C" 32x28 shifted right 4?
+N $D542 #HTML[#CALL(graphic($D542,32,28,0,1))]
 B $D542,112,4 Bitmap: "C" 32x28 shifted right 8?
+N $D5B2 #HTML[#CALL(graphic($D5B2,40,28,0,1))]
 B $D5B2,140,5 Bitmap: "C" 40x28
+N $D63E #HTML[#CALL(graphic($D63E,32,28,0,1))]
 B $D63E,112,4 Bitmap: "H" 32x28
+N $D6AE #HTML[#CALL(graphic($D6AE,32,28,0,1))]
 B $D6AE,112,4 Bitmap: "H" 32x28 shifted right
+N $D71E #HTML[#CALL(graphic($D71E,40,28,0,1))]
 B $D71E,140,5 Bitmap: "H" 40x28
+N $D7AA #HTML[#CALL(graphic($D7AA,40,28,0,1))]
 B $D7AA,140,5 Bitmap: "H" 40x28 shifted right
+N $D836 #HTML[#CALL(graphic($D836,24,28,0,1))]
 B $D836,84,3 Bitmap: "A" 24x28
+N $D88A #HTML[#CALL(graphic($D88A,24,28,0,1))]
 B $D88A,84,3 Bitmap: "A" 24x28 shifted right
+N $D8DE #HTML[#CALL(graphic($D8DE,32,28,0,1))]
 B $D8DE,112,4 Bitmap: "A" 32x28
+N $D94E #HTML[#CALL(graphic($D94E,32,28,0,1))]
 B $D94E,112,4 Bitmap: "A" 32x28 shifted right
+N $D9BE #HTML[#CALL(graphic($D9BE,32,28,0,1))]
 B $D9BE,112,4 Bitmap: "S" 32x28
+N $DA2E #HTML[#CALL(graphic($DA2E,32,28,0,1))]
 B $DA2E,112,4 Bitmap: "S" 32x28 shifted right
+N $DA9E #HTML[#CALL(graphic($DA9E,32,28,0,1))]
 B $DA9E,112,4 Bitmap: "S" 32x28 shifted right again
+N $DB0E #HTML[#CALL(graphic($DB0E,40,28,0,1))]
 B $DB0E,140,5 Bitmap: "S" 40x28
+N $DB9A #HTML[#CALL(graphic($DB9A,32,28,0,1))]
 B $DB9A,112,5*22,2 Bitmap: "E" 32x28
+N $DC0A #HTML[#CALL(graphic($DC0A,32,28,0,1))]
 B $DC0A,112,5*22,2 Bitmap: "E" 32x28 shifted right
+N $DC7A #HTML[#CALL(graphic($DC7A,32,28,0,1))]
 B $DC7A,112,5*22,2 Bitmap: "E" 32x28 shifted right again
+N $DCEA #HTML[#CALL(graphic($DCEA,32,28,0,1))]
 B $DCEA,112,5*22,2 Bitmap: "E" 32x28 shifted right again again
+N $DD5A #HTML[#CALL(graphic($DD5A,32,32,0,1))]
 B $DD5A,128,4 Bitmap: "Q" 32x32
+N $DDDA #HTML[#CALL(graphic($DDDA,32,32,0,1))]
 B $DDDA,128,4 Bitmap: "Q" 32x32 shifted right
+N $DE5A #HTML[#CALL(graphic($DE5A,32,32,0,1))]
 B $DE5A,128,4 Bitmap: "Q" 32x32 shifted right again
+N $DEDA #HTML[#CALL(graphic($DEDA,40,32,0,1))]
 B $DEDA,160,5 Bitmap: "Q" 40x32
+N $DF7A #HTML[#CALL(graphic($DF7A,16,8,0,1))]
 B $DF7A,16,2 Bitmap: "." 16x8
+N $DF8A #HTML[#CALL(graphic($DF8A,16,8,0,1))]
 B $DF8A,16,2 Bitmap: "." 16x8
+N $DF9A #HTML[#CALL(graphic($DF9A,16,8,0,1))]
 B $DF9A,16,2 Bitmap: "." 16x8
+N $DFAA #HTML[#CALL(graphic($DFAA,16,8,0,1))]
 B $DFAA,16,2 Bitmap: "." 16x8
+N $DFBA #HTML[#CALL(graphic($DFBA,24,26,0,1))]
 B $DFBA,78,3 Bitmap: "A" 24x26
 B $E008,80,8 Bitmap
 B $E058,72,8 Bitmap
