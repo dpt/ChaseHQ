@@ -1841,8 +1841,11 @@ B $E3B1,1,1
 W $E3B2,2,2 34, handshake_3
 B $E3B4,1,1
 W $E3B5,2,2 35, handshake_2
-c $E3B7 Routine at E3B7
+c $E3B7 Fade the glyph attribute band, then advance the handshake
+D $E3B7 The entry point the HANDSHAKE script command dispatches to ($5FB7 in the relocated dispatch table). It fades the band one step by calling es_handler_glyph_fade_b at #R$E472 -- $6072 once relocated -- then falls into es_handler_handshake_advance. The RESET HANDSHAKE and HANDSHAKE AGAIN commands enter at $5FBA instead, skipping the fade.
 @ $E3B7 label=es_handler_handshake
+C $E3B7,3 Call es_handler_glyph_fade_b [#R$E472]
+@ $E3BA label=es_handler_handshake_advance
 c $E42E Glyph-plot routine (draws a character/digit into the (backbuffer/screen?); called via the interpreter's self-modified $E030 dispatch)
 @ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
@@ -1852,9 +1855,16 @@ C $E434,3 Middle band of attributes
 C $E437,3 Backbuffer
 C $E43A,2 Testing BRIGHT bit?
 @ $E452 label=e452
-c $E46D Routine at E46D
+c $E46D Fade the glyph attribute band out
+D $E46D Two thin wrappers over one tail: #R$E46D gates on $5C6D and #R$E472 on $5C6C. The tail rotates the gate byte and returns unless the bit rotated out was set, so each gate runs the fade on alternate calls. When it does run it sweeps the same 512 attribute cells es_attribute_fade_in covers, taking one off each cell's ink and one unit off its paper, both stopping at zero.
+D $E46D The bytes are masked down to their ink and paper fields and re-combined, so BRIGHT and FLASH are dropped from every cell the fade touches.
 @ $E46D label=es_handler_glyph_fade_c
+C $E46D,3 Gate on $5C6D
+C $E470,2 Jump to es_attribute_fade_out
 @ $E472 label=es_handler_glyph_fade_b
+C $E472,3 Gate on $5C6C
+@ $E475 label=es_attribute_fade_out
+C $E475,2 Rotate the gate byte
 @ $E499 label=es_clear
 C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)

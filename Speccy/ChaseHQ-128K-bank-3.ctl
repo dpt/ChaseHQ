@@ -558,6 +558,7 @@ N $C9AF Alternate masked-sprite blit dispatch used by the background-object draw
 @ $C9AF label=blit_masked_sprite_dispatch_b
 N $C9D5 Width-1 (mask-only, no fill byte) unrolled OR-blit. #R$C917/#R$C9AF dispatch here when the width selector (C, decremented to 0) picks this variant. Draws 2 scanlines per POP DE: E blits into the current HL byte (LD A,(HL) / OR E / LD (HL),A -- a masked, non-overwriting sprite draw), then INC H steps to the next screen row; if that crosses a third boundary (H AND $07 = 0), the SUB $08 / ADD A,$20 / carry-adjust pattern at #R$C9F3 fixes up H/L, otherwise the row falls straight through. D then blits the same way into the following row, with its own boundary fix-up at #R$CA05. A short fixed delay (#R$C9E8, a 30-iteration DEC-A loop) pads out the timing before DJNZ repeats for the next row-pair (B counts row-pairs); once B reaches 0, execution falls into #R$C93C, which restores the real SP and returns.
 @ $C9D5 label=blit_width1
+@ $C9F3 label=advance_glyph_scanline
 N $CA17 Width-2 unrolled OR-blit variant (see #R$C9D5 for the general pattern).
 @ $CA17 label=blit_width2
 N $CA64 Width-3 unrolled OR-blit variant (see #R$C9D5 for the general pattern).
@@ -1353,6 +1354,9 @@ N $F8A7 This entry point is used by the routines at #R$F8EB and #R$FA3A.
 @ $F8A7 label=wait_for_frame_flag
 N $F8AD IM2 interrupt handler (installed by #R$F7AA): just sets the "frame occurred" flag ($F8A8) polled by #R$F8A7 and re-enables interrupts. The actual per-frame work happens synchronously from the main loop at #R$F7D1, not here.
 @ $F8AD label=frame_interrupt_handler
+@ $F8B6 label=play_fixed_sample_1
+@ $F8BD label=play_fixed_sample_2
+@ $F8C2 label=play_fixed_sample_start
 N $F8CD 1-bit sample bit-bang loop: pulses port $FE (border/speaker) from bitmap data at HL, one row of 8 bits per iteration, RLC (HL) rotating the next bit into carry-adjacent position; D counts rows remaining.
 @ $F8CD label=play_sample_row
 c $F8EB Clears the "sample playing" flag and returns to #R$F8A7 to wait for the next frame
@@ -1461,6 +1465,7 @@ R $FF2C $FFF7 for control 1, ... $ FFFE for control 8) -- the growing list
 R $FF2C used by the duplicate check above and read back by #R$FEE2-$FEF1.
 N $FF2C Name lookup ($FF53-$FF68): the scan-matrix key code (bits 0-2 = column/bit-within-row 0-4, bits 3+ = row 0-7, from #R$FF0C) is unpacked into row and bit, then re-combined as index = 5*bit + row (a column-major layout, not row-major) to index the 2-bytes/entry name table at #R$FF95. Print ($FF6D-$FF7F): the looked-up character and a second byte (with bit 7 forced set, presumably an attribute/terminator flag for the string printer) are written into a 2-character scratch buffer at $FD97-$FD9B alongside the caller's screen address (DE), then #R$FDA4 prints it. Column advance ($FF82-$FF94): restores the caller's screen address and steps it on by $20 (one label column); on overflow (E wraps past $FF) also bumps D by 8 to drop down a pixel row. The same step is applied unconditionally once more when the caller's remaining loop count B is exactly 4 (#R$FF87-$FF8A) -- the extra step that wraps from the first row of 4 control labels to the second row of 4. Used by the routine at #R$FEA9.
 @ $FF2C label=read_new_key_definition
+@ $FF8B label=advance_key_label_column
 b $FF95 Key-name lookup table for the "redefine keys" screen, plus joystick key-lists
 D $FF95 $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (2 bytes/entry -- printable character + space, with SYMBOL SHIFT/SPACE/ ENTER/CAPS SHIFT spelled out as two-letter codes -- indexed by #R$FF2C's row/bit arithmetic). The entries run in *reverse* matrix order: row 7 ($7FFE) down to row 0 ($FEFE), and within each row bit 4 down to bit 0 -- e.g. the first 5 entries (B, N, M, SY, SP) are row 7's keys read backwards, matching #R$FF2C's index = 5*(7-row) + (4-bit).
 R $FF95 $FFE5-$ FFE9 ("list A", installed by #R$FBD4 for the "SINCLAIR
