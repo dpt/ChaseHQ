@@ -3705,7 +3705,7 @@ C $8E3E,3 transition_control = 0
 C $8E41,1 Return
 c $8E42 Draw overlay messages
 D $8E42 Reveals a list of overlay message blocks - the arrest bonus screen, for one - a message at a time. Each call draws the messages revealed so far, then counts the delay down; when it hits zero a fresh delay is read from the message stream and the count goes up by one, so one more message appears next call. That continues until the stop sentinel is reached, at which point transition_control is taken from the byte before the sentinel to trigger whatever comes next.
-D $8E42 The state is held in the code itself: the #REGhl at #R$8E45 is the base message pointer, the #REGb at #R$8E46 the current count and the delay is the operand at #R$8E4A.
+D $8E42 The state is held in the code itself: the #REGhl at #R$8E45 is the base message pointer, the #REGb at #R$8E45 the current count and the delay is the operand at #R$8E49.
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
 @ $8E42 label=draw_overlay_messages
 C $8E42,3 Load address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
@@ -4080,7 +4080,7 @@ C $9162,3 Continue if it didn't roll over
 C $9165,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9169,3 Loop
 c $916C Draws stretchy objects, such as trees
-D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CE and #R$9244 - then drops into the common stretchy object code.
+D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CD and #R$9243 - then drops into the common stretchy object code.
 D $916C Used by the routine at #R$9052.
 R $916C I:B Depth index of the object
 R $916C I:DE Address of the object's stretchy object descriptor (e.g. stretchy_shortpole/#R$7E05)
@@ -6300,7 +6300,7 @@ C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
 E $A399 FALLTHROUGH
 c $A4B8 Scenery was hit
-D $A4B8 Sets up the crash state after hitting scenery or a tunnel wall. It returns at once if the car is already crashed, so a second hit during the spin does nothing. The spin speed starts at the greater of 24 and speed/16 + 16, and the speed the car decays to is the lesser of the current speed and the cap passed in #REGa'. The crash flags, the flip direction, the delay counter, the spin speed and that speed cap are then written out, the last two by self modifying #R$B357 and #R$B32F.
+D $A4B8 Sets up the crash state after hitting scenery or a tunnel wall. It returns at once if the car is already crashed, so a second hit during the spin does nothing. The spin speed starts at the greater of 24 and speed/16 + 16, and the speed the car decays to is the lesser of the current speed and the cap passed in #REGa'. The crash flags, the flip direction, the delay counter, the spin speed and that speed cap are then written out, the last two by self modifying #R$B356 and #R$B32E.
 D $A4B8 Used by the routines at #R$A399, #R$A637 and #R$A8CD.
 R $A4B8 I:A Flip flag: 0 for the right hand side, 1 for the left
 R $A4B8 I:A' Speed cap: the crash starts at the lower of this and the current speed
@@ -8910,7 +8910,7 @@ D $B828 breaks/crashes road rendering if messed with
 B $B828,32,8
 c $B848 Scroll the horizon
 D $B848 Returns immediately when the speed is zero. Otherwise two independent sections run.
-D $B848 Horizontal (#R$B854): when current_curvature is non-zero, picks a pair of bytes out of #R$B828 using an index built from the curvature and the top bits of the speed, counts horizon_x_scroll down, and on reaching zero reloads it and steps the horizon's horizontal shift (#R$C7E8) by the table's signed step, wrapping to stay in 0..19.
+D $B848 Horizontal (#R$B854): when current_curvature is non-zero, picks a pair of bytes out of #R$B828 using an index built from the curvature and the top bits of the speed, counts horizon_x_scroll down, and on reaching zero reloads it and steps the horizon's horizontal shift (#R$C7E7) by the table's signed step, wrapping to stay in 0..19.
 D $B848 Vertical (#R$B889): with a non-zero incline, works out how many ticks have passed since the last vertical step, converts that to a movement using the per-incline rate from #R$B828, applies it to horizon_level and carries the remainders in horizon_y_accum and horizon_y_step.
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
 R $B848 I:A' The scroll amount move_hero_car banked at #R$B296, consumed by #R$B857; only meaningful when current_curvature is non-zero
@@ -13321,7 +13321,7 @@ C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
 c $EE5E Reset music
 D $EE5E Used by the routine at #R$E8FE.
-D $EE5E Clears the three self-modified operands that carry music state from frame to frame -- the drum-playing flag at #R$EF0E, the extra-delay byte at #R$EF01 and the first-call flag at #R$EEA3 -- then restarts the pattern list at #R$F0FE by jumping into #R$EE78.
+D $EE5E Clears the three self-modified operands that carry music state from frame to frame -- the drum-playing flag at #R$EF0D, the extra-delay byte at #R$EF00 and the first-call flag at #R$EEA2 -- then restarts the pattern list at #R$F0FE by jumping into #R$EE78.
 @ $EE5E label=reset_music
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
@@ -13331,7 +13331,7 @@ C $EE68,3 Load address of music patterns
 C $EE6B,3 Jump to next_pattern_at_addr
 c $EE6E Setup the next music pattern
 D $EE6E Used by the routine at #R$EE9E.
-D $EE6E Decrements the repeat count held in the operand at #R$EE6F and returns while repeats remain. On zero it falls into np_next, which reads the next (repetitions, data offset) pair from the pattern list, self-modifies the repeat count and the pattern pointer, and points playback at the music data that starts at #R$F111. A repeat count of $FF ends the list: np_restart follows the address word stored after it and starts over.
+D $EE6E Decrements the repeat count held in the operand at #R$EE6E and returns while repeats remain. On zero it falls into np_next, which reads the next (repetitions, data offset) pair from the pattern list, self-modifies the repeat count and the pattern pointer, and points playback at the music data that starts at #R$F111. A repeat count of $FF ends the list: np_restart follows the address word stored after it and starts over.
 N $EE6E Keep playing current pattern until this counter becomes zero.
 @ $EE6E label=next_pattern
 C $EE6E,2 Load number of pattern repetitions. Self modified by #R$EE7E, and below.
@@ -13435,7 +13435,7 @@ C $EF20,1 Enable interrupts
 C $EF21,1 Return
 c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
-D $EF22 Two entry points share one loop: #R$EF22 plays drum 2 (108 bytes at #R$F05A) and playdrum_1 (#R$EF29) plays drum 1 (252 bytes at #R$EF5E). playdrum_start stores #REGa into the loop counter operand at #R$EF3A and raises the drum-playing flag at #R$EF0E. Each sample byte is played most significant bit first as a speaker level on port $FE, rotating in place -- but only #REGa bits are taken from a byte before the pointer moves on, so the speed value is both the bit count and the resampling step, and 1 runs through the sample eight times faster than 8. The loop hands control back to the music driver as soon as the interrupt flag at #R$EF14 is set, and clears the drum-playing flag when the sample runs out.
+D $EF22 Two entry points share one loop: #R$EF22 plays drum 2 (108 bytes at #R$F05A) and playdrum_1 (#R$EF29) plays drum 1 (252 bytes at #R$EF5E). playdrum_start stores #REGa into the loop counter operand at #R$EF39 and raises the drum-playing flag at #R$EF0D. Each sample byte is played most significant bit first as a speaker level on port $FE, rotating in place -- but only #REGa bits are taken from a byte before the pointer moves on, so the speed value is both the bit count and the resampling step, and 1 runs through the sample eight times faster than 8. The loop hands control back to the music driver as soon as the interrupt flag at #R$EF13 is set, and clears the drum-playing flag when the sample runs out.
 R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
 C $EF22,3 Load address of drum 2 data
@@ -13523,7 +13523,7 @@ C $F0F8,1 Decrement duration counter
 C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Exit via pm_wait_for_interrupt
 b $F0FE Music patterns
-D $F0FE One (repetitions, data offset) pair per pattern, read by #R$EE78: the repetition count self-modifies the counter at #R$EE6F and the offset is added to #R$F111 to find that pattern's music data. $FF ends the list, and the address word that follows it -- #R$F100 -- is where playback restarts, so the first pattern is an intro that plays once and is never returned to.
+D $F0FE One (repetitions, data offset) pair per pattern, read by #R$EE78: the repetition count self-modifies the counter at #R$EE6E and the offset is added to #R$F111 to find that pattern's music data. $FF ends the list, and the address word that follows it -- #R$F100 -- is where playback restarts, so the first pattern is an intro that plays once and is never returned to.
 @ $F0FE label=music_patterns
 @ $F100 label=mp_restart
 B $F0FE,16,2 Patterns (repetitions, data offset)
@@ -13841,15 +13841,15 @@ C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 c $F41B Attract mode (128K)
 D $F41B Lives at $820F when relocated.
-D $F41B Runs the bouncy logo in bank 3, sets up the attract stage, then loops a frame at a time over #R$852A and #R$8D8F. Each frame flashes either "ENTER FOR OPTIONS" or "PRESS GEAR" -- whichever depends on whether the controls have been chosen yet -- four frames on and four off, driven by the rotating byte at #R$F458. ENTER re-enters bank 3 at the input selection menu; FIRE leaves for #R$9C79 and the game.
-D $F41B A countdown in the operand at #R$F46A paces the overlays. It starts at 2 and drops by one each time transition_control falls back to zero: 1 shows the credits at #R$F4B9, 0 shows the best officers table at $F51B, and -1 starts a forward transition -- after which the next pass restarts the whole sequence from the bouncy logo.
+D $F41B Runs the bouncy logo in bank 3, sets up the attract stage, then loops a frame at a time over #R$852A and #R$8D8F. Each frame flashes either "ENTER FOR OPTIONS" or "PRESS GEAR" -- whichever depends on whether the controls have been chosen yet -- four frames on and four off, driven by the rotating byte at #R$F457. ENTER re-enters bank 3 at the input selection menu; FIRE leaves for #R$9C79 and the game.
+D $F41B A countdown in the operand at #R$F469 paces the overlays. It starts at 2 and drops by one each time transition_control falls back to zero: 1 shows the credits at #R$F4B9, 0 shows the best officers table at $F51B, and -1 starts a forward transition -- after which the next pass restarts the whole sequence from the bouncy logo.
 @ $F41B label=attract_mode_128k
 C $F41B,3 Entry point for title animations
 C $F41E,3 Call relocated call_bank_3_128k
 C $F421,2 Return if #REGa is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
-C $F429,5 Set the overlay countdown at #R$F46A to 2
+C $F429,5 Set the overlay countdown at #R$F469 to 2
 C $F42E,6 Set speed to $190
 @ $F434 label=am1_loop
 C $F434,3 Call drive_attract_demo
@@ -13868,7 +13868,7 @@ C $F450,1 Shift ENTER's flag out to carry
 C $F451,3 Load entry point for keyboard/joystick selection menu
 C $F454,2 Jump if ENTER was pressed
 C $F456,1 #REGhl -> messages
-C $F457,6 Rotate the blink pattern and self modify #R$F458 with it -- $F0 gives four frames on, four off
+C $F457,6 Rotate the blink pattern and self modify #R$F457 with it -- $F0 gives four frames on, four off
 C $F45D,2 Skip the message on the blank half of the blink
 C $F460,3 Call print_message
 @ $F463 label=f463_128k
