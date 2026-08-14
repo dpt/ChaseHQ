@@ -6498,16 +6498,15 @@ D $A637 This gets called whenever the perp is within sight of the hero car. It m
 D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
 D $A637 A normal frame first walks the five non-perp slots for an active vehicle in the perp's lane and within range, which forces a random lane change. It then picks a lane by a random +/-1 walk biased by the road width, clamps that to the spawn lane bounds, slides the horizontal position toward it and finally scales the perp's approach speed by the distance remaining.
 R $A637 I:IX Address of hazard[0] (the perp)
-R $A637 I:IY ? sampled $E360 $E356 $E34F
 N $A637 Exit if we've caught the perp.
 @ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
 N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
 C $A63C,7 Call start_chase if sighted_flag is zero
-N $A643 Reading a hit counter here? It starts at $FC (set at #R$A78A) and is incremented. This seems like it might speed the perp car up when it's hit.
-C $A643,3 Read IX[7] e.g. $A18F  -- a hit counter
+N $A643 IX[7] is the hit timer. #R$A78A sets it to $FC after a smash and the INC below counts it back up, so the four frames it takes to reach zero are the perp's post-hit cooldown, during which the rest of this routine is skipped.
+C $A643,3 Read IX[7] e.g. $A18F  -- the hit timer
 C $A646,1 Set flags
-C $A647,2 Jump if zero  -- delay finished?
+C $A647,2 Jump if zero  -- cooldown finished
 C $A649,3 Jump to set delay if positive
 N $A64C Otherwise #REGa is negative.
 N $A64C This line gets hit 4 times when we smash into the perp's car - matching the $FC value it's reset to.
@@ -6619,7 +6618,7 @@ C $A711,3 Re-read current_lane [not convinced this is required]
 @ $A714 ssub=LD HL,hazard_pos_speed - 1
 C $A714,5 Load address of hazard_pos_speed[current_lane]
 C $A719,4 Compare horizontal position IX[5] with table value
-N $A71D #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We seem to be bumping the position by +/-10.
+N $A71D #REGc is the changing-lane flag: 1 while the perp is still moving toward its target lane, 0 once it has arrived. The position is bumped by +/-10 a frame until it does.
 C $A71D,2 Set flag indicating we're changing lane
 @ $A71F label=pb_check_low
 C $A71F,4 Jump with C==1 if horizontal position <= table value [is this meaning left or right?]
@@ -6643,8 +6642,8 @@ C $A737,3 Set horizontal position
 C $A73A,4 Self modify 'LD A' @ #R$A68F to load #REGc  -- changing lane flag will be 0 or 1
 C $A73E,2 A = <self modified>  -- delay counter
 C $A740,1 Set flags
-C $A741,3 DE = $1E  -- multiplicand
-C $A744,3 HL = $E6  -- base
+C $A741,3 DE = 30  -- the step added per unit of distance still to close
+C $A744,3 HL = 230  -- the perp's base approach rate
 C $A747,2 Jump pb_bypass if non-zero  -- bypasses all the delay stuff
 N $A749 Countdown+rng stuff again... as at #R$A69B
 N $A749 In-place decrementing counter.
@@ -6652,10 +6651,10 @@ C $A749,3 A = <self modified> - 1  -- Self modified below
 C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A74F,2 Jump to pb_a776 if non-zero
 N $A751 When it hits zero we pick a random number...
-C $A751,1 Preserve HL [always holding $E6?]
+C $A751,1 Preserve the accumulator, still $00E6 here
 C $A752,3 Generate a random byte
 C $A755,1 Restore HL
-C $A756,7 A = smash_perp_delay + (random value) & 15  -- perhaps a base delay plus random factor
+C $A756,7 A = smash_perp_delay + (random value & 15), the inner approach timer reloaded from the per-stage base delay at #R$5D1C plus a random 0 to 15
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A760,2 A = 10  -- reset the delay loop
 N $A762 Count down outer delay loop.
@@ -6668,7 +6667,7 @@ C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
 C $A76B,4 Jump if A >= 13 -- too far
 N $A76F Distance to perp is 12 or less.
 N $A76F HL += (13 - A) * DE    HL is 230, DE is 30
-N $A76F This seems to be using the distance to the perp as a scale by which to adjust its horizontal position.
+N $A76F The nearer the perp is, the more of these steps run, so its approach rate climbs as the gap closes.
 C $A76F,4 B = (13 - A)  -- iterations
 @ $A773 label=pb_mult_loop
 C $A773,1 HL += 30
@@ -6679,14 +6678,13 @@ C $A77B,2 Jump to pb_store_exit if A >= 6
 N $A77D Distance to perp is 5 or less.
 C $A77D,2 Put back most of what we just subtracted
 C $A77F,3 Multiply by 8
-N $A782 Bug? And then we do nothing with #REGa...
+N $A782 #REGa is then discarded - the three shifts are dead. Only the extra step below has any effect, giving the perp one more increment when it is very close.
 C $A782,1 HL += DE
 @ $A783 label=pb_store_exit
-C $A783,6 wordat(IX + 13) = HL  -- store horizontal position (or accel?)
+C $A783,6 wordat(IX + 13) = HL  -- store the perp's approach rate, whole units in the high byte and fractional in the low
 C $A789,1 Return
-N $A78A If I meddle with this value the perp seems to race off too fast to catch.
 @ $A78A label=pb_set_delay
-C $A78A,4 IX[7] = $FC  -- set a delay of 4 turns until we ... do what?
+C $A78A,4 IX[7] = $FC  -- four frames of post-hit cooldown, read back at the top of #R$A637. Raise it and the perp gets away
 C $A78E,5 Jump if A < 3  -- preserve A
 C $A793,2 A -= 3  -- 0..
 @ $A795 label=pb_check_boost
