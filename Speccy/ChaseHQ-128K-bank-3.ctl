@@ -1106,6 +1106,7 @@ C $EBA6,1 BC = A * 7 (2A, +A = 3A, doubled = 6A, +A = 7A):
 C $EBA7,1 the $F225 table's 7-byte-per-tune entry stride
 C $EBAE,3 HL -> this tune's entry in the tune-select table
 C $EBB2,1 First byte = tempo/speed, saved for later use
+C $EBB3,3 Self modify 'LD A,x' at #R$EC99 to set the tempo-counter reload value to this tune's tempo byte
 C $EBB7,4 IX -> first of the 3 channel-tracker records
 C $EBBB,2 Record stride (37 bytes)
 C $EBBD,2 3 channels
@@ -1143,8 +1144,9 @@ C $EC83,1 B = 0 (post-decrement)
 C $EC84,4 Advance channel 1's pattern by one tracker row
 C $EC8B,4 Channel 2
 C $EC92,4 Channel 3
-C $EC99,2 Reset the tempo counter (Conv note: reset to a
-C $EC9B,3 fixed 1, not the tune's stored tempo at $EC9A -- appears to always tick every other frame)
+N $EC99 Self modified by #R$EBB3 (start_tune) and #R$EE71 (in-song tempo command); the operand byte at $EC9A is tune_tempo. Confirmed against a real-hardware trace: tune 0's tempo byte (2) gives a period-2 fire/skip alternation.
+C $EC99,2 A = <self modified>  -- reset the tempo counter to this tune's tempo
+C $EC9B,3 Store the new tempo counter
 @ $EC9E label=tms_refresh_registers
 C $EC9E,4 Recompute the AY register values for all 3
 C $ECA2,3 channels from their current tracker state
@@ -1239,6 +1241,8 @@ N $EE38 Between pattern rows: nudge the current note (+$12) up or down by one pe
 @ $EE38 label=channel_slide_upkeep
 N $EE49 Command/effect byte decode: range-tests the byte against a cascade of thresholds ($B0, then +$20, +$10, +$18) to find which opcode group it falls in, then either handles it directly (note-table/pointer effects) or falls through to the jump table at #R$EE96 for the fixed-length opcode handlers at #R$ED36-$EDD1.
 @ $EE49 label=decode_pattern_command
+N $EE71 In-song tempo command: self modifies 'LD A,x' at #R$EC99 to set the tempo-counter reload value
+C $EE71,3 Self modify 'LD A,x' at #R$EC99
 N $EE96 Jump-table dispatch into the fixed-length opcode handlers at #R$ED36-$EDD1, indexed by the remaining low bits of the command byte (A, with B assumed 0 as throughout this driver). Rather than storing a full 2-byte address per entry, the table at $EC9D stores a 1-byte displacement from the table slot itself to the handler: HL is first set to the table slot ($EC9D + A), then the displacement byte at that slot is added back onto HL, giving the handler's address. This works because every handler lies within 256 bytes of its table slot.
 @ $EE96 label=dispatch_pattern_command
 C $EE96,3 HL = table slot for this command
