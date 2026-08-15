@@ -316,7 +316,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         "bad-command": lambda: "- Bad command!<br/>",
     }
 
-    def map_curvature(self, cwd, base, page=None):
+    def map_curvature(self, cwd, base, page=None, follow=True):
         curvenames = {
             0: "Curve Straight",
             1: "Curve Right",
@@ -343,7 +343,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_nibble_rle(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     c_common_actions = {
@@ -382,7 +382,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     # 1/3/5/7 are used - why not the others?
     # "Up 5" and "Down 5" seem to be the most extreme used.
     # Level changes are smoothed in terms of map data?
-    def map_height(self, cwd, base, page=None):
+    def map_height(self, cwd, base, page=None, follow=True):
         heightnames = {
             0: "Going Up 8 XXX",
             1: "Going Up 7",
@@ -409,7 +409,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_nibble_rle(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     def height_for_c(self, cwd, base, page=None):
@@ -434,7 +434,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
-    def map_lanes(self, cwd, base, page=None):
+    def map_lanes(self, cwd, base, page=None, follow=True):
         # L/M/R is the left/middle/right alignment of the road with respect to
         # the default four-lane road.
         #
@@ -477,7 +477,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_counted_rle(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     def lanes_for_c(self, cwd, base, page=None):
@@ -533,7 +533,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     #        else:
     #            print (byte, "2 lanes", 3,4)
 
-    def map_hazards(self, cwd, base, page=None):
+    def map_hazards(self, cwd, base, page=None, follow=True):
         hazardnames = {
             3: "Stop Spawning Obstacles and Barriers",
             4: "Start Spawning Obstacle Left",
@@ -560,7 +560,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_hazards(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     def hazards_for_c(self, cwd, base, page=None):
@@ -592,7 +592,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
-    def map_left_objects(self, cwd, base, page=None):
+    def map_left_objects(self, cwd, base, page=None, follow=True):
         objnames = {
             0: "Nothing",
             1: "Tunnel Light",
@@ -614,7 +614,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_nibble_rle(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     def objects_for_c(self, cwd, base, page=None):
@@ -640,7 +640,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
-    def map_right_objects(self, cwd, base, page=None):
+    def map_right_objects(self, cwd, base, page=None, follow=True):
         objnames = {
             0: "Nothing",
             1: "Tunnel Light",
@@ -662,7 +662,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
         snapshot = self._get_bank_snapshot(page) if page else self.snapshot
         return self.decoders.decode_nibble_rle(
-            snapshot, base, actions, showlength=True, follow=True, gather=True
+            snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
 
     def _make_empty_udg_array(self, width_udgs: int, height_udgs: int):
