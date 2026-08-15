@@ -1,0 +1,298 @@
+/*
+ * Chase H.Q. disassembly theme.
+ *
+ * Colours sampled from the box-art poster: indigo night sky, chrome-blue
+ * logo lettering, red poster border, amber/yellow title glow, car yellow.
+ */
+
+body {
+  color: #ded7f7;
+  background-color: #120e28;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 16px 24px 48px;
+}
+
+a {
+  color: #4fc3f7;
+  text-decoration: none;
+}
+
+a:hover, a.map-entry-title:hover {
+  color: #ffd400;
+  text-decoration: underline;
+}
+
+a.map-entry-title {
+  color: inherit;
+}
+
+img {
+  border-width: 0;
+}
+
+/* Title banner */
+
+table.header {
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #241c46 0%, #140f2e 100%);
+  border: 1px solid #7a2230;
+  border-radius: 8px;
+}
+
+table.header td {
+  vertical-align: middle;
+  padding: 12px 16px;
+}
+
+td.page-header {
+  color: #a89bd9;
+  font-size: 90%;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+td.logo {
+  color: #ffb020;
+  font-size: 200%;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+td.logo a {
+  color: inherit;
+}
+
+/* Section headers and index lists */
+
+div.section-header {
+  color: #ffb020;
+  font-weight: 700;
+  font-size: 110%;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 20px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #7a2230;
+}
+
+ul.index-list {
+  list-style-type: none;
+  margin: 0 0 8px;
+  padding-left: 0;
+}
+
+ul.index-list li {
+  padding: 3px 0;
+}
+
+/* Navigation bar (prev / up / next) */
+
+table.asm-navigation {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+table.asm-navigation td {
+  background-color: #1d1846;
+  border: 1px solid #7a2230;
+  padding: 6px 12px;
+}
+
+table.asm-navigation td.prev {
+  text-align: left;
+  width: 33.33%;
+  border-radius: 6px 0 0 6px;
+}
+
+table.asm-navigation td.up {
+  text-align: center;
+  width: 33.34%;
+}
+
+table.asm-navigation td.next {
+  text-align: right;
+  width: 33.33%;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Routine description / disassembly table */
+
+div.description {
+  background-color: #2a1f4d;
+  color: #ffb020;
+  font-size: 115%;
+  font-weight: 700;
+  border-radius: 6px 6px 0 0;
+  padding: 8px 12px;
+  margin-top: 10px;
+}
+
+table.disassembly {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+td.routine-comment {
+  background-color: #17102e;
+  padding: 8px 12px;
+}
+
+div.details, div.comments {
+  color: #a89bd9;
+}
+
+div.paragraph {
+  margin-top: 6px;
+}
+
+div.paragraph:first-child {
+  margin-top: 0;
+}
+
+td.asm-label,
+td.address-1,
+td.address-2,
+td.instruction {
+  font-family: "SF Mono", Consolas, "Courier New", monospace;
+  vertical-align: top;
+  padding: 1px 10px 1px 4px;
+  white-space: pre;
+  border-bottom: 1px solid #1c1440;
+}
+
+td.asm-label {
+  color: #6fb3e0;
+  text-align: right;
+}
+
+td.address-1, td.address-2 {
+  color: #ffd400;
+}
+
+td.address-2 {
+  font-weight: 700;
+}
+
+td.instruction {
+  color: #efe9ff;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+td.comment-1, td.comment-0 {
+  color: #a89bd9;
+  font-style: italic;
+  padding: 1px 4px;
+  border-bottom: 1px solid #1c1440;
+  width: 100%;
+}
+
+span.register {
+  color: #56d4dd;
+  font-style: normal;
+}
+
+/* Memory / stage maps */
+
+table.map {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+table.map th {
+  background-color: #2a1f4d;
+  color: #ffb020;
+}
+
+table.map td {
+  background-color: #17102e;
+  border-bottom: 1px solid #1c1440;
+}
+
+div.map-intro {
+  margin-bottom: 10px;
+  color: #a89bd9;
+}
+
+td.map-page, td.map-byte, td.map-length,
+td.map-b, td.map-c, td.map-g, td.map-s, td.map-t, td.map-u, td.map-w {
+  text-align: center;
+  vertical-align: top;
+}
+
+td.map-c-desc { color: #c58aff; }
+td.map-b-desc, td.map-w-desc { color: #6fb3e0; }
+td.map-g-desc { color: #ffd400; }
+td.map-t-desc { color: #a89bd9; font-family: monospace; }
+div.map-entry-title-11, div.map-entry-desc, td.map-s-desc, td.map-u-desc {
+  color: #ded7f7;
+}
+div.map-entry-title-11 { font-weight: 700; }
+
+/* Generic tables, boxes and list entries (data/graphics pages) */
+
+th, td {
+  padding: 4px 10px;
+  vertical-align: top;
+}
+
+th {
+  text-align: center;
+  background-color: #2a1f4d;
+  color: #ffb020;
+}
+
+table.input td, table.output td { background-color: #17102e; }
+table.input th, table.output th { background-color: #2a1f4d; }
+
+td.register {
+  color: #56d4dd;
+  width: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+td.transparent { background-color: transparent !important; }
+td.centre { text-align: center; }
+
+div.box, div.list-entry {
+  width: 100%;
+  max-width: 900px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background-color: #1d1846;
+  border: 1px solid #7a2230;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+div.box-title, div.list-entry-title {
+  font-size: 130%;
+  font-weight: 700;
+  color: #ffb020;
+}
+
+div.box p { margin-bottom: 0; }
+div.list-entry-desc { margin-top: 6px; color: #a89bd9; }
+ul.list-entry { margin-top: 6px; margin-bottom: 0; }
+
+/* Footer */
+
+footer {
+  clear: both;
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid #2a1f4d;
+  text-align: center;
+  font-size: 85%;
+  color: #7a70a8;
+}
