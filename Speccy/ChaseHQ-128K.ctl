@@ -4250,7 +4250,7 @@ N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
-C $92A0,6 likely E << 3
+C $92A0,6 E = bitmap width_bytes << 3 (byte width to pixel width)
 C $92A6,1 A -= E
 C $92A9,4 Jump if A >= 8
 C $92AD,1 E = *HL
@@ -6035,7 +6035,7 @@ W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6 (230), high gear =~ $168
 @ $A24C label=inclined_counter
 B $A24C,1,1 Counts 3/2/1/0 when the hero car is ascending or descending. #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
-B $A24D,1,1 Likely a cornering force flag. Used to trigger smoke. #R$B3B4, #R$B432 reads  #R$B2E5, #R$B314, #R$B32A writes
+B $A24D,1,1 Set while cornering hard enough to squeal. Gates the tyre-squeal SFX and whether turbo smoke is drawn this frame. #R$B3B4, #R$B432 reads  #R$B2E5, #R$B314, #R$B32A writes
 @ $A24E label=boost
 B $A24E,1,1 Turbo boost time remaining (60..0)
 @ $A24F label=smoke
@@ -8035,12 +8035,12 @@ C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
 @ $B1EF label=mhc_b1ef
 C $B1EF,3 Set speed to #REGhl
-C $B1F2,1 Restore HL  [likely to be the user input?]
+C $B1F2,1 Restore HL -- the user input flags, popped earlier
 C $B1F3,4 B = right_turn
 C $B1F7,4 C = left_turn
 C $B1FB,3 A = *$B064  -- Read jump counter [self modified]
 C $B1FE,4 Jump to mhc_b253 if non-zero
-N $B202 Is this checking input flags in H?
+N $B202 Testing the user input flags in H: steering is ignored while the car is airborne (jump counter non-zero, checked above)
 C $B202,2 Shift LSB out of H
 C $B204,2 Jump to mhc_b21a if set
 C $B206,2 Shift new LSB out of H
