@@ -29,8 +29,8 @@ W $C116,2,2 [$C936] Address of LOD of Car D (a Lambo in S1)
 W $C118,2,2 [$C8E2] Address of LOD of Car E (a generic car in S1)
 b $C11A [Stage 5] Per-stage difficulty settings
 B $C11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $C11B,1,1 Smash config parameter TBD
-B $C11C,1,1 Smash config parameter TBD
+B $C11B,1,1 Perp lane-change base delay: added to (rng() & 31) to reset the lane-change timer
+B $C11C,1,1 Perp approach base delay: added to (rng() & 15) to reset the approach timer
 w $C11D [Stage 5] Per-stage setup data
 W $C11D,2,2 road_pos
 W $C11F,2,2 [$C2A0] Address of start stretch, curvature

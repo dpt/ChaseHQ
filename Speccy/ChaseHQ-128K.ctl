@@ -360,10 +360,10 @@ W $5D18,2,2 Address of LODs for car (generic car - must match the perp's car; no
 b $5D1A [Stage 1] Per-stage difficulty settings
 @ $5D1A label=car_spawn_delay
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
-@ $5D1B label=smash_5d1b
-B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_behaviour.
-@ $5D1C label=smash_perp_delay
-B $5D1C,1,1 Loaded by #R$A759. Delay between perp boosts or something?
+@ $5D1B label=perp_lane_change_base
+B $5D1B,1,1 Base for the perp's lane-change timer; reset value adds rng() & 31. Loaded by #R$A6A7.
+@ $5D1C label=perp_approach_base
+B $5D1C,1,1 Base for the perp's approach timer; reset value adds rng() & 15. Loaded by #R$A759.
 w $5D1D [Stage 1] Per-stage setup data
 @ $5D1D label=stage_set_up_data
 W $5D1D,2,2 road_pos
@@ -5922,7 +5922,7 @@ N $A188 +19 (byte) Sprite plot mode: 0 normal, 1 inverted. #R$AC3C toggles it ev
 @ $A1D8 label=hazard_4
 @ $A1EC label=hazard_5
 S $A188,120,$14
-N $A200 Unknown - not enough space for another hazard
+N $A200 Padding: 19 bytes, one short of another 20-byte hazard slot, before the AY register soft copy at #R$A213
 S $A200,19,$13
 N $A213 AY registers 0..11 [128K]
 @ $A213 label=ay_chan_a_pitch
@@ -6562,18 +6562,18 @@ C $A68D,2 Jump to pb_random_move_left_or_right
 @ $A68F label=pb_check_changing_lane_flag
 C $A68F,2 A = <self modified>  -- load "changing lane" flag that appears to be set to 1 when the perp changes lane
 C $A691,3 Jump to pb_check_lane if non-zero
-N $A694 Otherwise not changing lane?
-C $A694,3 Load buffer offset
+N $A694 Not mid lane-change, so a new one may be started -- but only once the perp is within 7 slots of the player.
+C $A694,3 A = perp's distance (IX+1)
 C $A697,4 Jump to pb_check_lane if A >= 7
-N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop between lane changes.
+N $A69B Delay between perp lane changes: lane_change_timer counts down; on zero it resets to perp_lane_change_base + (rng() & 31).
 N $A69B In-place decrementing counter.
 C $A69B,3 A = <self modified> - 1  -- Self modified below
 C $A69E,2 Jump to pb_update_counter if non-zero
 N $A6A0 When it hits zero we pick a random number...
-C $A6A0,1 [C incremented but overwritten in a moment - no effect?]
+C $A6A0,1 C incremented but immediately overwritten by rng() below -- no effect
 C $A6A1,6 C = rng() & 31
-N $A6A7 This gets hit at some point during the smash process.
-C $A6A7,4 A = smash_5d1b + C
+N $A6A7 Timer hit zero: reload it from perp_lane_change_base + C
+C $A6A7,4 A = perp_lane_change_base + C
 @ $A6AB label=pb_update_counter
 C $A6AB,3 Self modify 'LD A,x' at #R$A69B (above) to load A
 N $A6AE This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
@@ -6668,7 +6668,7 @@ N $A751 When it hits zero we pick a random number...
 C $A751,1 Preserve the accumulator, still $00E6 here
 C $A752,3 Generate a random byte
 C $A755,1 Restore HL
-C $A756,7 A = smash_perp_delay + (random value & 15), the inner approach timer reloaded from the per-stage base delay at #R$5D1C plus a random 0 to 15
+C $A756,7 A = perp_approach_base + (random value & 15), the inner approach timer reloaded from the per-stage base delay at #R$5D1C plus a random 0 to 15
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A760,2 A = 10  -- reset the delay loop
 N $A762 Count down outer delay loop.
@@ -7063,10 +7063,10 @@ D $AA38 #R$AB89 (in drive_helicopter) self modifies #R$8FA4 to call this.
 D $AA38 It returns unless the counter is 3, the only distance at which the helicopter is drawn. The rotor position comes from multiplying the top three bits of fast_counter by the difference between two adjacent object_positions entries, halving the high byte of the product. The body's y offset is the vertical base less the lower of those two entries. Five body parts are then drawn in a loop and the rotor is drawn separately, using the self modified rotor position.
 D $AA38 Note that #REGiy addresses the height table, but the two bytes read as #REGiy+$4E and #REGiy+$4F land well past the end of it, past the clamped heights, past the horizon values and one spare byte, in the object_positions buffer at $E34F that #R$A579 fills.
 R $AA38 I:B Counter
-R $AA38 I:IY Somewhere in the $E315 buffer
+R $AA38 I:IY Somewhere in the object_positions buffer ($E34F onwards)
 @ $AA38 label=draw_helicopter
 C $AA38,4 Return if counter isn't 3
-C $AA3C,6 A = IY[$4F] - IY[$4E]  -- a delta between two bytes in this unknown $E315 buffer
+C $AA3C,6 A = IY[$4F] - IY[$4E]  -- a delta between two adjacent object_positions entries ($E34F onwards)
 C $AA42,2 D = 0
 C $AA44,2 HL = 0
 C $AA46,1 E = A => DE = A  -- DE is now the delta from above, widened
@@ -8630,21 +8630,21 @@ N $B653 Don't draw smoke if car's mid-jump
 C $B653,3 Read jump counter in move_hero_car
 C $B656,1 Set flags
 C $B657,1 Return if non-zero
-N $B658 Load size(s) and position(s) TBD?
-C $B658,2 C = *HL++
-C $B65A,2 B = *HL++
-C $B65C,2 D = *HL++
-C $B65E,2 E = *HL++
+N $B658 Load width, height and flipped/unflipped x positions from hero_car_turbo_smoke[A_anim_frame]
+C $B658,2 C = *HL++  -- width
+C $B65A,2 B = *HL++  -- height
+C $B65C,2 D = *HL++  -- flipped x
+C $B65E,2 E = *HL++  -- unflipped x
 N $B660 Load frame data pointer into #REGhl
 C $B660,1 Load low byte
 C $B661,1 Advance
 C $B662,1 Load high byte
 C $B663,1 Finalise
 N $B664 Work out whether to draw the flipped (left) or normal (right) exhaust.
-C $B664,1 Preserve (sizes ?)
+C $B664,1 Preserve width/height
 C $B665,1 Bank
-C $B666,1 unbanking a flip flag?
-C $B667,1 Restore (sizes ?)
+C $B666,1 Bank
+C $B667,1 Restore width/height
 C $B668,1 B = A  -- copy flip flag
 C $B669,1 E = C
 C $B66A,1 C--
