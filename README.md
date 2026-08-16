@@ -49,7 +49,7 @@ shortcuts.
 - [Spectrum Computing forums thread](https://spectrumcomputing.co.uk/forums/viewtopic.php?p=113633)
 - [Reassembler's interview with original artist Will Harbison](http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html)
 - [Original artist Will Harbison's video about the game](https://www.youtube.com/watch?v=1pT6KOJFgMg)
-- [Hacker news discussion about the game's loader](https://news.ycombinator.com/item?id=8850193)
+- [Hacker News discussion about the game's loader](https://news.ycombinator.com/item?id=8850193)
 - [Play the original Chase H.Q. online via QAOP](http://torinak.com/qaop#!chasehq)
 - [Lou's Pseudo 3D Page](https://www.extentofthejam.com/pseudo/index.html)
 

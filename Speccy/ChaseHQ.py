@@ -284,6 +284,14 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         self.decoders = ChaseHQDecoders()
         self._bank_snapshots = {}
 
+    def _snapshot_for_page(self, page):
+        """
+        Return self.snapshot when page is None, otherwise the reconstructed
+        snapshot for that 128K RAM bank page. page=0 is a valid page, so
+        this must check "is not None" rather than truthiness.
+        """
+        return self.snapshot if page is None else self._get_bank_snapshot(page)
+
     def _get_bank_snapshot(self, page: int):
         """
         Return the reconstructed snapshot for the given 128K RAM bank page,
@@ -341,7 +349,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"- {curvenames[t]} for {l} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -374,7 +382,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"MAP_CURVE_{names[t]}({l}),<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
@@ -407,7 +415,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"- {heightnames[t]} for {l} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -429,7 +437,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"MAP_HEIGHT_{names[t]}({l}),<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
@@ -475,7 +483,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"- {lanesnames[t]} for {l} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_counted_rle(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -507,7 +515,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"MAP_LANES_{names[t]}({l}),<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_counted_rle(
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
@@ -558,7 +566,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "wait": lambda c: f"- Wait for {c} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_hazards(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -587,7 +595,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "wait": lambda c: f"MAP_HAZARD_WAIT({c}),<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_hazards(
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
@@ -612,7 +620,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"- {objnames[t]} for {l} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -635,7 +643,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"MAP_OBJ_S1_{names[t]}({l}),<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=False, follow=False, gather=False
         )
@@ -660,7 +668,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             "item": lambda t, l: f"- {objnames[t]} for {l} units<br/>",
         }
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
         return self.decoders.decode_nibble_rle(
             snapshot, base, actions, showlength=True, follow=follow, gather=True
         )
@@ -705,7 +713,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         :rtype: tuple
         """
 
-        snapshot = self._get_bank_snapshot(page) if page else self.snapshot
+        snapshot = self._snapshot_for_page(page)
 
         # The first byte is mask; data comes second.
         if interleaved:

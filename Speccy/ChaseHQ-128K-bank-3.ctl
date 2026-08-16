@@ -1078,18 +1078,18 @@ B $EB0A,10,8,2 Bitmap: title-logo glyph 8x10
 B $EB14,20,8*2,4 Bitmap: title-logo glyph 16x10
 B $EB28,20,8*2,4 Bitmap: title-logo glyph 16x10
 B $EB3C,20,8*2,4 Bitmap: title-logo glyph 16x10
-B $EB50,6,6 Bitmap: title-logo glyph 56x6
-B $EB56,12,8,4 Bitmap: title-logo glyph 48x6
-B $EB62,12,8,4 Bitmap: title-logo glyph 48x6
-B $EB6E,12,8,4 Bitmap: title-logo glyph 48x6
-B $EB7A,4,4 Bitmap: title-logo glyph 56x4
-B $EB7E,4,4 Bitmap: title-logo glyph 56x4
-B $EB82,8,8 Bitmap: title-logo glyph 48x4
-B $EB8A,8,8 Bitmap: title-logo glyph 48x4
-B $EB92,2,2 Bitmap: title-logo glyph 56x2
-B $EB94,2,2 Bitmap: title-logo glyph 56x2
-B $EB96,4,4 Bitmap: title-logo glyph 48x2
-B $EB9A,4,4 Bitmap: title-logo glyph 48x2
+B $EB50,6,6 Bitmap: title-logo glyph 8x6
+B $EB56,12,8,4 Bitmap: title-logo glyph 16x6
+B $EB62,12,8,4 Bitmap: title-logo glyph 16x6
+B $EB6E,12,8,4 Bitmap: title-logo glyph 16x6
+B $EB7A,4,4 Bitmap: title-logo glyph 8x4
+B $EB7E,4,4 Bitmap: title-logo glyph 8x4
+B $EB82,8,8 Bitmap: title-logo glyph 16x4
+B $EB8A,8,8 Bitmap: title-logo glyph 16x4
+B $EB92,2,2 Bitmap: title-logo glyph 8x2
+B $EB94,2,2 Bitmap: title-logo glyph 8x2
+B $EB96,4,4 Bitmap: title-logo glyph 16x2
+B $EB9A,4,4 Bitmap: title-logo glyph 16x2
 c $EB9E Start playing a tune (AY-3-8912 music driver)
 D $EB9E A = tune number. Looks up the tune's 7-byte entry (index = A*7, via the ADD A,A / ADD A,C doubling sequence at #R$EBA7-#R$EBAB) in the table at #R$F225@bank1: 1 tempo/speed byte followed by 3 x 2-byte pattern-data pointers, one per channel. Uses that entry to initialise the 3 channel-tracker records at $EC01/$EC26/$EC4B (37 bytes each, stride $25 -- offsets used elsewhere in this sound driver: +$00 note/status, +$01/+$02 pattern pointer, +$03/+$04 envelope or effect pointer, +$05 initial speed, +$06 counter, +$10 enable flag, +$1D/+$1F/+$20/+$21 misc playback state) before flagging the tune active via $F223 for the per-frame service routine at #R$EC71.
 R $EB9E The per-channel effect/envelope pointer (+$01/+$02) is not read from
