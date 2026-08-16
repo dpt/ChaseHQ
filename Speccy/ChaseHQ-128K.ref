@@ -67,12 +67,16 @@ TitleGraphics=Title Screen Graphics
 EndScreenGraphics=End Screen Graphics
 
 [Index]
+Instructions
 Game
 MemoryMaps
 Graphics
 DataTables
 Reference
 OtherCode
+
+[Index:Instructions:Instructions]
+Instructions
 
 [Index:Game:Game]
 MapFormat
