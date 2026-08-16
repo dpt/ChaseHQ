@@ -77,7 +77,7 @@ be reached: every jump into the block above it either loops back to
 Kept in the disassembly as found, not trimmed.
 
 [Fact:AlwaysClearsCarry:A carry check that can never fire]
-In the engine-noise burst routine (#R$FA3A@bank3, at $FA67), <code>AND A</code>
+In the drum-noise burst routine (#R$FA3A@bank3, at $FA67), <code>AND A</code>
 unconditionally clears the carry flag immediately before <code>RET C</code>,
 so that <code>RET</code> can never actually trigger early. The frame-flag
 byte it loads is never used for anything. Preserved as an apparent dead

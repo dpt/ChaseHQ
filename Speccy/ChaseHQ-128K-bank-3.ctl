@@ -1382,7 +1382,7 @@ C $F882,2 for the two fixed samples (stashed via $F8CE at
 C $F884,2 #R$F8C2)
 C $F889,3 Selector 1 -> fixed sample table #R$F8F2
 C $F88D,3 Selector 2 -> fixed sample table #R$F95A
-C $F891,3 Selector 3 -> procedural engine noise
+C $F891,3 Selector 3 -> procedural drum noise
 @ $F894 label=sfx2_tick_countdown
 C $F894,2 A = SFX slot 2 busy flag ($F895)
 C $F897,2 Idle -> nothing to tick
@@ -1409,9 +1409,9 @@ B $F8F2,104,8
 b $F95A 1-bit digitised sample (224 bytes)
 D $F95A See #R$F8BD, D=$E0=224; played back the same way as #R$F8F2.
 B $F95A,224,8
-c $FA3A Procedural engine/tyre-noise generator (variable duty-cycle square wave)
-D $FA3A Repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive the wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state -- this is how the beeper engine-note pitch varies with speed/RPM. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
-D $FA3A A (-> E) is the pitch/rate parameter from #R$F82F (the dispatch byte's upper 5 bits). Two nested loops: outer E times (#R$FA6C/$FA6D), inner D = 50 times each (#R$FA64/$FA65); each inner iteration advances the 3-byte self-modified state at $FA72-$FA74 (a phase counter, a wrapping accumulator subtracting a fixed constant, and a rotating byte mixed back into the accumulator) and tests bit 4 of the result to decide whether to emit a click this iteration -- a bit-4 test on a steadily-advancing counter behaves like a variable duty-cycle gate, the source of the engine/tyre buzz. When a click fires, the ON delay is $18-E cycles and the OFF delay is E cycles (#R$FA58/#R$FA5F): a larger E (higher dispatch parameter) shortens the ON wait but lengthens the OFF wait, lowering the effective pitch -- consistent with this parameter tracking engine RPM/speed. After each inner-loop pass, the frame flag ($F8A8, set by #R$F8AD) is checked; note that the "AND A" immediately before "RET C" always clears the carry flag, so that RET C can never actually fire -- an apparent dead check preserved as found in the original code, not a translation artifact. Once the outer loop completes, control falls into #R$F8A7 to wait for the next frame.
+c $FA3A Procedural drum-noise burst generator (variable duty-cycle square wave)
+D $FA3A This is the title screen's synthesised drum sound, dispatched as selector 3 of the three 1-bit sample engines run from #R$F82F (the title music/SFX driver) -- not an in-game engine/tyre sound. Repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive the wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
+D $FA3A A (-> E) is the pitch/rate parameter from #R$F82F (the dispatch byte's upper 5 bits). Two nested loops: outer E times (#R$FA6C/$FA6D), inner D = 50 times each (#R$FA64/$FA65); each inner iteration advances the 3-byte self-modified state at $FA72-$FA74 (a phase counter, a wrapping accumulator subtracting a fixed constant, and a rotating byte mixed back into the accumulator) and tests bit 4 of the result to decide whether to emit a click this iteration -- a bit-4 test on a steadily-advancing counter behaves like a variable duty-cycle gate, the source of the drum's buzz/rattle. When a click fires, the ON delay is $18-E cycles and the OFF delay is E cycles (#R$FA58/#R$FA5F): a larger E (higher dispatch parameter) shortens the ON wait but lengthens the OFF wait, lowering the effective pitch. After each inner-loop pass, the frame flag ($F8A8, set by #R$F8AD) is checked; note that the "AND A" immediately before "RET C" always clears the carry flag, so that RET C can never actually fire -- an apparent dead check preserved as found in the original code, not a translation artifact. Once the outer loop completes, control falls into #R$F8A7 to wait for the next frame.
 R $FA3A Used by the routine at #R$F82F.
 @ $FA3A label=play_drum_noise_burst
 C $FA3A,1 E = pitch/rate parameter; outer loop counter
@@ -1428,8 +1428,8 @@ C $FA67,3 Frame flag check (see comment above: RET C here
 C $FA6A,1 never fires, AND A always clears carry)
 C $FA6C,1 Outer loop
 C $FA6F,3 Done: wait for the next frame
-b $FA72 Self-modifying engine-noise state, SFX tables and pattern data
-D $FA72 $FA72-$FA74: self-modifying counter/pitch state read and rewritten by #R$FA3A on every call (the procedural engine-noise generator).
+b $FA72 Self-modifying drum-noise state, SFX tables and pattern data
+D $FA72 $FA72-$FA74: self-modifying counter/pitch state read and rewritten by #R$FA3A on every call (the procedural drum-noise generator).
 R $FA72 $FA75 onward: the per-tune SFX trigger-script pointer table indexed by
 R $FA72 tune-number*2, referenced by #R$F7DB.
 N $FA72 $FAA4 onward: the per-sound-ID parameter table read by #R$F7FE's script interpreter (3 bytes/entry: 1 selector byte + a 2-byte pointer -- see #R$F7F4), giving each triggered sound its sample table selector and pointer. The remainder of this block is raw pattern/parameter data consumed by the SFX scripts and not decoded byte-by-byte here.
