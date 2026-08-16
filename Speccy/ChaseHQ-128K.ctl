@@ -3665,7 +3665,7 @@ C $8E7D,1 Return
 c $8E7E Setup overlay messages
 D $8E7E Called for TIME UP, CONTINUE, BEST OFFICERS, etc. messages.
 D $8E7E Used by the routines at #R$8258, #R$873C, #R$8A57, #R$8C3A, #R$9BCF, #R$B4CC and #R$F220.
-D $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginning .    with a frame delay.]
+D $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginning . with a frame delay.]
 @ $8E7E label=setup_overlay_messages
 C $8E7E,2 Set transition_control to 2 (show overlay)
 N $8E80 This entry point is used by the routine at #R$8A57.
@@ -4108,7 +4108,7 @@ C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $924A,3 Loop to dso_next_object
 c $924D Draws tunnel lights via the shared draw_object_left/right drawing code
 D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 (draw_object_left_entrypt) as the drawing callback and dispatches to the common object-drawing code with PUSH HL / RET.
-D $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx .   address; the routine is skipped if it's >= 16 I:DE Depth set pointer for the light object I:IX X-position table pointer I:IY Height table pointer
+D $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx . address; the routine is skipped if it's >= 16 I:DE Depth set pointer for the light object I:IX X-position table pointer I:IY Height table pointer
 @ $924D label=draw_tunnel_light_left
 C $924D,3 HL = $9279
 @ $9252 label=draw_tunnel_light_right
@@ -4948,7 +4948,7 @@ C $9AEA,2 Loop
 c $9AEC Plot mini font characters
 D $9AEC Entry point with #REGbc zero, so both of the extra bitmap bytes are zero and no cursor block is drawn beneath the character.
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
-D $9AEC I:A Column index, counting from zero, or $FF for the off-screen cursor .   position I:D The character to plot (ASCII)
+D $9AEC I:A Column index, counting from zero, or $FF for the off-screen cursor . position I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_cursor_off
 C $9AEF,2 Jump to plot_mini_font_char
 N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55.
@@ -8584,7 +8584,7 @@ c $B716 Masked sprite plotter
 D $B716 This plots the game's graphics using AND-OR masking.
 D $B716 This uses the "stack trick": internally the stack is pointed at pairs of bitmap and mask bytes and #REGhl points into the screen buffer. It proceeds left-right.
 D $B716 This routine doesn't flip sprites; instead use #R$B76C (below) for that.
-D $B716 I:B Number of source data rows (loop counter) I:DE Source data stride in byte pairs (e.g. 10 for 40px wide) I:HL Source data (bitmap, mask byte pairs) I:IX Where in #R$B729 to start the row. The table holds eight load-mask-store .    steps of six bytes each; entering it (8 - byte width) * 6 bytes in draws .    one pair per byte of width, then falls through to the scanline advance. .    #R$B701 does the arithmetic. I:B' 15 (mask used at #R$B75B) I:HL' Destination address O:HL' Destination address of the last row drawn
+D $B716 I:B Number of source data rows (loop counter) I:DE Source data stride in byte pairs (e.g. 10 for 40px wide) I:HL Source data (bitmap, mask byte pairs) I:IX Where in #R$B729 to start the row. The table holds eight load-mask-store . steps of six bytes each; entering it (8 - byte width) * 6 bytes in draws . one pair per byte of width, then falls through to the scanline advance. . #R$B701 does the arithmetic. I:B' 15 (mask used at #R$B75B) I:HL' Destination address O:HL' Destination address of the last row drawn
 @ $B716 label=plot_masked_sprite
 C $B716,4 Save #REGsp to be restored on exit
 C $B71A,2 Start
@@ -11435,7 +11435,7 @@ C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplies C by the top three bits of A, then divides by 8 with rounding
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
-D $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result                              e.g. $03, $02, $01, $02, $FE
+D $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=scale_curvature_or_height
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
@@ -12474,18 +12474,18 @@ B $E2F8,2,2 3 Lanes R for 10 units
 B $E2FA,2,2 3-4 Widening R for 2 units
 B $E2FC,2,2 4 Lanes for 12 units
 B $E2FE,2,2 Escape, Command 1 (Fork End)
-b $E300 Per-row height table
+g $E300 Per-row height table
 D $E300 #R$CD3A writes 21 entries here each frame, from $E301, with $A0 left as a sentinel after the last. Each is the screen row that road slice is drawn at.
 @ $E300 label=height_table
 B $E300,1,1
 S $E301,31,$1F
-b $E320 Data block at E320
+g $E320 Data block at E320
 @ $E320 label=table_e320
 S $E320,22,$16 22 entries. Used by $CC8E
-b $E336 Data block at E336
+g $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
-b $E34B Horizon values
+g $E34B Horizon values
 D $E34B These drive the per-frame sky and ground colour boundary in #R$BD5A. $E34B is the previous frame's rounded minimum height, $E34C the delta from it to this frame's, always a multiple of 8, and $E34D that delta a frame later.
 D $E34B #R$CD3A writes $E34B and $E34C by running the height table pointer off the end of the table at #R$CDD1, so neither shows up in a search for their addresses. #R$BD5A reads $E34D to decide whether to move the boundary and $E34C for how far to move it next frame.
 @ $E34B label=horizon_attr

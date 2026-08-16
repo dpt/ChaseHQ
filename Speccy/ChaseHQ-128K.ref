@@ -72,29 +72,26 @@ Information
 About
 Game
 MemoryMaps
-Graphics
 DataTables
 Reference
 OtherCode
 
 [Index:Information:Chase H.Q.]
-Instructions
-Information
 About
+Information
+Instructions
 
 [Index:Game:Game Data]
 MapFormat
 Stage1Map
-Stage2Map
-Stage3Map
-Stage4Map
-Stage5Map
-
-[Index:Graphics:Graphics]
 Stage1Graphics
+Stage2Map
 Stage2Graphics
+Stage3Map
 Stage3Graphics
+Stage4Map
 Stage4Graphics
+Stage5Map
 Stage5Graphics
 CommonGraphics
 TitleGraphics
