@@ -93,6 +93,20 @@ fetch a new instruction, and it freezes in place for the rest of the scene.
 A genuine quirk of the original interpreter, not a disassembly error — see
 $CCF2 (in #R$CCB7@bank3) for object 0's case.
 
+[Fact:StretchyObjects:How trees and buildings fake perspective]
+There is no hardware scaling on the Spectrum, so roadside objects like trees,
+lamp posts and buildings can't just be one bitmap stretched to size. Instead
+#R$9174 (draw_stretchy_object_common, reached via #R$916C or #R$9171) builds
+each object from a stack of small bitmap "bands": some bands are drawn at a
+fixed height regardless of distance, anchoring the object's basic shape;
+others are scaled to a percentage (25% to 200%) of a base height looked up in
+the shared <code>persp_y_scale</code> table, and it's these bands that
+actually shrink and grow as the object approaches or recedes. Each band picks
+its own bitmap variant for the current depth from a small per-band table, so
+a fixed foot or a stretched trunk can look subtly different up close without
+needing a whole extra full-size sprite. Five ~32-byte bands per object is far
+cheaper than one full bitmap per depth level.
+
 [Fact:UnusedTurnSign:A road sign graphic that's drawn but never shown]
 #R$6D32 defines a 16x10 "turn right" sign, complete with a pre-shifted
 copy at #R$6D5A, but nothing in the disassembly references either bitmap.
