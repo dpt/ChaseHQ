@@ -5,60 +5,6 @@
 [Page:Facts]
 SectionPrefix=Fact
 
-[Fact:Authors:Authors]
-Code by John O'Brien aka JOBBEEE
-<a href="https://www.mobygames.com/person/28679/john-obrien/">https://www.mobygames.com/person/28679/john-obrien/</a>
-
-Graphics by Bill Harbison aka BILL aka Harbonaut
-<a href="https://www.mobygames.com/person/31804/bill-harbison/">https://www.mobygames.com/person/31804/bill-harbison/</a>
-
-Music by Jonathan Dunn aka JON DUNN
-<a href="https://www.mobygames.com/person/31702/jonathan-dunn/">https://www.mobygames.com/person/31702/jonathan-dunn/</a>
-
-[Fact:AlternativeVersions:Alternative versions]
-There's a demo version of Chase H.Q. on Sinclair User issue 94: Megatape 23.
-<a href="https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user">https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user</a>.
-It features a single stage, with the graphics from stage 1 of the real game
-and what seems to be a custom map. There's no retry on fail and it's a tough
-level.
-
-[Fact:RelatedPorts:Related ports]
-The Amstrad CPC version is by the same authors and was produced after this
-Spectrum version.
-
-[Fact:RelatedGames:Related games]
-<b>WEC Le Mans</b> (Imagine, 1989) [Lamb/Mullins/Dunn/Harbison/Morrall]
-<br>Shares a composer and an artist with ZX Chase H.Q.
-<br><a href="https://www.mobygames.com/game/15167/wec-le-mans-24/">https://www.mobygames.com/game/15167/wec-le-mans-24/</a>
-<br>Chase H.Q. is reportedly a modification of WEC Le Mans' game engine.
-
-<p><b>Batman: The Movie</b> (Ocean Software, 1989) [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
-<br>ZX Chase H.Q.'s authors worked on the driving sequences for the Atari ST
-and Amiga versions of this game.
-<br><a href="https://www.mobygames.com/game/3848/batman/">https://www.mobygames.com/game/3848/batman/</a>
-
-<p><b>Burnin' Rubber</b> (Ocean Software, 1990) [O'Brien/Hemphill/Dunn]
-<br>A later Amstrad game by John O'Brien very much like WEC Le Mans.
-<br><a href="https://www.mobygames.com/game/70894/burnin-rubber/">https://www.mobygames.com/game/70894/burnin-rubber/</a>
-
-[Fact:Research:Research]
-<a href="https://en.wikipedia.org/wiki/Chase_H.Q.">https://en.wikipedia.org/wiki/Chase_H.Q.</a>
-<br><a href="https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ">https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ</a>
-<br><a href="https://www.mobygames.com/game/9832/chase-hq/">https://www.mobygames.com/game/9832/chase-hq/</a>
-<br><a href="http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html">http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html</a>
-<br><a href="https://news.ycombinator.com/item?id=8850193">https://news.ycombinator.com/item?id=8850193</a> (discussion about the game loader)
-<br><a href="http://www.extentofthejam.com/pseudo/">http://www.extentofthejam.com/pseudo/</a> (Lou's Pseudo 3D page)
-
-[Fact:VersionDifferences:48K/128K version differences]
-<ul>
-<li>48K version is a multiloader</li>
-<li>128K version has AY music with sampled speech and effects</li>
-<li>128K has a logo animation, then music plays, then attract mode cycle (48K version only has attract mode)</li>
-<li>128K has a Best Officers (high score) on attract screen and a high score entry screen</li>
-<li>128K retains the input device/define keys code (48K has to overwrite it for space reasons)</li>
-<li>48K has a beatbox music routine on the input selection screen</li>
-</ul>
-
 [Fact:Secrets:Secrets]
 Redefine keys to "SHOCKED&lt;ENTER&gt;" to activate test/cheat mode.
 
