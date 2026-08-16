@@ -26,7 +26,7 @@ SKOOLBANK7=$(GAME)-bank-7.skool
 
 SKOOLBANKS=$(SKOOLBANK1) $(SKOOLBANK3) $(SKOOLBANK4) $(SKOOLBANK6) $(SKOOLBANK7)
 
-REF=$(GAME).ref ChaseHQChangelog.ref ChaseHQFacts.ref ChaseHQInstructions.ref ChaseHQInformation.ref ChaseHQAbout.ref ChaseHQMapFormat.ref ChaseHQStageMaps.ref ChaseHQStageGraphics.ref
+REF=$(GAME).ref ChaseHQChangelog.ref ChaseHQFacts.ref ChaseHQInstructions.ref ChaseHQInformation.ref ChaseHQAbout.ref ChaseHQMapFormat.ref ChaseHQStageMaps.ref ChaseHQStageGraphics.ref ChaseHQCommonGraphics.ref
 TAP=$(BUILD)/$(GAME).tap
 Z80=$(BUILD)/$(GAME).z80
 
