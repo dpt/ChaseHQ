@@ -27,7 +27,8 @@ Source=ChaseHQ-128K-bank-7.skool
 
 [Game]
 Game=Chase H.Q.
-Release=The incomplete Chase H.Q. disassembly 20260720
+StyleSheet=chase-hq.css
+Release=The incomplete Chase H.Q. disassembly 20260814
 Copyright=&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023-2026 David Thomas (this disassembly)
 
 [PageHeaders]
@@ -50,6 +51,10 @@ CommonGraphics=Common Graphics
 MapFormat=Map Data Format
 Stage1Graphics=Stage 1 Graphics
 Stage1Map=Stage 1 Map
+Stage2Map=Stage 2 Map
+Stage3Map=Stage 3 Map
+Stage4Map=Stage 4 Map
+Stage5Map=Stage 5 Map
 Stage2Graphics=Stage 2 Graphics
 Stage3Graphics=Stage 3 Graphics
 Stage4Graphics=Stage 4 Graphics
@@ -68,6 +73,10 @@ OtherCode
 [Index:Game:Game]
 MapFormat
 Stage1Map
+Stage2Map
+Stage3Map
+Stage4Map
+Stage5Map
 
 [Index:Graphics:Graphics]
 Stage1Graphics
@@ -243,6 +252,110 @@ PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
 <h4>Escape Scene stretch, right objects</h4>
 #CALL(map_right_objects($E2C0))
 
+[Page:Stage2Map]
+PageContent=#INCLUDE(PageContent:Stage2Map)
+
+[PageContent:Stage2Map]
+<h3>Stage 2 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 2, curvature</h4>
+#CALL(map_curvature($E28C,1,0))
+
+<h4>Stage 2, height</h4>
+#CALL(map_height($E2B0,1,0))
+
+<h4>Stage 2, lanes</h4>
+#CALL(map_lanes($E2E6,1,0))
+
+<h4>Stage 2, hazards</h4>
+#CALL(map_hazards($E2FC,1,0))
+
+<h4>Stage 2, left objects</h4>
+#CALL(map_left_objects($E330,1,0))
+
+<h4>Stage 2, right objects</h4>
+#CALL(map_right_objects($E3C2,1,0))
+
+[Page:Stage3Map]
+PageContent=#INCLUDE(PageContent:Stage3Map)
+
+[PageContent:Stage3Map]
+<h3>Stage 3 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 3, curvature</h4>
+#CALL(map_curvature($C288,6,0))
+
+<h4>Stage 3, height</h4>
+#CALL(map_height($C2AC,6,0))
+
+<h4>Stage 3, lanes</h4>
+#CALL(map_lanes($C2CD,6,0))
+
+<h4>Stage 3, hazards</h4>
+#CALL(map_hazards($C2DB,6,0))
+
+<h4>Stage 3, left objects</h4>
+#CALL(map_left_objects($C2E8,6,0))
+
+<h4>Stage 3, right objects</h4>
+#CALL(map_right_objects($C36C,6,0))
+
+[Page:Stage4Map]
+PageContent=#INCLUDE(PageContent:Stage4Map)
+
+[PageContent:Stage4Map]
+<h3>Stage 4 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 4, curvature</h4>
+#CALL(map_curvature($E29C,6,0))
+
+<h4>Stage 4, height</h4>
+#CALL(map_height($E2C4,6,0))
+
+<h4>Stage 4, lanes</h4>
+#CALL(map_lanes($E304,6,0))
+
+<h4>Stage 4, hazards</h4>
+#CALL(map_hazards($E30E,6,0))
+
+<h4>Stage 4, left objects</h4>
+#CALL(map_left_objects($E336,6,0))
+
+<h4>Stage 4, right objects</h4>
+#CALL(map_right_objects($E3CE,6,0))
+
+[Page:Stage5Map]
+PageContent=#INCLUDE(PageContent:Stage5Map)
+
+[PageContent:Stage5Map]
+<h3>Stage 5 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 5, curvature</h4>
+#CALL(map_curvature($C2A1,7,0))
+
+<h4>Stage 5, height</h4>
+#CALL(map_height($C2C9,7,0))
+
+<h4>Stage 5, lanes</h4>
+#CALL(map_lanes($C2FB,7,0))
+
+<h4>Stage 5, hazards</h4>
+#CALL(map_hazards($C30D,7,0))
+
+<h4>Stage 5, left objects</h4>
+#CALL(map_left_objects($C32C,7,0))
+
+<h4>Stage 5, right objects</h4>
+#CALL(map_right_objects($C3D2,7,0))
+
 [Page:Stage1Graphics]
 PageContent=#INCLUDE(PageContent:Stage1Graphics)
 
@@ -269,6 +382,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 
 [PageContent:Stage1Graphics]
 #CALL(graphic($5C00,80,24,0,1))
+#CALL(graphic($C000,80,24,0,1,1))
 #CALL(face($638A))
 #CALL(graphic($64BC,48,30,0,1))
 #CALL(graphic($6570,40,22,0,1))
@@ -361,6 +475,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($7630,24,1,1,1))
 
 [PageContent:Stage2Graphics]
+#CALL(graphic($E000,80,24,0,1,1))
 #CALL(face($E84B,1))
 #CALL(graphic($E97D,48,29,0,1,1))
 #CALL(graphic($EA2B,32,19,0,1,1))
@@ -413,6 +528,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($FAD2,16,7,1,1,1))
 
 [PageContent:Stage3Graphics]
+#CALL(graphic($C000,80,24,0,1,6))
 #CALL(face($C82C,6))
 #CALL(graphic($C95E,48,30,0,1,6))
 #CALL(graphic($CA12,32,20,0,1,6))
@@ -479,6 +595,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($DAE0,16,4,1,1,6))
 
 [PageContent:Stage4Graphics]
+#CALL(graphic($E000,80,24,0,1,6))
 #CALL(face($E73E,6))
 #CALL(graphic($E870,48,30,0,1,6))
 #CALL(graphic($E924,32,22,0,1,6))
@@ -543,6 +660,7 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($FA07,16,13,1,1,6))
 
 [PageContent:Stage5Graphics]
+#CALL(graphic($C000,80,24,0,1,7))
 #CALL(face($C82E,7))
 #CALL(graphic($C960,48,30,0,1,7))
 #CALL(graphic($CA14,40,22,0,1,7))
@@ -629,6 +747,92 @@ PageContent=#INCLUDE(PageContent:EndScreenGraphics)
 #CALL(graphic($DF9A,16,8,0,0,3))
 #CALL(graphic($DFAA,16,8,0,0,3))
 #CALL(graphic($DFBA,24,26,0,0,3))
+#CALL(graphic($E008,32,20,0,0,3))
+#CALL(graphic($E058,32,18,0,0,3))
+#CALL(graphic($E0A0,24,20,0,0,3))
+#CALL(graphic($E0DC,24,20,0,0,3))
+#CALL(graphic($E118,32,20,0,0,3))
+#CALL(graphic($E168,32,20,0,0,3))
+#CALL(graphic($E1B8,16,14,0,0,3))
+#CALL(graphic($E1D4,16,14,0,0,3))
+#CALL(graphic($E1F0,16,14,0,0,3))
+#CALL(graphic($E20C,24,14,0,0,3))
+#CALL(graphic($E236,8,8,0,0,3))
+#CALL(graphic($E23E,16,8,0,0,3))
+#CALL(graphic($E24E,16,8,0,0,3))
+#CALL(graphic($E25E,16,8,0,0,3))
+#CALL(graphic($E26E,24,20,0,0,3))
+#CALL(graphic($E2AA,24,20,0,0,3))
+#CALL(graphic($E2E6,32,20,0,0,3))
+#CALL(graphic($E336,32,20,0,0,3))
+#CALL(graphic($E386,16,14,0,0,3))
+#CALL(graphic($E3A2,16,14,0,0,3))
+#CALL(graphic($E3BE,24,14,0,0,3))
+#CALL(graphic($E3E8,24,14,0,0,3))
+#CALL(graphic($E412,8,8,0,0,3))
+#CALL(graphic($E41A,16,8,0,0,3))
+#CALL(graphic($E42A,16,8,0,0,3))
+#CALL(graphic($E43A,16,8,0,0,3))
+#CALL(graphic($E44A,16,20,0,0,3))
+#CALL(graphic($E472,24,20,0,0,3))
+#CALL(graphic($E4AE,24,20,0,0,3))
+#CALL(graphic($E4EA,24,20,0,0,3))
+#CALL(graphic($E526,16,14,0,0,3))
+#CALL(graphic($E542,16,14,0,0,3))
+#CALL(graphic($E55E,16,14,0,0,3))
+#CALL(graphic($E57A,16,14,0,0,3))
+#CALL(graphic($E596,8,8,0,0,3))
+#CALL(graphic($E59E,8,8,0,0,3))
+#CALL(graphic($E5A6,16,8,0,0,3))
+#CALL(graphic($E5B6,16,8,0,0,3))
+#CALL(graphic($E5C6,24,20,0,0,3))
+#CALL(graphic($E602,24,20,0,0,3))
+#CALL(graphic($E63E,32,20,0,0,3))
+#CALL(graphic($E68E,32,20,0,0,3))
+#CALL(graphic($E6DE,16,14,0,0,3))
+#CALL(graphic($E6FA,16,14,0,0,3))
+#CALL(graphic($E716,16,14,0,0,3))
+#CALL(graphic($E732,24,14,0,0,3))
+#CALL(graphic($E75C,8,8,0,0,3))
+#CALL(graphic($E764,16,8,0,0,3))
+#CALL(graphic($E774,16,8,0,0,3))
+#CALL(graphic($E784,16,8,0,0,3))
+#CALL(graphic($E794,24,20,0,0,3))
+#CALL(graphic($E7D0,24,20,0,0,3))
+#CALL(graphic($E80C,24,20,0,0,3))
+#CALL(graphic($E848,24,20,0,0,3))
+#CALL(graphic($E884,16,14,0,0,3))
+#CALL(graphic($E8A0,16,14,0,0,3))
+#CALL(graphic($E8BC,16,14,0,0,3))
+#CALL(graphic($E8D8,24,14,0,0,3))
+#CALL(graphic($E902,8,8,0,0,3))
+#CALL(graphic($E90A,8,8,0,0,3))
+#CALL(graphic($E912,16,8,0,0,3))
+#CALL(graphic($E922,16,8,0,0,3))
+#CALL(graphic($E932,24,24,0,0,3))
+#CALL(graphic($E97A,24,24,0,0,3))
+#CALL(graphic($E9C2,24,24,0,0,3))
+#CALL(graphic($EA0A,32,24,0,0,3))
+#CALL(graphic($EA6A,16,16,0,0,3))
+#CALL(graphic($EA8A,16,16,0,0,3))
+#CALL(graphic($EAAA,24,16,0,0,3))
+#CALL(graphic($EADA,24,16,0,0,3))
+#CALL(graphic($EB0A,8,10,0,0,3))
+#CALL(graphic($EB14,16,10,0,0,3))
+#CALL(graphic($EB28,16,10,0,0,3))
+#CALL(graphic($EB3C,16,10,0,0,3))
+#CALL(graphic($EB50,56,6,0,0,3))
+#CALL(graphic($EB56,48,6,0,0,3))
+#CALL(graphic($EB62,48,6,0,0,3))
+#CALL(graphic($EB6E,48,6,0,0,3))
+#CALL(graphic($EB7A,56,4,0,0,3))
+#CALL(graphic($EB7E,56,4,0,0,3))
+#CALL(graphic($EB82,48,4,0,0,3))
+#CALL(graphic($EB8A,48,4,0,0,3))
+#CALL(graphic($EB92,56,2,0,0,3))
+#CALL(graphic($EB94,56,2,0,0,3))
+#CALL(graphic($EB96,48,2,0,0,3))
+#CALL(graphic($EB9A,48,2,0,0,3))
 
 [PageContent:EndScreenGraphics]
 #CALL(endshot($E4E1,7))

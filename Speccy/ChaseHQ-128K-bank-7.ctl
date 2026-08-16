@@ -1,5 +1,6 @@
 b $C000 [Stage 5] Horizon graphic
 D $C000 The stage's skyline: 10 bytes wide by 24 rows, 240 bytes in all. It arrives at $5C00 with the rest of the per-stage data, and pre_shift_backdrop makes a copy at $5B00 rotated right by one nibble. Bit 0 of the horizontal scroll then picks between the two in draw_road, so the four pixel shift comes free.
+N $C000 #HTML[#CALL(graphic($C000,80,24,0,1))]
 @ $C000 label=stage5_backdrop
 B $C000,240,8
 b $C0F0 [Stage 5] Per-stage data
@@ -28,8 +29,8 @@ W $C116,2,2 [$C936] Address of LOD of Car D (a Lambo in S1)
 W $C118,2,2 [$C8E2] Address of LOD of Car E (a generic car in S1)
 b $C11A [Stage 5] Per-stage difficulty settings
 B $C11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $C11B,1,1 Smash config parameter TBD
-B $C11C,1,1 Smash config parameter TBD
+B $C11B,1,1 Perp lane-change base delay: added to (rng() & 31) to reset the lane-change timer
+B $C11C,1,1 Perp approach base delay: added to (rng() & 15) to reset the approach timer
 w $C11D [Stage 5] Per-stage setup data
 W $C11D,2,2 road_pos
 W $C11F,2,2 [$C2A0] Address of start stretch, curvature
