@@ -68,7 +68,7 @@ The eight bytes at #R$8008 are labelled unused, but three of them
 at $800E, six bytes into the block. <code>CALL $800E</code> is therefore equivalent to
 <code>CALL $A0D6</code> — the disassembly has to spot this by decoding the
 data as code, since nothing points at $800E directly. Two call sites use
-it this way, at #R$C647@bank3 and #R$C1D7@bank3.
+it this way, at $C647 (in #R$C59E@bank3) and $C1D7 (in #R$C16A@bank3).
 
 [Fact:DeadCode:A block of code that can never be reached]
 The three instructions at #R$85DD (labelled <code>rps_dead_code</code>) can't
@@ -77,7 +77,7 @@ be reached: every jump into the block above it either loops back to
 Kept in the disassembly as found, not trimmed.
 
 [Fact:AlwaysClearsCarry:A carry check that can never fire]
-In the engine-noise burst routine (#R$FA67@bank3), <code>AND A</code>
+In the engine-noise burst routine (#R$FA3A@bank3, at $FA67), <code>AND A</code>
 unconditionally clears the carry flag immediately before <code>RET C</code>,
 so that <code>RET</code> can never actually trigger early. The frame-flag
 byte it loads is never used for anything. Preserved as an apparent dead
@@ -86,12 +86,12 @@ check in the original code, not a translation artefact.
 [Fact:FrozenTitleObject:A title-screen object that can freeze mid-script]
 Object scripts on the title screen use opcode $D1 for an initial
 constant-velocity burst, but $D1 is never tested by either of the two
-dispatch chains that drive object movement (#R$C70E@bank3 onwards). Every
-one of the five title scenes hits this: once $D1 is latched as the active
-opcode, the object can never reach the countdown that would let it fetch a
-new instruction, and it freezes in place for the rest of the scene. A
-genuine quirk of the original interpreter, not a disassembly error — see
-#R$CCF2@bank3 for object 0's case.
+dispatch chains that drive object movement ($C70E onwards, in #R$C59E@bank3).
+Every one of the five title scenes hits this: once $D1 is latched as the
+active opcode, the object can never reach the countdown that would let it
+fetch a new instruction, and it freezes in place for the rest of the scene.
+A genuine quirk of the original interpreter, not a disassembly error — see
+$CCF2 (in #R$CBCE) for object 0's case.
 
 [Fact:UnusedTurnSign:A road sign graphic that's drawn but never shown]
 #R$6D32 defines a 16x10 "turn right" sign, complete with a pre-shifted
@@ -100,8 +100,8 @@ Whatever used it (perhaps an earlier version of the fork-in-the-road
 warning) was cut before release.
 
 [Fact:CorneringDoubleTest:A repeated bit test in the cornering check]
-#R$B2C7@bank3's cornering-direction check tests bit 7 of H twice on the
-same branch of the decision tree (#R$B2CD and #R$B2D5@bank3) — the second
+The cornering-direction check at $B2C7, in #R$B063, tests bit 7 of H twice
+on the same branch of the decision tree ($B2CD and $B2D5) — the second
 test can never come out differently from the first, since nothing changes
 H in between. Marked "bug?" in the disassembly; behaviourally harmless, but
 almost certainly an accidental duplication rather than an intentional
