@@ -5,6 +5,25 @@
 [Page:Changelog]
 SectionType=BulletPoints
 
+[Changelog:20260816]
+Fifth release
+
+- Decoded the remaining title-logo glyph bitmaps in bank 3
+
+- Resolved remaining hedged comments via a C-port rebuild cross-check
+
+- Added a custom CSS theme for the HTML output
+
+- Added Stage 2-5 map ref sections and index pages for the banked map data
+
+- Added Facts and Bugs pages, moved from the skool prologue
+
+- Fixed several Facts page defects: truncated/misdirected links, a wrong
+  drum-sample description, and a wrong address in the frozen title object fact
+
+- Fixed multi-paragraph description blocks being misparsed as register/N
+  sections
+
 [Changelog:20260814]
 Fourth release
 
