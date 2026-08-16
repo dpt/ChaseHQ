@@ -11,86 +11,8 @@
 > $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2025.
 > $4000 ; Sources live at <https://github.com/dpt/ChaseHQ>.
 > $4000 ;
-> $4000 ;
-> $4000 ; AUTHORS
-> $4000 ; -------
-> $4000 ; Code by John O'Brien aka JOBBEEE
-> $4000 ; <https://www.mobygames.com/person/28679/john-obrien/>
-> $4000 ;
-> $4000 ; Graphics by Bill Harbison aka BILL aka Harbonaut
-> $4000 ; <https://www.mobygames.com/person/31804/bill-harbison/>
-> $4000 ;
-> $4000 ; Music by Jonathan Dunn aka JON DUNN
-> $4000 ; <https://www.mobygames.com/person/31702/jonathan-dunn/>
-> $4000 ;
-> $4000 ;
-> $4000 ; ALTERNATIVE VERSIONS
-> $4000 ; --------------------
-> $4000 ; There's a demo version of Chase H.Q. on Sinclair User issue 94: Megatape 23.
-> $4000 ; <https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user>.
-> $4000 ; It features a single stage, with the graphics from stage 1 of the real game
-> $4000 ; and what seems to be a custom map. There's no retry on fail and it's a tough
-> $4000 ; level.
-> $4000 ;
-> $4000 ;
-> $4000 ; RELATED PORTS
-> $4000 ; -------------
-> $4000 ; The Amstrad CPC version is by the same authors and was produced after this
-> $4000 ; Spectrum version.
-> $4000 ;
-> $4000 ;
-> $4000 ; RELATED GAMES
-> $4000 ; -------------
-> $4000 ; "WEC Le Mans" (Imagine, 1989)
-> $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
-> $4000 ; - Shares a composer and an artist with ZX Chase H.Q.
-> $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
-> $4000 ; - Chase H.Q. is reportedly a modification of WEC Le Mans' game engine.
-> $4000 ;
-> $4000 ; "Batman: The Movie" (Ocean Software, 1989)
-> $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
-> $4000 ; - ZX Chase H.Q.'s authors worked on the driving sequences for the Atari ST and
-> $4000 ;   Amiga versions of this game.
-> $4000 ; <https://www.mobygames.com/game/3848/batman/>
-> $4000 ;
-> $4000 ; "Burnin' Rubber" (Ocean Software, 1990)
-> $4000 ; [O'Brien/Hemphill/Dunn]
-> $4000 ; - A later Amstrad game by John O'Brien very much like WEC Le Mans.
-> $4000 ; <https://www.mobygames.com/game/70894/burnin-rubber/>
-> $4000 ;
-> $4000 ;
-> $4000 ; RESEARCH
-> $4000 ; --------
-> $4000 ; https://en.wikipedia.org/wiki/Chase_H.Q.
-> $4000 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
-> $4000 ; https://www.mobygames.com/game/9832/chase-hq/
-> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-> $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
-> $4000 ; http://www.extentofthejam.com/pseudo/ (Lou's Pseudo 3D page)
-> $4000 ;
-> $4000 ;
-> $4000 ; BUGS
-> $4000 ; ----
-> $4000 ; Bugfix provided by Russell Marks:
-> $4000 ; "When you finish a stage, a hidden bonus is sometimes given randomly. At
-> $4000 ;  address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
-> $4000 ;  Therefore calculation of time bonus is using random value from A' instead of
-> $4000 ;  low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
-> $4000 ;
-> $4000 ;
-> $4000 ; SECRETS
-> $4000 ; -------
-> $4000 ; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
-> $4000 ;
-> $4000 ;
-> $4000 ; 48K/128K VERSION DIFFERENCES
-> $4000 ; ----------------------------
-> $4000 ; - 48K version is a multiloader
-> $4000 ; - 128K version has AY music with sampled speech and effects
-> $4000 ; - 128K has a logo animation > music plays > attract mode cycle (48K version only has attract mode)
-> $4000 ; - 128K has a Best Officers (high score) on attract screen and a high score entry screen
-> $4000 ; - 128K retains the input device/define keys code (48K has to overwrite it for space reasons)
-> $4000 ; - 48K has a beatbox music routine on the input selection screen
+> $4000 ; Authors, related games/ports, research links, bugs and secrets are now
+> $4000 ; documented on the Facts and Bugs pages (ChaseHQFacts.ref), not here.
 > $4000 ;
 > $4000 ;
 > $4000 ; MEMORY MAP
