@@ -1,0 +1,175 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Links]
+Stage1Map=[Stage 1] (map data for stage 1)
+Stage2Map=[Stage 2] (map data for stage 2)
+Stage3Map=[Stage 3] (map data for stage 3)
+Stage4Map=[Stage 4] (map data for stage 4)
+Stage5Map=[Stage 5] (map data for stage 5)
+
+[Titles]
+Stage1Map=Stage 1 Map
+Stage2Map=Stage 2 Map
+Stage3Map=Stage 3 Map
+Stage4Map=Stage 4 Map
+Stage5Map=Stage 5 Map
+
+[Page:Stage1Map]
+PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
+
+[PageContent:Stage1Map]
+<h3>Stage 1 Map</h3>
+
+<ul>
+<li>Curvature</li>
+<li>Height</li>
+<li>Lanes</li>
+<li>Hazards</li>
+<li>Left-side Objects</li>
+<li>Right-side Objects</li>
+</ul>
+
+<h4>Stage 1, curvature</h4>
+#CALL(map_curvature($5EC4))
+
+<h4>Stage 1, height</h4>
+#CALL(map_height($5EE4))
+
+<h4>Stage 1, lanes</h4>
+#CALL(map_lanes($5F0F))
+
+<h4>Stage 1, hazards</h4>
+#CALL(map_hazards($5F1D))
+
+<h4>Stage 1, left objects</h4>
+#CALL(map_left_objects($5F2A))
+
+<h4>Stage 1, right objects</h4>
+#CALL(map_right_objects($5F78))
+
+[PageContent:EscapeMap]
+<h3>Escape Scene Map</h3>
+
+<h4>Escape Scene stretch, curvature</h4>
+#CALL(map_curvature($E2AA))
+
+<h4>Escape Scene stretch, height</h4>
+#CALL(map_height($E2AF))
+
+<h4>Escape Scene stretch, lanes</h4>
+#CALL(map_lanes($E2B4))
+
+<h4>Escape Scene stretch, hazards</h4>
+#CALL(map_hazards($E2A4))
+
+<h4>Escape Scene stretch, left objects</h4>
+#CALL(map_left_objects($E2C0))
+
+<h4>Escape Scene stretch, right objects</h4>
+#CALL(map_right_objects($E2C0))
+
+[Page:Stage2Map]
+PageContent=#INCLUDE(PageContent:Stage2Map)
+
+[PageContent:Stage2Map]
+<h3>Stage 2 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 2, curvature</h4>
+#CALL(map_curvature($E28C,1,0))
+
+<h4>Stage 2, height</h4>
+#CALL(map_height($E2B0,1,0))
+
+<h4>Stage 2, lanes</h4>
+#CALL(map_lanes($E2E6,1,0))
+
+<h4>Stage 2, hazards</h4>
+#CALL(map_hazards($E2FC,1,0))
+
+<h4>Stage 2, left objects</h4>
+#CALL(map_left_objects($E330,1,0))
+
+<h4>Stage 2, right objects</h4>
+#CALL(map_right_objects($E3C2,1,0))
+
+[Page:Stage3Map]
+PageContent=#INCLUDE(PageContent:Stage3Map)
+
+[PageContent:Stage3Map]
+<h3>Stage 3 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 3, curvature</h4>
+#CALL(map_curvature($C288,6,0))
+
+<h4>Stage 3, height</h4>
+#CALL(map_height($C2AC,6,0))
+
+<h4>Stage 3, lanes</h4>
+#CALL(map_lanes($C2CD,6,0))
+
+<h4>Stage 3, hazards</h4>
+#CALL(map_hazards($C2DB,6,0))
+
+<h4>Stage 3, left objects</h4>
+#CALL(map_left_objects($C2E8,6,0))
+
+<h4>Stage 3, right objects</h4>
+#CALL(map_right_objects($C36C,6,0))
+
+[Page:Stage4Map]
+PageContent=#INCLUDE(PageContent:Stage4Map)
+
+[PageContent:Stage4Map]
+<h3>Stage 4 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 4, curvature</h4>
+#CALL(map_curvature($E29C,6,0))
+
+<h4>Stage 4, height</h4>
+#CALL(map_height($E2C4,6,0))
+
+<h4>Stage 4, lanes</h4>
+#CALL(map_lanes($E304,6,0))
+
+<h4>Stage 4, hazards</h4>
+#CALL(map_hazards($E30E,6,0))
+
+<h4>Stage 4, left objects</h4>
+#CALL(map_left_objects($E336,6,0))
+
+<h4>Stage 4, right objects</h4>
+#CALL(map_right_objects($E3CE,6,0))
+
+[Page:Stage5Map]
+PageContent=#INCLUDE(PageContent:Stage5Map)
+
+[PageContent:Stage5Map]
+<h3>Stage 5 Map</h3>
+
+<p>Curvature/height/lanes/hazards/object streams for this stage live in a 128K bank. The Jump/Split target addresses embedded in this data are patched in by self-modifying code when the stage's bank is paged in; the pristine snapshot used to build this disassembly predates that patch, so only each stream's start section is decoded below and any Jump/Split target address shown is stale.</p>
+
+<h4>Stage 5, curvature</h4>
+#CALL(map_curvature($C2A1,7,0))
+
+<h4>Stage 5, height</h4>
+#CALL(map_height($C2C9,7,0))
+
+<h4>Stage 5, lanes</h4>
+#CALL(map_lanes($C2FB,7,0))
+
+<h4>Stage 5, hazards</h4>
+#CALL(map_hazards($C30D,7,0))
+
+<h4>Stage 5, left objects</h4>
+#CALL(map_left_objects($C32C,7,0))
+
+<h4>Stage 5, right objects</h4>
+#CALL(map_right_objects($C3D2,7,0))
