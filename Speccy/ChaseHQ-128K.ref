@@ -36,9 +36,36 @@ GameIndex=The incomplete<>disassembly
 
 [Links]
 Map=[Road map] (the road map)
+Stage1Graphics=[Stage 1] (graphics specific to stage 1)
+Stage1Map=[Stage 1] (map data for stage 1)
+Stage2Graphics=[Stage 2] (graphics specific to stage 2)
+Stage2Map=[Stage 2] (map data for stage 2)
+Stage3Graphics=[Stage 3] (graphics specific to stage 3)
+Stage3Map=[Stage 3] (map data for stage 3)
+Stage4Graphics=[Stage 4] (graphics specific to stage 4)
+Stage4Map=[Stage 4] (map data for stage 4)
+Stage5Graphics=[Stage 5] (graphics specific to stage 5)
+Stage5Map=[Stage 5] (map data for stage 5)
+CommonGraphics=[Common] (graphics common to all stages)
+TitleGraphics=[Title screen] (the animated title screen, bank 3)
+EndScreenGraphics=[End screen] (the end-of-game results screen, bank 7)
 
 [Titles]
 About=About this Project
+MapFormat=Map Data Format
+Stage1Graphics=Stage 1 Graphics
+Stage1Map=Stage 1 Map
+Stage2Graphics=Stage 2 Graphics
+Stage2Map=Stage 2 Map
+Stage3Graphics=Stage 3 Graphics
+Stage3Map=Stage 3 Map
+Stage4Graphics=Stage 4 Graphics
+Stage4Map=Stage 4 Map
+Stage5Graphics=Stage 5 Graphics
+Stage5Map=Stage 5 Map
+CommonGraphics=Common Graphics
+EndScreenGraphics=End Screen Graphics
+TitleGraphics=Title Screen Graphics
 
 [Index]
 Instructions

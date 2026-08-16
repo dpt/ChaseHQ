@@ -2,20 +2,6 @@
 ; SkoolKit ref file for Chase H.Q. by Ocean.
 ;
 
-[Links]
-Stage1Graphics=[Stage 1] (graphics specific to stage 1)
-Stage2Graphics=[Stage 2] (graphics specific to stage 2)
-Stage3Graphics=[Stage 3] (graphics specific to stage 3)
-Stage4Graphics=[Stage 4] (graphics specific to stage 4)
-Stage5Graphics=[Stage 5] (graphics specific to stage 5)
-
-[Titles]
-Stage1Graphics=Stage 1 Graphics
-Stage2Graphics=Stage 2 Graphics
-Stage3Graphics=Stage 3 Graphics
-Stage4Graphics=Stage 4 Graphics
-Stage5Graphics=Stage 5 Graphics
-
 [Page:Stage1Graphics]
 PageContent=#INCLUDE(PageContent:Stage1Graphics)
 

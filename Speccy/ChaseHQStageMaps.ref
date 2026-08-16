@@ -2,20 +2,6 @@
 ; SkoolKit ref file for Chase H.Q. by Ocean.
 ;
 
-[Links]
-Stage1Map=[Stage 1] (map data for stage 1)
-Stage2Map=[Stage 2] (map data for stage 2)
-Stage3Map=[Stage 3] (map data for stage 3)
-Stage4Map=[Stage 4] (map data for stage 4)
-Stage5Map=[Stage 5] (map data for stage 5)
-
-[Titles]
-Stage1Map=Stage 1 Map
-Stage2Map=Stage 2 Map
-Stage3Map=Stage 3 Map
-Stage4Map=Stage 4 Map
-Stage5Map=Stage 5 Map
-
 [Page:Stage1Map]
 PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
 

@@ -2,9 +2,6 @@
 ; SkoolKit ref file for Chase H.Q. by Ocean.
 ;
 
-[Titles]
-MapFormat=Map Data Format
-
 [Page:MapFormat]
 PageContent=#INCLUDE(PageContent:MapFormatX)
 

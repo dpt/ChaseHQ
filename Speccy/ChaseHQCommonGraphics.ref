@@ -2,16 +2,6 @@
 ; SkoolKit ref file for Chase H.Q. by Ocean.
 ;
 
-[Links]
-CommonGraphics=[Common] (graphics common to all stages)
-TitleGraphics=[Title screen] (the animated title screen, bank 3)
-EndScreenGraphics=[End screen] (the end-of-game results screen, bank 7)
-
-[Titles]
-CommonGraphics=Common Graphics
-EndScreenGraphics=End Screen Graphics
-TitleGraphics=Title Screen Graphics
-
 [Page:CommonGraphics]
 PageContent=#INCLUDE(PageContent:CommonGraphics)
 
