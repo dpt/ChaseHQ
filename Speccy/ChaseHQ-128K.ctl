@@ -2222,7 +2222,7 @@ C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
-R $80B9 O:F Carry set on return likely signals success.
+D $80B9 O:F Carry set on return likely signals success.
 @ $80B9 label=tape_load_to_5c00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
@@ -2967,7 +2967,7 @@ C $87D9,3 Loop
 c $87DC Sets up the stage
 D $87DC Resets the road buffer, restores the saved game session over the live one, clears every hazard slot but slot 0, copies the caller's set-up data, pre-shifts the backdrop, resets the horizon attribute bytes at $E34B, NOPs the helicopter and tunnel draw calls in #R$8F5F, primes the map reader by cycling it 32 times, then starts a reverse transition, clears the playfield, dims the marquee lights and silences audio.
 D $87DC Used by the routines at #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
-R $87DC I:HL Address of 14 bytes of set up data to be copied to #R$A26C onwards.
+D $87DC I:HL Address of 14 bytes of set up data to be copied to #R$A26C onwards.
 @ $87DC label=set_up_stage
 C $87DC,1 Preserve data pointer
 N $87DD Zero $EE00..$EEFF and reset road_buffer_offset to $EE00.
@@ -3062,8 +3062,7 @@ D $88E2 Used by the routine at #R$BDC1.
 c $88F2 Starts a sound effect
 D $88F2 The request is accepted when no effect is currently playing (priority zero) or when the incoming priority is at least as high as the current one. A lower number means higher precedence, so 1 outranks everything.
 D $88F2 Used by the routines at #R$8401, #R$8903, #R$9BCF, #R$A399, #R$A637, #R$A8CD, #R$AC3C, #R$B063 and #R$B318.
-R $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C.
-R $88F2 I:C Priority. Lower priority effects will take precedence.
+D $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C. I:C Priority. Lower priority effects will take precedence.
 @ $88F2 label=start_sfx
 C $88F2,6 If current effect's priority is zero then assign
 C $88F8,2 Return if current effect's priority is lower than request
@@ -3119,7 +3118,7 @@ N $895C Effect 9 - Time running out low ("bow")
 W $895C,4,2
 c $8960 Crash sound effect
 D $8960 Walks the 93-byte waveform table at #R$897C. Each byte is played bit by bit: the inner loop runs #REGd times, driving the EAR bit from the byte's top bit and rotating the byte left in place each time. Since the table is rotated where it sits, successive calls play a different waveform.
-R $8960 I:D Inner loop count
+D $8960 I:D Inner loop count
 @ $8960 label=sfx_crash
 C $8960,3 #REGhl -> Effect data table
 C $8963,2 Length of table is 93
@@ -3142,7 +3141,7 @@ B $897C,93,8*11,5 Effect data table
 c $89D9 "Thud" sound effect
 D $89D9 Steps through the 32-byte table at #R$89EF. Each byte gives a number of output pulses to emit at the current EAR level; the level is toggled after each group. #REGd sets the delay between pulses, so a larger value gives a lower pitch.
 D $89D9 The game uses a delay multiplier of 8 for car landings and 3 for hazard hits.
-R $89D9 I:D Delay multiplier value
+D $89D9 I:D Delay multiplier value
 @ $89D9 label=sfx_thud
 C $89D9,2 Length of table is 32
 C $89DB,3 Point #REGhl at the effect data table
@@ -3163,9 +3162,7 @@ C $89EE,1 Return
 B $89EF,32,8 Each byte is a delay between speaker toggles (off-on-off-...)
 c $8A0F Cornering sound effect
 D $8A0F The game only ever uses a duty factor of 100 and a count of 1.
-R $8A0F I:D Duty factor and outer loop count
-R $8A0F I:E Inner loop count
-R $8A0F Half duty cycle: only run on every other call.
+D $8A0F I:D Duty factor and outer loop count I:E Inner loop count Half duty cycle: only run on every other call.
 @ $8A0F label=sfx_cornering
 C $8A0F,7 Toggle static flag
 C $8A16,1 Return if flag became non-zero
@@ -3190,8 +3187,7 @@ C $8A35,1 Return
 c $8A36 "Bip" or "Bow" sound effect
 D $8A36 Twenty outer iterations, each a burst of five inner steps. The on-phase delay is #REGc, counting down from 20, and the off-phase is 24 - #REGc, so the pitch falls as the effect plays. #REGd is reloaded from #REGe at every step.
 D $8A36 The game uses $78 or $C8 for both args.
-R $8A36 I:D Delay at start
-R $8A36 I:E Same as #REGd
+D $8A36 I:D Delay at start I:E Same as #REGd
 @ $8A36 label=sfx_bipbow
 C $8A36,2 Set outer loop counter to 20
 C $8A38,3 Inner loop counter. H is decremented and restored from L each loop.
@@ -3590,7 +3586,7 @@ C $8DF8,1 Return
 c $8DF9 Sets up a transition (the fade between scenes)
 D $8DF9 Picks one of the four three-byte entries in the forward ($EC00) or reverse ($EC0C) half of the table at random and plants its frame count and mask pointer, along with the stride passed in, into the three self-modified operands #R$8D8F reads.
 D $8DF9 Used by the routines at #R$8014, #R$8401, #R$858C, #R$873C, #R$87DC, #R$8A57 and #R$F220.
-R $8DF9 I:A $08 or $F8 to animate forwards or backwards respectively.
+D $8DF9 I:A $08 or $F8 to animate forwards or backwards respectively.
 @ $8DF9 label=setup_transition
 C $8DF9,1 Set flags from #REGa
 C $8DFA,3 Widen #REGa to #REGbc
@@ -3654,9 +3650,7 @@ C $8E6B,1 Return
 c $8E6C Print a message
 D $8E6C The six byte header holds the attribute byte, the back buffer destination and the screen attribute address; the NUL terminated string follows it and is rendered by #R$9F99. The pointer returned is the byte after the NUL, so callers can chain one message block onto the next.
 D $8E6C Used by the routines at #R$8014, #R$8258, #R$865A, #R$8E42 and #R$F220.
-R $8E6C I:A Flags byte
-R $8E6C I:HL -> as yet unnamed message structure
-R $8E6C O:HL -> next unconsumed byte
+D $8E6C I:A Flags byte I:HL -> as yet unnamed message structure O:HL -> next unconsumed byte
 @ $8E6C label=print_message
 C $8E6C,1 Preserve/bank flags byte in #REGa
 C $8E6D,1 Preserve #REGbc
@@ -3671,7 +3665,7 @@ C $8E7D,1 Return
 c $8E7E Setup overlay messages
 D $8E7E Called for TIME UP, CONTINUE, BEST OFFICERS, etc. messages.
 D $8E7E Used by the routines at #R$8258, #R$873C, #R$8A57, #R$8C3A, #R$9BCF, #R$B4CC and #R$F220.
-R $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginning with a frame delay.]
+D $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginning .    with a frame delay.]
 @ $8E7E label=setup_overlay_messages
 C $8E7E,2 Set transition_control to 2 (show overlay)
 N $8E80 This entry point is used by the routine at #R$8A57.
@@ -3703,9 +3697,7 @@ C $8EB5,2 Exit via draw_overlay_messages
 c $8EB7 Draws a mugshot to the back buffer
 D $8EB7 160 bytes, 32 by 5 pixels, are copied backwards from the byte before the attributes down into the back buffer, four at a time: four LDDs write one four byte slice across the width of the face, then the back buffer pointer steps to the previous scanline. The PUSH HL and POP HL keep the attributes pointer, which is still needed when the copy finishes and the routine falls into plot_face_attributes.
 D $8EB7 Used by the routine at #R$8E91.
-R $8EB7 I:BC Screen position (used for attributes)
-R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
-R $8EB7 I:HL Address of start of mugshot attributes / end of bitmap data
+D $8EB7 I:BC Screen position (used for attributes) I:DE Address of last byte of bitmap data to be written (in back buffer) I:HL Address of start of mugshot attributes / end of bitmap data
 @ $8EB7 label=draw_mugshot
 C $8EB7,1 Preserve screen position (plot_face_attributes POPs it)
 C $8EB8,1 Preserve address of mugshot attributes
@@ -3912,10 +3904,7 @@ c $9052 Draws overhead graphics
 D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
 D $9052 #R$916C is called first if the second x-position entry is zero. The perspective y-scale for the current row gives the vertical offset, and the depth set pair index is the depth less one, capped at 9. The x-position entries either side of the current position then say whether the object is visible and how far it is clipped. The deck itself is drawn a row at a time: each depth has a row count and one solid fill byte per row, and every row is a single colour fill across the clipped width.
 D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (Stage 3)
-R $9052 I:B Depth scale index, which also picks the pair entry, 0 to 9
-R $9052 I:DE Address of the stretchy object descriptors
-R $9052 I:IX Pointer into the centre x-position table for this object slot
-R $9052 I:IY Pointer into the height table for this object slot
+D $9052 I:B Depth scale index, which also picks the pair entry, 0 to 9 I:DE Address of the stretchy object descriptors I:IX Pointer into the centre x-position table for this object slot I:IY Pointer into the height table for this object slot
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
 C $9056,3 A = IX[1]  -- buffer offset/distance
@@ -4005,11 +3994,8 @@ C $9169,3 Loop
 c $916C Draws stretchy objects, such as trees
 D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CD and #R$9243 - then drops into the common stretchy object code.
 D $916C Used by the routine at #R$9052.
-R $916C I:B Depth index of the object
-R $916C I:DE Address of the object's stretchy object descriptor (e.g. stretchy_shortpole/#R$7E05)
-R $916C I:IX X-position table pointer
-R $916C I:IY Height table pointer
-N $916C Entry point for left hand objects.
+D $916C I:B Depth index of the object I:DE Address of the object's stretchy object descriptor (e.g. .    stretchy_shortpole/#R$7E05) I:IX X-position table pointer I:IY Height table pointer
+D $916C Entry point for left hand objects.
 @ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
 N $9171 Entry point for right hand objects.
@@ -4122,10 +4108,7 @@ C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $924A,3 Loop to dso_next_object
 c $924D Draws tunnel lights via the shared draw_object_left/right drawing code
 D $924D The entry point for lights on the left hand side of the tunnel. It loads #R$9279 (draw_object_left_entrypt) as the drawing callback and dispatches to the common object-drawing code with PUSH HL / RET.
-R $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx address; the routine is skipped if it's >= 16
-R $924D I:DE Depth set pointer for the light object
-R $924D I:IX X-position table pointer
-R $924D I:IY Height table pointer
+D $924D I:B Depth index of the light, 0 being nearest. Offset added to the $E6xx .   address; the routine is skipped if it's >= 16 I:DE Depth set pointer for the light object I:IX X-position table pointer I:IY Height table pointer
 @ $924D label=draw_tunnel_light_left
 C $924D,3 HL = $9279
 @ $9252 label=draw_tunnel_light_right
@@ -4149,10 +4132,7 @@ C $9277,1 Return via earlier PUSH
 c $9278 Draws objects (left hand version)
 D $9278 Called via dispatch at #R$901B.
 D $9278 Used to draw turn signs, lamp posts and the like. It is the plain case: XOR A sets a column offset of zero and falls into #R$9279, which does the work.
-R $9278 I:B Depth index of the object
-R $9278 I:DE Address of arg, e.g. $6B0C
-R $9278 I:IX X-position table pointer
-R $9278 I:IY Height table pointer
+D $9278 I:B Depth index of the object I:DE Address of arg, e.g. $6B0C I:IX X-position table pointer I:IY Height table pointer
 @ $9278 label=draw_object_left
 C $9278,1 A = 0
 @ $9279 label=draw_object_left_entrypt
@@ -4197,10 +4177,7 @@ C $92DB,2 C = 0
 C $92DE,3 Exit via draw_object_common_flipped
 c $92E1 Draws objects (right hand version)
 D $92E1 The right hand counterpart of #R$9278: XOR A sets a column offset of zero and falls into #R$92E2.
-R $92E1 I:B Depth index of the object
-R $92E1 I:IX X-position table pointer
-R $92E1 I:IY Height table pointer
-R $92E1 I:DE Address of arg, e.g. $6B0C
+D $92E1 I:B Depth index of the object I:IX X-position table pointer I:IY Height table pointer I:DE Address of arg, e.g. $6B0C
 @ $92E1 label=draw_object_right
 C $92E1,1 A = 0
 @ $92E2 label=draw_object_right_entrypt
@@ -4375,11 +4352,7 @@ C $9496,4 E = -E
 C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
-R $949C I:A Width in bytes
-R $949C I:HL Address in back buffer to plot at
-R $949C I:B' Height in rows
-R $949C I:DE' Stride of bitmap data in bytes
-R $949C I:HL' Address of bitmap data
+D $949C I:A Width in bytes I:HL Address in back buffer to plot at I:B' Height in rows I:DE' Stride of bitmap data in bytes I:HL' Address of bitmap data
 @ $949C label=plot_sprite
 C $949C,5 Use plot_sprite_odd if the bottom bit is set (odd widths)
 C $94A1,4 #REGix = Base of jump table
@@ -4473,11 +4446,7 @@ C $953F,3 Continue
 c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
 D $9542 The back buffer pointer is advanced by the byte width so that the rows fill right to left, then the odd or even width inner loop is chosen as in #R$949C. Each byte is bit reversed through the flip table before it is stored, which is what mirrors the sprite.
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
-R $9542 I:A Plot (#REGa + 1) * 8 pixels
-R $9542 I:HL Address in back buffer to plot at
-R $9542 I:B' Height in rows
-R $9542 I:DE' Stride of bitmap data in bytes
-R $9542 I:HL' Address of bitmap data
+D $9542 I:A Plot (#REGa + 1) * 8 pixels I:HL Address in back buffer to plot at I:B' Height in rows I:DE' Stride of bitmap data in bytes I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
 C $9542,4 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
 C $9546,5 Use plot_sprite_flipped_odd if the bottom bit is set (odd widths)
@@ -4492,12 +4461,7 @@ C $9562,1 Bank
 E $9542 FALLTHROUGH
 c $9565 Plot a horizontally flipped sprite, even byte widths
 D $9565 The even-width half of #R$9542, reached by falling through it; nothing else calls it. Each row is read as byte pairs through #REGsp, bit reversed through the flip table and stored right to left, then #REGhl steps back a row and #REGde advances the bitmap pointer by the stride. #R$9553 has already picked the entry point into the unrolled table at #R$9575, skipping (4 - #REGa) of its five 9-byte plot operations so that exactly the sprite's width is written. The caller's #REGsp is restored from the operand self modified at #R$954B.
-R $9565 I:IX Entry point into the plot operation table at #R$9575
-R $9565 I:DE Flip table of bit-reversed bytes, high byte only
-R $9565 I:HL Address in back buffer to plot at, already advanced to the end of the first row
-R $9565 I:B' Height in rows
-R $9565 I:DE' Stride of bitmap data in bytes
-R $9565 I:HL' Address of bitmap data
+D $9565 I:IX Entry point into the plot operation table at #R$9575 I:DE Flip table of bit-reversed bytes, high byte only I:HL Address in back buffer to plot at, already advanced to the end of the .    first row I:B' Height in rows I:DE' Stride of bitmap data in bytes I:HL' Address of bitmap data
 @ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
@@ -4585,8 +4549,7 @@ C $9611,4 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
 D $9618 My tests show this has a period of 32,768.
-R $9618 O:A Random byte
-R $9618 O:HL Corrupted
+D $9618 O:A Random byte O:HL Corrupted
 @ $9618 label=rng_seed
 B $9618,3,3 Seed / initial state
 N $961B This entry point is used by the routines at #R$860F, #R$8A0F, #R$8DF9, #R$99EC, #R$A637, #R$A7F3 and #R$A955.
@@ -4772,8 +4735,7 @@ B $9944,1,1 <STOP>
 c $9945 Start chatter
 D $9945 If chatter is already running and its priority is at least as high as the one asked for, the request is dropped without a word. Otherwise the new block pointer is stored and the state machine is reset to its starting state.
 D $9945 Used by the routines at #R$8401, #R$858C, #R$873C, #R$8876, #R$9BCF, #R$A637, #R$A8CD, #R$AB33, #R$B063, #R$B4F0 and #R$B9F4.
-R $9945 I:A Message priority: must be higher than the stored priority for the message to take effect
-R $9945 I:HL Address of message set
+D $9945 I:A Message priority: must be higher than the stored priority for the message .   to take effect I:HL Address of message set
 @ $9945 label=start_chatter
 C $9945,1 Copy priority value to #REGb
 C $9946,3 Load chatter_state into #REGa
@@ -4911,7 +4873,7 @@ C $9A54,1 Return
 c $9A55 Noise in/out effect used for mugshots
 D $9A55 The counter comes down by one and is stored back. Reaching zero means the effect is over, so #R$99EC is called to reveal the face and the message; otherwise the routine falls through and draws the next frame of static.
 D $9A55 Used by the routine at #R$9965.
-R $9A55 I:A Noise effect counter
+D $9A55 I:A Noise effect counter
 @ $9A55 label=drive_noise_effect
 C $9A55,4 Decrement noise_counter
 C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
@@ -4955,8 +4917,7 @@ C $9AAA,1 Return
 c $9AAB Plots a face on the screen
 D $9AAB 160 bytes of bitmap are copied to the real screen a scanline at a time, then the routine falls into plot_face_attributes, which writes the 4 by 5 block of colour that follows the bitmap. #REGde is always $4036 in practice.
 D $9AAB Used by the routine at #R$99EC.
-R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
-R $9AAB I:DE Address of screen location (real screen)
+D $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes) I:DE Address of screen location (real screen)
 @ $9AAB label=plot_face
 C $9AAB,3 Byte length of bitmap - counter
 C $9AAE,1 Save current screen address
@@ -4987,8 +4948,7 @@ C $9AEA,2 Loop
 c $9AEC Plot mini font characters
 D $9AEC Entry point with #REGbc zero, so both of the extra bitmap bytes are zero and no cursor block is drawn beneath the character.
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
-R $9AEC I:A Column index, counting from zero, or $FF for the off-screen cursor position
-R $9AEC I:D The character to plot (ASCII)
+D $9AEC I:A Column index, counting from zero, or $FF for the off-screen cursor .   position I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_cursor_off
 C $9AEF,2 Jump to plot_mini_font_char
 N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55.
@@ -5180,8 +5140,7 @@ c $9CD6 Add a bonus
 D $9CD6 The bonus value is passed as five BCD digits in #REGde and #REGa like: 0bDDDDddddEEEEeeeeAAAAxxxxx, where x is not used.
 D $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
 D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
-R $9CD6 I:A Low nibble of bonus
-R $9CD6 I:DE High four nibbles of bonus
+D $9CD6 I:A Low nibble of bonus I:DE High four nibbles of bonus
 @ $9CD6 label=add_bonus
 C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
@@ -5222,11 +5181,7 @@ C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B, then fall into increment_score with the bonus preserved
 c $9D17 Increments the score by (D,E,A)
 D $9D17 Used by the routines at #R$8A57 and #R$9CC2.
-R $9D17 I:A Low byte of increment (low two digits)
-R $9D17 I:E Middle byte of increment (middle two digits)
-R $9D17 I:D High byte of increment (high two digits)
-R $9D17 O:A Corrupted
-R $9D17 O:HL Corrupted
+D $9D17 I:A Low byte of increment (low two digits) I:E Middle byte of increment (middle two digits) I:D High byte of increment (high two digits) O:A Corrupted O:HL Corrupted
 @ $9D17 label=increment_score
 C $9D17,3 HL = &score_bcd
 C $9D1A,1 A += *HL
@@ -5340,7 +5295,7 @@ C $9DEF,3 Toggle its brightness
 C $9DF2,2 Exit via plot_turbos_and_digits
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 D $9DF4 Used by the routines at #R$9D51 and #R$B4CC.
-R $9DF4 I:HL Address of light to toggle.
+D $9DF4 I:HL Address of light to toggle.
 @ $9DF4 label=toggle_light_brightness
 C $9DF4,3 B = 4, C = $40 (BRIGHT bit)
 C $9DF7,19 Toggle attribute byte on five successive locations
@@ -5529,9 +5484,7 @@ C $9F42,3 Plot the digit
 C $9F45,2 Jump back to handle hext digit (next whole pair)
 c $9F47 Plots an 8x15 LED font digit to the screen
 D $9F47 The glyph is 15 bytes: the first seven fill the bottom seven scanlines of one character row and the remaining eight fill the row below it, which is why the digits sit at Y coordinates of 1, 9, 17 and so on.
-R $9F47 I:A Glyph ID (0..9)
-R $9F47 I:DE' Address of (real) screen location
-R $9F47 O:DE' Next screen location
+D $9F47 I:A Glyph ID (0..9) I:DE' Address of (real) screen location O:DE' Next screen location
 @ $9F47 label=ledfont_plot
 C $9F47,1 Bank
 C $9F48,13 #REGhl = &ledfont[glyphID * 15]
@@ -5550,12 +5503,7 @@ C $9F98,1 Return
 c $9F99 Draw a NUL-terminated string with a specified style
 D $9F99 Adapter entry point: it reorders the registers into the layout the string loop expects and supplies the constant attribute stride of 32 bytes, one attribute row.
 D $9F99 Used by the routine at #R$8E6C.
-R $9F99 I:A Attribute byte written at each character cell
-R $9F99 I:BC Attribute address
-R $9F99 I:DE Back buffer address of the first character cell
-R $9F99 I:HL String data, NUL terminated
-R $9F99 I:A' Draw style, as taken by #R$9FB4
-R $9F99 O:HL Address of the byte after the NUL terminator
+D $9F99 I:A Attribute byte written at each character cell I:BC Attribute address I:DE Back buffer address of the first character cell I:HL String data, NUL terminated I:A' Draw style, as taken by #R$9FB4 O:HL Address of the byte after the NUL terminator
 @ $9F99 label=draw_string_with_style
 C $9F99,1 Push attribute address
 C $9F9A,1 Bank
@@ -5574,14 +5522,7 @@ c $9FB4 Draw one character, to the screen or to the back buffer
 D $9FB4 Maps the ASCII character to a glyph index, then dispatches on the style in #REGa' to one of six render modes: 1 = single height, straight to the screen with the ZX scanline row advance; 2 = single height to the back buffer, nine scanlines being a blank, seven glyph rows and a blank; 3 = double height to the back buffer, each glyph row drawn on two consecutive scanlines; 4 and 5 = the inverted forms of 2 and 3; 0 = double height drawn as separate four- and three-row passes with a column advance between them. The attribute byte goes to one attribute row for the single-height styles and to two for the double-height ones.
 D $9FB4 Input font definitions are only seven rows high so gaps are left when drawing.
 D $9FB4 Used by the routine at #R$9F99.
-R $9FB4 I:A Character to draw (ASCII)
-R $9FB4 I:DE Screen address
-R $9FB4 I:A' Rendering type (double height, invert, etc.)
-R $9FB4 I:C' Attribute
-R $9FB4 I:DE' Stride
-R $9FB4 I:HL' Attribute address
-R $9FB4 O:HL' Attribute address moved on past the character
-R $9FB4 O:DE Screen address moved to next column
+D $9FB4 I:A Character to draw (ASCII) I:DE Screen address I:A' Rendering type (double height, invert, etc.) I:C' Attribute I:DE' Stride I:HL' Attribute address O:HL' Attribute address moved on past the character O:DE Screen address moved to next column
 @ $9FB4 label=draw_char
 C $9FB4,4 If it's not a space character, goto dc_not_space with #REGa reduced
 N $9FB8 It's a space
@@ -6225,8 +6166,7 @@ E $A399 FALLTHROUGH
 c $A4B8 Scenery was hit
 D $A4B8 Sets up the crash state after hitting scenery or a tunnel wall. It returns at once if the car is already crashed, so a second hit during the spin does nothing. The spin speed starts at the greater of 24 and speed/16 + 16, and the speed the car decays to is the lesser of the current speed and the cap passed in #REGa'. The crash flags, the flip direction, the delay counter, the spin speed and that speed cap are then written out, the last two by self modifying #R$B356 and #R$B32E.
 D $A4B8 Used by the routines at #R$A399, #R$A637 and #R$A8CD.
-R $A4B8 I:A Flip flag: 0 for the right hand side, 1 for the left
-R $A4B8 I:A' Speed cap: the crash starts at the lower of this and the current speed
+D $A4B8 I:A Flip flag: 0 for the right hand side, 1 for the left I:A' Speed cap: the crash starts at the lower of this and the current speed
 @ $A4B8 label=scenery_hit
 C $A4B8,3 Load address of the x in 'LD A,x' @ #R$B325 (crashed flag)
 C $A4BB,2 Set flags
@@ -6252,8 +6192,7 @@ C $A4F5,1 Return
 c $A4F6 Checks for scenery collisions at a road fork
 D $A4F6 The variant of #R$A399 used once the fork is visible and the fork countdown has reached zero. Off-road is judged from the left and fork-right x-position tables rather than the centre ones, and the only object tested is the short pole on the side of the fork the player did not take.
 D $A4F6 Used by the routine at #R$A399.
-R $A4F6 I:HL' Road position minimum, inherited from #R$A399 and stored as is
-R $A4F6 I:DE' Road position maximum, inherited from #R$A399 and stored as is
+D $A4F6 I:HL' Road position minimum, inherited from #R$A399 and stored as is I:DE' Road position maximum, inherited from #R$A399 and stored as is
 @ $A4F6 label=check_fork_scenery_collisions
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
@@ -6433,8 +6372,8 @@ c $A637 Perp car behaviour
 D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
 D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
 D $A637 A normal frame first walks the five non-perp slots for an active vehicle in the perp's lane and within range, which forces a random lane change. It then picks a lane by a random +/-1 walk biased by the road width, clamps that to the spawn lane bounds, slides the horizontal position toward it and finally scales the perp's approach speed by the distance remaining.
-R $A637 I:IX Address of hazard[0] (the perp)
-N $A637 Exit if we've caught the perp.
+D $A637 I:IX Address of hazard[0] (the perp)
+D $A637 Exit if we've caught the perp.
 @ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
 N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
@@ -6766,9 +6705,7 @@ C $A89B,1 Return
 c $A89C Returns the range of lanes that cars or hazards should spawn within
 D $A89C Returning (1,1) means that cars will only spawn in the leftmost lane; returning (3,4) makes them spawn in the third or fourth lane; and so on.
 D $A89C The lanes byte at the given road buffer offset decides. (1,4) is a four lane road, a dirt track or a fork; (1,3) a three lane road or a tunnel; (2,4) a three lane road biased right; (1,2) a two lane road biased left; and (3,4) a two lane road biased right.
-R $A89C I:C Additional lanes buffer offset (e.g. 20)
-R $A89C O:B Lowest lane
-R $A89C O:C Highest lane
+D $A89C I:C Additional lanes buffer offset (e.g. 20) O:B Lowest lane O:C Highest lane
 @ $A89C label=get_spawn_lanes
 C $A89C,6 Calculate [current buffer offset] + [lanes offset of 64] + 2 bytes + [additional buffer offset] (wrapping around)
 C $A8A2,3 Point #REGde at road buffer lane data as calculated
@@ -6799,7 +6736,7 @@ D $A8CD Called once a frame for each traffic car: it clamps the car's target lan
 D $A8CD If perp_caught_phase or dont_spawn_cars is set the car is pushed off screen instead, by setting its speed word to $01FF.
 D $A8CD The two lane bytes are distinct: IX[17] is the lane the car occupies now and IX[18] the lane it is heading for. #R$A89C returns the lowest and highest lanes in use at the car's road position -- the range narrows at a fork -- and it is IX[18] that gets clamped to it. While the two disagree, IX[5] slides +/-5 a frame toward the lane's column in #R$A7E7; on arrival IX[17] is set to IX[18] and the car has changed lane.
 D $A8CD If IX[7] is non-zero the collision engine has hit this car: the slot is freed, the overtake bonus is cleared and #R$A4B8 is called to apply the crash penalty.
-R $A8CD I:IX Hazard slot to update
+D $A8CD I:IX Hazard slot to update
 @ $A8CD label=hazard_handler
 C $A8CD,6 Jump if perp_caught_phase > 0
 C $A8D3,6 Check dont_spawn_cars flag
@@ -6935,7 +6872,7 @@ c $A9DE Draws one stone or dirt particle
 D $A9DE Draws one stone or dirt particle a call, from the positions #R$A97E worked out. Returns at once when the self modified enable flag is zero, which is what stops stones and dirt from rendering.
 D $A9DE It reads the current entry through the particle pointer. A zero type byte means the slot is inactive and only advances the pointer. Otherwise the type byte picks the stones or the dust sprite table, #REGb is clamped to 10 and halved for a level of detail index, and the particle is drawn at the x position in the entry.
 D $A9DE Used by the routine at #R$8F5F.
-R $A9DE I:B Distance counter, clamped to 10 and halved to pick the level of detail
+D $A9DE I:B Distance counter, clamped to 10 and halved to pick the level of detail
 @ $A9DE label=draw_dirt_and_stones
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
@@ -6984,8 +6921,7 @@ c $AA38 Draw the helicopter
 D $AA38 #R$AB89 (in drive_helicopter) self modifies #R$8FA4 to call this.
 D $AA38 It returns unless the counter is 3, the only distance at which the helicopter is drawn. The rotor position comes from multiplying the top three bits of fast_counter by the difference between two adjacent object_positions entries, halving the high byte of the product. The body's y offset is the vertical base less the lower of those two entries. Five body parts are then drawn in a loop and the rotor is drawn separately, using the self modified rotor position.
 D $AA38 Note that #REGiy addresses the height table, but the two bytes read as #REGiy+$4E and #REGiy+$4F land well past the end of it, past the clamped heights, past the horizon values and one spare byte, in the object_positions buffer at $E34F that #R$A579 fills.
-R $AA38 I:B Counter
-R $AA38 I:IY Somewhere in the object_positions buffer ($E34F onwards)
+D $AA38 I:B Counter I:IY Somewhere in the object_positions buffer ($E34F onwards)
 @ $AA38 label=draw_helicopter
 C $AA38,4 Return if counter isn't 3
 C $AA3C,6 A = IY[$4F] - IY[$4E]  -- a delta between two adjacent object_positions entries ($E34F onwards)
@@ -7249,8 +7185,8 @@ C $AC3B,1 Return
 c $AC3C Test for collision with hazard
 D $AC3C The hit handler for the static hazards, the barriers and tumbleweeds, hooked into every slot that #R$AB9A spawns.
 D $AC3C IX[15] is a three-state machine. 0 is the untouched state: return unless IX[7] shows a hit, otherwise look the wobble parameters up by hero speed, stash them in IX[17] and IX[18], scale the approach speed, play the hit effect and move to state 2. 2 is the wobble itself: each call steps IX[16] through the amplitude table, decays the speed by a thirty-second, toggles the inverted flag and counts IX[18] down, and at zero it clears the speed and the flag and drops to state 1. 1 is finished, and returns at once.
-R $AC3C I:IX Address of hazard structure ($A188+)
-N $AC3C If IX[15] is non-zero then jump forward.
+D $AC3C I:IX Address of hazard structure ($A188+)
+D $AC3C If IX[15] is non-zero then jump forward.
 @ $AC3C label=hazard_hit
 C $AC3C,3 IX[15] appears to be a delay of some sort
 C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
@@ -7353,11 +7289,7 @@ c $AD51 Hazard collision
 D $AD51 Returns 1, and arms the hazard's hit timer, only if all of these hold: the hit timer is zero, so this hazard is not still in its cooldown; the horizontal clip is zero, so the hazard is fully on screen; the distance is under the threshold, 2 or 3 depending on the hazard's flags; the sign of fast_counter passes the speed gate for that distance; and the horizontal position overlaps the car's zone, $68 to $8F.
 D $AD51 The hit timer written is the severity: 1 for a glancing blow at close range, up to 4 for a strike dead centre.
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
-R $AD51 I:D Initialised to zero (when return value is required)
-R $AD51 I:IX Address of a hazard structure
-R $AD51 O:D Return value
-R $AD51 O:L Hazard[2]. #R$AE7A, the only caller that could use it, discards it: it writes horz_pos and horz_clip before the CALL and never reads them back
-R $AD51 O:H Hazard[3]. Discarded likewise
+D $AD51 I:D Initialised to zero (when return value is required) I:IX Address of a hazard structure O:D Return value O:L Hazard[2]. #R$AE7A, the only caller that could use it, discards it: it .   writes horz_pos and horz_clip before the CALL and never reads them back O:H Hazard[3]. Discarded likewise
 @ $AD51 label=check_collision
 C $AD51,5 Return if hit counter is non-zero
 N $AD56 Otherwise we're... ?
@@ -7556,8 +7488,7 @@ c $AECF Draws the hazard sprites at one depth
 D $AECF Called once per depth as #R$8F5F walks the depth sorted draw list, and returns at once unless the first word of the draw table matches the current distance. For each hazard at that depth the bitmap comes from the level of detail table, the screen x position is worked out from the hazard's horizontal position and clip, and the sprite is drawn by the left or right hand object plotter.
 D $AECF A hazard whose flags are $FF is the perp car. Its position is also saved into the self modified fields #R$B01C uses, and then the floating "HERE!" arrow is drawn while smash_level is under 5, the fire overlays once smash_level reaches 4, and trailing smoke for smash_level 1 to 3.
 D $AECF Used by the routine at #R$8F5F.
-R $AECF I:B Current draw depth; must match the draw table entry
-R $AECF I:IY Pointer into the height table
+D $AECF I:B Current draw depth; must match the draw table entry I:IY Pointer into the height table
 @ $AECF label=draw_hazard_sprites
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
@@ -8354,7 +8285,7 @@ C $B4CB,1 Return
 c $B4CC Start the chase
 D $B4CC This starts the animation to put the cherry light on the roof of the hero car, enables flashing lights and the smash bar, shows the "SIGHTING OF..." message and starts the siren.
 D $B4CC It also resets the hand animation's step and delay and sets hand_flag to make it run, resets the time limit to 15 sixteenths, a BCD 60 seconds, and toggles the marquee's left light.
-R $B4CC Used by the routine at #R$A637.
+D $B4CC Used by the routine at #R$A637.
 @ $B4CC label=start_chase
 C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
 N $B4D0 Starts the animation that puts the cherry light on the roof
@@ -8438,8 +8369,7 @@ C $B58D,1 Return
 c $B58E Draws the car
 D $B58E The shadow goes down first, 56 pixels wide at y=120. The body index, 0..8, comes from the turn speed, the wobble in #REGb and the pitch; that indexes the car parts table. The back buffer address is computed from the adjusted y and the body is drawn by #R$949C or, when flip_car is set, #R$9542. The windscreen, the wheels and the two side panels follow, each through #R$B627.
 D $B58E Used by the routine at #R$B318.
-R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
-R $B58E I:B 0/3 to make the car wobble when off-road.
+D $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard. I:B 0/3 to make the car wobble when off-road.
 @ $B58E label=draw_hero_car
 C $B58E,6 If not turning (turn speed zero) then flip_car = 0
 @ $B594 label=dc_draw_shadow
@@ -8511,13 +8441,7 @@ C $B625,2 Set (horz pos in px) to 144 if not flipped [then fall through]
 c $B627 Draws a car part
 D $B627 One part is the shadow, the windscreen, the wheels or a side panel. The y-offset and the row count come from the graphic def, the part's y is subtracted from the car's y and #R$B6D6 does the drawing. flip_car picks the start offset in #REGc': zero when unflipped, byte width minus one when flipped. The returned pointer is the following graphic def, so callers chain the parts together.
 D $B627 Used by the routine at #R$B58E.
-R $B627 I:C Byte width
-R $B627 I:D Y/Vertical position (in rows)
-R $B627 I:E X/Horizontal position (in pixels)
-R $B627 I:HL Address of graphic def (y_offset, nrows, data address)
-R $B627 O:D Preserved
-R $B627 O:E Preserved
-R $B627 O:HL Address of next graphic def
+D $B627 I:C Byte width I:D Y/Vertical position (in rows) I:E X/Horizontal position (in pixels) I:HL Address of graphic def (y_offset, nrows, data address) O:D Preserved O:E Preserved O:HL Address of next graphic def
 @ $B627 label=draw_hero_car_part
 C $B627,1 A = Y
 C $B628,1 Preserve X,Y
@@ -8544,9 +8468,7 @@ C $B647,1 Return
 c $B648 Draw the hero car's turbo smoke
 D $B648 Draws one cloud of turbo exhaust smoke, at vertical position 119 and centred at x + 127. It returns without drawing while the car is airborne. Unflipped, #REGc' is zero and x comes from the unflipped table; flipped, #REGc' is the byte width less one and x comes from the flipped table.
 D $B648 Used by the routine at #R$B318.
-R $B648 I:A Index 0..3 of car turbo smoke animation
-R $B648 I:A' Non-zero to draw flipped, for the left hand exhaust
-R $B648 Calculate address of hero_car_turbo smoke[#REGa]
+D $B648 I:A Index 0..3 of car turbo smoke animation I:A' Non-zero to draw flipped, for the left hand exhaust Calculate address of hero_car_turbo smoke[#REGa]
 @ $B648 label=draw_smoke
 N $B653 Don't draw smoke if car's mid-jump
 C $B653,3 Read jump counter in move_hero_car
@@ -8586,9 +8508,7 @@ C $B67A,2 Exit via #R$B6D6 (draw part using car_y)
 c $B67C Draw the cherry light on the car roof
 D $B67C Picks the light's sprite frame, then draws it via #R$B699. The base flicker comes from the bottom bit of the half rate counter. Once turn_speed reaches #REGb the light switches to its turned frames: #REGc is added once when the car is upright and twice when flip_car is set, so the turned frames come in left and right pairs.
 D $B67C Used by the routine at #R$B318.
-R $B67C I:A Base frame index into the cherry light sprites
-R $B67C I:B Lowest turn_speed that selects the turned frames, e.g. 1
-R $B67C I:C Frame delta added once, or twice when flipped, e.g. 2
+D $B67C I:A Base frame index into the cherry light sprites I:B Lowest turn_speed that selects the turned frames, e.g. 1 I:C Frame delta added once, or twice when flipped, e.g. 2
 @ $B67C label=draw_cherry_light
 C $B67C,7 Take the bottom bit of the half rate counter_C (counts 0/1/2/3 then repeats) and add it to #REGa
 C $B683,1 Bank A
@@ -8610,9 +8530,7 @@ E $B67C FALL THROUGH
 c $B69E Draw one frame of the crash, hand and smash animation
 D $B69E Takes the x and y offsets and the adornment index from the frame table at #R$CFB2, reads that adornment's dimensions and bitmap, adjusts y for the jump height and the road's pitch, then draws it via #R$B6D6.
 D $B69E Used by the routine at #R$B318.
-R $B69E I:A Frame index into the table at #R$CFB2
-R $B69E I:B' Non-zero to draw the frame flipped horizontally
-R $B69E I:C' Horizontal start offset within the sprite
+D $B69E I:A Frame index into the table at #R$CFB2 I:B' Non-zero to draw the frame flipped horizontally I:C' Horizontal start offset within the sprite
 @ $B69E label=draw_crash
 C $B69E,2 E = 128  -- base horizontal position; the frame's own offset is added at #R$B6AF
 C $B6A0,6 Turn index into offset into car_frames (BC = A * 3)
@@ -8636,15 +8554,7 @@ C $B6D2,4 D += A - 2  -- make v.shift -1/1
 E $B69E FALL THROUGH
 c $B6D6 Draw a masked bitmap at (E,D)
 D $B6D6 Used by the routines at #R$B58E, #R$B648 and #R$B69E.
-R $B6D6 I:B Height (in rows)
-R $B6D6 I:C (byte width - 1) if flipping, 0 if not
-R $B6D6 I:D Vertical position (rows)
-R $B6D6 I:E Horizontal position (pixels)
-R $B6D6 I:HL Address of bitmap data
-R $B6D6 I:B' Non-zero to draw the sprite flipped horizontally
-R $B6D6 I:C' Horizontal start offset within the sprite
-R $B6D6 I:D' Not an input. #R$B714 zeroes it as the high byte of the stride
-R $B6D6 I:E' Sprite row stride in bytes
+D $B6D6 I:B Height (in rows) I:C (byte width - 1) if flipping, 0 if not I:D Vertical position (rows) I:E Horizontal position (pixels) I:HL Address of bitmap data I:B' Non-zero to draw the sprite flipped horizontally I:C' Horizontal start offset within the sprite I:D' Not an input. #R$B714 zeroes it as the high byte of the stride I:E' Sprite row stride in bytes
 @ $B6D6 label=draw_masked_sprite_rel_car
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
@@ -8674,13 +8584,7 @@ c $B716 Masked sprite plotter
 D $B716 This plots the game's graphics using AND-OR masking.
 D $B716 This uses the "stack trick": internally the stack is pointed at pairs of bitmap and mask bytes and #REGhl points into the screen buffer. It proceeds left-right.
 D $B716 This routine doesn't flip sprites; instead use #R$B76C (below) for that.
-R $B716 I:B Number of source data rows (loop counter)
-R $B716 I:DE Source data stride in byte pairs (e.g. 10 for 40px wide)
-R $B716 I:HL Source data (bitmap, mask byte pairs)
-R $B716 I:IX Where in #R$B729 to start the row. The table holds eight load-mask-store steps of six bytes each; entering it (8 - byte width) * 6 bytes in draws one pair per byte of width, then falls through to the scanline advance. #R$B701 does the arithmetic.
-R $B716 I:B' 15 (mask used at #R$B75B)
-R $B716 I:HL' Destination address
-R $B716 O:HL' Destination address of the last row drawn
+D $B716 I:B Number of source data rows (loop counter) I:DE Source data stride in byte pairs (e.g. 10 for 40px wide) I:HL Source data (bitmap, mask byte pairs) I:IX Where in #R$B729 to start the row. The table holds eight load-mask-store .    steps of six bytes each; entering it (8 - byte width) * 6 bytes in draws .    one pair per byte of width, then falls through to the scanline advance. .    #R$B701 does the arithmetic. I:B' 15 (mask used at #R$B75B) I:HL' Destination address O:HL' Destination address of the last row drawn
 @ $B716 label=plot_masked_sprite
 C $B716,4 Save #REGsp to be restored on exit
 C $B71A,2 Start
@@ -8726,11 +8630,7 @@ C $B769,3 Loop
 c $B76C Masked sprite plotter which flips
 D $B76C This moves the destination on by the byte width so that the second entry point starts at the right hand edge of the sprite, then falls into #R$B770, which draws right to left.
 D $B76C Used by the routine at #R$92E1.
-R $B76C I:A Byte width
-R $B76C I:HL Destination address of the left hand edge of the sprite
-R $B76C I:B' Number of source data rows (loop counter)
-R $B76C I:E' Source data stride in bytes
-R $B76C I:HL' Source data (bitmap, mask byte pairs)
+D $B76C I:A Byte width I:HL Destination address of the left hand edge of the sprite I:B' Number of source data rows (loop counter) I:E' Source data stride in bytes I:HL' Source data (bitmap, mask byte pairs)
 @ $B76C label=plot_masked_sprite_flipped
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
@@ -8788,11 +8688,7 @@ C $B7EC,3 Loop (not resetting)
 c $B7EF Masked + inverted sprite plotter
 D $B7EF Used when barriers are turned upside down. It works out the address of the last row of the bitmap, (rows - 1) * stride + base, negates the stride and calls #R$B724, so the bitmap is consumed in reverse row order. Seen with #REGbc' = $0704, seven rows of four byte stride, and #REGhl' pointing at the four-lane barrier bitmap.
 D $B7EF Used by the routine at #R$92E1.
-R $B7EF I:A Byte width
-R $B7EF I:HL Destination address of the first, topmost, row
-R $B7EF I:B' Number of source data rows (loop counter)
-R $B7EF I:E' Source data stride in bytes, positive; negated here
-R $B7EF I:HL' Source data (bitmap, mask byte pairs)
+D $B7EF I:A Byte width I:HL Destination address of the first, topmost, row I:B' Number of source data rows (loop counter) I:E' Source data stride in bytes, positive; negated here I:HL' Source data (bitmap, mask byte pairs)
 @ $B7EF label=plot_masked_sprite_inverted
 C $B7EF,4 Self modify #R$B71F - exit of plot_masked_sprite to be #REGsp to be restored on exit
 C $B7F3,4 Point #REGix at pms_jumptable
@@ -8835,8 +8731,7 @@ D $B848 Returns immediately when the speed is zero. Otherwise two independent se
 D $B848 Horizontal (#R$B854): when current_curvature is non-zero, picks a pair of bytes out of #R$B828 using an index built from the curvature and the top bits of the speed, counts horizon_x_scroll down, and on reaching zero reloads it and steps the horizon's horizontal shift (#R$C7E7) by the table's signed step, wrapping to stay in 0..19.
 D $B848 Vertical (#R$B889): with a non-zero incline, works out how many ticks have passed since the last vertical step, converts that to a movement using the per-incline rate from #R$B828, applies it to horizon_level and carries the remainders in horizon_y_accum and horizon_y_step.
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
-R $B848 I:A' The scroll amount move_hero_car banked at #R$B296, consumed by #R$B857; only meaningful when current_curvature is non-zero
-R $B848 O:A' Zeroed at #R$B889 then used as the routine's own accumulator
+D $B848 I:A' The scroll amount move_hero_car banked at #R$B296, consumed by #R$B857; .    only meaningful when current_curvature is non-zero O:A' Zeroed at #R$B889 then used as the routine's own accumulator
 @ $B848 label=scroll_horizon
 C $B848,3 Load speed into #REGhl
 C $B84B,3 Return if speed is zero
@@ -9352,8 +9247,7 @@ C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
 D $BC3E Copies 240 x 128 pixels from the back buffer to the screen. This is thinner than the real screen due to the main gameplay area's left and right black borders: each row is copied as 16 bytes then 14. It then sets up the attributes, scrolling the sky and ground colour boundary by the horizon delta of the frame before, and painting the smash-o-meter's six attribute rows at $5962 once a perp has been sighted.
-R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
-R $BC3E #R$F220.
+D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $BC3E label=send_playfield
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
 C $BC42,3 Point #REGhl' at back buffer + 1 byte.
@@ -9870,7 +9764,7 @@ C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by #R$8F82 etc. when that's self modified to call here.
 D $C15B It draws the entrance, the interior and the far wall into the back buffer for the current road scanline, in three fill phases from back to front, each using the PUSH table trick. The main body fills from the left edge and from the right; the transition rows fill from the right only, with #REGc set to $0F so every row is masked; and the far wall fills from the right only, at a depth set by the far wall mode. The horizontal extents of the fills come from the centre right and left x-position tables, which give the columns of the two tunnel walls.
-R $C15B I:IY e.g. $E315 buffer
+D $C15B I:IY e.g. $E315 buffer
 @ $C15B label=draw_tunnel
 C $C15B,2 Load #REGiy's low byte -- it's a size/distance value
 N $C15D This is set to ~20 then counts down to ~9 as the tunnel is entered. (I've noted 15..6 elsewhere).
@@ -10078,8 +9972,7 @@ c $C2E7 Subroutine of draw_road
 D $C2E7 Fills the road edge position tables for a section where the road is narrowing or widening, interpolating the edge x positions between two height table entries in Bresenham fashion and writing them through an SP-based pointer.
 D $C2E7 It is called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
-R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
-R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
+D $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer) I:IY ... sampled: $E301..E315 (height table pointer)
 @ $C2E7 label=draw_road_lanes_change
 C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
@@ -10858,8 +10751,7 @@ c $C8E3 Forked road plotting
 D $C8E3 Called from #R$C452 when the road is in a fork. It mirrors the structure of draw_road but drives five screen zones - left verge, left road, middle verge, right road, right verge - rather than three, reading the zone widths from the six x-position tables at $E8xx-$EDxx at each scanline.
 D $C8E3 The EXX on entry banks draw_road's own #REGd, #REGe, #REGb, #REGc and #REGl into the main registers: they hold the fill pattern, the horizon scanline counter, the back buffer address and the row index, the same values #R$C2E7 is handed. Ten self modified operands are then copied out of draw_road's SM bytes into the local ones at $CA9D to $CB65. Which of the two inner loops runs depends on whether the banked #REGb is zero: zero takes the zero-fill path at #R$C923, non-zero the five zone path at #R$C963.
 D $C8E3 Used by the routine at #R$C452.
-R $C8E3 I:IX Road buffer lanes pointer
-R $C8E3 I:IY Height table pointer; advanced once per block
+D $C8E3 I:IX Road buffer lanes pointer I:IY Height table pointer; advanced once per block
 @ $C8E3 label=draw_forked_road
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
@@ -11543,9 +11435,7 @@ C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplies C by the top three bits of A, then divides by 8 with rounding
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
-R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
-R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
-R $CDD6 O:A Result                              e.g. $03, $02, $01, $02, $FE
+D $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result                              e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=scale_curvature_or_height
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
@@ -12665,7 +12555,7 @@ D $E540 This is the table of 96 words (being 10^x or similar function), used for
 W $E540,192,2
 b $E600 Road/object animation tables
 D $E600 Three perspective tables of 8 rows by 22 bytes: persp_y_scale, persp_x_scale_right and persp_x_delta_left. The row is a speed band, taken from the top three bits of fast_counter, and the column is one of the 22 depth slots, nearest first. Setting the values to zero puts the road fully flush against the right hand side.
-R $E600 vertical = lower moves values UP
+D $E600 vertical = lower moves values UP
 @ $E600 label=persp_y_scale
 B $E600,176,22
 N $E6B0 horizontal = lower moves the road RIGHT
@@ -12956,8 +12846,7 @@ C $EBFD,2 Otherwise loop
 c $EBFF Renders a string
 D $EBFF The top bit of the attribute byte is the double-height flag; it is shifted out into the carry and banked in #REGf' before the character loop starts, so that #R$EC2C can test it per character.
 D $EBFF Used by the routines at #R$EBF7 and #R$ED6D.
-R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string)
-R $EBFF O:HL Address of next unconsumed byte
+D $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination .    screen address, bytes: top bit set terminated ASCII string) O:HL Address of next unconsumed byte
 @ $EBFF label=menu_draw_string
 C $EBFF,1 Load attribute byte
 C $EC00,5 Extract top bit of attribute byte as carry flag then bank (this is the single height flag)
@@ -12983,10 +12872,7 @@ C $EC2B,1 Return
 c $EC2C Renders a single character
 D $EC2C Compare #R$9FB4
 D $EC2C Used by the routine at #R$EBFF.
-R $EC2C I:A The character to plot (ASCII)
-R $EC2C I:F' Carry flag set to draw single height characters
-R $EC2C I:DE' Screen address (UDG aligned)
-R $EC2C I:HL' Attribute address
+D $EC2C I:A The character to plot (ASCII) I:F' Carry flag set to draw single height characters I:DE' Screen address (UDG aligned) I:HL' Attribute address
 @ $EC2C label=menu_draw_char
 C $EC2C,6 Handle space
 C $EC32,3 Advance attribute address
@@ -13113,8 +12999,7 @@ C $ED4B,2 Restart routine
 c $ED4D Keyscan
 D $ED4D Scans all eight keyboard half-rows in turn. A half-row with exactly one key down yields that key's packed definition; anything more ambiguous makes the routine return early with Z clear.
 D $ED4D Used by the routine at #R$ED6D.
-R $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing the key definition table uses, so the result can be stored straight into it. $FF if no key was down. Only meaningful when Z is set
-R $ED4D O:F Z set when at most one key was identified, so #REGd can be trusted. Z clear when the scan was ambiguous: two half-rows active, or two keys in one half-row
+D $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing .   the key definition table uses, so the result can be stored straight into .   it. $FF if no key was down. Only meaningful when Z is set O:F Z set when at most one key was identified, so #REGd can be trusted. Z .   clear when the scan was ambiguous: two half-rows active, or two keys in .   one half-row
 @ $ED4D label=redefine_keyscan
 C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
 C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
@@ -13140,10 +13025,7 @@ C $ED6B,2 Set Z
 c $ED6D Defines a single key
 D $ED6D Waits for an unambiguous key press, rejects it if that key is already in use, stores it in temp_keydefs, then looks the key's two-character name up in #R$EDD6 and draws it at #REGde. The screen address is advanced by one character row on the way out, and by two when #REGb is 4, which is the gap in the middle of the printed list.
 D $ED6D Used by the routine at #R$ECF3.
-R $ED6D I:B Position in the eight-key list, counting down from 8. 4 inserts the extra row gap
-R $ED6D I:C Index of key to define
-R $ED6D I:DE Screen address at which the key name is drawn
-R $ED6D O:DE Screen address of the next row
+D $ED6D I:B Position in the eight-key list, counting down from 8. 4 inserts the extra .   row gap I:C Index of key to define I:DE Screen address at which the key name is drawn O:DE Screen address of the next row
 @ $ED6D label=define_a_key
 C $ED6D,2 Preserve #REGde, #REGbc
 @ $ED6F label=dak_loop1
@@ -13357,7 +13239,7 @@ C $EF21,1 Return
 c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
 D $EF22 Two entry points share one loop: #R$EF22 plays drum 2 (108 bytes at #R$F05A) and playdrum_1 (#R$EF29) plays drum 1 (252 bytes at #R$EF5E). playdrum_start stores #REGa into the loop counter operand at #R$EF39 and raises the drum-playing flag at #R$EF0D. Each sample byte is played most significant bit first as a speaker level on port $FE, rotating in place -- but only #REGa bits are taken from a byte before the pointer moves on, so the speed value is both the bit count and the resampling step, and 1 runs through the sample eight times faster than 8. The loop hands control back to the music driver as soon as the interrupt flag at #R$EF13 is set, and clears the drum-playing flag when the sample runs out.
-R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+D $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
 C $EF22,3 Load address of drum 2 data
 C $EF25,2 108 sample bytes
@@ -13404,7 +13286,7 @@ B $F05A,108,8*13,4 Drum 2 sample/data
 c $F0C6 White noise generator
 D $F0C6 Used by the routine at #R$EE9E.
 D $F0C6 Each of the #REGe outer ticks runs 50 noise steps. A step adds 3 to the first byte of rng_seed, subtracts 141 from the second, adds the two together, rotates the sum left and adds it to the third seed byte rotated right, then taps bit 4 of the result. When the tap is set the speaker is driven high after a delay of (24 - #REGe) iterations and low again #REGe iterations later, so the duration sets the pulse width -- and hence the timbre -- as well as the length of the burst.
-R $F0C6 I:A Duration (3 or 9 in practice)
+D $F0C6 I:A Duration (3 or 9 in practice)
 @ $F0C6 label=play_noise
 C $F0C6,1 Set #REGe to duration counter
 @ $F0C7 label=n_outer_loop
@@ -13621,8 +13503,8 @@ C $F327,4 Clear turbo_sfx_noise_pitch
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play a sampled sound effect (mostly speech)
 D $F32E Lives at $8122 when relocated.
-R $F32E I:A Input index (1..5)
-N $F32E "Giddy up boy!"
+D $F32E I:A Input index (1..5)
+D $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
 W $F32E,2,2 Length
 W $F330,2,2 Address (in bank 4)
@@ -13708,7 +13590,7 @@ C $F3B0,3 Self modify #R$8E49 - reset overlay frame delay
 C $F3B3,3 Entry point for success music in bank 3
 E $F39F FALLTHROUGH
 c $F3B6 Call a routine in RAM bank 3
-R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
+D $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
 @ $F3B6 label=call_bank_3_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 (#R$F3D1 here - below)
 C $F3B9,9 Set up registers to copy 4096 bytes from $B000 to $F000
@@ -13842,7 +13724,7 @@ T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
 b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
-R $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
+D $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
 @ $F5BE label=marquee
 B $F5BE,2048,32
 b $FDBE Marquee initial attributes

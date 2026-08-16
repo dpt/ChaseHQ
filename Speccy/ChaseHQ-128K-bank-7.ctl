@@ -1954,9 +1954,7 @@ C $E3B7,3 Call es_handler_glyph_fade_b [#R$E472]
 @ $E3BA label=es_handler_handshake_advance
 c $E42E Sweep the playfield attributes toward their target colours
 D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
-R $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not
-R $E42E masked back into their 3-bit fields, so a field that reaches its target
-R $E42E exactly on the last step carries into the next one.
+D $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not masked back into their 3-bit fields, so a field that reaches its target exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
@@ -2172,7 +2170,7 @@ C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
 D $F8B9 Used by #R$F82F.
-R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+D $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
 C $F8BC,2 94 sample bytes
@@ -2219,7 +2217,7 @@ B $F953,160,2,8*19,6 Drum 1 sample
 c $F9F3 White noise generator
 D $F9F3 Bank 7's own copy of #R$F0C6@main, byte for byte identical to it apart from the two references to the <interrupt flag>, which point at this bank's copy at #R$F8AA rather than the main bank's. Reached as instrument 3 from #R$F893.
 D $F9F3 The disassembler took these 56 bytes for data; they are code.
-R $F9F3 I:A Duration (3 or 9 in practice)
+D $F9F3 I:A Duration (3 or 9 in practice)
 @ $F9F3 label=b7_play_noise
 C $F9F3,1 Set #REGe to duration counter
 @ $F9F4 label=b7n_outer_loop
