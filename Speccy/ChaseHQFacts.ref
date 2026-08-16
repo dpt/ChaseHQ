@@ -91,7 +91,7 @@ Every one of the five title scenes hits this: once $D1 is latched as the
 active opcode, the object can never reach the countdown that would let it
 fetch a new instruction, and it freezes in place for the rest of the scene.
 A genuine quirk of the original interpreter, not a disassembly error — see
-$CCF2 (in #R$CBCE) for object 0's case.
+$CCF2 (in #R$CCB7@bank3) for object 0's case.
 
 [Fact:UnusedTurnSign:A road sign graphic that's drawn but never shown]
 #R$6D32 defines a 16x10 "turn right" sign, complete with a pre-shifted
