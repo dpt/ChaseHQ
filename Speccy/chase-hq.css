@@ -205,7 +205,7 @@ td.address-2 {
 td.instruction {
   color: var(--instruction);
   font-weight: 600;
-  white-space: pre-wrap;
+  white-space: pre;
 }
 
 td.comment-1, td.comment-0 {

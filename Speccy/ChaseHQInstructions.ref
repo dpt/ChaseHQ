@@ -1,0 +1,93 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Page:Instructions]
+PageContent=#INCLUDE(PageContent:InstructionsX)
+
+[PageContent:InstructionsX]
+<h2>Scenario</h2>
+
+<p>The heat is on! The steaming roads beckon your turbo-charged Porsche 928 as the screeching tyres in the distance heralds another crime being committed.
+
+<p>"This is Nancy at Chase HQ" &ndash; we gotta few perps to catch, Algernon, Looks like you ain't gonna get much sleep tonight" "Gotcha, Nancy baby! We're on our way!"
+
+<p>Details of the perpetrators vehicles flash across your in-car computer screen as you tear away down the busy L.A. streets in search of your quarry.
+
+<p>You are the head of SCI (Special Criminal Investigation) and the type of guys you chase don't stop for no-one! After years of experience, you have discovered that the only way of stopping these people is to ram 'em off the road!
+
+<p>Your limited Turbo Chargers help you catch up, but these guys seem to drive the best (and fastest) sports cars on the road, so catchin' em ain't easy.
+
+<h2>Controls</h2>
+
+<p>This is a one player game which can be played with either joystick in port one or keyboard which is redefinable.
+
+<p>The following Spectrum joysticks may be used: KEMPSTON, SINCLAIR, CURSOR.
+
+<p>Joystick controls:
+
+<ul>
+<li>Up &ndash; Accelerate</li>
+<li>Down &ndash; Brake</li>
+<li>Fire &ndash; Change gear</li>
+<li>Space bar &ndash; Turbo</li>
+</ul>
+
+<p>Preset keys:
+
+<ul>
+<li>A &ndash; Accelerate</li>
+<li>Z &ndash; Brake</li>
+<li>K &ndash; Left</li>
+<li>L &ndash; Right</li>
+<li>N &ndash; Change gear</li>
+<li>Space bar &ndash; Turbo</li>
+<li>P &ndash; Pause</li>
+<li>Q &ndash; Quit</li>
+</ul>
+
+<p>Please note that on the 48K Spectrum control options may be changed once &ndash; when the game has loaded.
+
+<h2>Status and scoring</h2>
+
+<p>You have 60 seconds to catch up with the target vehicle and then a further 60 seconds in which to ram it off the road.
+
+<p>Points are scored as you progress along the road. Points are allowed for passing cars as follows: first car passed &ndash; 200 points; second car passed &ndash; 400 points. This continues up to 8,000 points, but if you hit another car (other than your target) the scoring will restart at 200 points.
+
+<p>When you reach the target vehicle you will score 10,000 points for each hit on the first level and 20,000 points for each hit on the second level etc. There is also a 'hidden' special bonus which may be awarded.
+
+<p>Points will be awarded for time remaining on each level, with a cumulative bonus for completing each level starting at 100,000 points. There will be an extra bonus for completing the game.
+
+<p>When you catch up with the criminals car a hit indicator will appear on the screen. This will show how many times you have to hit the target vehicle; when this indicator is full your car will automatically overtake the criminals and stop them.
+
+<h2>Gameplay</h2>
+
+<p>Your instructions come from Nancy at Chase Headquarters as she sends a description of the criminals vehicle to your on-board computer. You have limited time to catch up to the villain, at which point you will be allotted a further time bonus to force him off the road. To achieve this you must ram his car a number of times &ndash; as shown on your status panel. If you run into any other vehicles this will slow you down and make the capture more difficult. However, you have a limited number of Turbo Boosts which will give you extra acceleration for a very short period. Use these wisely! When you have inflicted the necessary number of collisions, the criminals car will pull over to the side of the road, and you can arrest them.
+
+<p>There are five missions in all, each successively tougher than the last, taking you over various landscapes and through different towns. Occasionally you will be presented with a fork in the road and an arrow will indicate the shortest route to take. A constant hazard is the presence of other innocent, but appalling drivers whom you must avoid, or pay the time penalty.
+
+<p>The clock is ticking, crimes are being committed, your Porsche is tanked-up and the bad guys are getting away.
+
+<p>"LET'S GO MR. DRIVER!"
+
+<h2>Hints and tips</h2>
+
+<ul>
+<li>Only use your turbo when ramming the target vehicle.</li>
+<li>Slow down when the road splits and follow the correct turn-off.</li>
+<li>Take your time when 'bashing' to increase your score.</li>
+<li>Try and find the hidden bonuses.</li>
+<li>You will score less for using the continue-play option.</li>
+</ul>
+
+<h2>Credits</h2>
+
+<p>Chase H.Q.: its program code, graphic representation and artwork are the copyright of Ocean Software Limited.
+
+<p>Spectrum and Amstrad: programming by Jon O'Brien, graphics by William Harbison, music by Jonathan Dunn. &copy; 1989 Ocean Software Ltd. &copy; Taito Corp.
+
+<p>Commodore: coding, graphics and music by Teque Software Ltd. &copy; 1989 Ocean Software Ltd. &copy; Taito Corp.
+
+<p>Produced by D.C. Ward.
+
+<p>(Transcribed by Robin Stuart)

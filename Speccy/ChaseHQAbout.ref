@@ -1,0 +1,30 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Page:About]
+PageContent=#INCLUDE(PageContent:AboutX)
+
+[PageContent:AboutX]
+<h2>About this project</h2>
+
+<p>This is an in-progress disassembly and rebuild of the <a href="https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ">ZX Spectrum conversion of Chase H.Q. by Ocean Software</a>, made up of two halves that feed each other:
+
+<ul>
+<li>a <a href="https://skoolkit.ca/">SkoolKit</a> disassembly of the original game &ndash; the pages you're reading now &ndash; covering the 128K version bank by bank;</li>
+<li>a mostly hand-written, human-readable C reimplementation of the game engine, translated function by function from the disassembly and keeping the original game's Z80 addresses in the comments.</li>
+</ul>
+
+<p>The disassembly explains the game; the C port proves the explanation is right. They do get out of sync sometimes.
+
+<p>The C rebuild builds with CMake, links against SDL3, and plays through all five stages &ndash; you can <a href="https://dpt.github.io/ChaseHQ/play/">play it in your browser</a> via an Emscripten/WebAssembly build. There's also a self-contained native RISC OS application built from the same engine sources.
+
+<h2>Why</h2>
+
+<p>Chase H.Q. was one of the games I grew up with on the Spectrum, and reverse engineering it is a way of properly understanding how it worked &ndash; not just what it did, but the specific tricks (stretchy objects, self-modifying dispatch, banked memory juggling) a small team used to squeeze a pseudo-3D racing game out of a 3.5MHz Z80. Writing a portable C port alongside the disassembly is a way of proving that understanding: if the C code doesn't behave like the original, the explanation is wrong somewhere.
+
+<h2>Who</h2>
+
+<p>This project is by David Thomas. I previously disassembled and rebuilt <a href="https://github.com/dpt/The-Great-Escape">The Great Escape</a> (<a href="https://github.com/dpt/The-Great-Escape-in-C">and its C rebuild</a>), and wrote <a href="https://github.com/dpt/SlopAY">SlopAY</a>, an AY-3-8912 emulator. <a href="https://www.youtube.com/watch?v=hWz7eTfn2l4&amp;list=PLAn5dfRl63Oc">I've also made some videos about this project</a>.
+
+<p>Source for everything is on GitHub at <a href="https://github.com/dpt/ChaseHQ">dpt/ChaseHQ</a>.

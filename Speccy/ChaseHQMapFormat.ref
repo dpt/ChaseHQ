@@ -1,0 +1,113 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Page:MapFormat]
+PageContent=#INCLUDE(PageContent:MapFormatX)
+
+[PageContent:MapFormatX]
+<p>Each stage's map is composed of six separate variable-length streams of data. They are:
+
+<ul>
+<li>Curvature</li>
+<li>Height</li>
+<li>Lanes</li>
+<li>Right side objects</li>
+<li>Left side objects</li>
+<li>Hazards</li>
+</ul>
+
+<p><b>Curvature</b> controls the left-right turn of the road. It is stored as a sequence of bytes of the form $CT where $C is a count (1..15) and $T is a type. The valid types are:
+
+<ul>
+<li>0: Straight</li>
+<li>1: Right</li>
+<li>2: Right Hard</li>
+<li>3: Right Very Hard</li>
+<li>8: Straight (alternate)</li>
+<li>9: Left</li>
+<li>10: Left Hard</li>
+<li>11: Left Very Hard</li>
+<li>Other values are unused by the game.</li>
+</ul>
+
+<p>A zero byte in the stream is an escape which can be followed by one of:
+
+<ul>
+<li>0: Jump. The next two bytes are the address of the next byte in the stream.</li>
+<li>1: Fork End. Used during road forks.</li>
+<li>2: Split. Used to follow road forks. The next two bytes are the address of the left fork's data, and the next two bytes are the address of the right fork's data.</li>
+<li>Other values are invalid.
+</ul>
+
+<p>This escape format is the same for all the other streams.
+
+<p><b>Height</b> controls the up-down inclination of the road. It uses the same encoding as curvature but the type field instead defines the road's inclination. Its valid values are:
+
+<ul>
+<li>1: Going Up 7 (steep incline)</li>
+<li>3: Going Up 5</li>
+<li>5: Going Up 3</li>
+<li>7: Going Up 1 (gentle incline)</li>
+<li>8: Level Road</li>
+<li>9: Going Down 1 (gentle)</li>
+<li>11: Going Down 3</li>
+<li>13: Going Down 5</li>
+<li>15: Going Down 7 (steep)</li>
+<li>Other values are unused by the game.</li>
+</ul>
+
+<p><b>Lanes</b> use a different scheme: pairs of bytes. The first byte is a count and the following byte is the data. The currently understood valid data values are:
+
+<ul>
+<li><code>$00: [ |||| ] </code>4 Lanes</li>
+<li><code>$01: [ ||__ ] </code>2 Lanes, Left Aligned</li>
+<li><code>$02: [ _||_ ] </code>2 Lanes, Centre Aligned</li>
+<li><code>$03: [ __|| ] </code>2 Lanes, Right Aligned</li>
+<li><code>$06: [ /||_ ] </code>3 Lanes to 2 Narrowing, Left Aligned</li>
+<li><code>$0F: [ _/|| ] </code>3 Lanes to 2 Narrowing, Right Aligned</li>
+<li><code>$1F: [ _\|| ] </code>2 Lanes to 3 Widening, Left Aligned</li>
+<li><code>$2D: [ \||_ ] </code>2 Lanes to 3 Widening, Right Aligned</li>
+<li><code>$45: [ ____ ] </code>Tunnel start</li>
+<li><code>$59: [ ____ ] </code>Tunnel cont/end?</li>
+<li><code>$81: [ |||_ ] </code>3 Lanes, Left Aligned</li>
+<li><code>$82: [ _||| ] </code>3 Lanes, Right Aligned</li>
+<li><code>$8E: [ /||| ] </code>4 Lanes to 3 Narrowing, Right Aligned</li>
+<li><code>$9E: [ \||| ] </code>3 Lanes to 4 Widening, Right Aligned</li>
+<li><code>$AD: [ |||/ ] </code>3 Lanes to 4 Widening, Left Aligned</li>
+<li><code>$BD: [ |||\ ] </code>4 Lanes to 3 Narrowing, Left Aligned</li>
+<li><code>$C1: [ |||| ] </code>4 Lanes, Dirt track  </li>
+<li><code>$C2: [ _||| ] </code>3 Lanes, Dirt track, Right Aligned</li>
+<li><code>$C3: [ __|| ] </code>2 Lanes, Dirt track, Right Aligned</li>
+</ul>
+
+<p><b>Right and Left side objects</b> are encoded in nibbles as for curvature data.
+
+The object types (for Stage 1) are:
+
+<ul>
+<li>0: Nothing
+<li>1: Tunnel Light
+<li>3: Short Pole
+<li>4: Tree
+<li>5: Bush
+<li>6: Street Lamp
+<li>7: Telegraph Pole
+<li>8: Turn Sign, Pointing Left
+<li>9: Turn Sign, Pointing Right
+</ul>
+
+<p><b>Hazards</b> are encoded only as byte counters and an extended form of the escapes with the following additional codes:
+
+<ul>
+<li>3: (TBD) Stop Spawning Barriers</li>
+<li>6: (TBD) Stop Spawning Barriers</li>
+<li>7: Start Spawning Barriers Left</li>
+<li>8: Start Spawning Barriers Right</li>
+<li>9: Start Spawning Two Barriers</li>
+<li>10: Set Floating Arrow Off</li>
+<li>11: Set Floating Arrow to Left</li>
+<li>12: Set Floating Arrow to Right</li>
+<li>13: Enable Car Spawning</li>
+<li>14: Disable Car Spawning</li>
+</ul>

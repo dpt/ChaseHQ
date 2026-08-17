@@ -1954,9 +1954,7 @@ C $E3B7,3 Call es_handler_glyph_fade_b [#R$E472]
 @ $E3BA label=es_handler_handshake_advance
 c $E42E Sweep the playfield attributes toward their target colours
 D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
-R $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not
-R $E42E masked back into their 3-bit fields, so a field that reaches its target
-R $E42E exactly on the last step carries into the next one.
+D $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not masked back into their 3-bit fields, so a field that reaches its target exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
 C $E42E,3 HL -> data_e06c [$E06C]
 C $E431,2 50-50 pattern, rotate in place
@@ -1980,7 +1978,8 @@ C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
-D $E4A9 I:HL Address of image to plot DE Destination address in the screen
+R $E4A9 I:HL Address of image to plot
+R $E4A9 I:DE Destination address in the screen
 @ $E4A9 label=draw_endshot
 C $E4A9,1 Preserve destination in screen
 C $E4AA,2 Counter = 64 rows

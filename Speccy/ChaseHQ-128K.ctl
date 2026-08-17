@@ -11,86 +11,8 @@
 > $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2025.
 > $4000 ; Sources live at <https://github.com/dpt/ChaseHQ>.
 > $4000 ;
-> $4000 ;
-> $4000 ; AUTHORS
-> $4000 ; -------
-> $4000 ; Code by John O'Brien aka JOBBEEE
-> $4000 ; <https://www.mobygames.com/person/28679/john-obrien/>
-> $4000 ;
-> $4000 ; Graphics by Bill Harbison aka BILL aka Harbonaut
-> $4000 ; <https://www.mobygames.com/person/31804/bill-harbison/>
-> $4000 ;
-> $4000 ; Music by Jonathan Dunn aka JON DUNN
-> $4000 ; <https://www.mobygames.com/person/31702/jonathan-dunn/>
-> $4000 ;
-> $4000 ;
-> $4000 ; ALTERNATIVE VERSIONS
-> $4000 ; --------------------
-> $4000 ; There's a demo version of Chase H.Q. on Sinclair User issue 94: Megatape 23.
-> $4000 ; <https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user>.
-> $4000 ; It features a single stage, with the graphics from stage 1 of the real game
-> $4000 ; and what seems to be a custom map. There's no retry on fail and it's a tough
-> $4000 ; level.
-> $4000 ;
-> $4000 ;
-> $4000 ; RELATED PORTS
-> $4000 ; -------------
-> $4000 ; The Amstrad CPC version is by the same authors and was produced after this
-> $4000 ; Spectrum version.
-> $4000 ;
-> $4000 ;
-> $4000 ; RELATED GAMES
-> $4000 ; -------------
-> $4000 ; "WEC Le Mans" (Imagine, 1989)
-> $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
-> $4000 ; - Shares a composer and an artist with ZX Chase H.Q.
-> $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
-> $4000 ; - Chase H.Q. is reportedly a modification of WEC Le Mans' game engine.
-> $4000 ;
-> $4000 ; "Batman: The Movie" (Ocean Software, 1989)
-> $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
-> $4000 ; - ZX Chase H.Q.'s authors worked on the driving sequences for the Atari ST and
-> $4000 ;   Amiga versions of this game.
-> $4000 ; <https://www.mobygames.com/game/3848/batman/>
-> $4000 ;
-> $4000 ; "Burnin' Rubber" (Ocean Software, 1990)
-> $4000 ; [O'Brien/Hemphill/Dunn]
-> $4000 ; - A later Amstrad game by John O'Brien very much like WEC Le Mans.
-> $4000 ; <https://www.mobygames.com/game/70894/burnin-rubber/>
-> $4000 ;
-> $4000 ;
-> $4000 ; RESEARCH
-> $4000 ; --------
-> $4000 ; https://en.wikipedia.org/wiki/Chase_H.Q.
-> $4000 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
-> $4000 ; https://www.mobygames.com/game/9832/chase-hq/
-> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-> $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
-> $4000 ; http://www.extentofthejam.com/pseudo/ (Lou's Pseudo 3D page)
-> $4000 ;
-> $4000 ;
-> $4000 ; BUGS
-> $4000 ; ----
-> $4000 ; Bugfix provided by Russell Marks:
-> $4000 ; "When you finish a stage, a hidden bonus is sometimes given randomly. At
-> $4000 ;  address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
-> $4000 ;  Therefore calculation of time bonus is using random value from A' instead of
-> $4000 ;  low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
-> $4000 ;
-> $4000 ;
-> $4000 ; SECRETS
-> $4000 ; -------
-> $4000 ; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
-> $4000 ;
-> $4000 ;
-> $4000 ; 48K/128K VERSION DIFFERENCES
-> $4000 ; ----------------------------
-> $4000 ; - 48K version is a multiloader
-> $4000 ; - 128K version has AY music with sampled speech and effects
-> $4000 ; - 128K has a logo animation > music plays > attract mode cycle (48K version only has attract mode)
-> $4000 ; - 128K has a Best Officers (high score) on attract screen and a high score entry screen
-> $4000 ; - 128K retains the input device/define keys code (48K has to overwrite it for space reasons)
-> $4000 ; - 48K has a beatbox music routine on the input selection screen
+> $4000 ; Authors, related games/ports, research links, bugs and secrets are now
+> $4000 ; documented on the Facts and Bugs pages (ChaseHQFacts.ref), not here.
 > $4000 ;
 > $4000 ;
 > $4000 ; MEMORY MAP
@@ -4087,7 +4009,7 @@ R $916C I:B Depth index of the object
 R $916C I:DE Address of the object's stretchy object descriptor (e.g. stretchy_shortpole/#R$7E05)
 R $916C I:IX X-position table pointer
 R $916C I:IY Height table pointer
-N $916C Entry point for left hand objects.
+D $916C Entry point for left hand objects.
 @ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
 N $9171 Entry point for right hand objects.
@@ -6512,7 +6434,7 @@ D $A637 This gets called whenever the perp is within sight of the hero car. It m
 D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
 D $A637 A normal frame first walks the five non-perp slots for an active vehicle in the perp's lane and within range, which forces a random lane change. It then picks a lane by a random +/-1 walk biased by the road width, clamps that to the spawn lane bounds, slides the horizontal position toward it and finally scales the perp's approach speed by the distance remaining.
 R $A637 I:IX Address of hazard[0] (the perp)
-N $A637 Exit if we've caught the perp.
+D $A637 Exit if we've caught the perp.
 @ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
 N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
@@ -7328,7 +7250,7 @@ c $AC3C Test for collision with hazard
 D $AC3C The hit handler for the static hazards, the barriers and tumbleweeds, hooked into every slot that #R$AB9A spawns.
 D $AC3C IX[15] is a three-state machine. 0 is the untouched state: return unless IX[7] shows a hit, otherwise look the wobble parameters up by hero speed, stash them in IX[17] and IX[18], scale the approach speed, play the hit effect and move to state 2. 2 is the wobble itself: each call steps IX[16] through the amplitude table, decays the speed by a thirty-second, toggles the inverted flag and counts IX[18] down, and at zero it clears the speed and the flag and drops to state 1. 1 is finished, and returns at once.
 R $AC3C I:IX Address of hazard structure ($A188+)
-N $AC3C If IX[15] is non-zero then jump forward.
+D $AC3C If IX[15] is non-zero then jump forward.
 @ $AC3C label=hazard_hit
 C $AC3C,3 IX[15] appears to be a delay of some sort
 C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
@@ -8432,7 +8354,7 @@ C $B4CB,1 Return
 c $B4CC Start the chase
 D $B4CC This starts the animation to put the cherry light on the roof of the hero car, enables flashing lights and the smash bar, shows the "SIGHTING OF..." message and starts the siren.
 D $B4CC It also resets the hand animation's step and delay and sets hand_flag to make it run, resets the time limit to 15 sixteenths, a BCD 60 seconds, and toggles the marquee's left light.
-R $B4CC Used by the routine at #R$A637.
+D $B4CC Used by the routine at #R$A637.
 @ $B4CC label=start_chase
 C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
 N $B4D0 Starts the animation that puts the cherry light on the roof
@@ -9430,8 +9352,7 @@ C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
 D $BC3E Copies 240 x 128 pixels from the back buffer to the screen. This is thinner than the real screen due to the main gameplay area's left and right black borders: each row is copied as 16 bytes then 14. It then sets up the attributes, scrolling the sky and ground colour boundary by the horizon delta of the frame before, and painting the smash-o-meter's six attribute rows at $5962 once a perp has been sighted.
-R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
-R $BC3E #R$F220.
+D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $BC3E label=send_playfield
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
 C $BC42,3 Point #REGhl' at back buffer + 1 byte.
@@ -12662,18 +12583,18 @@ B $E2F8,2,2 3 Lanes R for 10 units
 B $E2FA,2,2 3-4 Widening R for 2 units
 B $E2FC,2,2 4 Lanes for 12 units
 B $E2FE,2,2 Escape, Command 1 (Fork End)
-b $E300 Per-row height table
+g $E300 Per-row height table
 D $E300 #R$CD3A writes 21 entries here each frame, from $E301, with $A0 left as a sentinel after the last. Each is the screen row that road slice is drawn at.
 @ $E300 label=height_table
 B $E300,1,1
 S $E301,31,$1F
-b $E320 Data block at E320
+g $E320 Data block at E320
 @ $E320 label=table_e320
 S $E320,22,$16 22 entries. Used by $CC8E
-b $E336 Data block at E336
+g $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
-b $E34B Horizon values
+g $E34B Horizon values
 D $E34B These drive the per-frame sky and ground colour boundary in #R$BD5A. $E34B is the previous frame's rounded minimum height, $E34C the delta from it to this frame's, always a multiple of 8, and $E34D that delta a frame later.
 D $E34B #R$CD3A writes $E34B and $E34C by running the height table pointer off the end of the table at #R$CDD1, so neither shows up in a search for their addresses. #R$BD5A reads $E34D to decide whether to move the boundary and $E34C for how far to move it next frame.
 @ $E34B label=horizon_attr
@@ -12743,7 +12664,7 @@ D $E540 This is the table of 96 words (being 10^x or similar function), used for
 W $E540,192,2
 b $E600 Road/object animation tables
 D $E600 Three perspective tables of 8 rows by 22 bytes: persp_y_scale, persp_x_scale_right and persp_x_delta_left. The row is a speed band, taken from the top three bits of fast_counter, and the column is one of the 22 depth slots, nearest first. Setting the values to zero puts the road fully flush against the right hand side.
-R $E600 vertical = lower moves values UP
+D $E600 vertical = lower moves values UP
 @ $E600 label=persp_y_scale
 B $E600,176,22
 N $E6B0 horizontal = lower moves the road RIGHT
@@ -13700,7 +13621,7 @@ C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play a sampled sound effect (mostly speech)
 D $F32E Lives at $8122 when relocated.
 R $F32E I:A Input index (1..5)
-N $F32E "Giddy up boy!"
+D $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
 W $F32E,2,2 Length
 W $F330,2,2 Address (in bank 4)
@@ -13920,7 +13841,7 @@ T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
 b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
-R $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
+D $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
 @ $F5BE label=marquee
 B $F5BE,2048,32
 b $FDBE Marquee initial attributes
