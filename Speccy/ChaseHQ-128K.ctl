@@ -13841,7 +13841,7 @@ T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
 b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
-D $F5BE #HTML[#CALL:graphic($F5BE,256,64,0,0)]
+D $F5BE #HTML[#SCR2,0,0,32,8,$F5BE,$FDBE]
 @ $F5BE label=marquee
 B $F5BE,2048,32
 b $FDBE Marquee initial attributes
