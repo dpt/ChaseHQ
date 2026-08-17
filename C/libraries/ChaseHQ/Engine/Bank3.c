@@ -5312,11 +5312,11 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   int                     blink,
                                   u8                      attrs)
 {
-  draw_table_field_scrolling(state, 0, D, E, high_score_rank_suffixes[row], 5, attrs, !blink);
-  draw_table_field_scrolling(state, 64, D, E, entry->score, NELEMS(entry->score), attrs, !blink);
+  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
+  draw_table_field_scrolling(state,  64, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
   draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
-  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1, attrs, !blink);
-  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name), attrs, !blink);
+  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1,                       attrs, !blink);
+  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
 }
 
 /**
@@ -5356,11 +5356,11 @@ static void draw_score_row_fields(chqstate_t             *state,
  */
 static void blink_hiscore_row(chqstate_t *state, int do_toggle)
 {
-  u8                row;   /* rank index being written this session (Conv: added) */
-  u8                D;     /* row's current screen address high byte (was D) */
-  u8                E;     /* row's current screen address low byte (was E) */
+  u8                row;      /* rank index being written this session (Conv: added) */
+  u8                D;        /* row's current screen address high byte (was D) */
+  u8                E;        /* row's current screen address low byte (was E) */
   high_score_row_t *DE_entry; /* this row's data (was DE) */
-  int               blink; /* non-zero draws this frame's text, zero blanks it (Conv: added) */
+  int               blink;    /* non-zero draws this frame's text, zero blanks it (Conv: added) */
 
   row = state->bank3->hiscore.row;
   D   = state->bank3->hiscore.row_addr[row][1];
@@ -6372,50 +6372,6 @@ static void titlescr_refresh_name_table(chqstate_t *state)
    * out of scope for this task. */
   NOT_USED(state);
 }
-
-/* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
- * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
- * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
- * not arbitrary key choices. */
-static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
-
-/* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
- * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
-static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
-
-/* $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (40
- * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
- * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by
- * read_new_key_definition via the same key/halfrow packing produced by
- * scan_keyboard_matrix. Byte-for-byte identical to the 48K version's key_names[]
- * ($EDD6, CommonData.c) -- kept as a separate array since it is a distinct
- * copy at a distinct bank-3 address in the original. */
-static const u8 control_key_names[80] = {
-  'B', ' ', 'N', ' ', 'M', ' ', 'S', 'Y',
-  'S', 'P', 'H', ' ', 'J', ' ', 'K', ' ',
-  'L', ' ', 'E', 'N', 'Y', ' ', 'U', ' ',
-  'I', ' ', 'O', ' ', 'P', ' ', '6', ' ',
-  '7', ' ', '8', ' ', '9', ' ', '0', ' ',
-  '5', ' ', '4', ' ', '3', ' ', '2', ' ',
-  '1', ' ', 'T', ' ', 'R', ' ', 'E', ' ',
-  'W', ' ', 'Q', ' ', 'G', ' ', 'F', ' ',
-  'D', ' ', 'S', ' ', 'A', ' ', 'V', ' ',
-  'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
-};
-
-/* $FFF7-$FFFE: pristine contents of the live scan-key-code buffer, i.e. the
- * keyboard scheme's default key assignments. Layout matches control_keys[]:
- * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
-static const u8 default_control_keys[8] = {
-  0x08, 0x26, 0x1F, 0x11, 0x19, 0x25, 0x22, 0x20
-};
-
-/* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
- * checked by redefine_keys_screen against the 8 keys just chosen. Byte-for-
- * byte identical to the 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
-static const u8 shocked_keydef_sequence[8] = {
-  0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
-};
 
 /**
  * $C6C4: Per-frame title-screen animation driver
@@ -10671,6 +10627,16 @@ static u8 options_menu_driver(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
+  /* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
+   * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
+   * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
+   * not arbitrary key choices. */
+  static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
+
+  /* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
+   * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
+  static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
+
   u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
                            * bit3=key"4"; the exit debounce reuses it as an
                            * any-key mask (was A) */
@@ -11065,6 +11031,13 @@ static void clear_options_screen(chqstate_t *state)
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
+  /* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
+   * checked against the 8 keys just chosen. Byte-for-byte identical to the
+   * 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
+  static const u8 shocked_keydef_sequence[8] = {
+    0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
+  };
+
   u16 DE_screen;       /* current label print position (was DE) */
   int B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
@@ -11227,6 +11200,26 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index)
 {
+  /* $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (40
+   * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
+   * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by the same
+   * key/halfrow packing produced by scan_keyboard_matrix. Byte-for-byte
+   * identical to the 48K version's key_names[] ($EDD6, CommonData.c) -- kept
+   * as a separate array since it is a distinct copy at a distinct bank-3
+   * address in the original. */
+  static const u8 control_key_names[80] = {
+    'B', ' ', 'N', ' ', 'M', ' ', 'S', 'Y',
+    'S', 'P', 'H', ' ', 'J', ' ', 'K', ' ',
+    'L', ' ', 'E', 'N', 'Y', ' ', 'U', ' ',
+    'I', ' ', 'O', ' ', 'P', ' ', '6', ' ',
+    '7', ' ', '8', ' ', '9', ' ', '0', ' ',
+    '5', ' ', '4', ' ', '3', ' ', '2', ' ',
+    '1', ' ', 'T', ' ', 'R', ' ', 'E', ' ',
+    'W', ' ', 'Q', ' ', 'G', ' ', 'F', ' ',
+    'D', ' ', 'S', ' ', 'A', ' ', 'V', ' ',
+    'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
+  };
+
   u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
   u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
   u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
@@ -11396,6 +11389,13 @@ int bank3_state_create(chqstate_t *state)
     { "  340500", " 1 ", '1', "STE" }, /* $C4EF: row 7 (8th place) */
     { "  235050", " 1 ", '1', "PIX" }, /* $C510: row 8 (9th place) */
     { "  123000", " 1 ", '1', "IES" }, /* $C531: row 9 (10th place) */
+  };
+
+  /* $FFF7-$FFFE: pristine contents of the live scan-key-code buffer, i.e. the
+   * keyboard scheme's default key assignments. Layout matches control_keys[]:
+   * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
+  static const u8 default_control_keys[8] = {
+    0x08, 0x26, 0x1F, 0x11, 0x19, 0x25, 0x22, 0x20
   };
 
   // clang-format on
