@@ -4001,27 +4001,11 @@ static const u8 title_tune23_data[203] = {
 };
 
 /**
- * $FC29-$FD96 -- 128K control-select, key-redefinition and hidden test-mode
- * screen text, printed via print_string/print_character. Unlike the
- * messages_* lists above, print_string does not walk an end-marker-terminated
- * list: each 0x00 below terminates whichever call is in progress, so this one
- * data block actually holds four independent entry points, each reached via
- * its own literal HL constant in the original:
- *   offset   0 ($FC29): control-select screen -- wired into
- *                       omd_redraw_and_poll below.
- *   offset 114 ($FC9B): key-redefinition screen, header + GEAR/ACCELERATE/
- *                       BRAKE -- not yet wired up (needs redefine_keys_screen,
- *                       $FEA9).
- *   offset 160 ($FCC9): key-redefinition screen continued, LEFT/RIGHT/QUIT/
- *                       PAUSE/TURBO -- not yet wired up (see above).
- *   offset 199 ($FCF0): hidden test-mode screen -- not yet wired up (needs a
- *                       128K test-mode driver, $C06E).
- * "P1."-"P4."/"P5." labels in the skool comments are missing their leading
- * "P" in the actual data (confirmed byte-for-byte against the skool) --
- * presumably drawn as a separate fixed graphic; transcribed faithfully as-is.
+ * $FC29-$FC9A -- 128K control-select screen text, printed via
+ * print_string/print_character. Wired into omd_redraw_and_poll below.
  */
-static const u8 options_menu_text[366] = {
-  // $FC29 (offset 0): control-select screen
+static const u8 control_select_text[] = {
+  // $FC29: control-select screen
   attribute_RED_OVER_BLACK,
   ZXSCREEN(0x484A),
   'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
@@ -4041,8 +4025,14 @@ static const u8 options_menu_text[366] = {
   ZXSCREEN(0x50C6),
   '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
   0, // terminator ($FC9A)
+};
 
-  // $FC9B (offset 114): key-redefinition screen, header + first 3 labels
+/**
+ * $FC9B-$FCC8 -- 128K key-redefinition screen text, header + first 3 labels
+ * (GEAR/ACCELERATE/BRAKE). Wired into redefine_keys_screen below.
+ */
+static const u8 key_redefinition_text1[] = {
+  // $FC9B: key-redefinition screen, header + first 3 labels
   attribute_RED_OVER_BLACK,
   ZXSCREEN(0x4849),
   'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
@@ -4056,8 +4046,14 @@ static const u8 options_menu_text[366] = {
   ZXSCREEN(0x5009),
   'B', 'R', 'A', 'K', 'E' | EOS,
   0, // terminator ($FCC8)
+};
 
-  // $FCC9 (offset 160): key-redefinition screen, remaining 5 labels
+/**
+ * $FCC9-$FCEF -- 128K key-redefinition screen text, remaining 5 labels
+ * (LEFT/RIGHT/QUIT/PAUSE/TURBO). Wired into redefine_keys_screen below.
+ */
+static const u8 key_redefinition_text2[] = {
+  // $FCC9: key-redefinition screen, remaining 5 labels
   (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
   ZXSCREEN(0x5029),
   'L', 'E', 'F', 'T' | EOS,
@@ -4074,8 +4070,14 @@ static const u8 options_menu_text[366] = {
   ZXSCREEN(0x50C9),
   'T', 'U', 'R', 'B', 'O' | EOS,
   0, // terminator ($FCEF)
+};
 
-  // $FCF0 (offset 199): hidden test-mode screen
+/**
+ * $FCF0-$FD96 -- 128K hidden test-mode screen text. Wired into
+ * redefine_keys_screen below (test-mode confirmation text).
+ */
+static const u8 test_mode_text[] = {
+  // $FCF0: hidden test-mode screen
   (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),  // was 0xC1
   ZXSCREEN(0x4000),
   'T', 'E', 'S', 'T' | EOS,
@@ -4500,15 +4502,22 @@ static void insert_high_score_entry(chqstate_t *state, int row)
  * print_character's own unpack order at $FDA4). */
 // clang-format off
 static const u8 name_entry_screen_text[] = {
-  0x02, ZXSCREEN(0x480A), 'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
-  0xC6, ZXSCREEN(0x4867), 'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
-  0x07, ZXSCREEN(0x488E), '.',' ','.',' ', '.' | EOS,
-  0xC6, ZXSCREEN(0x48C0),
-    'R','A','N','K',' ',' ',' ',' ',
-    'S','C','O','R','E',' ',' ',
-    'S','T','A','G','E',' ',' ',
-    'P','L','A','Y',' ',' ',
-    'N','A','M', 'E' | EOS,
+  0x02,
+  ZXSCREEN(0x480A),
+  'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
+
+  0xC6,
+  ZXSCREEN(0x4867),
+  'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
+
+  0x07,
+  ZXSCREEN(0x488E),
+  '.',' ','.',' ', '.' | EOS,
+
+  0xC6,
+  ZXSCREEN(0x48C0),
+  'R','A','N','K',' ',' ',' ',' ','S','C','O','R','E',' ',' ','S','T','A','G','E',' ',' ','P','L','A','Y',' ',' ','N','A','M', 'E' | EOS,
+
   0
 };
 // clang-format on
@@ -4521,9 +4530,16 @@ static const u8 name_entry_screen_text[] = {
  * (D < $40) start one character row above the visible screen and scroll
  * down into place in the original. */
 static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
-  { 0x80, 0x38 }, { 0xC0, 0x38 },
-  { 0x00, 0x40 }, { 0x40, 0x40 }, { 0x80, 0x40 }, { 0xC0, 0x40 },
-  { 0x00, 0x48 }, { 0x40, 0x48 }, { 0x80, 0x48 }, { 0xC0, 0x48 },
+  { 0x80, 0x38 },
+  { 0xC0, 0x38 },
+  { 0x00, 0x40 },
+  { 0x40, 0x40 },
+  { 0x80, 0x40 },
+  { 0xC0, 0x40 },
+  { 0x00, 0x48 },
+  { 0x40, 0x48 },
+  { 0x80, 0x48 },
+  { 0xC0, 0x48 },
 };
 
 /**
@@ -4545,10 +4561,10 @@ static void name_entry_setup_screen(chqstate_t *state)
 
   clear_playfield_and_attrs(state);
   update_whole_playfield_full_width(state); /* Conv: added -- draws right to
-                                               * the screen edge, so needs the
-                                               * full-width dirty rect, not
-                                               * just update_whole_playfield's
-                                               * driving-playfield inset */
+                                             * the screen edge, so needs the
+                                             * full-width dirty rect, not
+                                             * just update_whole_playfield's
+                                             * driving-playfield inset */
 
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
   {
@@ -4567,19 +4583,19 @@ static void name_entry_setup_screen(chqstate_t *state)
   state->bank3->hiscore.letter_code       = '@'; /* blank/"." marker */
   state->bank3->hiscore.fire_locked       = 0;
   state->bank3->hiscore.flash_phase_a     = 0xF0; /* $C59A ROM-data seed --
-                                                     * rotated left one frame
-                                                     * at a time, see
-                                                     * name_entry_dispatch */
+                                                   * rotated left one frame
+                                                   * at a time, see
+                                                   * name_entry_dispatch */
   state->bank3->hiscore.flash_phase_b     = 0xEE; /* $C59B ROM-data seed,
-                                                     * rotated the same way */
+                                                   * rotated the same way */
   state->bank3->hiscore.draw_erase_toggle = 0xF0; /* $C58D ROM-data seed
-                                                     * (copied from the $C580
-                                                     * template by
-                                                     * check_high_score) --
-                                                     * rotated left one frame
-                                                     * at a time, see
-                                                     * name_entry_frame/
-                                                     * blink_hiscore_row */
+                                                   * (copied from the $C580
+                                                   * template by
+                                                   * check_high_score) --
+                                                   * rotated left one frame
+                                                   * at a time, see
+                                                   * name_entry_frame/
+                                                   * blink_hiscore_row */
   state->bank3->hiscore.blink_timer       = 0x0C;
   state->bank3->hiscore.blink_offset      = 0;
   state->bank3->hiscore.cursor_addr       = HISCORE_CURSOR_ADDR_INIT;
@@ -4756,14 +4772,14 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
   carry_a = (u8) (state->bank3->hiscore.flash_phase_a >> 7);
   state->bank3->hiscore.flash_phase_a =
     (u8) ((state->bank3->hiscore.flash_phase_a << 1) | carry_a);
-  C_blink_attr = carry_a ? 0x42 : 0x00;
+  C_blink_attr = carry_a ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BLACK_OVER_BLACK;
 
   set_marquee_attr(state, state->bank3->hiscore.cursor_addr, C_blink_attr);
 
   /* $C1C0: the paired double-height row below shares the same blink, minus
    * the bright bit. */
   set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
-                    (u8) (C_blink_attr & ~0x40));
+                          (u8) (C_blink_attr & ~ATTR_BRIGHT));
 
   state->bank3->hiscore.flash_phase_b =
     (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
@@ -4815,7 +4831,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     /* $C172-$C17B: restore the outgoing cell to its base colour (it was
      * blanked below on a previous call). */
     L_attr = (u8) (MARQUEE_ROW_ATTR_L + state->bank3->hiscore.blink_offset);
-    set_marquee_attr(state, L_attr, 0x46);
+    set_marquee_attr(state, L_attr, attribute_BRIGHT_YELLOW_OVER_BLACK);
 
     if (++state->bank3->hiscore.blink_offset >= 20)
     {
@@ -4826,8 +4842,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
        * its paired double-height row below to the matching non-bright
        * colour. */
       L_attr = state->bank3->hiscore.cursor_addr;
-      set_marquee_attr(state, L_attr, 0x42);
-      set_marquee_attr(state, (u8) (L_attr + 0x20), 0x02);
+      set_marquee_attr(state, L_attr, attribute_BRIGHT_RED_OVER_BLACK);
+      set_marquee_attr(state, (u8) (L_attr + 0x20), attribute_RED_OVER_BLACK);
 
       if (++state->bank3->hiscore.cursor_addr == HISCORE_CURSOR_ADDR_FINALISE)
       {
@@ -4839,7 +4855,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     /* $C19E-$C1A6: blank the new current cell -- this is the visible
      * "letter blinks off" step of the chase. */
     L_attr = (u8) (MARQUEE_ROW_ATTR_L + state->bank3->hiscore.blink_offset);
-    set_marquee_attr(state, L_attr, 0x00);
+    set_marquee_attr(state, L_attr, attribute_BLACK_OVER_BLACK);
   }
 
   fast_blink_best_officers_cell(state);
@@ -10667,8 +10683,8 @@ static u8 omd_redraw_and_poll(chqstate_t *state)
 redraw:
   clear_options_screen(state);
 
-  print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
-                                                * P1-P5 control-scheme list. */
+  print_string(state, &control_select_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
+                                                 * P1-P5 control-scheme list. */
 
   update_whole_playfield(state); /* Conv: added */
 
@@ -11060,11 +11076,11 @@ static void redefine_keys_screen(chqstate_t *state)
   {
     clear_options_screen(state);
 
-    print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
-                                                    * GEAR/ACCELERATE/BRAKE */
+    print_string(state, &key_redefinition_text1[0]); /* $FEAC-$FEAF: header +
+                                                      * GEAR/ACCELERATE/BRAKE */
     run_title_tune(state);
-    print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
-                                                    * LEFT/RIGHT/QUIT/PAUSE/TURBO */
+    print_string(state, &key_redefinition_text2[0]); /* $FEB5-$FEB8:
+                                                      * LEFT/RIGHT/QUIT/PAUSE/TURBO */
 
     update_whole_playfield(state); /* Conv: added */
 
@@ -11103,7 +11119,7 @@ static void redefine_keys_screen(chqstate_t *state)
     state->test_mode = 1;
 
     clear_options_screen(state);
-    print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
+    print_string(state, &test_mode_text[0]); /* $FEF9-$FEFC: test-mode confirmation text */
 
     update_whole_playfield(state); /* Conv: added */
 
