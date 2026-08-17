@@ -34,12 +34,6 @@ the explanation is right. They do get out of sync sometimes.
 [Play it in your browser](https://dpt.github.io/ChaseHQ/play/) — an
 Emscripten/WebAssembly build of the SDL3 app.
 
-## [`C/apps/riscos/`](C/apps/riscos/README.md) — the native RISC OS application
-
-A self-contained 32-bit `!ChaseHQ` desktop application, built from the same
-engine sources. See that directory's README for build instructions and host
-shortcuts.
-
 ## Links
 
 - [My videos about this project](https://www.youtube.com/watch?v=hWz7eTfn2l4&list=PLAn5dfRl63Oc)

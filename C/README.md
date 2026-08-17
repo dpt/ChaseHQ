@@ -10,23 +10,46 @@ This directory holds a mostly hand-written, human-readable C reimplementation of
 the ZX Spectrum _Chase H.Q._ game engine. It's not a decompiler dump - it's
 intended to be read and learned from. Every function is translated from the
 [SkoolKit disassembly](../Speccy/README.md), with the original Z80 addresses
-kept in the comments so the two can be read side by side, compared (...
+kept in the comments so the two can be read side by side, compared (and
 debugged).
 
-See the [sister project README](../Speccy/README.md) for the disassembly this is
-derived from.
+Since it's a direct port of a Speccy game it inherits all the ZX Spectrum
+limitations too. Screen resolution, depth and organisation are as the original.
+Keyboard and sound too. Think of it as a Spectrum emulator without the, err,
+emulator...
+
+See the [sister project README](../Speccy/README.md) for the disassembly that
+this is derived from.
 
 ## Status
 
-- Engine logic translated across `Main.c` (~18k lines of fun), `Bank3.c` (~3.7k
-  lines of 128K title-screen/tune code) and `Bank7.c` (~1.4k lines of end screen
-  animation).
+- The game is **complete** but there may be conversion bugs remaining. The
+  original game is very reliant on self-modified instructions, values and Z80
+  wizardry.  Debugging my hand conversion into a working state has been
+  considerable effort.
+- Engine logic translated across `Main.c` (~22.5k lines of fun), `Bank3.c`
+  (~11.5k lines of 128K title-screen/tune code) and `Bank7.c` (~2.3k lines of
+  end screen animation).
 - All five stages have the original per-stage road, object and sprite data
-  (`Stage1Data.c`–`Stage6Data.c`).
-  - There's a sixth stage in the mix to help decode the magic.
-- The game runs and plays through the stages, with known rough edges: title
-  screen music/animation timing, perp-car jitter, an incomplete 128K options
-  menu and gaps in the sound-effect subsystem — see `TODO.md` for the full list.
+  (`Stage1Data.c`–`Stage5Data.c`).
+  - There's a sixth test stage in the mix for playing around with.
+
+## Source Layout
+
+- `include/<Module>/` — public headers (`C99/Types.h`, `ZXSpectrum/*.h`,
+  `ChaseHQ/ChaseHQ.h`)
+- `libraries/ZXSpectrum/` — a thin ZX Spectrum facade:
+  `in`/`out`/`draw`/`stamp`/`sleep` callbacks and a screen buffer. Game code
+  never touches SDL.
+- `libraries/ChaseHQ/Engine/` — the game itself: `Main.c`, `Bank3.c` (128K title
+  screen and tune player), `Bank7.c` (end sequence), `State.h` (all mutable
+  state, ordered by original Z80 address)
+- `libraries/ChaseHQ/Data/` — read-only tables: stages, sound samples, title
+  screen, bank 3 data
+- `apps/sdl3/` — the host: SDL3 window, event loop, audio and a CRT shader
+- `Tests/` — unit tests and a standalone stretchy-object renderer
+- `docs/` — how the road drawing works, the stage data format, translation
+  principles and a catalogue of Z80-to-C pitfalls
 
 ## Building
 
@@ -45,11 +68,11 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Formatting (clang-format, K&R, 2-space indent, 80 columns):
+## [`apps/riscos/`](apps/riscos/README.md) — native RISC OS application
 
-```sh
-cmake --build cmake-build-debug --target format
-```
+A self-contained 32-bit `!ChaseHQ` desktop application, built from the same
+engine sources by @gerph. See that directory's README for build instructions
+and host shortcuts.
 
 ## Controls
 
@@ -65,7 +88,7 @@ redefine option can change:
 | `P`       | Pause the current game |
 | `Q`       | Quit the current game  |
 
-A Kempston joystick is emulated on the arrow keys, with `.` as fire.
+A Kempston joystick is emulated on the arrow keys, using `.` for fire.
 
 The host adds its own keys, which never reach the game:
 
@@ -89,27 +112,30 @@ The host adds its own keys, which never reach the game:
 | `Ctrl-[` / `Ctrl-]`   | Jump to minimum / maximum emulation speed                      |
 | `\`                   | Reset emulation speed to 100%                                  |
 
-Test mode is always on (`test_mode` in `Create.c`), so while a level is running
-`1` restarts it, `2` loads the next one and `3` jumps to the end screen.
+Host keys use a 1990s TV style overlay to respond. This reuses the game's 8x8
+font scaled to 8x16.
 
-## CRT shader
+The "SHOCKED" cheat/test mode is always on (`test_mode` in `Create.c`), so
+while a level is running `1` restarts it, `2` loads the next one and `3` jumps
+to the end screen. On the title screen you can use 1-5 to play the animations
+and 6 to enter hi-score entry.
 
-`F4` swaps the plain SDL blit for a CRT post-effect: barrel distortion,
-threshold bloom, brightness/contrast/saturation, luminance-adaptive scanlines, a
-vignette and a PAL colour bleed. The bleed models PAL's narrow chroma bandwidth
-— luma is taken from the centre tap only while chroma is averaged over four
-leftward taps, so colour smears rightwards and edges stay sharp.
+## CRT TV shader
 
-It is written in Metal Shading Language and compiled at runtime by SDL's GPU
-API, so it is macOS-only for now; elsewhere `F4` reports the shader as
-unavailable and keeps the plain renderer. Running SPIR-V and DXIL variants would
-fix that.
+For a bit of fun I've added a CRT TV shader. This works on macOS, Linux and
+Emscripten builds so far.
+
+`F4` swaps the plain SDL blit for a CRT TV effect: barrel distortion, threshold
+bloom, brightness/contrast/saturation, luminance-adaptive scanlines, a vignette
+and a PAL colour bleed. The bleed models PAL's narrow chroma bandwidth — luma
+is taken from the centre tap only while chroma is averaged over four leftward
+taps, so colour smears rightwards and edges stay sharp.
 
 With the shader up, its parameters can be tuned live:
 
 | Key                   | Action                                                        |
 | --------------------- | ------------------------------------------------------------- |
-| `TAB`                 | Select the next parameter (`Shift-TAB` for the previous)      |
+| `TAB` / `Shift-TAB`   | Select the next / previous parameter                          |
 | `PAGEUP` / `PAGEDOWN` | Increase / decrease the selected parameter                    |
 | `Ctrl-R`              | Turn every parameter off (flat 0.0/1.0 — the effect vanishes) |
 | `Ctrl-T`              | Reset every parameter to its tuned defaults                   |
@@ -118,35 +144,19 @@ The selected parameter and its value are shown as an on-screen status flash on
 each change. Nothing is saved between runs — settings that are worth keeping go
 into `crt_tuned_params` in `apps/sdl3/SDLMain.c`.
 
-## Layout
-
-- `include/<Module>/` — public headers (`C99/Types.h`, `ZXSpectrum/*.h`,
-  `ChaseHQ/ChaseHQ.h`)
-- `libraries/ZXSpectrum/` — a thin ZX Spectrum facade:
-  `in`/`out`/`draw`/`stamp`/`sleep` callbacks and a screen buffer. Game code
-  never touches SDL.
-- `libraries/ChaseHQ/Engine/` — the game itself: `Main.c`, `Bank3.c` (128K title
-  screen and tune player), `Bank7.c` (end sequence), `State.h` (all mutable
-  state, ordered by original Z80 address)
-- `libraries/ChaseHQ/Data/` — read-only tables: stages, sound samples, title
-  screen, bank 3 data
-- `apps/sdl3/` — the host: SDL3 window, event loop, audio and a CRT shader
-- `Tests/` — unit tests and a standalone stretchy-object renderer
-- `docs/` — how the road drawing works, the stage data format, translation
-  principles and a catalogue of Z80-to-C pitfalls
-
 ## How the translation is written
 
 The C is a model of a Z80 program, written to be read. Locals are named after
-the register that held the value (`A_prev_height`, `HLbackdrop`, `DEscr` -
-naming is not always consistent), declared at the top of scope in order of first
-use, each with a `/* intent (was X) */` comment. `EXX` and `EX AF,AF'` banking
-is modelled explicitly, because that gets confusing quickly otherwise.
-Deliberate departures from a literal translation are marked `// Conv:`.
+the original register that held the value (`A_prev_height`, `HL_backdrop`,
+`DE_scr` - although naming is not 100% consistent), declared at the top of
+scope in order of first use, each with a `/* intent (was X) */` comment. `EXX`
+and `EX AF,AF'` banking is tracked via comments, because that gets confusing
+quickly otherwise. Deliberate departures from a literal translation are marked
+with `Conv:` comments.
 
 `docs/translation-principles.md` and `docs/translation-pitfalls.md` cover this
-in detail, and `docs/function_comment_template_example.c` is a worked example of
-what a finished function might look like.
+in detail, and `docs/function_comment_template_example.c` is a worked example
+of what a finished function might look like.
 
 ## Stage data
 
@@ -155,7 +165,7 @@ Stage data is extracted from the disassembly rather than typed in by hand:
 though not always successfully. See `docs/convert-stage.md` for usage and what
 still needs completing by hand afterwards.
 
-### Building your own level
+### Building your own stages
 
 A stage's road is six parallel byte streams (curvature, height, lanes, hazards,
 left/right objects) that are unreadable on their own and easy to desync.
