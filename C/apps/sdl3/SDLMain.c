@@ -1435,6 +1435,14 @@ static void chq_action_toggle_backbuffer(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.show_backbuffer ? "BACKBUFFER ON" : "BACKBUFFER OFF");
 }
 
+static void chq_action_toggle_test_mode(chq_sdl_state_t *state)
+{
+  int on;
+
+  on = chq_toggle_test_mode(state->game);
+  chq_osd_show(state, on ? "TEST MODE ON" : "TEST MODE OFF");
+}
+
 static void chq_action_randomise_screen(chq_sdl_state_t *state)
 {
   zxspectrum_randomise_screen(state->zx);
@@ -1666,6 +1674,16 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     {
       if (k->down && !k->repeat)
         chq_action_randomise_screen(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_X:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_test_mode(state);
       return;
     }
     j = zxjoystick_UNKNOWN;
