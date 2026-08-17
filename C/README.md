@@ -106,6 +106,7 @@ The host adds its own keys, which never reach the game:
 | `Ctrl-M`              | Toggle monochrome (greyscale) display                          |
 | `Ctrl-N`              | Toggle mellow (dimmed, desaturated CRT-style) palette          |
 | `Ctrl-Y`              | One-shot glitch: fill the screen with random noise for a frame |
+| `Ctrl-X`              | Toggle the "SHOCKED" test-mode cheat                            |
 | `-` / `=`             | Window scale down / up                                         |
 | `[` / `]`             | Emulation speed down / up (5% steps)                           |
 | `Shift-[` / `Shift-]` | Emulation speed down / up (1% steps)                           |
@@ -115,10 +116,10 @@ The host adds its own keys, which never reach the game:
 Host keys use a 1990s TV style overlay to respond. This reuses the game's 8x8
 font scaled to 8x16.
 
-The "SHOCKED" cheat/test mode is always on (`test_mode` in `Create.c`), so
-while a level is running `1` restarts it, `2` loads the next one and `3` jumps
-to the end screen. On the title screen you can use 1-5 to play the animations
-and 6 to enter hi-score entry.
+The "SHOCKED" cheat/test mode is off by default; toggle it with `Ctrl-X`. While
+it's on and a level is running, `1` restarts it, `2` loads the next one and `3`
+jumps to the end screen. On the title screen you can use 1-5 to play the
+animations and 6 to enter hi-score entry.
 
 ## CRT TV shader
 
