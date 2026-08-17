@@ -4136,9 +4136,7 @@ perp_too_far_away:
   zero            = (HL_speed == 0);
   HL_speed        = HL_speedpushed; // POP HL
   if (zero || carry)
-  {
-    goto set_perp_speed; // with DE=70
-  }
+  goto set_perp_speed; // with DE=70
   HL_speed -= 5;
   DE_speed  = HL_speed;
 

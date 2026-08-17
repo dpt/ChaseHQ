@@ -8959,17 +8959,11 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * update). This re-derives the condition purely to select the billing
      * constant; it does not alter behaviour. */
     if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE))
-    {
-      state->speccy->logtime(state->speccy, 12);
-    }
+    state->speccy->logtime(state->speccy, 12);
     else if (!(C_status & CHSTATUS_TOGGLE))
-    {
-      state->speccy->logtime(state->speccy, 22);
-    }
+    state->speccy->logtime(state->speccy, 22);
     else
-    {
-      state->speccy->logtime(state->speccy, 27);
-    }
+    state->speccy->logtime(state->speccy, 27);
     if (!((IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE) && (C_status & CHSTATUS_TOGGLE)))
     {
       /* Conv: $EF09-$EF12 gate whether the phase updates this call at all
@@ -9100,13 +9094,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
        * C_slide_step purely to select the billing constant; matches the
        * BIT 7,C test above. */
       if (C_slide_step >= 0)
-      {
-        state->speccy->logtime(state->speccy, 12);
-      }
+      state->speccy->logtime(state->speccy, 12);
       else
-      {
-        state->speccy->logtime(state->speccy, 11);
-      }
+      state->speccy->logtime(state->speccy, 11);
 
       HL_slide_accum = IX_channel->slide_accum + (s16) C_slide_step; // sign-extended add
       /* $EF62-$EF6C: LD L,(IX+$07)/LD H,(IX+$08)/ADD HL,BC/LD (IX+$07),L/
@@ -11092,9 +11082,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     B_wait = 0x14;
     do
-    {
       run_title_tune(state);
-    }
     while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
