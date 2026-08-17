@@ -2181,7 +2181,7 @@ C $8061,3 Call set_playfield_attrs
 C $8064,3 Call clear_playfield_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
 C $806C,3 Call ls_8098
-C $806F,1 Preserve ?
+C $806F,1 Preserve HL across the keypress wait below
 N $8070 Wait for a keypress - debounce.
 C $8070,3 Call keyscan
 C $8073,4 Loop while key not pressed
@@ -2189,7 +2189,7 @@ C $8077,3 Call keyscan
 C $807A,4 Loop while key pressed
 C $807E,2 Forward transition
 C $8080,3 Call setup_transition
-C $8083,1 Restore ?
+C $8083,1 Restore HL after the keypress wait
 C $8084,2 B = 2
 C $8086,2 Exit via ls_8098
 N $8088 #REGb is passed in.
@@ -2236,10 +2236,10 @@ C $80C6,1 Disable interrupts
 C $80C7,2 Set MIC bit (deactivates MIC)
 C $80C9,2 output
 C $80CB,2 input
-C $80CD,1 why shift?
+C $80CD,1 Shift bit 6 (EAR) down to bit 5
 C $80CE,2 Check EAR input bit 6
-C $80D0,2 set border?
-C $80D3,1 Set Z? [weird]
+C $80D0,2 Set border colour bit (visible load flicker)
+C $80D3,1 Always sets Z (A compared to itself)
 @ $80D4 label=tl_80d4
 @ $80D5 label=tl_80d5
 C $80D5,3 Call tl_delay_814b
@@ -2305,31 +2305,31 @@ C $8165,2 Output
 C $8167,1 Set carry
 C $8168,1 Return (success)
 @ $8169 label=rewind_tape
-B $8169,1,1 attr?
+B $8169,1,1 Attribute byte
 W $816A,2,2 Screen position (8,64)
 W $816C,2,2 Screen attribute position (1,8)
 T $816E,30,29:n1 "REWIND TAPE TO START OF SIDE 2"
 @ $818C label=start_tape
-B $818C,1,1 attr?
+B $818C,1,1 Attribute byte
 W $818D,2,2 Screen position (88,96)
 W $818F,2,2 Screen attribute position (11,12)
 T $8191,10,9:n1 "START TAPE"
-B $819B,1,1 attr?
+B $819B,1,1 Attribute byte
 W $819C,2,2 Screen position (72,128)
 W $819E,2,2 Screen attribute position (9,16)
 @ $81A0 label=searching_for_n
 T $81A0,15,14:n1 "SEARCHING FOR 1"
-B $81AF,1,1 attr?
+B $81AF,1,1 Attribute byte
 W $81B0,2,2 Screen position (104,160)
 W $81B2,2,2 Screen attribute position (13,20)
 @ $81B4 label=found_n
 T $81B4,7,6:n1 "FOUND 1"
 @ $81BB label=stop_the_tape_press_gear
-B $81BB,1,1 attr?
+B $81BB,1,1 Attribute byte
 W $81BC,2,2 Screen position (80,96)
 W $81BE,2,2 Screen attribute position (10,12)
 T $81C0,13,12:n1 "STOP THE TAPE"
-B $81CD,1,1 attr?
+B $81CD,1,1 Attribute byte
 W $81CE,2,2 Screen position (88,128)
 W $81D0,2,2 Screen attribute position (11,16)
 T $81D2,11,10:n1 "PRESS  GEAR"
@@ -3263,7 +3263,7 @@ C $8AB2,5 perp_caught_phase = 3
 C $8AB7,4 Self modify the 'LD A,x' at #R$8ABE below to load 4
 C $8ABB,3 Exit via fill_attributes
 @ $8ABE label=hpc_phase3
-C $8ABE,2 Self modified by #R$8AB8 above  -- meaning?
+C $8ABE,2 Self modified by #R$8AB8 above to the phase-3 counter (loaded with 4)
 C $8AC0,1 A--
 C $8AC1,3 Self modify 'LD A' at #R$8ABE to load A
 C $8AC4,1 Return if A != 0
@@ -4005,11 +4005,11 @@ C $9169,3 Loop
 c $916C Draws stretchy objects, such as trees
 D $916C The entry point for left hand objects whose width grows as they get nearer. It picks #R$9293 as the per-segment drawing callback - that is what the #REGhl loaded here is for, and it is planted by self modification at #R$91CD and #R$9243 - then drops into the common stretchy object code.
 D $916C Used by the routine at #R$9052.
+D $916C Entry point for left hand objects.
 R $916C I:B Depth index of the object
 R $916C I:DE Address of the object's stretchy object descriptor (e.g. stretchy_shortpole/#R$7E05)
 R $916C I:IX X-position table pointer
 R $916C I:IY Height table pointer
-D $916C Entry point for left hand objects.
 @ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
 N $9171 Entry point for right hand objects.
@@ -4274,7 +4274,7 @@ C $9362,1 D = A
 C $9369,3 A = IY[$35]
 C $936D,3 A = *HL - 1 - D
 C $9370,3 Jump if no carry
-C $9373,1 Discard?
+C $9373,1 Discard the saved AF (rebalance the stack only; not reused)
 C $9374,3 Read A from 'LD A,x' @ #R$93C0 below
 C $9377,1 Set flags
 C $9378,1 Return if zero
@@ -4610,7 +4610,7 @@ B $9632,1,1 Index of next character in the message bar
 B $9633,1,1 Counted down while waiting to display the next line of chatter
 @ $9634 label=noise_bytes
 B $9634,5,5 Five bytes used for noise when character pictures 'noise in'
-B $9639,3,3 Used?
+B $9639,3,3 Continuation of the noise_bytes scratch buffer walked by draw_noise_effect (needs 160 bytes for 40 rows of 4 columns)
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
 @ $963D label=chatter_state
@@ -6433,8 +6433,8 @@ c $A637 Perp car behaviour
 D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
 D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
 D $A637 A normal frame first walks the five non-perp slots for an active vehicle in the perp's lane and within range, which forces a random lane change. It then picks a lane by a random +/-1 walk biased by the road width, clamps that to the spawn lane bounds, slides the horizontal position toward it and finally scales the perp's approach speed by the distance remaining.
-R $A637 I:IX Address of hazard[0] (the perp)
 D $A637 Exit if we've caught the perp.
+R $A637 I:IX Address of hazard[0] (the perp)
 @ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
 N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
@@ -7249,8 +7249,8 @@ C $AC3B,1 Return
 c $AC3C Test for collision with hazard
 D $AC3C The hit handler for the static hazards, the barriers and tumbleweeds, hooked into every slot that #R$AB9A spawns.
 D $AC3C IX[15] is a three-state machine. 0 is the untouched state: return unless IX[7] shows a hit, otherwise look the wobble parameters up by hero speed, stash them in IX[17] and IX[18], scale the approach speed, play the hit effect and move to state 2. 2 is the wobble itself: each call steps IX[16] through the amplitude table, decays the speed by a thirty-second, toggles the inverted flag and counts IX[18] down, and at zero it clears the speed and the flag and drops to state 1. 1 is finished, and returns at once.
-R $AC3C I:IX Address of hazard structure ($A188+)
 D $AC3C If IX[15] is non-zero then jump forward.
+R $AC3C I:IX Address of hazard structure ($A188+)
 @ $AC3C label=hazard_hit
 C $AC3C,3 IX[15] appears to be a delay of some sort
 C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
@@ -13620,8 +13620,8 @@ C $F327,4 Clear turbo_sfx_noise_pitch
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play a sampled sound effect (mostly speech)
 D $F32E Lives at $8122 when relocated.
-R $F32E I:A Input index (1..5)
 D $F32E "Giddy up boy!"
+R $F32E I:A Input index (1..5)
 @ $F32E label=speech_samples_table
 W $F32E,2,2 Length
 W $F330,2,2 Address (in bank 4)

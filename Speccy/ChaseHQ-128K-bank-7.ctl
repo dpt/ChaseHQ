@@ -1845,7 +1845,7 @@ C $E05E,4 Loop while key pressed
 C $E062,2 Loop
 C $E065,4 Set interrupt vector table base to $8000
 C $E069,3 Call drive_chatter_stop
-b $E06C Data block at E06C
+b $E06C End-screen trigger flags and congratulations text pointers
 N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
 @ $E06C label=data_e06c
 B $E06C,2,1 Trigger flags (see note above)
