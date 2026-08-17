@@ -5,24 +5,27 @@
 [Page:Changelog]
 SectionType=BulletPoints
 
-[Changelog:20260816]
+[Changelog:20260817]
 Fifth release
 
 - Decoded the remaining title-logo glyph bitmaps in bank 3
 
 - Resolved remaining hedged comments via a C-port rebuild cross-check
 
+- Added Stage 2-5 map ref sections and index pages for the banked map data,
+  later split into their own ref files along with MapFormat and the
+  Common/Title/EndScreen graphics pages
+
+- Added Facts, Bugs, Information and About pages, moved and expanded from the
+  skool prologue, with several accuracy fixes along the way
+
 - Added a custom CSS theme for the HTML output
-
-- Added Stage 2-5 map ref sections and index pages for the banked map data
-
-- Added Facts and Bugs pages, moved from the skool prologue
-
-- Fixed several Facts page defects: truncated/misdirected links, a wrong
-  drum-sample description, and a wrong address in the frozen title object fact
 
 - Fixed multi-paragraph description blocks being misparsed as register/N
   sections
+
+- Reclassified per-frame road-height and horizon-scroll state as g blocks so
+  they'll appear in the game status buffer page
 
 [Changelog:20260814]
 Fourth release
