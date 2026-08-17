@@ -20578,11 +20578,11 @@ void stop_the_tape_48k(chqstate_t *state)
 
   /** $EE2B: cursor_joy_keydefs */
   static const u8 cursor_joy_keydefs[5] = {
-    KEYDEF(4, 3), // 0
-    KEYDEF(1, 3), // 7
-    KEYDEF(0, 3), // 6
-    KEYDEF(0, 4), // 5
-    KEYDEF(2, 3)  // 8
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_7),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_5),
+    KEYDEF(zxkey_8)
   };
   // clang-format on
 
@@ -21035,14 +21035,14 @@ static void redefine_keys_48k(chqstate_t *state)
 
   /** $EE30: shocked_keydefs */
   static const u8 shocked_keydefs[8] = {
-    KEYDEF(3, 6), // S
-    KEYDEF(0, 1), // H
-    KEYDEF(3, 2), // O
-    KEYDEF(1, 7), // C
-    KEYDEF(2, 1), // K
-    KEYDEF(2, 5), // E
-    KEYDEF(2, 6), // D
-    KEYDEF(4, 1)  // <ENTER>
+    KEYDEF(zxkey_S),
+    KEYDEF(zxkey_H),
+    KEYDEF(zxkey_O),
+    KEYDEF(zxkey_C),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_E),
+    KEYDEF(zxkey_D),
+    KEYDEF(zxkey_ENTER)
   };
   // clang-format on
 

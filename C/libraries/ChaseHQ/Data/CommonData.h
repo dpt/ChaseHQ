@@ -19,12 +19,23 @@
 #define CHASEHQ_COMMONDATA_H
 
 #include "C99/Types.h"
+#include "ZXSpectrum/Keyboard.h"
 #include "ZXSpectrum/Pixels.h"
 #include "ChaseHQ/Engine/State.h"
 
 /* ----------------------------------------------------------------------- */
 
-#define KEYDEF(key, halfrow) (((key) << 3) | (halfrow))
+/* Packs a zxkey_t into the game's own key-definition scan-code byte format,
+ * %RRRRRPPP, produced by scan_keyboard_matrix and consumed directly by
+ * keyscan_inner ($A11E, Main.c): bits 2-0 (P) select the keyboard half-row
+ * port via P+1 RRC rotations of $FE, bits 7-3 (R) select the bit position
+ * within that row's 5-key byte, tested via 5-R RR rotations. zxkey_t's own
+ * enum order groups keys into the same eight 5-key rows in the same order
+ * (see Keyboard.h), so a key's row is zxkey/5 and its position within the
+ * row is zxkey%5; R counts from the top of the row (position 0) down, hence
+ * the (4 - position). Verified by round-tripping every table that uses it:
+ * e.g. shocked_keydefs decodes to exactly S,H,O,C,K,E,D,ENTER. */
+#define KEYDEF(zxkey) ((u8) (((4 - ((zxkey) % 5)) << 3) | ((zxkey) / 5)))
 
 /* ----------------------------------------------------------------------- */
 

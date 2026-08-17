@@ -8567,7 +8567,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
          * branch is dead in practice. Approximated with the same 35 as 0x85
          * -- see the Conv note above the prologue. */
         state->speccy->logtime(state->speccy, 35);
-        continue;
       }
     }
     else if (A_byte < PCMD_PITCH_OFFSET_BASE)
@@ -8579,7 +8578,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 91);
       /* $EE6F: set the tune tempo/speed byte. */
       state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
-      continue;
     }
     else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE)
     {
@@ -8595,7 +8593,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       HL_ptr = pitch_offset_table[A_byte - PCMD_PITCH_OFFSET_BASE].base;
       IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
       IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
-      continue;
     }
     else if (A_byte < PCMD_ROW_WAIT_BASE)
     {
@@ -8610,7 +8607,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
        * event (see the note-value branch above). */
       IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
       IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
-      continue;
     }
     else
     {
@@ -8619,7 +8615,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 66);
       /* $EE77: set the per-row wait reload value. */
       IX_channel->row_wait_reload = (u8) (A_byte - PCMD_ROW_WAIT_BASE + 1); /* +$11 */
-      continue;
     }
   }
 
@@ -8639,6 +8634,7 @@ reset_row_counter:
     IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
     return 0;
   }
+
   /* $EE32: RET Z taken (11). */
   state->speccy->logtime(state->speccy, 11);
   return 0;
@@ -9033,13 +9029,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * expression above purely to select the billing constant; no behaviour
      * change. */
     if (DE_vib_offset >= 0)
-    {
       state->speccy->logtime(state->speccy, 12);
-    }
     else
-    {
       state->speccy->logtime(state->speccy, 11);
-    }
 
     A_shift_test = (u16) A_note_lookup + 0xA0;
     /* $EF3D: ADD A,$A0 (7). */
@@ -9107,7 +9099,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       /* $EF5F: JR Z (12 taken/11 not taken) -- re-derives the sign of
        * C_slide_step purely to select the billing constant; matches the
        * BIT 7,C test above. */
-      if ((s8) C_slide_step >= 0)
+      if (C_slide_step >= 0)
       {
         state->speccy->logtime(state->speccy, 12);
       }
@@ -9227,12 +9219,15 @@ static const u8 *resolve_phrase_addr(u16 addr)
   if (addr >= TITLE_TUNE0_DATA_ADDR &&
       addr < TITLE_TUNE0_DATA_ADDR + NELEMS(title_tune0_data))
     return &title_tune0_data[addr - TITLE_TUNE0_DATA_ADDR];
+
   if (addr >= TITLE_TUNE1_DATA_ADDR &&
       addr < TITLE_TUNE1_DATA_ADDR + NELEMS(title_tune1_data))
     return &title_tune1_data[addr - TITLE_TUNE1_DATA_ADDR];
+
   if (addr >= TITLE_TUNE23_DATA_ADDR &&
       addr < TITLE_TUNE23_DATA_ADDR + NELEMS(title_tune23_data))
     return &title_tune23_data[addr - TITLE_TUNE23_DATA_ADDR];
+
   assert(0); /* address outside all transcribed raw tune data */
   return NULL;
 }
@@ -9332,7 +9327,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       /* $F1CB: JR NZ taken (12). */
       state->speccy->logtime(state->speccy, 12);
       *DE_pattern = IX_channel->phrase_ptr;
-      goto finalize;
+      goto exit;
     }
     /* $F1CB-$F1CF: JR NZ not taken (7); INC BC/INC BC/JR $F1B4
      * (6+6+12=24). Total 31. */
@@ -9368,7 +9363,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       DE_word         = wordat(HL_entry);
       BC_table_offset = 2;
       *DE_pattern     = resolve_phrase_addr(DE_word);
-      goto finalize;
+      goto exit;
 
     case PHRASE_TABLE_TRANSPOSE_PREFIX:
       /* $F1DA-$F202: JR NZ taken(from RESET test, 12); DEC DE/LD A,D/OR E/
@@ -9403,7 +9398,7 @@ static void advance_channel_phrase(chqstate_t           *state,
 
       BC_table_offset += 3;
       *DE_pattern      = IX_channel->phrase_ptr;
-      goto finalize;
+      goto exit;
 
     default:
       /* $F1DA-$F221: JR NZ taken(12); DEC DE/LD A,D/OR E/JR NZ taken
@@ -9414,11 +9409,11 @@ static void advance_channel_phrase(chqstate_t           *state,
       /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
       BC_table_offset += 2;
       *DE_pattern      = resolve_phrase_addr(DE_word);
-      goto finalize;
+      goto exit;
     }
   }
 
-finalize:
+exit:
   /* $F1E8-$F1EE: LD (IX+$05),C/LD (IX+$06),B/LD B,$00 (19+19+7=45). The
    * LD B,$00 has no C equivalent (BC is not otherwise modelled here). */
   state->speccy->logtime(state->speccy, 45);
@@ -9524,8 +9519,7 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  *       ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count
  *       the Z80 uses for the tune-4 wait in titlescr_wait_loop) and then
  *       returns normally. The frame count is a guess at the jingle's real
- *       duration; TODO: tune by ear once pattern data exists to actually hear
- *       it.
+ *       duration.
  */
 static void play_success_music(chqstate_t *state)
 {
@@ -9979,8 +9973,7 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
 
   for (;;)
   {
-    A = *HL;
-    HL++;
+    A = *HL++;
 
     /* $F7FE LD A,(HL) / $F7FF INC HL / $F800 CP $FE / $F802 JP Z,$F829
      * (7+6+7+10=30). */
@@ -10191,7 +10184,7 @@ drum_dispatch_entry:
   /* $F87B LD D,A / $F87C AND $07 (4+7=11). */
   state->speccy->logtime(state->speccy, 11);
   D_entry  = A;
-  A       &= 0x07;
+  A       &= 0x07; /* isolate instrument */
   if (A == 0)
   {
     /* $F87E JR Z,$F894 taken (12) -- nothing to trigger this frame. */
@@ -10631,11 +10624,23 @@ static u8 omd_redraw_and_poll(chqstate_t *state)
    * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
    * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
    * not arbitrary key choices. */
-  static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
+  static const u8 sinclair_joystick_keys[5] = {
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_9),
+    KEYDEF(zxkey_8),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_7)
+  };
 
   /* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
    * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
-  static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
+  static const u8 cursor_joystick_keys[5] = {
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_7),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_5),
+    KEYDEF(zxkey_8)
+  };
 
   u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
                            * bit3=key"4"; the exit debounce reuses it as an
@@ -11035,7 +11040,14 @@ static void redefine_keys_screen(chqstate_t *state)
    * checked against the 8 keys just chosen. Byte-for-byte identical to the
    * 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
   static const u8 shocked_keydef_sequence[8] = {
-    0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
+    KEYDEF(zxkey_S),
+    KEYDEF(zxkey_H),
+    KEYDEF(zxkey_O),
+    KEYDEF(zxkey_C),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_E),
+    KEYDEF(zxkey_D),
+    KEYDEF(zxkey_ENTER)
   };
 
   u16 DE_screen;       /* current label print position (was DE) */
@@ -11395,7 +11407,14 @@ int bank3_state_create(chqstate_t *state)
    * keyboard scheme's default key assignments. Layout matches control_keys[]:
    * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
   static const u8 default_control_keys[8] = {
-    0x08, 0x26, 0x1F, 0x11, 0x19, 0x25, 0x22, 0x20
+    KEYDEF(zxkey_N),
+    KEYDEF(zxkey_A),
+    KEYDEF(zxkey_Z),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_L),
+    KEYDEF(zxkey_Q),
+    KEYDEF(zxkey_P),
+    KEYDEF(zxkey_SPACE)
   };
 
   // clang-format on
