@@ -1308,7 +1308,7 @@ C $F7D1,3 Call titlescr_music
 C $F7D4,2 Loop
 c $F7D6 Starts tune A and sets up its sound-effect trigger table
 D $F7D6 Plays tune A (via #R$EB9E), looks up a pointer in the table at $FA75 (indexed by A*2) into a per-tune SFX script, and clears the 3 SFX "busy" flags at $F837/$F895/$F8A2. Falls into the script reader below, whose byte-code and interaction with #R$F82F's SFX dispatch is documented at #R$F7F4.
-D $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and .    #R$FBC8.
+D $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and #R$FBC8.
 @ $F7D6 label=titlescr_start_tune
 N $F7DB This entry point is used by the routine at #R$C59E.
 @ $F7DB label=load_drum_script
@@ -1454,7 +1454,7 @@ D $FD9C Used by the routines at #R$C06E, #R$C59E, #R$FB99 and #R$FEA9.
 @ $FD9C label=print_string
 c $FDA4 Prints a single character: unpacks its position and blits the glyph bitmap to screen
 D $FDA4 Unpacks a packed row/column position byte from (HL) into a screen address, then blits the character's 8-row bitmap via LDI (one of two colour paths, selected by a carry test partway through).
-D $FDA4 Used by the routine at #R$FD9C's loop, and directly by #R$C59E and #R$FF2C .    ($FF7F) wherever only one character needs printing.
+D $FDA4 Used by the routine at #R$FD9C's loop, and directly by #R$C59E and #R$FF2C ($FF7F) wherever only one character needs printing.
 @ $FDA4 label=print_character
 c $FE7F Clears the options-menu screen area (attributes and bitmap)
 D $FE7F Attribute memory from $5900 (511 bytes) and screen bitmap from $4800 and $4000, each via a self-filling LDIR pass ("LD (HL),L" seeds the first byte, then LDIR propagates it), servicing sound (#R$FBC8) between passes.
@@ -1478,12 +1478,12 @@ D $FF0C Used by the routine at #R$FF2C.
 c $FF2C Waits for a fresh single keypress, rejecting ambiguous or empty scans
 D $FF2C Services sound each poll via #R$FBC8 and scans via #R$FF0C, rejecting and retrying if the scan is an ambiguous multi-row press (NZ from #R$FF0C) or "no key held" (D still $FF).
 D $FF2C Duplicate check ($FF3D-$FF48): compares the new key code against the C-1 entries already stored at $FFF7 (C is the 1-based control index from the caller); a match rejects and loops back to re-scan.
-D $FF2C Store ($FF4C-$FF52): the new key code is written to $FFF6+C (i.e. $FFF7 for control 1, ... $ FFFE for control 8) -- the growing list used by the duplicate check above and read back by #R$FEE2-$FEF1.
+D $FF2C Store ($FF4C-$FF52): the new key code is written to $FFF6+C (i.e. $FFF7 for control 1, ... $FFFE for control 8) -- the growing list used by the duplicate check above and read back by #R$FEE2-$FEF1.
 D $FF2C Name lookup ($FF53-$FF68): the scan-matrix key code (bits 0-2 = column/bit-within-row 0-4, bits 3+ = row 0-7, from #R$FF0C) is unpacked into row and bit, then re-combined as index = 5*bit + row (a column-major layout, not row-major) to index the 2-bytes/entry name table at #R$FF95. Print ($FF6D-$FF7F): the looked-up entry's two characters are copied into a 2-character scratch buffer at $FD97-$FD9B alongside the caller's screen address (DE), with bit 7 forced on the second (the string terminator consumed by #R$FDA4's own BIT 7 test -- see #R$FF95: usually a space, but a real second letter for the spelled-out SYMBOL SHIFT/SPACE/ENTER/CAPS SHIFT codes), then #R$FDA4 prints it. Column advance ($FF82-$FF94): restores the caller's screen address and steps it on by $20 (one label column); on overflow (E wraps past $FF) also bumps D by 8 to drop down a pixel row. The same step is applied unconditionally once more when the caller's remaining loop count B is exactly 4 (#R$FF87-$FF8A) -- the extra step that wraps from the first row of 4 control labels to the second row of 4. Used by the routine at #R$FEA9.
 @ $FF2C label=read_new_key_definition
 @ $FF8B label=advance_key_label_column
 b $FF95 Key-name lookup table for the "redefine keys" screen, plus joystick key-lists
 D $FF95 $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (2 bytes/entry -- printable character + space, with SYMBOL SHIFT/SPACE/ ENTER/CAPS SHIFT spelled out as two-letter codes -- indexed by #R$FF2C's row/bit arithmetic). The entries run in *reverse* matrix order: row 7 ($7FFE) down to row 0 ($FEFE), and within each row bit 4 down to bit 0 -- e.g. the first 5 entries (B, N, M, SY, SP) are row 7's keys read backwards, matching #R$FF2C's index = 5*(7-row) + (4-bit).
-D $FF95 $FFE5-$ FFE9 ("list A", installed by #R$FBD4 for the "SINCLAIR JOYSTICK" option) and $FFEA-$FFEE ("list B", by #R$FBD9 for "CURSOR JOYSTICK") are each a 5-byte set of scan-key-codes in the same encoding. Decoded, list A uses only keys from the "0 9 8 7 6" row and list B uses keys {0, 5, 6, 7, 8} -- i.e. genuine emulation of the classic Sinclair Interface II (keys 6-0) and Cursor/Protek (keys 5,6,7,8,0) joystick wiring conventions, not arbitrary key choices.
+D $FF95 $FFE5-$FFE9 ("list A", installed by #R$FBD4 for the "SINCLAIR JOYSTICK" option) and $FFEA-$FFEE ("list B", by #R$FBD9 for "CURSOR JOYSTICK") are each a 5-byte set of scan-key-codes in the same encoding. Decoded, list A uses only keys from the "0 9 8 7 6" row and list B uses keys {0, 5, 6, 7, 8} -- i.e. genuine emulation of the classic Sinclair Interface II (keys 6-0) and Cursor/Protek (keys 5,6,7,8,0) joystick wiring conventions, not arbitrary key choices.
 D $FF95 $FFEF-$FFF6 is the fixed 8-byte "SHOCKED"+ENTER secret-code reference used by #R$FEA9's hidden test-mode unlock (see that routine's header for the full decode). $FFF7-$FFFE is not fixed data at all: it is the live scan-key-code buffer that #R$FBDC/#R$FF52 write the currently-active 5- or 8-key control scheme into, and #R$FBF3/#R$FF3D/#R$FEE7 read back from; the bytes shown here are simply whatever was resident when this snapshot was taken. End of bank 3.
 B $FF95,107,8*13,3

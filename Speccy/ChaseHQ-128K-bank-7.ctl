@@ -1978,7 +1978,8 @@ C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
-D $E4A9 I:HL Address of image to plot DE Destination address in the screen
+R $E4A9 I:HL Address of image to plot
+R $E4A9 I:DE Destination address in the screen
 @ $E4A9 label=draw_endshot
 C $E4A9,1 Preserve destination in screen
 C $E4AA,2 Counter = 64 rows
@@ -2170,7 +2171,7 @@ C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
 D $F8B9 Used by #R$F82F.
-D $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
 C $F8BC,2 94 sample bytes
@@ -2217,7 +2218,7 @@ B $F953,160,2,8*19,6 Drum 1 sample
 c $F9F3 White noise generator
 D $F9F3 Bank 7's own copy of #R$F0C6@main, byte for byte identical to it apart from the two references to the <interrupt flag>, which point at this bank's copy at #R$F8AA rather than the main bank's. Reached as instrument 3 from #R$F893.
 D $F9F3 The disassembler took these 56 bytes for data; they are code.
-D $F9F3 I:A Duration (3 or 9 in practice)
+R $F9F3 I:A Duration (3 or 9 in practice)
 @ $F9F3 label=b7_play_noise
 C $F9F3,1 Set #REGe to duration counter
 @ $F9F4 label=b7n_outer_loop
