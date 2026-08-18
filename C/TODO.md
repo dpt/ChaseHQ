@@ -5,14 +5,11 @@
   - hard to enter name
   - characters vanish
   - test: non-highest score
-- fix: Disable test flag by default (perhaps put it on an F-key)
 - timing: Properly calibrate the game against the original (needs emulator
   T-state recording)
 - Complete decoding of all stage data (via the level converter script)
-- Stretchy test app produces crap output [checked - still a bit rubbish] -
-  delete it?
-- Start backporting changes to the disasm
-- 48K mode drum timing is off (interrupts?)
+- Continue backporting changes to the disasm
+- bug: 48K mode drum timing is off (lack of interrupts?)
 - Audit "Conv: added" vars
 - Investigate Claude fixes in case they've made the C diverge from the asm
 
