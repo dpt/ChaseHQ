@@ -1935,7 +1935,6 @@ static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
   {
   case SDL_EVENT_QUIT:
     CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
-    SDL_Log("Quitting after %llu ns", (unsigned long long) event->quit.timestamp);
     break;
 
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -2042,13 +2041,11 @@ static void chq_dispatch_events(chq_sdl_state_t *instances, int count)
       continue;
 
     for (n = 0; n < count; n++)
-    {
       if (SDL_GetWindowID(instances[n].video.window) == windowID)
       {
         chq_handle_event(&instances[n], &event);
         break;
       }
-    }
   }
 }
 
@@ -2127,7 +2124,7 @@ static void chq_sdl_main_loop(void *opaque)
 // Instances are otherwise independent -- each owns its own chq_sdl_state_t,
 // so this exists purely to let two-up mode spin up N of them without
 // duplicating the whole of main().
-static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale)
+static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale, int speed)
 {
   zxconfig_t  zxconfig;
   SDL_Window *window;
@@ -2141,7 +2138,7 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   state->flags    = 0;
   CHQ_FLAG_ASSIGN(state, CHQ_FLAG_MODE_128K, mode_128k);
   state->video.scale           = scale;
-  state->speed                 = SPEED_DEFAULT;
+  state->speed                 = speed;
   state->audio.volume          = VOLUME_DEFAULT;
   state->video.crt_params      = crt_tuned_params;
   state->video.crt_param_index = 0;
@@ -2442,15 +2439,18 @@ static void chq_web_main_loop(void *opaque)
 int main(int argc, char *argv[])
 {
   chq_sdl_state_t *instances;
-  int              n, count, arg, mode_128k, quiet, scale;
+  int              n, count, arg, mode_128k, quiet, scale, scale_random, speed, speed_random;
 #ifndef __EMSCRIPTEN__
   int              quit_count;
 #endif
 
-  count     = 1;
-  mode_128k = 1;
-  quiet     = 0;
-  scale     = SCALE_DEFAULT;
+  count        = 1;
+  mode_128k    = 1;
+  quiet        = 0;
+  scale        = SCALE_DEFAULT;
+  scale_random = 0;
+  speed        = SPEED_DEFAULT;
+  speed_random = 0;
 
   for (arg = 1; arg < argc; arg++)
   {
@@ -2476,15 +2476,33 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(argv[arg], "-scale") == 0 && arg + 1 < argc)
     {
-      if (!chq_parse_int(argv[++arg], &scale))
+      arg++;
+      if (strcmp(argv[arg], "random") == 0)
       {
-        fprintf(stderr, "Error: -scale expects an integer, got '%s'\n", argv[arg]);
+        scale_random = 1;
+      }
+      else if (!chq_parse_int(argv[arg], &scale))
+      {
+        fprintf(stderr, "Error: -scale expects an integer or 'random', got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
+    }
+    else if (strcmp(argv[arg], "-speed") == 0 && arg + 1 < argc)
+    {
+      arg++;
+      if (strcmp(argv[arg], "random") == 0)
+      {
+        speed_random = 1;
+      }
+      else if (!chq_parse_int(argv[arg], &speed))
+      {
+        fprintf(stderr, "Error: -speed expects an integer or 'random', got '%s'\n", argv[arg]);
         return EXIT_FAILURE;
       }
     }
     else
     {
-      fprintf(stderr, "Usage: %s [-48k | -128k] [-n count] [-quiet] [-scale factor]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-48k | -128k] [-n count] [-quiet] [-scale factor|random] [-speed percent|random]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -2495,11 +2513,20 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  if (scale < SCALE_MIN || scale > SCALE_MAX)
+  if (!scale_random && (scale < SCALE_MIN || scale > SCALE_MAX))
   {
-    fprintf(stderr, "Error: -scale must be between %d and %d\n", SCALE_MIN, SCALE_MAX);
+    fprintf(stderr, "Error: -scale must be between %d and %d, or 'random'\n", SCALE_MIN, SCALE_MAX);
     return EXIT_FAILURE;
   }
+
+  if (!speed_random && (speed < SPEED_MIN || speed > SPEED_MAX))
+  {
+    fprintf(stderr, "Error: -speed must be between %d and %d, or 'random'\n", SPEED_MIN, SPEED_MAX);
+    return EXIT_FAILURE;
+  }
+
+  if (speed_random || scale_random)
+    srand((unsigned) SDL_GetTicks());
 
 #ifdef __APPLE__
   /* Conv: disable macOS press-and-hold accent popover so held keys repeat
@@ -2527,7 +2554,10 @@ int main(int argc, char *argv[])
 
   for (n = 0; n < count; n++)
   {
-    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, scale))
+    int instance_speed = speed_random ? SPEED_DEFAULT + rand() % (SPEED_MAX - SPEED_DEFAULT + 1) : speed;
+    int instance_scale = scale_random ? SCALE_MIN + rand() % (SCALE_MAX - SCALE_MIN + 1) : scale;
+
+    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, instance_scale, instance_speed))
     {
       fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
       chq_shutdown_all(instances, n);

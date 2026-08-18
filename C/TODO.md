@@ -1,17 +1,22 @@
 # TODO
 
-- fix: High score screen bugs
-  - flicker at bottom when scrolling
-  - hard to enter name
-  - characters vanish
-  - test: non-highest score
-- timing: Properly calibrate the game against the original (needs emulator
-  T-state recording)
-- Complete decoding of all stage data (via the level converter script)
-- Continue backporting changes to the disasm
-- bug: 48K mode drum timing is off (lack of interrupts?)
 - Audit "Conv: added" vars
+- Audit: Can we delete a lot of the logtime calls now?
+- Bug: 48K mode drum timing is off (lack of interrupts?)
+- Bug: Highscore: Characters vanish
+- Bug: Highscore: Flicker at bottom when scrolling
+- Bug: Highscore: Hard to enter name
+- Bug: Highscore: Test: non-highest score
+- Compare the demo level with stage 4
+- Continue backporting changes to the disasm
+- Flush out this 'it's a custom level' germ of an idea that keeps reappearing
 - Investigate Claude fixes in case they've made the C diverge from the asm
+- New video
+- Optimisations
+- Slap warnings on the level converter now it's finished?
+- Timing: Properly calibrate the game against the original (needs emulator
+  T-state recording)
+- Idea: Mouse steering!
 
 ### Authority sweep (comments that read as guesswork)
 
@@ -34,9 +39,7 @@ against the skool then rewrite the comment as a statement — or delete it.
 
 ## FOR WRITEUP / NOTES
 
-- Document the game from start until first frame built
-- Explain that it's "Actual C code" designed to be read by humans - not machine
-  generated grot
+- Document the game from start until its first frame is built
 - Also it omits unneeded ops - it should be efficient (but nowhere near the
   original)
 - Document how functions are created from source Z80
@@ -45,8 +48,4 @@ against the skool then rewrite the comment as a statement — or delete it.
 - Claude on medium effort + advisor notes
 - Example: creating a whole new stage + backporting to Speccy
 
-## IDEAS (backlog)
-
-- Annotate all state members to show which functions consume/mutate them (messy)
-- Add new level(s) - actual good one, not just test
-- Pull across the demo version of the game
+https://en.wikipedia.org/wiki/Muntzing
