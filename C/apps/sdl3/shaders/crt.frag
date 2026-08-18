@@ -58,6 +58,9 @@ void main()
   vec3 bw;
   float flicker;
   float lum;
+  float scan_phase;
+  float scan_width;
+  float scan_atten;
   float scan;
   float adaptive;
   vec2 d;
@@ -131,8 +134,15 @@ void main()
   lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));
   c.rgb = mix(vec3(lum), c.rgb, p.saturation);
 
-  /* scanlines, intensity adapted to local luminance. */
-  scan = sin(uv0.y * 384.0 * 3.14159265) * 0.5 + 0.5;
+  /* scanlines, intensity adapted to local luminance. Band-limit via fwidth
+   * so the scanline amplitude fades out (rather than aliasing into moire)
+   * once curvature or downscaling makes a pixel span several source lines.
+   */
+  scan_phase = uv0.y * 384.0 * 3.14159265;
+  scan_width = fwidth(scan_phase);
+  scan_atten =
+      scan_width > 0.0001 ? clamp(sin(scan_width * 0.5) / (scan_width * 0.5), 0.0, 1.0) : 1.0;
+  scan = sin(scan_phase) * scan_atten * 0.5 + 0.5;
   adaptive = mix(p.scanline_intensity, p.scanline_intensity * (1.0 - lum), 0.5);
   c.rgb *= 1.0 - adaptive * scan;
 
