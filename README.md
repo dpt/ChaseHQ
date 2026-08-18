@@ -49,5 +49,6 @@ Emscripten/WebAssembly build of the SDL3 app.
 
 ## Related
 
-- [My previous Speccy disassembly - The Great Escape](https://github.com/dpt/The-Great-Escape) ... [and its rebuild in C](https://github.com/dpt/The-Great-Escape-in-C)
+- [My previous Speccy disassembly - The Great Escape](https://github.com/dpt/The-Great-Escape)
+  ... [and its rebuild in C](https://github.com/dpt/The-Great-Escape-in-C)
 - [My AY-8912 emulator, SlopAY](https://github.com/dpt/SlopAY)
