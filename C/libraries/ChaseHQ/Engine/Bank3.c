@@ -8327,8 +8327,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
 
         /* $ED6F-$ED83: LD A,(DE)/INC DE (operand 1 read, 7+6=13); LD (IX+$07),B/
          * LD (IX+$08),B/LD (IX+$0D),A (clear slide_accum + store slide_step,
-         * 19+19+19=57); SET 2,(IX+$00) (23); LD A,(DE)/INC DE (operand 2 read,
-         * 7+6=13); LD (IX+$0E),A (19); JR $EDE4 (12). Total 13+57+23+13+19+12=137. */
+         * 19+19+19=57); SET 2,(IX+$00) (23); LD A,(DE) (operand 2 read, 7);
+         * LD (IX+$0E),A (19); INC DE (6); JR $EDE4 (12).
+         * Total 13+57+23+7+19+6+12=137. */
         state->speccy->logtime(state->speccy, 137);
         continue;
 
@@ -8354,8 +8355,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         IX_channel->vibrato_phase = A_operand; /* +$1C */
 
         /* $ED8C-$ED99: LD A,(DE)/LD (IX+$1B),A/INC DE (operand 1, 7+19+6=32);
-         * LD A,(DE)/INC DE (operand 2 read, 7+6=13); LD (IX+$1A),A/
-         * LD (IX+$1C),A/JR $EDE4 (19+19+12=50). Total 32+13+50=95. */
+         * LD A,(DE) (operand 2 read, 7); LD (IX+$1A),A (19); INC DE (6);
+         * LD (IX+$1C),A (19); JR $EDE4 (12). Total 32+7+19+6+19+12=95. */
         state->speccy->logtime(state->speccy, 95);
         continue;
 
@@ -9972,8 +9973,9 @@ static void titlescr_music(chqstate_t *state)
   /* $F832-$F833: XOR A / LD ($F8A8),A -- clears the "frame occurred" flag.
    * Conv: functionally omitted (see prologue), since nothing here polls
    * $F8A8, but the two instructions still cost real T-states on hardware. */
-  /* $F836-$F839: LD A,(slot1_busy) / AND A -- common prefix before the
-   * busy/idle branch. */
+  /* $F836-$F839: LD A,(SM,$00) / AND A -- common prefix before the
+   * busy/idle branch; the "LD A,$00" operand is self-modified to
+   * slot1_busy, same pattern as the $F84D reload noted below. */
   state->speccy->logtime(state->speccy, 4 + 13 + 7 + 4);
 
   if (!state->bank3->drums.slot1_busy)
@@ -9986,8 +9988,9 @@ static void titlescr_music(chqstate_t *state)
     goto sfx1_reload_pointer;
   }
 
-  /* $F839 JR NZ,$F841 taken (12) + $F841 LD A,(slot1_countdown) / $F843 DEC
-   * A / $F844 JP Z,$F84D (7+4+10=21). */
+  /* $F839 JR NZ,$F841 taken (12) + $F841 LD A,(SM,$00) / $F843 DEC A / $F844
+   * JP Z,$F84D (7+4+10=21) -- the "LD A,$00" operand is self-modified to
+   * slot1_countdown. */
   state->speccy->logtime(state->speccy, 12 + 21);
 
   A = (u8)(state->bank3->drums.slot1_countdown - 1);
@@ -10097,7 +10100,8 @@ drum_dispatch_entry:
   }
 
 sfx2_tick_countdown:
-  /* $F894 LD A,(slot2_busy) / $F896 AND A (7+4=11). */
+  /* $F894 LD A,(SM,$00) / $F896 AND A (7+4=11) -- the "LD A,$00" operand is
+   * self-modified to slot2_busy. */
   state->speccy->logtime(state->speccy, 11);
   if (state->bank3->drums.slot2_busy)
   {
@@ -10113,8 +10117,8 @@ sfx2_tick_countdown:
     state->speccy->logtime(state->speccy, 12);
   }
 
-  /* $F8A1 LD A,(sample_active) / $F8A3 DEC A / $F8A4 JP Z,$F8CC
-   * (7+4+10=21). */
+  /* $F8A1 LD A,(SM,$00) / $F8A3 DEC A / $F8A4 JP Z,$F8CC (7+4+10=21) -- the
+   * "LD A,$00" operand is self-modified to sample_active. */
   state->speccy->logtime(state->speccy, 21);
   if (state->bank3->drums.sample_active)
   {
@@ -10307,16 +10311,33 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
         bits = 0;
       speccy->out(speccy, port_BORDER_EAR_MIC, bits);
       RLC(*HL_data); /* rotate sample byte in place */
-      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
-      speccy->logtime(speccy, 63);
-      /* The OUT above costs a further 11, billed to the virtual clock by the
-       * facade's out() rather than by logtime. The yield budget must count the
-       * full 74 or it lets ~16% too many rows through per frame. */
-      frame_tstates += 63 + 11;
+      if (bits)
+      {
+        /* $F8CF-$F8DC bit-set path: LD A,$10; NOP; BIT 7,(HL); JR NZ taken
+         * (RES 4,A skipped); RLC (HL); DJNZ taken (7+4+12+12+15+13) */
+        speccy->logtime(speccy, 63);
+        /* The OUT above costs a further 11, billed to the virtual clock by
+         * the facade's out() rather than by logtime. The yield budget must
+         * count the full 74 or it lets ~16% too many rows through per
+         * frame. */
+        frame_tstates += 63 + 11;
+      }
+      else
+      {
+        /* $F8CF-$F8DC mute path: LD A,$10; NOP; BIT 7,(HL); JR NZ not taken;
+         * RES 4,A; RLC (HL); DJNZ taken (7+4+12+7+8+15+13) -- +3 versus the
+         * bit-set path (JR NZ -5, RES 4,A +8) */
+        speccy->logtime(speccy, 66);
+        frame_tstates += 66 + 11;
+      }
     }
     while (--i > 0);
     HL_data++;
-    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
+    /* $F8DE-$F8E6: INC HL; DEC D; JR Z not taken; LD A,($F8A8); AND A;
+     * JP Z taken (6+4+7+13+4+10=44), plus next byte's $F8CD LD B,$08
+     * pre-billed here (+7 = 51), less the final row-bit's DJNZ billed as
+     * taken (13) in the loop above when it was actually not-taken (8),
+     * i.e. -5: 51-5=46. */
     speccy->logtime(speccy, 46);
     frame_tstates += 46;
     if (--D_length == 0)
@@ -10416,11 +10437,14 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
       {
         /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
         speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - E_duration));
+        /* $FA5A: LD A,$18 (7) */
+        speccy->logtime(speccy, 7);
         speccy->out(speccy, port_BORDER_EAR_MIC, port_MASK_EAR | port_MASK_MIC);
         /* $FA5E: LD B,E; DJNZ; XOR A (4 + loop + 4) */
         speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
+        /* $FA64-$FA65: DEC D; JR NZ taken (4+12) */
         speccy->logtime(speccy, 16);
       }
       else
