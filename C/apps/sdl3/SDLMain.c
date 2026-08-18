@@ -64,6 +64,14 @@
 #define VOLUME_MAX         (100)
 #define VOLUME_STEP         (10)
 
+/* Mouse steering: relative motion accumulates into a virtual wheel position
+ * (pixels), clamped to +-MOUSE_WHEEL_RANGE. Past MOUSE_WHEEL_DEADZONE either
+ * side, kempston LEFT/RIGHT is asserted -- Kempston has no analogue axis, so
+ * the wheel position only ever decides a digital direction.
+ */
+#define MOUSE_WHEEL_RANGE      (150)
+#define MOUSE_WHEEL_DEADZONE    (15)
+
 /* Whether the CRT post-effect starts switched on. Both display backends are
  * always built: the plain SDL_Renderer blit (any GPU backend,
  * nearest-neighbour scaling) and the SDL3 GPU CRT post-effect pipeline
@@ -234,6 +242,8 @@ typedef struct chq_sdl_state
 
   zxkeyset_t        keys;
   zxkempston_t      kempston;
+  int               mouse_wheel; // relative-motion accumulator driving steering, +-MOUSE_WHEEL_RANGE
+  int               mouse_steering; // bool; toggled with Ctrl-G, off by default
 
   int               instance;   // 0-based index; only used to label the window title in n-up mode
   int               instance_count; // total instances launched; >1 shows the instance number in the title
@@ -1429,6 +1439,19 @@ static void chq_action_toggle_mellow(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.mellow ? "MELLOW ON" : "MELLOW OFF");
 }
 
+static void chq_action_toggle_mouse_steering(chq_sdl_state_t *state)
+{
+  state->mouse_steering = !state->mouse_steering;
+  state->mouse_wheel     = 0;
+
+  zxkempston_assign(&state->kempston, zxjoystick_LEFT,  0);
+  zxkempston_assign(&state->kempston, zxjoystick_RIGHT, 0);
+  zxkempston_assign(&state->kempston, zxjoystick_FIRE,  0); // GEAR; see chq_sdl_mouse_button
+  zxkeyset_assign(&state->keys, zxkey_SPACE, 0);            // BOOST default key; see chq_sdl_mouse_button
+
+  chq_osd_show(state, state->mouse_steering ? "MOUSE STEERING ON" : "MOUSE STEERING OFF");
+}
+
 static void chq_action_toggle_backbuffer(chq_sdl_state_t *state)
 {
   state->video.show_backbuffer = !state->video.show_backbuffer;
@@ -1669,6 +1692,16 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     j = zxjoystick_UNKNOWN;
     break;
 
+  case SDLK_G:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_mouse_steering(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
   case SDLK_Y:
     if (k->mod & SDL_KMOD_CTRL)
     {
@@ -1761,6 +1794,47 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   }
 
   chq_action_joystick_or_key(state, k, j);
+}
+
+static void chq_sdl_mouse_motion(chq_sdl_state_t           *state,
+                                 const SDL_MouseMotionEvent *m)
+{
+  if (!state->mouse_steering)
+    return;
+
+  state->mouse_wheel = CLAMP(state->mouse_wheel + (int) m->xrel,
+                             -MOUSE_WHEEL_RANGE, MOUSE_WHEEL_RANGE);
+
+  zxkempston_assign(&state->kempston, zxjoystick_LEFT,
+                    state->mouse_wheel < -MOUSE_WHEEL_DEADZONE);
+  zxkempston_assign(&state->kempston, zxjoystick_RIGHT,
+                    state->mouse_wheel > MOUSE_WHEEL_DEADZONE);
+}
+
+// Left click stands in for GEAR via the kempston FIRE bit, same joystick
+// path as arrow-key steering -- both need the in-game "KEMPSTON JOYSTICK"
+// control scheme selected (or auto-detected) to take effect. Right click is
+// turbo boost via zxkey_SPACE, its default keyboard binding
+// (Bank3.c default_control_keys[7]), which is scanned regardless of scheme.
+static void chq_sdl_mouse_button(chq_sdl_state_t            *state,
+                                 const SDL_MouseButtonEvent *b)
+{
+  if (!state->mouse_steering)
+    return;
+
+  switch (b->button)
+  {
+  case SDL_BUTTON_LEFT:
+    zxkempston_assign(&state->kempston, zxjoystick_FIRE, b->down);
+    break;
+
+  case SDL_BUTTON_RIGHT:
+    zxkeyset_assign(&state->keys, zxkey_SPACE, b->down);
+    break;
+
+  default:
+    break;
+  }
 }
 
 /* Outlines the screen regions chq_draw_handler reported dirty since the last
@@ -1878,8 +1952,14 @@ static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
     break;
 
   case SDL_EVENT_MOUSE_MOTION:
+    chq_sdl_mouse_motion(state, &event->motion);
+    break;
+
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
   case SDL_EVENT_MOUSE_BUTTON_UP:
+    chq_sdl_mouse_button(state, &event->button);
+    break;
+
   case SDL_EVENT_MOUSE_WHEEL:
     break;
 

@@ -90,6 +90,12 @@ redefine option can change:
 
 A Kempston joystick is emulated on the arrow keys, using `.` for fire.
 
+`Ctrl-G` turns on mouse steering: moving the mouse left/right steers (through
+the same Kempston path as the arrow keys, so the in-game "KEMPSTON JOYSTICK"
+control scheme needs selecting too), left click is gear, right click is
+turbo boost. Off by default; toggling it off releases any held direction or
+button.
+
 The host adds its own keys, which never reach the game:
 
 | Key                   | Action                                                         |
@@ -107,6 +113,7 @@ The host adds its own keys, which never reach the game:
 | `Ctrl-N`              | Toggle mellow (dimmed, desaturated CRT-style) palette          |
 | `Ctrl-Y`              | One-shot glitch: fill the screen with random noise for a frame |
 | `Ctrl-X`              | Toggle the "SHOCKED" test-mode cheat                            |
+| `Ctrl-G`              | Toggle mouse steering (off by default)                          |
 | `-` / `=`             | Window scale down / up                                         |
 | `[` / `]`             | Emulation speed down / up (5% steps)                           |
 | `Shift-[` / `Shift-]` | Emulation speed down / up (1% steps)                           |
