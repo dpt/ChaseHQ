@@ -4000,129 +4000,9 @@ static const u8 title_tune23_data[203] = {
   0x87, /* $F7A9: PCMD_ADVANCE_PHRASE [tune3ch2] */
 };
 
-/**
- * $FC29-$FC9A -- 128K control-select screen text, printed via
- * print_string/print_character. Wired into omd_redraw_and_poll below.
- */
-static const u8 control_select_text[] = {
-  // $FC29: control-select screen
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x484A),
-  'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x48C6),
-  '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5006),
-  '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5046),
-  '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5086),
-  '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x50C6),
-  '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
-  0, // terminator ($FC9A)
-};
-
-/**
- * $FC9B-$FCC8 -- 128K key-redefinition screen text, header + first 3 labels
- * (GEAR/ACCELERATE/BRAKE). Wired into redefine_keys_screen below.
- */
-static const u8 key_redefinition_text1[] = {
-  // $FC9B: key-redefinition screen, header + first 3 labels
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x4849),
-  'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),  // was 0xC6
-  ZXSCREEN(0x48C9),
-  'G', 'E', 'A', 'R' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x48E9),
-  'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5009),
-  'B', 'R', 'A', 'K', 'E' | EOS,
-  0, // terminator ($FCC8)
-};
-
-/**
- * $FCC9-$FCEF -- 128K key-redefinition screen text, remaining 5 labels
- * (LEFT/RIGHT/QUIT/PAUSE/TURBO). Wired into redefine_keys_screen below.
- */
-static const u8 key_redefinition_text2[] = {
-  // $FCC9: key-redefinition screen, remaining 5 labels
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5029),
-  'L', 'E', 'F', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5049),
-  'R', 'I', 'G', 'H', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),  // was 0xC4
-  ZXSCREEN(0x5089),
-  'Q', 'U', 'I', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50A9),
-  'P', 'A', 'U', 'S', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50C9),
-  'T', 'U', 'R', 'B', 'O' | EOS,
-  0, // terminator ($FCEF)
-};
-
-/**
- * $FCF0-$FD96 -- 128K hidden test-mode screen text. Wired into
- * redefine_keys_screen below (test-mode confirmation text).
- */
-static const u8 test_mode_text[] = {
-  // $FCF0: hidden test-mode screen
-  (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),  // was 0xC1
-  ZXSCREEN(0x4000),
-  'T', 'E', 'S', 'T' | EOS,
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x4826),
-  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),  // was 0xC5
-  ZXSCREEN(0x48A2),
-  'T', 'I', 'T', 'L', 'E', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),  // was 0xC3
-  ZXSCREEN(0x48E2),
-  '1', ' ', 'T', 'O', ' ', '5', '.', ' ', 'L', 'O', 'G', 'O', ' ', 'A', 'N', 'I', 'M', 'A', 'T', 'I', 'O', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),
-  ZXSCREEN(0x5007),
-  '6', '.', ' ', 'S', 'C', 'O', 'R', 'E', ' ', 'E', 'N', 'T', 'R', 'Y' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
-  ZXSCREEN(0x5042),
-  'I', 'N', ' ', 'G', 'A', 'M', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x5087),
-  '1', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50A7),
-  '2', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50C7),
-  '3', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50E7),
-  '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
-  0 // terminator / pad byte ($FD96)
-};
 // clang-format on
 
 /* ----------------------------------------------------------------------- */
-
-/* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
- * each high-score row (fixed to screen position, never shifted -- see
- * high_score_row_t's own comment in Bank3State.h). Not consumed yet: the
- * high-score screen's rendering is not translated (see
- * insert_high_score_entry's Conv note below); kept here for when it is. */
-static const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
-  "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",
-  "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
-};
 
 /* ----------------------------------------------------------------------- */
 
@@ -4494,54 +4374,6 @@ static void insert_high_score_entry(chqstate_t *state, int row)
   update_whole_playfield(state);    /* Conv: added */
 }
 
-/* $C3AF-$C400: static header/label text for the name-entry screen, packed in
- * print_character record format -- byte0 (style bit7 + colour), TWOBYTES of
- * the screen address, then the character stream with the last character
- * OR'd with EOS. Decoded directly from the raw bytes, not the skool's own
- * "pos=.. attr=.." prose (which mislabels the field order -- see
- * print_character's own unpack order at $FDA4). */
-// clang-format off
-static const u8 name_entry_screen_text[] = {
-  0x02,
-  ZXSCREEN(0x480A),
-  'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
-
-  0xC6,
-  ZXSCREEN(0x4867),
-  'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
-
-  0x07,
-  ZXSCREEN(0x488E),
-  '.',' ','.',' ', '.' | EOS,
-
-  0xC6,
-  ZXSCREEN(0x48C0),
-  'R','A','N','K',' ',' ',' ',' ','S','C','O','R','E',' ',' ','S','T','A','G','E',' ',' ','P','L','A','Y',' ',' ','N','A','M', 'E' | EOS,
-
-  0
-};
-// clang-format on
-
-/* $C54B-$C55E: (E, D) screen address of each rank's name field in the
- * 10-row table -- consumed by scroll_score_rows' full-table renderer, not
- * the letter-entry cursor (see cursor_cell_addr below: the ". . ." record
- * at $488E is a separate, fixed on-screen slot the player types into,
- * independent of which rank the confirmed name will land in). Ranks 1-2
- * (D < $40) start one character row above the visible screen and scroll
- * down into place in the original. */
-static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
-  { 0x80, 0x38 },
-  { 0xC0, 0x38 },
-  { 0x00, 0x40 },
-  { 0x40, 0x40 },
-  { 0x80, 0x40 },
-  { 0xC0, 0x40 },
-  { 0x00, 0x48 },
-  { 0x40, 0x48 },
-  { 0x80, 0x48 },
-  { 0xC0, 0x48 },
-};
-
 /**
  * $C0EC: Set up the name-entry screen
  *
@@ -4557,6 +4389,54 @@ static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
  */
 static void name_entry_setup_screen(chqstate_t *state)
 {
+  /* $C3AF-$C400: static header/label text for the name-entry screen, packed
+   * in print_character record format -- byte0 (style bit7 + colour),
+   * TWOBYTES of the screen address, then the character stream with the last
+   * character OR'd with EOS. Decoded directly from the raw bytes, not the
+   * skool's own "pos=.. attr=.." prose (which mislabels the field order --
+   * see print_character's own unpack order at $FDA4). */
+  // clang-format off
+  static const u8 name_entry_screen_text[] = {
+    0x02,
+    ZXSCREEN(0x480A),
+    'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
+
+    0xC6,
+    ZXSCREEN(0x4867),
+    'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
+
+    0x07,
+    ZXSCREEN(0x488E),
+    '.',' ','.',' ', '.' | EOS,
+
+    0xC6,
+    ZXSCREEN(0x48C0),
+    'R','A','N','K',' ',' ',' ',' ','S','C','O','R','E',' ',' ','S','T','A','G','E',' ',' ','P','L','A','Y',' ',' ','N','A','M', 'E' | EOS,
+
+    0
+  };
+  // clang-format on
+
+  /* $C54B-$C55E: (E, D) screen address of each rank's name field in the
+   * 10-row table -- consumed by scroll_score_rows' full-table renderer, not
+   * the letter-entry cursor (see cursor_cell_addr below: the ". . ." record
+   * at $488E is a separate, fixed on-screen slot the player types into,
+   * independent of which rank the confirmed name will land in). Ranks 1-2
+   * (D < $40) start one character row above the visible screen and scroll
+   * down into place in the original. */
+  static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
+    { 0x80, 0x38 },
+    { 0xC0, 0x38 },
+    { 0x00, 0x40 },
+    { 0x40, 0x40 },
+    { 0x80, 0x40 },
+    { 0xC0, 0x40 },
+    { 0x00, 0x48 },
+    { 0x40, 0x48 },
+    { 0x80, 0x48 },
+    { 0xC0, 0x48 },
+  };
+
   int row; /* name_entry_row_addr copy index (Conv: rolled, no Z80 equivalent) */
 
   clear_playfield_and_attrs(state);
@@ -5312,6 +5192,14 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   int                     blink,
                                   u8                      attrs)
 {
+  /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed
+   * beside each high-score row (fixed to screen position, never shifted --
+   * see high_score_row_t's own comment in Bank3State.h). */
+  static const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
+    "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",
+    "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
+  };
+
   draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
   draw_table_field_scrolling(state,  64, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
   draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
@@ -10610,6 +10498,33 @@ static u8 options_menu_driver(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
+  /* $FC29-$FC9A -- 128K control-select screen text, printed via
+   * print_string/print_character. */
+  // clang-format off
+  static const u8 control_select_text[] = {
+    // $FC29: control-select screen
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x484A),
+    'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x48C6),
+    '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5006),
+    '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5046),
+    '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5086),
+    '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x50C6),
+    '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    0, // terminator ($FC9A)
+  };
+  // clang-format on
+
   /* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
    * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
    * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
@@ -11026,6 +10941,86 @@ static void clear_options_screen(chqstate_t *state)
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
+  /* $FC9B-$FCC8 -- 128K key-redefinition screen text, header + first 3
+   * labels (GEAR/ACCELERATE/BRAKE). */
+  // clang-format off
+  static const u8 key_redefinition_text1[] = {
+    // $FC9B: key-redefinition screen, header + first 3 labels
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x4849),
+    'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),  // was 0xC6
+    ZXSCREEN(0x48C9),
+    'G', 'E', 'A', 'R' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x48E9),
+    'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5009),
+    'B', 'R', 'A', 'K', 'E' | EOS,
+    0, // terminator ($FCC8)
+  };
+
+  /* $FCC9-$FCEF -- 128K key-redefinition screen text, remaining 5 labels
+   * (LEFT/RIGHT/QUIT/PAUSE/TURBO). */
+  static const u8 key_redefinition_text2[] = {
+    // $FCC9: key-redefinition screen, remaining 5 labels
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5029),
+    'L', 'E', 'F', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5049),
+    'R', 'I', 'G', 'H', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),  // was 0xC4
+    ZXSCREEN(0x5089),
+    'Q', 'U', 'I', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A9),
+    'P', 'A', 'U', 'S', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50C9),
+    'T', 'U', 'R', 'B', 'O' | EOS,
+    0, // terminator ($FCEF)
+  };
+
+  /* $FCF0-$FD96 -- 128K hidden test-mode screen text (test-mode confirmation
+   * text). */
+  static const u8 test_mode_text[] = {
+    // $FCF0: hidden test-mode screen
+    (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),  // was 0xC1
+    ZXSCREEN(0x4000),
+    'T', 'E', 'S', 'T' | EOS,
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x4826),
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),  // was 0xC5
+    ZXSCREEN(0x48A2),
+    'T', 'I', 'T', 'L', 'E', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),  // was 0xC3
+    ZXSCREEN(0x48E2),
+    '1', ' ', 'T', 'O', ' ', '5', '.', ' ', 'L', 'O', 'G', 'O', ' ', 'A', 'N', 'I', 'M', 'A', 'T', 'I', 'O', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),
+    ZXSCREEN(0x5007),
+    '6', '.', ' ', 'S', 'C', 'O', 'R', 'E', ' ', 'E', 'N', 'T', 'R', 'Y' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
+    ZXSCREEN(0x5042),
+    'I', 'N', ' ', 'G', 'A', 'M', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5087),
+    '1', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A7),
+    '2', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50C7),
+    '3', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50E7),
+    '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
+    0 // terminator / pad byte ($FD96)
+  };
+  // clang-format on
+
   /* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
    * checked against the 8 keys just chosen. Byte-for-byte identical to the
    * 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
@@ -11236,10 +11231,7 @@ rescan:
     run_title_tune(state);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
-    if (ambiguous)
-      continue;
-
-    if (D_key_code == 0xFF)
+    if (ambiguous || D_key_code == 0xFF)
       continue;
 
     break;
