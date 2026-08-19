@@ -814,12 +814,7 @@ static void test_helicopter_draws(void)
 /*
  * draw_overhead ($9052): the bridge deck span must stop where the Z80's
  * unrolled fill loop ($9117-$9151, BRIDGE_DECK_LOOP_WRITES entries) would
- * stop, not run past it. Regression test for the "central part of the
- * object that spans the road fails to stop at the right edge" report: the
- * memset byte count was taken directly from overhead.span_width_words/2 (the JR
- * displacement into the loop) instead of BRIDGE_DECK_LOOP_WRITES minus that
- * value, which inverted the clip -- the span grew wider as the deck should
- * have been narrowing towards the edge.
+ * stop, not run past it.
  *
  * All values below (Avertical, overhead.vert_sub, D, E, overhead.span_width_words, dest
  * address) are hand-derived from the skool at $90A3-$9169 for this specific
@@ -888,8 +883,7 @@ static void test_draw_overhead_stops_at_right_edge(void)
     assert(row[expected_col + i] == fill_byte);
 
   /* The byte immediately past the span must be untouched -- this is the
-   * right-edge stop. Before the BRIDGE_DECK_LOOP_WRITES fix the buggy
-   * formula wrote 18 bytes here instead of 12, overrunning this check. */
+   * right-edge stop. */
   assert(row[expected_col + expected_writes] == 0xFF);
 
   chq_destroy(state);
@@ -1312,10 +1306,10 @@ static void test_stop_the_tape_48k_installs_sinclair_scheme(void)
 }
 
 /*
- * Every stage's sprites are drawn from their own array now rather than from one
- * offset into a shared blob per graphics run, so a sprite whose height reaches
- * past its array no longer lands harmlessly in the next sprite's data -- there
- * is no guarantee how the compiler lays two arrays out. Driving frames for each
+ * Every stage's sprites are drawn from their own array rather than from one
+ * offset into a shared blob, so a sprite whose height reaches past its array
+ * no longer lands harmlessly in the next sprite's data -- there is no
+ * guarantee how the compiler lays two arrays out. Driving frames for each
  * stage under the Debug build's AddressSanitizer is what catches that: a read
  * past the end of any one of the ~370 sprite arrays aborts here.
  */

@@ -83,18 +83,18 @@
 
 /* Conv: port-added; no Z80 timing to calibrate against, as a real tape's
  * load time depends on the cassette. Held for a fixed ~2s (100 frames at
- * 50Hz), matching the fixed hold the host previously used. */
-#define LOADING_SCREEN_TSTATES  (FRAME_TSTATES * 100)
+ * 50Hz). */
+#define LOADING_SCREEN_TSTATES (FRAME_TSTATES * 100)
 
 /* $F82F titlescr_music ends by spinning on the IM2 frame flag ($F8A7), so one
  * call is exactly one frame. Trace: 8096 calls, median entry-to-entry delta
  * 70908.
  *
- * Conv: the options-menu, Kempston-detect and success-jingle loops used to
- * have their own placeholder constants. Each paces itself solely by calling
- * titlescr_music once per iteration, so the frame is timed there and those
- * outer sleeps have gone. Trace confirms the period is the same: 919 calls at
- * $FBC8 (run_title_tune), median delta 70908. */
+ * Conv: the options-menu, Kempston-detect and success-jingle loops each pace
+ * themselves solely by calling titlescr_music once per iteration, so the
+ * frame is timed there and no separate outer sleep is needed. Trace confirms
+ * the period is the same: 919 calls at $FBC8 (run_title_tune), median delta
+ * 70908. */
 #define TITLE_MUSIC_TSTATES     FRAME_TSTATES
 
 /* $C6C4 titlescr_animate_frame's self-loop opens with EI/HALT, so one animated

@@ -21311,10 +21311,9 @@ dak_loop1:
  * \param[in] DE_screen Z80 screen address (D = high byte, E = low byte).
  * \return              Screen address of the next character row.
  *
- * Conv: fixed -- previously added 8 to D unconditionally on every call; the
- *       Z80's `RET NC` at $EDD0 only takes that step when the E+=32 addition
- *       overflows (JR NC / RET NC = skip on no-carry, so the D increment is
- *       conditional on carry, not automatic).
+ * Conv: the D increment is conditional, not automatic -- the Z80's `RET NC`
+ *       at $EDD0 only takes that step when the E+=32 addition overflows
+ *       (JR NC / RET NC = skip on no-carry, so D increments only on carry).
  */
 static u16 dak_move_down(int DE_screen)
 {

@@ -4920,10 +4920,9 @@ static void advance_screen_scanline(u8 *D, u8 *E)
  * $E0); third 2 ($50-$57) draws on every character-row except its bottom one
  * (E < $E0). Together these cover one contiguous 8-character-row band
  * (third 1's last row followed by third 2's first seven), not the full 16
- * rows both thirds span. Using the wider "D in $48-$57" range instead (an
- * earlier version of this function did) starts each row drawing a full
- * character-row band too early, overlapping rows already at rest further
- * down the table.
+ * rows both thirds span. The wider "D in $48-$57" range would start each row
+ * drawing a full character-row band too early, overlapping rows already at
+ * rest further down the table.
  *
  * \param[in] D Screen address high byte.
  * \param[in] E Screen address low byte.
@@ -4955,10 +4954,10 @@ static int table_row_visible(u8 D, u8 E)
  * briefly overlap the same slot exactly as the original hardware does.
  *
  * The real $C2D3-$C2EB gate (table_row_visible) fires once per row per
- * frame, on the row's just-advanced address -- not an 8-frame throttle (an
- * earlier version of this comment claimed that; it was wrong, confused with
- * the unrelated `AND $07` third-wrap test inside advance_screen_scanline).
- * Every frame a row's address is inside the visible band, $C2F6 redraws it;
+ * frame, on the row's just-advanced address -- not an 8-frame throttle (that
+ * is the unrelated `AND $07` third-wrap test inside
+ * advance_screen_scanline). Every frame a row's address is inside the
+ * visible band, $C2F6 redraws it;
  * outside the band nothing touches that row's pixels at all -- no draw, no
  * erase. rsn_char_loop's blit is unclamped (see draw_table_field_scrolling)
  * and leads with its own one-scanline erase ($C350-$C352) before each
