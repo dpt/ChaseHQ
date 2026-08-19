@@ -64,6 +64,14 @@
 #define VOLUME_MAX         (100)
 #define VOLUME_STEP         (10)
 
+/* Mouse steering: relative motion accumulates into a virtual wheel position
+ * (pixels), clamped to +-MOUSE_WHEEL_RANGE. Past MOUSE_WHEEL_DEADZONE either
+ * side, kempston LEFT/RIGHT is asserted -- Kempston has no analogue axis, so
+ * the wheel position only ever decides a digital direction.
+ */
+#define MOUSE_WHEEL_RANGE      (150)
+#define MOUSE_WHEEL_DEADZONE    (15)
+
 /* Whether the CRT post-effect starts switched on. Both display backends are
  * always built: the plain SDL_Renderer blit (any GPU backend,
  * nearest-neighbour scaling) and the SDL3 GPU CRT post-effect pipeline
@@ -234,6 +242,8 @@ typedef struct chq_sdl_state
 
   zxkeyset_t        keys;
   zxkempston_t      kempston;
+  int               mouse_wheel; // relative-motion accumulator driving steering, +-MOUSE_WHEEL_RANGE
+  int               mouse_steering; // bool; toggled with Ctrl-G, off by default
 
   int               instance;   // 0-based index; only used to label the window title in n-up mode
   int               instance_count; // total instances launched; >1 shows the instance number in the title
@@ -1429,10 +1439,31 @@ static void chq_action_toggle_mellow(chq_sdl_state_t *state)
   chq_osd_show(state, state->video.mellow ? "MELLOW ON" : "MELLOW OFF");
 }
 
+static void chq_action_toggle_mouse_steering(chq_sdl_state_t *state)
+{
+  state->mouse_steering = !state->mouse_steering;
+  state->mouse_wheel     = 0;
+
+  zxkempston_assign(&state->kempston, zxjoystick_LEFT,  0);
+  zxkempston_assign(&state->kempston, zxjoystick_RIGHT, 0);
+  zxkempston_assign(&state->kempston, zxjoystick_FIRE,  0); // GEAR; see chq_sdl_mouse_button
+  zxkeyset_assign(&state->keys, zxkey_SPACE, 0);            // BOOST default key; see chq_sdl_mouse_button
+
+  chq_osd_show(state, state->mouse_steering ? "MOUSE STEERING ON" : "MOUSE STEERING OFF");
+}
+
 static void chq_action_toggle_backbuffer(chq_sdl_state_t *state)
 {
   state->video.show_backbuffer = !state->video.show_backbuffer;
   chq_osd_show(state, state->video.show_backbuffer ? "BACKBUFFER ON" : "BACKBUFFER OFF");
+}
+
+static void chq_action_toggle_test_mode(chq_sdl_state_t *state)
+{
+  int on;
+
+  on = chq_toggle_test_mode(state->game);
+  chq_osd_show(state, on ? "TEST MODE ON" : "TEST MODE OFF");
 }
 
 static void chq_action_randomise_screen(chq_sdl_state_t *state)
@@ -1661,11 +1692,31 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     j = zxjoystick_UNKNOWN;
     break;
 
+  case SDLK_G:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_mouse_steering(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
   case SDLK_Y:
     if (k->mod & SDL_KMOD_CTRL)
     {
       if (k->down && !k->repeat)
         chq_action_randomise_screen(state);
+      return;
+    }
+    j = zxjoystick_UNKNOWN;
+    break;
+
+  case SDLK_X:
+    if (k->mod & SDL_KMOD_CTRL)
+    {
+      if (k->down && !k->repeat)
+        chq_action_toggle_test_mode(state);
       return;
     }
     j = zxjoystick_UNKNOWN;
@@ -1743,6 +1794,47 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   }
 
   chq_action_joystick_or_key(state, k, j);
+}
+
+static void chq_sdl_mouse_motion(chq_sdl_state_t           *state,
+                                 const SDL_MouseMotionEvent *m)
+{
+  if (!state->mouse_steering)
+    return;
+
+  state->mouse_wheel = CLAMP(state->mouse_wheel + (int) m->xrel,
+                             -MOUSE_WHEEL_RANGE, MOUSE_WHEEL_RANGE);
+
+  zxkempston_assign(&state->kempston, zxjoystick_LEFT,
+                    state->mouse_wheel < -MOUSE_WHEEL_DEADZONE);
+  zxkempston_assign(&state->kempston, zxjoystick_RIGHT,
+                    state->mouse_wheel > MOUSE_WHEEL_DEADZONE);
+}
+
+// Left click stands in for GEAR via the kempston FIRE bit, same joystick
+// path as arrow-key steering -- both need the in-game "KEMPSTON JOYSTICK"
+// control scheme selected (or auto-detected) to take effect. Right click is
+// turbo boost via zxkey_SPACE, its default keyboard binding
+// (Bank3.c default_control_keys[7]), which is scanned regardless of scheme.
+static void chq_sdl_mouse_button(chq_sdl_state_t            *state,
+                                 const SDL_MouseButtonEvent *b)
+{
+  if (!state->mouse_steering)
+    return;
+
+  switch (b->button)
+  {
+  case SDL_BUTTON_LEFT:
+    zxkempston_assign(&state->kempston, zxjoystick_FIRE, b->down);
+    break;
+
+  case SDL_BUTTON_RIGHT:
+    zxkeyset_assign(&state->keys, zxkey_SPACE, b->down);
+    break;
+
+  default:
+    break;
+  }
 }
 
 /* Outlines the screen regions chq_draw_handler reported dirty since the last
@@ -1843,7 +1935,6 @@ static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
   {
   case SDL_EVENT_QUIT:
     CHQ_FLAG_SET(state, CHQ_FLAG_QUIT);
-    SDL_Log("Quitting after %llu ns", (unsigned long long) event->quit.timestamp);
     break;
 
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -1860,8 +1951,14 @@ static void chq_handle_event(chq_sdl_state_t *state, const SDL_Event *event)
     break;
 
   case SDL_EVENT_MOUSE_MOTION:
+    chq_sdl_mouse_motion(state, &event->motion);
+    break;
+
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
   case SDL_EVENT_MOUSE_BUTTON_UP:
+    chq_sdl_mouse_button(state, &event->button);
+    break;
+
   case SDL_EVENT_MOUSE_WHEEL:
     break;
 
@@ -1944,13 +2041,11 @@ static void chq_dispatch_events(chq_sdl_state_t *instances, int count)
       continue;
 
     for (n = 0; n < count; n++)
-    {
       if (SDL_GetWindowID(instances[n].video.window) == windowID)
       {
         chq_handle_event(&instances[n], &event);
         break;
       }
-    }
   }
 }
 
@@ -2029,7 +2124,7 @@ static void chq_sdl_main_loop(void *opaque)
 // Instances are otherwise independent -- each owns its own chq_sdl_state_t,
 // so this exists purely to let two-up mode spin up N of them without
 // duplicating the whole of main().
-static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale)
+static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index, int count, int quiet, int scale, int speed)
 {
   zxconfig_t  zxconfig;
   SDL_Window *window;
@@ -2043,7 +2138,7 @@ static int chq_instance_create(chq_sdl_state_t *state, int mode_128k, int index,
   state->flags    = 0;
   CHQ_FLAG_ASSIGN(state, CHQ_FLAG_MODE_128K, mode_128k);
   state->video.scale           = scale;
-  state->speed                 = SPEED_DEFAULT;
+  state->speed                 = speed;
   state->audio.volume          = VOLUME_DEFAULT;
   state->video.crt_params      = crt_tuned_params;
   state->video.crt_param_index = 0;
@@ -2344,15 +2439,18 @@ static void chq_web_main_loop(void *opaque)
 int main(int argc, char *argv[])
 {
   chq_sdl_state_t *instances;
-  int              n, count, arg, mode_128k, quiet, scale;
+  int              n, count, arg, mode_128k, quiet, scale, scale_random, speed, speed_random;
 #ifndef __EMSCRIPTEN__
   int              quit_count;
 #endif
 
-  count     = 1;
-  mode_128k = 1;
-  quiet     = 0;
-  scale     = SCALE_DEFAULT;
+  count        = 1;
+  mode_128k    = 1;
+  quiet        = 0;
+  scale        = SCALE_DEFAULT;
+  scale_random = 0;
+  speed        = SPEED_DEFAULT;
+  speed_random = 0;
 
   for (arg = 1; arg < argc; arg++)
   {
@@ -2378,15 +2476,33 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(argv[arg], "-scale") == 0 && arg + 1 < argc)
     {
-      if (!chq_parse_int(argv[++arg], &scale))
+      arg++;
+      if (strcmp(argv[arg], "random") == 0)
       {
-        fprintf(stderr, "Error: -scale expects an integer, got '%s'\n", argv[arg]);
+        scale_random = 1;
+      }
+      else if (!chq_parse_int(argv[arg], &scale))
+      {
+        fprintf(stderr, "Error: -scale expects an integer or 'random', got '%s'\n", argv[arg]);
+        return EXIT_FAILURE;
+      }
+    }
+    else if (strcmp(argv[arg], "-speed") == 0 && arg + 1 < argc)
+    {
+      arg++;
+      if (strcmp(argv[arg], "random") == 0)
+      {
+        speed_random = 1;
+      }
+      else if (!chq_parse_int(argv[arg], &speed))
+      {
+        fprintf(stderr, "Error: -speed expects an integer or 'random', got '%s'\n", argv[arg]);
         return EXIT_FAILURE;
       }
     }
     else
     {
-      fprintf(stderr, "Usage: %s [-48k | -128k] [-n count] [-quiet] [-scale factor]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-48k | -128k] [-n count] [-quiet] [-scale factor|random] [-speed percent|random]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -2397,11 +2513,20 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  if (scale < SCALE_MIN || scale > SCALE_MAX)
+  if (!scale_random && (scale < SCALE_MIN || scale > SCALE_MAX))
   {
-    fprintf(stderr, "Error: -scale must be between %d and %d\n", SCALE_MIN, SCALE_MAX);
+    fprintf(stderr, "Error: -scale must be between %d and %d, or 'random'\n", SCALE_MIN, SCALE_MAX);
     return EXIT_FAILURE;
   }
+
+  if (!speed_random && (speed < SPEED_MIN || speed > SPEED_MAX))
+  {
+    fprintf(stderr, "Error: -speed must be between %d and %d, or 'random'\n", SPEED_MIN, SPEED_MAX);
+    return EXIT_FAILURE;
+  }
+
+  if (speed_random || scale_random)
+    srand((unsigned) SDL_GetTicks());
 
 #ifdef __APPLE__
   /* Conv: disable macOS press-and-hold accent popover so held keys repeat
@@ -2429,7 +2554,10 @@ int main(int argc, char *argv[])
 
   for (n = 0; n < count; n++)
   {
-    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, scale))
+    int instance_speed = speed_random ? SPEED_DEFAULT + rand() % (SPEED_MAX - SPEED_DEFAULT + 1) : speed;
+    int instance_scale = scale_random ? SCALE_MIN + rand() % (SCALE_MAX - SCALE_MIN + 1) : scale;
+
+    if (!chq_instance_create(&instances[n], mode_128k, n, count, quiet, instance_scale, instance_speed))
     {
       fprintf(stderr, "Error: failed to start instance #%d\n", n + 1);
       chq_shutdown_all(instances, n);

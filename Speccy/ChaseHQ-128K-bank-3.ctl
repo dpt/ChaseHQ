@@ -158,7 +158,7 @@ C $C1E1,2 Test the confirm/fire bit
 C $C1E3,2 Not confirming -> scroll/select the next letter
 C $C1E5,7 Skip if a "locked" flag is set
 C $C1EC,1 E += 2
-C $C1EF,2 At the maximum name length?
+C $C1EF,2 At the maximum name length
 C $C1F1,2 Yes -> finalise without storing another character
 C $C1F8,4 DE -> row write cursor (see #R$C06E)
 C $C1FC,1 A = selected character code
@@ -195,7 +195,7 @@ C $C275,3 Clear the "locked" flag (see #R$C16A)
 N $C278 This entry point is used by the routine at #R$C16A.
 @ $C278 label=cad_draw_entry
 C $C278,1 A = letter code to draw
-C $C27B,2 Blank marker?
+C $C27B,2 Test for the blank marker
 C $C27F,2 Map the letter code to a font-table index
 C $C282,11 Compute this glyph's offset into the font bitmap table (index * 7, matching font[]'s 7-byte stride)
 C $C28D,3 HL = font bitmap table base
@@ -236,7 +236,7 @@ C $C302,2 Alternate blink phase -> the second name-draw loop below
 C $C304,1 A = next name character
 C $C309,3 Non-space -> draw it
 C $C30C,1 Space -> just advance one column
-C $C30D,2 End of name (bit 7 set)?
+C $C30D,2 Test for end of name (bit 7 set)
 C $C310,3 No -> next character
 C $C313,3 Yes -> resume the #R$C2B1 scroll loop
 C $C316,3 Move the screen address into the shadow DE
@@ -586,7 +586,7 @@ C $CC4C,3 Restore the real stack pointer (operand self-
 C $CC4F,1 modified by $CC04) and return
 b $CC50 Title-screen text, scene/object tables and script byte-code
 D $CC50 Four position-encoded text strings (2 position bytes, 1 attribute byte, ASCII text terminated by a character with bit 7 set -- same encoding as the high-score text at #R$C3AF): "(C) 1989 OCEAN SOFTWARE", "(C) 1988 TAITO CORPORATION" (Chase H.Q. was originally a Taito arcade game, licensed to Ocean for the home computer ports), "PRESS GEAR TO PLAY" and "PRESS ENTER FOR OPTIONS" (drawn by #R$C608/#R$C615 via #R$FDA4). Text ends at $CCB6.
-D $CC50 From $CCB7: 5 scene definition tables, one selected per title-screen call by #R$C5AC-#R$C5C4 ($CCB7, $CD4F, $CF10, $CFCD, $D16C). Each table holds 9 x 5-byte object records (initial X, initial Y, initial screen- row byte, script pointer low, script pointer high -- read by the loop at #R$C5E5) followed immediately by that scene's pool of object animation scripts, addressed by the pointers in the records above.
+D $CC50 From $CCB7: 5 scene definition tables, one selected per title-screen call by #R$C5AC-#R$C5C4 ($CCB7, $CD4F, $CF10, $CFCD, $D16C). Each table holds 9 x 5-byte object records (initial X, initial Y, initial screen-row byte, script pointer low, script pointer high -- read by the loop at #R$C5E5) followed immediately by that scene's pool of object animation scripts, addressed by the pointers in the records above.
 D $CC50 Script byte-code is consumed by the interpreter at #R$C705/#R$C740: bytes with bit 7 clear are immediate 2-axis step opcodes (#R$C868); bytes $C8-$D0 select a movement mode (set row, set velocity, accelerate/decelerate via the #R$D272@bank1 table, or jump to an absolute position) with further operand bytes following in the stream; $D2 ends the script. $D1 is a dead value here (see #R$C705): every scene's object 0 script hits it, permanently freezing that object. The raw bytes below are not decoded byte-by-byte per scene here -- that would mean reproducing every scene's animation script inline -- but the full opcode set they are built from is documented at #R$C740/#R$C746 for anyone tracing an individual scene's animation. At $D272: a 36-byte monotonically-increasing speed/deceleration curve table, indexed (via #R$C804) by a 0-35 countdown value to produce a velocity magnitude for the decelerate/accelerate script opcodes.
 B $CC50,1606,8*200,6
 b $D296 Character graphic data table
@@ -1085,6 +1085,7 @@ c $EB9E Start playing a tune (AY-3-8912 music driver)
 D $EB9E A = tune number. Looks up the tune's 7-byte entry (index = A*7, via the ADD A,A / ADD A,C doubling sequence at #R$EBA7-#R$EBAB) in the table at #R$F225@bank1: 1 tempo/speed byte followed by 3 x 2-byte pattern-data pointers, one per channel. Uses that entry to initialise the 3 channel-tracker records at $EC01/$EC26/$EC4B (37 bytes each, stride $25 -- offsets used elsewhere in this sound driver: +$00 note/status, +$01/+$02 pattern pointer, +$03/+$04 envelope or effect pointer, +$05 initial speed, +$06 counter, +$10 enable flag, +$1D/+$1F/+$20/+$21 misc playback state) before flagging the tune active via $F223 for the per-frame service routine at #R$EC71.
 D $EB9E The per-channel effect/envelope pointer (+$01/+$02) is not read from the tune table directly -- it is read from the first 2 bytes of the pattern data that the channel's own pattern pointer (+$03/+$04) points to (#R$EBDF-$EBE2), i.e. every pattern begins with an envelope-pointer header. #R$EDD6 and #R$EE9E (referenced by #R$EC71 below) do the actual per-frame pattern-data processing.
 D $EB9E Used by the routine at #R$F7D6.
+R $EB9E I:A The tune number to start
 @ $EB9E label=start_tune
 C $EB9E,3 Clear the "tune active" flag and its companion
 C $EBA1,2 byte at $F224
@@ -1392,6 +1393,7 @@ c $FA3A Procedural drum-noise burst generator (variable duty-cycle square wave)
 D $FA3A This is the title screen's synthesised drum sound, dispatched as selector 3 of the three 1-bit sample engines run from #R$F82F (the title music/SFX driver) -- not an in-game engine/tyre sound. Repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive the wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
 D $FA3A A (-> E) is the pitch/rate parameter from #R$F82F (the dispatch byte's upper 5 bits). Two nested loops: outer E times (#R$FA6C/$FA6D), inner D = 50 times each (#R$FA64/$FA65); each inner iteration advances the 3-byte self-modified state at $FA72-$FA74 (a phase counter, a wrapping accumulator subtracting a fixed constant, and a rotating byte mixed back into the accumulator) and tests bit 4 of the result to decide whether to emit a click this iteration -- a bit-4 test on a steadily-advancing counter behaves like a variable duty-cycle gate, the source of the drum's buzz/rattle. When a click fires, the ON delay is $18-E cycles and the OFF delay is E cycles (#R$FA58/#R$FA5F): a larger E (higher dispatch parameter) shortens the ON wait but lengthens the OFF wait, lowering the effective pitch. After each inner-loop pass, the frame flag ($F8A8, set by #R$F8AD) is checked; note that the "AND A" immediately before "RET C" always clears the carry flag, so that RET C can never actually fire -- an apparent dead check preserved as found in the original code, not a translation artifact. Once the outer loop completes, control falls into #R$F8A7 to wait for the next frame.
 D $FA3A Used by the routine at #R$F82F.
+R $FA3A I:A The pitch/rate parameter (dispatch byte's upper 5 bits)
 @ $FA3A label=play_drum_noise_burst
 C $FA3A,1 E = pitch/rate parameter; outer loop counter
 C $FA3B,2 D = 50; inner loop counter

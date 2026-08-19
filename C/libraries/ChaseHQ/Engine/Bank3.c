@@ -4000,127 +4000,9 @@ static const u8 title_tune23_data[203] = {
   0x87, /* $F7A9: PCMD_ADVANCE_PHRASE [tune3ch2] */
 };
 
-/**
- * $FC29-$FD96 -- 128K control-select, key-redefinition and hidden test-mode
- * screen text, printed via print_string/print_character. Unlike the
- * messages_* lists above, print_string does not walk an end-marker-terminated
- * list: each 0x00 below terminates whichever call is in progress, so this one
- * data block actually holds four independent entry points, each reached via
- * its own literal HL constant in the original:
- *   offset   0 ($FC29): control-select screen -- wired into
- *                       omd_redraw_and_poll below.
- *   offset 114 ($FC9B): key-redefinition screen, header + GEAR/ACCELERATE/
- *                       BRAKE -- not yet wired up (needs redefine_keys_screen,
- *                       $FEA9).
- *   offset 160 ($FCC9): key-redefinition screen continued, LEFT/RIGHT/QUIT/
- *                       PAUSE/TURBO -- not yet wired up (see above).
- *   offset 199 ($FCF0): hidden test-mode screen -- not yet wired up (needs a
- *                       128K test-mode driver, $C06E).
- * "P1."-"P4."/"P5." labels in the skool comments are missing their leading
- * "P" in the actual data (confirmed byte-for-byte against the skool) --
- * presumably drawn as a separate fixed graphic; transcribed faithfully as-is.
- */
-static const u8 options_menu_text[366] = {
-  // $FC29 (offset 0): control-select screen
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x484A),
-  'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x48C6),
-  '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5006),
-  '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5046),
-  '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x5086),
-  '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
-  attribute_CYAN_OVER_BLACK,
-  ZXSCREEN(0x50C6),
-  '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
-  0, // terminator ($FC9A)
-
-  // $FC9B (offset 114): key-redefinition screen, header + first 3 labels
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x4849),
-  'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),  // was 0xC6
-  ZXSCREEN(0x48C9),
-  'G', 'E', 'A', 'R' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x48E9),
-  'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5009),
-  'B', 'R', 'A', 'K', 'E' | EOS,
-  0, // terminator ($FCC8)
-
-  // $FCC9 (offset 160): key-redefinition screen, remaining 5 labels
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5029),
-  'L', 'E', 'F', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
-  ZXSCREEN(0x5049),
-  'R', 'I', 'G', 'H', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),  // was 0xC4
-  ZXSCREEN(0x5089),
-  'Q', 'U', 'I', 'T' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50A9),
-  'P', 'A', 'U', 'S', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50C9),
-  'T', 'U', 'R', 'B', 'O' | EOS,
-  0, // terminator ($FCEF)
-
-  // $FCF0 (offset 199): hidden test-mode screen
-  (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),  // was 0xC1
-  ZXSCREEN(0x4000),
-  'T', 'E', 'S', 'T' | EOS,
-  attribute_RED_OVER_BLACK,
-  ZXSCREEN(0x4826),
-  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),  // was 0xC5
-  ZXSCREEN(0x48A2),
-  'T', 'I', 'T', 'L', 'E', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),  // was 0xC3
-  ZXSCREEN(0x48E2),
-  '1', ' ', 'T', 'O', ' ', '5', '.', ' ', 'L', 'O', 'G', 'O', ' ', 'A', 'N', 'I', 'M', 'A', 'T', 'I', 'O', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),
-  ZXSCREEN(0x5007),
-  '6', '.', ' ', 'S', 'C', 'O', 'R', 'E', ' ', 'E', 'N', 'T', 'R', 'Y' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
-  ZXSCREEN(0x5042),
-  'I', 'N', ' ', 'G', 'A', 'M', 'E' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x5087),
-  '1', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50A7),
-  '2', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50C7),
-  '3', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
-  (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
-  ZXSCREEN(0x50E7),
-  '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
-  0 // terminator / pad byte ($FD96)
-};
 // clang-format on
 
 /* ----------------------------------------------------------------------- */
-
-/* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed beside
- * each high-score row (fixed to screen position, never shifted -- see
- * high_score_row_t's own comment in Bank3State.h). Not consumed yet: the
- * high-score screen's rendering is not translated (see
- * insert_high_score_entry's Conv note below); kept here for when it is. */
-static const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
-  "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",
-  "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
-};
 
 /* ----------------------------------------------------------------------- */
 
@@ -4492,40 +4374,6 @@ static void insert_high_score_entry(chqstate_t *state, int row)
   update_whole_playfield(state);    /* Conv: added */
 }
 
-/* $C3AF-$C400: static header/label text for the name-entry screen, packed in
- * print_character record format -- byte0 (style bit7 + colour), TWOBYTES of
- * the screen address, then the character stream with the last character
- * OR'd with EOS. Decoded directly from the raw bytes, not the skool's own
- * "pos=.. attr=.." prose (which mislabels the field order -- see
- * print_character's own unpack order at $FDA4). */
-// clang-format off
-static const u8 name_entry_screen_text[] = {
-  0x02, ZXSCREEN(0x480A), 'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
-  0xC6, ZXSCREEN(0x4867), 'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
-  0x07, ZXSCREEN(0x488E), '.',' ','.',' ', '.' | EOS,
-  0xC6, ZXSCREEN(0x48C0),
-    'R','A','N','K',' ',' ',' ',' ',
-    'S','C','O','R','E',' ',' ',
-    'S','T','A','G','E',' ',' ',
-    'P','L','A','Y',' ',' ',
-    'N','A','M', 'E' | EOS,
-  0
-};
-// clang-format on
-
-/* $C54B-$C55E: (E, D) screen address of each rank's name field in the
- * 10-row table -- consumed by scroll_score_rows' full-table renderer, not
- * the letter-entry cursor (see cursor_cell_addr below: the ". . ." record
- * at $488E is a separate, fixed on-screen slot the player types into,
- * independent of which rank the confirmed name will land in). Ranks 1-2
- * (D < $40) start one character row above the visible screen and scroll
- * down into place in the original. */
-static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
-  { 0x80, 0x38 }, { 0xC0, 0x38 },
-  { 0x00, 0x40 }, { 0x40, 0x40 }, { 0x80, 0x40 }, { 0xC0, 0x40 },
-  { 0x00, 0x48 }, { 0x40, 0x48 }, { 0x80, 0x48 }, { 0xC0, 0x48 },
-};
-
 /**
  * $C0EC: Set up the name-entry screen
  *
@@ -4541,14 +4389,62 @@ static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
  */
 static void name_entry_setup_screen(chqstate_t *state)
 {
+  /* $C3AF-$C400: static header/label text for the name-entry screen, packed
+   * in print_character record format -- byte0 (style bit7 + colour),
+   * TWOBYTES of the screen address, then the character stream with the last
+   * character OR'd with EOS. Decoded directly from the raw bytes, not the
+   * skool's own "pos=.. attr=.." prose (which mislabels the field order --
+   * see print_character's own unpack order at $FDA4). */
+  // clang-format off
+  static const u8 name_entry_screen_text[] = {
+    0x02,
+    ZXSCREEN(0x480A),
+    'B','E','S','T',' ','O','F','F','I','C','E','R', 'S' | EOS,
+
+    0xC6,
+    ZXSCREEN(0x4867),
+    'E','N','T','E','R',' ','Y','O','U','R',' ','I','N','I','T','I','A','L', 'S' | EOS,
+
+    0x07,
+    ZXSCREEN(0x488E),
+    '.',' ','.',' ', '.' | EOS,
+
+    0xC6,
+    ZXSCREEN(0x48C0),
+    'R','A','N','K',' ',' ',' ',' ','S','C','O','R','E',' ',' ','S','T','A','G','E',' ',' ','P','L','A','Y',' ',' ','N','A','M', 'E' | EOS,
+
+    0
+  };
+  // clang-format on
+
+  /* $C54B-$C55E: (E, D) screen address of each rank's name field in the
+   * 10-row table -- consumed by scroll_score_rows' full-table renderer, not
+   * the letter-entry cursor (see cursor_cell_addr below: the ". . ." record
+   * at $488E is a separate, fixed on-screen slot the player types into,
+   * independent of which rank the confirmed name will land in). Ranks 1-2
+   * (D < $40) start one character row above the visible screen and scroll
+   * down into place in the original. */
+  static const u8 name_entry_row_offsets[HIGH_SCORE_TABLE_ROWS][2] = {
+    { 0x80, 0x38 },
+    { 0xC0, 0x38 },
+    { 0x00, 0x40 },
+    { 0x40, 0x40 },
+    { 0x80, 0x40 },
+    { 0xC0, 0x40 },
+    { 0x00, 0x48 },
+    { 0x40, 0x48 },
+    { 0x80, 0x48 },
+    { 0xC0, 0x48 },
+  };
+
   int row; /* name_entry_row_addr copy index (Conv: rolled, no Z80 equivalent) */
 
   clear_playfield_and_attrs(state);
   update_whole_playfield_full_width(state); /* Conv: added -- draws right to
-                                               * the screen edge, so needs the
-                                               * full-width dirty rect, not
-                                               * just update_whole_playfield's
-                                               * driving-playfield inset */
+                                             * the screen edge, so needs the
+                                             * full-width dirty rect, not
+                                             * just update_whole_playfield's
+                                             * driving-playfield inset */
 
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
   {
@@ -4567,19 +4463,19 @@ static void name_entry_setup_screen(chqstate_t *state)
   state->bank3->hiscore.letter_code       = '@'; /* blank/"." marker */
   state->bank3->hiscore.fire_locked       = 0;
   state->bank3->hiscore.flash_phase_a     = 0xF0; /* $C59A ROM-data seed --
-                                                     * rotated left one frame
-                                                     * at a time, see
-                                                     * name_entry_dispatch */
+                                                   * rotated left one frame
+                                                   * at a time, see
+                                                   * name_entry_dispatch */
   state->bank3->hiscore.flash_phase_b     = 0xEE; /* $C59B ROM-data seed,
-                                                     * rotated the same way */
+                                                   * rotated the same way */
   state->bank3->hiscore.draw_erase_toggle = 0xF0; /* $C58D ROM-data seed
-                                                     * (copied from the $C580
-                                                     * template by
-                                                     * check_high_score) --
-                                                     * rotated left one frame
-                                                     * at a time, see
-                                                     * name_entry_frame/
-                                                     * blink_hiscore_row */
+                                                   * (copied from the $C580
+                                                   * template by
+                                                   * check_high_score) --
+                                                   * rotated left one frame
+                                                   * at a time, see
+                                                   * name_entry_frame/
+                                                   * blink_hiscore_row */
   state->bank3->hiscore.blink_timer       = 0x0C;
   state->bank3->hiscore.blink_offset      = 0;
   state->bank3->hiscore.cursor_addr       = HISCORE_CURSOR_ADDR_INIT;
@@ -4756,14 +4652,14 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
   carry_a = (u8) (state->bank3->hiscore.flash_phase_a >> 7);
   state->bank3->hiscore.flash_phase_a =
     (u8) ((state->bank3->hiscore.flash_phase_a << 1) | carry_a);
-  C_blink_attr = carry_a ? 0x42 : 0x00;
+  C_blink_attr = carry_a ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BLACK_OVER_BLACK;
 
   set_marquee_attr(state, state->bank3->hiscore.cursor_addr, C_blink_attr);
 
   /* $C1C0: the paired double-height row below shares the same blink, minus
    * the bright bit. */
   set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
-                    (u8) (C_blink_attr & ~0x40));
+                          (u8) (C_blink_attr & ~ATTR_BRIGHT));
 
   state->bank3->hiscore.flash_phase_b =
     (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
@@ -4815,7 +4711,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     /* $C172-$C17B: restore the outgoing cell to its base colour (it was
      * blanked below on a previous call). */
     L_attr = (u8) (MARQUEE_ROW_ATTR_L + state->bank3->hiscore.blink_offset);
-    set_marquee_attr(state, L_attr, 0x46);
+    set_marquee_attr(state, L_attr, attribute_BRIGHT_YELLOW_OVER_BLACK);
 
     if (++state->bank3->hiscore.blink_offset >= 20)
     {
@@ -4826,8 +4722,8 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
        * its paired double-height row below to the matching non-bright
        * colour. */
       L_attr = state->bank3->hiscore.cursor_addr;
-      set_marquee_attr(state, L_attr, 0x42);
-      set_marquee_attr(state, (u8) (L_attr + 0x20), 0x02);
+      set_marquee_attr(state, L_attr, attribute_BRIGHT_RED_OVER_BLACK);
+      set_marquee_attr(state, (u8) (L_attr + 0x20), attribute_RED_OVER_BLACK);
 
       if (++state->bank3->hiscore.cursor_addr == HISCORE_CURSOR_ADDR_FINALISE)
       {
@@ -4839,7 +4735,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     /* $C19E-$C1A6: blank the new current cell -- this is the visible
      * "letter blinks off" step of the chase. */
     L_attr = (u8) (MARQUEE_ROW_ATTR_L + state->bank3->hiscore.blink_offset);
-    set_marquee_attr(state, L_attr, 0x00);
+    set_marquee_attr(state, L_attr, attribute_BLACK_OVER_BLACK);
   }
 
   fast_blink_best_officers_cell(state);
@@ -5024,10 +4920,9 @@ static void advance_screen_scanline(u8 *D, u8 *E)
  * $E0); third 2 ($50-$57) draws on every character-row except its bottom one
  * (E < $E0). Together these cover one contiguous 8-character-row band
  * (third 1's last row followed by third 2's first seven), not the full 16
- * rows both thirds span. Using the wider "D in $48-$57" range instead (an
- * earlier version of this function did) starts each row drawing a full
- * character-row band too early, overlapping rows already at rest further
- * down the table.
+ * rows both thirds span. The wider "D in $48-$57" range would start each row
+ * drawing a full character-row band too early, overlapping rows already at
+ * rest further down the table.
  *
  * \param[in] D Screen address high byte.
  * \param[in] E Screen address low byte.
@@ -5059,10 +4954,10 @@ static int table_row_visible(u8 D, u8 E)
  * briefly overlap the same slot exactly as the original hardware does.
  *
  * The real $C2D3-$C2EB gate (table_row_visible) fires once per row per
- * frame, on the row's just-advanced address -- not an 8-frame throttle (an
- * earlier version of this comment claimed that; it was wrong, confused with
- * the unrelated `AND $07` third-wrap test inside advance_screen_scanline).
- * Every frame a row's address is inside the visible band, $C2F6 redraws it;
+ * frame, on the row's just-advanced address -- not an 8-frame throttle (that
+ * is the unrelated `AND $07` third-wrap test inside
+ * advance_screen_scanline). Every frame a row's address is inside the
+ * visible band, $C2F6 redraws it;
  * outside the band nothing touches that row's pixels at all -- no draw, no
  * erase. rsn_char_loop's blit is unclamped (see draw_table_field_scrolling)
  * and leads with its own one-scanline erase ($C350-$C352) before each
@@ -5296,11 +5191,19 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   int                     blink,
                                   u8                      attrs)
 {
-  draw_table_field_scrolling(state, 0, D, E, high_score_rank_suffixes[row], 5, attrs, !blink);
-  draw_table_field_scrolling(state, 64, D, E, entry->score, NELEMS(entry->score), attrs, !blink);
+  /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed
+   * beside each high-score row (fixed to screen position, never shifted --
+   * see high_score_row_t's own comment in Bank3State.h). */
+  static const u8 high_score_rank_suffixes[HIGH_SCORE_TABLE_ROWS][5] = {
+    "1ST  ", "2ND  ", "3RD  ", "4TH  ", "5TH  ",
+    "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
+  };
+
+  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
+  draw_table_field_scrolling(state,  64, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
   draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
-  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1, attrs, !blink);
-  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name), attrs, !blink);
+  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1,                       attrs, !blink);
+  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
 }
 
 /**
@@ -5340,11 +5243,11 @@ static void draw_score_row_fields(chqstate_t             *state,
  */
 static void blink_hiscore_row(chqstate_t *state, int do_toggle)
 {
-  u8                row;   /* rank index being written this session (Conv: added) */
-  u8                D;     /* row's current screen address high byte (was D) */
-  u8                E;     /* row's current screen address low byte (was E) */
+  u8                row;      /* rank index being written this session (Conv: added) */
+  u8                D;        /* row's current screen address high byte (was D) */
+  u8                E;        /* row's current screen address low byte (was E) */
   high_score_row_t *DE_entry; /* this row's data (was DE) */
-  int               blink; /* non-zero draws this frame's text, zero blanks it (Conv: added) */
+  int               blink;    /* non-zero draws this frame's text, zero blanks it (Conv: added) */
 
   row = state->bank3->hiscore.row;
   D   = state->bank3->hiscore.row_addr[row][1];
@@ -6356,50 +6259,6 @@ static void titlescr_refresh_name_table(chqstate_t *state)
    * out of scope for this task. */
   NOT_USED(state);
 }
-
-/* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
- * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
- * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
- * not arbitrary key choices. */
-static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
-
-/* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
- * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
-static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
-
-/* $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (40
- * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
- * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by
- * read_new_key_definition via the same key/halfrow packing produced by
- * scan_keyboard_matrix. Byte-for-byte identical to the 48K version's key_names[]
- * ($EDD6, CommonData.c) -- kept as a separate array since it is a distinct
- * copy at a distinct bank-3 address in the original. */
-static const u8 control_key_names[80] = {
-  'B', ' ', 'N', ' ', 'M', ' ', 'S', 'Y',
-  'S', 'P', 'H', ' ', 'J', ' ', 'K', ' ',
-  'L', ' ', 'E', 'N', 'Y', ' ', 'U', ' ',
-  'I', ' ', 'O', ' ', 'P', ' ', '6', ' ',
-  '7', ' ', '8', ' ', '9', ' ', '0', ' ',
-  '5', ' ', '4', ' ', '3', ' ', '2', ' ',
-  '1', ' ', 'T', ' ', 'R', ' ', 'E', ' ',
-  'W', ' ', 'Q', ' ', 'G', ' ', 'F', ' ',
-  'D', ' ', 'S', ' ', 'A', ' ', 'V', ' ',
-  'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
-};
-
-/* $FFF7-$FFFE: pristine contents of the live scan-key-code buffer, i.e. the
- * keyboard scheme's default key assignments. Layout matches control_keys[]:
- * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
-static const u8 default_control_keys[8] = {
-  0x08, 0x26, 0x1F, 0x11, 0x19, 0x25, 0x22, 0x20
-};
-
-/* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
- * checked by redefine_keys_screen against the 8 keys just chosen. Byte-for-
- * byte identical to the 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
-static const u8 shocked_keydef_sequence[8] = {
-  0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
-};
 
 /**
  * $C6C4: Per-frame title-screen animation driver
@@ -8467,8 +8326,9 @@ static u8 advance_channel_pattern(chqstate_t           *state,
 
         /* $ED6F-$ED83: LD A,(DE)/INC DE (operand 1 read, 7+6=13); LD (IX+$07),B/
          * LD (IX+$08),B/LD (IX+$0D),A (clear slide_accum + store slide_step,
-         * 19+19+19=57); SET 2,(IX+$00) (23); LD A,(DE)/INC DE (operand 2 read,
-         * 7+6=13); LD (IX+$0E),A (19); JR $EDE4 (12). Total 13+57+23+13+19+12=137. */
+         * 19+19+19=57); SET 2,(IX+$00) (23); LD A,(DE) (operand 2 read, 7);
+         * LD (IX+$0E),A (19); INC DE (6); JR $EDE4 (12).
+         * Total 13+57+23+7+19+6+12=137. */
         state->speccy->logtime(state->speccy, 137);
         continue;
 
@@ -8494,8 +8354,8 @@ static u8 advance_channel_pattern(chqstate_t           *state,
         IX_channel->vibrato_phase = A_operand; /* +$1C */
 
         /* $ED8C-$ED99: LD A,(DE)/LD (IX+$1B),A/INC DE (operand 1, 7+19+6=32);
-         * LD A,(DE)/INC DE (operand 2 read, 7+6=13); LD (IX+$1A),A/
-         * LD (IX+$1C),A/JR $EDE4 (19+19+12=50). Total 32+13+50=95. */
+         * LD A,(DE) (operand 2 read, 7); LD (IX+$1A),A (19); INC DE (6);
+         * LD (IX+$1C),A (19); JR $EDE4 (12). Total 32+7+19+6+19+12=95. */
         state->speccy->logtime(state->speccy, 95);
         continue;
 
@@ -8595,7 +8455,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
          * branch is dead in practice. Approximated with the same 35 as 0x85
          * -- see the Conv note above the prologue. */
         state->speccy->logtime(state->speccy, 35);
-        continue;
       }
     }
     else if (A_byte < PCMD_PITCH_OFFSET_BASE)
@@ -8607,7 +8466,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 91);
       /* $EE6F: set the tune tempo/speed byte. */
       state->bank3->title_music.tune_tempo = (u8) (A_byte - PCMD_TEMPO_BASE + 1);
-      continue;
     }
     else if (A_byte < PCMD_ENVELOPE_SHAPE_BASE)
     {
@@ -8623,7 +8481,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       HL_ptr = pitch_offset_table[A_byte - PCMD_PITCH_OFFSET_BASE].base;
       IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
       IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
-      continue;
     }
     else if (A_byte < PCMD_ROW_WAIT_BASE)
     {
@@ -8638,7 +8495,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
        * event (see the note-value branch above). */
       IX_channel->envelope_shape_default = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].base;  /* +$14/$15 */
       IX_channel->envelope_speed         = envelope_shape_table[A_byte - PCMD_ENVELOPE_SHAPE_BASE].speed; /* +$0F */
-      continue;
     }
     else
     {
@@ -8647,7 +8503,6 @@ static u8 advance_channel_pattern(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 66);
       /* $EE77: set the per-row wait reload value. */
       IX_channel->row_wait_reload = (u8) (A_byte - PCMD_ROW_WAIT_BASE + 1); /* +$11 */
-      continue;
     }
   }
 
@@ -8667,6 +8522,7 @@ reset_row_counter:
     IX_channel->mute_pending = CHMUTE_PENDING; /* normalise any nonzero value to the one-shot gate */
     return 0;
   }
+
   /* $EE32: RET Z taken (11). */
   state->speccy->logtime(state->speccy, 11);
   return 0;
@@ -8991,17 +8847,11 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * update). This re-derives the condition purely to select the billing
      * constant; it does not alter behaviour. */
     if (!(IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE))
-    {
-      state->speccy->logtime(state->speccy, 12);
-    }
+    state->speccy->logtime(state->speccy, 12);
     else if (!(C_status & CHSTATUS_TOGGLE))
-    {
-      state->speccy->logtime(state->speccy, 22);
-    }
+    state->speccy->logtime(state->speccy, 22);
     else
-    {
-      state->speccy->logtime(state->speccy, 27);
-    }
+    state->speccy->logtime(state->speccy, 27);
     if (!((IX_channel->flags & CHFLAGS_VIBRATO_UPDATE_GATE) && (C_status & CHSTATUS_TOGGLE)))
     {
       /* Conv: $EF09-$EF12 gate whether the phase updates this call at all
@@ -9061,13 +8911,9 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
      * expression above purely to select the billing constant; no behaviour
      * change. */
     if (DE_vib_offset >= 0)
-    {
       state->speccy->logtime(state->speccy, 12);
-    }
     else
-    {
       state->speccy->logtime(state->speccy, 11);
-    }
 
     A_shift_test = (u16) A_note_lookup + 0xA0;
     /* $EF3D: ADD A,$A0 (7). */
@@ -9135,14 +8981,10 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       /* $EF5F: JR Z (12 taken/11 not taken) -- re-derives the sign of
        * C_slide_step purely to select the billing constant; matches the
        * BIT 7,C test above. */
-      if ((s8) C_slide_step >= 0)
-      {
-        state->speccy->logtime(state->speccy, 12);
-      }
+      if (C_slide_step >= 0)
+      state->speccy->logtime(state->speccy, 12);
       else
-      {
-        state->speccy->logtime(state->speccy, 11);
-      }
+      state->speccy->logtime(state->speccy, 11);
 
       HL_slide_accum = IX_channel->slide_accum + (s16) C_slide_step; // sign-extended add
       /* $EF62-$EF6C: LD L,(IX+$07)/LD H,(IX+$08)/ADD HL,BC/LD (IX+$07),L/
@@ -9255,12 +9097,15 @@ static const u8 *resolve_phrase_addr(u16 addr)
   if (addr >= TITLE_TUNE0_DATA_ADDR &&
       addr < TITLE_TUNE0_DATA_ADDR + NELEMS(title_tune0_data))
     return &title_tune0_data[addr - TITLE_TUNE0_DATA_ADDR];
+
   if (addr >= TITLE_TUNE1_DATA_ADDR &&
       addr < TITLE_TUNE1_DATA_ADDR + NELEMS(title_tune1_data))
     return &title_tune1_data[addr - TITLE_TUNE1_DATA_ADDR];
+
   if (addr >= TITLE_TUNE23_DATA_ADDR &&
       addr < TITLE_TUNE23_DATA_ADDR + NELEMS(title_tune23_data))
     return &title_tune23_data[addr - TITLE_TUNE23_DATA_ADDR];
+
   assert(0); /* address outside all transcribed raw tune data */
   return NULL;
 }
@@ -9360,7 +9205,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       /* $F1CB: JR NZ taken (12). */
       state->speccy->logtime(state->speccy, 12);
       *DE_pattern = IX_channel->phrase_ptr;
-      goto finalize;
+      goto exit;
     }
     /* $F1CB-$F1CF: JR NZ not taken (7); INC BC/INC BC/JR $F1B4
      * (6+6+12=24). Total 31. */
@@ -9396,7 +9241,7 @@ static void advance_channel_phrase(chqstate_t           *state,
       DE_word         = wordat(HL_entry);
       BC_table_offset = 2;
       *DE_pattern     = resolve_phrase_addr(DE_word);
-      goto finalize;
+      goto exit;
 
     case PHRASE_TABLE_TRANSPOSE_PREFIX:
       /* $F1DA-$F202: JR NZ taken(from RESET test, 12); DEC DE/LD A,D/OR E/
@@ -9431,7 +9276,7 @@ static void advance_channel_phrase(chqstate_t           *state,
 
       BC_table_offset += 3;
       *DE_pattern      = IX_channel->phrase_ptr;
-      goto finalize;
+      goto exit;
 
     default:
       /* $F1DA-$F221: JR NZ taken(12); DEC DE/LD A,D/OR E/JR NZ taken
@@ -9442,11 +9287,11 @@ static void advance_channel_phrase(chqstate_t           *state,
       /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
       BC_table_offset += 2;
       *DE_pattern      = resolve_phrase_addr(DE_word);
-      goto finalize;
+      goto exit;
     }
   }
 
-finalize:
+exit:
   /* $F1E8-$F1EE: LD (IX+$05),C/LD (IX+$06),B/LD B,$00 (19+19+7=45). The
    * LD B,$00 has no C equivalent (BC is not otherwise modelled here). */
   state->speccy->logtime(state->speccy, 45);
@@ -9552,8 +9397,7 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  *       ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count
  *       the Z80 uses for the tune-4 wait in titlescr_wait_loop) and then
  *       returns normally. The frame count is a guess at the jingle's real
- *       duration; TODO: tune by ear once pattern data exists to actually hear
- *       it.
+ *       duration.
  */
 static void play_success_music(chqstate_t *state)
 {
@@ -10007,8 +9851,7 @@ static void load_drum_op(chqstate_t *state, const u8 *HL)
 
   for (;;)
   {
-    A = *HL;
-    HL++;
+    A = *HL++;
 
     /* $F7FE LD A,(HL) / $F7FF INC HL / $F800 CP $FE / $F802 JP Z,$F829
      * (7+6+7+10=30). */
@@ -10129,8 +9972,9 @@ static void titlescr_music(chqstate_t *state)
   /* $F832-$F833: XOR A / LD ($F8A8),A -- clears the "frame occurred" flag.
    * Conv: functionally omitted (see prologue), since nothing here polls
    * $F8A8, but the two instructions still cost real T-states on hardware. */
-  /* $F836-$F839: LD A,(slot1_busy) / AND A -- common prefix before the
-   * busy/idle branch. */
+  /* $F836-$F839: LD A,(SM,$00) / AND A -- common prefix before the
+   * busy/idle branch; the "LD A,$00" operand is self-modified to
+   * slot1_busy, same pattern as the $F84D reload noted below. */
   state->speccy->logtime(state->speccy, 4 + 13 + 7 + 4);
 
   if (!state->bank3->drums.slot1_busy)
@@ -10143,8 +9987,9 @@ static void titlescr_music(chqstate_t *state)
     goto sfx1_reload_pointer;
   }
 
-  /* $F839 JR NZ,$F841 taken (12) + $F841 LD A,(slot1_countdown) / $F843 DEC
-   * A / $F844 JP Z,$F84D (7+4+10=21). */
+  /* $F839 JR NZ,$F841 taken (12) + $F841 LD A,(SM,$00) / $F843 DEC A / $F844
+   * JP Z,$F84D (7+4+10=21) -- the "LD A,$00" operand is self-modified to
+   * slot1_countdown. */
   state->speccy->logtime(state->speccy, 12 + 21);
 
   A = (u8)(state->bank3->drums.slot1_countdown - 1);
@@ -10219,7 +10064,7 @@ drum_dispatch_entry:
   /* $F87B LD D,A / $F87C AND $07 (4+7=11). */
   state->speccy->logtime(state->speccy, 11);
   D_entry  = A;
-  A       &= 0x07;
+  A       &= 0x07; /* isolate instrument */
   if (A == 0)
   {
     /* $F87E JR Z,$F894 taken (12) -- nothing to trigger this frame. */
@@ -10254,7 +10099,8 @@ drum_dispatch_entry:
   }
 
 sfx2_tick_countdown:
-  /* $F894 LD A,(slot2_busy) / $F896 AND A (7+4=11). */
+  /* $F894 LD A,(SM,$00) / $F896 AND A (7+4=11) -- the "LD A,$00" operand is
+   * self-modified to slot2_busy. */
   state->speccy->logtime(state->speccy, 11);
   if (state->bank3->drums.slot2_busy)
   {
@@ -10270,8 +10116,8 @@ sfx2_tick_countdown:
     state->speccy->logtime(state->speccy, 12);
   }
 
-  /* $F8A1 LD A,(sample_active) / $F8A3 DEC A / $F8A4 JP Z,$F8CC
-   * (7+4+10=21). */
+  /* $F8A1 LD A,(SM,$00) / $F8A3 DEC A / $F8A4 JP Z,$F8CC (7+4+10=21) -- the
+   * "LD A,$00" operand is self-modified to sample_active. */
   state->speccy->logtime(state->speccy, 21);
   if (state->bank3->drums.sample_active)
   {
@@ -10464,16 +10310,33 @@ static void play_sample_row(chqstate_t *state, int D_length, u8 *HL_data)
         bits = 0;
       speccy->out(speccy, port_BORDER_EAR_MIC, bits);
       RLC(*HL_data); /* rotate sample byte in place */
-      /* inter-bit cost 15+13+7+4+12+12 (bit-set path) */
-      speccy->logtime(speccy, 63);
-      /* The OUT above costs a further 11, billed to the virtual clock by the
-       * facade's out() rather than by logtime. The yield budget must count the
-       * full 74 or it lets ~16% too many rows through per frame. */
-      frame_tstates += 63 + 11;
+      if (bits)
+      {
+        /* $F8CF-$F8DC bit-set path: LD A,$10; NOP; BIT 7,(HL); JR NZ taken
+         * (RES 4,A skipped); RLC (HL); DJNZ taken (7+4+12+12+15+13) */
+        speccy->logtime(speccy, 63);
+        /* The OUT above costs a further 11, billed to the virtual clock by
+         * the facade's out() rather than by logtime. The yield budget must
+         * count the full 74 or it lets ~16% too many rows through per
+         * frame. */
+        frame_tstates += 63 + 11;
+      }
+      else
+      {
+        /* $F8CF-$F8DC mute path: LD A,$10; NOP; BIT 7,(HL); JR NZ not taken;
+         * RES 4,A; RLC (HL); DJNZ taken (7+4+12+7+8+15+13) -- +3 versus the
+         * bit-set path (JR NZ -5, RES 4,A +8) */
+        speccy->logtime(speccy, 66);
+        frame_tstates += 66 + 11;
+      }
     }
     while (--i > 0);
     HL_data++;
-    /* inter-byte cost 6+4+7+13+4+10+7, less the DJNZ not-taken saving */
+    /* $F8DE-$F8E6: INC HL; DEC D; JR Z not taken; LD A,($F8A8); AND A;
+     * JP Z taken (6+4+7+13+4+10=44), plus next byte's $F8CD LD B,$08
+     * pre-billed here (+7 = 51), less the final row-bit's DJNZ billed as
+     * taken (13) in the loop above when it was actually not-taken (8),
+     * i.e. -5: 51-5=46. */
     speccy->logtime(speccy, 46);
     frame_tstates += 46;
     if (--D_length == 0)
@@ -10573,11 +10436,14 @@ static void play_drum_noise_burst(chqstate_t *state, int E_pitch_param)
       {
         /* $FA52: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
         speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(0x18 - E_duration));
+        /* $FA5A: LD A,$18 (7) */
+        speccy->logtime(speccy, 7);
         speccy->out(speccy, port_BORDER_EAR_MIC, port_MASK_EAR | port_MASK_MIC);
         /* $FA5E: LD B,E; DJNZ; XOR A (4 + loop + 4) */
         speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(E_duration));
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
+        /* $FA64-$FA65: DEC D; JR NZ taken (4+12) */
         speccy->logtime(speccy, 16);
       }
       else
@@ -10655,6 +10521,55 @@ static u8 options_menu_driver(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
+  /* $FC29-$FC9A -- 128K control-select screen text, printed via
+   * print_string/print_character. */
+  // clang-format off
+  static const u8 control_select_text[] = {
+    // $FC29: control-select screen
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x484A),
+    'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x48C6),
+    '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5006),
+    '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5046),
+    '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x5086),
+    '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
+    attribute_CYAN_OVER_BLACK,
+    ZXSCREEN(0x50C6),
+    '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    0, // terminator ($FC9A)
+  };
+  // clang-format on
+
+  /* $FFE5-$FFE9: Sinclair Interface II joystick key-scan codes,
+   * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
+   * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
+   * not arbitrary key choices. */
+  static const u8 sinclair_joystick_keys[5] = {
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_9),
+    KEYDEF(zxkey_8),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_7)
+  };
+
+  /* $FFEA-$FFEE: Cursor/Protek joystick key-scan codes, installed
+   * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
+  static const u8 cursor_joystick_keys[5] = {
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_7),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_5),
+    KEYDEF(zxkey_8)
+  };
+
   u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
                            * bit3=key"4"; the exit debounce reuses it as an
                            * any-key mask (was A) */
@@ -10667,8 +10582,8 @@ static u8 omd_redraw_and_poll(chqstate_t *state)
 redraw:
   clear_options_screen(state);
 
-  print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
-                                                * P1-P5 control-scheme list. */
+  print_string(state, &control_select_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
+                                                 * P1-P5 control-scheme list. */
 
   update_whole_playfield(state); /* Conv: added */
 
@@ -11049,6 +10964,100 @@ static void clear_options_screen(chqstate_t *state)
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
+  /* $FC9B-$FCC8 -- 128K key-redefinition screen text, header + first 3
+   * labels (GEAR/ACCELERATE/BRAKE). */
+  // clang-format off
+  static const u8 key_redefinition_text1[] = {
+    // $FC9B: key-redefinition screen, header + first 3 labels
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x4849),
+    'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),  // was 0xC6
+    ZXSCREEN(0x48C9),
+    'G', 'E', 'A', 'R' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x48E9),
+    'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5009),
+    'B', 'R', 'A', 'K', 'E' | EOS,
+    0, // terminator ($FCC8)
+  };
+
+  /* $FCC9-$FCEF -- 128K key-redefinition screen text, remaining 5 labels
+   * (LEFT/RIGHT/QUIT/PAUSE/TURBO). */
+  static const u8 key_redefinition_text2[] = {
+    // $FCC9: key-redefinition screen, remaining 5 labels
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5029),
+    'L', 'E', 'F', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_YELLOW_OVER_BLACK),
+    ZXSCREEN(0x5049),
+    'R', 'I', 'G', 'H', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),  // was 0xC4
+    ZXSCREEN(0x5089),
+    'Q', 'U', 'I', 'T' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A9),
+    'P', 'A', 'U', 'S', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50C9),
+    'T', 'U', 'R', 'B', 'O' | EOS,
+    0, // terminator ($FCEF)
+  };
+
+  /* $FCF0-$FD96 -- 128K hidden test-mode screen text (test-mode confirmation
+   * text). */
+  static const u8 test_mode_text[] = {
+    // $FCF0: hidden test-mode screen
+    (SINGLE_HEIGHT | attribute_BRIGHT_BLUE_OVER_BLACK),  // was 0xC1
+    ZXSCREEN(0x4000),
+    'T', 'E', 'S', 'T' | EOS,
+    attribute_RED_OVER_BLACK,
+    ZXSCREEN(0x4826),
+    'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),  // was 0xC5
+    ZXSCREEN(0x48A2),
+    'T', 'I', 'T', 'L', 'E', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),  // was 0xC3
+    ZXSCREEN(0x48E2),
+    '1', ' ', 'T', 'O', ' ', '5', '.', ' ', 'L', 'O', 'G', 'O', ' ', 'A', 'N', 'I', 'M', 'A', 'T', 'I', 'O', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_MAGENTA_OVER_BLACK),
+    ZXSCREEN(0x5007),
+    '6', '.', ' ', 'S', 'C', 'O', 'R', 'E', ' ', 'E', 'N', 'T', 'R', 'Y' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_CYAN_OVER_BLACK),
+    ZXSCREEN(0x5042),
+    'I', 'N', ' ', 'G', 'A', 'M', 'E' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x5087),
+    '1', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50A7),
+    '2', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50C7),
+    '3', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+    (SINGLE_HEIGHT | attribute_BRIGHT_GREEN_OVER_BLACK),
+    ZXSCREEN(0x50E7),
+    '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
+    0 // terminator / pad byte ($FD96)
+  };
+  // clang-format on
+
+  /* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
+   * checked against the 8 keys just chosen. Byte-for-byte identical to the
+   * 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
+  static const u8 shocked_keydef_sequence[8] = {
+    KEYDEF(zxkey_S),
+    KEYDEF(zxkey_H),
+    KEYDEF(zxkey_O),
+    KEYDEF(zxkey_C),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_E),
+    KEYDEF(zxkey_D),
+    KEYDEF(zxkey_ENTER)
+  };
+
   u16 DE_screen;       /* current label print position (was DE) */
   int B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
@@ -11060,11 +11069,11 @@ static void redefine_keys_screen(chqstate_t *state)
   {
     clear_options_screen(state);
 
-    print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
-                                                    * GEAR/ACCELERATE/BRAKE */
+    print_string(state, &key_redefinition_text1[0]); /* $FEAC-$FEAF: header +
+                                                      * GEAR/ACCELERATE/BRAKE */
     run_title_tune(state);
-    print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
-                                                    * LEFT/RIGHT/QUIT/PAUSE/TURBO */
+    print_string(state, &key_redefinition_text2[0]); /* $FEB5-$FEB8:
+                                                      * LEFT/RIGHT/QUIT/PAUSE/TURBO */
 
     update_whole_playfield(state); /* Conv: added */
 
@@ -11091,9 +11100,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     B_wait = 0x14;
     do
-    {
       run_title_tune(state);
-    }
     while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++)
@@ -11103,7 +11110,7 @@ static void redefine_keys_screen(chqstate_t *state)
     state->test_mode = 1;
 
     clear_options_screen(state);
-    print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
+    print_string(state, &test_mode_text[0]); /* $FEF9-$FEFC: test-mode confirmation text */
 
     update_whole_playfield(state); /* Conv: added */
 
@@ -11211,6 +11218,26 @@ static void read_new_key_definition(chqstate_t *state,
                                     u8          B_remaining,
                                     u8          C_control_index)
 {
+  /* $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (40
+   * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
+   * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by the same
+   * key/halfrow packing produced by scan_keyboard_matrix. Byte-for-byte
+   * identical to the 48K version's key_names[] ($EDD6, CommonData.c) -- kept
+   * as a separate array since it is a distinct copy at a distinct bank-3
+   * address in the original. */
+  static const u8 control_key_names[80] = {
+    'B', ' ', 'N', ' ', 'M', ' ', 'S', 'Y',
+    'S', 'P', 'H', ' ', 'J', ' ', 'K', ' ',
+    'L', ' ', 'E', 'N', 'Y', ' ', 'U', ' ',
+    'I', ' ', 'O', ' ', 'P', ' ', '6', ' ',
+    '7', ' ', '8', ' ', '9', ' ', '0', ' ',
+    '5', ' ', '4', ' ', '3', ' ', '2', ' ',
+    '1', ' ', 'T', ' ', 'R', ' ', 'E', ' ',
+    'W', ' ', 'Q', ' ', 'G', ' ', 'F', ' ',
+    'D', ' ', 'S', ' ', 'A', ' ', 'V', ' ',
+    'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
+  };
+
   u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
   u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
   u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
@@ -11227,10 +11254,7 @@ rescan:
     run_title_tune(state);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
-    if (ambiguous)
-      continue;
-
-    if (D_key_code == 0xFF)
+    if (ambiguous || D_key_code == 0xFF)
       continue;
 
     break;
@@ -11380,6 +11404,20 @@ int bank3_state_create(chqstate_t *state)
     { "  340500", " 1 ", '1', "STE" }, /* $C4EF: row 7 (8th place) */
     { "  235050", " 1 ", '1', "PIX" }, /* $C510: row 8 (9th place) */
     { "  123000", " 1 ", '1', "IES" }, /* $C531: row 9 (10th place) */
+  };
+
+  /* $FFF7-$FFFE: pristine contents of the live scan-key-code buffer, i.e. the
+   * keyboard scheme's default key assignments. Layout matches control_keys[]:
+   * [0..4] = gear/accelerate/brake/left/right, [5..7] = quit/pause/turbo. */
+  static const u8 default_control_keys[8] = {
+    KEYDEF(zxkey_N),
+    KEYDEF(zxkey_A),
+    KEYDEF(zxkey_Z),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_L),
+    KEYDEF(zxkey_Q),
+    KEYDEF(zxkey_P),
+    KEYDEF(zxkey_SPACE)
   };
 
   // clang-format on

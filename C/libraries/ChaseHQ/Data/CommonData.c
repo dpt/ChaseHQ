@@ -2198,11 +2198,11 @@ const u8 music_data[271] = {
 
 /** $EE26: sinclair_joy_keydefs */
 const u8 sinclair_joy_keydefs[5] = {
-  KEYDEF(4, 3), // 0
-  KEYDEF(3, 3), // 9
-  KEYDEF(2, 3), // 8
-  KEYDEF(0, 3), // 6
-  KEYDEF(1, 3)  // 7
+  KEYDEF(zxkey_0),
+  KEYDEF(zxkey_9),
+  KEYDEF(zxkey_8),
+  KEYDEF(zxkey_6),
+  KEYDEF(zxkey_7)
 };
 
 /** $EE38: temp_keydefs_template -- the assembled contents of the 48K version's
@@ -2212,14 +2212,14 @@ const u8 sinclair_joy_keydefs[5] = {
  * default_control_keys[] ($FFF7, Bank3.c); stop_the_tape_48k copies these into
  * state->keydefs when the player picks a scheme that does not redefine them. */
 const u8 temp_keydefs_template[8] = {
-  KEYDEF(1, 0), // N      -- gear
-  KEYDEF(4, 6), // A      -- accelerate
-  KEYDEF(3, 7), // Z      -- brake
-  KEYDEF(2, 1), // K      -- left
-  KEYDEF(3, 1), // L      -- right
-  KEYDEF(4, 5), // Q      -- quit
-  KEYDEF(4, 2), // P      -- pause
-  KEYDEF(4, 0)  // SPACE  -- turbo
+  KEYDEF(zxkey_N),     // gear
+  KEYDEF(zxkey_A),     // accelerate
+  KEYDEF(zxkey_Z),     // brake
+  KEYDEF(zxkey_K),     // left
+  KEYDEF(zxkey_L),     // right
+  KEYDEF(zxkey_Q),     // quit
+  KEYDEF(zxkey_P),     // pause
+  KEYDEF(zxkey_SPACE)  // turbo
 };
 
 /* ----------------------------------------------------------------------- */

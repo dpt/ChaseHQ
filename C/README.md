@@ -25,7 +25,7 @@ this is derived from.
 
 - The game is **complete** but there may be conversion bugs remaining. The
   original game is very reliant on self-modified instructions, values and Z80
-  wizardry.  Debugging my hand conversion into a working state has been
+  wizardry. Debugging my hand conversion into a working state has been
   considerable effort.
 - Engine logic translated across `Main.c` (~22.5k lines of fun), `Bank3.c`
   (~11.5k lines of 128K title-screen/tune code) and `Bank7.c` (~2.3k lines of
@@ -71,8 +71,8 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ## [`apps/riscos/`](apps/riscos/README.md) — native RISC OS application
 
 A self-contained 32-bit `!ChaseHQ` desktop application, built from the same
-engine sources by @gerph. See that directory's README for build instructions
-and host shortcuts.
+engine sources by @gerph. See that directory's README for build instructions and
+host shortcuts.
 
 ## Controls
 
@@ -90,6 +90,11 @@ redefine option can change:
 
 A Kempston joystick is emulated on the arrow keys, using `.` for fire.
 
+`Ctrl-G` turns on mouse steering: moving the mouse left/right steers (through
+the same Kempston path as the arrow keys, so the in-game "KEMPSTON JOYSTICK"
+control scheme needs selecting too), left click is gear, right click is turbo
+boost. Off by default; toggling it off releases any held direction or button.
+
 The host adds its own keys, which never reach the game:
 
 | Key                   | Action                                                         |
@@ -106,6 +111,8 @@ The host adds its own keys, which never reach the game:
 | `Ctrl-M`              | Toggle monochrome (greyscale) display                          |
 | `Ctrl-N`              | Toggle mellow (dimmed, desaturated CRT-style) palette          |
 | `Ctrl-Y`              | One-shot glitch: fill the screen with random noise for a frame |
+| `Ctrl-X`              | Toggle the "SHOCKED" test-mode cheat                           |
+| `Ctrl-G`              | Toggle mouse steering (off by default)                         |
 | `-` / `=`             | Window scale down / up                                         |
 | `[` / `]`             | Emulation speed down / up (5% steps)                           |
 | `Shift-[` / `Shift-]` | Emulation speed down / up (1% steps)                           |
@@ -115,10 +122,10 @@ The host adds its own keys, which never reach the game:
 Host keys use a 1990s TV style overlay to respond. This reuses the game's 8x8
 font scaled to 8x16.
 
-The "SHOCKED" cheat/test mode is always on (`test_mode` in `Create.c`), so
-while a level is running `1` restarts it, `2` loads the next one and `3` jumps
-to the end screen. On the title screen you can use 1-5 to play the animations
-and 6 to enter hi-score entry.
+The "SHOCKED" cheat/test mode is off by default; toggle it with `Ctrl-X`. While
+it's on and a level is running, `1` restarts it, `2` loads the next one and `3`
+jumps to the end screen. On the title screen you can use 1-5 to play the
+animations and 6 to enter hi-score entry.
 
 ## CRT TV shader
 
@@ -127,9 +134,9 @@ Emscripten builds so far.
 
 `F4` swaps the plain SDL blit for a CRT TV effect: barrel distortion, threshold
 bloom, brightness/contrast/saturation, luminance-adaptive scanlines, a vignette
-and a PAL colour bleed. The bleed models PAL's narrow chroma bandwidth — luma
-is taken from the centre tap only while chroma is averaged over four leftward
-taps, so colour smears rightwards and edges stay sharp.
+and a PAL colour bleed. The bleed models PAL's narrow chroma bandwidth — luma is
+taken from the centre tap only while chroma is averaged over four leftward taps,
+so colour smears rightwards and edges stay sharp.
 
 With the shader up, its parameters can be tuned live:
 
@@ -148,15 +155,15 @@ into `crt_tuned_params` in `apps/sdl3/SDLMain.c`.
 
 The C is a model of a Z80 program, written to be read. Locals are named after
 the original register that held the value (`A_prev_height`, `HL_backdrop`,
-`DE_scr` - although naming is not 100% consistent), declared at the top of
-scope in order of first use, each with a `/* intent (was X) */` comment. `EXX`
-and `EX AF,AF'` banking is tracked via comments, because that gets confusing
-quickly otherwise. Deliberate departures from a literal translation are marked
-with `Conv:` comments.
+`DE_scr` - although naming is not 100% consistent), declared at the top of scope
+in order of first use, each with a `/* intent (was X) */` comment. `EXX` and
+`EX AF,AF'` banking is tracked via comments, because that gets confusing quickly
+otherwise. Deliberate departures from a literal translation are marked with
+`Conv:` comments.
 
 `docs/translation-principles.md` and `docs/translation-pitfalls.md` cover this
-in detail, and `docs/function_comment_template_example.c` is a worked example
-of what a finished function might look like.
+in detail, and `docs/function_comment_template_example.c` is a worked example of
+what a finished function might look like.
 
 ## Stage data
 

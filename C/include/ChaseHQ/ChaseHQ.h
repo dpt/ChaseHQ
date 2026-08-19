@@ -72,6 +72,14 @@ CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state,
                                      int        *width,
                                      int        *height);
 
+/**
+ * Toggle test mode.
+ *
+ * \param state Game instance.
+ * \return New value of test_mode (0 or 1).
+ */
+CHQ_API int chq_toggle_test_mode(chqstate_t *state);
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_H */

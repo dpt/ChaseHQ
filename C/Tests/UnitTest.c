@@ -812,14 +812,128 @@ static void test_helicopter_draws(void)
 }
 
 /*
+ * draw_stretchy_object_left/right ($916C/$9171): exposed in Tests.h for
+ * direct test/tool use, but otherwise only reached indirectly, inside a full
+ * game frame, by every other test in this file. Call them directly with
+ * stage 1's real stretchy_shortpole entries (index 3 of the 9-element
+ * left/right hand object tables -- see Stage1Data.c) and confirm they run
+ * without corrupting memory outside the back buffer.
+ */
+static void test_draw_stretchy_object_left_right_draw(void)
+{
+  chqstate_t  *state;
+  const obj_t *left_entry;
+  const obj_t *right_entry;
+  const s16   *xpos;
+  const u8    *height;
+
+  state = make_road_state();
+
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+
+  left_entry  = &state->stage->addrof_left_hand_objects[3];
+  right_entry = &state->stage->addrof_right_hand_objects[3];
+  assert(left_entry->handler == draw_stretchy_object_left);
+  assert(right_entry->handler == draw_stretchy_object_right);
+  assert(left_entry->arg != NULL);
+  assert(right_entry->arg != NULL);
+
+  xpos   = &state->xpos.centre[64];
+  height = &state->height_table[5];
+
+  draw_stretchy_object_left(state, 5, left_entry->arg, xpos, height);
+  draw_stretchy_object_right(state, 5, right_entry->arg, xpos, height);
+
+  chq_destroy(state);
+  printf("PASS  draw_stretchy_object_left/right: draw stage 1's "
+         "stretchy_shortpole "
+         "without corruption\n");
+}
+
+/*
+ * draw_object_left/right ($9279/$9659): the depthset-driven counterpart of
+ * draw_stretchy_object_left/right -- same obj_t handler shape, exposed in
+ * Tests.h but otherwise only reached indirectly. Call them directly with
+ * stage 1's real turn-sign entries (index 7 of the 9-element left/right hand
+ * object tables -- see Stage1Data.c -- reached via
+ * addrof_left/right_hand_objects[8] under the table's 1-based-with-a-[-1]-base
+ * indexing convention) and confirm they run without corrupting memory outside
+ * the back buffer.
+ */
+static void test_draw_object_left_right_draw(void)
+{
+  chqstate_t  *state;
+  const obj_t *left_entry;
+  const obj_t *right_entry;
+  const s16   *xpos;
+  const u8    *height;
+
+  state = make_road_state();
+
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+
+  left_entry  = &state->stage->addrof_left_hand_objects[8];
+  right_entry = &state->stage->addrof_right_hand_objects[8];
+  assert(left_entry->handler == draw_object_left);
+  assert(right_entry->handler == draw_object_right);
+  assert(left_entry->arg != NULL);
+  assert(right_entry->arg != NULL);
+
+  xpos   = &state->xpos.centre[64];
+  height = &state->height_table[5];
+
+  draw_object_left(state, 5, left_entry->arg, xpos, height);
+  draw_object_right(state, 5, right_entry->arg, xpos, height);
+
+  chq_destroy(state);
+  printf("PASS  draw_object_left/right: draw stage 1's turn sign "
+         "without corruption\n");
+}
+
+/*
+ * draw_tunnel_light_left/right ($92D4/$96C0): another obj_t handler exposed
+ * in Tests.h but otherwise only reached indirectly. Both gate on
+ * B_depth >= 16 (object too distant to light), so the fixture uses depth 5
+ * to stay under that gate and actually exercise the draw. Uses stage 1's
+ * real tunnellight entries (index 0 of the left/right hand object tables).
+ */
+static void test_draw_tunnel_light_left_right_draw(void)
+{
+  chqstate_t  *state;
+  const obj_t *left_entry;
+  const obj_t *right_entry;
+  const s16   *xpos;
+  const u8    *height;
+
+  state = make_road_state();
+
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+
+  left_entry  = &state->stage->addrof_left_hand_objects[1];
+  right_entry = &state->stage->addrof_right_hand_objects[1];
+  assert(left_entry->handler == draw_tunnel_light_left);
+  assert(right_entry->handler == draw_tunnel_light_right);
+  assert(left_entry->arg != NULL);
+  assert(right_entry->arg != NULL);
+
+  xpos   = &state->xpos.centre[64];
+  height = &state->height_table[5];
+
+  draw_tunnel_light_left(state, 5, left_entry->arg, xpos, height);
+  draw_tunnel_light_right(state, 5, right_entry->arg, xpos, height);
+
+  chq_destroy(state);
+  printf("PASS  draw_tunnel_light_left/right: draw stage 1's tunnellight "
+         "without corruption\n");
+}
+
+/*
  * draw_overhead ($9052): the bridge deck span must stop where the Z80's
  * unrolled fill loop ($9117-$9151, BRIDGE_DECK_LOOP_WRITES entries) would
- * stop, not run past it. Regression test for the "central part of the
- * object that spans the road fails to stop at the right edge" report: the
- * memset byte count was taken directly from overhead.span_width_words/2 (the JR
- * displacement into the loop) instead of BRIDGE_DECK_LOOP_WRITES minus that
- * value, which inverted the clip -- the span grew wider as the deck should
- * have been narrowing towards the edge.
+ * stop, not run past it.
  *
  * All values below (Avertical, overhead.vert_sub, D, E, overhead.span_width_words, dest
  * address) are hand-derived from the skool at $90A3-$9169 for this specific
@@ -888,8 +1002,7 @@ static void test_draw_overhead_stops_at_right_edge(void)
     assert(row[expected_col + i] == fill_byte);
 
   /* The byte immediately past the span must be untouched -- this is the
-   * right-edge stop. Before the BRIDGE_DECK_LOOP_WRITES fix the buggy
-   * formula wrote 18 bytes here instead of 12, overrunning this check. */
+   * right-edge stop. */
   assert(row[expected_col + expected_writes] == 0xFF);
 
   chq_destroy(state);
@@ -1128,6 +1241,43 @@ static void test_name_entry_idle_timeout_finalises(void)
   printf("PASS  name_entry: idle timeout force-finalises after 3120 frames\n");
 }
 
+/*
+ * chq_test_insert_high_score_entry drives the real ihe_flash_loop -- the
+ * interactive per-frame loop insert_high_score_entry falls into, reading
+ * input the normal way rather than via chq_test_hiscore_inject_input's
+ * direct dispatch. name_entry_input's idle counter runs every frame
+ * regardless of loop phase, so with no key ever pressed (fake_in reports
+ * nothing held) the loop must still reach hiscore.complete and return,
+ * proving the bound holds through the real call path, not just the
+ * injected-input path the other name-entry tests use.
+ */
+static void test_insert_high_score_entry_idle_timeout_finalises(void)
+{
+  chqstate_t       *state;
+  high_score_row_t *entry;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  /* check_high_score always formats a valid ASCII digit/space string into
+   * high_score_digits before falling through into insert_high_score_entry;
+   * this wrapper skips that caller, so the fixture must supply one itself. */
+  memset(state->bank3->high_score_digits,
+         '0',
+         sizeof(state->bank3->high_score_digits));
+
+  chq_test_insert_high_score_entry(state, 0);
+
+  assert(state->bank3->hiscore.complete == 1);
+
+  entry = &state->bank3->high_score_table[0];
+  assert(entry->name[0] == '.'); /* idle timeout: never confirmed by FIRE */
+
+  chq_destroy(state);
+  printf("PASS  insert_high_score_entry: idle timeout finalises through the "
+         "real ihe_flash_loop\n");
+}
+
 static void test_cycle_and_draw_letter_wraps_both_ends(void)
 {
   chqstate_t *state;
@@ -1312,10 +1462,210 @@ static void test_stop_the_tape_48k_installs_sinclair_scheme(void)
 }
 
 /*
- * Every stage's sprites are drawn from their own array now rather than from one
- * offset into a shared blob per graphics run, so a sprite whose height reaches
- * past its array no longer lands harmlessly in the next sprite's data -- there
- * is no guarantee how the compiler lays two arrays out. Driving frames for each
+ * chq_toggle_test_mode ($8000, host-facing accessor): flips state->test_mode
+ * and returns the new value, so repeated calls must alternate 0/1 and each
+ * returned value must match the field it just set.
+ */
+static void test_chq_toggle_test_mode_toggles(void)
+{
+  chqstate_t *state;
+  int         result;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+  assert(state->test_mode == 0);
+
+  result = chq_toggle_test_mode(state);
+  assert(result == 1);
+  assert(state->test_mode == 1);
+
+  result = chq_toggle_test_mode(state);
+  assert(result == 0);
+  assert(state->test_mode == 0);
+
+  chq_destroy(state);
+  printf(
+      "PASS  chq_toggle_test_mode: flips and returns test_mode on each call\n");
+}
+
+/*
+ * chq_get_backbuffer (host-facing accessor): must report the fixed back
+ * buffer dimensions, and the returned pointer must be state->backbuffer
+ * itself (a live view, not a copy) so drawing after the call is visible
+ * through the same pointer.
+ */
+static void test_chq_get_backbuffer_returns_live_view(void)
+{
+  chqstate_t *state;
+  const u8   *buffer;
+  int         width;
+  int         height;
+
+  state = make_road_state();
+
+  buffer = chq_get_backbuffer(state, &width, &height);
+  assert(buffer == state->backbuffer);
+  assert(width == BACKBUFFER_WIDTH);
+  assert(height == BACKBUFFER_HEIGHT);
+
+  memset(state->backbuffer, 0xFF, sizeof(state->backbuffer));
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+  chq_test_draw_road(state);
+
+  assert(memcmp(buffer, state->backbuffer, BACKBUFFER_LENGTH) == 0);
+
+  chq_destroy(state);
+  printf("PASS  chq_get_backbuffer: reports fixed dimensions and a live view "
+         "of the back buffer\n");
+}
+
+/*
+ * increment_score ($9D17): packed-BCD add across all four score_bcd bytes.
+ * Two edge cases: a full carry ripple (0x99 + 1 in every byte must roll all
+ * four back to zero except the untouched top byte, which absorbs the final
+ * carry) and a plain no-carry add (each byte keeps its own digits).
+ */
+static void test_increment_score_bcd_carry_chain(void)
+{
+  chqstate_t *state;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->score_bcd[0] = 0x99;
+  state->score_bcd[1] = 0x99;
+  state->score_bcd[2] = 0x99;
+  state->score_bcd[3] = 0x00;
+
+  increment_score(state, 0x01, 0x00, 0x00);
+
+  assert(state->score_bcd[0] == 0x00);
+  assert(state->score_bcd[1] == 0x00);
+  assert(state->score_bcd[2] == 0x00);
+  assert(state->score_bcd[3] == 0x01);
+
+  memset(state->score_bcd, 0, sizeof(state->score_bcd));
+
+  increment_score(state, 0x23, 0x00, 0x45);
+
+  assert(state->score_bcd[0] == 0x23);
+  assert(state->score_bcd[1] == 0x45);
+  assert(state->score_bcd[2] == 0x00);
+  assert(state->score_bcd[3] == 0x00);
+
+  chq_destroy(state);
+  printf("PASS  increment_score: BCD carry ripples through all four bytes; "
+         "plain add keeps each byte's own digits\n");
+}
+
+/*
+ * chq_test_prime_road ($BE1F via rm_cycle_buffer_offset): each call must
+ * advance roadbufptr by exactly one ring-buffer slot, and 0 iterations must
+ * leave it untouched -- the loop is `while (iterations-- > 0)`, so a boundary
+ * bug here would either skip the first slot or run one iteration too many.
+ */
+static void test_chq_test_prime_road_boundary_counts(void)
+{
+  chqstate_t *state;
+  int         idx_before;
+  int         idx_after;
+
+  state = make_road_state();
+
+  idx_before = (int)(state->roadbufptr - state->roadbuf_start);
+
+  chq_test_prime_road(state, 0);
+  idx_after = (int)(state->roadbufptr - state->roadbuf_start);
+  assert(idx_after == idx_before);
+
+  chq_test_prime_road(state, 1);
+  idx_after = (int)(state->roadbufptr - state->roadbuf_start);
+  assert(idx_after == (idx_before + 1) % 256);
+
+  chq_test_prime_road(state, 3);
+  idx_after = (int)(state->roadbufptr - state->roadbuf_start);
+  assert(idx_after == (idx_before + 4) % 256);
+
+  chq_destroy(state);
+  printf("PASS  chq_test_prime_road: 0 iterations no-ops, N iterations "
+         "advances roadbufptr by exactly N slots\n");
+}
+
+/*
+ * exit_fork ($BB69): guarded by the fork_distance high byte. With it zero,
+ * the function must return immediately -- no field it would otherwise reset
+ * may be touched. Confirms the guard itself, independent of the full
+ * drive-through-a-fork path already covered by test_fork_progression.
+ */
+static void test_chq_test_exit_fork_guard_is_noop(void)
+{
+  chqstate_t *state;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->fork_distance    = 0;
+  state->fork_taken       = 1;
+  state->fork_in_progress = 1;
+  state->curvature_byte   = 42;
+
+  chq_test_exit_fork(state);
+
+  assert(state->fork_taken == 1);
+  assert(state->fork_in_progress == 1);
+  assert(state->curvature_byte == 42);
+
+  chq_destroy(state);
+  printf("PASS  chq_test_exit_fork: no-ops while fork_distance's high byte "
+         "is zero\n");
+}
+
+/*
+ * Attract mode loads a different map stream (stage 1's attract_data, not its
+ * stage_data) through the same set_up_stage/game_frame pipeline as normal
+ * play. Drive it for many frames, watching for the same road-buffer
+ * corruption test_full_frame_no_corruption watches for on the game-data
+ * path -- attract mode has never been driven frame-by-frame in this suite.
+ */
+static void test_attract_mode_frames_no_corruption(void)
+{
+  chqstate_t *state;
+  int         frame;
+  int         max_obj;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+  state->wanted_stage_number  = MINSTAGE;
+  state->current_stage_number = 0;
+  chq_test_load_stage(state);
+  chq_test_set_up_stage_attract(state);
+
+  for (frame = 0; frame < 5000; frame++)
+  {
+    chq_test_game_frame(state);
+
+    max_obj = chq_test_max_side_object(state);
+    if (max_obj > 9)
+    {
+      printf("  FAIL: side object byte %d (> 9) at attract frame %d\n",
+             max_obj,
+             frame);
+      assert(max_obj <= 9);
+    }
+  }
+
+  chq_destroy(state);
+  printf("PASS  attract mode: %d frames of attract_data drive without road "
+         "buffer corruption\n",
+         frame);
+}
+
+/*
+ * Every stage's sprites are drawn from their own array rather than from one
+ * offset into a shared blob, so a sprite whose height reaches past its array
+ * no longer lands harmlessly in the next sprite's data -- there is no
+ * guarantee how the compiler lays two arrays out. Driving frames for each
  * stage under the Debug build's AddressSanitizer is what catches that: a read
  * past the end of any one of the ~370 sprite arrays aborts here.
  */
@@ -1370,6 +1720,9 @@ int main(void)
   test_fork_progression();
   test_full_frame_no_corruption();
   test_draw_overhead_stops_at_right_edge();
+  test_draw_stretchy_object_left_right_draw();
+  test_draw_object_left_right_draw();
+  test_draw_tunnel_light_left_right_draw();
   test_helicopter_draws();
   test_perp_caught_progression();
   test_advance_hazards_insert_shift_preserves_records();
@@ -1377,10 +1730,17 @@ int main(void)
   test_name_entry_setup_screen_draws_table();
   test_name_entry_confirms_three_letters();
   test_name_entry_idle_timeout_finalises();
+  test_insert_high_score_entry_idle_timeout_finalises();
   test_cycle_and_draw_letter_wraps_both_ends();
   test_run_title_tune_starts_and_keeps_playing();
   test_play_music_48k_paces_every_tick();
   test_stop_the_tape_48k_installs_sinclair_scheme();
+  test_chq_toggle_test_mode_toggles();
+  test_chq_get_backbuffer_returns_live_view();
+  test_increment_score_bcd_carry_chain();
+  test_chq_test_prime_road_boundary_counts();
+  test_chq_test_exit_fork_guard_is_noop();
+  test_attract_mode_frames_no_corruption();
   test_all_stages_draw_frames();
 
   printf("\nAll tests passed.\n");

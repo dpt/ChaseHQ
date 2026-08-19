@@ -292,7 +292,7 @@ static void chq_initialise(chqstate_t *state)
     memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
 
   // $8000
-  state->test_mode = 1;
+  state->test_mode = 0;
 
   // $8007
   state->wanted_stage_number   = MINSTAGE;
@@ -474,4 +474,19 @@ CHQ_API const u8 *chq_get_backbuffer(chqstate_t *state, int *width, int *height)
   *height = BACKBUFFER_HEIGHT;
 
   return state->backbuffer;
+}
+
+/**
+ * Toggle test mode ($8000).
+ *
+ * Conv: host-facing accessor; has no Z80 address.
+ *
+ * \param state Game instance.
+ * \return New value of test_mode.
+ */
+CHQ_API int chq_toggle_test_mode(chqstate_t *state)
+{
+  state->test_mode = !state->test_mode;
+
+  return state->test_mode;
 }

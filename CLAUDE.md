@@ -69,12 +69,11 @@ See `C/apps/riscos/README.md` for shortcuts and layout, and
 ### C implementation (C/ directory)
 
 CMake is the canonical build system. SDL3 is required for the `ChaseHQ` app
-target; configuring without it still builds `ChaseHQ_Tests` and
-`StretchyRenderer`. On Linux, `glslangValidator` (package `glslang-tools` on
-Debian/Ubuntu) is needed to build the CRT shader (compiles
-`apps/sdl3/shaders/crt.{vert,frag}` to SPIR-V at build time); without it the
-`ChaseHQ` target still builds, just falls back to the plain renderer (see
-`CRTShader.c`).
+target; configuring without it still builds `ChaseHQ_Tests`. On Linux,
+`glslangValidator` (package `glslang-tools` on Debian/Ubuntu) is needed to build
+the CRT shader (compiles `apps/sdl3/shaders/crt.{vert,frag}` to SPIR-V at build
+time); without it the `ChaseHQ` target still builds, just falls back to the
+plain renderer (see `CRTShader.c`).
 
 ```bash
 # From C/
@@ -98,12 +97,12 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Tests live in `C/Tests/` (`UnitTest.c`, `RenderStretchyObject.c`). They are
-built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of
-`ChaseHQ/Engine/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions
-for direct testing. Declarations for those wrappers live in
-`C/libraries/ChaseHQ/Engine/Tests.h`. When adding a new test hook, add the
-wrapper to `Main.c` and declare it in `Tests.h`.
+Tests live in `C/Tests/` (`UnitTest.c`). They are built with `-DCHQ_TESTS`,
+which compiles in thin wrappers at the bottom of `ChaseHQ/Engine/Main.c` (inside
+`#ifdef CHQ_TESTS`) that expose static functions for direct testing.
+Declarations for those wrappers live in `C/libraries/ChaseHQ/Engine/Tests.h`.
+When adding a new test hook, add the wrapper to `Main.c` and declare it in
+`Tests.h`.
 
 ## C Implementation Architecture
 

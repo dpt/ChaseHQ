@@ -41,8 +41,7 @@ endif()
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
 
 # ponytail: SDL3 is only needed by the ChaseHQ app target. Configuring
-# without it still gets you ChaseHQ_Tests and StretchyRenderer, which is all
-# CI builds.
+# without it still gets you ChaseHQ_Tests, which is all CI builds.
 if(EMSCRIPTEN)
   set(SDL3_FOUND TRUE)
 else()
@@ -206,20 +205,6 @@ target_include_directories(ChaseHQ_Tests PRIVATE ${INCLUDE_DIRS})
 if(CHQ_ENABLE_TEST_STAGE)
   target_sources(ChaseHQ_Tests PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
   target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_ENABLE_TEST_STAGE)
-endif()
-
-# ---- Stretchy object renderer (visual debug tool, no SDL2 dependency) ------
-
-set(STRETCHY_SOURCE_FILES ${TEST_SOURCE_FILES})
-list(REMOVE_ITEM STRETCHY_SOURCE_FILES Tests/UnitTest.c)
-list(APPEND STRETCHY_SOURCE_FILES Tests/RenderStretchyObject.c)
-
-add_executable(StretchyRenderer ${STRETCHY_SOURCE_FILES})
-target_compile_definitions(StretchyRenderer PRIVATE CHQ_TESTS)
-target_include_directories(StretchyRenderer PRIVATE ${INCLUDE_DIRS})
-if(CHQ_ENABLE_TEST_STAGE)
-  target_sources(StretchyRenderer PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
-  target_compile_definitions(StretchyRenderer PRIVATE CHQ_ENABLE_TEST_STAGE)
 endif()
 
 # ---- Title drum renderer (offline audio timing check, no SDL dependency) ---

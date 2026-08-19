@@ -1412,12 +1412,13 @@ static void play_engine_sfx_48k(chqstate_t *state)
   do
   {
     state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
-    /* off-phase delay (7 + loop + 7 T-states) */
+    /* $8248-$824C: LD B,$00; DJNZ; LD A,$18 (7 + loop + 7) */
     state->speccy->logtime(state->speccy,
                            14 + DJNZ_LOOP_TSTATES(off_cycle));
     state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
                        port_MASK_EAR | port_MASK_MIC);
-    /* on-phase delay (7 + loop + 4 + 12 + 4 T-states) */
+    /* $8250-$8255: LD B,$00; DJNZ; DEC C; JR NZ taken (7 + loop + 4 + 12),
+     * plus next iteration's $8245 XOR A (4), pre-billed here */
     state->speccy->logtime(state->speccy,
                            27 + DJNZ_LOOP_TSTATES(on_cycle));
   }
@@ -3694,6 +3695,8 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
           delay = 256;
         /* JR Z not taken; LD A; SUB; LD B (7+7+4+4) + DJNZ */
         speccy->logtime(speccy, 22 + DJNZ_LOOP_TSTATES(delay));
+        /* $8A25: LD A,$18 (7) */
+        speccy->logtime(speccy, 7);
         speccy->out(speccy,
                     port_BORDER_EAR_MIC,
                     port_MASK_EAR | port_MASK_MIC);
@@ -3701,6 +3704,7 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
         speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(param1));
         speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
+        /* $8A2F-$8A30: DEC C; JR NZ taken (4+12) */
         speccy->logtime(speccy, 16);
       }
       else
@@ -3751,6 +3755,8 @@ void sfx_bipbow(chqstate_t *state, int param1, int param2)
       param1 = param2;
       /* $8A3F: LD A,$18; SUB C; LD B,A; DJNZ (7+4+4 + loop) */
       speccy->logtime(speccy, 15 + DJNZ_LOOP_TSTATES(24 - j));
+      /* $8A45: LD A,$18 (7) */
+      speccy->logtime(speccy, 7);
       speccy->out(speccy,
                   port_BORDER_EAR_MIC,
                   port_MASK_EAR | port_MASK_MIC);
@@ -3758,6 +3764,7 @@ void sfx_bipbow(chqstate_t *state, int param1, int param2)
       speccy->logtime(speccy, 8 + DJNZ_LOOP_TSTATES(j));
       speccy->out(speccy, port_BORDER_EAR_MIC, 0);
 
+      /* $8A4F-$8A50: DEC H; JR NZ taken (4+12) */
       speccy->logtime(speccy, 16);
     }
     while (--i > 0);
@@ -4136,9 +4143,7 @@ perp_too_far_away:
   zero            = (HL_speed == 0);
   HL_speed        = HL_speedpushed; // POP HL
   if (zero || carry)
-  {
-    goto set_perp_speed; // with DE=70
-  }
+  goto set_perp_speed; // with DE=70
   HL_speed -= 5;
   DE_speed  = HL_speed;
 
@@ -20578,11 +20583,11 @@ void stop_the_tape_48k(chqstate_t *state)
 
   /** $EE2B: cursor_joy_keydefs */
   static const u8 cursor_joy_keydefs[5] = {
-    KEYDEF(4, 3), // 0
-    KEYDEF(1, 3), // 7
-    KEYDEF(0, 3), // 6
-    KEYDEF(0, 4), // 5
-    KEYDEF(2, 3)  // 8
+    KEYDEF(zxkey_0),
+    KEYDEF(zxkey_7),
+    KEYDEF(zxkey_6),
+    KEYDEF(zxkey_5),
+    KEYDEF(zxkey_8)
   };
   // clang-format on
 
@@ -21035,14 +21040,14 @@ static void redefine_keys_48k(chqstate_t *state)
 
   /** $EE30: shocked_keydefs */
   static const u8 shocked_keydefs[8] = {
-    KEYDEF(3, 6), // S
-    KEYDEF(0, 1), // H
-    KEYDEF(3, 2), // O
-    KEYDEF(1, 7), // C
-    KEYDEF(2, 1), // K
-    KEYDEF(2, 5), // E
-    KEYDEF(2, 6), // D
-    KEYDEF(4, 1)  // <ENTER>
+    KEYDEF(zxkey_S),
+    KEYDEF(zxkey_H),
+    KEYDEF(zxkey_O),
+    KEYDEF(zxkey_C),
+    KEYDEF(zxkey_K),
+    KEYDEF(zxkey_E),
+    KEYDEF(zxkey_D),
+    KEYDEF(zxkey_ENTER)
   };
   // clang-format on
 
@@ -21306,10 +21311,9 @@ dak_loop1:
  * \param[in] DE_screen Z80 screen address (D = high byte, E = low byte).
  * \return              Screen address of the next character row.
  *
- * Conv: fixed -- previously added 8 to D unconditionally on every call; the
- *       Z80's `RET NC` at $EDD0 only takes that step when the E+=32 addition
- *       overflows (JR NC / RET NC = skip on no-carry, so the D increment is
- *       conditional on carry, not automatic).
+ * Conv: the D increment is conditional, not automatic -- the Z80's `RET NC`
+ *       at $EDD0 only takes that step when the E+=32 addition overflows
+ *       (JR NC / RET NC = skip on no-carry, so D increments only on carry).
  */
 static u16 dak_move_down(int DE_screen)
 {
@@ -21729,13 +21733,16 @@ void play_noise(chqstate_t *state, int A_param)
       RRC(*seed);
       A     += *seed;
       *seed  = A;
-      /* $F0C9: LFSR step through rng_seed + AND $10 (127 T-states) */
+      /* $F0C9: LFSR step through rng_seed + AND $10 (127 T-states:
+       * 10+7+7+7+6+33+7+6+4+15+7+7+7) */
       state->speccy->logtime(state->speccy, 127);
       if (A & (1 << 4))
       {
         /* $F0DE: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
         state->speccy->logtime(state->speccy,
                                22 + DJNZ_LOOP_TSTATES(24 - E_duration));
+        /* $F0E6: LD A,$18 (7) */
+        state->speccy->logtime(state->speccy, 7);
         state->speccy->out(state->speccy,
                            port_BORDER_EAR_MIC,
                            port_MASK_EAR | port_MASK_MIC);
@@ -21744,6 +21751,7 @@ void play_noise(chqstate_t *state, int A_param)
                                8 + DJNZ_LOOP_TSTATES(E_duration));
         state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
 
+        /* $F0F0-$F0F1: DEC D; JR NZ taken (4+12) */
         state->speccy->logtime(state->speccy, 16);
       }
       else

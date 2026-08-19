@@ -48,6 +48,7 @@ static const char *const chq_crt_vertex_gles =
  * field is its own uniform, set by name in chq_CRT_shader_render).
  */
 static const char *const chq_crt_fragment_gles =
+    "#extension GL_OES_standard_derivatives : enable\n"
     "precision mediump float;\n"
     "varying vec2 v_uv;\n"
     "uniform sampler2D u_tex;\n"
@@ -106,7 +107,10 @@ static const char *const chq_crt_fragment_gles =
     "  c.rgb *= u_brightness * flicker;\n"
     "  float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(vec3(lum), c.rgb, u_saturation);\n"
-    "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
+    "  float scanPhase = uv.y * 384.0 * 3.14159265;\n"
+    "  float scanWidth = fwidth(scanPhase);\n"
+    "  float scanAtten = scanWidth > 0.0001 ? clamp(sin(scanWidth * 0.5) / (scanWidth * 0.5), 0.0, 1.0) : 1.0;\n"
+    "  float scan = sin(scanPhase) * scanAtten * 0.5 + 0.5;\n"
     "  float adaptive = mix(u_scanlineIntensity, u_scanlineIntensity * (1.0 - lum), 0.5);\n"
     "  c.rgb *= 1.0 - adaptive * scan;\n"
     "  vec2 d = abs(uv - 0.5) * 2.0;\n"
@@ -264,8 +268,14 @@ static const char *const chq_crt_fragment_msl =
     "  c.rgb *= p.brightness * flicker;\n"
     "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
-    // scanlines, intensity adapted to local luminance.
-    "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
+    // scanlines, intensity adapted to local luminance. Band-limit via
+    // fwidth so amplitude fades out (rather than aliasing into moire) once
+    // curvature or downscaling makes a pixel span several source lines.
+    "  float scanPhase = uv.y * 384.0 * 3.14159265;\n"
+    "  float scanWidth = fwidth(scanPhase);\n"
+    "  float scanAtten = scanWidth > 0.0001 ? saturate(sin(scanWidth * 0.5) "
+    "/ (scanWidth * 0.5)) : 1.0;\n"
+    "  float scan = sin(scanPhase) * scanAtten * 0.5 + 0.5;\n"
     "  float adaptive = mix(p.scanlineIntensity, p.scanlineIntensity * (1.0 - "
     "lum), 0.5);\n"
     "  c.rgb *= 1.0 - adaptive * scan;\n"
