@@ -22,6 +22,7 @@
 
 #if defined(CHQ_CRT_SHADER_GLES)
 #include <SDL3/SDL_opengles2.h>
+#include <emscripten.h>
 #endif
 
 #if defined(CHQ_CRT_SHADER_GLES)
@@ -319,6 +320,47 @@ static const char *const chq_gles_uniform_names[CHQ_U_COUNT] = {
   "u_vignetteStrength", "u_chromaBleed", "u_glitch", "u_time",
 };
 
+/* Set by chq_gles_on_context_restored (called from JS -- see
+ * chq_gles_install_context_handlers) when the browser recreates a lost
+ * WebGL context. The GL objects below (program/vbo/texture) do not survive
+ * a context loss even though the context handle itself does, so the next
+ * chq_CRT_shader_render call must recreate them before drawing. Without
+ * this, a lost context leaves the canvas permanently black (audio and game
+ * logic run on unrelated threads/nodes and are unaffected) -- mobile Chrome
+ * drops WebGL contexts under GPU memory pressure far more readily than
+ * desktop, and the default handler for webglcontextlost does not even
+ * attempt to restore unless told to via preventDefault(), which
+ * chq_gles_install_context_handlers below does.
+ */
+static volatile int chq_gles_needs_reinit = 0;
+
+EMSCRIPTEN_KEEPALIVE
+void chq_gles_on_context_lost(void)
+{
+  fprintf(stderr, "WebGL context lost\n");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void chq_gles_on_context_restored(void)
+{
+  fprintf(stderr, "WebGL context restored; reinitialising GL objects\n");
+  chq_gles_needs_reinit = 1;
+}
+
+EM_JS(void, chq_gles_install_context_handlers, (), {
+  var canvas = Module['canvas'];
+  if (!canvas || canvas.__chqContextHandlersInstalled)
+    return;
+  canvas.__chqContextHandlersInstalled = true;
+  canvas.addEventListener('webglcontextlost', function(e) {
+    e.preventDefault(); // required, otherwise the browser never restores it
+    Module['_chq_gles_on_context_lost']();
+  }, false);
+  canvas.addEventListener('webglcontextrestored', function() {
+    Module['_chq_gles_on_context_restored']();
+  }, false);
+});
+
 /* Compiles one shader stage and checks the compile log; returns 0 (and
  * prints the log) on failure, matching the SDL_GPU paths' error handling.
  */
@@ -344,10 +386,13 @@ static GLuint chq_gles_compile(GLenum stage, const char *source)
   return shader;
 }
 
-int chq_CRT_shader_create(chq_CRT_shader_t *shader,
-                          SDL_Window       *window,
-                          int               game_width,
-                          int               game_height)
+/* Compiles/links the program and allocates the vbo/texture. Split out of
+ * chq_CRT_shader_create so chq_CRT_shader_render can call it again after a
+ * webglcontextrestored event: the GL context handle survives a context
+ * loss, but every object bound to it (program, buffers, textures) does not
+ * and must be recreated from scratch. Does not touch shader->gl_context.
+ */
+static int chq_gles_create_objects(chq_CRT_shader_t *shader)
 {
   GLuint vertex_shader;
   GLuint fragment_shader;
@@ -363,18 +408,6 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
      3.0f, -1.0f, 2.0f, 1.0f,
     -1.0f,  3.0f, 0.0f, -1.0f,
   };
-
-  (void) game_width;
-  (void) game_height;
-
-  memset(shader, 0, sizeof(*shader));
-
-  shader->gl_context = SDL_GL_CreateContext(window);
-  if (shader->gl_context == NULL)
-  {
-    fprintf(stderr, "Error: SDL_GL_CreateContext: %s\n", SDL_GetError());
-    return 0;
-  }
 
   vertex_shader = chq_gles_compile(GL_VERTEX_SHADER, chq_crt_vertex_gles);
   if (vertex_shader == 0)
@@ -424,6 +457,29 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   return 1;
 }
 
+int chq_CRT_shader_create(chq_CRT_shader_t *shader,
+                          SDL_Window       *window,
+                          int               game_width,
+                          int               game_height)
+{
+  (void) game_width;
+  (void) game_height;
+
+  memset(shader, 0, sizeof(*shader));
+
+  shader->gl_context = SDL_GL_CreateContext(window);
+  if (shader->gl_context == NULL)
+  {
+    fprintf(stderr, "Error: SDL_GL_CreateContext: %s\n", SDL_GetError());
+    return 0;
+  }
+
+  chq_gles_install_context_handlers();
+  chq_gles_needs_reinit = 0;
+
+  return chq_gles_create_objects(shader);
+}
+
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
                            SDL_Window             *window,
                            zxspectrum_t           *zx,
@@ -442,6 +498,13 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   uint32_t         *composited = NULL;
 
   SDL_GL_MakeCurrent(window, shader->gl_context);
+
+  if (chq_gles_needs_reinit)
+  {
+    chq_gles_needs_reinit = 0;
+    if (!chq_gles_create_objects(shader))
+      fprintf(stderr, "Error: GLES reinit after context restore failed\n");
+  }
 
   /* Composite the OSD mask on the CPU before upload, same as the SDL_GPU
    * path -- there is no SDL_Renderer here for the caller to draw an overlay
