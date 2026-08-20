@@ -202,6 +202,9 @@ set(TEST_SOURCE_FILES
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE ${INCLUDE_DIRS})
+# UnitTest.c's checks are all assert() calls; NDEBUG (added by non-Debug
+# CMAKE_BUILD_TYPE) would strip them and turn every test into a silent no-op.
+target_compile_options(ChaseHQ_Tests PRIVATE -UNDEBUG)
 if(CHQ_ENABLE_TEST_STAGE)
   target_sources(ChaseHQ_Tests PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
   target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_ENABLE_TEST_STAGE)
