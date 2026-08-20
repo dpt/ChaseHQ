@@ -22,6 +22,9 @@
 
 #if defined(CHQ_CRT_SHADER_GLES)
 #include <SDL3/SDL_opengles2.h>
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
 #endif
 
 #if defined(CHQ_CRT_SHADER_GLES)
@@ -71,10 +74,23 @@ static const char *const chq_crt_fragment_gles =
     "  vec2 coord = v_uv * 2.0 - 1.0;\n"
     "  coord *= 1.0 + dot(coord, coord) * u_curvature;\n"
     "  vec2 uv = coord * 0.5 + 0.5;\n"
-    "  float band = floor(uv.y / u_texel.y);\n"
-    "  float seed = chq_hash(band * 78.233 + floor(u_time * 50.0) * 37.719);\n"
-    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * u_glitch *\n"
-    "          step(0.9, seed);\n"
+    "  float tick = mod(floor(u_time * 50.0), 2048.0);\n"
+    /* u_glitch is a runtime uniform, so the compiler cannot fold
+     * chq_hash(...) * u_glitch to a constant -- the hash's internal sin()
+     * runs every frame regardless of u_glitch's value. mediump sin() on
+     * mobile GPUs is only accurate over a modest range and can return
+     * NaN/Inf outside it; NaN survives "* u_glitch" (NaN * 0.0 is still
+     * NaN) and corrupts the whole canvas to solid black on tile-based
+     * renderers. Guarding on u_glitch is a uniform (not varying) branch, so
+     * every fragment takes the same side with no divergence cost, and the
+     * hash chain -- and its NaN risk -- only runs when glitch is enabled.
+     */
+    "  if (u_glitch > 0.0) {\n"
+    "    float band = floor(uv.y / u_texel.y);\n"
+    "    float seed = chq_hash(band * 78.233 + tick * 37.719);\n"
+    "    uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * u_glitch *\n"
+    "            step(0.9, seed);\n"
+    "  }\n"
     "  vec2 edge = smoothstep(vec2(0.0), vec2(0.005), uv) *\n"
     "              smoothstep(vec2(0.0), vec2(0.005), 1.0 - uv);\n"
     "  float edgeMask = edge.x * edge.y;\n"
@@ -102,8 +118,9 @@ static const char *const chq_crt_fragment_gles =
     "  if (max(bw.r, max(bw.g, bw.b)) > u_bloomThreshold) bloom += bw;\n"
     "  c.rgb += bloom * u_bloomIntensity;\n"
     "  c.rgb = (c.rgb - 0.5) * u_contrast + 0.5;\n"
-    "  float flicker = 1.0 + (chq_hash(floor(u_time * 50.0) * 91.7) - 0.5) *\n"
-    "                        0.06 * u_glitch;\n"
+    "  float flicker = 1.0;\n"
+    "  if (u_glitch > 0.0)\n"
+    "    flicker = 1.0 + (chq_hash(tick * 91.7) - 0.5) * 0.06 * u_glitch;\n"
     "  c.rgb *= u_brightness * flicker;\n"
     "  float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(vec3(lum), c.rgb, u_saturation);\n"
@@ -210,10 +227,17 @@ static const char *const chq_crt_fragment_msl =
      * step(0.9) picks roughly one line in ten, and picks a different ten every
      * frame, so no torn line survives into the next.
      */
-    "  float band = floor(uv.y * float(tex.get_height()));\n"
-    "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
-    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
-    "          step(0.9, seed);\n"
+    /* Branch on p.glitch -- see matching comment in the GLES shader above
+     * (mediump sin() NaN risk); Metal's sin() has no such issue, kept in
+     * sync anyway so the two shaders' math stays identical.
+     */
+    "  float tick = fmod(floor(p.time * 50.0), 2048.0);\n"
+    "  if (p.glitch > 0.0) {\n"
+    "    float band = floor(uv.y * float(tex.get_height()));\n"
+    "    float seed = chq_hash(band * 78.233 + tick * 37.719);\n"
+    "    uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
+    "            step(0.9, seed);\n"
+    "  }\n"
     /* Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
      * which otherwise aliases into a jagged edge along the curvature.
      */
@@ -263,8 +287,9 @@ static const char *const chq_crt_fragment_msl =
     /* Mains flicker: brightness wobble reseeded 50 times a second, the rate an
      * unsynchronised 50Hz display would beat at.
      */
-    "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
-    "                        0.06 * p.glitch;\n"
+    "  float flicker = 1.0;\n"
+    "  if (p.glitch > 0.0)\n"
+    "    flicker = 1.0 + (chq_hash(tick * 91.7) - 0.5) * 0.06 * p.glitch;\n"
     "  c.rgb *= p.brightness * flicker;\n"
     "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
@@ -319,6 +344,59 @@ static const char *const chq_gles_uniform_names[CHQ_U_COUNT] = {
   "u_vignetteStrength", "u_chromaBleed", "u_glitch", "u_time",
 };
 
+/* Set by chq_gles_on_context_restored (called from JS -- see
+ * chq_gles_install_context_handlers) when the browser recreates a lost
+ * WebGL context. The GL objects below (program/vbo/texture) do not survive
+ * a context loss even though the context handle itself does, so the next
+ * chq_CRT_shader_render call must recreate them before drawing. Without
+ * this, a lost context leaves the canvas permanently black (audio and game
+ * logic run on unrelated threads/nodes and are unaffected) -- mobile Chrome
+ * drops WebGL contexts under GPU memory pressure far more readily than
+ * desktop, and the default handler for webglcontextlost does not even
+ * attempt to restore unless told to via preventDefault(), which
+ * chq_gles_install_context_handlers below does.
+ */
+static volatile int chq_gles_needs_reinit = 0;
+
+#if defined(__EMSCRIPTEN__)
+
+EMSCRIPTEN_KEEPALIVE
+void chq_gles_on_context_lost(void)
+{
+  fprintf(stderr, "WebGL context lost\n");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void chq_gles_on_context_restored(void)
+{
+  fprintf(stderr, "WebGL context restored; reinitialising GL objects\n");
+  chq_gles_needs_reinit = 1;
+}
+
+EM_JS(void, chq_gles_install_context_handlers, (), {
+  var canvas = Module['canvas'];
+  if (!canvas || canvas.__chqContextHandlersInstalled)
+    return;
+  canvas.__chqContextHandlersInstalled = true;
+  canvas.addEventListener('webglcontextlost', function(e) {
+    e.preventDefault(); // required, otherwise the browser never restores it
+    Module['_chq_gles_on_context_lost']();
+  }, false);
+  canvas.addEventListener('webglcontextrestored', function() {
+    Module['_chq_gles_on_context_restored']();
+  }, false);
+});
+
+#else
+
+/* Native GLES (e.g. Android): no browser context-loss/restore event to wire
+ * up, so chq_gles_needs_reinit is set only by its initialiser above. */
+static void chq_gles_install_context_handlers(void)
+{
+}
+
+#endif /* __EMSCRIPTEN__ */
+
 /* Compiles one shader stage and checks the compile log; returns 0 (and
  * prints the log) on failure, matching the SDL_GPU paths' error handling.
  */
@@ -344,10 +422,19 @@ static GLuint chq_gles_compile(GLenum stage, const char *source)
   return shader;
 }
 
-int chq_CRT_shader_create(chq_CRT_shader_t *shader,
-                          SDL_Window       *window,
-                          int               game_width,
-                          int               game_height)
+/* Compiles/links the program and allocates the vbo/texture. Split out of
+ * chq_CRT_shader_create so chq_CRT_shader_render can call it again after a
+ * webglcontextrestored event: the GL context handle survives a context
+ * loss, but every object bound to it (program, buffers, textures) does not
+ * and must be recreated from scratch. Does not touch shader->gl_context.
+ *
+ * Allocates the texture's storage up front (glTexImage2D with NULL data) at
+ * game_width x game_height so chq_CRT_shader_render can update its contents
+ * with glTexSubImage2D each frame instead of re-specifying format/size on
+ * every draw.
+ */
+static int chq_gles_create_objects(chq_CRT_shader_t *shader, int game_width,
+                                   int game_height)
 {
   GLuint vertex_shader;
   GLuint fragment_shader;
@@ -364,17 +451,13 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
     -1.0f,  3.0f, 0.0f, -1.0f,
   };
 
-  (void) game_width;
-  (void) game_height;
-
-  memset(shader, 0, sizeof(*shader));
-
-  shader->gl_context = SDL_GL_CreateContext(window);
-  if (shader->gl_context == NULL)
-  {
-    fprintf(stderr, "Error: SDL_GL_CreateContext: %s\n", SDL_GetError());
-    return 0;
-  }
+  /* No-ops on the first call (shader is zeroed by chq_CRT_shader_create) and
+   * on a context-restore reinit (the old handles were already invalidated by
+   * the context loss) -- present so a future caller that reinitialises for
+   * some other reason, with a still-live context, does not leak. */
+  glDeleteTextures(1, &shader->texture);
+  glDeleteBuffers(1, &shader->vbo);
+  glDeleteProgram(shader->program);
 
   vertex_shader = chq_gles_compile(GL_VERTEX_SHADER, chq_crt_vertex_gles);
   if (vertex_shader == 0)
@@ -420,8 +503,32 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0,
+              GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  shader->texture_w = game_width;
+  shader->texture_h = game_height;
 
   return 1;
+}
+
+int chq_CRT_shader_create(chq_CRT_shader_t *shader,
+                          SDL_Window       *window,
+                          int               game_width,
+                          int               game_height)
+{
+  memset(shader, 0, sizeof(*shader));
+
+  shader->gl_context = SDL_GL_CreateContext(window);
+  if (shader->gl_context == NULL)
+  {
+    fprintf(stderr, "Error: SDL_GL_CreateContext: %s\n", SDL_GetError());
+    return 0;
+  }
+
+  chq_gles_install_context_handlers();
+  chq_gles_needs_reinit = 0;
+
+  return chq_gles_create_objects(shader, game_width, game_height);
 }
 
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
@@ -442,6 +549,20 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   uint32_t         *composited = NULL;
 
   SDL_GL_MakeCurrent(window, shader->gl_context);
+
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+      fprintf(stderr, "GLES error at frame start: 0x%x%s\n", err,
+              err == 0x9242 ? " (CONTEXT_LOST_WEBGL)" : "");
+  }
+
+  if (chq_gles_needs_reinit)
+  {
+    chq_gles_needs_reinit = 0;
+    if (!chq_gles_create_objects(shader, game_width, game_height))
+      fprintf(stderr, "Error: GLES reinit after context restore failed\n");
+  }
 
   /* Composite the OSD mask on the CPU before upload, same as the SDL_GPU
    * path -- there is no SDL_Renderer here for the caller to draw an overlay
@@ -478,8 +599,27 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, shader->texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0, GL_RGBA,
-              GL_UNSIGNED_BYTE, pixels);
+  /* Update the pre-allocated texture's contents rather than re-specifying
+   * format/size every frame -- see the comment on chq_gles_create_objects.
+   * game_width/game_height are constant for the process lifetime in
+   * practice, but if they ever did change, fall back to full respecification
+   * so the texture storage stays the right size.
+   */
+  if (game_width == shader->texture_w && game_height == shader->texture_h)
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, game_width, game_height, GL_RGBA,
+                    GL_UNSIGNED_BYTE, pixels);
+  else
+  {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    shader->texture_w = game_width;
+    shader->texture_h = game_height;
+  }
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+      fprintf(stderr, "GLES error after texture upload: 0x%x\n", err);
+  }
 
   if (override_pixels == NULL)
     zxspectrum_release_screen(zx);
