@@ -39,6 +39,7 @@ void main()
   vec2 coord;
   vec2 uv0;
   ivec2 tex_size;
+  float tick;
   float band;
   float seed;
   vec2 edge;
@@ -76,10 +77,23 @@ void main()
    * threshold. step(0.9) picks roughly one line in ten, and picks a
    * different ten every frame, so no torn line survives into the next.
    */
-  tex_size = textureSize(tex, 0);
-  band = floor(uv0.y * float(tex_size.y));
-  seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);
-  uv0.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch * step(0.9, seed);
+  /* Branch on p.glitch -- see the root-cause writeup in CRTShader.c's GLES
+   * shader (a runtime-uniform 0.0 can't be constant-folded the way a
+   * compile-time 0.0 can, so a NaN from chq_hash's internal sin() survives
+   * "* p.glitch"). Vulkan/SPIR-V is not known to hit the underlying mediump
+   * sin() bug, but the branch is kept in sync so the three shaders' math
+   * stays identical.
+   */
+  tick = mod(floor(p.time * 50.0), 2048.0);
+  band = 0.0;
+  seed = 0.0;
+  if (p.glitch > 0.0)
+  {
+    tex_size = textureSize(tex, 0);
+    band = floor(uv0.y * float(tex_size.y));
+    seed = chq_hash(band * 78.233 + tick * 37.719);
+    uv0.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch * step(0.9, seed);
+  }
 
   /* Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
    * which otherwise aliases into a jagged edge along the curvature.
@@ -129,7 +143,9 @@ void main()
   /* Mains flicker: brightness wobble reseeded 50 times a second, the rate
    * an unsynchronised 50Hz display would beat at.
    */
-  flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) * 0.06 * p.glitch;
+  flicker = 1.0;
+  if (p.glitch > 0.0)
+    flicker = 1.0 + (chq_hash(tick * 91.7) - 0.5) * 0.06 * p.glitch;
   c.rgb *= p.brightness * flicker;
   lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));
   c.rgb = mix(vec3(lum), c.rgb, p.saturation);

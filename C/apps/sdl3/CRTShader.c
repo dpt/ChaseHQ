@@ -72,10 +72,29 @@ static const char *const chq_crt_fragment_gles =
     "  vec2 coord = v_uv * 2.0 - 1.0;\n"
     "  coord *= 1.0 + dot(coord, coord) * u_curvature;\n"
     "  vec2 uv = coord * 0.5 + 0.5;\n"
-    "  float band = floor(uv.y / u_texel.y);\n"
-    "  float seed = chq_hash(band * 78.233 + floor(u_time * 50.0) * 37.719);\n"
-    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * u_glitch *\n"
-    "          step(0.9, seed);\n"
+    "  float tick = mod(floor(u_time * 50.0), 2048.0);\n"
+    /* Root cause of the Pixel 8a blackout, isolated by bisecting each
+     * uniform between a compile-time const and a real per-frame uniform:
+     * with u_glitch a *runtime* uniform (even holding the same 0.0 every
+     * frame), the compiler cannot fold "chq_hash(...) * u_glitch" to a
+     * constant the way it can when u_glitch is a literal 0.0, so the hash's
+     * internal sin() actually runs every frame. mediump sin() on mobile GPUs
+     * is only accurate over a modest input range and has been observed to
+     * return NaN/Inf outside it; NaN survives "* u_glitch" regardless of
+     * u_glitch's value (NaN * 0.0 is still NaN). A NaN fragment on this
+     * GPU's tile-based renderer was reproduced corrupting the whole canvas
+     * to solid black a few frames in -- no GL error, no context-loss event,
+     * bisected and confirmed on-device. Branching on u_glitch is a uniform
+     * (not varying) branch: every fragment in the draw takes the same side,
+     * so there is no divergence cost, and the hash chain -- and its NaN risk
+     * -- now only runs when the glitch effect is actually enabled.
+     */
+    "  if (u_glitch > 0.0) {\n"
+    "    float band = floor(uv.y / u_texel.y);\n"
+    "    float seed = chq_hash(band * 78.233 + tick * 37.719);\n"
+    "    uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * u_glitch *\n"
+    "            step(0.9, seed);\n"
+    "  }\n"
     "  vec2 edge = smoothstep(vec2(0.0), vec2(0.005), uv) *\n"
     "              smoothstep(vec2(0.0), vec2(0.005), 1.0 - uv);\n"
     "  float edgeMask = edge.x * edge.y;\n"
@@ -103,8 +122,9 @@ static const char *const chq_crt_fragment_gles =
     "  if (max(bw.r, max(bw.g, bw.b)) > u_bloomThreshold) bloom += bw;\n"
     "  c.rgb += bloom * u_bloomIntensity;\n"
     "  c.rgb = (c.rgb - 0.5) * u_contrast + 0.5;\n"
-    "  float flicker = 1.0 + (chq_hash(floor(u_time * 50.0) * 91.7) - 0.5) *\n"
-    "                        0.06 * u_glitch;\n"
+    "  float flicker = 1.0;\n"
+    "  if (u_glitch > 0.0)\n"
+    "    flicker = 1.0 + (chq_hash(tick * 91.7) - 0.5) * 0.06 * u_glitch;\n"
     "  c.rgb *= u_brightness * flicker;\n"
     "  float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(vec3(lum), c.rgb, u_saturation);\n"
@@ -211,10 +231,18 @@ static const char *const chq_crt_fragment_msl =
      * step(0.9) picks roughly one line in ten, and picks a different ten every
      * frame, so no torn line survives into the next.
      */
-    "  float band = floor(uv.y * float(tex.get_height()));\n"
-    "  float seed = chq_hash(band * 78.233 + floor(p.time * 50.0) * 37.719);\n"
-    "  uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
-    "          step(0.9, seed);\n"
+    /* Branch on p.glitch -- see the matching comment and root-cause writeup
+     * in the GLES shader above; kept in sync here even though Metal's sin()
+     * does not exhibit the underlying NaN bug, so the two shaders' math
+     * stays identical.
+     */
+    "  float tick = fmod(floor(p.time * 50.0), 2048.0);\n"
+    "  if (p.glitch > 0.0) {\n"
+    "    float band = floor(uv.y * float(tex.get_height()));\n"
+    "    float seed = chq_hash(band * 78.233 + tick * 37.719);\n"
+    "    uv.x += (chq_hash(seed * 91.0) - 0.5) * 0.005 * p.glitch *\n"
+    "            step(0.9, seed);\n"
+    "  }\n"
     /* Soft edge: smoothstep border fade instead of a hard uv-bounds cutoff,
      * which otherwise aliases into a jagged edge along the curvature.
      */
@@ -264,8 +292,9 @@ static const char *const chq_crt_fragment_msl =
     /* Mains flicker: brightness wobble reseeded 50 times a second, the rate an
      * unsynchronised 50Hz display would beat at.
      */
-    "  float flicker = 1.0 + (chq_hash(floor(p.time * 50.0) * 91.7) - 0.5) *\n"
-    "                        0.06 * p.glitch;\n"
+    "  float flicker = 1.0;\n"
+    "  if (p.glitch > 0.0)\n"
+    "    flicker = 1.0 + (chq_hash(tick * 91.7) - 0.5) * 0.06 * p.glitch;\n"
     "  c.rgb *= p.brightness * flicker;\n"
     "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
     "  c.rgb = mix(float3(lum), c.rgb, p.saturation);\n"
@@ -391,8 +420,21 @@ static GLuint chq_gles_compile(GLenum stage, const char *source)
  * webglcontextrestored event: the GL context handle survives a context
  * loss, but every object bound to it (program, buffers, textures) does not
  * and must be recreated from scratch. Does not touch shader->gl_context.
+ *
+ * Allocates the texture's storage up front (glTexImage2D with NULL data) at
+ * game_width x game_height so chq_CRT_shader_render can update its contents
+ * with glTexSubImage2D each frame instead of re-specifying format/size on
+ * every draw. This is a worthwhile avoidance on its own (full respecification
+ * every frame is wasteful), but it was originally added on a theory that it
+ * fixed a Pixel 8a-specific bug where the canvas went solid black a few
+ * frames in, no GL error, no context-loss event. That theory did not survive
+ * testing -- the real cause was the fragment shader's u_glitch-gated hash
+ * chain producing a NaN on this GPU when u_glitch was a runtime (rather than
+ * compile-time-const) uniform; see the root-cause comment in
+ * chq_crt_fragment_gles.
  */
-static int chq_gles_create_objects(chq_CRT_shader_t *shader)
+static int chq_gles_create_objects(chq_CRT_shader_t *shader, int game_width,
+                                   int game_height)
 {
   GLuint vertex_shader;
   GLuint fragment_shader;
@@ -453,6 +495,10 @@ static int chq_gles_create_objects(chq_CRT_shader_t *shader)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0,
+              GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  shader->texture_w = game_width;
+  shader->texture_h = game_height;
 
   return 1;
 }
@@ -462,9 +508,6 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
                           int               game_width,
                           int               game_height)
 {
-  (void) game_width;
-  (void) game_height;
-
   memset(shader, 0, sizeof(*shader));
 
   shader->gl_context = SDL_GL_CreateContext(window);
@@ -477,7 +520,7 @@ int chq_CRT_shader_create(chq_CRT_shader_t *shader,
   chq_gles_install_context_handlers();
   chq_gles_needs_reinit = 0;
 
-  return chq_gles_create_objects(shader);
+  return chq_gles_create_objects(shader, game_width, game_height);
 }
 
 void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
@@ -499,10 +542,17 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   SDL_GL_MakeCurrent(window, shader->gl_context);
 
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+      fprintf(stderr, "GLES error at frame start: 0x%x%s\n", err,
+              err == 0x9242 ? " (CONTEXT_LOST_WEBGL)" : "");
+  }
+
   if (chq_gles_needs_reinit)
   {
     chq_gles_needs_reinit = 0;
-    if (!chq_gles_create_objects(shader))
+    if (!chq_gles_create_objects(shader, game_width, game_height))
       fprintf(stderr, "Error: GLES reinit after context restore failed\n");
   }
 
@@ -541,8 +591,27 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, shader->texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0, GL_RGBA,
-              GL_UNSIGNED_BYTE, pixels);
+  /* Update the pre-allocated texture's contents rather than re-specifying
+   * format/size every frame -- see the comment on chq_gles_create_objects.
+   * game_width/game_height are constant for the process lifetime in
+   * practice, but if they ever did change, fall back to full respecification
+   * so the texture storage stays the right size.
+   */
+  if (game_width == shader->texture_w && game_height == shader->texture_h)
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, game_width, game_height, GL_RGBA,
+                    GL_UNSIGNED_BYTE, pixels);
+  else
+  {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, game_width, game_height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    shader->texture_w = game_width;
+    shader->texture_h = game_height;
+  }
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+      fprintf(stderr, "GLES error after texture upload: 0x%x\n", err);
+  }
 
   if (override_pixels == NULL)
     zxspectrum_release_screen(zx);

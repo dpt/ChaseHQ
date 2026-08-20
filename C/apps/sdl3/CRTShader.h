@@ -35,6 +35,8 @@ typedef struct
   unsigned int  program;
   unsigned int  texture;  // GLuint, avoids pulling in GLES headers here
   unsigned int  vbo;
+  int           texture_w; // dimensions the texture was last allocated at --
+  int           texture_h; // glTexSubImage2D reuses storage when unchanged
   int           uniform_locs[13]; // GLint, cached at link time -- see
                                    // chq_gles_uniform in CRTShader.c
 #else
