@@ -73,21 +73,15 @@ static const char *const chq_crt_fragment_gles =
     "  coord *= 1.0 + dot(coord, coord) * u_curvature;\n"
     "  vec2 uv = coord * 0.5 + 0.5;\n"
     "  float tick = mod(floor(u_time * 50.0), 2048.0);\n"
-    /* Root cause of the Pixel 8a blackout, isolated by bisecting each
-     * uniform between a compile-time const and a real per-frame uniform:
-     * with u_glitch a *runtime* uniform (even holding the same 0.0 every
-     * frame), the compiler cannot fold "chq_hash(...) * u_glitch" to a
-     * constant the way it can when u_glitch is a literal 0.0, so the hash's
-     * internal sin() actually runs every frame. mediump sin() on mobile GPUs
-     * is only accurate over a modest input range and has been observed to
-     * return NaN/Inf outside it; NaN survives "* u_glitch" regardless of
-     * u_glitch's value (NaN * 0.0 is still NaN). A NaN fragment on this
-     * GPU's tile-based renderer was reproduced corrupting the whole canvas
-     * to solid black a few frames in -- no GL error, no context-loss event,
-     * bisected and confirmed on-device. Branching on u_glitch is a uniform
-     * (not varying) branch: every fragment in the draw takes the same side,
-     * so there is no divergence cost, and the hash chain -- and its NaN risk
-     * -- now only runs when the glitch effect is actually enabled.
+    /* u_glitch is a runtime uniform, so the compiler cannot fold
+     * chq_hash(...) * u_glitch to a constant -- the hash's internal sin()
+     * runs every frame regardless of u_glitch's value. mediump sin() on
+     * mobile GPUs is only accurate over a modest range and can return
+     * NaN/Inf outside it; NaN survives "* u_glitch" (NaN * 0.0 is still
+     * NaN) and corrupts the whole canvas to solid black on tile-based
+     * renderers. Guarding on u_glitch is a uniform (not varying) branch, so
+     * every fragment takes the same side with no divergence cost, and the
+     * hash chain -- and its NaN risk -- only runs when glitch is enabled.
      */
     "  if (u_glitch > 0.0) {\n"
     "    float band = floor(uv.y / u_texel.y);\n"
@@ -231,10 +225,9 @@ static const char *const chq_crt_fragment_msl =
      * step(0.9) picks roughly one line in ten, and picks a different ten every
      * frame, so no torn line survives into the next.
      */
-    /* Branch on p.glitch -- see the matching comment and root-cause writeup
-     * in the GLES shader above; kept in sync here even though Metal's sin()
-     * does not exhibit the underlying NaN bug, so the two shaders' math
-     * stays identical.
+    /* Branch on p.glitch -- see matching comment in the GLES shader above
+     * (mediump sin() NaN risk); Metal's sin() has no such issue, kept in
+     * sync anyway so the two shaders' math stays identical.
      */
     "  float tick = fmod(floor(p.time * 50.0), 2048.0);\n"
     "  if (p.glitch > 0.0) {\n"
@@ -424,14 +417,7 @@ static GLuint chq_gles_compile(GLenum stage, const char *source)
  * Allocates the texture's storage up front (glTexImage2D with NULL data) at
  * game_width x game_height so chq_CRT_shader_render can update its contents
  * with glTexSubImage2D each frame instead of re-specifying format/size on
- * every draw. This is a worthwhile avoidance on its own (full respecification
- * every frame is wasteful), but it was originally added on a theory that it
- * fixed a Pixel 8a-specific bug where the canvas went solid black a few
- * frames in, no GL error, no context-loss event. That theory did not survive
- * testing -- the real cause was the fragment shader's u_glitch-gated hash
- * chain producing a NaN on this GPU when u_glitch was a runtime (rather than
- * compile-time-const) uniform; see the root-cause comment in
- * chq_crt_fragment_gles.
+ * every draw.
  */
 static int chq_gles_create_objects(chq_CRT_shader_t *shader, int game_width,
                                    int game_height)
