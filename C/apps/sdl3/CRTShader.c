@@ -22,7 +22,9 @@
 
 #if defined(CHQ_CRT_SHADER_GLES)
 #include <SDL3/SDL_opengles2.h>
+#if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
+#endif
 #endif
 
 #if defined(CHQ_CRT_SHADER_GLES)
@@ -356,6 +358,8 @@ static const char *const chq_gles_uniform_names[CHQ_U_COUNT] = {
  */
 static volatile int chq_gles_needs_reinit = 0;
 
+#if defined(__EMSCRIPTEN__)
+
 EMSCRIPTEN_KEEPALIVE
 void chq_gles_on_context_lost(void)
 {
@@ -382,6 +386,16 @@ EM_JS(void, chq_gles_install_context_handlers, (), {
     Module['_chq_gles_on_context_restored']();
   }, false);
 });
+
+#else
+
+/* Native GLES (e.g. Android): no browser context-loss/restore event to wire
+ * up, so chq_gles_needs_reinit is set only by its initialiser above. */
+static void chq_gles_install_context_handlers(void)
+{
+}
+
+#endif /* __EMSCRIPTEN__ */
 
 /* Compiles one shader stage and checks the compile log; returns 0 (and
  * prints the log) on failure, matching the SDL_GPU paths' error handling.
@@ -436,6 +450,14 @@ static int chq_gles_create_objects(chq_CRT_shader_t *shader, int game_width,
      3.0f, -1.0f, 2.0f, 1.0f,
     -1.0f,  3.0f, 0.0f, -1.0f,
   };
+
+  /* No-ops on the first call (shader is zeroed by chq_CRT_shader_create) and
+   * on a context-restore reinit (the old handles were already invalidated by
+   * the context loss) -- present so a future caller that reinitialises for
+   * some other reason, with a still-live context, does not leak. */
+  glDeleteTextures(1, &shader->texture);
+  glDeleteBuffers(1, &shader->vbo);
+  glDeleteProgram(shader->program);
 
   vertex_shader = chq_gles_compile(GL_VERTEX_SHADER, chq_crt_vertex_gles);
   if (vertex_shader == 0)
