@@ -39,6 +39,9 @@ typedef struct
   int           texture_h; // glTexSubImage2D reuses storage when unchanged
   int           uniform_locs[13]; // GLint, cached at link time -- see
                                    // chq_gles_uniform in CRTShader.c
+  void         *composite_buf;    // scratch buffer for OSD compositing,
+  size_t        composite_cap;    // grown/reused across frames rather than
+                                   // malloc'd/freed each one
 #else
   SDL_GPUDevice         *gpu;
   SDL_GPUTexture        *texture;         // holds the game's converted screen
