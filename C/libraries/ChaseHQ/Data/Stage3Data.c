@@ -107,9 +107,9 @@ static const u8 stage3_map_hazards_C6FC[35];
 static const u8 stage3_map_lobjs_C71F[142];
 static const u8 stage3_map_robjs_C7AD[127];
 static const pixel_t stage3_perp_face[180];
-static const bitmap_t stage3_lods_C8E0[6];
-static const bitmap_t stage3_lods_C90A[6];
-static const bitmap_t stage3_lods_C934[6];
+static const bitmap_t stage3_f40_bitmaps[6];
+static const bitmap_t stage3_convertible_bitmaps[6];
+static const bitmap_t stage3_sedan_bitmaps[6];
 static const bitmap_t stage3_lods_CDF1[6];
 static const bitmap_t stage3_lods_CE1B[6];
 static const stretchy_t stage3_stretchy_CEA1[4];
@@ -141,6 +141,11 @@ static const bitmap_t stage3_lods_DA16[5];
 static const pixel_t stage3_bitmap_CAC9[6 * 1 * 29 * 1];
 static const pixel_t stage3_bitmap_CB77[4 * 1 * 19 * 1];
 static const pixel_t stage3_bitmap_CBC3[3 * 1 * 14 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+static const pixel_t stage3_bitmap_CAC9_masked[6 * 2 * 29 * 1];
+static const pixel_t stage3_bitmap_CB77_masked[4 * 2 * 19 * 1];
+static const pixel_t stage3_bitmap_CBC3_masked[3 * 2 * 14 * 1];
+#endif
 static const pixel_t stage3_bitmap_CF6B[8 * 1 * 32 * 1];
 static const pixel_t stage3_bitmap_D06B[8 * 1 * 8 * 1];
 static const pixel_t stage3_bitmap_D0AB[6 * 1 * 25 * 1];
@@ -216,12 +221,12 @@ const stage_t stage3 = {
 
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[0],  /* bitmaps_stones */
   (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CE1B[0],  /* bitmaps_dust */
-  &stage3_lods_C8E0[0],  /* bitmaps_perp_car */
+  &stage3_f40_bitmaps[0],  /* bitmaps_perp_car */
   {
-    &stage3_lods_C934[0],
-    &stage3_lods_C90A[0],
-    &stage3_lods_C934[0],
-    &stage3_lods_C8E0[0]
+    &stage3_sedan_bitmaps[0],
+    &stage3_convertible_bitmaps[0],
+    &stage3_sedan_bitmaps[0],
+    &stage3_f40_bitmaps[0]
   },  /* bitmaps_vehicles */
 
   /* $C11A difficulty */
@@ -1788,32 +1793,53 @@ static const pixel_t stage3_perp_face[FACEBYTES] = {
 
 /* ----------------------------------------------------------------------- */
 
-/** $C8E0: stage3_lods_C8E0 */
-static const bitmap_t stage3_lods_C8E0[6] = {
+/** $C8E0: stage3_f40_bitmaps */
+static const bitmap_t stage3_f40_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_C95E_masked[0], &bitmap_C95E_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 20, &bitmap_CA12_masked[0], &bitmap_CA12_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_C95E[0], &bitmap_C95E[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &bitmap_CA12[0], &bitmap_CA12[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CA89[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CAA9[0] },  // [5]
 };
 
-/** $C90A: stage3_lods_C90A */
-static const bitmap_t stage3_lods_C90A[6] = {
+/** $C90A: stage3_convertible_bitmaps */
+static const bitmap_t stage3_convertible_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 29, &stage3_bitmap_CAC9_masked[0], &stage3_bitmap_CAC9_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 19, &stage3_bitmap_CB77_masked[0], &stage3_bitmap_CB77_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 14, &stage3_bitmap_CBC3_masked[0], &stage3_bitmap_CBC3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 14, &stage3_bitmap_CBC3_masked[0], &stage3_bitmap_CBC3_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 29, &stage3_bitmap_CAC9[0], &stage3_bitmap_CAC9[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &stage3_bitmap_CB77[0], &stage3_bitmap_CB77[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 14, &stage3_bitmap_CBC3[0], &stage3_bitmap_CBC3[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 14, &stage3_bitmap_CBC3[0], &stage3_bitmap_CBC3[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CAA9[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CAA9[0] },  // [5]
 };
 
-/** $C934: stage3_lods_C934 */
-static const bitmap_t stage3_lods_C934[6] = {
+/** $C934: stage3_sedan_bitmaps */
+static const bitmap_t stage3_sedan_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 31, &bitmap_car_1_masked[0], &bitmap_car_1_masked[0] },  // [0]
+  { 5, BITMAPFLAG_MASKED, 22, &bitmap_car_2_masked[0], &bitmap_car_2_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 16, &bitmap_car_3_masked[0], &bitmap_car_3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 16, &bitmap_car_3_masked[0], &bitmap_car_3_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 31, &bitmap_car_1[0], &bitmap_car_1[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_car_2[0], &bitmap_car_2[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0] },  // [3]
+#endif
   { 3, BITMAPFLAG_MASKED, 9, &bitmap_car_4[0], &bitmap_car_4s[0] },  // [4]
   { 3, BITMAPFLAG_MASKED, 9, &bitmap_car_4[0], &bitmap_car_4s[0] },  // [5]
 };
@@ -1863,6 +1889,43 @@ static const pixel_t stage3_bitmap_CAC9[6 * 1 * 29 * 1] = {
   ________, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ________,
 };
 
+/* Conv: port-added masked variant of stage3_bitmap_CAC9, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+static const pixel_t stage3_bitmap_CAC9_masked[6 * 2 * 29 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXXXX__, ________, X_X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX_X_X_, ______XX, _XXXXX__,
+  ________, XXXXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X_XXXXX_,
+  ________, XXXXX_X_, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X__, _______X, X_XXXXX_,
+  ________, XXXXX___, ________, X_X_____, ________, ______X_, ________, X_X_____, ________, ____X_X_, _______X, __XXXXX_,
+  X_______, _XXX_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XX_XXX__,
+  X_______, _XX_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ______XX, X_X_XX__,
+  ________, XX_X_X__, ________, ________, ________, ________, ________, ________, ________, ________, _______X, _X_X_XX_,
+  ________, X_______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  ________, X_______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  ________, X____X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, _______X, _X____X_,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXX_X__,
+  X_______, _X_X____, ________, __X_X___, ________, _X______, ________, _____X__, ________, __X_X___, ______XX, ___X_X__,
+  X_______, _X_X_X_X, ________, _X_XX___, ________, _X______, ________, _____X__, ________, __XX_X_X, ______XX, _X_X_X__,
+  X_______, _X_XX_X_, ________, X_X_X_X_, ________, XX______, ________, _____XX_, ________, X_X_X_X_, ______XX, X_XX_X__,
+  X_______, _X_X____, ________, _X_XXXXX, ________, XX______, ________, _____XXX, ________, XXXX_X__, ______XX, ___X_X__,
+  XX______, __X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXX_X___,
+  XX______, __X_X___, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX, __X_X___,
+  XXX_____, ___XXX_X, ________, ________, ________, ________, ________, ________, ________, ________, ____XXXX, X_XX____,
+  XXX_____, ___X_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XX_X____,
+  XX______, __X_____, ________, X__XX_X_, ________, X_X_X___, ________, __X_X_X_, ________, X_XX__X_, _____XXX, ____X___,
+  XX______, __X_____, ________, X__XX___, ________, _____X__, ________, _X______, ________, __XX__X_, _____XXX, ____X___,
+  XXX_____, ___XXXXX, X_______, _X_XX___, ________, _____X__, ________, _X______, ______X_, __XX_X_X, ____XXXX, XXXX____,
+  XXXXXXXX, ________, X_______, _X__XXXX, ________, XXXXX___, ________, __XXXXXX, ______XX, XXX__X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __X_XXXX, ________, XXX_____, ________, ________, _____XXX, __X_X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, X______X, ________, XX______, ________, ________, _______X, ______X_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+};
+#endif
+
 /**
  * $CB77: stage3_bitmap_CB77
  */
@@ -1907,6 +1970,50 @@ static const pixel_t stage3_bitmap_CBC3[3 * 1 * 14 * 1] = {
   ____X__X, X_______, __X_____,
   _____XXX, XXXXXXXX, XX______,
 };
+
+/* Conv: port-added masked variants of stage3_bitmap_CB77/CBC3, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+static const pixel_t stage3_bitmap_CB77_masked[4 * 2 * 19 * 1] = {
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, XXXX_X_X, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_X_XXXX,
+  ________, XXX_XXXX, ________, XX_X_X__, ________, __X_X_XX, ________, XXXX_XXX,
+  ________, XXX___X_, ________, X_X_X_XX, ________, XX_X_X_X, ________, _X___XXX,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXX_X_,
+  ________, XXX_____, ________, ________, ________, ________, ________, _____X_X,
+  ________, X____X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X___X,
+  ________, X__XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX__X,
+  ________, X_X_X_X_, ________, X___X___, ________, ___X___X, ________, _XX_XX_X,
+  ________, X_XX_XXX, ________, X___X___, ________, ___X___X, ________, XX_X_X_X,
+  ________, X_X___XX, ________, XXXXX___, ________, ___XXXXX, ________, XX___X_X,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXX_X_,
+  XX______, __XX____, ________, ________, ________, ________, ______XX, ____XX__,
+  XX______, __X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXX_X__,
+  X_______, _X___X__, ________, X_____X_, ________, _X_____X, _______X, __X___X_,
+  XX___X__, __XXX_X_, ________, X_____X_, ________, _X_____X, __X___XX, _X_XXX__,
+  XXXXXXX_, _______X, ________, XXXXXX__, ________, __XXXXXX, _XXXXXXX, X_______,
+  XXXXXX__, ______X_, ________, __XXX___, ________, ________, __XXXXXX, _X______,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,
+};
+
+static const pixel_t stage3_bitmap_CBC3_masked[3 * 2 * 14 * 1] = {
+  X_______, _XXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  ________, XX__XXXX, ________, XXXXXXXX, _______X, XXX__XX_,
+  ________, X_XXXXXX, ________, XXXXXXXX, _______X, XXXXX_X_,
+  ________, X__X_X_X, ________, _X_X_X_X, _______X, _X_X__X_,
+  ________, X_______, ________, ________, _______X, ______X_,
+  ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, X_X_XX__, ________, X____X__, _______X, _XX_X_X_,
+  ________, XX_X_XXX, ________, X____XXX, _______X, XX_X_XX_,
+  X_______, _XX_____, ________, ________, ______XX, ____XX__,
+  ________, X__XXXXX, ________, XXXXXXXX, _______X, XXXX__X_,
+  X_______, _XXXXX__, ________, __X_X___, ______XX, _XXXXX__,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____X__X, ________, X_______, ___XXXXX, __X_____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
+};
+#endif
 
 /* $CA89: bitmap_CA89 - Conv: Deduped to CommonData.c (shared with stage 5) */
 

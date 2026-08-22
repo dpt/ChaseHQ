@@ -66,7 +66,6 @@ static const bitmap_t stage6_veh1[6];
 
 static const bitmap_t stage6_lods_D620[6];
 
-static const pixel_t stage6_bitmap_C960[1329];
 static const pixel_t stage6_bitmap_D64A[181];
 
 /* ----------------------------------------------------------------------- */
@@ -409,207 +408,55 @@ static const pixel_t stage6_perp_face[FACEBYTES] = {
 
 /* ----------------------------------------------------------------------- */
 
-/** $C8E2: stage6_veh3 */
+/** $C8E2: stage6_veh3 - Conv: Deduped to CommonData.c (shared with stage 1) */
 static const bitmap_t stage6_veh3[6] = {
-  { 6, BITMAPFLAG_DEFAULT, 30, &stage6_bitmap_C960[0], &stage6_bitmap_C960[0] },  // [0]
-  { 5, BITMAPFLAG_DEFAULT, 22, &stage6_bitmap_C960[180], &stage6_bitmap_C960[180] },  // [1]
-  { 3, BITMAPFLAG_DEFAULT, 15, &stage6_bitmap_C960[290], &stage6_bitmap_C960[290] },  // [2]
-  { 3, BITMAPFLAG_DEFAULT, 15, &stage6_bitmap_C960[290], &stage6_bitmap_C960[290] },  // [3]
-  { 3, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[335], &stage6_bitmap_C960[335] },  // [4]
-  { 3, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[335], &stage6_bitmap_C960[383] },  // [5]
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_lambo_1_masked[0], &bitmap_lambo_1_masked[0] },  // [0]
+  { 5, BITMAPFLAG_MASKED, 22, &bitmap_lambo_2_masked[0], &bitmap_lambo_2_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },  // [3]
+#else
+  { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_lambo_1[0], &bitmap_lambo_1[0] },  // [0]
+  { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_lambo_2[0], &bitmap_lambo_2[0] },  // [1]
+  { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0] },  // [2]
+  { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0] },  // [3]
+#endif
+  { 3, BITMAPFLAG_MASKED, 8, &bitmap_lambo_4[0], &bitmap_lambo_4[0] },  // [4]
+  { 3, BITMAPFLAG_MASKED, 8, &bitmap_lambo_4[0], &bitmap_lambo_4s[0] },  // [5]
 };
 
-/** $C90C: stage6_veh2 */
+/** $C90C: stage6_veh2 - Conv: Deduped to CommonData.c (shared with stage 1) */
 static const bitmap_t stage6_veh2[6] = {
-  { 6, BITMAPFLAG_DEFAULT, 39, &stage6_bitmap_C960[431], &stage6_bitmap_C960[431] },  // [0]
-  { 5, BITMAPFLAG_DEFAULT, 29, &stage6_bitmap_C960[665], &stage6_bitmap_C960[665] },  // [1]
-  { 3, BITMAPFLAG_DEFAULT, 20, &stage6_bitmap_C960[810], &stage6_bitmap_C960[810] },  // [2]
-  { 3, BITMAPFLAG_DEFAULT, 20, &stage6_bitmap_C960[810], &stage6_bitmap_C960[810] },  // [3]
-  { 2, BITMAPFLAG_MASKED, 12, &stage6_bitmap_C960[870], &stage6_bitmap_C960[918] },  // [4]
-  { 2, BITMAPFLAG_MASKED, 12, &stage6_bitmap_C960[870], &stage6_bitmap_C960[918] },  // [5]
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 39, &bitmap_truck_1_masked[0], &bitmap_truck_1_masked[0] },  // [0]
+  { 5, BITMAPFLAG_MASKED, 29, &bitmap_truck_2_masked[0], &bitmap_truck_2_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },  // [3]
+#else
+  { 6, BITMAPFLAG_DEFAULT, 39, &bitmap_truck_1[0], &bitmap_truck_1[0] },  // [0]
+  { 5, BITMAPFLAG_DEFAULT, 29, &bitmap_truck_2[0], &bitmap_truck_2[0] },  // [1]
+  { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0] },  // [2]
+  { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0] },  // [3]
+#endif
+  { 2, BITMAPFLAG_MASKED, 12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },  // [4]
+  { 2, BITMAPFLAG_MASKED, 12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },  // [5]
 };
 
-/** $C936: stage6_veh1 */
+/** $C936: stage6_veh1 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 static const bitmap_t stage6_veh1[6] = {
-  { 6, BITMAPFLAG_DEFAULT, 30, &stage6_bitmap_C960[966], &stage6_bitmap_C960[966] },  // [0]
-  { 4, BITMAPFLAG_DEFAULT, 20, &stage6_bitmap_C960[1146], &stage6_bitmap_C960[1146] },  // [1]
-  { 3, BITMAPFLAG_DEFAULT, 13, &stage6_bitmap_C960[1226], &stage6_bitmap_C960[1226] },  // [2]
-  { 3, BITMAPFLAG_DEFAULT, 13, &stage6_bitmap_C960[1226], &stage6_bitmap_C960[1226] },  // [3]
-  { 2, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[1265], &stage6_bitmap_C960[1265] },  // [4]
-  { 2, BITMAPFLAG_MASKED, 8, &stage6_bitmap_C960[1265], &stage6_bitmap_C960[1297] },  // [5]
-};
-
-/**
- * $C960: stage6_bitmap_C960
- */
-static const pixel_t stage6_bitmap_C960[1329] = {
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, _XXXXXX_, _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, __XXXXXX,
-  _XXXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX, __XXX_XX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXX_, ___XXXX_, X_X_X_XX, X_X_X_X_, X_X_X_X_,
-  XXX_X_X_, X_XXXX__, ___X_X__, _____XXX, XXXXXXXX, XXXXXXXX, XXXX____, ___X_X__,
-  __X___X_, X_XXXXXX, _XX_XXXX, XXXXXXX_, XX_XXXX_, X_X___X_, __X_XXXX, XXXXXXX_,
-  _X__XXX_, X_X_XX__, X__XXXXX, XXXXX_X_, __XXXXXX, XXXXXXXX, XXXXXX_X, _X_X_XXX,
-  XXXXXXXX, XXXXXXX_, __XXXXXX, XXXX_XXX, X_X__X__, ____X_X_, XXXXXXXX, XXXXXXX_,
-  __XX_XXX, __X_X_X_, X_______, ________, X_XXXXXX, XXXXXXX_, __X_X_X_, _X_X_XXX,
-  ________, ________, _XX____X, XXXXXXX_, __X___X_, XXXXXXXX, _X_X_X_X, _X_X_X_X,
-  _X_XXXX_, _XXXXXX_, __X__X_X, XX____XX, X_X_X_X_, X_X_X_X_, X_X____X, X__XX_X_,
-  _X_X_XXX, __X_X__X, XXXXXXXX, XXXXXXXX, XX__X_X_, _XX_XX_X, _XX_XX__, _______X,
-  __X_X_X_, X_X_X_X_, _X______, ___XX_XX, _XXX_X__, _______X, __XX_X_X, _X_X_XX_,
-  _X______, ___XXXXX, _XXX_XXX, _X_X_X_X, XXXXXXXX, XXXXXXXX, XX_X_X_X, _XXXXXXX,
-  __XXX__X, XX____XX, X_______, ________, XXX____X, XX_XXXX_, ____X___, _XXXXXXX,
-  XXX_X_X_, X_X_X_XX, XXXXXXXX, ____X___, ____XX_X, ______XX, XXXXXXXX, XXXXXXXX,
-  XXX_____, _X_XX___, ______XX, X_XX___X, _X_X_X_X, _X_X_X_X, _X___XX_, XXX_____,
-  __XXX___, XXXXXXXX, XXX_____, ______XX, XXXXXXXX, X___XXX_, _X__XX__, _XXX_X_X,
-  _XXXXXXX, XXXXXXXX, _X_X_XXX, ___XX__X, _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXX_X, _X__X___, ________, ________, ________, ________, ____X__X,
-  _XX__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX__XX, ___XXX__, ________,
-  ________, ________, ________, ___XXX__, _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXX_____, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___, __XXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXX__, __XX__X_, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXX__,
-  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XX___, ___XX___, ___XXXXX, XXXXXXXX,
-  XXXX____, __XX____, __X__X_X, _XXXX_XX, _XXXXXXX, _XX_XX_X, _X__X___, __X_XXXX,
-  XXXX__X_, _XX__XX_, _X__XXXX, XXX_X___, __XXXXXX, _X_XXXXX, XX____XX, XXXXXXXX,
-  XXXXX___, __XX_XX_, __X__X_X, _______X, _X_XXXXX, XXXXX___, __X_X___, _XXXX___,
-  ________, __XXXXXX, XXXXX___, __X____X, X___XX_X, _X_X_X_X, _XX___XX, X_X_X___,
-  ___X_XX_, __X_XXXX, XXXXXXXX, XXX_X___, XX_X_X__, __XX_X__, ____X__X, _X_X_X_X,
-  __X_____, _XXXXX__, __XX_XXX, ___XXXXX, XXXXXXXX, XXXX___X, XXXXXX__, ____X___,
-  XXXXXXX_, X_X_X_X_, XXXXXXX_, ___X____, _____XX_, ____XXXX, XXXXXXXX, XXXX____,
-  _XX_____, ______XX, _XX_XXXX, _X__X__X, _XXX_XX_, XX______, __X__X__, XX_XX_XX,
-  XXXXXXXX, XX_XX_XX, __X__X__, __X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_X__,
-  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX__, ___XX___, ________, ________,
-  ________, __XX____, _XXXXXXX, XXXXXXXX, XXXXXXX_, XXX__XXX, XXXXXXXX, XXX__XXX,
-  XX_XXXXX, XXXXXXXX, XXXXX_XX, _XX___XX, XXXXXXXX, XX___XX_, XX_XXXXX, _X_XX_X_,
-  XXXXX_X_, XXXXXXXX, XXX__XXX, XXXXXXXX, XX__XXXX, ________, _XXXXXXX, X__XX__X,
-  XXXXXXXX, X__XXXXX, X_X____X, ________, X____XXX, X_XXX_XX, XXXXXXXX, XX_XXXXX,
-  _XX__XX_, XXXXXXXX, _XXX_XX_, ___X___X, X_X__X_X, X_XXX___, XXX_X_X_, XXXXXXXX,
-  XXXX_XXX, X_XXXXXX, XXXXXXXX, XXXXXX_X, _XX_____, ________, _____XX_, ________,
-  XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________, X_______, _XXXXXXX, ______XX,
-  XXXXXX__, XXXXXXXX, ________, ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX,
-  ________, ________, X_XX_XXX, _______X, XXX_XXX_, XXXXXXXX, ________, ________,
-  X_X__XX_, _______X, X_X__XX_, XXXXXXXX, ________, X_______, _X_XXXXX, ______XX,
-  XXXXXX__, XXXXXXXX, ________, _X______, X_XXX_X_, _____X_X, X_XXX_X_, XXXXXXXX,
-  ________, ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________, XXXX____,
-  ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXX___, _____XXX, ________,
-  XXXXXXXX, __XXXXXX, XX______, XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX,
-  XXX_____, XXXX____, ____X_XX, ________, _XXXXXX_, ___XXXXX, XXX_____, XXXX____,
-  ____X_X_, ________, _XX_X_X_, ___XXXXX, _XX_____, XXXXX___, _____X_X, ________,
-  XXXXXXXX, __XXXXXX, XX______, XXXX_X__, ____X_XX, ________, X_X_X_XX, _X_XXXXX,
-  X_X_____, XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____, ____XXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ___XXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXX___, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXX_, _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXX_X_X, __XXXXX_, _XXXX__X,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXXX_, _XXXX_XX, XXXXXXXX, XX______,
-  _______X, XXXXXXXX, XX_XXXX_, __XXX_XX, XXXXXXXX, XX______, _______X, XXXXXXXX,
-  XX_XXX__, __XXX_XX, XXXXX___, XXX_____, ______XX, X___XXXX, XX_XXX__, ___XX_XX,
-  XXXX_X_X, XX_X_X_X, _X_X_X_X, XX_X_XXX, XX_XX___, ____XXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXX____, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXX___, ___X____, ________, ________, ________, ________, ____X___, __X_X_X_,
-  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, _X_X_X__, __XX_X_X, _X___X_X, _X_X_X_X,
-  _X_X_X_X, _X_X__X_, X_X_XX__, __X_XXX_, ________, ________, ________, ________,
-  _XXX_X__, __XXXX__, ________, ________, ________, ________, __XXXX__, _X___XX_,
-  ________, ________, ________, ________, _XX___X_, _X___X__, ________, ________,
-  ________, ________, __X___X_, _X___XX_, ________, ________, ________, ________,
-  _XX___X_, __XXXXX_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_XXXXX_, _X___XXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX___X_, _X______, ________, ________,
-  ________, ________, ______X_, _X______, ________, ________, ________, ________,
-  ______X_, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ___XXXX_,
-  _XX_X_X_, X_X_X_XX, X_X_X_X_, X_X_X_X_, _XXXX___, ______XX, X_XXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXX_X, XX______, ______XX, XX______, XX_____X, X_____XX, ______XX,
-  XX______, _____XX_, __XXXXXX, __XXXXX_, _XXXXX__, XXXXXX__, _XX_____, ____X_XX,
-  X_X_X_XX, __X_X_X_, _X_X_X__, XX_X_X_X, XX_X____, ____X__X, _X_XXXXX, __XXXXX_,
-  _XXXXX__, XXXXX_X_, X__X____, ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_,
-  X___X___, ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X___X___, ___X___X,
-  __X_XXXX, __XXXXX_, _XXXXX__, XXXX_X__, X___X___, ___X___X, X_X_XXXX, __XXXXX_,
-  _XXXXX__, XXXX_X_X, X___X___, ____X_X_, _XX_XXXX, __XXXXX_, _XXXXX__, XXXX_XX_,
-  _X_X____, _____XXX, X__X_XXX, __XXXXX_, _XXXXX__, XXX_X__X, XXX_____, ________,
-  _XXX____, ________, ________, ____XXX_, ________, ________, ____X___, ________,
-  ________, ___X____, ________, ________, _____XXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  ________, _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____, ____XXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXX____, ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  ___XXX_X, _XXXXXXX, XXXXXXXX, XXXXXXX_, X_XXXX__, ___XX_XX, XXXXXXXX, ________,
-  _XXXXXXX, XX_XXX__, ___XX_XX, XXXX__XX, ________, _XX__XXX, XX_XX___, ____X_XX,
-  XXX_XXXX, X_X___X_, XXXXX_XX, XX_X____, _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXX_____, ____X___, ________, ________, ________, ___X____, ___X_XX_, X_XXXXXX,
-  XXXXXXXX, XXXXXX_X, _XX_X___, ___X_X_X, _X______, ________, ______X_, X_X_X___,
-  ___XXX__, ________, ________, ________, __XXX___, __X___X_, ________, ________,
-  ________, _X___X__, __X___X_, ________, ________, ________, _X___X__, __XXXXX_,
-  X_X_X_X_, X_X__X_X, _X_X_X_X, __XXXX__, __X_____, ________, ________, ________,
-  _____X__, __X_____, ________, ________, ________, _____X__, ___XXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXX___, ______XX, X_XXXXXX, XXXXXXXX, XXXXXX_X, XX______,
-  ______XX, XX____X_, ___XX___, _X____XX, XX______, _____XXX, X__X_X_X, X_X__X_X,
-  X_X_X__X, XXX_____, _____X_X, __XXXX_X, XXX__XXX, X_XXXX__, X_X_____, ____X__X,
-  __XXXX_X, XXX__XXX, X_XXXX__, X__X____, ____X__X, _X_XXX_X, XXX__XXX, X_XXX_X_,
-  X__X____, ____X__X, XX_XXX_X, XXX__XXX, X_XXX_XX, X__X____, ______XX, X_X_XX_X,
-  XXX__XXX, X_XX_X_X, XX______, ________, _XX_____, ________, _____XX_, ________,
-  ________, ___X____, ________, ____X___, ________, ________, ____XXXX, XXXXXXXX,
-  XXXX____, ________, _XXXXXXX, XXXXXXXX, XXXXXXX_, XXX_XXXX, XXXXXXXX, XXXX_XXX,
-  XX_XXXXX, X______X, XXXXX_XX, _X_XXXX_, XX____XX, _XXXX_X_, __XXXXXX, XXXXXXXX,
-  XXXXXX__, _X______, ________, ______X_, _XXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X___,
-  ________, ___X_X_X, X_X_____, ________, _____X_X, _XX_X_X_, X_X_X_X_, X_X_XXX_,
-  X_______, ________, _______X, _XXXXXXX, XXXXXXXX, XXXXXXX_, ___XXX__, ________,
-  ___XX___, ___X___X, X_XX_XX_, XX___X__, __X_XX_X, X_XX_XX_, XX_XX_X_, __X_X__X,
-  X_XX_XX_, XX__X_X_, __X_X__X, X_XX_XX_, XX__X_X_, ___XXXX_, X_XX_XX_, X_XXXX__,
-  _______X, ________, _X______, ________, XXXXXXXX, X_______, ________, XXXXXXXX,
-  _____XXX, XXXXX___, ________, XX_XXXXX, _____XXX, XX_XX___, ________, XXXXX___,
-  _____XXX, XXXXX___, ________, X_X_X_X_, _____XXX, X_X_X___, ________, X_______,
-  _____XXX, ____X___, ________, X_______, _____XXX, ____X___, ________, XXX_X_X_,
-  _____XXX, X_XXX___, X_______, _X_X_X_X, ____XXXX, _X_X____, ________, X__X_X_X,
-  _____XXX, _X__X___, ________, XX_X_X_X, _____XXX, _X_XX___, X_______, _XX_____,
-  ____XXXX, __XX____, XXX_____, ___XXXXX, __XXXXXX, XX______, XXX_____, ___XXXXX,
-  ________, XXXXXXXX, XXX_____, ___XX_XX, ________, XXXXX_XX, XXX_____, ___XXXXX,
-  ________, ___XXXXX, XXX_____, ___X_X_X, ________, _X_X_X_X, XXX_____, ___X____,
-  ________, _______X, XXX_____, ___X____, ________, _______X, XXX_____, ___XXX_X,
-  ________, _X_X_XXX, XXXX____, ____X_X_, _______X, X_X_X_X_, XXX_____, ___X__X_,
-  ________, X_X_X__X, XXX_____, ___XX_X_, ________, X_X_X_XX, XXXX____, ____XX__,
-  _______X, _____XX_, XXXXXX__, ______XX, _____XXX, XXXXX___, _____XXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXX_, __XXXXX_, _X_X_XXX, XXXXXXXX, XXXXXXXX, XXXX_X_X, __XXXXX_,
-  _XXXXX_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX, _XXXXX_X, __X_X_X_,
-  X_X_X_X_, X_X_X_X_, X_X_X_X_, _X_XXXXX, _XXXXX__, _X_X____, ___XXXXX, XXXXXXX_,
-  _____X_X, ___XXXXX, __XXX_XX, XXXXXXXX, XXXX____, ______XX, XXXXXXXX, XXX_XXX_,
-  __XX_X_X, _X_X_X_X, _X_X____, ______XX, _X_X_X_X, _X_X_XX_, _XX_X_X_, ________,
-  ___X____, ______X_, ________, __X_X_XX, _X______, ________, ___XXXXX, XXXXXXX_,
-  ________, _______X, _X______, ________, ________, ________, ________, _______X,
-  _X____X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X____X, __X_XXXX, XXXXXXXX,
-  _______X, XX______, _XXXXXXX, XXXXX_X_, __X_X__X, XXXX_XXX, ______XX, X_______,
-  _XXX_XXX, XX__X_X_, __X_X_XX, X_X_X_XX, _______X, XX______, _XX_X_X_, XXX_X_X_,
-  __X_X__X, XX_X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, XX__X_X_, __X__X_X, X_X___XX,
-  XXXXXXXX, XXXXXXXX, XXX___X_, XX_X__X_, ___X__XX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXX__X__, ___X____, ________, ________, ________, ________, _____X__,
-  ___X__X_, X_______, ________, ________, ________, __X__X__, ___X_X__, __XXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXX_, ___X_X__, ___X_XXX, __X_X_X_, X_X_X_X_, X_X_X_X_,
-  X_X_X_X_, _XXX_X__, ___XXX_X, X__X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X__, XX_XXX__,
-  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ___X____, ________,
-  ________, ________, ________, _____X__, ___X____, ________, ________, ________,
-  ________, _____X__, ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  ________, ____X___, ________, ________, ____X___, ________, ________, _____XX_,
-  ________, ________, __XX____, ________, ________, _______X, XXXXXXXX, XXXXXXXX,
-  XX______, ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, _XXX__X_, XXXXXXXX,
-  XXXXXXX_, X__XXXX_, XXX_XXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX, XXXXX_X_, X_X_XXXX,
-  XXX_X_X_, X_X_XXXX, _X_X_X_X, _X_XX___, __XX_X_X, _X_X__X_, X_______, ____X___,
-  __X_____, _______X, X_______, ________, ________, _______X, X__XXX_X, X_XX_XX_,
-  XX_XX_XX, _XX_X__X, X_X_XXXX, XXX_____, ____XXXX, XXXX_X_X, X_X_X_X_, _XX_____,
-  ____XX__, X_XX_X_X, X__XX_X_, _XXXXXXX, XXXXXX__, X_XXX__X, _X__XXXX, XXXXXXXX,
-  XXXXXXXX, XXXX__X_, _X______, ________, ________, ______X_, _XX___XX, XXXXXXXX,
-  XXXXXXXX, X____XX_, _XXXX__X, X_XX_XX_, XX_XX_XX, X__XXXX_, _XXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXX_, _X______, ________, ________, ______X_, __XXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXX__, ________, XX______, _____XX_, ________, ________, __XXXXXX,
-  XXXXX___, ________, ___XXXXX, XXXXXXXX, XXXXXX__, _XXX___X, XXXXXXXX, XX___XX_,
-  _XX_X_X_, X_XXXXX_, X_X_X_XX, _X______, ________, _______X, _X___XXX, XXXXXXXX,
-  XXXX___X, _X_XXXXX, X___X___, XXXXXX_X, _X__X___, X___X___, X___X__X, _X_XXXXX,
-  XXXXXXXX, XXXXXX_X, __XX____, ________, ______X_, __XXX__X, XXXXXXXX, XX__XXX_,
-  __X__XXX, _X_X_X_X, _XXX__X_, ___XXXXX, XXXXXXXX, XXXXXX__, _______X, XXXXXXXX,
-  XX______, ________, XXXXXXXX, _____XXX, XXXXX___, ________, XX__XXXX, _____XXX,
-  X__XX___, X_______, _XX_X_X_, ____XXXX, X_XX____, ________, X_XXX___, _____XXX,
-  XXX_X___, ________, XXXXXXXX, _____XXX, XXXXX___, ________, X_______, _____XXX,
-  ____X___, X_______, _XX_X_X_, ____XXXX, X_XX____, XX______, __XXXXXX, __XXXXXX,
-  XX______, XXX_____, ___XXXXX, ________, XXXXXXXX, XXX_____, ___XX__X, ________,
-  XXXX__XX, XXXX____, ____XX_X, _______X, _X_X_XX_, XXX_____, ___X_XXX, ________,
-  ___XXX_X, XXX_____, ___XXXXX, ________, XXXXXXXX, XXX_____, ___X____, ________,
-  _______X, XXXX____, ____XX_X, _______X, _X_X_XX_, XXXXX___, _____XXX, _____XXX,
-  XXXXX___,
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_C95E_masked[0], &bitmap_C95E_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 20, &bitmap_CA12_masked[0], &bitmap_CA12_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [3]
+#else
+  { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_C95E[0], &bitmap_C95E[0] },  // [0]
+  { 4, BITMAPFLAG_DEFAULT, 20, &bitmap_CA12[0], &bitmap_CA12[0] },  // [1]
+  { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [2]
+  { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [3]
+#endif
+  { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CA89[0] },  // [4]
+  { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CAA9[0] },  // [5]
 };
 
 /** $D620: stage6_lods_D620 */

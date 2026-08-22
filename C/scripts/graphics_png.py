@@ -385,10 +385,16 @@ def build_manifest(name_to_value):
     attr_idx, attributes = load_attribute_table()
     manifest = []
     main_masked_names = find_masked_array_names_in_main()
+    # bitmap_t literals referencing a CommonData.c array can live in any
+    # Stage*Data.c file, not just the file that defines the array (e.g.
+    # bitmap_lambo_4 is defined in CommonData.c but only referenced from
+    # Stage1Data.c/Stage5Data.c) -- scan every data file's text together so
+    # maskedness is found regardless of which file holds the reference.
+    all_text = "\n".join((DATA_DIR / f).read_text() for f in DATA_FILES)
+    masked_names = find_masked_array_names(all_text) | main_masked_names
     for filename in DATA_FILES:
         text = (DATA_DIR / filename).read_text()
         entries = discover_arrays(filename, text, name_to_value)
-        masked_names = find_masked_array_names(text) | main_masked_names
         for e in entries:
             if e.name in masked_names and e.width_bytes % 2 == 0:
                 e.masked = True

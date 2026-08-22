@@ -39,6 +39,7 @@ else()
 endif()
 
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
+option(CHQ_ENABLE_MASKED_VEHICLES "Draw stage vehicle sprites with real silhouette masking on near frames instead of solid rectangular blits" OFF)
 
 # ponytail: SDL3 is only needed by the ChaseHQ app target. Configuring
 # without it still gets you ChaseHQ_Tests, which is all CI builds.
@@ -120,6 +121,9 @@ if(SDL3_FOUND)
   if(CHQ_ENABLE_TEST_STAGE)
     target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
     target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
+  endif()
+  if(CHQ_ENABLE_MASKED_VEHICLES)
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_MASKED_VEHICLES)
   endif()
   if(EMSCRIPTEN)
     set_target_properties(ChaseHQ PROPERTIES SUFFIX ".html")
@@ -208,6 +212,9 @@ target_compile_options(ChaseHQ_Tests PRIVATE -UNDEBUG)
 if(CHQ_ENABLE_TEST_STAGE)
   target_sources(ChaseHQ_Tests PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
   target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
+if(CHQ_ENABLE_MASKED_VEHICLES)
+  target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_ENABLE_MASKED_VEHICLES)
 endif()
 
 # ---- Title drum renderer (offline audio timing check, no SDL dependency) ---

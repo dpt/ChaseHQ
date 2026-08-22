@@ -225,12 +225,27 @@ extern const u8 perp_description[7];
 extern const pixel_t bitmap_lambo_1[6 * 1 * 30 * 1];
 extern const pixel_t bitmap_lambo_2[5 * 1 * 22 * 1];
 extern const pixel_t bitmap_lambo_3[3 * 1 * 15 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+extern const pixel_t bitmap_lambo_1_masked[6 * 2 * 30 * 1];
+extern const pixel_t bitmap_lambo_2_masked[5 * 2 * 22 * 1];
+extern const pixel_t bitmap_lambo_3_masked[3 * 2 * 15 * 1];
+#endif
 extern const pixel_t bitmap_truck_1[6 * 1 * 39 * 1];
 extern const pixel_t bitmap_truck_2[5 * 1 * 29 * 1];
 extern const pixel_t bitmap_truck_3[3 * 1 * 20 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+extern const pixel_t bitmap_truck_1_masked[6 * 2 * 39 * 1];
+extern const pixel_t bitmap_truck_2_masked[5 * 2 * 29 * 1];
+extern const pixel_t bitmap_truck_3_masked[3 * 2 * 20 * 1];
+#endif
 extern const pixel_t bitmap_car_1[6 * 1 * 31 * 1];
 extern const pixel_t bitmap_car_2[5 * 1 * 22 * 1];
 extern const pixel_t bitmap_car_3[3 * 1 * 16 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+extern const pixel_t bitmap_car_1_masked[6 * 2 * 31 * 1];
+extern const pixel_t bitmap_car_2_masked[5 * 2 * 22 * 1];
+extern const pixel_t bitmap_car_3_masked[3 * 2 * 16 * 1];
+#endif
 extern const pixel_t bitmap_lambo_4[3 * 2 * 8 * 1];
 extern const pixel_t bitmap_lambo_4s[3 * 2 * 8 * 1];
 extern const pixel_t bitmap_truck_4[2 * 2 * 12 * 1];
@@ -282,6 +297,11 @@ extern const pixel_t pilot_mugshot[180];
 extern const pixel_t bitmap_E97D[6 * 1 * 29 * 1];
 extern const pixel_t bitmap_EA2B[4 * 1 * 19 * 1];
 extern const pixel_t bitmap_EA77[3 * 1 * 13 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+extern const pixel_t bitmap_E97D_masked[6 * 2 * 29 * 1];
+extern const pixel_t bitmap_EA2B_masked[4 * 2 * 19 * 1];
+extern const pixel_t bitmap_EA77_masked[3 * 2 * 13 * 1];
+#endif
 extern const pixel_t bitmap_EC17[2 * 2 * 8 * 1];
 extern const pixel_t bitmap_EC37[2 * 2 * 8 * 1];
 extern const pixel_t bitmap_F2F0[5 * 1 * 8 * 1];
@@ -322,6 +342,11 @@ extern const pixel_t bitmap_F9E5[3 * 2 * 3 * 1];
 extern const pixel_t bitmap_C95E[6 * 1 * 30 * 1];
 extern const pixel_t bitmap_CA12[4 * 1 * 20 * 1];
 extern const pixel_t bitmap_CA62[3 * 1 * 13 * 1];
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+extern const pixel_t bitmap_C95E_masked[6 * 2 * 30 * 1];
+extern const pixel_t bitmap_CA12_masked[4 * 2 * 20 * 1];
+extern const pixel_t bitmap_CA62_masked[3 * 2 * 13 * 1];
+#endif
 extern const pixel_t bitmap_CA89[2 * 2 * 8 * 1];
 extern const pixel_t bitmap_CAA9[2 * 2 * 8 * 1];
 extern const pixel_t bitmap_D3AF[4 * 1 * 16 * 1];
