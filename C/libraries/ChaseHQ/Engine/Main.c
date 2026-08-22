@@ -3393,13 +3393,22 @@ static void check_user_input(chqstate_t *state)
 
     silence_audio_hook(state);
     do
+    {
+      CHECK_HOST_QUIT(state);
       keys = keyscan(state);
+    }
     while (keys & USERINPUTFLAG_PAUSE);
     do
+    {
+      CHECK_HOST_QUIT(state);
       keys = keyscan(state);
+    }
     while ((keys & USERINPUTFLAGMASK_NOT_QUIT) == 0);
     do
+    {
+      CHECK_HOST_QUIT(state);
       keys = keyscan(state);
+    }
     while ((keys & USERINPUTFLAGMASK_NOT_QUIT) != 0);
   }
 }

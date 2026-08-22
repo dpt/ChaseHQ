@@ -15,6 +15,8 @@
 - Optimisations
 - Slap warnings on the level converter now it's finished?
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)
+- RISC OS: Sound support (...how?)
+- Graphics import/export still needs work
 
 ### Authority sweep (comments that read as guesswork)
 
