@@ -2224,4 +2224,1674 @@ const u8 temp_keydefs_template[8] = {
 
 /* ----------------------------------------------------------------------- */
 
+/* Deduplicated graphics: byte-identical across two or more of
+ * Stage1Data.c-Stage5Data.c in the original binary; kept once here. */
+
+/** $5D39 (stage1) / $E139 (stage2) / $C139 (stage3) / $E139 (stage4) / $C139 (stage5): perp_description */
+const u8 perp_description[7] = {
+  CHATTERCHR_NANCY,
+  CHATTERSTR_PERP_DESC_1,
+  CHATTERSTR_PERP_DESC_2,
+  CHATTERSTR_PERP_DESC_3,
+  CHATTERSTR_PERP_DESC_4,
+  CHATTERCMD_PAUSE,
+  CHATTERBLK_HEROES_ACKNOWLEDGE
+};
+
+/** $64BC (stage1) / $C960 (stage5): bitmap_lambo_1 */
+const pixel_t bitmap_lambo_1[6 * 1 * 30 * 1] = {
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XXXXXX_, _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, __XXXXXX,
+  _XXXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX,
+  __XXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXX_,
+  ___XXXX_, X_X_X_XX, X_X_X_X_, X_X_X_X_, XXX_X_X_, X_XXXX__,
+  ___X_X__, _____XXX, XXXXXXXX, XXXXXXXX, XXXX____, ___X_X__,
+  __X___X_, X_XXXXXX, _XX_XXXX, XXXXXXX_, XX_XXXX_, X_X___X_,
+  __X_XXXX, XXXXXXX_, _X__XXX_, X_X_XX__, X__XXXXX, XXXXX_X_,
+  __XXXXXX, XXXXXXXX, XXXXXX_X, _X_X_XXX, XXXXXXXX, XXXXXXX_,
+  __XXXXXX, XXXX_XXX, X_X__X__, ____X_X_, XXXXXXXX, XXXXXXX_,
+  __XX_XXX, __X_X_X_, X_______, ________, X_XXXXXX, XXXXXXX_,
+  __X_X_X_, _X_X_XXX, ________, ________, _XX____X, XXXXXXX_,
+  __X___X_, XXXXXXXX, _X_X_X_X, _X_X_X_X, _X_XXXX_, _XXXXXX_,
+  __X__X_X, XX____XX, X_X_X_X_, X_X_X_X_, X_X____X, X__XX_X_,
+  _X_X_XXX, __X_X__X, XXXXXXXX, XXXXXXXX, XX__X_X_, _XX_XX_X,
+  _XX_XX__, _______X, __X_X_X_, X_X_X_X_, _X______, ___XX_XX,
+  _XXX_X__, _______X, __XX_X_X, _X_X_XX_, _X______, ___XXXXX,
+  _XXX_XXX, _X_X_X_X, XXXXXXXX, XXXXXXXX, XX_X_X_X, _XXXXXXX,
+  __XXX__X, XX____XX, X_______, ________, XXX____X, XX_XXXX_,
+  ____X___, _XXXXXXX, XXX_X_X_, X_X_X_XX, XXXXXXXX, ____X___,
+  ____XX_X, ______XX, XXXXXXXX, XXXXXXXX, XXX_____, _X_XX___,
+  ______XX, X_XX___X, _X_X_X_X, _X_X_X_X, _X___XX_, XXX_____,
+  __XXX___, XXXXXXXX, XXX_____, ______XX, XXXXXXXX, X___XXX_,
+  _X__XX__, _XXX_X_X, _XXXXXXX, XXXXXXXX, _X_X_XXX, ___XX__X,
+  _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
+  _X__X___, ________, ________, ________, ________, ____X__X,
+  _XX__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX__XX,
+  ___XXX__, ________, ________, ________, ________, ___XXX__,
+};
+
+/** $6570 (stage1) / $CA14 (stage5): bitmap_lambo_2 */
+const pixel_t bitmap_lambo_2[5 * 1 * 22 * 1] = {
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  __XX__X_, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXX__,
+  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XX___,
+  ___XX___, ___XXXXX, XXXXXXXX, XXXX____, __XX____,
+  __X__X_X, _XXXX_XX, _XXXXXXX, _XX_XX_X, _X__X___,
+  __X_XXXX, XXXX__X_, _XX__XX_, _X__XXXX, XXX_X___,
+  __XXXXXX, _X_XXXXX, XX____XX, XXXXXXXX, XXXXX___,
+  __XX_XX_, __X__X_X, _______X, _X_XXXXX, XXXXX___,
+  __X_X___, _XXXX___, ________, __XXXXXX, XXXXX___,
+  __X____X, X___XX_X, _X_X_X_X, _XX___XX, X_X_X___,
+  ___X_XX_, __X_XXXX, XXXXXXXX, XXX_X___, XX_X_X__,
+  __XX_X__, ____X__X, _X_X_X_X, __X_____, _XXXXX__,
+  __XX_XXX, ___XXXXX, XXXXXXXX, XXXX___X, XXXXXX__,
+  ____X___, XXXXXXX_, X_X_X_X_, XXXXXXX_, ___X____,
+  _____XX_, ____XXXX, XXXXXXXX, XXXX____, _XX_____,
+  ______XX, _XX_XXXX, _X__X__X, _XXX_XX_, XX______,
+  __X__X__, XX_XX_XX, XXXXXXXX, XX_XX_XX, __X__X__,
+  __X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_X__,
+  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX__,
+  ___XX___, ________, ________, ________, __XX____,
+};
+
+/** $65DE (stage1) / $CA82 (stage5): bitmap_lambo_3 */
+const pixel_t bitmap_lambo_3[3 * 1 * 15 * 1] = {
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXX__XXX, XXXXXXXX, XXX__XXX,
+  XX_XXXXX, XXXXXXXX, XXXXX_XX,
+  _XX___XX, XXXXXXXX, XX___XX_,
+  XX_XXXXX, _X_XX_X_, XXXXX_X_,
+  XXXXXXXX, XXX__XXX, XXXXXXXX,
+  XX__XXXX, ________, _XXXXXXX,
+  X__XX__X, XXXXXXXX, X__XXXXX,
+  X_X____X, ________, X____XXX,
+  X_XXX_XX, XXXXXXXX, XX_XXXXX,
+  _XX__XX_, XXXXXXXX, _XXX_XX_,
+  ___X___X, X_X__X_X, X_XXX___,
+  XXX_X_X_, XXXXXXXX, XXXX_XXX,
+  X_XXXXXX, XXXXXXXX, XXXXXX_X,
+  _XX_____, ________, _____XX_,
+};
+
+/** $660B (stage1) / $CB0F (stage5): bitmap_truck_1 */
+const pixel_t bitmap_truck_1[6 * 1 * 39 * 1] = {
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXX_X_X, __XXXXX_,
+  _XXXX__X, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXXX_,
+  _XXXX_XX, XXXXXXXX, XX______, _______X, XXXXXXXX, XX_XXXX_,
+  __XXX_XX, XXXXXXXX, XX______, _______X, XXXXXXXX, XX_XXX__,
+  __XXX_XX, XXXXX___, XXX_____, ______XX, X___XXXX, XX_XXX__,
+  ___XX_XX, XXXX_X_X, XX_X_X_X, _X_X_X_X, XX_X_XXX, XX_XX___,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  ___X____, ________, ________, ________, ________, ____X___,
+  __X_X_X_, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, _X_X_X__,
+  __XX_X_X, _X___X_X, _X_X_X_X, _X_X_X_X, _X_X__X_, X_X_XX__,
+  __X_XXX_, ________, ________, ________, ________, _XXX_X__,
+  __XXXX__, ________, ________, ________, ________, __XXXX__,
+  _X___XX_, ________, ________, ________, ________, _XX___X_,
+  _X___X__, ________, ________, ________, ________, __X___X_,
+  _X___XX_, ________, ________, ________, ________, _XX___X_,
+  __XXXXX_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_XXXXX_,
+  _X___XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX___X_,
+  _X______, ________, ________, ________, ________, ______X_,
+  _X______, ________, ________, ________, ________, ______X_,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  ___XXXX_, _XX_X_X_, X_X_X_XX, X_X_X_X_, X_X_X_X_, _XXXX___,
+  ______XX, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, XX______,
+  ______XX, XX______, XX_____X, X_____XX, ______XX, XX______,
+  _____XX_, __XXXXXX, __XXXXX_, _XXXXX__, XXXXXX__, _XX_____,
+  ____X_XX, X_X_X_XX, __X_X_X_, _X_X_X__, XX_X_X_X, XX_X____,
+  ____X__X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X__X____,
+  ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X___X___,
+  ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X___X___,
+  ___X___X, __X_XXXX, __XXXXX_, _XXXXX__, XXXX_X__, X___X___,
+  ___X___X, X_X_XXXX, __XXXXX_, _XXXXX__, XXXX_X_X, X___X___,
+  ____X_X_, _XX_XXXX, __XXXXX_, _XXXXX__, XXXX_XX_, _X_X____,
+  _____XXX, X__X_XXX, __XXXXX_, _XXXXX__, XXX_X__X, XXX_____,
+  ________, _XXX____, ________, ________, ____XXX_, ________,
+  ________, ____X___, ________, ________, ___X____, ________,
+  ________, _____XXX, XXXXXXXX, XXXXXXXX, XXX_____, ________,
+};
+
+/** $66F5 (stage1) / $CBF9 (stage5): bitmap_truck_2 */
+const pixel_t bitmap_truck_2[5 * 1 * 29 * 1] = {
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  ___XXX_X, _XXXXXXX, XXXXXXXX, XXXXXXX_, X_XXXX__,
+  ___XX_XX, XXXXXXXX, ________, _XXXXXXX, XX_XXX__,
+  ___XX_XX, XXXX__XX, ________, _XX__XXX, XX_XX___,
+  ____X_XX, XXX_XXXX, X_X___X_, XXXXX_XX, XX_X____,
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  ____X___, ________, ________, ________, ___X____,
+  ___X_XX_, X_XXXXXX, XXXXXXXX, XXXXXX_X, _XX_X___,
+  ___X_X_X, _X______, ________, ______X_, X_X_X___,
+  ___XXX__, ________, ________, ________, __XXX___,
+  __X___X_, ________, ________, ________, _X___X__,
+  __X___X_, ________, ________, ________, _X___X__,
+  __XXXXX_, X_X_X_X_, X_X__X_X, _X_X_X_X, __XXXX__,
+  __X_____, ________, ________, ________, _____X__,
+  __X_____, ________, ________, ________, _____X__,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  ______XX, X_XXXXXX, XXXXXXXX, XXXXXX_X, XX______,
+  ______XX, XX____X_, ___XX___, _X____XX, XX______,
+  _____XXX, X__X_X_X, X_X__X_X, X_X_X__X, XXX_____,
+  _____X_X, __XXXX_X, XXX__XXX, X_XXXX__, X_X_____,
+  ____X__X, __XXXX_X, XXX__XXX, X_XXXX__, X__X____,
+  ____X__X, _X_XXX_X, XXX__XXX, X_XXX_X_, X__X____,
+  ____X__X, XX_XXX_X, XXX__XXX, X_XXX_XX, X__X____,
+  ______XX, X_X_XX_X, XXX__XXX, X_XX_X_X, XX______,
+  ________, _XX_____, ________, _____XX_, ________,
+  ________, ___X____, ________, ____X___, ________,
+  ________, ____XXXX, XXXXXXXX, XXXX____, ________,
+};
+
+/** $6786 (stage1) / $CC8A (stage5): bitmap_truck_3 */
+const pixel_t bitmap_truck_3[3 * 1 * 20 * 1] = {
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXX_XXXX, XXXXXXXX, XXXX_XXX,
+  XX_XXXXX, X______X, XXXXX_XX,
+  _X_XXXX_, XX____XX, _XXXX_X_,
+  __XXXXXX, XXXXXXXX, XXXXXX__,
+  _X______, ________, ______X_,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_X_X___, ________, ___X_X_X,
+  X_X_____, ________, _____X_X,
+  _XX_X_X_, X_X_X_X_, X_X_XXX_,
+  X_______, ________, _______X,
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  ___XXX__, ________, ___XX___,
+  ___X___X, X_XX_XX_, XX___X__,
+  __X_XX_X, X_XX_XX_, XX_XX_X_,
+  __X_X__X, X_XX_XX_, XX__X_X_,
+  __X_X__X, X_XX_XX_, XX__X_X_,
+  ___XXXX_, X_XX_XX_, X_XXXX__,
+  _______X, ________, _X______,
+  ________, XXXXXXXX, X_______,
+};
+
+/** $67C2 (stage1) / $CC2D (stage3): bitmap_car_1 */
+const pixel_t bitmap_car_1[6 * 1 * 31 * 1] = {
+  ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXX_X_X_, _XXXXX__,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XX_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_XXX_,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _X______, ________, ________, ________, ________, _____X__,
+  _X______, ________, ________, ________, ________, _____X__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_____, ________, ________, ________, ________, ____X___,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _X__XXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, XXX__X__,
+  _X__XXXX, _X_X_X_X, _X______, _____X_X, _X_X_X_X, XXX__X__,
+  _X__XXXX, __X_X_X_, XX______, _____XX_, X_X_X_X_, XXX__X__,
+  __XXXXX_, _X_X_X_X, _X______, _____X_X, _X_X_X__, XXXXXX__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_XX__, ________, ________, ________, ________, _XX_X___,
+  ___X_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_X____,
+  __X_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XX_X___,
+  _X___XX_, ________, ________, ________, ________, XX___X__,
+  _X____XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X____X__,
+  __XXXXXX, X_X_____, ________, ___XXXXX, ____X_XX, XXXXX___,
+  _______X, XX_X____, ________, __XXXXXX, ___X_XXX, ________,
+  ________, XX__X___, ________, __XXXXXX, __X__XX_, ________,
+  ________, _XX__XX_, ________, ___XXXX_, XX__XX__, ________,
+  ________, ___X___X, XXXXXXXX, XXXXXXXX, ___XX___, ________,
+  ________, ____XX__, ________, ________, _XX_____, ________,
+  ________, ______XX, XXXXXXXX, XXXXXXXX, X_______, ________
+};
+
+/** $687C (stage1) / $CCE7 (stage3): bitmap_car_2 */
+const pixel_t bitmap_car_2[5 * 1 * 22 * 1] = {
+  ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  __XXXX__, X_XXXXXX, XXXXXXXX, XXXXX_X_, _XXXX___,
+  _XXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  __XX_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_XXX__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_____, ________, ________, ________, ____X___,
+  ___X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_X____,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X__XX_, XXXXXXXX, XXXXXXXX, XXXXXXX_, XX__X___,
+  __X__XX_, _X_X_X__, ________, XX_X_X__, XX__X___,
+  ___XXXX_, X_X_XX__, ________, X_X_X_X_, XXXXX___,
+  ___XXX_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _XXX____,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  ___X_X__, XXXXXXXX, XXXXXXXX, XXXXXXX_, _X_X____,
+  __X__XXX, X_______, ________, ______XX, XX__X___,
+  ___XXXXX, _X______, ______XX, XX___X_X, XXXX____,
+  _______X, X_X_____, _____XXX, XX__X_XX, ________,
+  ________, XX_XX___, ______XX, X_XX_XX_, ________,
+  ________, __X__XXX, XXXXXXXX, XX__X___, ________,
+  ________, ___XXXXX, XXXXXXXX, XXXX____, ________,
+};
+
+/** $68EA (stage1) / $CD55 (stage3): bitmap_car_3 */
+const pixel_t bitmap_car_3[3 * 1 * 16 * 1] = {
+  _____XXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXX__XXX, XXXXXXXX, XXX__XXX,
+  XX_XXXXX, XXXXXXXX, XXXXX_XX,
+  _XX_X_X_, X_XX_X_X, _X_X_XX_,
+  X_______, ________, _______X,
+  _XX_XXXX, XXXXXXXX, XXXX_XX_,
+  X_XXX_X_, X______X, _X_XXX_X,
+  X_XX_X_X, _X_XX_X_, X_X_XX_X,
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XX_XXXX, XXXXXXXX, XXXXX_X_,
+  _X_X____, ________, _____X_X,
+  __XXX_X_, ______XX, __X_XXX_,
+  ____XX_X, _____XXX, _X_XX___,
+  _____XX_, _XXXXXXX, __XX____,
+  _______X, XXXXXXXX, XX______,
+};
+
+/** $691A (stage1) / $CAAF (stage5): bitmap_lambo_4 */
+const pixel_t bitmap_lambo_4[3 * 2 * 8 * 1] = {
+  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
+  ________, X_XX_XXX, _______X, XXX_XXX_, XXXXXXXX, ________,
+  ________, X_X__XX_, _______X, X_X__XX_, XXXXXXXX, ________,
+  X_______, _X_XXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  _X______, X_XXX_X_, _____X_X, X_XXX_X_, XXXXXXXX, ________,
+  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+};
+
+/** $694A (stage1) / $CADF (stage5): bitmap_lambo_4s */
+const pixel_t bitmap_lambo_4s[3 * 2 * 8 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
+  XXXX____, ____X_XX, ________, _XXXXXX_, ___XXXXX, XXX_____,
+  XXXX____, ____X_X_, ________, _XX_X_X_, ___XXXXX, _XX_____,
+  XXXXX___, _____X_X, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXXX_X__, ____X_XX, ________, X_X_X_XX, _X_XXXXX, X_X_____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+};
+
+/** $697A (stage1) / $CCC6 (stage5): bitmap_truck_4 */
+const pixel_t bitmap_truck_4[2 * 2 * 12 * 1] = {
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, XX_XXXXX, _____XXX, XX_XX___,
+  ________, XXXXX___, _____XXX, XXXXX___,
+  ________, X_X_X_X_, _____XXX, X_X_X___,
+  ________, X_______, _____XXX, ____X___,
+  ________, X_______, _____XXX, ____X___,
+  ________, XXX_X_X_, _____XXX, X_XXX___,
+  X_______, _X_X_X_X, ____XXXX, _X_X____,
+  ________, X__X_X_X, _____XXX, _X__X___,
+  ________, XX_X_X_X, _____XXX, _X_XX___,
+  X_______, _XX_____, ____XXXX, __XX____,
+  XXX_____, ___XXXXX, __XXXXXX, XX______,
+};
+
+/** $69AA (stage1) / $CCF6 (stage5): bitmap_truck_4s */
+const pixel_t bitmap_truck_4s[2 * 2 * 12 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX,
+  XXX_____, ___XX_XX, ________, XXXXX_XX,
+  XXX_____, ___XXXXX, ________, ___XXXXX,
+  XXX_____, ___X_X_X, ________, _X_X_X_X,
+  XXX_____, ___X____, ________, _______X,
+  XXX_____, ___X____, ________, _______X,
+  XXX_____, ___XXX_X, ________, _X_X_XXX,
+  XXXX____, ____X_X_, _______X, X_X_X_X_,
+  XXX_____, ___X__X_, ________, X_X_X__X,
+  XXX_____, ___XX_X_, ________, X_X_X_XX,
+  XXXX____, ____XX__, _______X, _____XX_,
+  XXXXXX__, ______XX, _____XXX, XXXXX___,
+};
+
+/** $69DA (stage1) / $CD85 (stage3): bitmap_car_4 */
+const pixel_t bitmap_car_4[3 * 2 * 9 * 1] = {
+  X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  ________, XXX_XXXX, ________, XXXX_XXX, XXXXXXXX, ________,
+  ________, XX_X_X_X, ________, _X_X__XX, XXXXXXXX, ________,
+  X_______, _X__X_X_, _______X, X_X___X_, XXXXXXXX, ________,
+  X_______, _XXX_XXX, _______X, XX_XXXX_, XXXXXXXX, ________,
+  X_______, _XX_____, _______X, _____XX_, XXXXXXXX, ________,
+  X_______, _X_XXXXX, _______X, XXXXX_X_, XXXXXXXX, ________,
+  XX___XXX, __X_X___, X_X___XX, _X_X_X__, XXXXXXXX, ________,
+  XXXX____, ____XXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
+};
+
+/** $6A10 (stage1) / $CDBB (stage3): bitmap_car_4s */
+const pixel_t bitmap_car_4s[3 * 2 * 9 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____XXX_, ________, XXXXXXXX, ____XXXX, _XXX____,
+  XXXX____, ____XX_X, ________, _X_X_X_X, ____XXXX, __XX____,
+  XXXXX___, _____X__, ________, X_X_X_X_, ___XXXXX, __X_____,
+  XXXXX___, _____XXX, ________, _XXXXX_X, ___XXXXX, XXX_____,
+  XXXXX___, _____XX_, ________, ________, ___XXXXX, _XX_____,
+  XXXXX___, _____X_X, ________, XXXXXXXX, ___XXXXX, X_X_____,
+  XXXXXX__, ______X_, _XXXX_X_, X____X_X, __XXXXXX, _X______,
+  XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
+};
+
+/** $6A9A (stage1) / $CE45 (stage3): bitmap_stones_1 */
+const pixel_t bitmap_stones_1[2 * 2 * 5 * 1] = {
+  ________, XXXXXXXX, ___XXXXX, XXX_____,
+  ________, X_____X_, ____XXXX, XXXX____,
+  ________, X______X, ___XXXXX, _XX_____,
+  X_______, _XX___XX, __XXXXXX, XX______,
+  XXX_____, ___XXXXX, XXXXXXXX, ________,
+};
+
+/** $6AAE (stage1) / $CE59 (stage3): bitmap_stones_2 */
+const pixel_t bitmap_stones_2[2 * 2 * 4 * 1] = {
+  ________, XXXXXXXX, XXXXXXXX, ________,
+  ________, X____XXX, _XXXXXXX, X_______,
+  X_______, _X____XX, XXXXXXXX, ________,
+  XX_____X, __XX_XX_, XXXXXXXX, ________,
+};
+
+/** $6ABE (stage1) / $CE69 (stage3): bitmap_stones_2s */
+const pixel_t bitmap_stones_2s[2 * 2 * 4 * 1] = {
+  XXXX____, ____XXXX, ____XXXX, XXXX____,
+  XXXX____, ____X___, _____XXX, _XXXX___,
+  XXXXX___, _____X__, ____XXXX, __XX____,
+  XXXXXX__, ______XX, ___XXXXX, _XX_____,
+};
+
+/** $6ACE (stage1) / $CE79 (stage3): bitmap_stones_3 */
+const pixel_t bitmap_stones_3[2 * 2 * 3 * 1] = {
+  _____XXX, XXXXX___, XXXXXXXX, ________,
+  ______XX, X__X_X__, XXXXXXXX, ________,
+  X____XXX, _X_XX___, XXXXXXXX, ________,
+};
+
+/** $6ADA (stage1) / $CE85 (stage3): bitmap_stones_3s */
+const pixel_t bitmap_stones_3s[2 * 2 * 3 * 1] = {
+  XXXX____, ____XXXX, _XXXXXXX, X_______,
+  XXXX____, ____X__X, __XXXXXX, _X______,
+  XXXXX___, _____X_X, _XXXXXXX, X_______,
+};
+
+/** $6AE6 (stage1) / $CE91 (stage3): bitmap_stones_4 */
+const pixel_t bitmap_stones_4[1 * 2 * 2 * 1] = {
+  ____XXXX, XXXX____,
+  ___XXXXX, X_X_____,
+};
+
+/** $6AEA (stage1) / $CE95 (stage3): bitmap_stones_4s */
+const pixel_t bitmap_stones_4s[1 * 2 * 2 * 1] = {
+  XXXX____, ____XXXX,
+  XXXX___X, ____X_X_,
+};
+
+/** $6AEE (stage1) / $CE99 (stage3): bitmap_stones_5 */
+const pixel_t bitmap_stones_5[1 * 2 * 1 * 1] = {
+  __XXXXXX, XX______,
+};
+
+/** $6AF0 (stage1) / $CE9B (stage3): bitmap_stones_5s */
+const pixel_t bitmap_stones_5s[1 * 2 * 1 * 1] = {
+  XXXX__XX, ____XX__,
+};
+
+/** $6AF2 (stage1) / $CE9D (stage3): bitmap_dust_1 */
+const pixel_t bitmap_dust_1[1 * 2 * 1 * 1] = {
+  ___XXXXX, _X______,
+};
+
+/** $6AF4 (stage1) / $CE9F (stage3): bitmap_dust_1s */
+const pixel_t bitmap_dust_1s[1 * 2 * 1 * 1] = {
+  XXXX___X, _____X__,
+};
+
+/** $6B68 (stage1) / $F871 (stage4): bitmap_turnsign_1 */
+const pixel_t bitmap_turnsign_1[4 * 1 * 40 * 1] = {
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XX____X, XXXXXXXX, XXXXXXXX, X_X_XXX_,
+  __X__X_X, ________, ________, XX_X_X__,
+  __X_X_XX, ________, ________, X_X_XX__,
+  __XXXXXX, ________, ________, XXXXXX__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_____, _______X, _X_X_X_X, _X_X_XXX,
+  XXX_____, ________, ______X_, X_X_XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, _____XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  X_X_____, ___XXX__, ________, _____XXX,
+  XXX_____, ____XXX_, ________, ____XXXX,
+  XXX_____, ____XXX_, ________, _____XXX,
+  X_X_____, ____XXX_, ________, _____XXX,
+  XXX_____, _____XXX, ________, _____XXX,
+  X_X_____, _____XXX, __XX____, _____XXX,
+  X_X_X___, ______XX, XXXX____, _____XXX,
+  XXX_____, _______X, XXXX____, _____XXX,
+  X_X_X___, ______XX, XXXXX___, _____XXX,
+  X_X_____, _____XXX, XXXXX___, _____XXX,
+  X_X_X___, ________, XXXXXX__, _____XXX,
+  XXX_____, ________, ____XXX_, _____XXX,
+  X_X_X_X_, X_X_____, ________, _____XXX,
+  X_X_____, ________, ________, _____XXX,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X____X__, _X__X_XX, _XXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+/** $6C08 (stage1) / $F911 (stage4): bitmap_turnsign_2 */
+const pixel_t bitmap_turnsign_2[3 * 1 * 30 * 1] = {
+  __XXXXXX, XXXXXXXX, XXXXXX__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XX__XXX, XXXXXXXX, XXXX_XX_,
+  __X_XX__, ________, __X_XX__,
+  __XXXX__, ________, __XX_X__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XX______, ____X_X_, X_X_X_XX,
+  XX______, ________, _X_X_XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ______XX,
+  XX______, XXX_____, _____XXX,
+  XX______, _XX_____, ______XX,
+  XX______, _XX_____, ______XX,
+  XX______, _XXX____, ______XX,
+  XX______, __XX__X_, ______XX,
+  XX_X____, ___XXXX_, ______XX,
+  XX______, ___XXXXX, ______XX,
+  X__X____, __XXXXXX, ______XX,
+  XX______, _____XXX, X_____XX,
+  X__X_X_X, _______X, XX____XX,
+  XX______, ________, ______XX,
+  X_X_X_XX, _XXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+/** $6C62 (stage1) / $F96B (stage4): bitmap_turnsign_3 */
+const pixel_t bitmap_turnsign_3[2 * 1 * 20 * 1] = {
+  _XXXXXXX, XXXXXXX_,
+  XXXXXXXX, XXXXXXXX,
+  _X__XXXX, XXXXX_X_,
+  _X_X____, ____XXX_,
+  XXXXXXXX, XXXXXXXX,
+  X______X, _X_X_X_X,
+  X_______, ______XX,
+  X_____X_, _______X,
+  X_____X_, ______XX,
+  X_____X_, _______X,
+  X_____X_, ______XX,
+  X_____X_, _______X,
+  X______X, ______XX,
+  X______X, _______X,
+  X_______, XXX____X,
+  XX_____X, XXX____X,
+  X_______, XXX____X,
+  XX______, __XX___X,
+  X_X_X___, _______X,
+  XXXXXXXX, XXXXXXXX,
+};
+
+/** $6C8A (stage1) / $F993 (stage4): bitmap_turnsign_4 */
+const pixel_t bitmap_turnsign_4[2 * 2 * 16 * 1] = {
+  X_______, _XXXXXXX, ____XXXX, XXXX____,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_XXXXXX, _____XXX, XXXXX___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_____X_, _____XXX, X_X_X___,
+  ________, X___X___, _____XXX, ___XX___,
+  ________, X___X___, _____XXX, ____X___,
+  ________, X___X___, _____XXX, ___XX___,
+  ________, X___X___, _____XXX, ____X___,
+  ________, X____X__, _____XXX, ___XX___,
+  ________, XX___X__, _____XXX, ____X___,
+  ________, X_____XX, _____XXX, ____X___,
+  ________, X____XXX, _____XXX, X___X___,
+  ________, XX_____X, _____XXX, X___X___,
+  ________, X_X__X__, _____XXX, ____X___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+};
+
+/** $6CCA (stage1) / $F9D3 (stage4): bitmap_turnsign_5 */
+const pixel_t bitmap_turnsign_5[2 * 2 * 13 * 1] = {
+  X_______, _XXXXXXX, _XXXXXXX, X_______,
+  ________, XXXXXXXX, __XXXXXX, XX______,
+  ________, XXXXXXXX, __XXXXXX, XX______,
+  ________, XXXXXXXX, __XXXXXX, XX______,
+  ________, X___X_X_, __XXXXXX, XX______,
+  ________, X__X____, __XXXXXX, _X______,
+  ________, X__X____, __XXXXXX, XX______,
+  ________, X__X____, __XXXXXX, _X______,
+  ________, X___X___, __XXXXXX, XX______,
+  ________, X___XX__, __XXXXXX, _X______,
+  ________, X____XX_, __XXXXXX, _X______,
+  ________, X_______, __XXXXXX, _X______,
+  ________, XXXXXXXX, __XXXXXX, XX______,
+};
+
+/** $6DAC (stage1) / $D679 (stage3): bitmap_tumbleweed_1 */
+const pixel_t bitmap_tumbleweed_1[2 * 1 * 16 * 1] = {
+  ___XX___, _X_XX___,
+  ____XXXX, XXXX____,
+  ___XXXXX, XXXXX___,
+  __XXXXXX, XXXXXX__,
+  __XXXXXX, XX_XXX__,
+  _XXXXXXX, XXXXXXX_,
+  _X_XX_XX, X_XXX_X_,
+  __XX_X__, XX_XXX__,
+  __X_X_X_, X_X_XXX_,
+  _X_X_X_X, X_X_X_X_,
+  __XX_XX_, X_X_XX__,
+  ___XX_X_, __X_XX__,
+  ___XX_XX, _XX_X___,
+  __XX_XXX, XX_XX___,
+  _____X__, X__X____,
+  ________, X_XX____,
+};
+
+/** $6DCC (stage1) / $D699 (stage3): bitmap_tumbleweed_2 */
+const pixel_t bitmap_tumbleweed_2[2 * 1 * 11 * 1] = {
+  ____X__X, __XX____,
+  _____XXX, XXX_____,
+  ____XXXX, XXXX____,
+  ____XXXX, X_XXX___,
+  ____XXX_, XXXXX___,
+  ___XXXX_, X_X_X___,
+  ___X_X_X, _X_X____,
+  _____XX_, X_XX____,
+  ______XX, X_X_____,
+  ____XX_X, _XX_____,
+  ________, X_X_____,
+};
+
+/** $6DE2 (stage1) / $D6AF (stage3): bitmap_tumbleweed_3 */
+const pixel_t bitmap_tumbleweed_3[1 * 1 * 9 * 1] = {
+  __XXXXX_,
+  _XXXXXXX,
+  XXXXXXXX,
+  XXX__XXX,
+  XXX_X_XX,
+  _X_X__X_,
+  _XXX_XX_,
+  __X_X_X_,
+  __X__X__,
+};
+
+/** $6DEB (stage1) / $D6B8 (stage3): bitmap_tumbleweed_4 */
+const pixel_t bitmap_tumbleweed_4[1 * 1 * 7 * 1] = {
+  __XXXX__,
+  _XXXXXX_,
+  _XXX_XX_,
+  _XX__XX_,
+  __X_XX__,
+  __XX_X__,
+  ___XX___,
+};
+
+/** $6E1C (stage1) / $FA39 (stage2) / $D6E9 (stage3) / $F63F (stage4) / $D64A (stage5): bitmap_barrier_1 */
+const pixel_t bitmap_barrier_1[4 * 1 * 17 * 1] = {
+  ___XXXXX, XX______, ______XX, XXXXX___,
+  ___XXXX_, _X____XX, XX____XX, _X__X___,
+  ____XX_X, __X___XX, _X___XX_, X__X____,
+  ____XXX_, X_X___XX, XX___XXX, _X_X____,
+  _____XXX, _X_X__XX, _X__XXX_, X_X_____,
+  _____XX_, X__X_XX_, X_X_XX_X, __X_____,
+  ______XX, _X__XXXX, __XXX_X_, _X______,
+  ______XX, X_X_XXX_, X_XXXX_X, _X______,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXX_X, _XXXXXX_, _XXXXXX_, X_XXXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  X_X_X___, _X_X_X__, __X_X_X_, ___X_X_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, ____XXXX, XXXXX___, ________,
+};
+
+/** $6E60 (stage1) / $FA7D (stage2) / $D72D (stage3) / $F683 (stage4) / $D68E (stage5): bitmap_barrier_2 */
+const pixel_t bitmap_barrier_2[3 * 1 * 13 * 1] = {
+  __XXXXXX, ________, XXXXXX__,
+  __XXX_XX, ___XXX__, XX_X_X__,
+  ___XXX_X, X__X_X_X, X_X_X___,
+  ___XX_X_, X_XX_X_X, XX__X___,
+  ____XX_X, X_X_X_XX, X__X____,
+  ____XXX_, _XXXXXXX, XX_X____,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXX_XX, XXXX_XXX, X_X_XXXX,
+  XXXX___X, XXX__XXX, X___XXXX,
+  XXXX___X, XXX__XXX, X___XXXX,
+  X__X___X, __X__X__, X___X__X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXX_, ________,
+};
+
+/** $6E87 (stage1) / $FAA4 (stage2) / $D754 (stage3) / $F6AA (stage4) / $D6B5 (stage5): bitmap_barrier_3 */
+const pixel_t bitmap_barrier_3[2 * 1 * 9 * 1] = {
+  _XXXX___, ___XXXX_,
+  _XX_X__X, X__XX_X_,
+  __XX_X_X, X_XX_X__,
+  __XXXX_X, X_XXXX__,
+  XXXXXXXX, XXXXXXXX,
+  XXX__XXX, __XXX__X,
+  X_X__X_X, __X_X__X,
+  XXXXXXXX, XXXXXXXX,
+  ______XX, XX______,
+};
+
+/** $6E99 (stage1) / $FAB6 (stage2) / $D766 (stage3) / $F6BC (stage4) / $D6C7 (stage5): bitmap_barrier_4 */
+const pixel_t bitmap_barrier_4[2 * 2 * 7 * 1] = {
+  X__XXXXX, _XX_____, X__XXXXX, _XX_____,
+  X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
+  XX______, __XXXXXX, __XXXXXX, XX______,
+  ________, XXXXXXXX, ____XXXX, XXXX____,
+  ________, X__XX__X, ____XXXX, X__X____,
+  ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXX____, ____XXXX, XXXXXXXX, ________,
+};
+
+/** $6EB5 (stage1) / $FAD2 (stage2) / $D782 (stage3) / $F6D8 (stage4) / $D6E3 (stage5): bitmap_barrier_4s */
+const pixel_t bitmap_barrier_4s[2 * 2 * 7 * 1] = {
+  XXXXX__X, _____XX_, XXXXX__X, _____XX_,
+  XXXXX___, _____XXX, X__X___X, _XX_XXX_,
+  XXXXXX__, ______XX, ______XX, XXXXXX__,
+  XXXX____, ____XXXX, ________, XXXXXXXX,
+  XXXX____, ____X__X, ________, X__XX__X,
+  XXXX____, ____XXXX, ________, XXXXXXXX,
+  XXXXXXXX, ________, ____XXXX, XXXX____,
+};
+
+/** $6F5D (stage1) / $F780 (stage4): bitmap_streetlamptop_1 */
+const pixel_t bitmap_streetlamptop_1[4 * 1 * 8 * 1] = {
+  ________, ________, ________, XXX__X__,
+  ___XXXXX, XXXXXXX_, _______X, X_X__X__,
+  __X_____, _______X, _____XXX, __X__X__,
+  __X_____, _______X, __XXXX__, XX___X__,
+  _XX_X_X_, X_X_X_XX, XXX___XX, _X___X__,
+  X_XXXXXX, XXXXXXX_, ___XXX__, _XX_XX__,
+  XX______, _______X, XXX_____, __XXX___,
+  __XXXXXX, XXXXXXX_, ________, ________
+};
+
+/** $6F7D (stage1) / $F7A0 (stage4): bitmap_streetlamptop_2 */
+const pixel_t bitmap_streetlamptop_2[3 * 1 * 5 * 1] = {
+  _XXXXXXX, XX_____X, X_X_X___,
+  X_______, __X__XX_, _X__X___,
+  X_______, _XXXX__X, XX__X___,
+  X_X_X_X_, X____XX_, _X__X___,
+  _XXXXXXX, XXXXX___, __XX____
+};
+
+/** $6F8C (stage1) / $F7AF (stage4): bitmap_streetlamptop_3 */
+const pixel_t bitmap_streetlamptop_3[3 * 1 * 4 * 1] = {
+  ______XX, XXXX___X, _XX_____,
+  _____X__, ____XXX_, X_X_____,
+  ____X_X_, _____X_X, _XX_____,
+  _____XXX, XXXXXXX_, ________
+};
+
+/** $6F98 (stage1) / $F7BB (stage4): bitmap_streetlamptop_3s */
+const pixel_t bitmap_streetlamptop_3s[3 * 1 * 4 * 1] = {
+  ________, __XXXXXX, ___X_XX_,
+  ________, _X______, XXX_X_X_,
+  ________, X_X_____, _X_X_XX_,
+  ________, _XXXXXXX, XXX_____
+};
+
+/** $6FA4 (stage1) / $F7C7 (stage4): bitmap_streetlamptop_4 */
+const pixel_t bitmap_streetlamptop_4[2 * 2 * 4 * 1] = {
+  XXXXXXXX, ________, X___XXXX, _XXX____,
+  ______X_, XX_XXX_X, ____XXXX, X_XX____,
+  ________, X____XX_, _X__XXXX, X_XX____,
+  X____XXX, _XXXX___, XXXXXXXX, ________
+};
+
+/** $6FB4 (stage1) / $F7D7 (stage4): bitmap_streetlamptop_4s */
+const pixel_t bitmap_streetlamptop_4s[2 * 2 * 4 * 1] = {
+  XXXXXXXX, ________, XXX___XX, ___XXX__,
+  XX______, __XX_XXX, X_____XX, _XX_XX__,
+  XX______, __X____X, ___X__XX, X_X_XX__,
+  XXX____X, ___XXXX_, XXXXXXXX, ________
+};
+
+/** $6FC4 (stage1) / $F7E7 (stage4): bitmap_streetlamptop_5 */
+const pixel_t bitmap_streetlamptop_5[2 * 2 * 3 * 1] = {
+  XXXXXXX_, _______X, _XXXXXXX, X_______,
+  ________, X___XXXX, _XXXXXXX, X_______,
+  ____XXXX, XXXX____, XXXXXXXX, ________
+};
+
+/** $6FD0 (stage1) / $F7F3 (stage4): bitmap_streetlamptop_5s */
+const pixel_t bitmap_streetlamptop_5s[2 * 2 * 3 * 1] = {
+  XXXXXXXX, ________, XXX__XXX, ___XX___,
+  XXXX____, ____X___, _____XXX, XXXXX___,
+  XXXX____, ____XXXX, XXXXXXXX, ________
+};
+
+/** $703F (stage1) / $DA39 (stage3) / $DA32 (stage5): bitmap_telegraphpoletop_1 */
+const pixel_t bitmap_telegraphpoletop_1[3 * 1 * 13 * 1] = {
+  ____XXXX, XXX__XXX, XXX_____,
+  ___X____, ___X_XX_, ___X____,
+  ___XXXXX, XXX__XXX, XXXX____,
+  ____X_X_, _X___X__, X_X_____,
+  ____X_X_, _XX__X__, X_X_____,
+  _____X__, _XX__X__, _X______,
+  _XXXXXXX, XXXX_XXX, XXXXXX__,
+  X_______, ___X_XX_, X_____X_,
+  XXXXXXXX, XXX__XXX, XXXXXXX_,
+  _X_XX_X_, _X___X__, X_XX_X__,
+  _X_XX_X_, _XX__X__, X_XX_X__,
+  __X__X__, _X___X__, _X__X___,
+  ________, _XXXXX__, ________
+};
+
+/** $7066 (stage1) / $DA60 (stage3) / $DA59 (stage5): bitmap_telegraphpoletop_2 */
+const pixel_t bitmap_telegraphpoletop_2[3 * 1 * 10 * 1] = {
+  ______XX, XX__XXXX, X_______,
+  _____X__, __X_XX__, X_______,
+  _____X_X, XX__XXX_, X_______,
+  ______XX, _X__X__X, ________,
+  ________, _XX_X___, ________,
+  ____XXXX, XXX_XXXX, XX______,
+  ___X____, __X_XX__, __X_____,
+  ___X_X_X, XX__X_X_, X_X_____,
+  ___X_X_X, _X__X_X_, X_X_____,
+  ____X_X_, _XXXX__X, _X______
+};
+
+/** $7084 (stage1) / $DA7E (stage3) / $DA77 (stage5): bitmap_telegraphpoletop_3 */
+const pixel_t bitmap_telegraphpoletop_3[3 * 1 * 7 * 1] = {
+  ______XX, XXXXXX__, ________,
+  _____X__, __X__X__, ________,
+  _____X_X, X_XX_X__, ________,
+  _____XXX, XXXXXXX_, ________,
+  ____X___, __XXX__X, ________,
+  ____X_XX, X_XXXX_X, ________,
+  _____X__, XXX___X_, ________
+};
+
+/** $7099 (stage1) / $DA93 (stage3) / $DA8C (stage5): bitmap_telegraphpoletop_3s */
+const pixel_t bitmap_telegraphpoletop_3s[3 * 1 * 7 * 1] = {
+  ________, __XXXXXX, XX______,
+  ________, _X____X_, _X______,
+  ________, _X_XX_XX, _X______,
+  ________, _XXXXXXX, XXX_____,
+  ________, X_____XX, X__X____,
+  ________, X_XXX_XX, XX_X____,
+  ________, _X__XXX_, __X_____
+};
+
+/** $70AE (stage1) / $DAA8 (stage3) / $DAA1 (stage5): bitmap_telegraphpoletop_4 */
+const pixel_t bitmap_telegraphpoletop_4[2 * 2 * 5 * 1] = {
+  XXXXXXX_, _______X, ______XX, XX_XXX__,
+  XXXXXXX_, _______X, ______XX, _X_X_X__,
+  XXXXXXXX, ________, XX__XXXX, ___X____,
+  XXXXXX__, ______XX, ______XX, XX_XXX__,
+  XXXXXX__, ______X_, ______XX, X___X___
+};
+
+/** $70C2 (stage1) / $DABC (stage3) / $DAB5 (stage5): bitmap_telegraphpoletop_4s */
+const pixel_t bitmap_telegraphpoletop_4s[2 * 2 * 5 * 1] = {
+  XXXXXXXX, ________, X_______, _XXX_XXX,
+  XXXXXXXX, ________, X_______, _X_X_X_X,
+  XXXXXXXX, ________, XXXX__XX, _____X__,
+  XXXXXXXX, ________, ________, XXXX_XXX,
+  XXXXXXXX, ________, ________, X_X___X_
+};
+
+/** $70D6 (stage1) / $DAD0 (stage3) / $DAC9 (stage5): bitmap_telegraphpoletop_5 */
+const pixel_t bitmap_telegraphpoletop_5[2 * 2 * 4 * 1] = {
+  XXXXXX__, ______XX, ___XXXXX, XXX_____,
+  XXXXXX__, ______XX, ___XXXXX, __X_____,
+  XXXXX___, _____XXX, ____XXXX, _XXX____,
+  XXXXX___, _____X_X, ____XXXX, __XX____
+};
+
+/** $70E6 (stage1) / $DAE0 (stage3): bitmap_telegraphpoletop_5s */
+const pixel_t bitmap_telegraphpoletop_5s[2 * 2 * 4 * 1] = {
+  XXXXXXXX, ________, XX_____X, __XXXXX_,
+  XXXXXXXX, ________, XX_____X, __XX__X_,
+  XXXXXXXX, ________, X_______, _XXX_XXX,
+  XXXXXXXX, ________, X_______, _X_X__XX
+};
+
+/** $F05A (stage2) / $EF35 (stage4): pilot_mugshot */
+const pixel_t pilot_mugshot[180] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXX__, _X_X_XX_, XXXXXXXX, XXX_X_XX,
+  XXXX___X, XXXXXXXX, XXXXXXXX, XXXXXX_X,
+  XXXX__X_, XXXXX_X_, X_X_XXXX, XXXXXXXX,
+  XXX__XXX, XXXXXXXX, _X_XXXXX, XXXXXXXX,
+  XXX_X_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
+  XXX_X_XX, XXXXXXXX, XXXX_XXX, XXXXXXXX,
+  XXX__XXX, XXXXXXXX, ___XXXXX, XXXXXX_X,
+  XXX_X_XX, XXXXXXX_, XXXX_XXX, XXXXXXXX,
+  XXX__XXX, XXXXXX_X, X__XX_XX, XXXXXX_X,
+  XXX_XXXX, XXXXXX_X, X___XX_X, XXXXXXXX,
+  XXX__XXX, XXXXX_XX, ____X_XX, XXXX_X_X,
+  XXXX__XX, XX_X_XX_, X___XXXX, X_X_X_XX,
+  XXXXXXXX, XXXXXX__, _____X_X, XXXXXXXX,
+  X_XXXXXX, X_X_XX__, X_______, _XXXXXXX,
+  XXXXXXXX, _____X_X, XX__XX__, __X_XXXX,
+  X_XXXXX_, ____X_XX, XXXXXX__, ___XXXXX,
+  XXXXXXXX, ____XXXX, XXXXXXX_, ____XXXX,
+  X_XXXXX_, ___XXXXX, XXXXXXXX, ___XXXXX,
+  XX_XXXXX, __XXXXXX, XX_XXXXX, X_X_XXXX,
+  X_XXXXXX, X_XXXXXX, XXXXXXXX, X__XXXXX,
+  XX_XXXXX, XX_XXXX_, _____XXX, XX_XXXXX,
+  X_X_XXXX, X_XXXX__, XXXX__XX, X_XXXXXX,
+  XX__XXXX, XX_X_X_X, XXXXXX_X, _X_XXXXX,
+  X_X__XXX, XXXXX_X_, XXXXX_X_, XXXXXX_X,
+  XXXX_X__, XXXXXXXX, XXXXXXXX, XXX_XX_X,
+  XXXXXXX_, _XXXXXXX, _____XXX, XX__XX_X,
+  X__XXXXX, ___XXX__, _______X, X__XX__X,
+  X____XXX, XX_XX_X_, _______X, X_XX___X,
+  X___XXXX, XXX_XX_X, _X_X__XX, XXXX___X,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX_X,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXXX__XX,
+  XX_XXXXX, _XXXXXXX, XXXXXXXX, X_XXXX_X,
+  XX_XXXX_, X_XXX_XX, XXXXXXXX, XXXXXXXX,
+  X_XXXXXX, _X_XXX_X, _X_X_XXX, X_XXXXXX,
+  X_XXXXXX, X_XXX_X_, ____X_XX, _XXXXXXX,
+  XXXXXXXX, _X_XXX_X, ___X_XX_, X_XXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+
+  attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_GREEN, attribute_BRIGHT_BLACK_OVER_GREEN,
+  attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
+  attribute_BLACK_OVER_GREEN, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW, attribute_BLACK_OVER_YELLOW,
+  attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_CYAN,
+  attribute_BLACK_OVER_WHITE, attribute_BLACK_OVER_WHITE, attribute_BRIGHT_BLACK_OVER_CYAN, attribute_BLACK_OVER_CYAN,
+};
+
+/** $E97D (stage2) / $EB0D (stage4): bitmap_E97D */
+const pixel_t bitmap_E97D[6 * 1 * 29 * 1] = {
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXX_X_X_, _XXXXX__,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
+  XXXXX_X_, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X__, X_XXXXX_,
+  XXXXX___, X_X_____, __XXXXXX, XXXXXX__, ____X_X_, __XXXXX_,
+  _XXX_XXX, XXXXXXXX, XXX_____, _____XXX, XXXXXXXX, XX_XXX__,
+  _XX_X_X_, X_X_X_X_, X_X_____, _____XX_, X_X_X_X_, X_X_XX__,
+  XX_X_X__, ________, __X_____, _____X__, ________, _X_X_XX_,
+  X_______, ________, __XXXXXX, XXXXXX__, ________, ______X_,
+  X_______, ________, ________, ________, ________, ______X_,
+  X____X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X____X_,
+  _X_XXXXX, XXXXXXX_, ______XX, X_______, XXXXXXXX, XXXX_X__,
+  _X_X__XX, XXX_XXX_, _____XXX, ________, XXX_XXXX, X__X_X__,
+  _X_X_XXX, _X_X_XX_, ______XX, X_______, XX_X_X_X, XX_X_X__,
+  _X_X__XX, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_XX, X__X_X__,
+  _X__X_XX, _X___XXX, XXXXXXXX, XXXXXXXX, XX___X_X, X_X__X__,
+  __X__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__X___,
+  __X_X___, ________, ________, ________, ________, __X_X___,
+  ___XXX_X, ________, ________, ________, ________, X_XX____,
+  ___X_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_X____,
+  __X_____, X__XX_X_, X_X_X___, __X_X_X_, X_XX__X_, ____X___,
+  __X_____, X__XX___, _____X__, _X______, __XX__X_, ____X___,
+  ___XXXXX, _X_XX___, _____X__, _X______, __XX_X_X, XXXX____,
+  ________, _X__XXXX, XXXXX___, __XXXXXX, XXX__X__, ________,
+  ________, __X_XXXX, XXX_____, ________, __X_X___, ________,
+  ________, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ________,
+  ________, X______X, XX______, ________, ______X_, ________,
+  ________, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ________,
+};
+
+/** $EA2B (stage2) / $EBBB (stage4): bitmap_EA2B */
+const pixel_t bitmap_EA2B[4 * 1 * 19 * 1] = {
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XXX_X_X, XXXXXXXX, XXXXXXXX, X_X_XXX_,
+  XXX_XXXX, _X__X_XX, _X_XX_X_, XXXX_XXX,
+  XXX__X__, ____XXXX, XXXX____, __X__XXX,
+  XX__XXXX, X_XXX___, ___XXX_X, XXXX__XX,
+  X__X____, ____X___, ___X____, ____X__X,
+  X_______, ________, ________, _______X,
+  X____XX_, XX_X_XXX, X_XXXX_X, X_X____X,
+  X_X_XXXX, XXX___XX, ____XXXX, XXXX_X_X,
+  X_X_X_X_, _XX____X, ____XX__, X_XX_X_X,
+  X__XX_X_, _XXXXXXX, XXXXXX__, X_XXX__X,
+  _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXX__X_,
+  __XX____, ________, ________, ___XXX__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  _X___X_X, X_____X_, X_____XX, _X___X__,
+  __XXXX_X, X____X__, _X____XX, _XXXX___,
+  _____XX_, XXXXX___, __XXXXX_, XX______,
+  _______X, XXXXXXXX, XXXXXXXX, ________,
+  _______X, XXXXXXXX, XXXXXXXX, ________,
+};
+
+/** $EA77 (stage2) / $EC07 (stage4): bitmap_EA77 */
+const pixel_t bitmap_EA77[3 * 1 * 13 * 1] = {
+  ___XXXXX, XXXXXXXX, XXXXXX__,
+  __XXX_X_, XXXXXXXX, X_X_XXX_,
+  _XXX_XXX, X__XXX__, XXXX_XXX,
+  __XXX___, __X___X_, ____XXX_,
+  _X______, __X___X_, _______X,
+  _X_XXXXX, X___X___, XXXXXX_X,
+  _X__X___, X___X___, X___X__X,
+  _X_XX___, XXXXXXXX, X___XX_X,
+  __XXXXXX, XXXXXXXX, XXXXXXX_,
+  __X__X_X, _X_XXX_X, _X_X__X_,
+  ___XX_XX, ____X___, _XX_XX__,
+  ______XX, XXXXXXXX, XXX_____,
+  ______XX, XXXXXXXX, XXX_____,
+};
+
+/** $EC17 (stage2) / $E994 (stage4): bitmap_EC17 */
+const pixel_t bitmap_EC17[2 * 2 * 8 * 1] = {
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, XX__XXXX, _____XXX, X__XX___,
+  X_______, _X_X_XXX, ____XXXX, _X_X____,
+  ________, X_XXXX_X, _____XXX, XXX_X___,
+  ________, X_XXXXXX, _____XXX, XXX_X___,
+  X_______, _X_XXXXX, ____XXXX, XX_X____,
+  XX______, __X_____, ___XXXXX, __X_____,
+  XXX_____, ___XXXXX, __XXXXXX, XX______,
+};
+
+/** $EC37 (stage2) / $E9B4 (stage4): bitmap_EC37 */
+const pixel_t bitmap_EC37[2 * 2 * 8 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX,
+  XXX_____, ___XX__X, ________, XXXX__XX,
+  XXXX____, ____X_X_, _______X, XXX_X_X_,
+  XXX_____, ___X_XXX, ________, X_XXXX_X,
+  XXX_____, ___X_XXX, ________, XXXXXX_X,
+  XXXX____, ____X_XX, _______X, XXXXX_X_,
+  XXXXX___, _____X__, ______XX, _____X__,
+  XXXXXX__, ______XX, _____XXX, XXXXX___,
+};
+
+/** $F2F0 (stage2) / $D073 (stage5): bitmap_F2F0 */
+const pixel_t bitmap_F2F0[5 * 1 * 8 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX, _X_XXXX_,
+  XX_XXXXX, X_XXXXXX, _XXXXXXX, XXXXX_XX, __XX____,
+  XXXX_XXX, _XXXXXX_, XXXXXX_X, XXXX_X__, _XX_____,
+  X_X_X_XX, XXXXXXXX, _XXXX__X, XX_XXXXX, XX______,
+  XXXX_XXX, XX_XXXX_, XXXX__XX, __XX____, ________,
+  XX_X__X_, XXXXXX_X, X_X_XXXX, XX______, ________,
+  XXXXX___, _XXX___X, XXXXX___, ________, ________,
+  XXXXXXXX, XXXXXXX_, ________, ________, ________,
+};
+
+/** $F318 (stage2) / $D09B (stage5): bitmap_F318 */
+const pixel_t bitmap_F318[7 * 1 * 8 * 1] = {
+  X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX, _XXXX___, XX__XX__,
+  X__XXXXX, _XXXXX_X, XXXXXXX_, XXXXXXX_, XXXX_XXX, _XX_XX_X, X__X____,
+  X_XXXXX_, XXXXXXXX, XXXXX_XX, XXXXXXXX, XXX_XXX_, _XXX___X, XXX_____,
+  X__XXXXX, _XXXXXXX, _XXXXXX_, XXXXXXX_, XXXX_X_X, _XX__XX_, ________,
+  XX__XXX_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXX_, XXXXX___, ________,
+  XX_XXXXX, XXXXXX_X, XXXXXX_X, XXXXX_XX, XXX_XX__, XX______, ________,
+  X_X_XXXX, X_XXXXXX, _XXXXXXX, XXXXXXX_, XX_XXXX_, XX______, ________,
+  XX_XXXX_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX_X, X_______, ________,
+};
+
+/** $F350 (stage2) / $D0D3 (stage5): bitmap_F350 */
+const pixel_t bitmap_F350[7 * 1 * 8 * 1] = {
+  X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX, _XXXXXX_, _XXXX_XX,
+  X__XXXXX, _XXXXX_X, XXXXXXX_, XXXXXXX_, XXXX_XXX, _XX_XX__, _XXX___X,
+  X_XXXXX_, XXXXXXXX, XXXXX_XX, XXXXXXXX, XXX_XXX_, _XXXXXX_, _XX_X__X,
+  X__XXXXX, _XXXXXXX, _XXXXXX_, XXXXXXX_, XXXX_X_X, _XXXX_X_, _XXX___X,
+  XX__XXX_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXX_, XXXX____, _XX____X,
+  XX_XXXXX, XXXXXX_X, XXXXXX_X, XXXXX_XX, XXX_XX__, XX_XXX__, XXX_X_X_,
+  X_X_XXXX, X_XXXXXX, _XXXXXXX, XXXXXXX_, XX_XXXX_, XXXXX_X_, XX_X__X_,
+  XX_XXXX_, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX_X, XX_X_X__, XXX___X_,
+};
+
+/** $F388 (stage2) / $D10B (stage5): bitmap_F388 */
+const pixel_t bitmap_F388[8 * 1 * 8 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X__XXXXX, X_XXXXXX, XXX_XXX_, X_XXX_X_, X_XX_X_X, ____XXXX, __XX__XX, _XX_X__X,
+  X__XXX_X, XX_XXXX_, XXXXXXXX, _XXXXX__, XXXXX_X_, ___XXXX_, _XX_X_XX, XX_X___X,
+  XX__X_XX, XXXXXXXX, XXXXXXXX, XXXXX_X_, XX_X____, _XXX_X__, XXXX__XX, _XX___X_,
+  XX___X_X, XX_XX_XX, _XXXXXX_, XXXX_X_X, XXXXX___, XXXXX_X_, XX___XX_, X_XXX_X_,
+  X_X___XX, X_XXXXXX, XXXXXX_X, XXXXX__X, XX_X___X, X_XXXX__, XXX__XXX, _____XX_,
+  X_XXXXXX, XXXXXXX_, XXXX_XXX, XXXX__XX, XXX___XX, _XX_X__X, __XXXX__, __XXXX__,
+  X__XXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX, XXXXXXX_, X_XX__X_, _XXX___X, XX______,
+};
+
+/** $F3C8 (stage2) / $D14B (stage5): bitmap_F3C8 */
+const pixel_t bitmap_F3C8[3 * 1 * 4 * 1] = {
+  XX_XXXXX, XXXX_XXX, _XX_XXXX,
+  XX__XXX_, XX__XX__, XX_XX___,
+  X_X___XX, XXXXXXXX, XXX_____,
+  XXXXXXXX, XXX_____, ________,
+};
+
+/** $F3D4 (stage2) / $D157 (stage5): bitmap_F3D4 */
+const pixel_t bitmap_F3D4[4 * 1 * 4 * 1] = {
+  X_XXXXXX, XX_XXXXX, _XXXXXXX, XX_XX_XX,
+  X_XXX_XX, XXXXXX_X, XXXXXXXX, X__X_XX_,
+  XXXXXXXX, XXXXXXXX, X_XXXXXX, __XXX___,
+  X_X_XXXX, _XXX__XX, XXXXXX__, _XX_____,
+};
+
+/** $F3E9 (stage2) / $D16C (stage5): bitmap_F3E9 */
+const pixel_t bitmap_F3E9[5 * 1 * 6 * 1] = {
+  XX_XX_XX, XXXXXXXX, XXXXXXXX, XX_X_X_X, X_X__XX_,
+  X_XXX_XX, XX_XXXXX, XXXXXXX_, XXX__X_X, _X___X_X,
+  X_XXXX_X, XXXXXXXX, X_XXXXX_, XXX_XX_X, XXX__X_X,
+  X__XX_XX, XX_XXXXX, XXXXXXXX, XX_XX_XX, X____X_X,
+  X_XXXX_X, XXX_XXXX, _XXXXX_X, XX_X__X_, XX__XXX_,
+  X_XXXX_X, XXXXXXXX, XXXXXXXX, XX_X_XX_, XX_XXX__,
+};
+
+/** $F407 (stage2) / $D18A (stage5): bitmap_F407 */
+const pixel_t bitmap_F407[6 * 1 * 6 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_XXXXXX, XXXXXX_X, X_XXXXX_, _XXX_X__, XXX__XX_, XXXXX__X,
+  X__XXXXX, XXXXXXXX, XXXXXX__, X_X____X, _X_XXX__, XX_X__X_,
+  XX_X_XX_, XXXX_XXX, X_XXX__X, XX_X__X_, __X_X_X_, X_X_X_X_,
+  XXX___XX, XXXXXXXX, _XXXXX_X, X___XXXX, XX__XX_X, ___XXX__,
+  X_XXXXXX, XXXXXXXX, XXXX__XX, XXXXX_XX, X_X__XX_, _XX_____,
+};
+
+/** $F42B (stage2) / $D1AE (stage5): bitmap_F42B */
+const pixel_t bitmap_F42B[2 * 1 * 4 * 1] = {
+  X_XXX_XX, _XXXXX_X,
+  XX_XXXXX, _XX_XXX_,
+  XX__XXX_, XXXXX___,
+  XXXXXXXX, ________,
+};
+
+/** $F433 (stage2) / $D1B6 (stage5): bitmap_F433 */
+const pixel_t bitmap_F433[3 * 1 * 3 * 1] = {
+  X_XX_XX_, XXXXXXXX, _X_XXX__,
+  X_XX_XXX, _XXXXX__, XX_XX___,
+  X_XXXXX_, XXX_XXX_, X_XX____,
+};
+
+/** $F43C (stage2) / $D1BF (stage5): bitmap_F43C */
+const pixel_t bitmap_F43C[3 * 1 * 4 * 1] = {
+  X_XX_XX_, XXXXXXXX, XX___X_X,
+  X_XX_XXX, _XXXXXX_, X__X_X_X,
+  X_XXX_XX, _XX_XX_X, X_X_XX_X,
+  X_XXX_XX, XXXXXXXX, X_X_X_X_,
+};
+
+/** $F448 (stage2) / $D1CB (stage5): bitmap_F448 */
+const pixel_t bitmap_F448[4 * 1 * 4 * 1] = {
+  X_XXXXXX, XXXXXXX_, XX_X__XX, __X_X_X_,
+  X__XXX_X, XXXXXX_X, X_X__X__, _XXXXXX_,
+  XX__XXXX, _XX_XXX_, X___XXX_, XXX__X__,
+  X_XXXXXX, XXXXX_XX, XXXXXX_X, _X__X___,
+};
+
+/** $F458 (stage2) / $D1DB (stage5): bitmap_F458 */
+const pixel_t bitmap_F458[1 * 1 * 3 * 1] = {
+  XXX_XX_X,
+  XXXX_XX_,
+  XX______,
+};
+
+/** $F45B (stage2) / $D1DE (stage5): bitmap_F45B */
+const pixel_t bitmap_F45B[2 * 1 * 3 * 1] = {
+  XXXXXXXX, XXXX_X__,
+  XXXXX_X_, X_XXX___,
+  XX_XXXXX, XXX_____,
+};
+
+/** $F461 (stage2) / $D1E4 (stage5): bitmap_F461 */
+const pixel_t bitmap_F461[2 * 1 * 3 * 1] = {
+  XXXXXXXX, XXXXXX_X,
+  XXXXX_X_, XXX__X_X,
+  XX_XXXXX, XX_XX_X_,
+};
+
+/** $F467 (stage2) / $D1EA (stage5): bitmap_F467 */
+const pixel_t bitmap_F467[3 * 1 * 2 * 1] = {
+  XXX_XXXX, XX_XX_XX, _X_X____,
+  X_XXXX_X, X_X__XX_, XXX_____,
+};
+
+/** $F46D (stage2) / $D1F0 (stage5): bitmap_F46D */
+const pixel_t bitmap_F46D[7 * 1 * 8 * 1] = {
+  XX_XXXX_, _XXXXXX_, XXXX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_X_X,
+  X___XXX_, __XX_XX_, XXX_XXXX, _XXXXXXX, _XXXXXXX, X_XXXXX_, XXXXX__X,
+  X__X_XX_, _XXXXXX_, _XXX_XXX, XXXXXXXX, XX_XXXXX, XXXXXXXX, _XXXXX_X,
+  X___XXX_, _X_XXXX_, X_X_XXXX, _XXXXXXX, _XXXXXX_, XXXXXXX_, XXXXX__X,
+  X____XX_, ____XXXX, _XXX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _XXX__XX,
+  _X_X_XXX, __XXX_XX, __XX_XXX, XX_XXXXX, X_XXXXXX, X_XXXXXX, XXXXX_XX,
+  _X__X_XX, _X_XXXXX, _XXXX_XX, _XXXXXXX, XXXXXXX_, XXXXXX_X, XXXX_X_X,
+  _X___XXX, __X_X_XX, X_XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, _XXXX_XX,
+};
+
+/** $F4A5 (stage2) / $D228 (stage5): bitmap_F4A5 */
+const pixel_t bitmap_F4A5[5 * 1 * 6 * 1] = {
+  _XX__X_X, X_X_X_XX, XXXXXXXX, XXXXXXXX, XX_XX_XX,
+  X_X___X_, X_X__XXX, _XXXXXXX, XXXXX_XX, XX_XXX_X,
+  X_X__XXX, X_XX_XXX, _XXXXX_X, XXXXXXXX, X_XXXX_X,
+  X_X____X, XX_XX_XX, XXXXXXXX, XXXXX_XX, XX_XX__X,
+  _XXX__XX, _X__X_XX, X_XXXXX_, XXXX_XXX, X_XXXX_X,
+  __XXX_XX, _XX_X_XX, XXXXXXXX, XXXXXXXX, X_XXXX_X,
+};
+
+/** $F4C3 (stage2) / $D246 (stage5): bitmap_F4C3 */
+const pixel_t bitmap_F4C3[3 * 1 * 4 * 1] = {
+  X_X___XX, XXXXXXXX, _XX_XX_X,
+  X_X_X__X, _XXXXXX_, XXX_XX_X,
+  X_XX_X_X, X_XX_XX_, XX_XXX_X,
+  _X_X_X_X, XXXXXXXX, XX_XXX_X,
+};
+
+/** $F4CF (stage2) / $D252 (stage5): bitmap_F4CF */
+const pixel_t bitmap_F4CF[2 * 1 * 3 * 1] = {
+  X_XXXXXX, XXXXXXXX,
+  X_X__XXX, _X_XXXXX,
+  _X_XX_XX, XXXXX_XX,
+};
+
+/** $F4D5 (stage2) / $D258 (stage5): bitmap_F4D5 */
+const pixel_t bitmap_F4D5[1 * 2 * 1 * 1] = {
+  ____XXXX, XXXX____,
+};
+
+/** $F4D7 (stage2) / $D25A (stage5): bitmap_F4D7 */
+const pixel_t bitmap_F4D7[2 * 2 * 1 * 1] = {
+  ________, XX_X_XXX, XXXXXXXX, ________,
+};
+
+/** $F4DB (stage2) / $D25E (stage5): bitmap_F4DB */
+const pixel_t bitmap_F4DB[2 * 2 * 2 * 1] = {
+  ________, X_XXX_XX, ___XXXXX, X_X_____,
+  ________, XXXXXXXX, __XXXXXX, _X______,
+};
+
+/** $F4E3 (stage2) / $D266 (stage5): bitmap_F4E3 */
+const pixel_t bitmap_F4E3[3 * 2 * 2 * 1] = {
+  ________, XX_XXXXX, ______XX, XX_X_X__, XXXXXXXX, ________,
+  ________, XXXXXXX_, _____XXX, X_X_X___, XXXXXXXX, ________,
+};
+
+/** $F4EF (stage2) / $D272 (stage5): bitmap_F4EF */
+const pixel_t bitmap_F4EF[1 * 2 * 1 * 1] = {
+  XXXX____, ____XXXX,
+};
+
+/** $F4F1 (stage2) / $D274 (stage5): bitmap_F4F1 */
+const pixel_t bitmap_F4F1[2 * 2 * 1 * 1] = {
+  XXXX____, ____XX_X, ____XXXX, _XXX____,
+};
+
+/** $F4F5 (stage2) / $D278 (stage5): bitmap_F4F5 */
+const pixel_t bitmap_F4F5[2 * 2 * 2 * 1] = {
+  XXXX____, ____X_XX, _______X, X_XXX_X_,
+  XXXX____, ____XXXX, ______XX, XXXX_X__,
+};
+
+/** $F4FD (stage2) / $D280 (stage5): bitmap_F4FD */
+const pixel_t bitmap_F4FD[3 * 2 * 2 * 1] = {
+  XXXX____, ____XX_X, ________, XXXXXX_X, __XXXXXX, _X______,
+  XXXX____, ____XXXX, ________, XXX_X_X_, _XXXXXXX, X_______,
+};
+
+/** $F8A2 (stage2) / $D8C2 (stage5): bitmap_F8A2 */
+const pixel_t bitmap_F8A2[1 * 2 * 2 * 1] = {
+  XXXXX__X, _____XX_,
+  XXXXX__X, _____XX_,
+};
+
+/** $F97B (stage2) / $D93B (stage5): bitmap_F97B */
+const pixel_t bitmap_F97B[5 * 1 * 8 * 1] = {
+  __XXXXX_, ________, XXX_XXX_, ________, _XXXXX__,
+  _XX___XX, _______X, X_X_X_XX, ________, XX___XX_,
+  _X_____X, _____XXX, __X_X__X, XX______, X_____X_,
+  _X_____X, __XXXX__, XX___XX_, _XXXX___, X_____X_,
+  _XX_X_XX, XXX___XX, _X___X_X, X___XXXX, XX_X_XX_,
+  XXXXXXX_, ___XXX__, _XX_XX__, _XXX____, XXXXXXXX,
+  X______X, XXX_____, __XXX___, ____XXXX, _______X,
+  _XXXXXX_, ________, ________, ________, XXXXXXX_,
+};
+
+/** $F9A3 (stage2) / $D963 (stage5): bitmap_F9A3 */
+const pixel_t bitmap_F9A3[4 * 1 * 6 * 1] = {
+  ____XXXX, _______X, X_XX____, ___XXXX_,
+  ___XX__X, X____XX_, X_X_XX__, __XX__XX,
+  ___X____, X_XXX__X, X__X__XX, X_X____X,
+  ____X_XX, XXX__XX_, X__XXX__, XXXXX_X_,
+  ___X_X_X, ___XX___, _XX___XX, ___X_X_X,
+  ____XXXX, XXX_____, ________, XXXXXXX_,
+};
+
+/** $F9BB (stage2) / $D97B (stage5): bitmap_F9BB */
+const pixel_t bitmap_F9BB[3 * 1 * 4 * 1] = {
+  _X_X___X, XXXXX___, X_X_____,
+  X___XXX_, X__X_XXX, ___X____,
+  XXXX____, _XX_____, XXXX____,
+  _XXX____, ________, XXX_____,
+};
+
+/** $F9C7 (stage2) / $D987 (stage5): bitmap_F9C7 */
+const pixel_t bitmap_F9C7[3 * 1 * 4 * 1] = {
+  _____X_X, ___XXXXX, X___X_X_,
+  ____X___, XXX_X__X, _XXX___X,
+  ____XXXX, _____XX_, ____XXXX,
+  _____XXX, ________, ____XXX_,
+};
+
+/** $F9D3 (stage2) / $D993 (stage5): bitmap_F9D3 */
+const pixel_t bitmap_F9D3[3 * 2 * 3 * 1] = {
+  XX___XX_, __X_X__X, ____XX__, XXXX__X_, _XXXXXXX, X_______,
+  XX______, ____XXX_, _____X__, X_X_X_X_, _XXXXXXX, ________,
+  XX_____X, __XXX___, XXXX____, ______XX, _XXXXXXX, X_______,
+};
+
+/** $F9E5 (stage2) / $D9A5 (stage5): bitmap_F9E5 */
+const pixel_t bitmap_F9E5[3 * 2 * 3 * 1] = {
+  XXXXXX__, ______X_, _XX_____, X__XXXXX, XX___XXX, __X_X___,
+  XXXXXX__, ________, ________, XXX_X_X_, _X___XXX, X_X_____,
+  XXXXXX__, ______XX, ___XXXXX, X_______, _____XXX, __XXX___,
+};
+
+/** $C95E (stage3) / $CD26 (stage5): bitmap_C95E */
+const pixel_t bitmap_C95E[6 * 1 * 30 * 1] = {
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  __XXXXX_, _X_X_XXX, XXXXXXXX, XXXXXXXX, XXXX_X_X, __XXXXX_,
+  _XXXXX_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX,
+  _XXXXX_X, __X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, _X_XXXXX,
+  _XXXXX__, _X_X____, ___XXXXX, XXXXXXX_, _____X_X, ___XXXXX,
+  __XXX_XX, XXXXXXXX, XXXX____, ______XX, XXXXXXXX, XXX_XXX_,
+  __XX_X_X, _X_X_X_X, _X_X____, ______XX, _X_X_X_X, _X_X_XX_,
+  _XX_X_X_, ________, ___X____, ______X_, ________, __X_X_XX,
+  _X______, ________, ___XXXXX, XXXXXXX_, ________, _______X,
+  _X______, ________, ________, ________, ________, _______X,
+  _X____X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X____X,
+  __X_XXXX, XXXXXXXX, _______X, XX______, _XXXXXXX, XXXXX_X_,
+  __X_X__X, XXXX_XXX, ______XX, X_______, _XXX_XXX, XX__X_X_,
+  __X_X_XX, X_X_X_XX, _______X, XX______, _XX_X_X_, XXX_X_X_,
+  __X_X__X, XX_X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, XX__X_X_,
+  __X__X_X, X_X___XX, XXXXXXXX, XXXXXXXX, XXX___X_, XX_X__X_,
+  ___X__XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX__X__,
+  ___X____, ________, ________, ________, ________, _____X__,
+  ___X__X_, X_______, ________, ________, ________, __X__X__,
+  ___X_X__, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, ___X_X__,
+  ___X_XXX, __X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, _XXX_X__,
+  ___XXX_X, X__X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X__, XX_XXX__,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  ___X____, ________, ________, ________, ________, _____X__,
+  ___X____, ________, ________, ________, ________, _____X__,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  ________, ____X___, ________, ________, ____X___, ________,
+  ________, _____XX_, ________, ________, __XX____, ________,
+  ________, _______X, XXXXXXXX, XXXXXXXX, XX______, ________,
+};
+
+/** $CA12 (stage3) / $CDDA (stage5): bitmap_CA12 */
+const pixel_t bitmap_CA12[4 * 1 * 20 * 1] = {
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _XXX__X_, XXXXXXXX, XXXXXXX_, X__XXXX_,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX,
+  XXXXX_X_, X_X_XXXX, XXX_X_X_, X_X_XXXX,
+  _X_X_X_X, _X_XX___, __XX_X_X, _X_X__X_,
+  X_______, ____X___, __X_____, _______X,
+  X_______, ________, ________, _______X,
+  X__XXX_X, X_XX_XX_, XX_XX_XX, _XX_X__X,
+  X_X_XXXX, XXX_____, ____XXXX, XXXX_X_X,
+  X_X_X_X_, _XX_____, ____XX__, X_XX_X_X,
+  X__XX_X_, _XXXXXXX, XXXXXX__, X_XXX__X,
+  _X__XXXX, XXXXXXXX, XXXXXXXX, XXXX__X_,
+  _X______, ________, ________, ______X_,
+  _XX___XX, XXXXXXXX, XXXXXXXX, X____XX_,
+  _XXXX__X, X_XX_XX_, XX_XX_XX, X__XXXX_,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _X______, ________, ________, ______X_,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  ________, XX______, _____XX_, ________,
+  ________, __XXXXXX, XXXXX___, ________,
+};
+
+/** $CA62 (stage3) / $CE2A (stage5): bitmap_CA62 */
+const pixel_t bitmap_CA62[3 * 1 * 13 * 1] = {
+  ___XXXXX, XXXXXXXX, XXXXXX__,
+  _XXX___X, XXXXXXXX, XX___XX_,
+  _XX_X_X_, X_XXXXX_, X_X_X_XX,
+  _X______, ________, _______X,
+  _X___XXX, XXXXXXXX, XXXX___X,
+  _X_XXXXX, X___X___, XXXXXX_X,
+  _X__X___, X___X___, X___X__X,
+  _X_XXXXX, XXXXXXXX, XXXXXX_X,
+  __XX____, ________, ______X_,
+  __XXX__X, XXXXXXXX, XX__XXX_,
+  __X__XXX, _X_X_X_X, _XXX__X_,
+  ___XXXXX, XXXXXXXX, XXXXXX__,
+  _______X, XXXXXXXX, XX______,
+};
+
+/** $CA89 (stage3) / $CBED (stage3) / $CE51 (stage5): bitmap_CA89 */
+const pixel_t bitmap_CA89[2 * 2 * 8 * 1] = {
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, XX__XXXX, _____XXX, X__XX___,
+  X_______, _XX_X_X_, ____XXXX, X_XX____,
+  ________, X_XXX___, _____XXX, XXX_X___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_______, _____XXX, ____X___,
+  X_______, _XX_X_X_, ____XXXX, X_XX____,
+  XX______, __XXXXXX, __XXXXXX, XX______,
+};
+
+/** $CAA9 (stage3) / $CC0D (stage3) / $CE71 (stage5): bitmap_CAA9 */
+const pixel_t bitmap_CAA9[2 * 2 * 8 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX,
+  XXX_____, ___XX__X, ________, XXXX__XX,
+  XXXX____, ____XX_X, _______X, _X_X_XX_,
+  XXX_____, ___X_XXX, ________, ___XXX_X,
+  XXX_____, ___XXXXX, ________, XXXXXXXX,
+  XXX_____, ___X____, ________, _______X,
+  XXXX____, ____XX_X, _______X, _X_X_XX_,
+  XXXXX___, _____XXX, _____XXX, XXXXX___,
+};
+
+/** $D3AF (stage3) / $D380 (stage5): bitmap_D3AF */
+const pixel_t bitmap_D3AF[4 * 1 * 16 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ________, ________, __X__XXX,
+  X____XXX, ________, ___XXX__, __X____X,
+  X__XX___, XXXXXXXX, XXX___XX, __X_X__X,
+  X__X_X__, _XXX____, _X___XXX, __X_XX_X,
+  X__X_XXX, __XXX__X, X__XXXXX, __X__X_X,
+  X__X_XXX, X___XXX_, __XXXX_X, __X__X_X,
+  X__X_XXX, _XX__X__, XXXXX__X, __X_XX_X,
+  X__X_XXX, ___X___X, XXXX___X, __X_XX_X,
+  X__X_XXX, _XX__X__, XXXXX__X, __X_XX_X,
+  X__X_XXX, X___XXX_, __XXXX_X, __X__X_X,
+  X__X_XXX, __XXXX_X, X__XXXXX, __X__X_X,
+  X__X_X__, _XXXX___, _X___XXX, __X_XX_X,
+  X__XX___, XXXXXXXX, XXX___XX, __X__X_X,
+  X_______, ________, ________, __X____X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX__X,
+};
+
+/** $D3EF (stage3) / $D3C0 (stage5): bitmap_D3EF */
+const pixel_t bitmap_D3EF[4 * 1 * 24 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ________, ________, __X__XXX,
+  X____XXX, ________, ___XXX__, __X___XX,
+  X__XX___, XXXXXXXX, XXX___XX, __X_XXXX,
+  X__X_X__, _XXX____, _X___XXX, __X_XXXX,
+  X__X_XXX, __XXX__X, X__XXXXX, __X_X_X_,
+  X__X_XXX, X___XXX_, __XXXX_X, __X_XXXX,
+  X__X_XXX, _XX__X__, XXXXX__X, __X_XX_X,
+  X__X_XXX, ___X___X, XXXX___X, __X_X___,
+  X__X_XXX, _XX__X__, XXXXX__X, __X_XXXX,
+  X__X_XXX, X___XXX_, __XXXX_X, __X_X_X_,
+  X__X_XXX, __XXXX_X, X__XXXXX, __X_X___,
+  X__X_X__, _XXXX___, _X___XXX, __X_X___,
+  X__XX___, XXXXXXXX, XXX___XX, __X_XX__,
+  X____XXX, ________, ___XXX__, __XX_XX_,
+  X_______, ________, ________, ____XX_X,
+  X______X, XXXXXXXX, XXXXXXXX, XX____XX,
+  _XXXX___, ___XXXXX, XXXX____, __X_____,
+  _____XXX, X______X, XXXXXXXX, X_X_____,
+  ________, _XXXX___, ___XXXXX, XXX____X,
+  ________, _____XXX, X______X, XXX____X,
+  ________, ________, _XXXX___, __X____X,
+  ________, ________, _____XXX, X_______,
+  ________, ________, ________, _XXXXXXX,
+};
+
+/** $D44F (stage3) / $D420 (stage5): bitmap_D44F */
+const pixel_t bitmap_D44F[24] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, XXXXXXXX, _X_X_X_X,
+  ________, XXXXXXXX, X_X_X_X_, ________, ________, ________, ________, ________,
+  XXXXXXXX, ________, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+};
+
+/** $D467 (stage3) / $D438 (stage5): bitmap_D467 */
+const pixel_t bitmap_D467[4 * 1 * 16 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX__X__, ________, ________, _______X,
+  X____X__, __XXX___, ________, XXX____X,
+  X__X_X__, XX___XXX, XXXXXXXX, ___XX__X,
+  X_XX_X__, XXX___X_, ____XXX_, __X_X__X,
+  X_X__X__, XXXXX__X, X__XXX__, XXX_X__X,
+  X_X__X__, X_XXXX__, _XXX___X, XXX_X__X,
+  X_XX_X__, X__XXXXX, __X__XX_, XXX_X__X,
+  X_XX_X__, X___XXXX, X___X___, XXX_X__X,
+  X_XX_X__, X__XXXXX, __X__XX_, XXX_X__X,
+  X_X__X__, X_XXXX__, _XXX___X, XXX_X__X,
+  X_X__X__, XXXXX__X, X_XXXX__, XXX_X__X,
+  X_XX_X__, XXX___X_, ___XXXX_, __X_X__X,
+  X_X__X__, XX___XXX, XXXXXXXX, ___XX__X,
+  X____X__, ________, ________, _______X,
+  X__XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+/** $D4A7 (stage3) / $D478 (stage5): bitmap_D4A7 */
+const pixel_t bitmap_D4A7[4 * 1 * 24 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX__X__, ________, ________, _______X,
+  XX___X__, __XXX___, ________, XXX____X,
+  XXXX_X__, XX___XXX, XXXXXXXX, ___XX__X,
+  XXXX_X__, XXX___X_, ____XXX_, __X_X__X,
+  X_XX_X__, XXXXX__X, X__XXX__, XXX_X__X,
+  XXXX_X__, X_XXXX__, _XXX___X, XXX_X__X,
+  _X_X_X__, X__XXXXX, __X__XX_, XXX_X__X,
+  ___X_X__, X___XXXX, X___X___, XXX_X__X,
+  XXXX_X__, X__XXXXX, __X__XX_, XXX_X__X,
+  X_XX_X__, X_XXXX__, _XXX___X, XXX_X__X,
+  ___X_X__, XXXXX__X, X_XXXX__, XXX_X__X,
+  ___X_X__, XXX___X_, ___XXXX_, __X_X__X,
+  __XX_X__, XX___XXX, XXXXXXXX, ___XX__X,
+  _XX_XX__, __XXX___, ________, XXX____X,
+  X_XX____, ________, ________, _______X,
+  XX____XX, XXXXXXXX, XXXXXXXX, X______X,
+  _____X__, ____XXXX, XXXXX___, ___XXXX_,
+  _____X_X, XXXXXXXX, X______X, XXX_____,
+  X____XXX, XXXXX___, ___XXXX_, ________,
+  X____XXX, X______X, XXX_____, ________,
+  X____X__, ___XXXX_, ________, ________,
+  _______X, XXX_____, ________, ________,
+  XXXXXXX_, ________, ________, ________,
+};
+
+/** $D507 (stage3) / $D4D8 (stage5): bitmap_D507 */
+const pixel_t bitmap_D507[3 * 1 * 12 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ________, ___X__XX,
+  X_XX__XX, XXXXXX__, XX_X___X,
+  X_X_X__X, X___X__X, XX_X_X_X,
+  X_X_XX__, XXXX__XX, XX_X___X,
+  X_X_XXXX, ____XXXX, _X_X_X_X,
+  X_X_XX_X, X__XXXX_, _X_X_X_X,
+  X_X_XXXX, ____XXXX, _X_X_X_X,
+  X_X_XX__, XXXX__XX, XX_X___X,
+  X_XXX__X, XX__X__X, XX_X_X_X,
+  X_XX__XX, XXXXXX__, XX_X___X,
+  XXXXXXXX, XXXXXXXX, XXXXXX_X,
+};
+
+/** $D52B (stage3) / $D4FC (stage5): bitmap_D52B */
+const pixel_t bitmap_D52B[3 * 1 * 18 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ________, ___X__XX,
+  X_XX__XX, XXXXXX__, XX_X_XXX,
+  X_X_X__X, X___X__X, XX_X_XXX,
+  X_X_XX__, XXXX__XX, XX_X_XX_,
+  X_X_XXXX, ____XXXX, _X_X_X_X,
+  X_X_XX_X, X__XXXX_, _X_X_X__,
+  X_X_XXXX, ____XXXX, _X_X_XX_,
+  X_X_XX__, XXXX__XX, XX_X_X__,
+  X_X_X__X, XX__X__X, XX_X_X__,
+  X_XX__XX, XXXXXX__, XX_X_X__,
+  X_______, ________, ___X_XX_,
+  X____XXX, XXXXXXXX, XXX_X_XX,
+  _XXXX___, XXXXXXX_, ___X____,
+  ____XXXX, ____XXXX, XXXX___X,
+  ________, XXXX____, XXXX___X,
+  ________, ____XXXX, ___X____,
+  ________, ________, XXXXXXXX,
+};
+
+/** $D564 (stage3) / $D535 (stage5): bitmap_D564 */
+const pixel_t bitmap_D564[18] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, _X_X_X_X, ________, X_X_X_X_,
+  ________, ________, ________, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX,
+  ________, XXXXXXXX,
+};
+
+/** $D576 (stage3) / $D547 (stage5): bitmap_D576 */
+const pixel_t bitmap_D576[3 * 1 * 12 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XX__X___, ________, _______X,
+  X___X_XX, __XXXXXX, XX__XX_X,
+  X_X_X_XX, X__X___X, X__X_X_X,
+  X___X_XX, XX__XXXX, __XX_X_X,
+  X_X_X_X_, XXXX____, XXXX_X_X,
+  X_X_X_X_, _XXXX__X, X_XX_X_X,
+  X_X_X_X_, XXXX____, XXXX_X_X,
+  X___X_XX, XX__XXXX, __XX_X_X,
+  X_X_X_XX, X__X__XX, X__XXX_X,
+  X___X_XX, __XXXXXX, XX__XX_X,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+/** $D59A (stage3) / $D56B (stage5): bitmap_D59A */
+const pixel_t bitmap_D59A[3 * 1 * 18 * 1] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XX__X___, ________, _______X,
+  XXX_X_XX, __XXXXXX, XX__XX_X,
+  XXX_X_XX, X__X___X, X__X_X_X,
+  X_X_X_XX, XX__XXXX, __XX_X_X,
+  _XX_X_X_, XXXX____, XXXX_X_X,
+  __X_X_X_, _XXXX__X, X_XX_X_X,
+  X_X_X_X_, XXXX____, XXXX_X_X,
+  __X_X_XX, XX__XXXX, __XX_X_X,
+  __X_X_XX, X__X__XX, X__X_X_X,
+  __X_X_XX, __XXXXXX, XX__XX_X,
+  _XX_X___, ________, _______X,
+  XX_X_XXX, XXXXXXXX, XXX____X,
+  ____X___, _XXXXXXX, ___XXXX_,
+  X___XXXX, XXXX____, XXXX____,
+  X___XXXX, ____XXXX, ________,
+  ____X___, XXXX____, ________,
+  XXXXXXXX, ________, ________,
+};
+
+/** $D5D0 (stage3) / $D5A1 (stage5): bitmap_D5D0 */
+const pixel_t bitmap_D5D0[2 * 1 * 8 * 1] = {
+  X_______, _____X_X,
+  X_X_XXXX, XX_X_XX_,
+  X_XX__XX, __XX_X__,
+  X_XXXX__, XXXX_XX_,
+  X_XXXX__, XXXX_XX_,
+  X_XX__XX, __XX_X__,
+  X_X_XXXX, XX_X_XX_,
+  XXXXXXXX, XXXXXXXX,
+};
+
+/** $D5E0 (stage3) / $D5B1 (stage5): bitmap_D5E0 */
+const pixel_t bitmap_D5E0[2 * 1 * 12 * 1] = {
+  X_______, _____X_X,
+  X_X_XXXX, XX_X_X_X,
+  X_XX__XX, __XX_X_X,
+  X_XXXX__, XXXX_X_X,
+  X_XXXX__, XXXX_X__,
+  X_XX__XX, __XX_X_X,
+  X_X_XXXX, XX_X_X__,
+  X__XXXXX, XXXX__X_,
+  _XX___XX, XX__XX__,
+  ___XXX__, __XXXX_X,
+  ______XX, XX___X__,
+  ________, __XXXXXX,
+};
+
+/** $D5F8 (stage3) / $D5C9 (stage5): bitmap_D5F8 */
+const pixel_t bitmap_D5F8[12] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, _X_X_X_X, ________, _X_X_X_X, ________, ________,
+  ________, XXXXXXXX, ________, XXXXXXXX,
+};
+
+/** $D604 (stage3) / $D5D5 (stage5): bitmap_D604 */
+const pixel_t bitmap_D604[2 * 1 * 8 * 1] = {
+  X_X_____, _______X,
+  _XX_X_XX, XXXX_X_X,
+  __X_XX__, XX__XX_X,
+  _XX_XXXX, __XXXX_X,
+  _XX_XXXX, __XXXX_X,
+  __X_XX__, XX__XX_X,
+  _XX_X_XX, XXXX_X_X,
+  XXXXXXXX, XXXXXXXX,
+};
+
+/** $D614 (stage3) / $D5E5 (stage5): bitmap_D614 */
+const pixel_t bitmap_D614[2 * 1 * 12 * 1] = {
+  X_X_____, _______X,
+  X_X_X_XX, XXXX_X_X,
+  X_X_XX__, XX__XX_X,
+  _XX_XXXX, __XXXX_X,
+  __X_XXXX, __XXXX_X,
+  _XX_XX__, XX__XX_X,
+  __X_X_XX, XXXX_X_X,
+  _X__XXXX, XXXXX__X,
+  __XX__XX, XX___XX_,
+  X_XXXX__, __XXX___,
+  __X___XX, XX______,
+  XXXXXX__, ________,
+};
+
+/** $D62C (stage3) / $D5FD (stage5): bitmap_D62C */
+const pixel_t bitmap_D62C[1 * 1 * 4 * 1] = {
+  X__XX___,
+  XXX__XX_,
+  X__XX___,
+  XXXXXXXX,
+};
+
+/** $D630 (stage3) / $D601 (stage5): bitmap_D630 */
+const pixel_t bitmap_D630[1 * 1 * 6 * 1] = {
+  X__XX___,
+  XXX__XX_,
+  X__XX___,
+  X__XXX__,
+  _XX___X_,
+  __XXXXXX,
+};
+
+/** $D636 (stage3) / $D607 (stage5): bitmap_D636 */
+const pixel_t bitmap_D636[7] = {
+  ________, XXXXXXXX, XXXXXXXX, _X_X_X_X, X_X_X_X_, ________, XXXXXXXX,
+};
+
+/** $D63D (stage3) / $D60E (stage5): bitmap_D63D */
+const pixel_t bitmap_D63D[1 * 1 * 4 * 1] = {
+  ___XX__X,
+  _XX__XXX,
+  ___XX__X,
+  XXXXXXXX,
+};
+
+/** $D641 (stage3) / $D612 (stage5): bitmap_D641 */
+const pixel_t bitmap_D641[1 * 1 * 6 * 1] = {
+  ___XX__X,
+  _XX__XXX,
+  ___XX__X,
+  __XXX__X,
+  _X___XX_,
+  XXXXXX__,
+};
+
+/* ----------------------------------------------------------------------- */
+
 // clang-format on

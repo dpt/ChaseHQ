@@ -1,0 +1,34 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Page:Facts]
+SectionPrefix=Fact
+
+[Fact:Demo:Sinclair User demo version of the game]
+Sinclair User issue 94 (January 1990) included a covertape, Megatape 23, with
+an exclusive demo version of the game on Side B. On Side A was Nightmare Rally
+(1986) - another game featuring Wakelin artwork with a prominent Lamborghini
+Countach (the actual game had a more modest Ford Escort pootling around).
+
+[Fact:DemoLoopOnly:(Demo version) A single stage, borrowed graphics, no retry]
+The demo is not a cut-down full game: $4000 sets up a single stage that reuses
+stage 1's vehicle graphics with stage 4's map data and there is no retry after
+crashing or running out of time. The map itself is shorter still — $6016
+onwards is only the closing "loop" section of stage 4's road, cut and rejoined
+into a short self-contained lap rather than the whole stage (see the
+curvature/height/hazards/right-object blocks starting at $6016, each ending in
+its own loop-back pointer rather than continuing into the rest of stage 4's
+data). No tunnel, no forking road and no helicopter pursuit appear anywhere in
+the demo's map or object streams.
+
+[Fact:DemoPerp:(Demo version) The demo's one perp]
+The demo's single stage uses the name "$5D5F(JASON THE UGLY PIRATE)" for its
+perp, reusing stage 1's perp-description slot rather than defining a
+demo-specific one.
+
+[Fact:DemoTightTimer:(Demo version) A deliberately unforgiving time limit]
+The demo's stage timer is set noticeably tighter than the equivalent retail
+stage. Combined with only ever seeing the closing "loop" section of stage 4
+(see the "loop only" fact above), the demo plays as a short, hard sprint rather
+than a full stage.

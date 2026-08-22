@@ -1,12 +1,12 @@
 # TODO
 
 - Audit "Conv: added" vars
-- Audit: Can we delete a lot of the logtime calls now?
 - Bug: 48K mode drum timing is off (lack of interrupts?)
 - Bug: Highscore: Characters vanish
 - Bug: Highscore: Flicker at bottom when scrolling
 - Bug: Highscore: Hard to enter name
 - Bug: Highscore: Test: non-highest score
+- Bug: Success tune cut short?
 - Compare the demo level with stage 4
 - Continue backporting changes to the disasm
 - Flush out this 'it's a custom level' germ of an idea that keeps reappearing
@@ -14,9 +14,7 @@
 - New video
 - Optimisations
 - Slap warnings on the level converter now it's finished?
-- Timing: Properly calibrate the game against the original (needs emulator
-  T-state recording)
-- Idea: Mouse steering!
+- Timing: Properly calibrate the game against the original (needs emulator T-state recording)
 
 ### Authority sweep (comments that read as guesswork)
 

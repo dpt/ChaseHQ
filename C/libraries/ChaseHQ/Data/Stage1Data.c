@@ -75,7 +75,6 @@
 
 /* Forward declarations */
 
-static const u8 stage1_perp_description[7];
 static const char *stage1_chatter_strings[4];
 static const u8 stage1_arrest_messages[83];
 static const hittable_t stage1_hittable_object_defs[2];
@@ -115,81 +114,25 @@ static const pixel_t stage1_perp_face[FACEBYTES];
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES];
-static const pixel_t stage1_bitmap_lambo_1[6 * 1 * 30 * 1];
-static const pixel_t stage1_bitmap_lambo_2[5 * 1 * 22 * 1];
-static const pixel_t stage1_bitmap_lambo_3[3 * 1 * 15 * 1];
-static const pixel_t stage1_bitmap_truck_1[6 * 1 * 39 * 1];
-static const pixel_t stage1_bitmap_truck_2[5 * 1 * 29 * 1];
-static const pixel_t stage1_bitmap_truck_3[3 * 1 * 20 * 1];
-static const pixel_t stage1_bitmap_car_1[6 * 1 * 31 * 1];
-static const pixel_t stage1_bitmap_car_2[5 * 1 * 22 * 1];
-static const pixel_t stage1_bitmap_car_3[3 * 1 * 16 * 1];
-static const pixel_t stage1_bitmap_lambo_4[3 * 2 * 8 * 1];
-static const pixel_t stage1_bitmap_lambo_4s[3 * 2 * 8 * 1];
-static const pixel_t stage1_bitmap_truck_4[2 * 2 * 12 * 1];
-static const pixel_t stage1_bitmap_truck_4s[2 * 2 * 12 * 1];
-static const pixel_t stage1_bitmap_car_4[3 * 2 * 9 * 1];
-static const pixel_t stage1_bitmap_car_4s[3 * 2 * 9 * 1];
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES];
-static const pixel_t stage1_bitmap_stones_1[2 * 2 * 5 * 1];
-static const pixel_t stage1_bitmap_stones_2[2 * 2 * 4 * 1];
-static const pixel_t stage1_bitmap_stones_2s[2 * 2 * 4 * 1];
-static const pixel_t stage1_bitmap_stones_3[2 * 2 * 3 * 1];
-static const pixel_t stage1_bitmap_stones_3s[2 * 2 * 3 * 1];
-static const pixel_t stage1_bitmap_stones_4[1 * 2 * 2 * 1];
-static const pixel_t stage1_bitmap_stones_4s[1 * 2 * 2 * 1];
-static const pixel_t stage1_bitmap_stones_5[1 * 2 * 1 * 1];
-static const pixel_t stage1_bitmap_stones_5s[1 * 2 * 1 * 1];
-static const pixel_t stage1_bitmap_dust_1[1 * 2 * 1 * 1];
-static const pixel_t stage1_bitmap_dust_1s[1 * 2 * 1 * 1];
 static const depthset_t stage1_turn_sign_right;
 static const depthset_t stage1_turn_sign_left;
 static const bitmap_t stage1_turn_sign_bitmaps[10];
-static const pixel_t stage1_bitmap_turnsign_1[4 * 1 * 40 * 1];
-static const pixel_t stage1_bitmap_turnsign_2[3 * 1 * 30 * 1];
-static const pixel_t stage1_bitmap_turnsign_3[2 * 1 * 20 * 1];
-static const pixel_t stage1_bitmap_turnsign_4[2 * 2 * 16 * 1];
-static const pixel_t stage1_bitmap_turnsign_5[2 * 2 * 13 * 1];
 static const pixel_t stage1_bitmap_turnsign_5s[2 * 2 * 13 * 1];
 static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES];
-static const pixel_t stage1_bitmap_tumbleweed_1[2 * 1 * 16 * 1];
-static const pixel_t stage1_bitmap_tumbleweed_2[2 * 1 * 11 * 1];
-static const pixel_t stage1_bitmap_tumbleweed_3[1 * 1 * 9 * 1];
-static const pixel_t stage1_bitmap_tumbleweed_4[1 * 1 * 7 * 1];
 static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES];
-static const pixel_t stage1_bitmap_barrier_1[4 * 1 * 17 * 1];
-static const pixel_t stage1_bitmap_barrier_2[3 * 1 * 13 * 1];
-static const pixel_t stage1_bitmap_barrier_3[2 * 1 * 9 * 1];
-static const pixel_t stage1_bitmap_barrier_4[2 * 2 * 7 * 1];
-static const pixel_t stage1_bitmap_barrier_4s[2 * 2 * 7 * 1];
 static const stretchy_t stage1_stretchy_streetlamp_right[5];
 static const stretchy_t stage1_stretchy_streetlamp_left[5];
 static const depthset_t stage1_streetlamptop_right;
 static const depthset_t stage1_streetlamptop_left;
 static const bitmap_t stage1_streetlamptop_bitmaps[5];
 static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5];
-static const pixel_t stage1_bitmap_streetlamptop_1[4 * 1 * 8 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_2[3 * 1 * 5 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_3[3 * 1 * 4 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_3s[3 * 1 * 4 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_4[2 * 2 * 4 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_4s[2 * 2 * 4 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_5[2 * 2 * 3 * 1];
-static const pixel_t stage1_bitmap_streetlamptop_5s[2 * 2 * 3 * 1];
 static const stretchy_t stage1_stretchy_telegraphpole_right[5];
 static const stretchy_t stage1_stretchy_telegraphpole_left[5];
 static const depthset_t stage1_telegraphpoletop_left;
 static const depthset_t stage1_telegraphpoletop_right;
 static const bitmap_t stage1_telegraphpoletop_bitmaps[5];
-static const pixel_t stage1_bitmap_telegraphpoletop_1[3 * 1 * 13 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_2[3 * 1 * 10 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_3[3 * 1 * 7 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_3s[3 * 1 * 7 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_4[2 * 2 * 5 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_5[2 * 2 * 4 * 1];
-static const pixel_t stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4 * 1];
 static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES];
 static const stretchy_t stage1_stretchy_bush[4];
 static const depthset_t stage1_tree_bottom;
@@ -270,7 +213,7 @@ const stage_t stage1 = {
   &stage1_left_hand_graphics_defs[-1].arg,
   &stage1_left_hand_graphics_defs[-1],
   &stage1_left_hand_graphics_defs[2], // short pole
-  &stage1_perp_description[0],
+  &perp_description[0],
   &stage1_arrest_messages[0],
   { NULL, NULL }, // unused on this level - addrof_helicopter_frames - Conv: was &000C
 
@@ -313,16 +256,7 @@ const stage_t stage1 = {
 
 /* ----------------------------------------------------------------------- */
 
-/** $5D39: stage1_perp_description */
-static const u8 stage1_perp_description[7] = {
-  CHATTERCHR_NANCY,
-  CHATTERSTR_PERP_DESC_1,
-  CHATTERSTR_PERP_DESC_2,
-  CHATTERSTR_PERP_DESC_3,
-  CHATTERSTR_PERP_DESC_4,
-  CHATTERCMD_PAUSE,
-  CHATTERBLK_HEROES_ACKNOWLEDGE
-};
+/* $5D39: perp_description - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
 /**
  * $C145 (bank 1)
@@ -1661,468 +1595,107 @@ static const pixel_t stage1_perp_face[FACEBYTES] = {
 
 /** $643E: stage1_lambo_bitmaps */
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES] = {
-  { 6, BITMAPFLAG_DEFAULT, 30, &stage1_bitmap_lambo_1[0], &stage1_bitmap_lambo_1[0]  },
-  { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_lambo_2[0], &stage1_bitmap_lambo_2[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
-  { 3, BITMAPFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4[0]  },
-  { 3, BITMAPFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4s[0] },
+  { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_lambo_1[0], &bitmap_lambo_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_lambo_2[0], &bitmap_lambo_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0]  },
+  { 3, BITMAPFLAG_MASKED,   8, &bitmap_lambo_4[0], &bitmap_lambo_4[0]  },
+  { 3, BITMAPFLAG_MASKED,   8, &bitmap_lambo_4[0], &bitmap_lambo_4s[0] },
 };
 
 /** $6468: stage1_truck_bitmaps */
 static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES] = {
-  { 6, BITMAPFLAG_DEFAULT, 39, &stage1_bitmap_truck_1[0], &stage1_bitmap_truck_1[0]  },
-  { 5, BITMAPFLAG_DEFAULT, 29, &stage1_bitmap_truck_2[0], &stage1_bitmap_truck_2[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
-  { 2, BITMAPFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
-  { 2, BITMAPFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
+  { 6, BITMAPFLAG_DEFAULT, 39, &bitmap_truck_1[0], &bitmap_truck_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 29, &bitmap_truck_2[0], &bitmap_truck_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0]  },
+  { 2, BITMAPFLAG_MASKED,  12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },
+  { 2, BITMAPFLAG_MASKED,  12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },
 };
 
 /** $6492: stage1_car_bitmaps */
 static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
-  { 6, BITMAPFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
-  { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, BITMAPFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
-  { 3, BITMAPFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+  { 6, BITMAPFLAG_DEFAULT, 31, &bitmap_car_1[0], &bitmap_car_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_car_2[0], &bitmap_car_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
+  { 3, BITMAPFLAG_MASKED,   9, &bitmap_car_4[0], &bitmap_car_4s[0] },
+  { 3, BITMAPFLAG_MASKED,   9, &bitmap_car_4[0], &bitmap_car_4s[0] },
 };
 
-/** $64BC: stage1_bitmap_lambo_1 */
-static const pixel_t stage1_bitmap_lambo_1[6 * 1 * 30 * 1] = {
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  _XXXXXX_, _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, __XXXXXX,
-  _XXXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX,
-  __XXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXX_,
-  ___XXXX_, X_X_X_XX, X_X_X_X_, X_X_X_X_, XXX_X_X_, X_XXXX__,
-  ___X_X__, _____XXX, XXXXXXXX, XXXXXXXX, XXXX____, ___X_X__,
-  __X___X_, X_XXXXXX, _XX_XXXX, XXXXXXX_, XX_XXXX_, X_X___X_,
-  __X_XXXX, XXXXXXX_, _X__XXX_, X_X_XX__, X__XXXXX, XXXXX_X_,
-  __XXXXXX, XXXXXXXX, XXXXXX_X, _X_X_XXX, XXXXXXXX, XXXXXXX_,
-  __XXXXXX, XXXX_XXX, X_X__X__, ____X_X_, XXXXXXXX, XXXXXXX_,
-  __XX_XXX, __X_X_X_, X_______, ________, X_XXXXXX, XXXXXXX_,
-  __X_X_X_, _X_X_XXX, ________, ________, _XX____X, XXXXXXX_,
-  __X___X_, XXXXXXXX, _X_X_X_X, _X_X_X_X, _X_XXXX_, _XXXXXX_,
-  __X__X_X, XX____XX, X_X_X_X_, X_X_X_X_, X_X____X, X__XX_X_,
-  _X_X_XXX, __X_X__X, XXXXXXXX, XXXXXXXX, XX__X_X_, _XX_XX_X,
-  _XX_XX__, _______X, __X_X_X_, X_X_X_X_, _X______, ___XX_XX,
-  _XXX_X__, _______X, __XX_X_X, _X_X_XX_, _X______, ___XXXXX,
-  _XXX_XXX, _X_X_X_X, XXXXXXXX, XXXXXXXX, XX_X_X_X, _XXXXXXX,
-  __XXX__X, XX____XX, X_______, ________, XXX____X, XX_XXXX_,
-  ____X___, _XXXXXXX, XXX_X_X_, X_X_X_XX, XXXXXXXX, ____X___,
-  ____XX_X, ______XX, XXXXXXXX, XXXXXXXX, XXX_____, _X_XX___,
-  ______XX, X_XX___X, _X_X_X_X, _X_X_X_X, _X___XX_, XXX_____,
-  __XXX___, XXXXXXXX, XXX_____, ______XX, XXXXXXXX, X___XXX_,
-  _X__XX__, _XXX_X_X, _XXXXXXX, XXXXXXXX, _X_X_XXX, ___XX__X,
-  _X_XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
-  _X__X___, ________, ________, ________, ________, ____X__X,
-  _XX__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX__XX,
-  ___XXX__, ________, ________, ________, ________, ___XXX__,
-};
+/* $64BC: bitmap_lambo_1 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $6570: stage1_bitmap_lambo_2 */
-static const pixel_t stage1_bitmap_lambo_2[5 * 1 * 22 * 1] = {
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  __XX__X_, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXX__,
-  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XX___,
-  ___XX___, ___XXXXX, XXXXXXXX, XXXX____, __XX____,
-  __X__X_X, _XXXX_XX, _XXXXXXX, _XX_XX_X, _X__X___,
-  __X_XXXX, XXXX__X_, _XX__XX_, _X__XXXX, XXX_X___,
-  __XXXXXX, _X_XXXXX, XX____XX, XXXXXXXX, XXXXX___,
-  __XX_XX_, __X__X_X, _______X, _X_XXXXX, XXXXX___,
-  __X_X___, _XXXX___, ________, __XXXXXX, XXXXX___,
-  __X____X, X___XX_X, _X_X_X_X, _XX___XX, X_X_X___,
-  ___X_XX_, __X_XXXX, XXXXXXXX, XXX_X___, XX_X_X__,
-  __XX_X__, ____X__X, _X_X_X_X, __X_____, _XXXXX__,
-  __XX_XXX, ___XXXXX, XXXXXXXX, XXXX___X, XXXXXX__,
-  ____X___, XXXXXXX_, X_X_X_X_, XXXXXXX_, ___X____,
-  _____XX_, ____XXXX, XXXXXXXX, XXXX____, _XX_____,
-  ______XX, _XX_XXXX, _X__X__X, _XXX_XX_, XX______,
-  __X__X__, XX_XX_XX, XXXXXXXX, XX_XX_XX, __X__X__,
-  __X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_X__,
-  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XX__,
-  ___XX___, ________, ________, ________, __XX____,
-};
+/* $6570: bitmap_lambo_2 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $65DE: stage1_bitmap_lambo_3 */
-static const pixel_t stage1_bitmap_lambo_3[3 * 1 * 15 * 1] = {
-  _XXXXXXX, XXXXXXXX, XXXXXXX_,
-  XXX__XXX, XXXXXXXX, XXX__XXX,
-  XX_XXXXX, XXXXXXXX, XXXXX_XX,
-  _XX___XX, XXXXXXXX, XX___XX_,
-  XX_XXXXX, _X_XX_X_, XXXXX_X_,
-  XXXXXXXX, XXX__XXX, XXXXXXXX,
-  XX__XXXX, ________, _XXXXXXX,
-  X__XX__X, XXXXXXXX, X__XXXXX,
-  X_X____X, ________, X____XXX,
-  X_XXX_XX, XXXXXXXX, XX_XXXXX,
-  _XX__XX_, XXXXXXXX, _XXX_XX_,
-  ___X___X, X_X__X_X, X_XXX___,
-  XXX_X_X_, XXXXXXXX, XXXX_XXX,
-  X_XXXXXX, XXXXXXXX, XXXXXX_X,
-  _XX_____, ________, _____XX_,
-};
+/* $65DE: bitmap_lambo_3 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $660B: stage1_bitmap_truck_1 */
-static const pixel_t stage1_bitmap_truck_1[6 * 1 * 39 * 1] = {
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
-  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
-  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXX_X_X, __XXXXX_,
-  _XXXX__X, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, X__XXXX_,
-  _XXXX_XX, XXXXXXXX, XX______, _______X, XXXXXXXX, XX_XXXX_,
-  __XXX_XX, XXXXXXXX, XX______, _______X, XXXXXXXX, XX_XXX__,
-  __XXX_XX, XXXXX___, XXX_____, ______XX, X___XXXX, XX_XXX__,
-  ___XX_XX, XXXX_X_X, XX_X_X_X, _X_X_X_X, XX_X_XXX, XX_XX___,
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
-  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  ___X____, ________, ________, ________, ________, ____X___,
-  __X_X_X_, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, _X_X_X__,
-  __XX_X_X, _X___X_X, _X_X_X_X, _X_X_X_X, _X_X__X_, X_X_XX__,
-  __X_XXX_, ________, ________, ________, ________, _XXX_X__,
-  __XXXX__, ________, ________, ________, ________, __XXXX__,
-  _X___XX_, ________, ________, ________, ________, _XX___X_,
-  _X___X__, ________, ________, ________, ________, __X___X_,
-  _X___XX_, ________, ________, ________, ________, _XX___X_,
-  __XXXXX_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_XXXXX_,
-  _X___XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX___X_,
-  _X______, ________, ________, ________, ________, ______X_,
-  _X______, ________, ________, ________, ________, ______X_,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  ___XXXX_, _XX_X_X_, X_X_X_XX, X_X_X_X_, X_X_X_X_, _XXXX___,
-  ______XX, X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, XX______,
-  ______XX, XX______, XX_____X, X_____XX, ______XX, XX______,
-  _____XX_, __XXXXXX, __XXXXX_, _XXXXX__, XXXXXX__, _XX_____,
-  ____X_XX, X_X_X_XX, __X_X_X_, _X_X_X__, XX_X_X_X, XX_X____,
-  ____X__X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X__X____,
-  ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X___X___,
-  ___X___X, _X_XXXXX, __XXXXX_, _XXXXX__, XXXXX_X_, X___X___,
-  ___X___X, __X_XXXX, __XXXXX_, _XXXXX__, XXXX_X__, X___X___,
-  ___X___X, X_X_XXXX, __XXXXX_, _XXXXX__, XXXX_X_X, X___X___,
-  ____X_X_, _XX_XXXX, __XXXXX_, _XXXXX__, XXXX_XX_, _X_X____,
-  _____XXX, X__X_XXX, __XXXXX_, _XXXXX__, XXX_X__X, XXX_____,
-  ________, _XXX____, ________, ________, ____XXX_, ________,
-  ________, ____X___, ________, ________, ___X____, ________,
-  ________, _____XXX, XXXXXXXX, XXXXXXXX, XXX_____, ________,
-};
+/* $660B: bitmap_truck_1 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $66F5: stage1_bitmap_truck_2 */
-static const pixel_t stage1_bitmap_truck_2[5 * 1 * 29 * 1] = {
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
-  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  ___XXX_X, _XXXXXXX, XXXXXXXX, XXXXXXX_, X_XXXX__,
-  ___XX_XX, XXXXXXXX, ________, _XXXXXXX, XX_XXX__,
-  ___XX_XX, XXXX__XX, ________, _XX__XXX, XX_XX___,
-  ____X_XX, XXX_XXXX, X_X___X_, XXXXX_XX, XX_X____,
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  ____X___, ________, ________, ________, ___X____,
-  ___X_XX_, X_XXXXXX, XXXXXXXX, XXXXXX_X, _XX_X___,
-  ___X_X_X, _X______, ________, ______X_, X_X_X___,
-  ___XXX__, ________, ________, ________, __XXX___,
-  __X___X_, ________, ________, ________, _X___X__,
-  __X___X_, ________, ________, ________, _X___X__,
-  __XXXXX_, X_X_X_X_, X_X__X_X, _X_X_X_X, __XXXX__,
-  __X_____, ________, ________, ________, _____X__,
-  __X_____, ________, ________, ________, _____X__,
-  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  ______XX, X_XXXXXX, XXXXXXXX, XXXXXX_X, XX______,
-  ______XX, XX____X_, ___XX___, _X____XX, XX______,
-  _____XXX, X__X_X_X, X_X__X_X, X_X_X__X, XXX_____,
-  _____X_X, __XXXX_X, XXX__XXX, X_XXXX__, X_X_____,
-  ____X__X, __XXXX_X, XXX__XXX, X_XXXX__, X__X____,
-  ____X__X, _X_XXX_X, XXX__XXX, X_XXX_X_, X__X____,
-  ____X__X, XX_XXX_X, XXX__XXX, X_XXX_XX, X__X____,
-  ______XX, X_X_XX_X, XXX__XXX, X_XX_X_X, XX______,
-  ________, _XX_____, ________, _____XX_, ________,
-  ________, ___X____, ________, ____X___, ________,
-  ________, ____XXXX, XXXXXXXX, XXXX____, ________,
-};
+/* $66F5: bitmap_truck_2 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $6786: stage1_bitmap_truck_3 */
-static const pixel_t stage1_bitmap_truck_3[3 * 1 * 20 * 1] = {
-  _XXXXXXX, XXXXXXXX, XXXXXXX_,
-  XXX_XXXX, XXXXXXXX, XXXX_XXX,
-  XX_XXXXX, X______X, XXXXX_XX,
-  _X_XXXX_, XX____XX, _XXXX_X_,
-  __XXXXXX, XXXXXXXX, XXXXXX__,
-  _X______, ________, ______X_,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX,
-  X_X_X___, ________, ___X_X_X,
-  X_X_____, ________, _____X_X,
-  _XX_X_X_, X_X_X_X_, X_X_XXX_,
-  X_______, ________, _______X,
-  _XXXXXXX, XXXXXXXX, XXXXXXX_,
-  ___XXX__, ________, ___XX___,
-  ___X___X, X_XX_XX_, XX___X__,
-  __X_XX_X, X_XX_XX_, XX_XX_X_,
-  __X_X__X, X_XX_XX_, XX__X_X_,
-  __X_X__X, X_XX_XX_, XX__X_X_,
-  ___XXXX_, X_XX_XX_, X_XXXX__,
-  _______X, ________, _X______,
-  ________, XXXXXXXX, X_______,
-};
+/* $6786: bitmap_truck_3 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $67C2: stage1_bitmap_car_1 */
-static const pixel_t stage1_bitmap_car_1[6 * 1 * 31 * 1] = {
-  ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXX_X_X_, _XXXXX__,
-  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
-  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
-  _XX_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_XXX_,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  _X______, ________, ________, ________, ________, _____X__,
-  _X______, ________, ________, ________, ________, _____X__,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  __X_____, ________, ________, ________, ________, ____X___,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  _X__XXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, XXX__X__,
-  _X__XXXX, _X_X_X_X, _X______, _____X_X, _X_X_X_X, XXX__X__,
-  _X__XXXX, __X_X_X_, XX______, _____XX_, X_X_X_X_, XXX__X__,
-  __XXXXX_, _X_X_X_X, _X______, _____X_X, _X_X_X__, XXXXXX__,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  __X_XX__, ________, ________, ________, ________, _XX_X___,
-  ___X_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_X____,
-  __X_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XX_X___,
-  _X___XX_, ________, ________, ________, ________, XX___X__,
-  _X____XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X____X__,
-  __XXXXXX, X_X_____, ________, ___XXXXX, ____X_XX, XXXXX___,
-  _______X, XX_X____, ________, __XXXXXX, ___X_XXX, ________,
-  ________, XX__X___, ________, __XXXXXX, __X__XX_, ________,
-  ________, _XX__XX_, ________, ___XXXX_, XX__XX__, ________,
-  ________, ___X___X, XXXXXXXX, XXXXXXXX, ___XX___, ________,
-  ________, ____XX__, ________, ________, _XX_____, ________,
-  ________, ______XX, XXXXXXXX, XXXXXXXX, X_______, ________
-};
+/* $67C2: bitmap_car_1 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $687C: stage1_bitmap_car_2 */
-static const pixel_t stage1_bitmap_car_2[5 * 1 * 22 * 1] = {
-  ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
-  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  __XXXX__, X_XXXXXX, XXXXXXXX, XXXXX_X_, _XXXX___,
-  _XXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
-  __XX_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_XXX__,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  __X_____, ________, ________, ________, ____X___,
-  ___X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_X____,
-  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
-  __X__XX_, XXXXXXXX, XXXXXXXX, XXXXXXX_, XX__X___,
-  __X__XX_, _X_X_X__, ________, XX_X_X__, XX__X___,
-  ___XXXX_, X_X_XX__, ________, X_X_X_X_, XXXXX___,
-  ___XXX_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _XXX____,
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
-  ___X_X__, XXXXXXXX, XXXXXXXX, XXXXXXX_, _X_X____,
-  __X__XXX, X_______, ________, ______XX, XX__X___,
-  ___XXXXX, _X______, ______XX, XX___X_X, XXXX____,
-  _______X, X_X_____, _____XXX, XX__X_XX, ________,
-  ________, XX_XX___, ______XX, X_XX_XX_, ________,
-  ________, __X__XXX, XXXXXXXX, XX__X___, ________,
-  ________, ___XXXXX, XXXXXXXX, XXXX____, ________,
-};
+/* $687C: bitmap_car_2 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $68EA: stage1_bitmap_car_3 */
-static const pixel_t stage1_bitmap_car_3[3 * 1 * 16 * 1] = {
-  _____XXX, XXXXXXXX, XXX_____,
-  _XXXXXXX, XXXXXXXX, XXXXXXX_,
-  XXX__XXX, XXXXXXXX, XXX__XXX,
-  XX_XXXXX, XXXXXXXX, XXXXX_XX,
-  _XX_X_X_, X_XX_X_X, _X_X_XX_,
-  X_______, ________, _______X,
-  _XX_XXXX, XXXXXXXX, XXXX_XX_,
-  X_XXX_X_, X______X, _X_XXX_X,
-  X_XX_X_X, _X_XX_X_, X_X_XX_X,
-  _XXXXXXX, XXXXXXXX, XXXXXXX_,
-  _XX_XXXX, XXXXXXXX, XXXXX_X_,
-  _X_X____, ________, _____X_X,
-  __XXX_X_, ______XX, __X_XXX_,
-  ____XX_X, _____XXX, _X_XX___,
-  _____XX_, _XXXXXXX, __XX____,
-  _______X, XXXXXXXX, XX______,
-};
+/* $68EA: bitmap_car_3 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $691A: stage1_bitmap_lambo_4 */
-static const pixel_t stage1_bitmap_lambo_4[3 * 2 * 8 * 1] = {
-  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
-  X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
-  ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
-  ________, X_XX_XXX, _______X, XXX_XXX_, XXXXXXXX, ________,
-  ________, X_X__XX_, _______X, X_X__XX_, XXXXXXXX, ________,
-  X_______, _X_XXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
-  _X______, X_XXX_X_, _____X_X, X_XXX_X_, XXXXXXXX, ________,
-  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
-};
+/* $691A: bitmap_lambo_4 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $694A: stage1_bitmap_lambo_4s */
-static const pixel_t stage1_bitmap_lambo_4s[3 * 2 * 8 * 1] = {
-  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
-  XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
-  XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
-  XXXX____, ____X_XX, ________, _XXXXXX_, ___XXXXX, XXX_____,
-  XXXX____, ____X_X_, ________, _XX_X_X_, ___XXXXX, _XX_____,
-  XXXXX___, _____X_X, ________, XXXXXXXX, __XXXXXX, XX______,
-  XXXX_X__, ____X_XX, ________, X_X_X_XX, _X_XXXXX, X_X_____,
-  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
-};
+/* $694A: bitmap_lambo_4s - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $697A: stage1_bitmap_truck_4 */
-static const pixel_t stage1_bitmap_truck_4[2 * 2 * 12 * 1] = {
-  ________, XXXXXXXX, _____XXX, XXXXX___,
-  ________, XX_XXXXX, _____XXX, XX_XX___,
-  ________, XXXXX___, _____XXX, XXXXX___,
-  ________, X_X_X_X_, _____XXX, X_X_X___,
-  ________, X_______, _____XXX, ____X___,
-  ________, X_______, _____XXX, ____X___,
-  ________, XXX_X_X_, _____XXX, X_XXX___,
-  X_______, _X_X_X_X, ____XXXX, _X_X____,
-  ________, X__X_X_X, _____XXX, _X__X___,
-  ________, XX_X_X_X, _____XXX, _X_XX___,
-  X_______, _XX_____, ____XXXX, __XX____,
-  XXX_____, ___XXXXX, __XXXXXX, XX______,
-};
+/* $697A: bitmap_truck_4 - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $69AA: stage1_bitmap_truck_4s */
-static const pixel_t stage1_bitmap_truck_4s[2 * 2 * 12 * 1] = {
-  XXX_____, ___XXXXX, ________, XXXXXXXX,
-  XXX_____, ___XX_XX, ________, XXXXX_XX,
-  XXX_____, ___XXXXX, ________, ___XXXXX,
-  XXX_____, ___X_X_X, ________, _X_X_X_X,
-  XXX_____, ___X____, ________, _______X,
-  XXX_____, ___X____, ________, _______X,
-  XXX_____, ___XXX_X, ________, _X_X_XXX,
-  XXXX____, ____X_X_, _______X, X_X_X_X_,
-  XXX_____, ___X__X_, ________, X_X_X__X,
-  XXX_____, ___XX_X_, ________, X_X_X_XX,
-  XXXX____, ____XX__, _______X, _____XX_,
-  XXXXXX__, ______XX, _____XXX, XXXXX___,
-};
+/* $69AA: bitmap_truck_4s - Conv: Deduped to CommonData.c (shared with stage 5) */
 
-/** $69DA: stage1_bitmap_car_4 */
-static const pixel_t stage1_bitmap_car_4[3 * 2 * 9 * 1] = {
-  X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
-  ________, XXX_XXXX, ________, XXXX_XXX, XXXXXXXX, ________,
-  ________, XX_X_X_X, ________, _X_X__XX, XXXXXXXX, ________,
-  X_______, _X__X_X_, _______X, X_X___X_, XXXXXXXX, ________,
-  X_______, _XXX_XXX, _______X, XX_XXXX_, XXXXXXXX, ________,
-  X_______, _XX_____, _______X, _____XX_, XXXXXXXX, ________,
-  X_______, _X_XXXXX, _______X, XXXXX_X_, XXXXXXXX, ________,
-  XX___XXX, __X_X___, X_X___XX, _X_X_X__, XXXXXXXX, ________,
-  XXXX____, ____XXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
-};
+/* $69DA: bitmap_car_4 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6A10: stage1_bitmap_car_4s */
-static const pixel_t stage1_bitmap_car_4s[3 * 2 * 9 * 1] = {
-  XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
-  XXXX____, ____XXX_, ________, XXXXXXXX, ____XXXX, _XXX____,
-  XXXX____, ____XX_X, ________, _X_X_X_X, ____XXXX, __XX____,
-  XXXXX___, _____X__, ________, X_X_X_X_, ___XXXXX, __X_____,
-  XXXXX___, _____XXX, ________, _XXXXX_X, ___XXXXX, XXX_____,
-  XXXXX___, _____XX_, ________, ________, ___XXXXX, _XX_____,
-  XXXXX___, _____X_X, ________, XXXXXXXX, ___XXXXX, X_X_____,
-  XXXXXX__, ______X_, _XXXX_X_, X____X_X, __XXXXXX, _X______,
-  XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
-};
+/* $6A10: bitmap_car_4s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
 /* ----------------------------------------------------------------------- */
 
 /** $CE46: stage1_stones_bitmaps */
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
-  { 2, BITMAPFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
-  { 2, BITMAPFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
-  { 2, BITMAPFLAG_MASKED, 3, &stage1_bitmap_stones_3[0], &stage1_bitmap_stones_3s[0] },
-  { 1, BITMAPFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
-  { 1, BITMAPFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
+  { 2, BITMAPFLAG_MASKED, 5, &bitmap_stones_1[0], &bitmap_stones_1[0] },
+  { 2, BITMAPFLAG_MASKED, 4, &bitmap_stones_2[0], &bitmap_stones_2s[0] },
+  { 2, BITMAPFLAG_MASKED, 3, &bitmap_stones_3[0], &bitmap_stones_3s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_stones_4[0], &bitmap_stones_4s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &bitmap_stones_4[0], &bitmap_stones_4s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_stones_5[0], &bitmap_stones_5s[0] }
 };
 
 /** $CE70: stage1_dust_bitmaps */
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] }
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &bitmap_dust_1[0], &bitmap_dust_1s[0] }
 };
 
-/** $6A9A: stage1_bitmap_stones_1 */
-static const pixel_t stage1_bitmap_stones_1[2 * 2 * 5 * 1] = {
-  ________, XXXXXXXX, ___XXXXX, XXX_____,
-  ________, X_____X_, ____XXXX, XXXX____,
-  ________, X______X, ___XXXXX, _XX_____,
-  X_______, _XX___XX, __XXXXXX, XX______,
-  XXX_____, ___XXXXX, XXXXXXXX, ________,
-};
+/* $6A9A: bitmap_stones_1 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AAE: stage1_bitmap_stones_2 */
-static const pixel_t stage1_bitmap_stones_2[2 * 2 * 4 * 1] = {
-  ________, XXXXXXXX, XXXXXXXX, ________,
-  ________, X____XXX, _XXXXXXX, X_______,
-  X_______, _X____XX, XXXXXXXX, ________,
-  XX_____X, __XX_XX_, XXXXXXXX, ________,
-};
+/* $6AAE: bitmap_stones_2 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6ABE: stage1_bitmap_stones_2s */
-static const pixel_t stage1_bitmap_stones_2s[2 * 2 * 4 * 1] = {
-  XXXX____, ____XXXX, ____XXXX, XXXX____,
-  XXXX____, ____X___, _____XXX, _XXXX___,
-  XXXXX___, _____X__, ____XXXX, __XX____,
-  XXXXXX__, ______XX, ___XXXXX, _XX_____,
-};
+/* $6ABE: bitmap_stones_2s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6ACE: stage1_bitmap_stones_3 */
-static const pixel_t stage1_bitmap_stones_3[2 * 2 * 3 * 1] = {
-  _____XXX, XXXXX___, XXXXXXXX, ________,
-  ______XX, X__X_X__, XXXXXXXX, ________,
-  X____XXX, _X_XX___, XXXXXXXX, ________,
-};
+/* $6ACE: bitmap_stones_3 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6ADA: stage1_bitmap_stones_3s */
-static const pixel_t stage1_bitmap_stones_3s[2 * 2 * 3 * 1] = {
-  XXXX____, ____XXXX, _XXXXXXX, X_______,
-  XXXX____, ____X__X, __XXXXXX, _X______,
-  XXXXX___, _____X_X, _XXXXXXX, X_______,
-};
+/* $6ADA: bitmap_stones_3s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AE6: stage1_bitmap_stones_4 */
-static const pixel_t stage1_bitmap_stones_4[1 * 2 * 2 * 1] = {
-  ____XXXX, XXXX____,
-  ___XXXXX, X_X_____,
-};
+/* $6AE6: bitmap_stones_4 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AEA: stage1_bitmap_stones_4s */
-static const pixel_t stage1_bitmap_stones_4s[1 * 2 * 2 * 1] = {
-  XXXX____, ____XXXX,
-  XXXX___X, ____X_X_,
-};
+/* $6AEA: bitmap_stones_4s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AEE: stage1_bitmap_stones_5 */
-static const pixel_t stage1_bitmap_stones_5[1 * 2 * 1 * 1] = {
-  __XXXXXX, XX______,
-};
+/* $6AEE: bitmap_stones_5 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AF0: stage1_bitmap_stones_5s */
-static const pixel_t stage1_bitmap_stones_5s[1 * 2 * 1 * 1] = {
-  XXXX__XX, ____XX__,
-};
+/* $6AF0: bitmap_stones_5s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AF2: stage1_bitmap_dust_1 */
-static const pixel_t stage1_bitmap_dust_1[1 * 2 * 1 * 1] = {
-  ___XXXXX, _X______,
-};
+/* $6AF2: bitmap_dust_1 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6AF4: stage1_bitmap_dust_1s */
-static const pixel_t stage1_bitmap_dust_1s[1 * 2 * 1 * 1] = {
-  XXXX___X, _____X__,
-};
+/* $6AF4: bitmap_dust_1s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
 /* ----------------------------------------------------------------------- */
 
@@ -2162,156 +1735,27 @@ static const depthset_t stage1_turn_sign_left = {
 
 /** $6B22: stage1_turn_sign_bitmaps */
 static const bitmap_t stage1_turn_sign_bitmaps[] = {
-  { 4, BITMAPFLAG_DEFAULT,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
-  { 3, BITMAPFLAG_DEFAULT,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
-  { 2, BITMAPFLAG_DEFAULT,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
-  { 2, BITMAPFLAG_MASKED,                   16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
-  { 2, BITMAPFLAG_MASKED,                   13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s },
-  { 4, BITMAPFLAG_FLIPPED,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
-  { 3, BITMAPFLAG_FLIPPED,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
-  { 2, BITMAPFLAG_FLIPPED,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
-  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
-  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
+  { 4, BITMAPFLAG_DEFAULT,                  40, bitmap_turnsign_1, bitmap_turnsign_1  },
+  { 3, BITMAPFLAG_DEFAULT,                  30, bitmap_turnsign_2, bitmap_turnsign_2  },
+  { 2, BITMAPFLAG_DEFAULT,                  20, bitmap_turnsign_3, bitmap_turnsign_3  },
+  { 2, BITMAPFLAG_MASKED,                   16, bitmap_turnsign_4, bitmap_turnsign_4  },
+  { 2, BITMAPFLAG_MASKED,                   13, bitmap_turnsign_5, stage1_bitmap_turnsign_5s },
+  { 4, BITMAPFLAG_FLIPPED,                  40, bitmap_turnsign_1, bitmap_turnsign_1  },
+  { 3, BITMAPFLAG_FLIPPED,                  30, bitmap_turnsign_2, bitmap_turnsign_2  },
+  { 2, BITMAPFLAG_FLIPPED,                  20, bitmap_turnsign_3, bitmap_turnsign_3  },
+  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 16, bitmap_turnsign_4, bitmap_turnsign_4  },
+  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 13, bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
 };
 
-/** $6B68: stage1_bitmap_turnsign_1 */
-static const pixel_t stage1_bitmap_turnsign_1[4 * 1 * 40 * 1] = {
-  ____XXXX, XXXXXXXX, XXXXXXXX, XXXX____,
-  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  _XX____X, XXXXXXXX, XXXXXXXX, X_X_XXX_,
-  __X__X_X, ________, ________, XX_X_X__,
-  __X_X_XX, ________, ________, X_X_XX__,
-  __XXXXXX, ________, ________, XXXXXX__,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXX_____, _______X, _X_X_X_X, _X_X_XXX,
-  XXX_____, ________, ______X_, X_X_XXXX,
-  XXX_____, ___XXX__, ________, ___X_XXX,
-  XXX_____, ___XXX__, ________, ____XXXX,
-  XXX_____, ___XXX__, ________, ___X_XXX,
-  XXX_____, ___XXX__, ________, ____XXXX,
-  XXX_____, ___XXX__, ________, ___X_XXX,
-  XXX_____, ___XXX__, ________, ____XXXX,
-  XXX_____, ___XXX__, ________, ___X_XXX,
-  XXX_____, ___XXX__, ________, ____XXXX,
-  XXX_____, ___XXX__, ________, _____XXX,
-  XXX_____, ___XXX__, ________, ____XXXX,
-  X_X_____, ___XXX__, ________, _____XXX,
-  XXX_____, ____XXX_, ________, ____XXXX,
-  XXX_____, ____XXX_, ________, _____XXX,
-  X_X_____, ____XXX_, ________, _____XXX,
-  XXX_____, _____XXX, ________, _____XXX,
-  X_X_____, _____XXX, __XX____, _____XXX,
-  X_X_X___, ______XX, XXXX____, _____XXX,
-  XXX_____, _______X, XXXX____, _____XXX,
-  X_X_X___, ______XX, XXXXX___, _____XXX,
-  X_X_____, _____XXX, XXXXX___, _____XXX,
-  X_X_X___, ________, XXXXXX__, _____XXX,
-  XXX_____, ________, ____XXX_, _____XXX,
-  X_X_X_X_, X_X_____, ________, _____XXX,
-  X_X_____, ________, ________, _____XXX,
-  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  X____X__, _X__X_XX, _XXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-};
+/* $6B68: bitmap_turnsign_1 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6C08: stage1_bitmap_turnsign_2 */
-static const pixel_t stage1_bitmap_turnsign_2[3 * 1 * 30 * 1] = {
-  __XXXXXX, XXXXXXXX, XXXXXX__,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  _XX__XXX, XXXXXXXX, XXXX_XX_,
-  __X_XX__, ________, __X_XX__,
-  __XXXX__, ________, __XX_X__,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XX______, ____X_X_, X_X_X_XX,
-  XX______, ________, _X_X_XXX,
-  XX______, XX______, ____X_XX,
-  XX______, XX______, _____XXX,
-  XX______, XX______, ____X_XX,
-  XX______, XX______, _____XXX,
-  XX______, XX______, ____X_XX,
-  XX______, XX______, _____XXX,
-  XX______, XX______, ______XX,
-  XX______, XXX_____, _____XXX,
-  XX______, _XX_____, ______XX,
-  XX______, _XX_____, ______XX,
-  XX______, _XXX____, ______XX,
-  XX______, __XX__X_, ______XX,
-  XX_X____, ___XXXX_, ______XX,
-  XX______, ___XXXXX, ______XX,
-  X__X____, __XXXXXX, ______XX,
-  XX______, _____XXX, X_____XX,
-  X__X_X_X, _______X, XX____XX,
-  XX______, ________, ______XX,
-  X_X_X_XX, _XXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-};
+/* $6C08: bitmap_turnsign_2 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6C62: stage1_bitmap_turnsign_3 */
-static const pixel_t stage1_bitmap_turnsign_3[2 * 1 * 20 * 1] = {
-  _XXXXXXX, XXXXXXX_,
-  XXXXXXXX, XXXXXXXX,
-  _X__XXXX, XXXXX_X_,
-  _X_X____, ____XXX_,
-  XXXXXXXX, XXXXXXXX,
-  X______X, _X_X_X_X,
-  X_______, ______XX,
-  X_____X_, _______X,
-  X_____X_, ______XX,
-  X_____X_, _______X,
-  X_____X_, ______XX,
-  X_____X_, _______X,
-  X______X, ______XX,
-  X______X, _______X,
-  X_______, XXX____X,
-  XX_____X, XXX____X,
-  X_______, XXX____X,
-  XX______, __XX___X,
-  X_X_X___, _______X,
-  XXXXXXXX, XXXXXXXX,
-};
+/* $6C62: bitmap_turnsign_3 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6C8A: stage1_bitmap_turnsign_4 */
-static const pixel_t stage1_bitmap_turnsign_4[2 * 2 * 16 * 1] = {
-  X_______, _XXXXXXX, ____XXXX, XXXX____,
-  ________, XXXXXXXX, _____XXX, XXXXX___,
-  ________, X_XXXXXX, _____XXX, XXXXX___,
-  ________, XXXXXXXX, _____XXX, XXXXX___,
-  ________, X_____X_, _____XXX, X_X_X___,
-  ________, X___X___, _____XXX, ___XX___,
-  ________, X___X___, _____XXX, ____X___,
-  ________, X___X___, _____XXX, ___XX___,
-  ________, X___X___, _____XXX, ____X___,
-  ________, X____X__, _____XXX, ___XX___,
-  ________, XX___X__, _____XXX, ____X___,
-  ________, X_____XX, _____XXX, ____X___,
-  ________, X____XXX, _____XXX, X___X___,
-  ________, XX_____X, _____XXX, X___X___,
-  ________, X_X__X__, _____XXX, ____X___,
-  ________, XXXXXXXX, _____XXX, XXXXX___,
-};
+/* $6C8A: bitmap_turnsign_4 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6CCA: stage1_bitmap_turnsign_5 */
-static const pixel_t stage1_bitmap_turnsign_5[2 * 2 * 13 * 1] = {
-  X_______, _XXXXXXX, _XXXXXXX, X_______,
-  ________, XXXXXXXX, __XXXXXX, XX______,
-  ________, XXXXXXXX, __XXXXXX, XX______,
-  ________, XXXXXXXX, __XXXXXX, XX______,
-  ________, X___X_X_, __XXXXXX, XX______,
-  ________, X__X____, __XXXXXX, _X______,
-  ________, X__X____, __XXXXXX, XX______,
-  ________, X__X____, __XXXXXX, _X______,
-  ________, X___X___, __XXXXXX, XX______,
-  ________, X___XX__, __XXXXXX, _X______,
-  ________, X____XX_, __XXXXXX, _X______,
-  ________, X_______, __XXXXXX, _X______,
-  ________, XXXXXXXX, __XXXXXX, XX______,
-};
+/* $6CCA: bitmap_turnsign_5 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
 /** $6CFE: stage1_bitmap_turnsign_5s */
 static const pixel_t stage1_bitmap_turnsign_5s[2 * 2 * 13 * 1] = {
@@ -2334,157 +1778,43 @@ static const pixel_t stage1_bitmap_turnsign_5s[2 * 2 * 13 * 1] = {
 
 /** $6D82: stage1_tumbleweed_bitmaps */
 static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES] = {
-  { 2, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
-  { 2, BITMAPFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
-  { 1, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
-  { 1, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
+  { 2, BITMAPFLAG_DEFAULT, 16, &bitmap_tumbleweed_1[0], &bitmap_tumbleweed_1[0] },
+  { 2, BITMAPFLAG_DEFAULT, 11, &bitmap_tumbleweed_2[0], &bitmap_tumbleweed_2[0] },
+  { 1, BITMAPFLAG_DEFAULT,  9, &bitmap_tumbleweed_3[0], &bitmap_tumbleweed_3[0] },
+  { 1, BITMAPFLAG_DEFAULT,  9, &bitmap_tumbleweed_3[0], &bitmap_tumbleweed_3[0] },
+  { 1, BITMAPFLAG_DEFAULT,  7, &bitmap_tumbleweed_4[0], &bitmap_tumbleweed_4[0] },
+  { 1, BITMAPFLAG_DEFAULT,  7, &bitmap_tumbleweed_4[0], &bitmap_tumbleweed_4[0] }
 };
 
-/** $6DAC: stage1_bitmap_tumbleweed_1 */
-static const pixel_t stage1_bitmap_tumbleweed_1[2 * 1 * 16 * 1] = {
-  ___XX___, _X_XX___,
-  ____XXXX, XXXX____,
-  ___XXXXX, XXXXX___,
-  __XXXXXX, XXXXXX__,
-  __XXXXXX, XX_XXX__,
-  _XXXXXXX, XXXXXXX_,
-  _X_XX_XX, X_XXX_X_,
-  __XX_X__, XX_XXX__,
-  __X_X_X_, X_X_XXX_,
-  _X_X_X_X, X_X_X_X_,
-  __XX_XX_, X_X_XX__,
-  ___XX_X_, __X_XX__,
-  ___XX_XX, _XX_X___,
-  __XX_XXX, XX_XX___,
-  _____X__, X__X____,
-  ________, X_XX____,
-};
+/* $6DAC: bitmap_tumbleweed_1 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6DCC: stage1_bitmap_tumbleweed_2 */
-static const pixel_t stage1_bitmap_tumbleweed_2[2 * 1 * 11 * 1] = {
-  ____X__X, __XX____,
-  _____XXX, XXX_____,
-  ____XXXX, XXXX____,
-  ____XXXX, X_XXX___,
-  ____XXX_, XXXXX___,
-  ___XXXX_, X_X_X___,
-  ___X_X_X, _X_X____,
-  _____XX_, X_XX____,
-  ______XX, X_X_____,
-  ____XX_X, _XX_____,
-  ________, X_X_____,
-};
+/* $6DCC: bitmap_tumbleweed_2 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6DE2: stage1_bitmap_tumbleweed_3 */
-static const pixel_t stage1_bitmap_tumbleweed_3[1 * 1 * 9 * 1] = {
-  __XXXXX_,
-  _XXXXXXX,
-  XXXXXXXX,
-  XXX__XXX,
-  XXX_X_XX,
-  _X_X__X_,
-  _XXX_XX_,
-  __X_X_X_,
-  __X__X__,
-};
+/* $6DE2: bitmap_tumbleweed_3 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
-/** $6DEB: stage1_bitmap_tumbleweed_4 */
-static const pixel_t stage1_bitmap_tumbleweed_4[1 * 1 * 7 * 1] = {
-  __XXXX__,
-  _XXXXXX_,
-  _XXX_XX_,
-  _XX__XX_,
-  __X_XX__,
-  __XX_X__,
-  ___XX___,
-};
+/* $6DEB: bitmap_tumbleweed_4 - Conv: Deduped to CommonData.c (shared with stage 3) */
 
 /* ----------------------------------------------------------------------- */
 
 /** $6DF2: stage1_barrier_bitmaps */
 static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
-  { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
-  { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
-  { 3, BITMAPFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
-  { 2, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
-  { 2, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
-  { 2, BITMAPFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
+  { 4, BITMAPFLAG_DEFAULT, 17, &bitmap_barrier_1[0], &bitmap_barrier_1[0]  },
+  { 4, BITMAPFLAG_DEFAULT, 17, &bitmap_barrier_1[0], &bitmap_barrier_1[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_barrier_2[0], &bitmap_barrier_2[0]  },
+  { 2, BITMAPFLAG_DEFAULT,  9, &bitmap_barrier_3[0], &bitmap_barrier_3[0]  },
+  { 2, BITMAPFLAG_DEFAULT,  9, &bitmap_barrier_3[0], &bitmap_barrier_3[0]  },
+  { 2, BITMAPFLAG_MASKED,   7, &bitmap_barrier_4[0], &bitmap_barrier_4s[0] }
 };
 
-/** $6E1C: stage1_bitmap_barrier_1 */
-static const pixel_t stage1_bitmap_barrier_1[4 * 1 * 17 * 1] = {
-  ___XXXXX, XX______, ______XX, XXXXX___,
-  ___XXXX_, _X____XX, XX____XX, _X__X___,
-  ____XX_X, __X___XX, _X___XX_, X__X____,
-  ____XXX_, X_X___XX, XX___XXX, _X_X____,
-  _____XXX, _X_X__XX, _X__XXX_, X_X_____,
-  _____XX_, X__X_XX_, X_X_XX_X, __X_____,
-  ______XX, _X__XXXX, __XXX_X_, _X______,
-  ______XX, X_X_XXX_, X_XXXX_X, _X______,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXX_X, _XXXXXX_, _XXXXXX_, X_XXXXXX,
-  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
-  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
-  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
-  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
-  X_X_X___, _X_X_X__, __X_X_X_, ___X_X_X,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  ________, ____XXXX, XXXXX___, ________,
-};
+/* $6E1C: bitmap_barrier_1 - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
-/** $6E60: stage1_bitmap_barrier_2 */
-static const pixel_t stage1_bitmap_barrier_2[3 * 1 * 13 * 1] = {
-  __XXXXXX, ________, XXXXXX__,
-  __XXX_XX, ___XXX__, XX_X_X__,
-  ___XXX_X, X__X_X_X, X_X_X___,
-  ___XX_X_, X_XX_X_X, XX__X___,
-  ____XX_X, X_X_X_XX, X__X____,
-  ____XXX_, _XXXXXXX, XX_X____,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXX_XX, XXXX_XXX, X_X_XXXX,
-  XXXX___X, XXX__XXX, X___XXXX,
-  XXXX___X, XXX__XXX, X___XXXX,
-  X__X___X, __X__X__, X___X__X,
-  XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  ________, _XXXXXX_, ________,
-};
+/* $6E60: bitmap_barrier_2 - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
-/** $6E87: stage1_bitmap_barrier_3 */
-static const pixel_t stage1_bitmap_barrier_3[2 * 1 * 9 * 1] = {
-  _XXXX___, ___XXXX_,
-  _XX_X__X, X__XX_X_,
-  __XX_X_X, X_XX_X__,
-  __XXXX_X, X_XXXX__,
-  XXXXXXXX, XXXXXXXX,
-  XXX__XXX, __XXX__X,
-  X_X__X_X, __X_X__X,
-  XXXXXXXX, XXXXXXXX,
-  ______XX, XX______,
-};
+/* $6E87: bitmap_barrier_3 - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
-/** $6E99: stage1_bitmap_barrier_4 */
-static const pixel_t stage1_bitmap_barrier_4[2 * 2 * 7 * 1] = {
-  X__XXXXX, _XX_____, X__XXXXX, _XX_____,
-  X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
-  XX______, __XXXXXX, __XXXXXX, XX______,
-  ________, XXXXXXXX, ____XXXX, XXXX____,
-  ________, X__XX__X, ____XXXX, X__X____,
-  ________, XXXXXXXX, ____XXXX, XXXX____,
-  XXXX____, ____XXXX, XXXXXXXX, ________,
-};
+/* $6E99: bitmap_barrier_4 - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
-/** $6EB5: stage1_bitmap_barrier_4s */
-static const pixel_t stage1_bitmap_barrier_4s[2 * 2 * 7 * 1] = {
-  XXXXX__X, _____XX_, XXXXX__X, _____XX_,
-  XXXXX___, _____XXX, X__X___X, _XX_XXX_,
-  XXXXXX__, ______XX, ______XX, XXXXXX__,
-  XXXX____, ____XXXX, ________, XXXXXXXX,
-  XXXX____, ____X__X, ________, X__XX__X,
-  XXXX____, ____XXXX, ________, XXXXXXXX,
-  XXXXXXXX, ________, ____XXXX, XXXX____,
-};
+/* $6EB5: bitmap_barrier_4s - Conv: Deduped to CommonData.c (shared with stage 2/3/4/5) */
 
 /* ----------------------------------------------------------------------- */
 
@@ -2542,88 +1872,37 @@ static const depthset_t stage1_streetlamptop_left = {
 
 /** $6F17: stage1_streetlamptop_bitmaps */
 static const bitmap_t stage1_streetlamptop_bitmaps[5] = {
-  { 4, BITMAPFLAG_DEFAULT, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
-  { 3, BITMAPFLAG_DEFAULT, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
-  { 3, BITMAPFLAG_DEFAULT, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
-  { 2, BITMAPFLAG_MASKED,  4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
-  { 2, BITMAPFLAG_MASKED,  3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+  { 4, BITMAPFLAG_DEFAULT, 8, bitmap_streetlamptop_1, bitmap_streetlamptop_1  },
+  { 3, BITMAPFLAG_DEFAULT, 5, bitmap_streetlamptop_2, bitmap_streetlamptop_2  },
+  { 3, BITMAPFLAG_DEFAULT, 4, bitmap_streetlamptop_3, bitmap_streetlamptop_3s },
+  { 2, BITMAPFLAG_MASKED,  4, bitmap_streetlamptop_4, bitmap_streetlamptop_4s },
+  { 2, BITMAPFLAG_MASKED,  3, bitmap_streetlamptop_5, bitmap_streetlamptop_5s }
 };
 
 /** $6F3A: stage1_streetlamptop_flipped_bitmaps */
 static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5] = {
-  { 4, BITMAPFLAG_FLIPPED, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
-  { 3, BITMAPFLAG_FLIPPED, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
-  { 3, BITMAPFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
-  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
-  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+  { 4, BITMAPFLAG_FLIPPED, 8, bitmap_streetlamptop_1, bitmap_streetlamptop_1  },
+  { 3, BITMAPFLAG_FLIPPED, 5, bitmap_streetlamptop_2, bitmap_streetlamptop_2  },
+  { 3, BITMAPFLAG_FLIPPED, 4, bitmap_streetlamptop_3, bitmap_streetlamptop_3s },
+  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 4, bitmap_streetlamptop_4, bitmap_streetlamptop_4s },
+  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 3, bitmap_streetlamptop_5, bitmap_streetlamptop_5s }
 };
 
-/** $6F5D: stage1_bitmap_streetlamptop_1 */
-static const pixel_t stage1_bitmap_streetlamptop_1[4 * 1 * 8 * 1] = {
-  ________, ________, ________, XXX__X__,
-  ___XXXXX, XXXXXXX_, _______X, X_X__X__,
-  __X_____, _______X, _____XXX, __X__X__,
-  __X_____, _______X, __XXXX__, XX___X__,
-  _XX_X_X_, X_X_X_XX, XXX___XX, _X___X__,
-  X_XXXXXX, XXXXXXX_, ___XXX__, _XX_XX__,
-  XX______, _______X, XXX_____, __XXX___,
-  __XXXXXX, XXXXXXX_, ________, ________
-};
+/* $6F5D: bitmap_streetlamptop_1 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6F7D: stage1_bitmap_streetlamptop_2 */
-static const pixel_t stage1_bitmap_streetlamptop_2[3 * 1 * 5 * 1] = {
-  _XXXXXXX, XX_____X, X_X_X___,
-  X_______, __X__XX_, _X__X___,
-  X_______, _XXXX__X, XX__X___,
-  X_X_X_X_, X____XX_, _X__X___,
-  _XXXXXXX, XXXXX___, __XX____
-};
+/* $6F7D: bitmap_streetlamptop_2 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6F8C: stage1_bitmap_streetlamptop_3 */
-static const pixel_t stage1_bitmap_streetlamptop_3[3 * 1 * 4 * 1] = {
-  ______XX, XXXX___X, _XX_____,
-  _____X__, ____XXX_, X_X_____,
-  ____X_X_, _____X_X, _XX_____,
-  _____XXX, XXXXXXX_, ________
-};
+/* $6F8C: bitmap_streetlamptop_3 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6F98: stage1_bitmap_streetlamptop_3s */
-static const pixel_t stage1_bitmap_streetlamptop_3s[3 * 1 * 4 * 1] = {
-  ________, __XXXXXX, ___X_XX_,
-  ________, _X______, XXX_X_X_,
-  ________, X_X_____, _X_X_XX_,
-  ________, _XXXXXXX, XXX_____
-};
+/* $6F98: bitmap_streetlamptop_3s - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6FA4: stage1_bitmap_streetlamptop_4 */
-static const pixel_t stage1_bitmap_streetlamptop_4[2 * 2 * 4 * 1] = {
-  XXXXXXXX, ________, X___XXXX, _XXX____,
-  ______X_, XX_XXX_X, ____XXXX, X_XX____,
-  ________, X____XX_, _X__XXXX, X_XX____,
-  X____XXX, _XXXX___, XXXXXXXX, ________
-};
+/* $6FA4: bitmap_streetlamptop_4 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6FB4: stage1_bitmap_streetlamptop_4s */
-static const pixel_t stage1_bitmap_streetlamptop_4s[2 * 2 * 4 * 1] = {
-  XXXXXXXX, ________, XXX___XX, ___XXX__,
-  XX______, __XX_XXX, X_____XX, _XX_XX__,
-  XX______, __X____X, ___X__XX, X_X_XX__,
-  XXX____X, ___XXXX_, XXXXXXXX, ________
-};
+/* $6FB4: bitmap_streetlamptop_4s - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6FC4: stage1_bitmap_streetlamptop_5 */
-static const pixel_t stage1_bitmap_streetlamptop_5[2 * 2 * 3 * 1] = {
-  XXXXXXX_, _______X, _XXXXXXX, X_______,
-  ________, X___XXXX, _XXXXXXX, X_______,
-  ____XXXX, XXXX____, XXXXXXXX, ________
-};
+/* $6FC4: bitmap_streetlamptop_5 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
-/** $6FD0: stage1_bitmap_streetlamptop_5s */
-static const pixel_t stage1_bitmap_streetlamptop_5s[2 * 2 * 3 * 1] = {
-  XXXXXXXX, ________, XXX__XXX, ___XX___,
-  XXXX____, ____X___, _____XXX, XXXXX___,
-  XXXX____, ____XXXX, XXXXXXXX, ________
-};
+/* $6FD0: bitmap_streetlamptop_5s - Conv: Deduped to CommonData.c (shared with stage 4) */
 
 /* ----------------------------------------------------------------------- */
 
@@ -2679,99 +1958,28 @@ static const depthset_t stage1_telegraphpoletop_right = {
 
 /** $701C: stage1_telegraphpoletop_bitmaps */
 static const bitmap_t stage1_telegraphpoletop_bitmaps[5] = {
-  { 3, BITMAPFLAG_DEFAULT, 13, stage1_bitmap_telegraphpoletop_1, stage1_bitmap_telegraphpoletop_1  },
-  { 3, BITMAPFLAG_DEFAULT, 10, stage1_bitmap_telegraphpoletop_2, stage1_bitmap_telegraphpoletop_2  },
-  { 3, BITMAPFLAG_DEFAULT,  7, stage1_bitmap_telegraphpoletop_3, stage1_bitmap_telegraphpoletop_3s },
-  { 2, BITMAPFLAG_MASKED,   5, stage1_bitmap_telegraphpoletop_4, stage1_bitmap_telegraphpoletop_4s },
-  { 2, BITMAPFLAG_MASKED,   4, stage1_bitmap_telegraphpoletop_5, stage1_bitmap_telegraphpoletop_5s }
+  { 3, BITMAPFLAG_DEFAULT, 13, bitmap_telegraphpoletop_1, bitmap_telegraphpoletop_1  },
+  { 3, BITMAPFLAG_DEFAULT, 10, bitmap_telegraphpoletop_2, bitmap_telegraphpoletop_2  },
+  { 3, BITMAPFLAG_DEFAULT,  7, bitmap_telegraphpoletop_3, bitmap_telegraphpoletop_3s },
+  { 2, BITMAPFLAG_MASKED,   5, bitmap_telegraphpoletop_4, bitmap_telegraphpoletop_4s },
+  { 2, BITMAPFLAG_MASKED,   4, bitmap_telegraphpoletop_5, bitmap_telegraphpoletop_5s }
 };
 
-/** $703F: stage1_bitmap_telegraphpoletop_1 */
-static const pixel_t stage1_bitmap_telegraphpoletop_1[3 * 1 * 13 * 1] = {
-  ____XXXX, XXX__XXX, XXX_____,
-  ___X____, ___X_XX_, ___X____,
-  ___XXXXX, XXX__XXX, XXXX____,
-  ____X_X_, _X___X__, X_X_____,
-  ____X_X_, _XX__X__, X_X_____,
-  _____X__, _XX__X__, _X______,
-  _XXXXXXX, XXXX_XXX, XXXXXX__,
-  X_______, ___X_XX_, X_____X_,
-  XXXXXXXX, XXX__XXX, XXXXXXX_,
-  _X_XX_X_, _X___X__, X_XX_X__,
-  _X_XX_X_, _XX__X__, X_XX_X__,
-  __X__X__, _X___X__, _X__X___,
-  ________, _XXXXX__, ________
-};
+/* $703F: bitmap_telegraphpoletop_1 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $7066: stage1_bitmap_telegraphpoletop_2 */
-static const pixel_t stage1_bitmap_telegraphpoletop_2[3 * 1 * 10 * 1] = {
-  ______XX, XX__XXXX, X_______,
-  _____X__, __X_XX__, X_______,
-  _____X_X, XX__XXX_, X_______,
-  ______XX, _X__X__X, ________,
-  ________, _XX_X___, ________,
-  ____XXXX, XXX_XXXX, XX______,
-  ___X____, __X_XX__, __X_____,
-  ___X_X_X, XX__X_X_, X_X_____,
-  ___X_X_X, _X__X_X_, X_X_____,
-  ____X_X_, _XXXX__X, _X______
-};
+/* $7066: bitmap_telegraphpoletop_2 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $7084: stage1_bitmap_telegraphpoletop_3 */
-static const pixel_t stage1_bitmap_telegraphpoletop_3[3 * 1 * 7 * 1] = {
-  ______XX, XXXXXX__, ________,
-  _____X__, __X__X__, ________,
-  _____X_X, X_XX_X__, ________,
-  _____XXX, XXXXXXX_, ________,
-  ____X___, __XXX__X, ________,
-  ____X_XX, X_XXXX_X, ________,
-  _____X__, XXX___X_, ________
-};
+/* $7084: bitmap_telegraphpoletop_3 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $7099: stage1_bitmap_telegraphpoletop_3s */
-static const pixel_t stage1_bitmap_telegraphpoletop_3s[3 * 1 * 7 * 1] = {
-  ________, __XXXXXX, XX______,
-  ________, _X____X_, _X______,
-  ________, _X_XX_XX, _X______,
-  ________, _XXXXXXX, XXX_____,
-  ________, X_____XX, X__X____,
-  ________, X_XXX_XX, XX_X____,
-  ________, _X__XXX_, __X_____
-};
+/* $7099: bitmap_telegraphpoletop_3s - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $70AE: stage1_bitmap_telegraphpoletop_4 */
-static const pixel_t stage1_bitmap_telegraphpoletop_4[2 * 2 * 5 * 1] = {
-  XXXXXXX_, _______X, ______XX, XX_XXX__,
-  XXXXXXX_, _______X, ______XX, _X_X_X__,
-  XXXXXXXX, ________, XX__XXXX, ___X____,
-  XXXXXX__, ______XX, ______XX, XX_XXX__,
-  XXXXXX__, ______X_, ______XX, X___X___
-};
+/* $70AE: bitmap_telegraphpoletop_4 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $70C2: stage1_bitmap_telegraphpoletop_4s */
-static const pixel_t stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5 * 1] = {
-  XXXXXXXX, ________, X_______, _XXX_XXX,
-  XXXXXXXX, ________, X_______, _X_X_X_X,
-  XXXXXXXX, ________, XXXX__XX, _____X__,
-  XXXXXXXX, ________, ________, XXXX_XXX,
-  XXXXXXXX, ________, ________, X_X___X_
-};
+/* $70C2: bitmap_telegraphpoletop_4s - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $70D6: stage1_bitmap_telegraphpoletop_5 */
-static const pixel_t stage1_bitmap_telegraphpoletop_5[2 * 2 * 4 * 1] = {
-  XXXXXX__, ______XX, ___XXXXX, XXX_____,
-  XXXXXX__, ______XX, ___XXXXX, __X_____,
-  XXXXX___, _____XXX, ____XXXX, _XXX____,
-  XXXXX___, _____X_X, ____XXXX, __XX____
-};
+/* $70D6: bitmap_telegraphpoletop_5 - Conv: Deduped to CommonData.c (shared with stage 3/5) */
 
-/** $70E6: stage1_bitmap_telegraphpoletop_5s */
-static const pixel_t stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4 * 1] = {
-  XXXXXXXX, ________, XX_____X, __XXXXX_,
-  XXXXXXXX, ________, XX_____X, __XX__X_,
-  XXXXXXXX, ________, X_______, _XXX_XXX,
-  XXXXXXXX, ________, X_______, _X_X__XX
-};
+/* $70E6: bitmap_telegraphpoletop_5s - Conv: Deduped to CommonData.c (shared with stage 3) */
 
 /* ----------------------------------------------------------------------- */
 
