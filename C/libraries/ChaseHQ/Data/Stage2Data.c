@@ -148,13 +148,14 @@ static const bitmap_t stage2_lods_F958[5];
 static const bitmap_t stage2_lods_FA0F[6];
 static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8 * 1];
 static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1];
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1];
 static const pixel_t stage2_bitmap_EB92[4 * 1 * 22 * 1];
 static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1];
 static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1];
 static const pixel_t stage2_bitmap_ED0B[4 * 1 * 22 * 1];
 static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1];
-#ifdef CHQ_ENABLE_MASKED_VEHICLES
+#else
 static const pixel_t stage2_bitmap_EADE_masked[6 * 2 * 30 * 1];
 static const pixel_t stage2_bitmap_EB92_masked[4 * 2 * 22 * 1];
 static const pixel_t stage2_bitmap_EBEA_masked[3 * 2 * 15 * 1];
@@ -1913,6 +1914,7 @@ static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1] = {
 /**
  * $EADE: stage2_bitmap_EADE
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1994,6 +1996,7 @@ static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1] = {
   _____X_X, XXXXXXXX, _X______,
   ______XX, XXXXXXXX, X_______,
 };
+#endif
 
 /* Conv: port-added masked variants of stage2_bitmap_EADE/EB92/EBEA, built
    under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted
@@ -2084,6 +2087,7 @@ static const pixel_t stage2_bitmap_EBEA_masked[3 * 2 * 15 * 1] = {
 /**
  * $EC57: stage2_bitmap_EC57
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -2166,6 +2170,7 @@ static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1] = {
   ______X_, ________, _X______,
   _______X, XXXXXXXX, X_______,
 };
+#endif
 
 /* Conv: port-added masked variants of stage2_bitmap_EC57/ED0B/ED63, built
    under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted

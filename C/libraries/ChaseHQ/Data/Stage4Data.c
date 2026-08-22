@@ -132,13 +132,14 @@ static const bitmap_t stage4_lods_F75D[5];
 static const depthset_t stage4_depthset_F7FF;
 static const depthset_t stage4_depthset_F815;
 static const bitmap_t stage4_lods_F82B[10];
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage4_bitmap_E870[6 * 1 * 30 * 1];
 static const pixel_t stage4_bitmap_E924[4 * 1 * 22 * 1];
 static const pixel_t stage4_bitmap_E97C[2 * 1 * 12 * 1];
 static const pixel_t stage4_bitmap_E9D4[6 * 1 * 30 * 1];
 static const pixel_t stage4_bitmap_EA88[4 * 1 * 22 * 1];
 static const pixel_t stage4_bitmap_EAE0[3 * 1 * 15 * 1];
-#ifdef CHQ_ENABLE_MASKED_VEHICLES
+#else
 static const pixel_t stage4_bitmap_E870_masked[6 * 2 * 30 * 1];
 static const pixel_t stage4_bitmap_E924_masked[4 * 2 * 22 * 1];
 static const pixel_t stage4_bitmap_E97C_masked[2 * 2 * 12 * 1];
@@ -1603,6 +1604,7 @@ static const bitmap_t stage4_convertible_bitmaps[6] = {
 /**
  * $E870: stage4_bitmap_E870
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage4_bitmap_E870[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1681,6 +1683,7 @@ static const pixel_t stage4_bitmap_E97C[2 * 1 * 12 * 1] = {
   ____XXXX, XXXX____,
   _____XXX, X_______,
 };
+#endif
 
 /* Conv: port-added masked variants of stage4_bitmap_E870/E924/E97C, built
    under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted
@@ -1768,6 +1771,7 @@ static const pixel_t stage4_bitmap_E97C_masked[2 * 2 * 12 * 1] = {
 /**
  * $E9D4: stage4_bitmap_E9D4
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage4_bitmap_E9D4[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1849,6 +1853,7 @@ static const pixel_t stage4_bitmap_EAE0[3 * 1 * 15 * 1] = {
   _____X__, ________, _X______,
   ______XX, XXXXXXXX, X_______,
 };
+#endif
 
 /* Conv: port-added masked variants of stage4_bitmap_E9D4/EA88/EAE0, built
    under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted

@@ -138,10 +138,11 @@ static const stretchy_t stage3_stretchy_D9E0[4];
 static const depthset_t stage3_depthset_D9EA;
 static const depthset_t stage3_depthset_DA00;
 static const bitmap_t stage3_lods_DA16[5];
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage3_bitmap_CAC9[6 * 1 * 29 * 1];
 static const pixel_t stage3_bitmap_CB77[4 * 1 * 19 * 1];
 static const pixel_t stage3_bitmap_CBC3[3 * 1 * 14 * 1];
-#ifdef CHQ_ENABLE_MASKED_VEHICLES
+#else
 static const pixel_t stage3_bitmap_CAC9_masked[6 * 2 * 29 * 1];
 static const pixel_t stage3_bitmap_CB77_masked[4 * 2 * 19 * 1];
 static const pixel_t stage3_bitmap_CBC3_masked[3 * 2 * 14 * 1];
@@ -1857,6 +1858,7 @@ static const bitmap_t stage3_sedan_bitmaps[6] = {
 /**
  * $CAC9: stage3_bitmap_CAC9
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage3_bitmap_CAC9[6 * 1 * 29 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1888,6 +1890,7 @@ static const pixel_t stage3_bitmap_CAC9[6 * 1 * 29 * 1] = {
   ________, X______X, XX______, ________, ______X_, ________,
   ________, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__, ________,
 };
+#endif
 
 /* Conv: port-added masked variant of stage3_bitmap_CAC9, built under
    CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
@@ -1929,6 +1932,7 @@ static const pixel_t stage3_bitmap_CAC9_masked[6 * 2 * 29 * 1] = {
 /**
  * $CB77: stage3_bitmap_CB77
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage3_bitmap_CB77[4 * 1 * 19 * 1] = {
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
   XXXX_X_X, XXXXXXXX, XXXXXXXX, X_X_XXXX,
@@ -1970,6 +1974,7 @@ static const pixel_t stage3_bitmap_CBC3[3 * 1 * 14 * 1] = {
   ____X__X, X_______, __X_____,
   _____XXX, XXXXXXXX, XX______,
 };
+#endif
 
 /* Conv: port-added masked variants of stage3_bitmap_CB77/CBC3, built under
    CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
