@@ -17,18 +17,21 @@ Requires Pillow (`pip install pillow`).
 `export` scans `CommonData.c` and `Stage{1-5}Data.c` for every
 `static const u8 name[...] = { ... };` array written entirely in `Pixels.h`
 bit-pattern macros (see the project's bitmap convention), plus each stage's
-`backdrop[]` block, and draws one grid cell per graphic. Cells are sized to the
-largest graphic found. The top block is `CommonData.c` graphics (streetlamps,
-tunnel lights, helicopter parts, arrow, ...); the following blocks are
-stage1..stage5, in order. `stage6` is a port-added test level (only built under
-`CHQ_ENABLE_TEST_STAGE`, default OFF) and is exempt from the sheet.
+`backdrop[]` block, and draws one cell per graphic, stacked in a single column.
+Cells are as wide as the largest graphic found, but each keeps its own height
+(no wasted grey space padding small graphics out to the tallest one). The top
+block is `CommonData.c`
+graphics (streetlamps, tunnel lights, helicopter parts, arrow, ...); the
+following blocks are stage1..stage5, in order. `stage6` is a port-added test
+level (only built under `CHQ_ENABLE_TEST_STAGE`, default OFF) and is exempt
+from the sheet.
 
 The manifest is not hand-maintained — it is re-discovered from the current
-source on every run, so the grid always matches whatever is currently committed.
-This also means `import` must be run against a sheet produced by `export` from
-the _same_ revision of the sources: cell positions are derived from array
-names/sizes, so editing an array's declared dimensions between export and import
-will desync the grid.
+source on every run, so the column always matches whatever is currently
+committed. This also means `import` must be run against a sheet produced by
+`export` from the _same_ revision of the sources: cell positions are derived
+from array names/sizes, so editing an array's declared dimensions between
+export and import will desync the column.
 
 `import` reads each cell back to bytes (a pixel darker than 50% grey is ink,
 lighter is paper), converts each byte to its `Pixels.h` macro name, and replaces
@@ -79,11 +82,32 @@ Colour is export-only. `import` always reconstructs plain ink/paper bits from
 pixel darkness — attribute bytes are never edited, so recolouring a face or
 backdrop cell in an image editor has no effect on import.
 
-Arrays whose C size expression isn't a `width * height` product (a few
+A `width * height + N` size expr (e.g. `2 * 2 * 4 + 7`) is a real image
+followed by `N` scaffold bytes the source itself marks as unreached (a
+"further bytes, not reached by any LOD entry" comment): the real
+`width * height` block renders normally — masked, if the array qualifies —
+and the trailing `N` bytes render as extra plain monochrome rows appended
+below it, since they aren't real mask/data pairs. These leftover bytes get
+their own row width (capped like the `MAX_ROW_BYTES` blobs below), independent
+of the real image's width — a narrow sprite's leftover bytes would otherwise
+stretch into an oddly tall, skinny noise strip instead of a squarish blob.
+
+Arrays whose C size expression can't be dimensioned at all (a few
 scaffold/undimensioned blobs, e.g. leftover `bitmap_<hexaddr>` tables) are
 reshaped to a fixed 32-byte row width purely to keep the sheet a sane size; this
 changes their on-sheet row wrapping but not the underlying byte order, so
 round-tripping is still lossless.
+
+## Frame-major tables: font and transition masks
+
+`font[]` and the four `*_transition_frames[]` tables (`spiral`, `circle`,
+`square`, `diamond` — the growing wipe/reveal masks used for scene
+transitions) are declared as `N * H`, but unlike a real `width * height`
+sprite this means N frames/glyphs of H rows each, stored frame-by-frame (all
+of frame 0's rows, then all of frame 1's, ...), not one row-major image N
+bytes wide. These five names are special-cased (`FRAME_MAJOR_ARRAYS`) to tile
+the N frames side by side on the sheet instead of reading the array as a
+single flat bitmap.
 
 ## Verifying a round trip
 

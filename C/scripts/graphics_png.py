@@ -40,12 +40,25 @@ SPECTRUM_H = ROOT / "include" / "ZXSpectrum" / "Spectrum.h"
 DATA_FILES = ["CommonData.c"] + [f"Stage{n}Data.c" for n in range(1, 6)]
 
 CELL_GAP = 2
-COLS = 20
 MAX_ROW_BYTES = 32  # cap on width_bytes for reshaping oversized/flat blobs
+
+# font[] and the *_transition_frames[] tables (square/spiral/circle/diamond
+# wipe masks used for scene transitions) are frame-major: N frames of H rows
+# each, stored frame-by-frame (frame 0's H bytes, then frame 1's H bytes, ...),
+# not one row-major W*H image. Treating size_expr "N * H" as width*height (as
+# the generic path does) scrambles them -- font additionally gets mangled by
+# the MAX_ROW_BYTES reshape since its frame count (41) exceeds the cap.
+FRAME_MAJOR_ARRAYS = {
+    "font",
+    "spiral_transition_frames",
+    "circle_transition_frames",
+    "square_transition_frames",
+    "diamond_transition_frames",
+}
 INK = (0, 0, 0, 255)
 TRANSPARENT = (255, 0, 255, 255)  # masked-out pixel; opaque magenta, distinct from canvas grey/ink/paper
 PAPER = (255, 255, 255, 255)
-SECTION_GAP_ROWS = 1
+SECTION_GAP_PX = 8  # extra blank space between sections, on top of CELL_GAP
 
 FACEBYTES = 180
 FACEBITMAPBYTES = 160  # 4 bytes/row * 40 rows
@@ -151,6 +164,36 @@ def height_of(size_expr, total_bytes):
     return 1
 
 
+def padded_dims_of(size_expr, total_bytes):
+    """Recover (width_bytes, height, leftover) for a size expr like
+    `2 * 2 * 4 + 7` -- a clean leading `width * height` product with a
+    trailing `+ N` of scaffold bytes tacked on past the real image (see e.g.
+    the "$DAE9: 7 further bytes, not reached by any LOD entry" comments).
+    `height_of` can't dimension these (the padding term isn't a plain
+    digit), so without this the whole array falls back to a single
+    `total_bytes`-wide row, destroying the real image's shape. Returns None
+    if size_expr isn't this exact pattern.
+    """
+    if "*" not in size_expr:
+        return None
+    factors = [f.strip() for f in size_expr.split("*")]
+    leading = factors[:2] if len(factors) >= 3 else factors[:-1]
+    candidate = factors[2] if len(factors) >= 3 else factors[-1] if factors else None
+    if not candidate or not all(f.isdigit() for f in leading):
+        return None
+    m = re.match(r"(\d+)\s*\+", candidate)
+    if not m:
+        return None  # no padding term -- height_of already handles this
+    height = int(m.group(1))
+    width = 1
+    for f in leading:
+        width *= int(f)
+    leftover = total_bytes - width * height
+    if height <= 0 or width <= 0 or leftover <= 0:
+        return None
+    return width, height, leftover
+
+
 def line_indent(text, offset):
     """Leading whitespace of the source line containing `offset`."""
     line_start = text.rfind("\n", 0, offset) + 1
@@ -161,11 +204,12 @@ class Entry:
     def __init__(
         self, name, filename, span, width_bytes, height, total_bytes=None,
         colour_fn=None, indent="  ", trailing="\n", flip_v=True, masked=False,
+        frame_major=False, reshaped=False, leftover=0,
     ):
         self.name = name
         self.filename = filename
         self.span = span  # (start, end) offsets of the array body in the file
-        self.width_bytes = width_bytes  # raw row width; for masked entries this is 2x the visual width (mask byte + data byte per column)
+        self.width_bytes = width_bytes  # raw row width; for masked entries this is 2x the visual width (mask byte + data byte per column); for frame_major entries this is the source row-wrap width (1: one macro per line), not the sheet width
         self.height = height
         self.total_bytes = total_bytes if total_bytes is not None else width_bytes * height
         self.section = section_of(filename)
@@ -174,16 +218,36 @@ class Entry:
         self.trailing = trailing  # text appended after the last row (closing brace's indent, or nothing)
         self.flip_v = flip_v  # sheet row order vs. source row order; mugshots read the right way up already
         self.masked = masked  # BITMAPFLAG_MASKED data: interleaved (mask byte, data byte) pairs per column
+        self.frame_major = frame_major  # N frames of `height` rows each, stored frame-by-frame rather than row-major
+        self.reshaped = reshaped  # width/height came from the MAX_ROW_BYTES fallback, not a real dimension -- never treat as masked (see build_manifest)
+        self.leftover = leftover  # scaffold bytes past width*height (a trailing "+ N" in the size expr); rendered as plain rows below the real image
+
+    @property
+    def leftover_width(self):
+        # Own row width for leftover scaffold bytes, capped like any other
+        # undimensioned blob (see MAX_ROW_BYTES) -- deliberately independent of
+        # the real image's width, otherwise a narrow sprite (e.g. 2 columns)
+        # stretches a handful of leftover bytes into a tall skinny noise strip
+        # instead of a squarish blob.
+        return min(self.leftover, MAX_ROW_BYTES) if self.leftover else 0
 
     @property
     def px_w(self):
         if self.masked:
-            return (self.width_bytes // 2) * 8
-        return self.width_bytes * 8
+            base = (self.width_bytes // 2) * 8
+        elif self.frame_major:
+            base = (self.total_bytes // self.height) * 8
+        else:
+            base = self.width_bytes * 8
+        if self.leftover:
+            return max(base, self.leftover_width * 8)
+        return base
 
     @property
     def px_h(self):
-        return self.height
+        if not self.leftover:
+            return self.height
+        return self.height + -(-self.leftover // self.leftover_width)  # ceil division
 
 
 ARRAY_RE = re.compile(
@@ -203,18 +267,36 @@ def discover_arrays(filename, text, name_to_value):
         total = len(tokens)
         height = height_of(size_expr, total)
         width_bytes = total // height
+        leftover = 0
+        frame_major = name in FRAME_MAJOR_ARRAYS
+        if frame_major:
+            # `height` (rows per frame) is already correct from height_of();
+            # the source is written one macro per line, not `width_bytes`
+            # (frame count) per line.
+            width_bytes = 1
+        elif height == 1 and "+" in size_expr:
+            padded = padded_dims_of(size_expr, total)
+            if padded:
+                width_bytes, height, leftover = padded
         # ponytail: reshape oversized/undimensioned blobs (e.g. unsplit
         # scaffold data) to a bounded row width so the sheet stays a sane
         # size; byte order is unaffected, so the round trip is unaffected.
-        if width_bytes > MAX_ROW_BYTES:
+        reshaped = False
+        if not frame_major and width_bytes > MAX_ROW_BYTES:
             width_bytes = MAX_ROW_BYTES
             height = -(-total // width_bytes)  # ceil division
+            leftover = 0
+            reshaped = True
         body_start, body_end = m.start(3), m.end(3)
         first_token = re.search(r"\S", text[body_start:body_end])
         indent = line_indent(text, body_start + first_token.start()) if first_token else "  "
         trailing = "\n" + (indent[:-2] if len(indent) >= 2 else "")
         entries.append(
-            Entry(name, filename, (body_start, body_end), width_bytes, height, total, indent=indent, trailing=trailing)
+            Entry(
+                name, filename, (body_start, body_end), width_bytes, height, total,
+                indent=indent, trailing=trailing, flip_v=not frame_major, frame_major=frame_major,
+                reshaped=reshaped, leftover=leftover,
+            )
         )
     return entries
 
@@ -396,7 +478,7 @@ def build_manifest(name_to_value):
         text = (DATA_DIR / filename).read_text()
         entries = discover_arrays(filename, text, name_to_value)
         for e in entries:
-            if e.name in masked_names and e.width_bytes % 2 == 0:
+            if e.name in masked_names and not e.reshaped and e.width_bytes % 2 == 0:
                 e.masked = True
         backdrop = find_backdrop(filename, text)
         if backdrop is not None:
@@ -412,37 +494,29 @@ def build_manifest(name_to_value):
     return manifest
 
 
-def layout(manifest, cell_w, cell_h):
-    """Assign (col, row) grid positions, grouped by section, wrapped at COLS."""
+def layout(manifest):
+    """Assign each entry its own row, sized to its own height (not a shared
+    max), single column, grouped by section."""
     positions = {}
-    row = 0
+    y = CELL_GAP
     for section in ["common"] + [f"stage{n}" for n in range(1, 7)]:
         section_entries = [e for e in manifest if e.section == section]
         if not section_entries:
             continue
-        col = 0
         for e in section_entries:
-            positions[id(e)] = (col, row)
-            col += 1
-            if col == COLS:
-                col = 0
-                row += 1
-        if col != 0:
-            row += 1
-        row += SECTION_GAP_ROWS
-    nrows = row
-    return positions, nrows
+            positions[id(e)] = (0, y)
+            y += e.px_h + CELL_GAP
+        y += SECTION_GAP_PX
+    return positions, y
 
 
 def do_export(png_path):
     name_to_value, _ = load_macro_table()
     manifest = build_manifest(name_to_value)
     cell_w = max(e.px_w for e in manifest)
-    cell_h = max(e.px_h for e in manifest)
-    positions, nrows = layout(manifest, cell_w, cell_h)
+    positions, sheet_h = layout(manifest)
 
-    sheet_w = COLS * (cell_w + CELL_GAP) + CELL_GAP
-    sheet_h = nrows * (cell_h + CELL_GAP) + CELL_GAP
+    sheet_w = cell_w + 2 * CELL_GAP
     image = Image.new("RGBA", (sheet_w, sheet_h), (128, 128, 128, 255))
 
     for filename in DATA_FILES:
@@ -450,12 +524,12 @@ def do_export(png_path):
         for e in [m for m in manifest if m.filename == filename]:
             body = text[e.span[0] : e.span[1]]
             tokens = [t for t in TOKEN_RE.findall(body)]
-            col, row = positions[id(e)]
-            x0 = CELL_GAP + col * (cell_w + CELL_GAP)
-            y0 = CELL_GAP + row * (cell_h + CELL_GAP)
+            x0 = CELL_GAP
+            y0 = positions[id(e)][1]
             if e.masked:
                 visual_width = e.width_bytes // 2
-                for pair_i in range(0, len(tokens) // 2):
+                real_pairs = e.height * visual_width
+                for pair_i in range(min(len(tokens) // 2, real_pairs)):
                     mask_tok, data_tok = tokens[pair_i * 2], tokens[pair_i * 2 + 1]
                     px_row, px_col = pair_i // visual_width, pair_i % visual_width
                     sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
@@ -465,10 +539,24 @@ def do_export(png_path):
                         # mask bit 0 = opaque, coloured by the data bit
                         pixel = TRANSPARENT if mask_tok[bit] == "X" else (INK if data_tok[bit] == "X" else PAPER)
                         image.putpixel((x, y), pixel)
+                # leftover scaffold bytes past the real masked block (see
+                # Entry.leftover) aren't mask/data pairs -- render them plain
+                for i, token in enumerate(tokens[real_pairs * 2 :]):
+                    px_row, px_col = e.height + i // e.leftover_width, i % e.leftover_width
+                    sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
+                    for bit in range(8):
+                        x, y = x0 + px_col * 8 + bit, y0 + sheet_row
+                        image.putpixel((x, y), INK if token[bit] == "X" else PAPER)
                 continue
+            real_bytes = e.height * e.width_bytes
             for byte_i, token in enumerate(tokens):
-                px_row = byte_i // e.width_bytes
-                px_col = byte_i % e.width_bytes
+                if e.frame_major:
+                    px_col, px_row = byte_i // e.height, byte_i % e.height
+                elif e.leftover and byte_i >= real_bytes:
+                    i = byte_i - real_bytes
+                    px_row, px_col = e.height + i // e.leftover_width, i % e.leftover_width
+                else:
+                    px_row, px_col = byte_i // e.width_bytes, byte_i % e.width_bytes
                 ink, paper = e.colour_fn(px_row, px_col)
                 sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
                 for bit in range(8):
@@ -483,9 +571,7 @@ def do_export(png_path):
 def do_import(png_path):
     name_to_value, value_to_name = load_macro_table()
     manifest = build_manifest(name_to_value)
-    cell_w = max(e.px_w for e in manifest)
-    cell_h = max(e.px_h for e in manifest)
-    positions, _ = layout(manifest, cell_w, cell_h)
+    positions, _ = layout(manifest)
 
     image = Image.open(png_path).convert("RGBA")
 
@@ -494,13 +580,13 @@ def do_import(png_path):
         text = path.read_text()
         edits = []  # (start, end, replacement)
         for e in [m for m in manifest if m.filename == filename]:
-            col, row = positions[id(e)]
-            x0 = CELL_GAP + col * (cell_w + CELL_GAP)
-            y0 = CELL_GAP + row * (cell_h + CELL_GAP)
+            x0 = CELL_GAP
+            y0 = positions[id(e)][1]
             tokens = []
             if e.masked:
                 visual_width = e.width_bytes // 2
-                for pair_i in range(e.total_bytes // 2):
+                real_pairs = e.height * visual_width
+                for pair_i in range(real_pairs):
                     px_row, px_col = pair_i // visual_width, pair_i % visual_width
                     sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
                     mask_bits, data_bits = "", ""
@@ -511,10 +597,26 @@ def do_import(png_path):
                         data_bits += "_" if transparent else ("X" if (r + g + b) / 3 < 128 else "_")
                     tokens.append(mask_bits)
                     tokens.append(data_bits)
+                # leftover scaffold bytes past the real masked block (see
+                # Entry.leftover) aren't mask/data pairs -- read them plain
+                for i in range(e.total_bytes - real_pairs * 2):
+                    px_row, px_col = e.height + i // e.leftover_width, i % e.leftover_width
+                    sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
+                    bits = ""
+                    for bit in range(8):
+                        r, g, b, a = image.getpixel((x0 + px_col * 8 + bit, y0 + sheet_row))
+                        bits += "X" if (r + g + b) / 3 < 128 else "_"
+                    tokens.append(bits)
             else:
+                real_bytes = e.height * e.width_bytes
                 for byte_i in range(e.total_bytes):
-                    px_row = byte_i // e.width_bytes
-                    px_col = byte_i % e.width_bytes
+                    if e.frame_major:
+                        px_col, px_row = byte_i // e.height, byte_i % e.height
+                    elif e.leftover and byte_i >= real_bytes:
+                        i = byte_i - real_bytes
+                        px_row, px_col = e.height + i // e.leftover_width, i % e.leftover_width
+                    else:
+                        px_row, px_col = byte_i // e.width_bytes, byte_i % e.width_bytes
                     sheet_row = e.px_h - 1 - px_row if e.flip_v else px_row
                     bits = ""
                     for bit in range(8):
