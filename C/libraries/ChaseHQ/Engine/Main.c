@@ -2078,6 +2078,11 @@ exit:
  *       $85EB; C uses state->pregame_car_revealed_height. Z80 banks parameters
  *       via EXX before calling plot_sprite and uses JP (tail call); C passes
  *       parameters directly and calls plot_sprite.
+ *
+ * Conv: bitmaps_perp_car[0] is shared with the in-race near-frame vehicle
+ *       sprite, which is drawn masked when CHQ_ENABLE_MASKED_VEHICLES is
+ *       built. Dispatch on BITMAPFLAG_MASKED so this reveal plots the same
+ *       mask/data pairs correctly instead of always assuming solid data.
  */
 static void reveal_perp_car(chqstate_t *state)
 {
@@ -2105,12 +2110,24 @@ static void reveal_perp_car(chqstate_t *state)
     height = revealed_height;
   bitmap = perp_bitmap->data;
 
-  plot_sprite(state,
-              width_bytes,
-              ADDRTOBACKBUF(0xF4CD),
-              height,
-              width_bytes,
-              bitmap); /* tail call */
+  if (perp_bitmap->flags & BITMAPFLAG_MASKED)
+  {
+    plot_masked_sprite_by_width(state,
+                                width_bytes,
+                                ADDRTOBACKBUF(0xF4CD),
+                                height,
+                                width_bytes,
+                                bitmap); /* tail call */
+  }
+  else
+  {
+    plot_sprite(state,
+                width_bytes,
+                ADDRTOBACKBUF(0xF4CD),
+                height,
+                width_bytes,
+                bitmap); /* tail call */
+  }
 }
 
 /**

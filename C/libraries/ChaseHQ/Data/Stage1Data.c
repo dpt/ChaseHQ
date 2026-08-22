@@ -112,8 +112,8 @@ static const u8 stage1_map_loop_leftobjs[128];
 static const u8 stage1_map_loop_rightobjs[118];
 static const pixel_t stage1_perp_face[FACEBYTES];
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES];
-static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES];
-static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES];
+static const bitmap_t stage1_pickup_bitmaps[SPRITE_FRAMES];
+static const bitmap_t stage1_sedan0_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES];
 static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES];
 static const depthset_t stage1_turn_sign_right;
@@ -219,12 +219,12 @@ const stage_t stage1 = {
 
   &stage1_stones_bitmaps,
   &stage1_dust_bitmaps,
-  &stage1_car_bitmaps[0],
+  &stage1_sedan0_bitmaps[0],
   {
     &stage1_lambo_bitmaps[0],
-    &stage1_truck_bitmaps[0],
+    &stage1_pickup_bitmaps[0],
     &stage1_lambo_bitmaps[0],
-    &stage1_car_bitmaps[0]
+    &stage1_sedan0_bitmaps[0]
   },
 
   20,  /* car_spawn_delay */
@@ -1595,30 +1595,51 @@ static const pixel_t stage1_perp_face[FACEBYTES] = {
 
 /** $643E: stage1_lambo_bitmaps */
 static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_lambo_1_masked[0], &bitmap_lambo_1_masked[0] },
+  { 5, BITMAPFLAG_MASKED, 22, &bitmap_lambo_2_masked[0], &bitmap_lambo_2_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_lambo_1[0], &bitmap_lambo_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_lambo_2[0], &bitmap_lambo_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0]  },
   { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0]  },
+#endif
   { 3, BITMAPFLAG_MASKED,   8, &bitmap_lambo_4[0], &bitmap_lambo_4[0]  },
   { 3, BITMAPFLAG_MASKED,   8, &bitmap_lambo_4[0], &bitmap_lambo_4s[0] },
 };
 
-/** $6468: stage1_truck_bitmaps */
-static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES] = {
+/** $6468: stage1_pickup_bitmaps */
+static const bitmap_t stage1_pickup_bitmaps[SPRITE_FRAMES] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 39, &bitmap_truck_1_masked[0], &bitmap_truck_1_masked[0] },
+  { 5, BITMAPFLAG_MASKED, 29, &bitmap_truck_2_masked[0], &bitmap_truck_2_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },
+#else
   { 6, BITMAPFLAG_DEFAULT, 39, &bitmap_truck_1[0], &bitmap_truck_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 29, &bitmap_truck_2[0], &bitmap_truck_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0]  },
   { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0]  },
+#endif
   { 2, BITMAPFLAG_MASKED,  12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },
   { 2, BITMAPFLAG_MASKED,  12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },
 };
 
-/** $6492: stage1_car_bitmaps */
-static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
+/** $6492: stage1_sedan0_bitmaps */
+static const bitmap_t stage1_sedan0_bitmaps[SPRITE_FRAMES] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 31, &bitmap_car_1_masked[0], &bitmap_car_1_masked[0] },
+  { 5, BITMAPFLAG_MASKED, 22, &bitmap_car_2_masked[0], &bitmap_car_2_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 16, &bitmap_car_3_masked[0], &bitmap_car_3_masked[0] },
+  { 3, BITMAPFLAG_MASKED, 16, &bitmap_car_3_masked[0], &bitmap_car_3_masked[0] },
+#else
   { 6, BITMAPFLAG_DEFAULT, 31, &bitmap_car_1[0], &bitmap_car_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_car_2[0], &bitmap_car_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
   { 3, BITMAPFLAG_DEFAULT, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
+#endif
   { 3, BITMAPFLAG_MASKED,   9, &bitmap_car_4[0], &bitmap_car_4s[0] },
   { 3, BITMAPFLAG_MASKED,   9, &bitmap_car_4[0], &bitmap_car_4s[0] },
 };

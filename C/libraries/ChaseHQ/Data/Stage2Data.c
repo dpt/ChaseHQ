@@ -107,9 +107,9 @@ static const u8 stage2_map_hazards_E6F0[35];
 static const u8 stage2_map_lobjs_E713[136];
 static const u8 stage2_map_robjs_E79B[176];
 static const pixel_t stage2_perp_face[180];
-static const bitmap_t stage2_lods_E8FF[6];
-static const bitmap_t stage2_lods_E929[6];
-static const bitmap_t stage2_lods_E953[6];
+static const bitmap_t stage2_sedan2_bitmaps[6];
+static const bitmap_t stage2_sedan1_bitmaps[6];
+static const bitmap_t stage2_car_bitmaps[6];
 static const stretchy_t stage2_stretchy_F10E[5];
 static const depthset_t stage2_depthset_F11B;
 static const depthset_t stage2_depthset_F131;
@@ -148,12 +148,21 @@ static const bitmap_t stage2_lods_F958[5];
 static const bitmap_t stage2_lods_FA0F[6];
 static const pixel_t stage2_bitmap_EA9E[2 * 2 * 8 * 1];
 static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1];
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1];
 static const pixel_t stage2_bitmap_EB92[4 * 1 * 22 * 1];
 static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1];
 static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1];
 static const pixel_t stage2_bitmap_ED0B[4 * 1 * 22 * 1];
 static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1];
+#else
+static const pixel_t stage2_bitmap_EADE_masked[6 * 2 * 30 * 1];
+static const pixel_t stage2_bitmap_EB92_masked[4 * 2 * 22 * 1];
+static const pixel_t stage2_bitmap_EBEA_masked[3 * 2 * 15 * 1];
+static const pixel_t stage2_bitmap_EC57_masked[6 * 2 * 30 * 1];
+static const pixel_t stage2_bitmap_ED0B_masked[4 * 2 * 22 * 1];
+static const pixel_t stage2_bitmap_ED63_masked[3 * 2 * 16 * 1];
+#endif
 static const pixel_t stage2_bitmap_F768[5 * 1 * 4 * 1];
 static const pixel_t stage2_bitmap_F77C[4 * 1 * 11 * 1];
 static const pixel_t stage2_bitmap_F7A8[5 * 1 * 8 * 1];
@@ -247,12 +256,12 @@ const stage_t stage2 = {
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
-  &stage2_lods_E8FF[0],  /* bitmaps_perp_car */
+  &stage2_sedan2_bitmaps[0],  /* bitmaps_perp_car */
   {
-    &stage2_lods_E953[0],
-    &stage2_lods_E929[0],
-    &stage2_lods_E953[0],
-    &stage2_lods_E8FF[0]
+    &stage2_car_bitmaps[0],
+    &stage2_sedan1_bitmaps[0],
+    &stage2_car_bitmaps[0],
+    &stage2_sedan2_bitmaps[0]
   },  /* bitmaps_vehicles */
 
   /* $E11A difficulty */
@@ -1817,32 +1826,53 @@ static const pixel_t stage2_perp_face[FACEBYTES] = {
 
 /* ----------------------------------------------------------------------- */
 
-/** $E8FF: stage2_lods_E8FF */
-static const bitmap_t stage2_lods_E8FF[6] = {
+/** $E8FF: stage2_sedan2_bitmaps */
+static const bitmap_t stage2_sedan2_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 29, &bitmap_E97D_masked[0], &bitmap_E97D_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 19, &bitmap_EA2B_masked[0], &bitmap_EA2B_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_EA77_masked[0], &bitmap_EA77_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_EA77_masked[0], &bitmap_EA77_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 29, &bitmap_E97D[0], &bitmap_E97D[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &bitmap_EA2B[0], &bitmap_EA2B[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_EA77[0], &bitmap_EA77[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_EA77[0], &bitmap_EA77[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &stage2_bitmap_EA9E[0], &stage2_bitmap_EA9E[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &stage2_bitmap_EA9E[0], &stage2_bitmap_EABE[0] },  // [5]
 };
 
-/** $E929: stage2_lods_E929 */
-static const bitmap_t stage2_lods_E929[6] = {
+/** $E929: stage2_sedan1_bitmaps */
+static const bitmap_t stage2_sedan1_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &stage2_bitmap_EADE_masked[0], &stage2_bitmap_EADE_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 22, &stage2_bitmap_EB92_masked[0], &stage2_bitmap_EB92_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 15, &stage2_bitmap_EBEA_masked[0], &stage2_bitmap_EBEA_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 15, &stage2_bitmap_EBEA_masked[0], &stage2_bitmap_EBEA_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &stage2_bitmap_EADE[0], &stage2_bitmap_EADE[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage2_bitmap_EB92[0], &stage2_bitmap_EB92[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 15, &stage2_bitmap_EBEA[0], &stage2_bitmap_EBEA[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 15, &stage2_bitmap_EBEA[0], &stage2_bitmap_EBEA[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_EC17[0], &bitmap_EC37[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_EC17[0], &bitmap_EC37[0] },  // [5]
 };
 
-/** $E953: stage2_lods_E953 */
-static const bitmap_t stage2_lods_E953[6] = {
+/** $E953: stage2_car_bitmaps */
+static const bitmap_t stage2_car_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &stage2_bitmap_EC57_masked[0], &stage2_bitmap_EC57_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 22, &stage2_bitmap_ED0B_masked[0], &stage2_bitmap_ED0B_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 16, &stage2_bitmap_ED63_masked[0], &stage2_bitmap_ED63_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 16, &stage2_bitmap_ED63_masked[0], &stage2_bitmap_ED63_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &stage2_bitmap_EC57[0], &stage2_bitmap_EC57[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage2_bitmap_ED0B[0], &stage2_bitmap_ED0B[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 16, &stage2_bitmap_ED63[0], &stage2_bitmap_ED63[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 16, &stage2_bitmap_ED63[0], &stage2_bitmap_ED63[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_EC17[0], &bitmap_EC37[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_EC17[0], &bitmap_EC37[0] },  // [5]
 };
@@ -1884,6 +1914,7 @@ static const pixel_t stage2_bitmap_EABE[2 * 2 * 8 * 1] = {
 /**
  * $EADE: stage2_bitmap_EADE
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EADE[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -1965,6 +1996,89 @@ static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1] = {
   _____X_X, XXXXXXXX, _X______,
   ______XX, XXXXXXXX, X_______,
 };
+#endif
+
+/* Conv: port-added masked variants of stage2_bitmap_EADE/EB92/EBEA, built
+   under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted
+   onto the exported sheet via scripts/graphics_png.py, see
+   docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+static const pixel_t stage2_bitmap_EADE_masked[6 * 2 * 30 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXX__X_, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX_X_, ______XX, X__XXX__,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  ________, XXXXX_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, _______X, X_XXXXX_,
+  X_______, _XX_____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, ____XX__,
+  X_______, _XX_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ______XX, X_X_XX__,
+  ________, XX_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, _______X, _X_X_XX_,
+  ________, X_XX_XX_, ________, XX_XX_XX, ________, _XX_XX_X, ________, X_XX_XX_, ________, XX_XX_XX, _______X, _XX_XXX_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, X_X_X_X_, ________, ___X_XXX, ________, X_X_X_X_, ________, X_X_X_XX, ________, XX_X____, _______X, X_X_X_X_,
+  ________, XX_X_X_X, ________, __X_XX_X, ________, ________, ________, _______X, ________, _XX_X__X, _______X, _X_X_XX_,
+  ________, X_____X_, ________, ___X_XXX, ________, ________, ________, _______X, ________, XX_X____, _______X, X_____X_,
+  ________, XX___X_X, ________, __X_XX_X, ________, ________, ________, _______X, ________, _XX_X__X, _______X, _X___XX_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, X_______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  X_______, _X__X___, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, __X__X__,
+  XX______, __XX__X_, ________, X_______, ________, ________, ________, ________, ________, ______X_, _____XXX, X__XX___,
+  XX______, __X_XX__, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, _____XXX, _XX_X___,
+  X_______, _X___XX_, ________, _X___XXX, ________, XXXXXX__, ________, _XXXXXXX, ________, XX___X__, ______XX, XX___X__,
+  X_______, _X____XX, ________, __X___XX, ________, XXXXXX__, ________, _XXXXXXX, ________, X___X__X, ______XX, X____X__,
+  XX______, __XXXXXX, ________, X__X____, ________, ________, ________, __XXXXXX, ________, ___X__XX, _____XXX, XXXXX___,
+  XXXXXXX_, _______X, ________, XX_XX___, ________, ________, ________, __XXXXXX, ________, __XX_XXX, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, XX__XX__, ________, ________, ________, ___XXXX_, _______X, _XX__XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XX__XXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XX__XX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___X____, ________, ________, ________, ________, ____XXXX, ___X____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XX__, ________, ________, ________, ________, ___XXXXX, _XX_____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, X_______, XXXXXXXX, ________,
+};
+
+static const pixel_t stage2_bitmap_EB92_masked[4 * 2 * 22 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  X_______, _XX_X_XX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XX_X_XX_,
+  ________, XX_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX_XX,
+  ________, XX_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX_XX,
+  X_______, _XXX____, ________, ________, ________, ________, _______X, ____XXX_,
+  X_______, _X_X_X_X, ________, _X_X_X_X, ________, X_X_X_X_, _______X, X_X_X_X_,
+  ________, X_X_X_X_, ________, X_X_X_X_, ________, _X_X_X_X, ________, _X_X_X_X,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, X__X_X_X, ________, X_XX_X_X, ________, X_X_XX_X, ________, X_X_X__X,
+  ________, X_X_X__X, ________, _XXX____, ________, ____XXX_, ________, X__X_X_X,
+  ________, XX___X_X, ________, X_XX____, ________, ____XX_X, ________, X_X___XX,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, X_______, ________, ________, ________, ________, ________, _______X,
+  X_______, _X_X____, ________, ________, ________, ________, _______X, ____X_X_,
+  X_______, _XX_X_X_, ________, ________, ________, ________, _______X, _X_X_XX_,
+  X_______, _X_X___X, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X___X_X_,
+  X_______, _X__XX_X, ________, __XXXXX_, ________, XXXXXX__, _______X, X_XX__X_,
+  XX______, __XXXXX_, ________, X_______, ________, XXXXX__X, ______XX, _XXXXX__,
+  XXXXX___, _____XX_, ________, XX______, ________, _XXXX_XX, ___XXXXX, _XX_____,
+  XXXXXXX_, _______X, ________, __XXXXXX, ________, XXXXXX__, _XXXXXXX, X_______,
+  XXXXXXXX, ________, ________, X_______, ________, _______X, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+};
+
+static const pixel_t stage2_bitmap_EBEA_masked[3 * 2 * 15 * 1] = {
+  XX______, __XXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ______XX, XXXX_X__,
+  ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _X______, ________, ________, ______XX, _____X__,
+  ________, X_X_X_X_, ________, X_XX_X_X, _______X, _X_X__X_,
+  ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, X_X_XXX_, ________, X_XX_XX_, _______X, XXX_X_X_,
+  ________, X__X_XXX, ________, X_____XX, _______X, XX_X__X_,
+  ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _XX_____, ________, ________, ______XX, ____XX__,
+  X_______, _XX__XXX, ________, XXXXXXXX, ______XX, XX__XX__,
+  ________, X__X_X_X, ________, XXX_XXXX, _______X, _X_X__X_,
+  X__X____, _XX_X_X_, ________, ____XXX_, ___X__XX, X_X_XX__,
+  XXXXX___, _____X_X, ________, XXXXXXXX, __XXXXXX, _X______,
+  XXXXXX__, ______XX, ________, XXXXXXXX, _XXXXXXX, X_______,
+};
+#endif
 
 /* $EC17: bitmap_EC17 - Conv: Deduped to CommonData.c (shared with stage 4) */
 
@@ -1973,6 +2087,7 @@ static const pixel_t stage2_bitmap_EBEA[3 * 1 * 15 * 1] = {
 /**
  * $EC57: stage2_bitmap_EC57
  */
+#ifndef CHQ_ENABLE_MASKED_VEHICLES
 static const pixel_t stage2_bitmap_EC57[6 * 1 * 30 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -2055,6 +2170,90 @@ static const pixel_t stage2_bitmap_ED63[3 * 1 * 16 * 1] = {
   ______X_, ________, _X______,
   _______X, XXXXXXXX, X_______,
 };
+#endif
+
+/* Conv: port-added masked variants of stage2_bitmap_EC57/ED0B/ED63, built
+   under CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted
+   onto the exported sheet via scripts/graphics_png.py, see
+   docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+static const pixel_t stage2_bitmap_EC57_masked[6 * 2 * 30 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXX__X_, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX_X_, ______XX, X__XXX__,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  ________, XXXXX_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, _______X, X_XXXXX_,
+  X_______, _XX_____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, ____XX__,
+  X_______, _XX_____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, ____XX__,
+  ________, XX_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, _______X, _X_X_XX_,
+  ________, X_XX_XX_, ________, XX_XX_XX, ________, _XX_XX_X, ________, X_XX_XX_, ________, XX_XX_XX, _______X, _XX_XXX_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, XXX_X_X_, ________, __XXX_XX, ________, X_X_X_X_, ________, X_X_X_XX, ________, X_XXX___, _______X, X_X_XXX_,
+  ________, XX_X_X_X, ________, ___X_X_X, ________, ________, ________, _______X, ________, _X_X___X, _______X, _X_X_XX_,
+  ________, XX____X_, ________, ___X___X, ________, ________, ________, _______X, ________, ___X____, _______X, X____XX_,
+  ________, XXX__X_X, ________, __XX___X, ________, ________, ________, _______X, ________, ___XX__X, _______X, _X__XXX_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, X__X_X_X, ________, _X______, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  X_______, _X__X_X_, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  X_______, _XXX_X_X, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, __X__X__,
+  XX______, __XX__X_, ________, X_X__X__, ________, ________, ________, ________, ________, ______X_, _____XXX, X__XX___,
+  XX______, __X_XX__, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, _____XXX, _XX_X___,
+  X_______, _X___XX_, ________, _X___XXX, ________, XXXXXX__, ________, _XXXXXXX, ________, XX___X__, ______XX, XX___X__,
+  X_______, _X____XX, ________, __X___XX, ________, XXXXXX__, ________, _XXXXXXX, ________, X___X__X, ______XX, X____X__,
+  XX______, __XXXXXX, ________, X__X____, ________, ________, ________, __XXXXXX, ________, ___X__XX, _____XXX, XXXXX___,
+  XXXXXXX_, _______X, ________, XX_XX___, ________, ________, ________, __XXXXXX, ________, __XX_XXX, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, XX__XX__, ________, ________, ________, ___XXXX_, _______X, _XX__XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XX__XXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XX__XX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___X____, ________, ________, ________, ________, ____XXXX, ___X____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XX__, ________, ________, ________, ________, ___XXXXX, _XX_____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, X_______, XXXXXXXX, ________,
+};
+
+static const pixel_t stage2_bitmap_ED0B_masked[4 * 2 * 22 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  X_______, _XX_X_XX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XX_X_XX_,
+  ________, XX_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX_XX,
+  ________, XX_X_X_X, ________, _X_X_X_X, ________, __X_X_X_, ________, X_X_X_XX,
+  X_______, _XX_____, ________, ________, ________, ________, _______X, ______X_,
+  X_______, _X______, ________, ________, ________, ________, _______X, ______X_,
+  ________, X_X_X_X_, ________, X_X_X_XX, ________, XX_X_X_X, ________, _X_X_X_X,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, XX__X__X, ________, XXXXX_XX, ________, XX_XXXXX, ________, X__X__XX,
+  ________, X__X____, ________, X__X____, ________, ____X__X, ________, ____X__X,
+  ________, XX__X__X, ________, X__X____, ________, ____X__X, ________, X__X__XX,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, X___X_X_, ________, X_______, ________, ________, ________, _______X,
+  ________, X__X_X__, ________, ________, ________, ________, ________, _______X,
+  X_______, _XX_X_X_, ________, ________, ________, ________, _______X, _X_X_XX_,
+  X_______, _X_X___X, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X___X_X_,
+  ________, X___XX_X, ________, __XXXXXX, ________, _XXXXX__, ________, X_XX___X,
+  X_______, _XXXXXX_, ________, X_______, ________, _XXXX__X, _______X, _XXXXXX_,
+  XXXXX___, _____XX_, ________, XX______, ________, _XXXX_XX, ___XXXXX, _XX_____,
+  XXXXXXX_, _______X, ________, __XXXXXX, ________, XXXXXX__, _XXXXXXX, X_______,
+  XXXXXXXX, ________, ________, XX______, ________, ______XX, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __XXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+};
+
+static const pixel_t stage2_bitmap_ED63_masked[3 * 2 * 16 * 1] = {
+  XX______, __XXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _X_XXXXX, ________, XXXXXXXX, _______X, XXXXX_X_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  X_______, _X______, ________, ________, _______X, ______X_,
+  ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X__X,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, X_X_XXXX, ________, X_X_X_XX, ________, XXXX_X_X,
+  ________, XX_X_XX_, ________, X______X, ________, _XX_X_XX,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  X_______, _XX_____, ________, ________, _______X, _____XX_,
+  X_______, _XX__XXX, ________, XXXXXXXX, _______X, XXX__XX_,
+  ________, X__X_X_X, ________, XXX__XXX, ________, X_X_X__X,
+  X__X____, _XX_X_X_, ________, _____XXX, ____X__X, _X_X_XX_,
+  XXXXX___, _____X_X, ________, XXXXXXXX, ___XXXXX, X_X_____,
+  XXXXXX__, ______X_, ________, ________, __XXXXXX, _X______,
+  XXXXXXX_, _______X, ________, XXXXXXXX, _XXXXXXX, X_______,
+};
+#endif
 
 /* $F05A: pilot_mugshot - Conv: Deduped to CommonData.c (shared with stage 4) */
 

@@ -2317,6 +2317,87 @@ const pixel_t bitmap_lambo_3[3 * 1 * 15 * 1] = {
   _XX_____, ________, _____XX_,
 };
 
+/* Conv: port-added masked variants of bitmap_lambo_{1,2,3}, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+const pixel_t bitmap_lambo_1_masked[6 * 2 * 30 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  X_______, _XXXXXX_, ________, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ________, __XXXXXX,
+  X_______, _XXXX__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX__XXXX,
+  XX______, __XXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  XXX_____, ___XXXX_, ________, X_X_X_XX, ________, X_X_X_X_, ________, X_X_X_X_, ________, XXX_X_X_, ______XX, X_XXXX__,
+  XXX_____, ___X_X__, ________, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXX____, ______XX, ___X_X__,
+  XX______, __X___X_, ________, X_XXXXXX, ________, _XX_XXXX, ________, XXXXXXX_, ________, XX_XXXX_, _______X, X_X___X_,
+  XX______, __X_XXXX, ________, XXXXXXX_, ________, _X__XXX_, ________, X_X_XX__, ________, X__XXXXX, _______X, XXXXX_X_,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ________, _X_X_XXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XX______, __XXXXXX, ________, XXXX_XXX, ________, X_X__X__, ________, ____X_X_, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XX______, __XX_XXX, ________, __X_X_X_, ________, X_______, ________, ________, ________, X_XXXXXX, _______X, XXXXXXX_,
+  XX______, __X_X_X_, ________, _X_X_XXX, ________, ________, ________, ________, ________, _XX____X, _______X, XXXXXXX_,
+  XX______, __X___X_, ________, XXXXXXXX, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_XXXX_, _______X, _XXXXXX_,
+  XX______, __X__X_X, ________, XX____XX, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X____X, _______X, X__XX_X_,
+  X_______, _X_X_XXX, ________, __X_X__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX__X_X_, ________, _XX_XX_X,
+  X_______, _XX_XX__, ________, _______X, ________, __X_X_X_, ________, X_X_X_X_, ________, _X______, ________, ___XX_XX,
+  X_______, _XXX_X__, ________, _______X, ________, __XX_X_X, ________, _X_X_XX_, ________, _X______, ________, ___XXXXX,
+  X_______, _XXX_XXX, ________, _X_X_X_X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX_X_X_X, ________, _XXXXXXX,
+  XX______, __XXX__X, ________, XX____XX, ________, X_______, ________, ________, ________, XXX____X, _______X, XX_XXXX_,
+  XXXX____, ____X___, ________, _XXXXXXX, ________, XXX_X_X_, ________, X_X_X_XX, ________, XXXXXXXX, _____XXX, ____X___,
+  XXXX____, ____XX_X, ________, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX_____, _____XXX, _X_XX___,
+  XXXXXX__, ______XX, ________, X_XX___X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X___XX_, ___XXXXX, XXX_____,
+  XX___XXX, __XXX___, ________, XXXXXXXX, ________, XXX_____, ________, ______XX, ________, XXXXXXXX, _XXX___X, X___XXX_,
+  X_____XX, _X__XX__, X_______, _XXX_X_X, ________, _XXXXXXX, ________, XXXXXXXX, ________, _X_X_XXX, XXX_____, ___XX__X,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X,
+  X_______, _X__X___, ________, ________, ________, ________, ________, ________, ________, ________, ________, ____X__X,
+  X_______, _XX__XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXX__XX,
+  XXX___XX, ___XXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__,
+};
+
+const pixel_t bitmap_lambo_2_masked[5 * 2 * 22 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XX______, __XX__X_, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, ______XX, X__XXX__,
+  XX______, __XX_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XX_XX___,
+  XXX_____, ___XX___, ________, ___XXXXX, ________, XXXXXXXX, ________, XXXX____, ____XXXX, __XX____,
+  XX______, __X__X_X, ________, _XXXX_XX, ________, _XXXXXXX, ________, _XX_XX_X, _____XXX, _X__X___,
+  XX______, __X_XXXX, ________, XXXX__X_, ________, _XX__XX_, ________, _X__XXXX, _____XXX, XXX_X___,
+  XX______, __XXXXXX, ________, _X_XXXXX, ________, XX____XX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __XX_XX_, ________, __X__X_X, ________, _______X, ________, _X_XXXXX, _____XXX, XXXXX___,
+  XX______, __X_X___, ________, _XXXX___, ________, ________, ________, __XXXXXX, _____XXX, XXXXX___,
+  XX______, __X____X, ________, X___XX_X, ________, _X_X_X_X, ________, _XX___XX, _____XXX, X_X_X___,
+  XXX_____, ___X_XX_, ________, __X_XXXX, ________, XXXXXXXX, ________, XXX_X___, ______XX, XX_X_X__,
+  XX______, __XX_X__, ________, ____X__X, ________, _X_X_X_X, ________, __X_____, ______XX, _XXXXX__,
+  XX______, __XX_XXX, ________, ___XXXXX, ________, XXXXXXXX, ________, XXXX___X, ______XX, XXXXXX__,
+  XXXX____, ____X___, ________, XXXXXXX_, ________, X_X_X_X_, ________, XXXXXXX_, ____XXXX, ___X____,
+  XXXXX___, _____XX_, ________, ____XXXX, ________, XXXXXXXX, ________, XXXX____, ___XXXXX, _XX_____,
+  XXXXXX__, ______XX, ________, _XX_XXXX, ________, _X__X__X, ________, _XXX_XX_, __XXXXXX, XX______,
+  XX_XX___, __X__X__, ________, XX_XX_XX, ________, XXXXXXXX, ________, XX_XX_XX, ___XX_XX, __X__X__,
+  XX_X____, __X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____X_XX, XXXX_X__,
+  XX______, __XX_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXX_XX__,
+  XXX__XXX, ___XX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX__XXXX, __XX____,
+};
+
+const pixel_t bitmap_lambo_3_masked[3 * 2 * 15 * 1] = {
+  X_______, _XXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, XXX__XXX, ________, XXXXXXXX, ________, XXX__XXX,
+  ________, XX_XXXXX, ________, XXXXXXXX, ________, XXXXX_XX,
+  X_______, _XX___XX, ________, XXXXXXXX, _______X, XX___XX_,
+  ________, XX_XXXXX, ________, _X_XX_X_, _______X, XXXXX_X_,
+  ________, XXXXXXXX, ________, XXX__XXX, ________, XXXXXXXX,
+  ________, XX__XXXX, ________, ________, ________, _XXXXXXX,
+  ________, X__XX__X, ________, XXXXXXXX, ________, X__XXXXX,
+  ________, X_X____X, ________, ________, ________, X____XXX,
+  ________, X_XXX_XX, ________, XXXXXXXX, ________, XX_XXXXX,
+  X_______, _XX__XX_, ________, XXXXXXXX, _______X, _XXX_XX_,
+  XXX_____, ___X___X, ________, X_X__X_X, _____XXX, X_XXX___,
+  ________, XXX_X_X_, ________, XXXXXXXX, ________, XXXX_XXX,
+  ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXX_X,
+  X__XXXXX, _XX_____, XXXXXXXX, ________, XXXXX__X, _____XX_,
+};
+#endif
+
 /** $660B (stage1) / $CB0F (stage5): bitmap_truck_1 */
 const pixel_t bitmap_truck_1[6 * 1 * 39 * 1] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX____,
@@ -2417,6 +2498,108 @@ const pixel_t bitmap_truck_3[3 * 1 * 20 * 1] = {
   ________, XXXXXXXX, X_______,
 };
 
+/* Conv: port-added masked variants of bitmap_truck_{1,2,3}, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+const pixel_t bitmap_truck_1_masked[6 * 2 * 39 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _XXXXX__, ________, X_X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXX_X_X, _______X, __XXXXX_,
+  X_______, _XXXX__X, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, X__XXXX_,
+  X_______, _XXXX_XX, ________, XXXXXXXX, ________, XX______, ________, _______X, ________, XXXXXXXX, _______X, XX_XXXX_,
+  XX______, __XXX_XX, ________, XXXXXXXX, ________, XX______, ________, _______X, ________, XXXXXXXX, ______XX, XX_XXX__,
+  XX______, __XXX_XX, ________, XXXXX___, ________, XXX_____, ________, ______XX, ________, X___XXXX, ______XX, XX_XXX__,
+  XXX_____, ___XX_XX, ________, XXXX_X_X, ________, XX_X_X_X, ________, _X_X_X_X, ________, XX_X_XXX, _____XXX, XX_XX___,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXX_____, ___X____, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX, ____X___,
+  XX______, __X_X_X_, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ______XX, _X_X_X__,
+  XX______, __XX_X_X, ________, _X___X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X__X_, ______XX, X_X_XX__,
+  XX______, __X_XXX_, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _XXX_X__,
+  XX______, __XXXX__, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, __XXXX__,
+  X_______, _X___XX_, ________, ________, ________, ________, ________, ________, ________, ________, _______X, _XX___X_,
+  X_______, _X___X__, ________, ________, ________, ________, ________, ________, ________, ________, _______X, __X___X_,
+  X_______, _X___XX_, ________, ________, ________, ________, ________, ________, ________, ________, _______X, _XX___X_,
+  XX______, __XXXXX_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, _______X, X_XXXXX_,
+  X_______, _X___XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXX___X_,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXX_____, ___XXXX_, ________, _XX_X_X_, ________, X_X_X_XX, ________, X_X_X_X_, ________, X_X_X_X_, _____XXX, _XXXX___,
+  XXXXXX__, ______XX, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, __XXXXXX, XX______,
+  XXXXXX__, ______XX, ________, XX______, ________, XX_____X, ________, X_____XX, ________, ______XX, __XXXXXX, XX______,
+  XXXXX___, _____XX_, ________, __XXXXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXXXX__, ___XXXXX, _XX_____,
+  XXXX____, ____X_XX, ________, X_X_X_XX, ________, __X_X_X_, ________, _X_X_X__, ________, XX_X_X_X, ____XXXX, XX_X____,
+  XXXX____, ____X__X, ________, _X_XXXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXXX_X_, ____XXXX, X__X____,
+  XXX_____, ___X___X, ________, _X_XXXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXXX_X_, _____XXX, X___X___,
+  XXX_____, ___X___X, ________, _X_XXXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXXX_X_, _____XXX, X___X___,
+  XXX_____, ___X___X, ________, __X_XXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXX_X__, _____XXX, X___X___,
+  XXX_____, ___X___X, ________, X_X_XXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXX_X_X, _____XXX, X___X___,
+  XXXX____, ____X_X_, ________, _XX_XXXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXXX_XX_, ____XXXX, _X_X____,
+  XXXXX___, _____XXX, ________, X__X_XXX, ________, __XXXXX_, ________, _XXXXX__, ________, XXX_X__X, ___XXXXX, XXX_____,
+  XXXXXXXX, ________, X_______, _XXX____, ________, ________, ________, ________, _______X, ____XXX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____X___, ________, ________, ________, ________, ____XXXX, ___X____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_truck_2_masked[5 * 2 * 29 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXX_____, ___XXX_X, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, ______XX, X_XXXX__,
+  XXX_____, ___XX_XX, ________, XXXXXXXX, ________, ________, ________, _XXXXXXX, ______XX, XX_XXX__,
+  XXX_____, ___XX_XX, ________, XXXX__XX, ________, ________, ________, _XX__XXX, _____XXX, XX_XX___,
+  XXXX____, ____X_XX, ________, XXX_XXXX, ________, X_X___X_, ________, XXXXX_XX, ____XXXX, XX_X____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____X___, ________, ________, ________, ________, ________, ________, ____XXXX, ___X____,
+  XXX_____, ___X_XX_, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, _____XXX, _XX_X___,
+  XXX_____, ___X_X_X, ________, _X______, ________, ________, ________, ______X_, _____XXX, X_X_X___,
+  XXX_____, ___XXX__, ________, ________, ________, ________, ________, ________, _____XXX, __XXX___,
+  XX______, __X___X_, ________, ________, ________, ________, ________, ________, ______XX, _X___X__,
+  XX______, __X___X_, ________, ________, ________, ________, ________, ________, ______XX, _X___X__,
+  XX______, __XXXXX_, ________, X_X_X_X_, ________, X_X__X_X, ________, _X_X_X_X, ______XX, __XXXX__,
+  XX______, __X_____, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XX______, __X_____, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXX__, ______XX, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, __XXXXXX, XX______,
+  XXXXXX__, ______XX, ________, XX____X_, ________, ___XX___, ________, _X____XX, __XXXXXX, XX______,
+  XXXXX___, _____XXX, ________, X__X_X_X, ________, X_X__X_X, ________, X_X_X__X, ___XXXXX, XXX_____,
+  XXXXX___, _____X_X, ________, __XXXX_X, ________, XXX__XXX, ________, X_XXXX__, ___XXXXX, X_X_____,
+  XXXX____, ____X__X, ________, __XXXX_X, ________, XXX__XXX, ________, X_XXXX__, ____XXXX, X__X____,
+  XXXX____, ____X__X, ________, _X_XXX_X, ________, XXX__XXX, ________, X_XXX_X_, ____XXXX, X__X____,
+  XXXX____, ____X__X, ________, XX_XXX_X, ________, XXX__XXX, ________, X_XXX_XX, ____XXXX, X__X____,
+  XXXXXX__, ______XX, ________, X_X_XX_X, ________, XXX__XXX, ________, X_XX_X_X, __XXXXXX, XX______,
+  XXXXXXXX, ________, X_______, _XX_____, ________, ________, _______X, _____XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___X____, ________, ________, _____XXX, ____X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XXXX, ________, XXXXXXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_truck_3_masked[3 * 2 * 20 * 1] = {
+  X_______, _XXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXX_XXX,
+  ________, XX_XXXXX, ________, X______X, ________, XXXXX_XX,
+  X_______, _X_XXXX_, ________, XX____XX, _______X, _XXXX_X_,
+  XX______, __XXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _X______, ________, ________, _______X, ______X_,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  ________, X_X_X___, ________, ________, ________, ___X_X_X,
+  ________, X_X_____, ________, ________, ________, _____X_X,
+  ________, _XX_X_X_, ________, X_X_X_X_, ________, X_X_XXX_,
+  ________, X_______, ________, ________, ________, _______X,
+  X_______, _XXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XXX_____, ___XXX__, ________, ________, _____XXX, ___XX___,
+  XXX_____, ___X___X, ________, X_XX_XX_, ______XX, XX___X__,
+  XX______, __X_XX_X, ________, X_XX_XX_, _______X, XX_XX_X_,
+  XX______, __X_X__X, ________, X_XX_XX_, _______X, XX__X_X_,
+  XX______, __X_X__X, ________, X_XX_XX_, _______X, XX__X_X_,
+  XXX_____, ___XXXX_, ________, X_XX_XX_, ______XX, X_XXXX__,
+  XXXXXXX_, _______X, ________, ________, __XXXXXX, _X______,
+  XXXXXXXX, ________, ________, XXXXXXXX, _XXXXXXX, X_______,
+};
+#endif
+
 /** $67C2 (stage1) / $CC2D (stage3): bitmap_car_1 */
 const pixel_t bitmap_car_1[6 * 1 * 31 * 1] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
@@ -2497,6 +2680,89 @@ const pixel_t bitmap_car_3[3 * 1 * 16 * 1] = {
   _____XX_, _XXXXXXX, __XX____,
   _______X, XXXXXXXX, XX______,
 };
+
+/* Conv: port-added masked variants of bitmap_car_{1,2,3}, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+const pixel_t bitmap_car_1_masked[6 * 2 * 31 * 1] = {
+  XXXXXXXX, ________, XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXXXX__, ________, X_X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX_X_X_, ______XX, _XXXXX__,
+  ________, XXXXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X_XXXXX_,
+  ________, XXXXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X_XXXXX_,
+  ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _XX_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, _______X, X_X_XXX_,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __X_____, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX, ____X___,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _X__XXXX, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ______XX, XXX__X__,
+  X_______, _X__XXXX, ________, _X_X_X_X, ________, _X______, ________, _____X_X, ________, _X_X_X_X, ______XX, XXX__X__,
+  X_______, _X__XXXX, ________, __X_X_X_, ________, XX______, ________, _____XX_, ________, X_X_X_X_, ______XX, XXX__X__,
+  XX______, __XXXXX_, ________, _X_X_X_X, ________, _X______, ________, _____X_X, ________, _X_X_X__, ______XX, XXXXXX__,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __X_XX__, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX, _XX_X___,
+  XXX_____, ___X_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XX_X____,
+  XX______, __X_XX__, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _____XXX, _XX_X___,
+  X_______, _X___XX_, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, XX___X__,
+  X_______, _X____XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, X____X__,
+  XX______, __XXXXXX, ________, X_X_____, ________, ________, ________, ___XXXXX, ________, ____X_XX, _____XXX, XXXXX___,
+  XXXXXXX_, _______X, ________, XX_X____, ________, ________, ________, __XXXXXX, ________, ___X_XXX, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, XX__X___, ________, ________, ________, __XXXXXX, _______X, __X__XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XX__XX_, ________, ________, ________, ___XXXX_, ______XX, XX__XX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___X___X, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, ___XX___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XX__, ________, ________, ________, ________, ___XXXXX, _XX_____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, X_______, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_car_2_masked[5 * 2 * 22 * 1] = {
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___, XXXXXXXX, ________,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XX______, __XXXX__, ________, X_XXXXXX, ________, XXXXXXXX, ________, XXXXX_X_, _____XXX, _XXXX___,
+  X_______, _XXXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, X_XXXX__,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XX______, __XX_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ______XX, _X_XXX__,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __X_____, ________, ________, ________, ________, ________, ________, _____XXX, ____X___,
+  XXX_____, ___X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ____XXXX, _X_X____,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XX______, __X__XX_, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _____XXX, XX__X___,
+  XX______, __X__XX_, ________, _X_X_X__, ________, ________, ________, XX_X_X__, _____XXX, XX__X___,
+  XXX_____, ___XXXX_, ________, X_X_XX__, ________, ________, ________, X_X_X_X_, _____XXX, XXXXX___,
+  XXX_____, ___XXX_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ____XXXX, _XXX____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXX_____, ___X_X__, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, ____XXXX, _X_X____,
+  XX______, __X__XXX, ________, X_______, ________, ________, ________, ______XX, _____XXX, XX__X___,
+  XXX_____, ___XXXXX, ________, _X______, ________, ______XX, ________, XX___X_X, ____XXXX, XXXX____,
+  XXXXXXX_, _______X, ________, X_X_____, ________, _____XXX, ________, XX__X_XX, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, XX_XX___, ________, ______XX, _______X, X_XX_XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __X__XXX, ________, XXXXXXXX, _____XXX, XX__X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___XXXXX, ________, XXXXXXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_car_3_masked[3 * 2 * 16 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  ________, XXX__XXX, ________, XXXXXXXX, ________, XXX__XXX,
+  ________, XX_XXXXX, ________, XXXXXXXX, ________, XXXXX_XX,
+  ________, _XX_X_X_, ________, X_XX_X_X, ________, _X_X_XX_,
+  ________, X_______, ________, ________, ________, _______X,
+  ________, _XX_XXXX, ________, XXXXXXXX, ________, XXXX_XX_,
+  ________, X_XXX_X_, ________, X______X, ________, _X_XXX_X,
+  ________, X_XX_X_X, ________, _X_XX_X_, ________, X_X_XX_X,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_,
+  X_______, _XX_XXXX, ________, XXXXXXXX, ________, XXXXX_X_,
+  X_______, _X_X____, ________, ________, ________, _____X_X,
+  XX______, __XXX_X_, ________, ______XX, _______X, __X_XXX_,
+  XXXX____, ____XX_X, ________, _____XXX, _____XXX, _X_XX___,
+  XXXXX___, _____XX_, ________, _XXXXXXX, ____XXXX, __XX____,
+  XXXXXXX_, _______X, ________, XXXXXXXX, __XXXXXX, XX______,
+};
+#endif
 
 /** $691A (stage1) / $CAAF (stage5): bitmap_lambo_4 */
 const pixel_t bitmap_lambo_4[3 * 2 * 8 * 1] = {
@@ -3199,6 +3465,81 @@ const pixel_t bitmap_EA77[3 * 1 * 13 * 1] = {
   ______XX, XXXXXXXX, XXX_____,
 };
 
+/* Conv: port-added masked variants of bitmap_E97D/EA2B/EA77, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+const pixel_t bitmap_E97D_masked[6 * 2 * 29 * 1] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXXXX__, ________, X_X_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX_X_X_, ______XX, _XXXXX__,
+  ________, XXXXX_XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X_XXXXX_,
+  ________, XXXXX_X_, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X__, _______X, X_XXXXX_,
+  ________, XXXXX___, ________, X_X_____, ________, __XXXXXX, ________, XXXXXX__, ________, ____X_X_, _______X, __XXXXX_,
+  X_______, _XXX_XXX, ________, XXXXXXXX, ________, XXX_____, ________, _____XXX, ________, XXXXXXXX, ______XX, XX_XXX__,
+  X_______, _XX_X_X_, ________, X_X_X_X_, ________, X_X_____, ________, _____XX_, ________, X_X_X_X_, ______XX, X_X_XX__,
+  ________, XX_X_X__, ________, ________, ________, __X_____, ________, _____X__, ________, ________, _______X, _X_X_XX_,
+  ________, X_______, ________, ________, ________, __XXXXXX, ________, XXXXXX__, ________, ________, _______X, ______X_,
+  ________, X_______, ________, ________, ________, ________, ________, ________, ________, ________, _______X, ______X_,
+  ________, X____X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, _______X, _X____X_,
+  X_______, _X_XXXXX, ________, XXXXXXX_, ________, ______XX, ________, X_______, ________, XXXXXXXX, ______XX, XXXX_X__,
+  X_______, _X_X__XX, ________, XXX_XXX_, ________, _____XXX, ________, ________, ________, XXX_XXXX, ______XX, X__X_X__,
+  X_______, _X_X_XXX, ________, _X_X_XX_, ________, ______XX, ________, X_______, ________, XX_X_X_X, ______XX, XX_X_X__,
+  X_______, _X_X__XX, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_XX, ______XX, X__X_X__,
+  X_______, _X__X_XX, ________, _X___XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX___X_X, ______XX, X_X__X__,
+  XX______, __X__XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XX__X___,
+  XX______, __X_X___, ________, ________, ________, ________, ________, ________, ________, ________, _____XXX, __X_X___,
+  XXX_____, ___XXX_X, ________, ________, ________, ________, ________, ________, ________, ________, ____XXXX, X_XX____,
+  XXX_____, ___X_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XX_X____,
+  XX______, __X_____, ________, X__XX_X_, ________, X_X_X___, ________, __X_X_X_, ________, X_XX__X_, _____XXX, ____X___,
+  XX______, __X_____, ________, X__XX___, ________, _____X__, ________, _X______, ________, __XX__X_, _____XXX, ____X___,
+  XXX_____, ___XXXXX, X_______, _X_XX___, ________, _____X__, ________, _X______, ______X_, __XX_X_X, ____XXXX, XXXX____,
+  XXXXXXXX, ________, X_______, _X__XXXX, ________, XXXXX___, ________, __XXXXXX, ______XX, XXX__X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __X_XXXX, ________, XXX_____, ________, ________, _____XXX, __X_X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, ________, X______X, ________, XX______, ________, ________, _______X, ______X_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_EA2B_masked[4 * 2 * 19 * 1] = {
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _XXX_X_X, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X_X_XXX_,
+  ________, XXX_XXXX, ________, _X__X_XX, ________, _X_XX_X_, ________, XXXX_XXX,
+  ________, XXX__X__, ________, ____XXXX, ________, XXXX____, ________, __X__XXX,
+  ________, XX__XXXX, ________, X_XXX___, ________, ___XXX_X, ________, XXXX__XX,
+  ________, X__X____, ________, ____X___, ________, ___X____, ________, ____X__X,
+  ________, X_______, ________, ________, ________, ________, ________, _______X,
+  ________, X____XX_, ________, XX_X_XXX, ________, X_XXXX_X, ________, X_X____X,
+  ________, X_X_XXXX, ________, XXX___XX, ________, ____XXXX, ________, XXXX_X_X,
+  ________, X_X_X_X_, ________, _XX____X, ________, ____XX__, ________, X_XX_X_X,
+  ________, X__XX_X_, ________, _XXXXXXX, ________, XXXXXX__, ________, X_XXX__X,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXX__X_,
+  XX______, __XX____, ________, ________, ________, ________, ______XX, ___XXX__,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  X_______, _X___X_X, ________, X_____X_, ________, X_____XX, ______XX, _X___X__,
+  XX______, __XXXX_X, ________, X____X__, ________, _X____XX, _____XXX, _XXXX___,
+  XXXXX___, _____XX_, ________, XXXXX___, ________, __XXXXX_, __XXXXXX, XX______,
+  XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
+  XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_EA77_masked[3 * 2 * 13 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XX______, __XXX_X_, ________, XXXXXXXX, _______X, X_X_XXX_,
+  X_______, _XXX_XXX, ________, X__XXX__, ________, XXXX_XXX,
+  XX______, __XXX___, ________, __X___X_, _______X, ____XXX_,
+  X_______, _X______, ________, __X___X_, ________, _______X,
+  X_______, _X_XXXXX, ________, X___X___, ________, XXXXXX_X,
+  X_______, _X__X___, ________, X___X___, ________, X___X__X,
+  X_______, _X_XX___, ________, XXXXXXXX, ________, X___XX_X,
+  XX______, __XXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XX______, __X__X_X, ________, _X_XXX_X, _______X, _X_X__X_,
+  XXX__X__, ___XX_XX, ________, ____X___, ___X__XX, _XX_XX__,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+};
+#endif
+
 /** $EC17 (stage2) / $E994 (stage4): bitmap_EC17 */
 const pixel_t bitmap_EC17[2 * 2 * 8 * 1] = {
   ________, XXXXXXXX, _____XXX, XXXXX___,
@@ -3578,6 +3919,83 @@ const pixel_t bitmap_CA62[3 * 1 * 13 * 1] = {
   ___XXXXX, XXXXXXXX, XXXXXX__,
   _______X, XXXXXXXX, XX______,
 };
+
+/* Conv: port-added masked variants of bitmap_C95E/CA12/CA62, built under
+   CHQ_ENABLE_MASKED_VEHICLES. Hand-authored silhouette mask painted onto the
+   exported sheet via scripts/graphics_png.py, see docs/graphics-png-format.md. */
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+const pixel_t bitmap_C95E_masked[6 * 2 * 30 * 1] = {
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XX______, __XXXXX_, ________, _X_X_XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXX_X_X, _______X, __XXXXX_,
+  X_______, _XXXXX_X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XX_XXXXX,
+  X_______, _XXXXX_X, ________, __X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, _X_XXXXX,
+  X_______, _XXXXX__, ________, _X_X____, ________, ___XXXXX, ________, XXXXXXX_, ________, _____X_X, ________, ___XXXXX,
+  XX______, __XXX_XX, ________, XXXXXXXX, ________, XXXX____, ________, ______XX, ________, XXXXXXXX, _______X, XXX_XXX_,
+  XX______, __XX_X_X, ________, _X_X_X_X, ________, _X_X____, ________, ______XX, ________, _X_X_X_X, _______X, _X_X_XX_,
+  X_______, _XX_X_X_, ________, ________, ________, ___X____, ________, ______X_, ________, ________, ________, __X_X_XX,
+  X_______, _X______, ________, ________, ________, ___XXXXX, ________, XXXXXXX_, ________, ________, ________, _______X,
+  X_______, _X______, ________, ________, ________, ________, ________, ________, ________, ________, ________, _______X,
+  X_______, _X____X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X____X,
+  XX______, __X_XXXX, ________, XXXXXXXX, ________, _______X, ________, XX______, ________, _XXXXXXX, _______X, XXXXX_X_,
+  XX______, __X_X__X, ________, XXXX_XXX, ________, ______XX, ________, X_______, ________, _XXX_XXX, _______X, XX__X_X_,
+  XX______, __X_X_XX, ________, X_X_X_XX, ________, _______X, ________, XX______, ________, _XX_X_X_, _______X, XXX_X_X_,
+  XX______, __X_X__X, ________, XX_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, _______X, XX__X_X_,
+  XX______, __X__X_X, ________, X_X___XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX___X_, _______X, XX_X__X_,
+  XXX_____, ___X__XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXX__X__,
+  XXX_____, ___X____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XXX_____, ___X__X_, ________, X_______, ________, ________, ________, ________, ________, ________, ______XX, __X__X__,
+  XXX_____, ___X_X__, ________, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, ______XX, ___X_X__,
+  XXX_____, ___X_XXX, ________, __X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ________, X_X_X_X_, ______XX, _XXX_X__,
+  XXX_____, ___XXX_X, ________, X__X_X_X, ________, _X_X_X_X, ________, _X_X_X_X, ________, _X_X_X__, ______XX, XX_XXX__,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXX_____, ___X____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XXX_____, ___X____, ________, ________, ________, ________, ________, ________, ________, ________, ______XX, _____X__,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXXX, ________, XXXX____, ____X___, ________, ________, ________, ________, _____XXX, ____X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXX___, _____XX_, ________, ________, ________, ________, ____XXXX, __XX____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_CA12_masked[4 * 2 * 20 * 1] = {
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXX__X_, ________, XXXXXXXX, ________, XXXXXXX_, _______X, X__XXXX_,
+  ________, XXX_XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX_XXXX,
+  ________, XXXXX_X_, ________, X_X_XXXX, ________, XXX_X_X_, ________, X_X_XXXX,
+  X_______, _X_X_X_X, ________, _X_XX___, ________, __XX_X_X, _______X, _X_X__X_,
+  ________, X_______, ________, ____X___, ________, __X_____, ________, _______X,
+  ________, X_______, ________, ________, ________, ________, ________, _______X,
+  ________, X__XXX_X, ________, X_XX_XX_, ________, XX_XX_XX, ________, _XX_X__X,
+  ________, X_X_XXXX, ________, XXX_____, ________, ____XXXX, ________, XXXX_X_X,
+  ________, X_X_X_X_, ________, _XX_____, ________, ____XX__, ________, X_XX_X_X,
+  ________, X__XX_X_, ________, _XXXXXXX, ________, XXXXXX__, ________, X_XXX__X,
+  X_______, _X__XXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXX__X_,
+  X_______, _X______, ________, ________, ________, ________, _______X, ______X_,
+  X_______, _XX___XX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, X____XX_,
+  X_______, _XXXX__X, ________, X_XX_XX_, ________, XX_XX_XX, _______X, X__XXXX_,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  X_______, _X______, ________, ________, ________, ________, _______X, ______X_,
+  XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXXXXXXX, ________, ________, XX______, _______X, _____XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __XXXXXX, _____XXX, XXXXX___, XXXXXXXX, ________,
+};
+
+const pixel_t bitmap_CA62_masked[3 * 2 * 13 * 1] = {
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  X_______, _XXX___X, ________, XXXXXXXX, _______X, XX___XX_,
+  X_______, _XX_X_X_, ________, X_XXXXX_, ________, X_X_X_XX,
+  X_______, _X______, ________, ________, ________, _______X,
+  X_______, _X___XXX, ________, XXXXXXXX, ________, XXXX___X,
+  X_______, _X_XXXXX, ________, X___X___, ________, XXXXXX_X,
+  X_______, _X__X___, ________, X___X___, ________, X___X__X,
+  X_______, _X_XXXXX, ________, XXXXXXXX, ________, XXXXXX_X,
+  XX______, __XX____, ________, ________, _______X, ______X_,
+  XX______, __XXX__X, ________, XXXXXXXX, _______X, XX__XXX_,
+  XX______, __X__XXX, ________, _X_X_X_X, _______X, _XXX__X_,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXXXXXX_, _______X, ________, XXXXXXXX, __XXXXXX, XX______,
+};
+#endif
 
 /** $CA89 (stage3) / $CBED (stage3) / $CE51 (stage5): bitmap_CA89 */
 const pixel_t bitmap_CA89[2 * 2 * 8 * 1] = {

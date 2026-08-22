@@ -109,9 +109,9 @@ static const u8 stage5_map_hazards_C6D1[29];
 static const u8 stage5_map_lobjs_C6EE[183];
 static const u8 stage5_map_robjs_C7A5[137];
 static const pixel_t stage5_perp_face[180];
-static const bitmap_t stage5_lods_C8E2[6];
-static const bitmap_t stage5_lods_C90C[6];
-static const bitmap_t stage5_lods_C936[6];
+static const bitmap_t stage5_lambo_bitmaps[6];
+static const bitmap_t stage5_pickup_bitmaps[6];
+static const bitmap_t stage5_f40_bitmaps[6];
 static const stretchy_t stage5_stretchy_CE91[5];
 static const depthset_t stage5_depthset_CE9E;
 static const depthset_t stage5_depthset_CEB4;
@@ -223,12 +223,12 @@ const stage_t stage5 = {
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
-  &stage5_lods_C8E2[0],  /* bitmaps_perp_car */
+  &stage5_lambo_bitmaps[0],  /* bitmaps_perp_car */
   {
-    &stage5_lods_C936[0],
-    &stage5_lods_C90C[0],
-    &stage5_lods_C936[0],
-    &stage5_lods_C8E2[0]
+    &stage5_f40_bitmaps[0],
+    &stage5_pickup_bitmaps[0],
+    &stage5_f40_bitmaps[0],
+    &stage5_lambo_bitmaps[0]
   },  /* bitmaps_vehicles */
 
   /* $C11A difficulty */
@@ -1770,32 +1770,53 @@ static const pixel_t stage5_perp_face[FACEBYTES] = {
 
 /* ----------------------------------------------------------------------- */
 
-/** $C8E2: stage5_lods_C8E2 */
-static const bitmap_t stage5_lods_C8E2[6] = {
+/** $C8E2: stage5_lambo_bitmaps */
+static const bitmap_t stage5_lambo_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_lambo_1_masked[0], &bitmap_lambo_1_masked[0] },  // [0]
+  { 5, BITMAPFLAG_MASKED, 22, &bitmap_lambo_2_masked[0], &bitmap_lambo_2_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 15, &bitmap_lambo_3_masked[0], &bitmap_lambo_3_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_lambo_1[0], &bitmap_lambo_1[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &bitmap_lambo_2[0], &bitmap_lambo_2[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 15, &bitmap_lambo_3[0], &bitmap_lambo_3[0] },  // [3]
+#endif
   { 3, BITMAPFLAG_MASKED, 8, &bitmap_lambo_4[0], &bitmap_lambo_4[0] },  // [4]
   { 3, BITMAPFLAG_MASKED, 8, &bitmap_lambo_4[0], &bitmap_lambo_4s[0] },  // [5]
 };
 
-/** $C90C: stage5_lods_C90C */
-static const bitmap_t stage5_lods_C90C[6] = {
+/** $C90C: stage5_pickup_bitmaps */
+static const bitmap_t stage5_pickup_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 39, &bitmap_truck_1_masked[0], &bitmap_truck_1_masked[0] },  // [0]
+  { 5, BITMAPFLAG_MASKED, 29, &bitmap_truck_2_masked[0], &bitmap_truck_2_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 20, &bitmap_truck_3_masked[0], &bitmap_truck_3_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 39, &bitmap_truck_1[0], &bitmap_truck_1[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 29, &bitmap_truck_2[0], &bitmap_truck_2[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 20, &bitmap_truck_3[0], &bitmap_truck_3[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 12, &bitmap_truck_4[0], &bitmap_truck_4s[0] },  // [5]
 };
 
-/** $C936: stage5_lods_C936 */
-static const bitmap_t stage5_lods_C936[6] = {
+/** $C936: stage5_f40_bitmaps */
+static const bitmap_t stage5_f40_bitmaps[6] = {
+#ifdef CHQ_ENABLE_MASKED_VEHICLES
+  { 6, BITMAPFLAG_MASKED, 30, &bitmap_C95E_masked[0], &bitmap_C95E_masked[0] },  // [0]
+  { 4, BITMAPFLAG_MASKED, 20, &bitmap_CA12_masked[0], &bitmap_CA12_masked[0] },  // [1]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [2]
+  { 3, BITMAPFLAG_MASKED, 13, &bitmap_CA62_masked[0], &bitmap_CA62_masked[0] },  // [3]
+#else
   { 6, BITMAPFLAG_DEFAULT, 30, &bitmap_C95E[0], &bitmap_C95E[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &bitmap_CA12[0], &bitmap_CA12[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [2]
   { 3, BITMAPFLAG_DEFAULT, 13, &bitmap_CA62[0], &bitmap_CA62[0] },  // [3]
+#endif
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CA89[0] },  // [4]
   { 2, BITMAPFLAG_MASKED, 8, &bitmap_CA89[0], &bitmap_CAA9[0] },  // [5]
 };
