@@ -547,6 +547,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   const zx_frame_t *frame;
   const uint32_t   *pixels;
   uint32_t         *composited = NULL;
+  size_t            composite_size;
 
   SDL_GL_MakeCurrent(window, shader->gl_context);
 
@@ -582,10 +583,25 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
   {
     int i;
 
-    composited = SDL_malloc((size_t) game_width * (size_t) game_height * 4);
-    if (composited != NULL)
+    /* Grown once and kept in shader->composite_buf rather than
+     * malloc'd/freed every frame -- game_width/game_height are constant for
+     * the process lifetime in practice (see the texture reuse comment
+     * below), so after the first OSD frame this never reallocates. */
+    composite_size = (size_t) game_width * (size_t) game_height * 4;
+    if (composite_size > shader->composite_cap)
     {
-      memcpy(composited, pixels, (size_t) game_width * (size_t) game_height * 4);
+      void *grown = SDL_realloc(shader->composite_buf, composite_size);
+      if (grown != NULL)
+      {
+        shader->composite_buf = grown;
+        shader->composite_cap = composite_size;
+      }
+    }
+
+    if (composite_size <= shader->composite_cap)
+    {
+      composited = shader->composite_buf;
+      memcpy(composited, pixels, composite_size);
       for (i = 0; i < game_width * game_height; i++)
         if (osd_mask[i] == 1)
           composited[i] = 0xFF40FF40u; /* green interior */
@@ -593,7 +609,7 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
           composited[i] = 0xFF000000u; /* black outline */
       pixels = composited;
     }
-    /* SDL_malloc failure: fall through and upload the frame without the
+    /* SDL_realloc failure: fall through and upload the frame without the
      * OSD overlay rather than crash on a null buffer. */
   }
 
@@ -623,8 +639,6 @@ void chq_CRT_shader_render(chq_CRT_shader_t       *shader,
 
   if (override_pixels == NULL)
     zxspectrum_release_screen(zx);
-  if (composited != NULL)
-    SDL_free(composited);
 
   glViewport(x, y, w, h);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -667,6 +681,7 @@ void chq_CRT_shader_destroy(chq_CRT_shader_t *shader, SDL_Window *window)
   glDeleteBuffers(1, &shader->vbo);
   glDeleteProgram(shader->program);
   SDL_GL_DestroyContext(shader->gl_context);
+  SDL_free(shader->composite_buf);
 }
 
 #else
