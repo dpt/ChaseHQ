@@ -15,12 +15,12 @@ not a release acceptance requirement. One game may run at a time. The first
 release is silent; native AY and beeper audio, save games, networking, CRT
 effects, 26-bit builds, a 64-bit Wimp host, and multiple instances are deferred.
 
-Build and test with:
+Build and test with (from the repository root, not `C/`):
 
-    riscos-amu
-    riscos-amu test
-    riscos-amu install INSTDIR=install
-    riscos64-amu install INSTDIR=install64
+    riscos-amu -f C/apps/riscos/Makefile
+    riscos-amu -f C/apps/riscos/Makefile test
+    riscos-amu -f C/apps/riscos/Makefile install INSTDIR=install
+    riscos64-amu -f C/apps/riscos/Makefile install INSTDIR=install64
 
 ## Staged checklist and acceptance criteria
 

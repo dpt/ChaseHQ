@@ -126,7 +126,7 @@ Spectrum Analyser to find out how it builds its back buffer up.
 `scripts/` holds the tools built along the way:
 
 - `CHQStage.py` — standalone stage data decoder, run over a `skool2bin.py` dump.
-- `skooltraceregs.py`, `trace_calibrate.py` — emulator trace helpers.
+- `skooltraceregs.py` — emulator trace helper.
 
 The skool-to-C stage converter lives with the code it generates, in
 [`C/scripts/convert_stage.py`](../C/scripts/convert_stage.py).

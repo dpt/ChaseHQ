@@ -47,7 +47,7 @@ collide with real stage data.
 
 ## Byte value design
 
-Verified directly against the source (`Main.c:13918-14208`), not just the
+Verified directly against the source (`Main.c:17487-17836`), not just the
 `Stages.h` decode comment:
 
 - Bit 7 must be **0** — this is what makes `dr_read_lanes` render the road at
@@ -81,7 +81,7 @@ added:
 #define MAP_LANES_3RTO2M(D)             (D), (MAP_LANES_3RTO2M_VAL)
 ```
 
-## 2. `Main.c`: `draw_road_lanes_change` (~line 13918)
+## 2. `Main.c`: `draw_road_lanes_change` (~line 17487)
 
 **Geometry.** For both new shapes the fixed edge is the one already passed in
 (`H_left_hand_table_hi = offset + 0xE7`, the 2-lane endpoint's own left edge —
@@ -102,8 +102,8 @@ drive stage 2 to the section after the tunnel, where a 3L run of 40 narrows to a
 2L run of 38, and the taper renders correctly as it stands. Any branch that
 captures `0x3D` is therefore a regression, not a fix.
 
-**New branch.** Insert immediately after `(*IY_heightptr)--;` (line 13967),
-_before_ the existing `if (L_lane_flags & (1 << 5))` check (line 13970) — our
+**New branch.** Insert immediately after `(*IY_heightptr)--;` (line 17548),
+_before_ the existing `if (L_lane_flags & (1 << 5))` check (line 17551) — our
 marker also has bit5 set, so it must be intercepted first or it would fall into
 the existing fixed-page override logic:
 
@@ -153,7 +153,7 @@ new label; it does **not** duplicate the ~40-line Bresenham fill.
 path joins the function's existing tail (delta computation, Bresenham fill,
 steep-step fallback) unchanged.
 
-**Required companion fix — the `-256` correction.** At line 14144:
+**Required companion fix — the `-256` correction.** At line 17758:
 
 ```c
 if ((*IX_lanesptr)[0] & (1 << 5))
@@ -183,7 +183,7 @@ if (L_lane_flags & (1 << 5)) {                 // existing override branch
   ...
 }
 ...
-if (H_is_override_page)                        // replaces the raw bit5 re-test at line 14144
+if (H_is_override_page)                        // replaces the raw bit5 re-test at line 17758
   SP_output -= 256;
 ```
 
@@ -197,7 +197,7 @@ wrong will be visually obvious (edge snaps or moves the wrong way) when driving
 through a stage that uses the new transition — check this during the build/run
 verification step below.
 
-## 3. `get_spawn_lanes` (~line 8826) — no change needed
+## 3. `get_spawn_lanes` (~line 10506) — no change needed
 
 Hand-verified for both new bytes: `get_spawn_lanes` only inspects bit 7 and bit
 1 of the lane byte. `0x3D` (bit7=0, bit1=0) yields the same `(min,max)` result
@@ -205,7 +205,7 @@ as steady `MAP_LANES_2L_VAL`; `0x3E` (bit7=0, bit1=1) yields the same result as
 steady `MAP_LANES_2M_VAL`. Both are exactly the results wanted for traffic
 spawning during these transitions.
 
-## 4. Test harness fix — `chq_test_draw_road_lanes_change` (`Main.c:19356`)
+## 4. Test harness fix — `chq_test_draw_road_lanes_change` (`Main.c:22564`)
 
 This wrapper currently hardcodes `0xEC` for `H_left_hand_table_hi` regardless of
 `lane_flags`:
@@ -232,10 +232,10 @@ Verified safe for the existing test: `4TO3L` still gets internally overridden to
 
 ## 5. New tests — `C/Tests/UnitTest.c`
 
-Add two tests immediately after `test_drlc_writes_xpos_entries` (line 446),
+Add two tests immediately after `test_drlc_writes_xpos_entries` (line 453),
 following its exact structure (snapshot the rail table expected to change, run
 the transition, assert at least one entry differs), and register both in
-`main()` next to the existing call (~line 868):
+`main()` next to the existing call (~line 1714):
 
 - `test_drlc_writes_xpos_entries_3lto2l` — snapshot `xpos.centre` (0xEA =
   destination for offset1+2), call with `MAP_LANES_3LTO2L_VAL`, assert it

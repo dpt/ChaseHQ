@@ -30,23 +30,26 @@ toward the player.
 
 ## Per-Frame Preprocessing
 
-### `build_height_table` → `table_e300[1..21]`
+### `build_height_table` → `state->height_table[1..21]`
 
 Reads 21 height bytes from the road buffer. Using `fast_counter` to index a row
-of `vertical_e600` (a 7×22 perspective scale table), it multiplies each height
-delta by a per-slot scale factor. The result is a 21-entry screen-Y position
-table — one Y coordinate per distance slot. A clamped copy (running minimum)
-goes into `table_e336`.
+of `persp_y_scale[8][22]` (an 8×22 perspective scale table), it multiplies each
+height delta by a per-slot scale factor. The result is a 21-entry screen-Y
+position table — one Y coordinate per distance slot. A clamped copy (running
+minimum) goes into `state->clamped_heights`.
 
-### `build_curve_table` → `table_ec00` (right edge) + `table_e800` (left edge)
+### `build_curve_table` → `state->xpos.right` (right edge) + `state->xpos.left` (left edge)
 
 Reads 20 curvature bytes from the road buffer. Accumulates them through
-`inward_bend_table` (a precomputed horizontal deflection curve) weighted by a
-`horizontal_e6b0` perspective row (again selected by `fast_counter`). Writes two
-21-entry tables of 16-bit horizontal positions — one for each road edge — from
-the far end backwards using a Z80 SP-push trick. A second pass adds a fixed
-offset to produce the left-edge table. For a forked road the same routine is run
-twice with inverted curvature to generate both fork positions.
+`bend_table[32+96]` — a precomputed horizontal deflection curve split into an
+outward sub-region (first 32 entries) and an inward sub-region
+(`inward_bend_table`, the upper 96 entries) — weighted by a
+`persp_x_scale_right`/`persp_x_delta_left` perspective row (again selected by
+`fast_counter`). Writes two 21-entry tables of 16-bit horizontal positions —
+one for each road edge — from the far end backwards using a Z80 SP-push trick.
+A second pass adds a fixed offset to produce the left-edge table. For a forked
+road the same routine is run twice with inverted curvature to generate both
+fork positions.
 
 ### `scroll_horizon`
 
@@ -92,11 +95,12 @@ scanline at a time.
 
 After the road is painted, a second pass over the same 21 distance slots:
 
-- Increments `table_e300` and `table_e336` by 32 each (advancing the frame).
+- Increments `state->height_table` and `state->clamped_heights` by 32 each
+  (advancing the frame).
 - For each slot, reads the right-side and left-side object IDs from the road
   buffer and dispatches to a stage-specific handler (tree, bush, lamp, sign,
-  tunnel light, …) with the slot's Y position from `table_e300` and X position
-  from `table_ea00`.
+  tunnel light, …) with the slot's Y position from `state->height_table` and X
+  position from `state->xpos.centre`.
 - Also triggers hazard arrows, smoke/dust, tunnel overlay, and helicopter.
 
 ---

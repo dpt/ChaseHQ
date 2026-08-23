@@ -101,8 +101,8 @@ automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders:
   `&stage2_left_obj_defs_E25B[-1].arg` — the script emits the array element,
   which warns on the pointer type
 
-For stages 2-5 that is roughly 90 `_ADDR` macros, 284 prologues, 6
-`overhead_span_t` decodes and 30 TODO placeholders to resolve.
+For stages 2-5 that is roughly 90 `_ADDR` macros, 280 prologues and 2
+`overhead_span_t` decodes; no TODO placeholders remain in the committed files.
 
 ## Reading a re-controlled skool
 

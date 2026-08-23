@@ -15,9 +15,10 @@ Requires Pillow (`pip install pillow`).
 ## What's on the sheet
 
 `export` scans `CommonData.c` and `Stage{1-5}Data.c` for every
-`static const u8 name[...] = { ... };` array written entirely in `Pixels.h`
-bit-pattern macros (see the project's bitmap convention), plus each stage's
-`backdrop[]` block, and draws one cell per graphic, stacked in a single column.
+`static const pixel_t name[...] = { ... };` array written entirely in
+`Pixels.h` bit-pattern macros (see the project's bitmap convention), plus each
+stage's `backdrop[]` block, and draws one cell per graphic, stacked in a
+single column.
 Cells are as wide as the largest graphic found, but each keeps its own height
 (no wasted grey space padding small graphics out to the tallest one). The top
 block is `CommonData.c`

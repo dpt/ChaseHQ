@@ -9,9 +9,8 @@ This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by
 Ocean Software. The project has two parallel strands: reverse engineering via
 SkoolKit, and a faithful C reimplementation of the game logic.
 
-Known rough edges (title screen timing, perp-car jitter, incomplete 128K options
-menu, sound-effect gaps) are tracked in `C/TODO.md` — check it before assuming
-an issue is new.
+Known rough edges (48K drum timing, highscore-entry bugs, sound-effect gaps) are
+tracked in `C/TODO.md` — check it before assuming an issue is new.
 
 ## Building
 
@@ -117,9 +116,8 @@ When adding a new test hook, add the wrapper to `Main.c` and declare it in
   - `libraries/ChaseHQ/Engine/`: game code (`Main.c`, `Bank3.c`, `Bank3.h`,
     `Bank3State.h`, `Bank7.c`, `Bank7.h`, `Create.c`, `State.h`, `Internal.h`,
     `Tests.h`, `Types.h`)
-  - `libraries/ChaseHQ/Data/`: read-only stage/sound/bank-3/bank-7 tables
-    (`Stages.*`, `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`,
-    `Bank3Data.*`, `Bank7Data.*`)
+  - `libraries/ChaseHQ/Data/`: read-only stage/sound tables (`Stages.*`,
+    `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `LoadingScreen.*`)
 - `C/apps/sdl3/`, `C/apps/riscos/` and `C/Tests/`: app entry points (SDL3 host,
   native RISC OS host) and the test driver, not modules themselves
 
@@ -143,8 +141,9 @@ chq_create → chq_start (blocks via longjmp until quit signal) → chq_stop →
   `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL
   directly
 - **Game** (`C/libraries/ChaseHQ/Engine/Main.c`): translation-oriented, heavily
-  commented with Z80 addresses (~1194 `$`-prefixed lines); ~17 TODO/stub markers
-  concentrated in SFX and title-screen code
+  commented with Z80 addresses (~1274 `$`-prefixed lines); a handful of
+  TODO/stub markers remain, mostly SFX gaps — title-screen code lives in
+  `Bank3.c`, not `Main.c`
 - **State** (`C/libraries/ChaseHQ/Engine/State.h`): `struct chqstate` — the
   single source of mutable game state, fields ordered by original Z80 memory
   addresses

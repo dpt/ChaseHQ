@@ -47,7 +47,7 @@ this is derived from.
 - `libraries/ChaseHQ/Data/` — read-only tables: stages, sound samples, title
   screen, bank 3 data
 - `apps/sdl3/` — the host: SDL3 window, event loop, audio and a CRT shader
-- `Tests/` — unit tests and a standalone stretchy-object renderer
+- `Tests/` — unit tests and a standalone title-drums renderer
 - `docs/` — how the road drawing works, the stage data format, translation
   principles and a catalogue of Z80-to-C pitfalls
 

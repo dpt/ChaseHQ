@@ -26,7 +26,7 @@ different width:
   `Adash_y_range += 248`, cascading into a wrapped `Adash_clip_rows`, an early
   exit and an assert inside `plot_sprite_even`. Fix: `+= (s8)D_col_pos`, or
   declare the field `s8`. The bit-7 conditional idiom is error-prone; the cast
-  is always correct. (`944371a`)
+  is always correct. (`1618e23`)
 - **`u16` field loaded into a wider type (was 28).** The store wraps correctly
   mod 65536, the load loses the sign: −6 arrives as 65530. During a fork,
   `layout_road` sets `road_pos = road_pos ± fork_distance`, which legitimately
@@ -36,19 +36,18 @@ different width:
   was the long-standing "forks seize the game up" bug. Contributing cause: the
   fork-distance delta at `$BAD0–$BADE` dropped the `AND $0F` at `$BAD7`, so the
   per-frame delta was −256..−1 instead of −16..−1. Fix: `(s16)` at all three
-  `road_pos` load sites. (`f47f822`)
+  `road_pos` load sites. (`421fa7d`)
 
 Width matters when casting: the Sign flag after `SBC HL,DE` reflects bit 15, so
 an `s8` cast of the `u16` result tests the low byte only — `0xFF64` is negative
-as `s16` but has bit 7 clear. (`f21a880`)
+as `s16` but has bit 7 clear. (`acf4e96`)
 
 **Rule:** Declare the variable `s8`/`s16` when the Z80 treats it as signed, and
 drop the redundant cast at comparison sites. Where the field must stay unsigned,
 cast at every use. When adding a cast to a shared field, grep for its other
 readers — one unsigned load re-introduces the bug.
 
-**Commits:** `c8251ba`, `6ce786f`, `4a9eb7f`, `2ab21904`, `f21a880`, `944371a`,
-`f47f822`
+**Commits:** `86a0fee`, `a62a9a2`, `acf4e96`, `1618e23`, `421fa7d`
 
 ---
 
@@ -69,7 +68,7 @@ computation.
 - `rm_cycle_buffer_offset`: the HEIGHT section was copied from the CURVATURE
   section without updating the escape-byte check (`if (Amapcurvebyte == 0)` for
   `if (Aheight_byte == 0)`), stalling `road_height_ptr` and corrupting the
-  perspective table. (`f8241bf`)
+  perspective table. (`aca9cad`)
 - `ds_attributes` loads A = `$E34C` (current delta) and E = `$E34D` (previous),
   saves A to `$E34D`, then `LD A,E` at `$BD67` so the rest of the block works on
   the _previous_ delta. The C kept using A throughout, using the wrong frame's
@@ -80,7 +79,7 @@ copy-pasting a parallel block, check every variable name against the new
 context. When the Z80 does `LD A,reg` at the start of a block, work out which
 logical value — usually the older one — the block actually needs.
 
-**Commits:** `8071d1f`, `f8241bf`, fix ds_attributes A-vs-E bug
+**Commits:** `671feb6`, `aca9cad`, fix ds_attributes A-vs-E bug
 
 ---
 
@@ -94,22 +93,22 @@ logical value — usually the older one — the block actually needs.
 
 - SM fields never set: `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`,
   `dr.neg_lane_count`, used on the first frame before `dr_four_lane_highway`
-  writes them. (`c8251ba`)
+  writes them. (`86a0fee`)
 - SM field type truncation: `ahc_road_pos_b` declared `u8`, but `$B3A3`
   (`LD DE,$01D8`) is 16-bit, so 472 truncated to 216. Check whether the SM
-  instruction loads a pair or a single register. (`bc1e1cb`)
+  instruction loads a pair or a single register. (`9e2b506`)
 - `ahc_road_pos_a`/`_b` left at 0 by calloc, clamping road_pos wrongly on frame
-  one. (`bc1e1cb`)
+  one. (`9e2b506`)
 - `road_buffer_offset` not reset in `set_up_stage` — stale pointer into the
-  previous stage's buffer. (`dfdaf8b`)
+  previous stage's buffer. (`8c3b879`)
 - `B_iterations`/`C_range` uninitialised in `draw_road_lanes_change`; both must
   be assigned from `C_bresen_range` at the `compute_step` entry point.
-  (`7a12c5b`)
+  (`7f77b7c`)
 - `C_bresen_range`/`B_tbl_stride` set from `A_curve_step` instead of
-  `IYheight[0] - ref_height`. (`f98088b`)
+  `IYheight[0] - ref_height`. (`b155784`)
 - `flipped[]` never built: `bootstrap()` builds it, and the `RUN_FULL_GAME=0`
-  path bypasses bootstrap — all flipped sprites black. (`c5c3e6c`)
-- Stage not loaded before attract mode: `state->stage` was NULL. (`5bd1c47`)
+  path bypasses bootstrap — all flipped sprites black. (`0f8059d`)
+- Stage not loaded before attract mode: `state->stage` was NULL. (`e5d8845`)
 
 ---
 
@@ -120,7 +119,7 @@ logical value — usually the older one — the block actually needs.
 `JR NC` skips the adjustment on _no_ carry. Translations routinely invert the
 sign or the condition.
 
-**Bugs** (all in `dr_rollover_filled`/`unfilled`, `de88b6f`/`8449d0f`):
+**Bugs** (all in `dr_rollover_filled`/`unfilled`, `8e8cbf0`):
 
 - `LO_ADD +32` should be `−32` (Z80 `SUB $20`).
 - `D += 16` inverted: the Z80 adds on no-carry, the C added on carry.
@@ -140,9 +139,9 @@ applied to it.
 **Bugs:**
 
 - `HLdash` in `dr_fill` was `u16*`, so `HLdash[Ldash]` read word index 255 of a
-  128-element array. Fix: `u8*`. (`6217000`)
+  128-element array. Fix: `u8*`. (`7bb8501`)
 - `SP_output++` for `INC SP` (`$C407`) advanced 2 bytes. Fix:
-  `SP_output = (u16 *)((u8 *)SP_output + 1)`. (`f21a880`)
+  `SP_output = (u16 *)((u8 *)SP_output + 1)`. (`acf4e96`)
 - A `u8[]` table reached via `LD HL,table-1; ADD HL,BC` gives a **byte** offset
   of `BC−1`. Halving it (`&table[(BC-1)/2]`) assumes 16-bit entries; the correct
   index is `BC−1`, unscaled. (`scroll_horizon`, `$B898`)
@@ -164,11 +163,11 @@ adjustment into the value edits the wrong object.
 
 - `build_curve_table` overwrote the IX position instead of accumulating,
   producing curvature indices of 127 into a 96-entry table. Fix:
-  `IXl = (current_offset + 0x40 + curvature_A) & 0xFF`. (`241b3da`)
+  `IXl = (current_offset + 0x40 + curvature_A) & 0xFF`. (`713eb3f`)
 - `draw_stretchy_object_common` (`$9237`): `doc.rows_2nd = width_bytes - 2`
   instead of stepping the pointer. For a 2-byte-wide masked bitmap that gives 0,
   looping `plot_masked_sprite` past the end of the bitmap array (ASan overflow).
-  Fix: `doc.rows_2nd = *HLptr; HLptr -= 2;`. (`dd973cb`)
+  Fix: `doc.rows_2nd = *HLptr; HLptr -= 2;`. (`e06306e`)
 
 **Rule:** When the Z80 loads a value then adjusts the pointer, write
 `value = *ptr; ptr ±= N;` — never fold the adjustment into the value. See 25 for
@@ -185,7 +184,7 @@ returned a new pointer but never assigned it back: every `WRAPPINGINCREMENT` in
 `dr_read_lanes` got a garbage IX pointer (SIGSEGV). Fix: assign in place —
 `((ptr) = &(base)[...])`.
 
-**Commit:** `3619da2`
+**Commit:** `0de89a6`
 
 ---
 
@@ -237,7 +236,7 @@ mistranslation are common:
 follow one `SUB` (`JR Z` then `JR NC`), read them together: the combined
 condition is usually `≤ 0`.
 
-**Commits:** `0f95209`, `bc1e1cb`, `02d2a5a`, `9409d37`, `55be0c6`
+**Commits:** `9e722d6`, `54a3ef8`, `a30b101`, `683aed9`, `0e42e15`
 
 ---
 
@@ -246,7 +245,7 @@ condition is usually `≤ 0`.
 Z80 constants are hex and easily misread. `Ccounter` in `draw_road` was
 initialised to `3` instead of `$60` (96). See 14 for the loop-count variant.
 
-**Commit:** `d6b91f9`
+**Commit:** `a96f90d`
 
 ---
 
@@ -258,7 +257,7 @@ flags field where a strict boolean is expected inverts both branches.
 draw path in the wrong order. Fix: derive the boolean explicitly —
 `zero_flipped = (flags & MASK) ? 0 : 1`.
 
-**Commit:** `c5c3e6c`
+**Commit:** `0f8059d`
 
 ---
 
@@ -274,7 +273,7 @@ reach a second packed byte.
   the "high byte" with `>> 8`. Fix: two `u8` variables matching B and C.
   (`scroll_horizon`, `$B868–$B86A`)
 
-**Commit:** `c5c3e6c`
+**Commit:** `0f8059d`
 
 ---
 
@@ -288,7 +287,7 @@ separate array needing different arithmetic. Fix: one 256-byte array for the
 whole page (16 leading zeros + 192 edge bytes + 48 lane bytes), every site
 subtracting `$E400`.
 
-**Commit:** `9998264`
+**Commit:** `47c5853`
 
 ---
 
@@ -301,7 +300,7 @@ at. In `dr_fill_left_stripe`, `Lrow` starts at `0xFF` and decrements by 2
 skipped. Secondary error: after `Lrow--` the position byte is `HL[-1]`, not
 `*HL`. Fix: `(u8 *)hi_to_xpostab(state, H) + Lrow` for an exact byte pointer.
 
-**Commit:** `fccab5a`
+**Commit:** `ce4836e`
 
 ---
 
@@ -314,7 +313,7 @@ freshly written and slot 20 grew by 3 every frame, cycling every ~85 frames
 (~1.7s) and making the road near the horizon dance left-right. Fix: `B = 22`;
 convert hex loop counts to decimal explicitly and note the source address.
 
-**Commit:** `fe9323a`
+**Commit:** `b11b3f5`
 
 ---
 
@@ -359,7 +358,7 @@ does not.
 - `update_road_level` stored curvature 254 (signed −2) in a `u8`, read it back
   as `int` 254 and negated with plain `-A`, giving −254; a later `(s8)` cast
   then fired the 4.5× multiply on the wrong sign, jumping the car ~130
-  road-position units per frame on any curve. (`087c724`)
+  road-position units per frame on any curve. (`91ba3a3`)
 - `build_curve_table`'s sign extension used `|= 0xFF00` on a rounded multiply
   result that could be a positive `int` ≥ 128, producing a 65536-unit drift in
   the road-position accumulator.
@@ -371,7 +370,7 @@ does not.
 - `draw_helicopter_part`'s `Abot` (A after `ADD A,B`) was `int`, reaching 509
   near a screen edge instead of wrapping mod 256, sending
   `draw_object_left_width_entrypt` down the wrong branch and flipping the sprite
-  to the opposite edge. Fix: declare `u8`. (`6ba1edc`)
+  to the opposite edge. Fix: declare `u8`. (`7f40432`)
 - `advance_hazard`'s overtake gate (`$AE03–$AE0C`, `AND $E0; CPL; CP (IX+$04)`):
   `A_fc_inv = ~(state->fast_counter & 0xE0)` as `int` yielded −225..−1, so the
   comparison was true for every `u8` `dist_frac`. Every traffic car retired the
@@ -388,7 +387,7 @@ at loop boundaries as well as inside the body. For an `INC A;…;JP NZ` loop, dr
 the `--` from the condition — `u8` wrap to 0 terminates it:
 `do { … A += n; } while (A != 0);`.
 
-**Commits:** `087c724`, `136e57d`
+**Commits:** `91ba3a3`, `839c52f`
 
 ---
 
@@ -417,7 +416,7 @@ computed landing offset, not from the loop variable's face value.
   `hazard_pos_speed − 1` before adding the 1-based `current_lane`. The C indexed
   `hazard_pos_speed[current_lane]`, one column right, so a car clamped out of a
   3-lane tunnel's rightmost slot still slid toward the 4-lane road's rightmost
-  x-position. (`2bf6d5e`)
+  x-position. (`fcb7fe1`)
 
 ---
 
@@ -437,14 +436,14 @@ suggests at a glance.
 - Three-way ladder collapsed to two-way — `layout_road`'s fork-side choice
   (`$BA7A–$BA88`): `DEC D; JP M,right; JP NZ,left; <D==1: E<12 test>`. The C
   handled only `D==1` and defaulted the rest to the right fork, but the Z80
-  takes the _left_ fork for `D−1` in 1..0x7F. (`f47f822`)
+  takes the _left_ fork for `D−1` in 1..0x7F. (`421fa7d`)
 
 **Rule:** `JR NZ → skip` is `if (reg == 0)`; `JR Z → skip` is `if (reg != 0)`;
 `RET Z` is `if (value == 0) return`. The fall-through should always be the
 "there is work to do" path. Every exit of a branch ladder needs its own C arm —
 do not fold the middle exits into the default.
 
-**Commits:** `136e57d`, `41de175`
+**Commits:** `9c2f5ea`, `2330649`
 
 ---
 
@@ -463,7 +462,7 @@ HLroadpos -= ROAD_RIGHTMOST;
 carry = (HLroadpos <= 0); /* Z80 SBC HL,DE with carry_in=1 */
 ```
 
-**Commit:** `136e57d`
+**Commit:** `839c52f`
 
 ---
 
@@ -490,7 +489,7 @@ sites with an `if` guard over the first.
 the block — one back-edge (`$9417 JP $9404`, in this same function) makes it a
 genuine loop however sequential it looks.
 
-**Commit:** `7e54fb2`
+**Commit:** `2d12187`
 
 ---
 
@@ -526,7 +525,7 @@ chain.
 Merged into 1 — a field holding a signed offset needs `(s8)` at the use site, or
 an `s8` declaration.
 
-**Commit:** `944371a`
+**Commit:** `1618e23`
 
 ---
 
@@ -576,8 +575,8 @@ scrambling every zone and marking read for the rest of the frame, and boundary
 table came on-screen — boundary reads then read s16 low bytes as flag bytes, the
 zones collapsed to full-width verge and the road vanished towards the horizon.
 The first fix converted three of the four boundary reads by exact-string
-matching; the fourth survived because its comment differed. (`c5b6347`,
-`1c611dd`)
+matching; the fourth survived because its comment differed. (`5ebc74b`,
+`9fe8daa`)
 
 **Bank and unbank in different functions (was 33).** A Z80 shadow register
 survives the whole intervening call chain; the C has no equivalent unless the
@@ -591,10 +590,10 @@ nothing on the path between them (`spawn_cars`, `cycle_counters`,
 `play_engine_or_siren_sfx_hook`, `build_height_table`) executes `EX AF,AF'`
 itself. Before writing off a cross-function shadow read as "approximate with 0",
 do that grep: if nothing intervenes, the value is exact, not approximate.
-(`cf269e4`)
+(`965b026`)
 
-**Commits:** `41de175`, `55be0c6`, `87f70fa`, `a0e41fd`, `c5b6347`, `1c611dd`,
-`cf269e4`
+**Commits:** `2330649`, `0e42e15`, `1e7d3ff`, `ee6845d`, `5ebc74b`, `9fe8daa`,
+`965b026`
 
 ---
 
@@ -620,7 +619,7 @@ caller discards, and arguments crossed at the call site.
   `(state, HLdash_road_pos_a, DEdash_road_pos_b)`, so the road clamp bounds
   stored swapped (min 472, max 72) while the fork was active and
   `animate_hero_car` latched `road_pos` to alternating ends of the road every
-  frame — a whole-screen two-frame flicker. (`1c611dd`)
+  frame — a whole-screen two-frame flicker. (`9fe8daa`)
 
 **Rule:** Check the struct's field-offset table against the C member at each
 write; a field written correctly earlier is a red flag if it reappears as a
@@ -630,7 +629,7 @@ one. Where parameters are named after registers, check each call site against
 the _callee's_ declared order, which need not match the caller's declaration
 order.
 
-**Commits:** `02d2a5a`, `be0ef28`
+**Commits:** `a30b101`, `dd5e319`
 
 ---
 
@@ -670,7 +669,7 @@ for the borrow branch. Conversely, before translating
 `LD A,(field); DEC A; RET Z` as `if (--state->field == 0)`, check the skool for
 a matching store; no store means test a copy.
 
-**Commits:** `507aa97`; (uncommitted — `play_engine_or_turbo_sfx_128k` fix)
+**Commits:** `c8fc5c3`; (uncommitted — `play_engine_or_turbo_sfx_128k` fix)
 
 ---
 
@@ -708,7 +707,7 @@ each carry an independent bug feeding the same visible effect. An asymmetric
 symptom is a strong clue: look for the code path that is genuinely
 side-specific, not the shared body both sides call.
 
-**Commit:** `c41e508`
+**Commit:** `def7bb2`
 
 ---
 
@@ -739,7 +738,7 @@ compute the landing address by hand and read what executes from there, including
 which set-up instructions get skipped. Where several fill loops sit side by
 side, check each for the presence of its own jump table.
 
-**Commit:** `e0cf3a9`
+**Commit:** `94e7c3e`
 
 ---
 
@@ -747,7 +746,7 @@ side, check each for the presence of its own jump table.
 
 Merged into 1 — every load into a wider type needs `(s16)`.
 
-**Commit:** `f47f822`
+**Commit:** `421fa7d`
 
 ---
 
@@ -770,7 +769,7 @@ is a table stride. `draw_helicopter` still contains the suspect form
 (`helibitmap = *helibitmaps++;` beside a "can't be right" comment) — audit it
 against `$AA38` when helicopter data is completed.
 
-**Commit:** `e457f6b`
+**Commit:** `caa80e5`
 
 ---
 
@@ -798,7 +797,7 @@ stays inside `chqstate` is invisible to ASan; the road-buffer diagnostics
 (`rm_prewrite`, `chq_test_max_side_object`) and a bisecting watchpoint found
 this one.
 
-**Commits:** `e457f6b`, `c5b6347`
+**Commits:** `caa80e5`, `5ebc74b`
 
 ---
 
@@ -823,7 +822,7 @@ every read's H page against the skool's address comments. Do not assume the
 pages are consecutive (the fill skips two) or that a shared increment can trail
 the section body (the markings advance before reading).
 
-**Commits:** `c5b6347`, `a5f0989`
+**Commits:** `5ebc74b`, `78e617c`
 
 ---
 
@@ -832,7 +831,7 @@ the section body (the markings advance before reading).
 Merged into 23 — give the banked side its own variable, then audit every
 mutation of the shared name.
 
-**Commits:** `c5b6347`, `1c611dd`
+**Commits:** `5ebc74b`, `9fe8daa`
 
 ---
 
@@ -840,7 +839,7 @@ mutation of the shared name.
 
 Merged into 23 — the shadow value needs a `chqstate_t` field, not a local.
 
-**Commit:** `cf269e4`
+**Commit:** `965b026`
 
 ---
 
