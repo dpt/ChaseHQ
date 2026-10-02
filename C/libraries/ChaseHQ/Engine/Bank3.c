@@ -8924,8 +8924,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       state->speccy->logtime(state->speccy, 7);
       do
       {
-        DE_vib_offset <<= 1;
-        A_shift_test    = (A_shift_test & 0xFF) + 0x18;
+        DE_vib_offset = (s16) (DE_vib_offset * 2); /* SLA E/RL D; may be < 0 */
+        A_shift_test  = (A_shift_test & 0xFF) + 0x18;
         /* $EF41-$EF47: SLA E/RL D/ADD A,$18/JR NC (8+8+7=23, +12 taken/+7 not
          * taken depending on whether the loop continues). */
         if (A_shift_test <= 0xFF)

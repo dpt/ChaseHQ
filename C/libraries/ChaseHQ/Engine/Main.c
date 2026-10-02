@@ -243,6 +243,15 @@ u8 *z80addrtobackbuf(chqstate_t *state, int addr)
   {
     ptr = ADDRTOBACKBUF_M(0x10000 + addr);
   }
+  else if (addr >= BACKBUFFER_START_ADDRESS - BACKBUFFER_ROWBYTES &&
+           addr < BACKBUFFER_START_ADDRESS)
+  {
+    /* Conv: a row walk that steps one row above the top ($EFE0-$EFFF) lands
+     * in unrelated Z80 RAM; give it a scratch row rather than index
+     * backbuffer[] out of bounds. */
+    ptr = &state->backbuffer_above[addr - (BACKBUFFER_START_ADDRESS -
+                                           BACKBUFFER_ROWBYTES)];
+  }
   else
   {
     //assert(addr >= BACKBUFFER_START_ADDRESS && addr < BACKBUFFER_END_ADDRESS);
@@ -15652,7 +15661,7 @@ static void update_road_level(chqstate_t *state)
     A_fork_taken     = state->fork_taken;
     A_curvature_byte = *HL_roadbuf;
     if (A_fork_taken)
-      A_curvature_byte = -A_curvature_byte;
+      A_curvature_byte = (-A_curvature_byte) & 0xFF; /* NEG */
   }
 
   state->current_curvature = A_curvature_byte;
@@ -15663,7 +15672,7 @@ static void update_road_level(chqstate_t *state)
   if (A_curvature_byte)
   {
     if ((s8) A_curvature_byte < 0)
-      A_curvature_byte = -A_curvature_byte;
+      A_curvature_byte = (-A_curvature_byte) & 0xFF; /* NEG */
     A_curvature_byte           <<= 2;
     state->horizon_curve_index   = A_curvature_byte;
     B_curv_idx                   = A_curvature_byte;
@@ -15989,29 +15998,36 @@ lr_badf:
  */
 static void exit_fork(chqstate_t *state)
 {
+  /* Conv: the Z80 points each road_*_ptr one byte before its table and
+   * pre-increments on read. Each table here starts with a pad byte which
+   * stands in for that byte, so no pointer is made before the array. */
   // clang-format off
   /** $ED23: forked_road_exit_hazards */
-  static const u8 forked_road_exit_hazards[3] = {
+  static const u8 forked_road_exit_hazards[4] = {
+    0, /* pad */
     MAP_HAZARD_WAIT(18),
     MAP_CMD_FORK_END
   };
 
   /** $ED26: forked_road_exit_rightobjs */
-  static const u8 forked_road_exit_rightobjs[4] = {
+  static const u8 forked_road_exit_rightobjs[5] = {
+    0, /* pad */
     MAP_OBJ_SHORT_POLE(5),
     MAP_OBJ_NONE(13),
     MAP_CMD_FORK_END
   };
 
   /** $E2DA: forked_road_exit_leftobjs */
-  static const u8 forked_road_exit_leftobjs[4] = {
+  static const u8 forked_road_exit_leftobjs[5] = {
+    0, /* pad */
     MAP_OBJ_NONE(5),
     MAP_OBJ_NONE(13),
     MAP_CMD_FORK_END
   };
 
   /** $E2DE: forked_road_exit_curvature */
-  static const u8 forked_road_exit_curvature[5] = {
+  static const u8 forked_road_exit_curvature[6] = {
+    0, /* pad */
     MAP_CURVE_STRAIGHT(15), // 15 is max
     MAP_CURVE_STRAIGHT(15),
     MAP_CURVE_STRAIGHT(6),
@@ -16019,7 +16035,8 @@ static void exit_fork(chqstate_t *state)
   };
 
   /** $E2E3: forked_road_exit_height */
-  static const u8 forked_road_exit_height[5] = {
+  static const u8 forked_road_exit_height[6] = {
+    0, /* pad */
     MAP_HEIGHT_LEVEL(15),
     MAP_HEIGHT_LEVEL(15),
     MAP_HEIGHT_LEVEL(6),
@@ -16027,7 +16044,8 @@ static void exit_fork(chqstate_t *state)
   };
 
   /** $E2E8: forked_road_exit_left_lanes */
-  static const u8 forked_road_exit_left_lanes[12] = {
+  static const u8 forked_road_exit_left_lanes[13] = {
+    0, /* pad */
     MAP_LANES_2L(10),
     MAP_LANES_2LTO3L(2),
     MAP_LANES_3L(10),
@@ -16037,7 +16055,8 @@ static void exit_fork(chqstate_t *state)
   };
 
   /** $E2F4: forked_road_exit_right_lanes */
-  static const u8 forked_road_exit_right_lanes[12] = {
+  static const u8 forked_road_exit_right_lanes[13] = {
+    0, /* pad */
     MAP_LANES_2R(10),
     MAP_LANES_2RTO3R(2),
     MAP_LANES_3R(10),
@@ -16060,9 +16079,9 @@ static void exit_fork(chqstate_t *state)
     /* $BBA1: ef_right */
     D_curve_type                        = 0x04;
     E_lanes_type                        = 0x03;
-    state->scenedata.road_leftside_ptr  = forked_road_exit_rightobjs - 1;
-    state->scenedata.road_rightside_ptr = forked_road_exit_leftobjs - 1;
-    state->scenedata.road_lanes_ptr     = forked_road_exit_right_lanes - 1;
+    state->scenedata.road_leftside_ptr  = forked_road_exit_rightobjs;
+    state->scenedata.road_rightside_ptr = forked_road_exit_leftobjs;
+    state->scenedata.road_lanes_ptr     = forked_road_exit_right_lanes;
     state->rm.curvature_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm.rightfork_curve);
     state->rm.height_fork_end_ptr    = lookup_map_goto(state->current_stage_number,
@@ -16083,9 +16102,9 @@ static void exit_fork(chqstate_t *state)
     /* $BB74: ef_left */
     D_curve_type                        = 0xFC;
     E_lanes_type                        = 0x01;
-    state->scenedata.road_leftside_ptr  = forked_road_exit_leftobjs - 1;
-    state->scenedata.road_rightside_ptr = forked_road_exit_rightobjs - 1;
-    state->scenedata.road_lanes_ptr     = forked_road_exit_left_lanes - 1;
+    state->scenedata.road_leftside_ptr  = forked_road_exit_leftobjs;
+    state->scenedata.road_rightside_ptr = forked_road_exit_rightobjs;
+    state->scenedata.road_lanes_ptr     = forked_road_exit_left_lanes;
     state->rm.curvature_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm.leftfork_curve);
     state->rm.height_fork_end_ptr    = lookup_map_goto(state->current_stage_number,
@@ -16103,9 +16122,9 @@ static void exit_fork(chqstate_t *state)
   }
 
   /* $BBE3: common exit-fork road pointers */
-  state->scenedata.road_curvature_ptr = forked_road_exit_curvature - 1;
-  state->scenedata.road_height_ptr    = forked_road_exit_height - 1;
-  state->scenedata.road_hazard_ptr    = forked_road_exit_hazards - 1;
+  state->scenedata.road_curvature_ptr = forked_road_exit_curvature;
+  state->scenedata.road_height_ptr    = forked_road_exit_height;
+  state->scenedata.road_hazard_ptr    = forked_road_exit_hazards;
 
   /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed).
    * Conv: Z80 uses three DJNZ loops (B=32 each); the buffer wraps modulo 256
@@ -16581,7 +16600,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HL_fast_counter)
   A_curvature           = A_curve_byte & 0x0F;
   if (A_curvature & 8)
     A_curvature = -(A_curvature & 7); // was NEG
-  *HL_curve_ptr = A_curvature << 1;
+  *HL_curve_ptr = (u8) (A_curvature * 2); /* ADD A,A; may be < 0 */
 
   /* ------------- *
    * $BE90: HEIGHT *
@@ -20274,14 +20293,14 @@ static int8_t scale_curvature_or_height(int8_t a, int8_t c)
   int carry;   /* carry flag (carry) */
 
   B_iters = 3;
-  E_copy  = a;
+  E_copy  = (u8) a;
   a       = 0;
   do
   {
     carry    = (E_copy >> 7) & 1; /* RL E — shift MSB into carry */
     E_copy <<= 1;
     if (carry) a += c;
-    a <<= 1;
+    a = (int8_t) (a * 2);
   }
   while (--B_iters);
   a     >>= 1; /* RRA — undo final doubling */

@@ -1516,6 +1516,11 @@ struct chqstate
    * the screen */
   u8        backbuffer[BACKBUFFER_LENGTH];
 
+  /* Conv: sink for writes to the row above the backbuffer ($EFE0-$EFFF),
+   * which sprite and tunnel row walks reach when they step past the top. On
+   * the Z80 these are stray writes to whatever RAM sits there. */
+  u8        backbuffer_above[BACKBUFFER_ROWBYTES];
+
   /* $EC01-$F224: Title-screen tune engine and options-menu state (128K bank 3
    * only)
    *

@@ -41,12 +41,13 @@
   } while (0)
 
 /**
- * Rotate left
+ * Rotate left. Masked to 8 bits, so an int register cannot grow until it
+ * overflows when rotated repeatedly.
  */
-#define RLC(r)                        \
-  do {                                \
-    carry = ((r) >> 7) & 1;           \
-    (r) = ((r) << 1) | (carry);       \
+#define RLC(r)                              \
+  do {                                      \
+    carry = ((r) >> 7) & 1;                 \
+    (r) = (((r) << 1) | (carry)) & 0xFF;    \
   } while (0)
 
 /**
