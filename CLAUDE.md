@@ -47,23 +47,11 @@ make ctl         # Rebuild control file from skool
 make commit      # Commit changes back to control file
 ```
 
-### RISC OS native app (C/apps/riscos/)
+### RISC OS
 
-Self-contained 32-bit `!ChaseHQ` desktop app — Wimp window or single-tasking
-fullscreen, one 48K/128K game, deliberately silent (no AY/beeper audio yet).
-Requires a RISC OS cross-build environment (AMU, Norcroft C, RISC_OSLib,
-`riscos-build-run`); build from the repository root, not from `C/`:
-
-```bash
-riscos-amu -f C/apps/riscos/Makefile test
-riscos-amu -f C/apps/riscos/Makefile install INSTDIR=install
-```
-
-An experimental 64-bit build (`riscos64-amu`) skips RISC_OSLib/Wimp and starts
-fullscreen directly; exercised on real hardware but outside CI. Generated `o32`,
-`aif32`, `install*` and `.rotransform` content is disposable, never commit it.
-See `C/apps/riscos/README.md` for shortcuts and layout, and
-`C/apps/riscos/PLAN.md` for the port's status/roadmap.
+The old native RISC OS app was removed. A RISC OS front-end will come from the
+shared ZXGame library (`hosts/riscos`), with a ChaseHQ app bundle still to be
+written.
 
 ### C implementation (C/ directory)
 
@@ -118,8 +106,7 @@ When adding a new test hook, add the wrapper to `Main.c` and declare it in
     `Tests.h`, `Types.h`)
   - `libraries/ChaseHQ/Data/`: read-only stage/sound tables (`Stages.*`,
     `Stage{1-6}Data.*`, `CommonData.*`, `SoundSamples.*`, `LoadingScreen.*`)
-- `C/apps/sdl3/`, `C/apps/riscos/` and `C/Tests/`: app entry points (SDL3 host,
-  native RISC OS host) and the test driver, not modules themselves
+- `C/apps/sdl3/` and `C/Tests/`: app entry points (SDL3 host) and the test driver, not modules themselves
 
 ### Entry point and lifecycle
 

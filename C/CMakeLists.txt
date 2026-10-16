@@ -41,42 +41,17 @@ endif()
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
 option(CHQ_ENABLE_MASKED_VEHICLES "Draw stage vehicle sprites with real silhouette masking on near frames instead of solid rectangular blits" OFF)
 
-# ponytail: SDL3 is only needed by the ChaseHQ app target. Configuring
-# without it still gets you ChaseHQ_Tests, which is all CI builds.
-if(EMSCRIPTEN)
-  set(SDL3_FOUND TRUE)
-else()
-  find_package(SDL3 QUIET)
-  if(NOT SDL3_FOUND)
-    message(STATUS "SDL3 not found - skipping the ChaseHQ app target")
-  endif()
-endif()
-
-# ponytail: CRT shader needs SPIR-V on Linux (Vulkan backend, no MSL).
-# glslangValidator is the common Vulkan SDK / glslang-tools compiler; if it's
-# missing the app still builds, just without the CRT shader, same as the
-# existing APPLE-only gate.
-if(UNIX AND NOT APPLE)
-  find_program(GLSLANG_VALIDATOR glslangValidator)
-  if(NOT GLSLANG_VALIDATOR)
-    message(STATUS "glslangValidator not found - skipping the CRT shader on this platform")
-  endif()
-endif()
+# ZXGame provides the virtual Spectrum and the front-ends. It lives beside
+# this repository by default.
+set(ZXGAME_DIR ${CMAKE_SOURCE_DIR}/../../ZXGame CACHE PATH "Path to the ZXGame repository")
+add_subdirectory(${ZXGAME_DIR} ZXGame)
 
 set(INCLUDE_DIRS include libraries)
 
 set(SOURCE_FILES
-        apps/sdl3/CRTShader.c
-        apps/sdl3/CRTShader.h
-        apps/sdl3/SDLMain.c
+        apps/sdl3/Main.c
         include/ChaseHQ/ChaseHQ.h
-        include/ZXSpectrum/Kempston.h
-        include/ZXSpectrum/Keyboard.h
-        include/ZXSpectrum/Macros.h
-        include/ZXSpectrum/Pixels.h
-        include/ZXSpectrum/Spectrum.h
-        include/ZXSpectrum/Z80.h
-        include/ZXSpectrum/slopay-chip.h
+        include/ChaseHQ/GameOps.h
         libraries/ChaseHQ/Data/CommonData.c
         libraries/ChaseHQ/Data/CommonData.h
         libraries/ChaseHQ/Data/LoadingScreen.c
@@ -101,23 +76,19 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Engine/Bank7.c
         libraries/ChaseHQ/Engine/Bank7.h
         libraries/ChaseHQ/Engine/Create.c
+        libraries/ChaseHQ/Engine/GameOps.c
         libraries/ChaseHQ/Engine/Internal.h
         libraries/ChaseHQ/Engine/Main.c
         libraries/ChaseHQ/Engine/State.h
         libraries/ChaseHQ/Engine/Tests.h
         libraries/ChaseHQ/Engine/Types.h
-        libraries/ZXSpectrum/Kempston.c
-        libraries/ZXSpectrum/Keyboard.c
-        libraries/ZXSpectrum/Screen.c
-        libraries/ZXSpectrum/Screen.h
-        libraries/ZXSpectrum/Spectrum.c
-        libraries/ZXSpectrum/Z80.c
-        libraries/ZXSpectrum/slopay-chip.c)
+)
 
-if(SDL3_FOUND)
+if(TARGET ZXGameSDL3)
   add_executable(ChaseHQ ${SOURCE_FILES})
-  target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
   target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
+  target_link_libraries(ChaseHQ ZXGameSDL3)
+  zxgame_sdl3_app(ChaseHQ)
   if(CHQ_ENABLE_TEST_STAGE)
     target_sources(ChaseHQ PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
     target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
@@ -125,74 +96,17 @@ if(SDL3_FOUND)
   if(CHQ_ENABLE_MASKED_VEHICLES)
     target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_MASKED_VEHICLES)
   endif()
-  if(EMSCRIPTEN)
-    set_target_properties(ChaseHQ PROPERTIES SUFFIX ".html")
-    target_compile_options(ChaseHQ PRIVATE "-sUSE_SDL=3" "-pthread")
-    target_link_options(ChaseHQ PRIVATE
-      "-sUSE_SDL=3" "-pthread" "-sPTHREAD_POOL_SIZE=4"
-      "-sINITIAL_MEMORY=67108864" "-sEXIT_RUNTIME=0"
-      # ponytail: no AUDIO_WORKLET/WASM_WORKERS -- SDL3's Emscripten audio
-      # backend is a main-thread ScriptProcessorNode and never uses them.
-      "--shell-file=${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
-    set_target_properties(ChaseHQ PROPERTIES LINK_DEPENDS
-      "${CMAKE_SOURCE_DIR}/apps/sdl3/shell.html")
-    add_custom_command(TARGET ChaseHQ POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_SOURCE_DIR}/apps/sdl3/coi-serviceworker.js"
-        "$<TARGET_FILE_DIR:ChaseHQ>/coi-serviceworker.js")
-    # ponytail: CRT shader on the web build is GLSL ES over a raw GL context
-    # (WebGL1/GLES2), not SDL_GPU -- SDL3 has no stable WebGPU backend yet.
-    # Compiled at runtime by the browser, same as the macOS MSL path, so no
-    # extra build step is needed beyond this define.
-    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1 CHQ_CRT_SHADER_GLES=1)
-  else()
-    target_link_libraries(ChaseHQ SDL3::SDL3)
-  endif()
-  if(APPLE)
-    target_link_libraries(ChaseHQ "-framework CoreFoundation")
-    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
-  endif()
-  if(UNIX AND NOT APPLE AND GLSLANG_VALIDATOR)
-    set(CRT_SHADER_DIR ${CMAKE_SOURCE_DIR}/apps/sdl3/shaders)
-    set(CRT_SPIRV_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
-    set(CRT_SPIRV_HEADER ${CRT_SPIRV_GEN_DIR}/CRTShaderSPIRV.h)
-    file(MAKE_DIRECTORY ${CRT_SPIRV_GEN_DIR})
-    add_custom_command(
-      OUTPUT ${CRT_SPIRV_HEADER}
-      COMMAND ${GLSLANG_VALIDATOR} -V ${CRT_SHADER_DIR}/crt.vert -o ${CRT_SPIRV_GEN_DIR}/crt.vert.spv
-      COMMAND ${GLSLANG_VALIDATOR} -V ${CRT_SHADER_DIR}/crt.frag -o ${CRT_SPIRV_GEN_DIR}/crt.frag.spv
-      COMMAND ${CMAKE_COMMAND} -DINPUT=${CRT_SPIRV_GEN_DIR}/crt.vert.spv -DOUTPUT=${CRT_SPIRV_GEN_DIR}/crt_vert_spirv.h -DVARNAME=chq_crt_vertex_spirv -P ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
-      COMMAND ${CMAKE_COMMAND} -DINPUT=${CRT_SPIRV_GEN_DIR}/crt.frag.spv -DOUTPUT=${CRT_SPIRV_GEN_DIR}/crt_frag_spirv.h -DVARNAME=chq_crt_fragment_spirv -P ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
-      COMMAND ${CMAKE_COMMAND} -E cat ${CRT_SPIRV_GEN_DIR}/crt_vert_spirv.h ${CRT_SPIRV_GEN_DIR}/crt_frag_spirv.h > ${CRT_SPIRV_HEADER}
-      DEPENDS ${CRT_SHADER_DIR}/crt.vert ${CRT_SHADER_DIR}/crt.frag ${CMAKE_SOURCE_DIR}/cmake/EmbedSPIRV.cmake
-      VERBATIM)
-    add_custom_target(crt_shader_spirv DEPENDS ${CRT_SPIRV_HEADER})
-    add_dependencies(ChaseHQ crt_shader_spirv)
-    target_include_directories(ChaseHQ PRIVATE ${CRT_SPIRV_GEN_DIR})
-    target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1 CHQ_CRT_SHADER_SPIRV=1)
-  endif()
-  if(WIN32)
-    add_custom_command(TARGET ChaseHQ POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-              $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:ChaseHQ>
-      VERBATIM)
-  endif()
 endif()
 
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
 
 set(TEST_SOURCE_FILES
         Tests/UnitTest.c
-        libraries/ZXSpectrum/Kempston.c
-        libraries/ZXSpectrum/Keyboard.c
-        libraries/ZXSpectrum/Screen.c
-        libraries/ZXSpectrum/slopay-chip.c
-        libraries/ZXSpectrum/Spectrum.c
-        libraries/ZXSpectrum/Z80.c
         libraries/ChaseHQ/Engine/Bank3.c
         libraries/ChaseHQ/Engine/Bank7.c
         libraries/ChaseHQ/Engine/Main.c
         libraries/ChaseHQ/Engine/Create.c
+        libraries/ChaseHQ/Engine/GameOps.c
         libraries/ChaseHQ/Data/Stages.c
         libraries/ChaseHQ/Data/CommonData.c
         libraries/ChaseHQ/Data/LoadingScreen.c
@@ -206,6 +120,7 @@ set(TEST_SOURCE_FILES
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(ChaseHQ_Tests ZXSpectrum)
 # UnitTest.c's checks are all assert() calls; NDEBUG (added by non-Debug
 # CMAKE_BUILD_TYPE) would strip them and turn every test into a silent no-op.
 target_compile_options(ChaseHQ_Tests PRIVATE -UNDEBUG)
@@ -229,6 +144,7 @@ list(APPEND TITLEDRUMS_SOURCE_FILES Tests/RenderTitleDrums.c)
 add_executable(TitleDrums ${TITLEDRUMS_SOURCE_FILES})
 target_compile_definitions(TitleDrums PRIVATE CHQ_TESTS)
 target_include_directories(TitleDrums PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(TitleDrums ZXSpectrum)
 if(CHQ_ENABLE_TEST_STAGE)
   target_sources(TitleDrums PRIVATE libraries/ChaseHQ/Data/Stage6Data.c libraries/ChaseHQ/Data/Stage6Data.h)
   target_compile_definitions(TitleDrums PRIVATE CHQ_ENABLE_TEST_STAGE)
@@ -282,18 +198,13 @@ if(CLANG_FORMAT)
   # either, as it only realigns function-local variable blocks, not struct
   # fields or top-level macros. Left to hand maintenance until a script
   # exists for this case.
-  # slopay-chip.{c,h} are ported third-party code with their own hand-tuned
-  # formatting (see .clang-format-ignore, which this target does not read).
   list(REMOVE_ITEM ALL_SOURCE_FILES
     libraries/ChaseHQ/Engine/State.h
     libraries/ChaseHQ/Engine/Bank3State.h
     libraries/ChaseHQ/Engine/Bank7State.h
     libraries/ChaseHQ/Engine/Internal.h
     libraries/ChaseHQ/Data/Stages.h
-    libraries/ChaseHQ/Data/CommonData.h
-    include/ZXSpectrum/Pixels.h
-    libraries/ZXSpectrum/slopay-chip.c
-    include/ZXSpectrum/slopay-chip.h)
+    libraries/ChaseHQ/Data/CommonData.h)
   # clang-format cannot align a signature against the prologue above it, or
   # a declaration block against its "(was X)" comments, so format_all.py
   # runs afterwards over the .c files: it reflows signatures and \param
