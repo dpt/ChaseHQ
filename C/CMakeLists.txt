@@ -40,8 +40,11 @@ else()
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-unterminated-string-initialization)
   endif()
-  add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-  add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+  # No AddressSanitizer for RISC OS: GCCSDK has no runtime for it.
+  if(NOT TARGET_RISCOS)
+    add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+    add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+  endif()
 endif()
 
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
