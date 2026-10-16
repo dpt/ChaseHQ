@@ -41,10 +41,14 @@ endif()
 option(CHQ_ENABLE_TEST_STAGE "Include the port-added stage 6 test level in normal progression" OFF)
 option(CHQ_ENABLE_MASKED_VEHICLES "Draw stage vehicle sprites with real silhouette masking on near frames instead of solid rectangular blits" OFF)
 
-# ZXGame provides the virtual Spectrum and the front-ends. It lives beside
-# this repository by default.
-set(ZXGAME_DIR ${CMAKE_SOURCE_DIR}/../../ZXGame CACHE PATH "Path to the ZXGame repository")
-add_subdirectory(${ZXGAME_DIR} ZXGame)
+# ZXGame provides the virtual Spectrum and the front-ends. It is
+# fetched from GitHub. Use a local checkout with
+# -DFETCHCONTENT_SOURCE_DIR_ZXGAME=<path>.
+include(FetchContent)
+FetchContent_Declare(ZXGame
+  GIT_REPOSITORY https://github.com/dpt/ZXGame
+  GIT_TAG master)
+FetchContent_MakeAvailable(ZXGame)
 
 set(INCLUDE_DIRS include libraries)
 
