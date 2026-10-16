@@ -1,3 +1,9 @@
+# When the RISC OS build recurses to build host tools it enters here.
+if(HOST_TOOLS_ONLY)
+  add_subdirectory(apps/riscos/!ChaseHQ)
+  return()
+endif()
+
 cmake_minimum_required(VERSION 3.20)
 project(ChaseHQ C)
 
@@ -87,6 +93,11 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Engine/Tests.h
         libraries/ChaseHQ/Engine/Types.h
 )
+
+if(TARGET_RISCOS)
+  add_subdirectory(apps/riscos/!ChaseHQ)
+  return()
+endif()
 
 if(TARGET ZXGameSDL3)
   add_executable(ChaseHQ ${SOURCE_FILES})

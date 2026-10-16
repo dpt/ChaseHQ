@@ -1,0 +1,37 @@
+Chase H.Q. - Help
+=================
+This is Chase H.Q., a reconstruction of the ZX Spectrum
+version of the 1988 Taito arcade game, released by Ocean
+Software in 1989. The game has been rebuilt as portable C
+code and runs on the RISC OS desktop.
+
+Compatibility
+-------------
+* RISC OS 3.1 or later.
+* ARM250 or better.
+
+Requirements
+------------
+The application is built using the GCCSDK toolchain. It
+requires the modules CallASWI 0.03 and SharedCLibrary 5.17
+or greater to be available in your !System. If you don't
+have them, they are available in RISC OS Open Ltd's
+'System resources' package:
+https://www.riscosopen.org/content/downloads/common
+
+Playing
+-------
+Click on the iconbar icon to open a game window. Click in
+the window to give it the keyboard caret. See 'Instructions'
+on the iconbar menu for the keys.
+
+Full screen
+-----------
+Press F10 or choose Full screen from the View menu. The game
+prefers a suitable 4bpp screen mode. To override the choice
+set `ChaseHQ$ScreenMode` to a mode number before running
+the application. Press Escape to return to the desktop.
+
+Saving
+------
+Saving is not available for this game.

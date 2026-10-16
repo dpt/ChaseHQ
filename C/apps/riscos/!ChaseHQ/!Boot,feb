@@ -1,0 +1,7 @@
+| >!Boot for Chase H.Q.
+| by David Thomas, © 2020-2026
+
+IconSprites <Obey$Dir>.!Sprites
+
+Set ChaseHQ$Dir <Obey$Dir>
+

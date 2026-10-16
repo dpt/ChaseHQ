@@ -53,3 +53,46 @@ jobs:
 
     - name: Run tests
       run: build\Debug\ChaseHQ_Tests.exe
+
+  macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: C
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build app
+      run: cmake --build build --target ChaseHQApp
+
+  riscos:
+    runs-on: ubuntu-latest
+    container: riscosdotinfo/riscos-gccsdk-4.7:latest
+    defaults:
+      run:
+        working-directory: C
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cross compile Chase H.Q. for RISC OS
+      run: |
+        apt-get update
+        apt-get install -y ca-certificates
+        ./riscos-ci-build.sh
+
+    - name: Archive it
+      run: |
+        apt-get install -y python3 python3-pip
+        pip install rozipinfo
+        cd build-riscos/install
+        find . -type f -not -name '*,*' -exec mv '{}' '{},fff' \;  # ensure that type-less files come out as Text
+        python3 -m rozipfile --verbose --create ../../ChaseHQ-RISC_OS.zip *
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Chase-HQ-RISC_OS
+        path: C/ChaseHQ-RISC_OS.zip
+        if-no-files-found: error

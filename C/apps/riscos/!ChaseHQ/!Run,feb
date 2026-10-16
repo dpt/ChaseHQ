@@ -1,0 +1,33 @@
+| >!Run for Chase H.Q.
+| by David Thomas, © 2020-2026
+
+Obey <Obey$Dir>.!Boot
+
+RMEnsure UtilityModule      3.10 Error Chase H.Q. requires RISC OS 3.1 or later
+
+RMEnsure UtilityModule      5.00 RMEnsure CallASWI 0.03 RMLoad System:Modules.CallASWI
+RMEnsure UtilityModule      5.00 RMEnsure CallASWI 0.03 Error Chase H.Q. requires CallASWI 0.03 or later
+
+RMEnsure SharedCLibrary     5.17 RMLoad System:Modules.CLib
+RMEnsure SharedCLibrary     5.17 Error Chase H.Q. requires SharedCLibrary 5.17 or later
+
+RMEnsure AppEngine          0.16 RMLoad <ChaseHQ$Dir>.AppEngine
+RMEnsure AppEngine          0.16 Error Chase H.Q. requires AppEngine 0.16 or later
+
+RMEnsure TimerMod           4.17 RMLoad <ChaseHQ$Dir>.TimerMod
+RMEnsure TimerMod           4.17 Error Chase H.Q. requires TimerMod 4.17 or later
+
+|RMEnsure SharedSound       1.07 RMLoad System:Modules.SSound
+|RMEnsure SharedSound       1.07 Error Chase H.Q. requires SharedSound 1.07 or later
+
+|RMEnsure StreamManager     0.03 RMLoad System:Modules.StreamMan
+|RMEnsure StreamManager     0.03 Error Chase H.Q. requires StreamManager 0.03 or later
+
+|RMEnsure SharedSoundBuffer 0.07 RMLoad System:Modules.SSBuffer
+|RMEnsure SharedSoundBuffer 0.07 Error Chase H.Q. requires SharedSoundBuffer 0.07 or later
+
+WimpSlot -min 192K -max 192K
+
+Run <ChaseHQ$Dir>.Resources.ResFind ChaseHQ
+
+Run <ChaseHQ$Dir>.!RunImage %*0

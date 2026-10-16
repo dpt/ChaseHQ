@@ -1,0 +1,199 @@
+# CMakeLists.txt
+#
+# Chase H.Q. in C
+#
+# Copyright (c) David Thomas, 2026
+#
+# vim: sw=4 ts=8 et
+
+cmake_minimum_required(VERSION 3.18)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
+set(APPENGINE_REPO_ROOT $ENV{APPENGINE_ROOT})
+
+list(APPEND CMAKE_MODULE_PATH ${APPENGINE_REPO_ROOT}/cmake/Modules)
+
+include(FetchContent)
+
+
+project(ChaseHQ VERSION 0.10 DESCRIPTION "Car chase game" LANGUAGES C)
+
+# If a host tools build was requested, then build them alone
+set(TEMPLHEADR_DIR ${APPENGINE_REPO_ROOT}/utils/templheader) # Note: Dir has an incorrect extra 'e'
+if(HOST_TOOLS_ONLY)
+    message(STATUS "${PROJECT_NAME}: Building host tools only")
+    add_subdirectory(${TEMPLHEADR_DIR} templheadr-build)
+    return()
+endif()
+
+# The values set in the toolchain file aren't available until this point.
+if(NOT DEFINED TARGET_RISCOS)
+    message(FATAL_ERROR "${PROJECT_NAME} builds for RISC OS only")
+endif()
+
+if(TARGET_RISCOS)
+    riscos_set_flags()
+endif()
+
+# Referencing CMAKE_TOOLCHAIN_FILE avoids a warning on rebuilds.
+if(NOT ${CMAKE_TOOLCHAIN_FILE} STREQUAL "")
+    message(STATUS "${PROJECT_NAME}: Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+# Build the native 'host' tools (...) in this dir
+set(HOSTTOOLSDIR "${CMAKE_BINARY_DIR}/host")
+
+# Create a directory in which to build the host tools
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${HOSTTOOLSDIR}")
+
+# Generate the host tools build
+#
+# We use -DCMAKE_C_COMPILER to force the use of the system compiler, otherwise
+# the child build may inherit a cross-compiler via the CC environment variable.
+# This is bound to break on Windows.
+execute_process(COMMAND ${CMAKE_COMMAND}
+    -G "${CMAKE_GENERATOR}"
+    -DCMAKE_BUILD_TYPE='Release'
+    -DCMAKE_C_COMPILER='cc'
+    -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+    -DHOST_TOOLS_ONLY=1
+    ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY "${HOSTTOOLSDIR}")
+
+# Build the host tools (by recursing)
+execute_process(COMMAND ${CMAKE_COMMAND} --build . --target templheadr WORKING_DIRECTORY "${HOSTTOOLSDIR}")
+
+# Build ChaseHQ itself
+message(STATUS "${PROJECT_NAME}: Building targets only")
+
+# Libs... (set this before imports)
+#
+set(LIBS_DIR ${APPENGINE_REPO_ROOT}/libs)
+
+# Import DPTLib
+FetchContent_Declare(DPTLib
+    GIT_REPOSITORY https://github.com/dpt/DPTLib
+    GIT_TAG 0.4.1)
+# Expanding out FetchContent_MakeAvailable(DPTLib) here so I can use EXCLUDE_FROM_ALL
+FetchContent_GetProperties(DPTLib)
+if(NOT DPTLib_POPULATED)
+    FetchContent_Populate(DPTLib)
+    add_subdirectory(${dptlib_SOURCE_DIR} ${dptlib_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# Import AppEngine
+set(APPENGINE_DIR ${LIBS_DIR}/appengine)
+set(APPENGINE_INCLUDE ${APPENGINE_DIR}/../)
+add_subdirectory(${APPENGINE_DIR} appengine-build EXCLUDE_FROM_ALL)
+
+
+# Avoid a warning from CMake
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
+add_executable(ChaseHQ)
+
+target_include_directories(ChaseHQ
+    PRIVATE
+    ${APPENGINE_INCLUDE}
+    ${DPTLIB_INCLUDE}
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/libraries)
+
+target_link_libraries(ChaseHQ PRIVATE AppEngine DPTLib)
+
+set_target_properties(ChaseHQ PROPERTIES
+    DESCRIPTION "Game"
+    C_STANDARD 99
+    RUNTIME_OUTPUT_NAME !RunImage)
+
+# Engine sources come from the root list, minus the SDL3 entry point.
+set(ENGINE_SOURCES ${SOURCE_FILES})
+list(REMOVE_ITEM ENGINE_SOURCES apps/sdl3/Main.c)
+list(TRANSFORM ENGINE_SOURCES PREPEND ${CMAKE_SOURCE_DIR}/)
+target_sources(ChaseHQ PRIVATE main.c ${ENGINE_SOURCES})
+if(CHQ_ENABLE_TEST_STAGE)
+    target_sources(ChaseHQ PRIVATE
+        ${CMAKE_SOURCE_DIR}/libraries/ChaseHQ/Data/Stage6Data.c)
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_TEST_STAGE)
+endif()
+if(CHQ_ENABLE_MASKED_VEHICLES)
+    target_compile_definitions(ChaseHQ PRIVATE CHQ_ENABLE_MASKED_VEHICLES)
+endif()
+
+
+# Generate iconnames.h
+#
+
+set(TEMPLATES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/UK/Templates,fec)
+set(ICONNAMES_H ${CMAKE_CURRENT_BINARY_DIR}/iconnames.h)
+
+# Note: We have to look for templheadr-build relative to where it's built.
+find_program(TEMPLHEADR
+    templheadr
+    PATHS ${HOSTTOOLSDIR}/apps/riscos/!ChaseHQ/templheadr-build
+    PATH_SUFFIXES Debug Release RelWithDebInfo MinSizeRel
+    NO_DEFAULT_PATH
+    REQUIRED)
+add_custom_command(OUTPUT ${ICONNAMES_H}
+    COMMAND ${TEMPLHEADR} ${TEMPLATES} ${ICONNAMES_H}
+    MAIN_DEPENDENCY ${TEMPLATES})
+add_custom_target(ChaseHQIconNames ALL DEPENDS ${ICONNAMES_H})
+
+add_dependencies(ChaseHQ ChaseHQIconNames)
+add_dependencies(ZXGameRISCOS ChaseHQIconNames)
+
+target_include_directories(ChaseHQ PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+
+# Build options
+#
+
+target_compile_options(ChaseHQ PRIVATE -Wall -Wextra -pedantic)
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_definitions(ChaseHQ PRIVATE CHASEHQ_DEBUG)
+endif()
+
+# Library dependencies
+#
+
+target_link_libraries(ChaseHQ PRIVATE ZXGameRISCOS)
+
+# The shared RISC OS host needs the same dependencies as the app.
+target_include_directories(ZXGameRISCOS
+    PRIVATE
+    ${APPENGINE_INCLUDE}
+    ${DPTLIB_INCLUDE}
+    ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(ZXGameRISCOS PRIVATE AppEngine DPTLib)
+
+if(TARGET_RISCOS)
+    # OSLib (& anything else in GCCSDK)
+    target_include_directories(ChaseHQ PRIVATE $ENV{GCCSDK_INSTALL_ENV}/include)
+    target_include_directories(ZXGameRISCOS PRIVATE $ENV{GCCSDK_INSTALL_ENV}/include)
+    target_link_libraries(ChaseHQ PRIVATE $ENV{GCCSDK_INSTALL_ENV}/lib/libOSLib32.a)
+endif()
+
+option(USE_FORTIFY "Use Fortify" OFF)
+if(USE_FORTIFY)
+    target_link_libraries(ChaseHQ PRIVATE Fortify)
+endif()
+
+# Installation
+#
+
+# (force this for now)
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "CMake install prefix" FORCE)
+set(INSTALL_APPDIR ${CMAKE_INSTALL_PREFIX}/Apps/Games/!ChaseHQ)
+
+install(TARGETS ChaseHQ RUNTIME
+    DESTINATION ${INSTALL_APPDIR})
+install(FILES !Boot,feb !Help,feb !Run,feb !Sprites,ff9 !Sprites22,ff9 AppEngine,ffa TimerMod,ffa
+    DESTINATION ${INSTALL_APPDIR})
+install(DIRECTORY Resources
+    DESTINATION ${INSTALL_APPDIR})
+install(DIRECTORY ../Package/System ../Package/RiscPkg
+    DESTINATION ${CMAKE_INSTALL_PREFIX})
