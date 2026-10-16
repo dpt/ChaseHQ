@@ -1,11 +1,11 @@
 on:
   push:
-    branches: develop
+    branches: [develop, zxgame]
     paths:
       - 'C/**'
       - '.github/workflows/c.yml'
   pull_request:
-    branches: develop
+    branches: [develop, zxgame]
     paths:
       - 'C/**'
       - '.github/workflows/c.yml'
