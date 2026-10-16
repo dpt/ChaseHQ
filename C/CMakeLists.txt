@@ -98,6 +98,10 @@ if(TARGET ZXGameSDL3)
   endif()
 endif()
 
+if(APPLE)
+  add_subdirectory(apps/macos)
+endif()
+
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
 
 set(TEST_SOURCE_FILES
