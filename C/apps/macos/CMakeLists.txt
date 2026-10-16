@@ -1,4 +1,4 @@
-# Native macOS (Cocoa/OpenGL) front-end. The host itself is ZXGameMacOS in
+# Native macOS (Cocoa/Metal) front-end. The host itself is ZXGameMacOS in
 # ZXGame; this only supplies main(), the xibs and the bundle.
 #
 # ponytail: no app icon yet, add AppIcon.icns to RESOURCES when there is art.
