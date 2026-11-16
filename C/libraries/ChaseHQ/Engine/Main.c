@@ -12282,7 +12282,7 @@ static void draw_hazard_sprites(chqstate_t *state,
     state->doc.plot_mode = IX_hazard->inverted;
 
     if ((u8) (IX_hazard->hazard_flags + 1) == 0) /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
-      goto dafs_af50;
+      goto dhs_draw_perp;
 
     A_horz_clip = IX_hazard->horz_clip;
     // AND A3
@@ -12330,7 +12330,7 @@ dafs_draw_done_1:
   state->dhs.xpos_table = HL_table;
   return;
 
-dafs_af50:
+dhs_draw_perp:
   A_horz_clip          = IX_hazard->horz_clip;
   state->dhs.horz_clip = A_horz_clip;
   A_horz_pos           = IX_hazard->horz_pos;
@@ -15899,11 +15899,11 @@ lr_check_spawning:
    * the unreliable bit-7 test, and it is safe here because the subtrahend is 2.
    */
   if (A_iterations >= 256 - 2)
-    goto lr_set_var_a16d_from_c;
+    goto lr_store_spawn_accumulator;
   C_spawn_accum         = A_iterations; // new value for $A16D
   HL_forkdistance      += 16;
   state->fork_distance  = HL_forkdistance;
-lr_set_var_a16d_from_c:
+lr_store_spawn_accumulator:
   state->session.spawn_accumulator = C_spawn_accum;
 lr_no_car_spawning:
   /* RL A x4; AND 0x0F: low nibble = (fast_counter >> 5) | (spawn_accumulator & 1) << 3 */
@@ -19109,7 +19109,7 @@ static void pre_shift_backdrop(chqstate_t *state)
  * exactly as they already are for the sibling dispatch calls.
  *
  * The function has two inner loops depending on whether the outer B counter is
- * zero (dfr_c923, zero-fill path) or non-zero (dfr_c963, 5-zone path). The
+ * zero (dfr_plain_loop, zero-fill path) or non-zero (dfr_zoned_loop, 5-zone path). The
  * $CA00–$CA65 scanline fill (five PUSH sequences) is stubbed out and only the
  * road-marking update ($CA68–$CB2E) is implemented.
  *
@@ -19149,7 +19149,7 @@ static void draw_forked_road(chqstate_t *state,
   u8  L;          /* road table byte index; decrements as road nears (was L) */
   u8  Ldash;      /* banked row index for the zone boundary reads; reloaded from L each pass (was L') */
   u8  af_prime;   /* current scanline fill pattern, banked in A' (was A') */
-  u8  loop_path;  /* 0 = dfr_c923 (zero-fill) path; 1 = dfr_c963 (5-zone) */
+  u8  loop_path;  /* 0 = dfr_plain_loop (zero-fill) path; 1 = dfr_zoned_loop (5-zone) */
   int A_row;      /* scanline row check: (D-1) & 0x0F; drives advance test (was A) */
   int carry;      /* carry/borrow flag for E underflow in scanline advance */
   const u8 *HL_zone;   /* pointer to zone position table for current zone (was HL) */
@@ -19223,12 +19223,12 @@ dfr_choose_fill:
   if (B != 0)
     goto dfr_set_zoned_fill;
 
-  /* $C91A: B == 0 -- set jump target to dfr_c923 (zero-fill path) */
+  /* $C91A: B == 0 -- set jump target to dfr_plain_loop (zero-fill path) */
   loop_path = 0;
   /* EX AF,AF' */
   af_prime = sm_CB40;
 
-dfr_c923:
+dfr_plain_loop:
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -19255,7 +19255,7 @@ dfr_plain_scanline: /* $C929: zero-fill scanline (inner road, pre-fork area) */
    * code below -- must not skip straight to dfr_after_marking, or the
    * marking section (and its real C-- accounting) never runs and the
    * scan-block counter never reaches zero. */
-  goto dfr_ca66;
+  goto dfr_draw_markings;
 
 dfr_next_plain_scanline:
   carry = (E < 0x20);
@@ -19264,12 +19264,12 @@ dfr_next_plain_scanline:
     D = D + 0x10;
   goto dfr_plain_scanline;
 
-dfr_set_zoned_fill: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
+dfr_set_zoned_fill: /* $C95A: B != 0 -- set jump target to dfr_zoned_loop (5-zone path) */
   loop_path = 1;
   /* EX AF,AF' */
   af_prime = sm_CB40;
 
-dfr_c963:
+dfr_zoned_loop:
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -19386,7 +19386,7 @@ dfr_zoned_scanline: /* $C969: 5-zone fork scanline render */
   af_prime      = A_rot_pat;
   fill_end_addr = ((int)D << 8) | (u8)(E + 31);
   /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough scanlines
-   * (see D-- in dfr_c923/dfr_c963); skip the write rather than let
+   * (see D-- in dfr_plain_loop/dfr_zoned_loop); skip the write rather than let
    * ADDRTOBACKBUF assert, mirroring the marking-section guard below. */
   /* Conv: the Z80 enters five fixed 15-PUSH chains via self-modified JR
    * displacements, so a scanline always receives exactly 15 pairs; when
@@ -19422,7 +19422,7 @@ dfr_zoned_scanline: /* $C969: 5-zone fork scanline render */
     memset(SP_fill, A_rot_pat, (size_t)remaining * 2);
   }
 
-dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
+dfr_draw_markings: /* $CA66: B = E (save screen low byte); C-- -- shared by both
            * the zero-fill (dfr_plain_scanline) and 5-zone (dfr_zoned_scanline) fill paths.
            * Conv: this DEC C hits main C, which the loop-exit test never
            * reads (see Cdash above) -- omitted since C has no other use
@@ -19441,7 +19441,7 @@ dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
     H_xpos_hi = 0xE8;
 
     /* Conv: D_row_hi can drift below BACKBUFFER_START_ADDRESS over enough
-     * scanlines (see D-- in dfr_c923/dfr_c963). On real Z80 hardware that
+     * scanlines (see D-- in dfr_plain_loop/dfr_zoned_loop). On real Z80 hardware that
      * is a harmless write into low ROM or unused RAM; the C port must
      * skip the write rather than let ADDRTOBACKBUF assert, mirroring the
      * DE_backbuf clamp in dr_write_scanline_unfilled. */
@@ -19526,9 +19526,9 @@ dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
   if (Cdash != 0)
   {
     if (loop_path == 0)
-      goto dfr_c923;
+      goto dfr_plain_loop;
     else
-      goto dfr_c963;
+      goto dfr_zoned_loop;
   }
 
   /* C == 0: scanline block complete.
@@ -19599,7 +19599,7 @@ dfr_height_step:
       if (A_diff >= 0x50)
       {
         /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough
-         * scanlines (see D-- in dfr_c923/dfr_c963); on real Z80 hardware
+         * scanlines (see D-- in dfr_plain_loop/dfr_zoned_loop); on real Z80 hardware
          * dr_start_backdrop_fill's INC E doesn't touch D, so this address
          * carries the same drift into its own backbuffer writes. Skip the
          * call rather than let ADDRTOBACKBUF assert, mirroring the

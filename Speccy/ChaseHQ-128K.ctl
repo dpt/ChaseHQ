@@ -8895,7 +8895,7 @@ C $B8A9,2 Jump if carry
 C $B8AB,1 B++
 C $B8AC,3 Add the rate to the accumulator kept in #REGa', which was zeroed at #R$B889. #R$B8CB reads the total back
 C $B8AF,2 Loop
-@ $B8B1 label=sh_b8b1_exit
+@ $B8B1 label=sh_divide_done
 C $B8B1,3 Return if B is zero
 C $B8B4,5 horizon_y_accum += A
 N $B8B9 Sign extend the step count using the downhill flag #R$B895 put in #REGe.
@@ -9178,7 +9178,7 @@ N $BAC0 Otherwise clamp it to 2.
 C $BAC0,1 C = A
 N $BAC1 Adjusting this delta will cause the forked road effect to proceed faster (higher values) or slower (lower values).
 C $BAC1,7 Increase fork_distance by 16
-@ $BAC8 label=lr_set_var_a16d_from_c
+@ $BAC8 label=lr_store_spawn_accumulator
 C $BAC8,4 spawn_accumulator = C
 @ $BACC label=lr_no_car_spawning
 C $BACC,3 A = spawn_accumulator
@@ -10772,7 +10772,7 @@ N $C813 Scanline advance pattern.
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
-@ $C821 label=dr_c821_apparent_loop_start
+@ $C821 label=dr_backdrop_loop
 C $C821,1 Bank/unbank
 C $C822,1 Swap
 C $C823,1 E = A
@@ -10887,6 +10887,7 @@ C $C917,3 Jump if non-zero
 C $C91A,1 Unbank
 C $C91B,6 Self modify 'JP NZ' @ #R$CB31 to be #R$C923
 C $C921,1 Bank
+@ $C923 label=dfr_plain_loop
 C $C923,4 A = (D - 1) & 15
 C $C927,2 Jump if zero
 N $C929 This entry point is used by the routine at #R$C94C.
@@ -10913,6 +10914,7 @@ C $C953,4 D -= 16
 @ $C95A label=dfr_set_zoned_fill
 C $C95A,1 Unbank
 C $C95B,6 Self modify 'JP NZ,x' @ #R$CB31 to be #R$C963
+@ $C963 label=dfr_zoned_loop
 C $C963,1 A = D
 C $C964,1 D--
 C $C965,2 A &= $0F
@@ -11031,6 +11033,7 @@ N $CA55 Draw striped pattern.
 C $CA55,2 Jump table (self modified)
 @ $CA57 label=dfr_push_15_hls
 N $CA66 (end of scanline filling)
+@ $CA66 label=dfr_draw_markings
 C $CA66,1 B = E
 C $CA67,1 C--
 C $CA68,2 H = $E4  -- table high byte
