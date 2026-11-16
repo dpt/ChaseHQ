@@ -1847,7 +1847,7 @@ C $E065,4 Set interrupt vector table base to $8000
 C $E069,3 Call drive_chatter_stop
 b $E06C End-screen trigger flags and congratulations text pointers
 N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
-@ $E06C label=data_e06c
+@ $E06C label=es_fade_gates
 B $E06C,2,1 Trigger flags (see note above)
 N $E06E Still unidentified (3 bytes, values $01,$3F,$96) -- confirmed dead end: grepped for literal $5C6E/$5C6F/$5C70 operands across the full static bank-7 disassembly and the entire trace-end-screen.log execution capture, zero hits either way. Not reached by any direct-addressed instruction in the code disassembled so far; either accessed only via computed/indexed addressing not yet spotted, read by common-RAM code outside bank 7, or genuinely unused padding
 @ $E06E label=data_e06e
@@ -1882,7 +1882,7 @@ B $E132,6,6
 W $E138,2,2 bitmap_endshot_3
 B $E13A,6,6
 W $E140,2,2 bitmap_endshot_4
-@ $E1E3 label=possible_data_block_e1e3
+@ $E1E3 label=es_script_congrats
 B $E142,200,13,8*18,4*2,8*4,3
 c $E20A Command interpreter
 D $E20A Confirmed live by trace-end-screen.log: reads script bytes via $A16D and dispatches on a DEC A/JP Z chain. Self-modifies the CALL operand at $E030 (live address $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran.
@@ -1956,7 +1956,7 @@ c $E42E Sweep the playfield attributes toward their target colours
 D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
 D $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not masked back into their 3-bit fields, so a field that reaches its target exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
-C $E42E,3 HL -> data_e06c [$E06C]
+C $E42E,3 HL -> es_fade_gates [$E06C]
 C $E431,2 50-50 pattern, rotate in place
 C $E433,1 Return when bit set
 C $E434,3 Middle band of attributes

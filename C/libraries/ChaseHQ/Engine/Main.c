@@ -9713,7 +9713,7 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   int          pos2;           /* x position from xpos.centre for the final collision test (was HL') */
 
   /* $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
-   * the fc_a510 right-hand check below; only pos in [0x6A,0xFF] with H==0
+   * the fc_check_fork right-hand check below; only pos in [0x6A,0xFF] with H==0
    * resolves off-road here without checking the right side.
    */
   pos = state->xpos.left[127];
@@ -10146,23 +10146,23 @@ pb_update_counter:
   HL = state->scenedata.road_pos - 164 - carry; // SBC HL,DE ($A6B4) takes carry-in
   B_min_lane = 4; C_max_lane = 4;
   if ((s16) HL < 0) // carried, HL < 164
-    goto pb_a6cf;
+    goto pb_check_lane_bounds;
   DE          = 70;
   B_min_lane  = 3;
   HL         -= DE;
   if ((s16) HL < 0) // carried, HL < 70
-    goto pb_a6cf;
+    goto pb_check_lane_bounds;
   B_min_lane = 2; C_max_lane = 3;
   HL -= DE;
   if ((s16) HL < 0) // carried, HL < 70
-    goto pb_a6cf;
+    goto pb_check_lane_bounds;
   B_min_lane = 1; C_max_lane = 2;
   HL -= DE;
   if ((s16) HL < 0) // carried, HL < 70
-    goto pb_a6cf;
+    goto pb_check_lane_bounds;
   C_max_lane = 1;
 
-pb_a6cf:
+pb_check_lane_bounds:
   A_currlane_bound = IX_perp->current_lane;
   if (A_currlane_bound == C_max_lane)
     goto pb_random_move_left_or_right;
@@ -10277,7 +10277,7 @@ pb_set_horz_pos:
   A_counter                = state->pb.approach_timer - 1;
   state->pb.approach_timer = A_counter;
   if (A_counter)
-    goto pb_a776;
+    goto pb_close_range;
 
   // When it hits zero we pick a random number...
   A_delay = state->stage->perp_approach_base + (rng(state) & 0xF);
@@ -10289,11 +10289,11 @@ pb_set_horz_pos:
 pb_bypass:
   state->pb.delay = --A_delay;
   if (A_delay == 0) // $A766 JR Z: skip boost only on the frame delay reaches 0
-    goto pb_a776;
+    goto pb_close_range;
 
   A_distance = IX_perp->distance;
   if (A_distance >= 13)
-    goto pb_a776;
+    goto pb_close_range;
 
   /* Distance to perp is 12 or less. The perp's speed is raised by 30 for each
    * unit the hero has closed inside 13, so it pulls away hardest just as the
@@ -10302,7 +10302,7 @@ pb_bypass:
 
   HL_speed += (13 - A_distance) * DE_speedmult;
 
-pb_a776:
+pb_close_range:
   A_dist_minus_6 = IX_perp->distance - 6;
   if ((s8) A_dist_minus_6 < 0)
   {
@@ -10335,12 +10335,12 @@ pb_set_delay:
 
   // POP AF  Restore A_hit_timer which holds IX_perp[7] and flags from earlier
   if (!carry || A_hit_timer == 2)
-    goto pb_a7be;
+    goto pb_add_stage_bonus;
 
   smash_twice = 1; /* was PUSH HL -- Put another call to smash on the stack */
 
   D_bonus_hi = 4; // Set bonus high digit to 4
-pb_a7be:
+pb_add_stage_bonus:
   D_bonus_hi  += state->wanted_stage_number;
   E_bonus_mid  = 0;
   if (state->retry_count)
@@ -13133,7 +13133,7 @@ ahc_speed_less_or_eq:
     {
       A = (HL_road_pos & 0xFF) - (DE_other_road_pos & 0xFF); // low diff
       if ((HL_road_pos & 0xFF) < (DE_other_road_pos & 0xFF)) // JR C: borrow
-        goto ahc_b3b0;
+        goto ahc_clamp_to_limit;
     }
 
     DE_other_road_pos = state->ahc.road_pos_max;
@@ -13145,7 +13145,7 @@ ahc_speed_less_or_eq:
           goto ahc_assign_road_pos_2;
       }
 
-ahc_b3b0:
+ahc_clamp_to_limit:
       // EX DE,HL_road_pos
       HL_road_pos = DE_other_road_pos;
     }
@@ -18892,12 +18892,12 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
     if ((s8)(u8)A < 0)
       goto dr_blank_sky_fill;
     if (A != 0)
-      goto dr_c7ca;
+      goto dr_backdrop_calc;
 
     /* $C7B5-$C7C9: compute sky rows from L vs B */
     L_horz = state->session.horizon_level & 0xFF;
     if ((u8)L_horz >= (u8)B)
-      goto dr_c7ca;
+      goto dr_backdrop_calc;
     A     = (u8)((u8)L_horz - (u8)B) + C;
     carry = (A > 0xFF);
     A     = (u8)A;
@@ -18905,11 +18905,11 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
       goto dr_blank_sky_fill;
     C = A;
 
-dr_c7ca:
+dr_backdrop_calc:
     A                  = C;
     state->dr.sky_rows = (u8)A;
     A = (u8)A + (u8)B;
-    if ((s8)(u8)A >= 0) goto dr_c7db;
+    if ((s8)(u8)A >= 0) goto dr_backdrop_offset;
     /* $C7D2-$C7DA: negative sum — clamp sky rows */
     A                  = (u8)((u8)A - 127);
     A                  = (u8)(-(s8)(u8)A);
@@ -18917,7 +18917,7 @@ dr_c7ca:
     state->dr.sky_rows = (u8)A;
     C                  = A;
 
-dr_c7db:
+dr_backdrop_offset:
 
     BC_backdrop_offset = (24 - (u8)C) * 10;
     A_scroll = state->dr.horizon_x_scroll;
@@ -18936,7 +18936,7 @@ dr_c7db:
      * and advances by 10 per scanline (each backdrop row = 10 bytes). */
     B_loop = state->dr.sky_rows;
     A_col  = 0;
-    goto dr_c824; // jumps into loop
+    goto dr_backdrop_row; // jumps into loop
 
     /* $C813: screen pointer row-block advance */
 dr_backdrop_fill_advance:
@@ -18956,7 +18956,7 @@ dr_backdrop_fill_advance:
        * reads A_col directly at the point of use below.
        */
 
-dr_c824:
+dr_backdrop_row:
       A = D;
       D = (u8)(D - 1);
       if ((A & 0x0F) == 0)
@@ -19143,7 +19143,7 @@ static void draw_forked_road(chqstate_t *state,
   u8  sm_CB40;    /* verge fill pattern (was $CB40) */
   u8  D;          /* screen address high byte (was D) */
   u8  E;          /* screen address low byte (was E) */
-  u8  B;          /* inner counter: banked from B_fill_pattern, 16 after dfr_c969 init (was B) */
+  u8  B;          /* inner counter: banked from B_fill_pattern, 16 after dfr_right_scanline init (was B) */
   u8  C;          /* per-pass scratch counter: reset every scanline pass, has no effect on loop exit (was C) */
   u8  Cdash;       /* scan-block exit counter: banked from C_counter, decremented once per pass (was C') */
   u8  L;          /* road table byte index; decrements as road nears (was L) */
@@ -19219,9 +19219,9 @@ static void draw_forked_road(chqstate_t *state,
 
   af_prime = sm_CB40; /* EX AF,AF': current scanline fill pattern */
 
-dfr_c915:
+dfr_check_half:
   if (B != 0)
-    goto dfr_c95a;
+    goto dfr_right_half;
 
   /* $C91A: B == 0 -- set jump target to dfr_c923 (zero-fill path) */
   loop_path = 0;
@@ -19235,7 +19235,7 @@ dfr_c923:
   if (A_row == 0)
     goto dfr_next_scanline_c929;
 
-dfr_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
+dfr_left_scanline: /* $C929: zero-fill scanline (inner road, pre-fork area) */
   /* $C929-$C93A: LD ($C92F),DE; LD DE,<SM>; HL = DE+$1F; SP = HL; HL = 0.
    * $CA57: 15 x PUSH HL (fills the same 30 bytes as the 5-zone fill below,
    * but uniformly with 0 -- there is no fork yet, so the whole scanline
@@ -19262,9 +19262,9 @@ dfr_next_scanline_c929:
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
-  goto dfr_c929;
+  goto dfr_left_scanline;
 
-dfr_c95a: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
+dfr_right_half: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
   loop_path = 1;
   /* EX AF,AF' */
   af_prime = sm_CB40;
@@ -19276,7 +19276,7 @@ dfr_c963:
   if (A_row == 0)
     goto dfr_next_scanline_c969;
 
-dfr_c969: /* $C969: 5-zone fork scanline render */
+dfr_right_scanline: /* $C969: 5-zone fork scanline render */
   /* B=16 inner counter, C=$F8 scan-block mask */
   B = 16;
   C = 0xF8; /* Conv: this is the banked C used to drive the scan-block loop */
@@ -19302,7 +19302,7 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   }
   else
   {
-    /* dfr_c984: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
+    /* dfr_byte_before_1: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
     pos_E8 = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1)); /* 3×RRCA + RRA + ADC */
     if (pos_E8 >= 16)
@@ -19318,7 +19318,7 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   }
   else
   {
-    /* dfr_c9aa: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
+    /* dfr_byte_before_2: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
     pos_EA = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
@@ -19332,7 +19332,7 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   }
   else
   {
-    /* dfr_c9c9: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
+    /* dfr_byte_before_3: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
     A_prev   = HL_zone[(u8)(Ldash - 1)];
     pos_EB = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1));
     if (pos_EB >= 16)
@@ -19348,7 +19348,7 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   }
   else
   {
-    /* dfr_c9f0: DEC L; A=HL[-1] (no INC L -- L' stays decremented, but only
+    /* dfr_byte_before_4: DEC L; A=HL[-1] (no INC L -- L' stays decremented, but only
      * on the banked side; main L must not change or every following row's
      * reads flip parity and the road vanishes towards the horizon) */
     Ldash--;
@@ -19423,7 +19423,7 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   }
 
 dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
-           * the zero-fill (dfr_c929) and 5-zone (dfr_c969) fill paths.
+           * the zero-fill (dfr_left_scanline) and 5-zone (dfr_right_scanline) fill paths.
            * Conv: this DEC C hits main C, which the loop-exit test never
            * reads (see Cdash above) -- omitted since C has no other use
            * in this port. */
@@ -19540,7 +19540,7 @@ dfr_loop:
     A_tog = sm_CB36 ^ 1;
     sm_CB36 = A_tog;
     if (A_tog != 0)
-      goto dfr_cb65;
+      goto dfr_edge_countdown;
   }
 
   /* sm_CB36 == 0: update fill pattern and ADD operands */
@@ -19559,16 +19559,16 @@ dfr_loop:
     }
   }
 
-dfr_cb65:
+dfr_edge_countdown:
   sm_CB65--;
   if (sm_CB65 != 0)
-    goto dfr_cb90;
+    goto dfr_height_step;
 
   /* sm_CB65 reached zero: advance XOR operand ($CB6E-$CB8D) */
   {
     A_newxor = sm_CB5D + 0x10;
     if (A_newxor < sm_CB5D)
-      goto dfr_cb90;
+      goto dfr_height_step;
     sm_CB5D = A_newxor;
     if (sm_CA9D != 0)
       sm_CA9D = A_newxor;
@@ -19576,7 +19576,7 @@ dfr_cb65:
     sm_CB65 = 5;                  /* $CB8D: reset thickness countdown */
   }
 
-dfr_cb90:
+dfr_height_step:
 {
     A_old_h = *IY_height;
     IY_height++;
@@ -19608,7 +19608,7 @@ dfr_cb90:
           dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L);
         return;
       }
-      goto dfr_c915;
+      goto dfr_check_half;
     }
     /* A_diff < 0 (negative): fall through */
     L = (u8)(L - 2);
@@ -19620,11 +19620,11 @@ dfr_next_scanline_c969:
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
-  goto dfr_c969;
+  goto dfr_right_scanline;
 }
 
 /* $CBA4
- * mystery_cba4 would go here, if we knew what it did
+ * dfr_unused_height_step would go here, if we knew what it did
  */
 
 /**
