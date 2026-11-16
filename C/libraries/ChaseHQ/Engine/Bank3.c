@@ -4007,8 +4007,7 @@ static const u8 title_tune23_data[203] = {
 /* ----------------------------------------------------------------------- */
 
 /* 180 frames, ~3.6s at 50Hz. This is the Z80's own $C627-$C637 tune-4 wait
- * count in titlescr_wait_loop; play_success_music borrows it as a heuristic
- * bound for a loop the Z80 never exits (see its Conv: note). */
+ * count in titlescr_wait_loop. */
 #define ATTRACT_TUNE_WAIT_FRAMES (0xB4)
 
 /* titlescr_wait_loop / run_title_screen outcomes. TITLESCR_START_GAME and
@@ -9380,40 +9379,30 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * $F7C7: Set up interrupts and run the success jingle
  *
  * Calls setup_im2_interrupt_table, starts tune 1 (via titlescr_start_tune,
- * which also arms tune 1's drum-sample cue script), then falls into
- * basl_service_loop ($F7D1), which calls titlescr_music once per 50Hz
- * interrupt via HALT synchronisation. In the Z80 this loop is unconditional
- * (`CALL $F82F` / `JR $F7D1`) and never returns to its caller (was RET never
- * reached).
+ * which also arms tune 1's drum-sample cue script), then calls
+ * titlescr_music once per 50Hz interrupt ($F7D1). The loop itself is
+ * unconditional: it ends when tune 1's cue script reaches its $FE
+ * end-of-script byte, whose handler at $F829 discards two return addresses
+ * and jumps to stop_music_and_silence, so its RET returns straight to this
+ * routine's caller.
  *
- * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
- *       bank3_call, whose caller (handle_perp_caught_128k, and in turn its own
- *       caller's phase4 state machine) expects a normal return so scoring and
- *       fading can proceed on the same call — an infinite loop here would
- *       permanently hang the game thread. Per explicit scope decision, the
- *       Z80's unconditional loop is quantised into a bounded run of
- *       ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count
- *       the Z80 uses for the tune-4 wait in titlescr_wait_loop) and then
- *       returns normally. The frame count is a guess at the jingle's real
- *       duration.
+ * Conv: load_drum_op cannot unwind the C call stack, so it stops the tune and
+ *       returns normally; the loop here ends once that clears
+ *       title_music.tune_active.
  */
 static void play_success_music(chqstate_t *state)
 {
-  int B_wait; /* jingle frame countdown (was B, unbounded in the Z80) */
-
   setup_im2_interrupt_table(state);
   titlescr_start_tune(state, 1);
 
-  B_wait = ATTRACT_TUNE_WAIT_FRAMES;
-  do
+  while (state->bank3->title_music.tune_active)
   {
-    /* Conv: ~3.6s of jingle; without this the window stays up that long after
-     * the host asks to quit. */
+    /* Conv: without this the window stays up for the rest of the jingle
+     * after the host asks to quit. */
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state);
   }
-  while (--B_wait);
 }
 
 /**

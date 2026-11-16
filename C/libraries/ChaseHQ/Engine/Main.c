@@ -22165,11 +22165,11 @@ void play_speech_128k(chqstate_t *state, int index)
  *
  * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into bank3_call; C passes
  *       BANK3_SUCCESS_MUSIC explicitly. The LD ($8E4A),A at $F3B0 self-modifies
- *       overlay.delay; C assigns state->overlay.delay directly. Now that
- *       BANK3_SUCCESS_MUSIC blocks for BASL_JINGLE_FRAMES frames of real
- *       playback (see boot_and_run_sound_loop), truncating overlay.delay to 1
- *       here is safe: the blocking call itself holds the arrest-message overlay
- *       for the jingle's duration, matching the Z80.
+ *       overlay.delay; C assigns state->overlay.delay directly. As in the
+ *       Z80, BANK3_SUCCESS_MUSIC blocks until the jingle's cue script ends
+ *       (see play_success_music), so truncating overlay.delay to 1 here is
+ *       safe: the blocking call itself holds the arrest-message overlay for
+ *       the jingle's duration.
  */
 static void handle_perp_caught_128k(chqstate_t *state)
 {
