@@ -9713,7 +9713,7 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   int          pos2;           /* x position from xpos.centre for the final collision test (was HL') */
 
   /* $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
-   * the fc_check_fork right-hand check below; only pos in [0x6A,0xFF] with H==0
+   * the fc_check_right_side check below; only pos in [0x6A,0xFF] with H==0
    * resolves off-road here without checking the right side.
    */
   pos = state->xpos.left[127];
@@ -11817,7 +11817,7 @@ static void advance_hazard(chqstate_t *state,
     zero   = (A_lane == 0);
     A_dist = C_dist;
     if (zero)
-      goto ah_adfa;
+      goto ah_store_distance;
     IX_hazard->distance = A_dist;
     return;
   }
@@ -11829,7 +11829,7 @@ static void advance_hazard(chqstate_t *state,
     return;
   }
 
-ah_adfa:
+ah_store_distance:
   IX_hazard->distance = A_dist;
   if (A_dist >= 20)
     return;
@@ -15828,7 +15828,7 @@ lr_forked_road:
   HL_forkdistance  = state->fork_distance;
   if ((*DE_lanedata & 4) !=
       0) // check for forked road (have already checked flags for 0xE1)
-    goto lr_badf;
+    goto lr_fork_visible;
   /* $BA67 fell through, so the lanes byte's bit 2 is clear: this is the fork
    * itself, not the approach to it. fork_in_progress is a once-only latch, not
    * a counter -- $BC29 clears it and $BA71 is the only other writer, so it
@@ -15912,7 +15912,7 @@ lr_no_car_spawning:
   A_iterations -= 0x10; // sets top nibble to $F
   // Conv: Z80 $BADB LD E,A; LD D,$FF forms signed DE = 0xFF00|A ∈ {−16..−1}
   HL_forkdistance += (s16)(0xFF00 | A_iterations);
-lr_badf:
+lr_fork_visible:
   // PUSH HL_forkdistance
   if (state->fork_taken - 1 != 0)
   {
@@ -18892,12 +18892,12 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
     if ((s8)(u8)A < 0)
       goto dr_blank_sky_fill;
     if (A != 0)
-      goto dr_backdrop_calc;
+      goto dr_set_sky_rows;
 
     /* $C7B5-$C7C9: compute sky rows from L vs B */
     L_horz = state->session.horizon_level & 0xFF;
     if ((u8)L_horz >= (u8)B)
-      goto dr_backdrop_calc;
+      goto dr_set_sky_rows;
     A     = (u8)((u8)L_horz - (u8)B) + C;
     carry = (A > 0xFF);
     A     = (u8)A;
@@ -18905,11 +18905,11 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DE_backbuf, int L_row)
       goto dr_blank_sky_fill;
     C = A;
 
-dr_backdrop_calc:
+dr_set_sky_rows:
     A                  = C;
     state->dr.sky_rows = (u8)A;
     A = (u8)A + (u8)B;
-    if ((s8)(u8)A >= 0) goto dr_backdrop_offset;
+    if ((s8)(u8)A >= 0) goto dr_backdrop_row_offset;
     /* $C7D2-$C7DA: negative sum — clamp sky rows */
     A                  = (u8)((u8)A - 127);
     A                  = (u8)(-(s8)(u8)A);
@@ -18917,7 +18917,7 @@ dr_backdrop_calc:
     state->dr.sky_rows = (u8)A;
     C                  = A;
 
-dr_backdrop_offset:
+dr_backdrop_row_offset:
 
     BC_backdrop_offset = (24 - (u8)C) * 10;
     A_scroll = state->dr.horizon_x_scroll;
@@ -19143,7 +19143,7 @@ static void draw_forked_road(chqstate_t *state,
   u8  sm_CB40;    /* verge fill pattern (was $CB40) */
   u8  D;          /* screen address high byte (was D) */
   u8  E;          /* screen address low byte (was E) */
-  u8  B;          /* inner counter: banked from B_fill_pattern, 16 after dfr_right_scanline init (was B) */
+  u8  B;          /* inner counter: banked from B_fill_pattern, 16 after dfr_zoned_scanline init (was B) */
   u8  C;          /* per-pass scratch counter: reset every scanline pass, has no effect on loop exit (was C) */
   u8  Cdash;       /* scan-block exit counter: banked from C_counter, decremented once per pass (was C') */
   u8  L;          /* road table byte index; decrements as road nears (was L) */
@@ -19219,9 +19219,9 @@ static void draw_forked_road(chqstate_t *state,
 
   af_prime = sm_CB40; /* EX AF,AF': current scanline fill pattern */
 
-dfr_check_half:
+dfr_choose_fill:
   if (B != 0)
-    goto dfr_right_half;
+    goto dfr_set_zoned_fill;
 
   /* $C91A: B == 0 -- set jump target to dfr_c923 (zero-fill path) */
   loop_path = 0;
@@ -19233,9 +19233,9 @@ dfr_c923:
   D--;
   A_row &= 0x0F;
   if (A_row == 0)
-    goto dfr_next_scanline_c929;
+    goto dfr_next_plain_scanline;
 
-dfr_left_scanline: /* $C929: zero-fill scanline (inner road, pre-fork area) */
+dfr_plain_scanline: /* $C929: zero-fill scanline (inner road, pre-fork area) */
   /* $C929-$C93A: LD ($C92F),DE; LD DE,<SM>; HL = DE+$1F; SP = HL; HL = 0.
    * $CA57: 15 x PUSH HL (fills the same 30 bytes as the 5-zone fill below,
    * but uniformly with 0 -- there is no fork yet, so the whole scanline
@@ -19257,14 +19257,14 @@ dfr_left_scanline: /* $C929: zero-fill scanline (inner road, pre-fork area) */
    * scan-block counter never reaches zero. */
   goto dfr_ca66;
 
-dfr_next_scanline_c929:
+dfr_next_plain_scanline:
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
-  goto dfr_left_scanline;
+  goto dfr_plain_scanline;
 
-dfr_right_half: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
+dfr_set_zoned_fill: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
   loop_path = 1;
   /* EX AF,AF' */
   af_prime = sm_CB40;
@@ -19274,9 +19274,9 @@ dfr_c963:
   D--;
   A_row &= 0x0F;
   if (A_row == 0)
-    goto dfr_next_scanline_c969;
+    goto dfr_next_zoned_scanline;
 
-dfr_right_scanline: /* $C969: 5-zone fork scanline render */
+dfr_zoned_scanline: /* $C969: 5-zone fork scanline render */
   /* B=16 inner counter, C=$F8 scan-block mask */
   B = 16;
   C = 0xF8; /* Conv: this is the banked C used to drive the scan-block loop */
@@ -19423,7 +19423,7 @@ dfr_right_scanline: /* $C969: 5-zone fork scanline render */
   }
 
 dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
-           * the zero-fill (dfr_left_scanline) and 5-zone (dfr_right_scanline) fill paths.
+           * the zero-fill (dfr_plain_scanline) and 5-zone (dfr_zoned_scanline) fill paths.
            * Conv: this DEC C hits main C, which the loop-exit test never
            * reads (see Cdash above) -- omitted since C has no other use
            * in this port. */
@@ -19608,19 +19608,19 @@ dfr_height_step:
           dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L);
         return;
       }
-      goto dfr_check_half;
+      goto dfr_choose_fill;
     }
     /* A_diff < 0 (negative): fall through */
     L = (u8)(L - 2);
     goto dfr_loop;
   }
 
-dfr_next_scanline_c969:
+dfr_next_zoned_scanline:
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
-  goto dfr_right_scanline;
+  goto dfr_zoned_scanline;
 }
 
 /* $CBA4

@@ -3941,7 +3941,7 @@ C $9087,1 A -= C
 C $9088,3 Self modify 'SUB x' at $90F1
 C $908B,2 A = B - 1
 C $9091,2 A = $09
-@ $9093 label=do_index_span
+@ $9093 label=do_size_clamped
 C $9093,1 B = A
 C $9094,5 HL = A * 2 + DE
 C $9099,1 C = *HL
@@ -3962,7 +3962,7 @@ C $90CD,1 Set flags
 C $90D1,4 A = IX[0] + C
 C $90DD,6 A >>= 3
 C $90E3,1 E = A
-@ $90E4 label=do_calc_width
+@ $90E4 label=do_set_fill_width
 C $90E4,1 C = D
 C $90E5,3 A = (E - C) * 2;
 C $90E8,3 A = ~A + $3D
@@ -6143,7 +6143,7 @@ C $A41D,2 A = 20
 C $A41F,1 Bank it
 C $A420,3 A = C & 1
 C $A423,3 Exit via scenery_hit
-@ $A426 label=csc_bit3_clear
+@ $A426 label=csc_pick_tunnel_wall
 C $A426,3 HL = 209
 C $A429,3 DE = 405
 C $A42C,1 Unbank from #R$A39F
@@ -6241,7 +6241,7 @@ C $A4CF,1 Preserve speed
 C $A4D0,5 A = HL >> 1
 C $A4D5,8 A = (A >> 3) + 16
 C $A4DD,6 L = MAX(24, A)
-@ $A4E3 label=sch_set_hit_handler
+@ $A4E3 label=sch_set_drift
 C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
 C $A4E7,3 HL = A'
 C $A4EA,1 Restore speed
@@ -6258,14 +6258,14 @@ R $A4F6 I:DE' Road position maximum, inherited from #R$A399 and stored as is
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
-C $A4FB,2 Jump to fc_check_fork if A isn't zero
+C $A4FB,2 Jump to fc_check_right_side if A isn't zero
 C $A4FD,9 Jump to #R$A510 if HL < $6A
 C $A506,4 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
 C $A50B,2 Jump to fc_not_fork_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
 C $A50E,2 Jump to fc_not_fork_set
-@ $A510 label=fc_check_fork
+@ $A510 label=fc_check_right_side
 C $A510,3 HL = *$EDFC
 C $A513,1 A = H
 C $A514,1 Set flags
@@ -6296,7 +6296,7 @@ C $A555,2 A = $8C  -- the speed cap #R$A4B8 takes in #REGa'
 C $A557,1 Bank
 C $A558,1 A = 0  -- flip right, per #R$A4B8's #REGa
 C $A559,3 Exit via csc_hit_scenery
-@ $A55C label=fc_read_fork_objects
+@ $A55C label=fc_check_left_pole
 C $A55C,3 HL = *$5D02
 C $A55F,2 C = *HL++
 C $A561,2 E = *HL++
@@ -7305,7 +7305,7 @@ C $ACCC,7 Zero the horizontal position
 C $ACD3,4 Set IX[19] to 1
 C $ACD7,3 Set IX[15] to 1
 C $ACDA,1 Return
-@ $ACDB label=table_acdb
+@ $ACDB label=wobble_amplitudes
 B $ACDB,40,8 #R$AC94 uses this
 @ $AD03 label=wobble_params_by_speed
 W $AD03,10,2 #R$AC53 uses this
@@ -7419,7 +7419,7 @@ C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
 N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which is the perp's speed
 C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of speed
 C $ADCA,3 If IX[4] was < IX[13] then C++
-@ $ADCD label=ah_adcd
+@ $ADCD label=ah_add_distance
 C $ADCD,5 C += IX[1]  -- buffer offset/distance
 C $ADD2,4 A = IX[15] + 1  -- counter?
 C $ADD6,2 Jump to ah_check_visible if non-zero
@@ -7441,7 +7441,7 @@ N $ADF5 Wipe the hazard
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
 @ $ADF9 label=no_op
 C $ADF9,1 Return (used as just a RET elsewhere)
-@ $ADFA label=ah_adfa
+@ $ADFA label=ah_store_distance
 C $ADFA,3 IX[1] = A  -- buffer offset/distance
 C $ADFD,3 Return if A >= 20
 C $AE00,1 A--
@@ -7565,7 +7565,7 @@ C $AED3,2 Return if A != *HL
 C $AED5,1 A--
 C $AED6,4 Jump if A < 11
 C $AEDA,2 A = 10
-@ $AEDC label=dhs_aedc
+@ $AEDC label=dhs_depth_clamped
 C $AEDC,2 A >>= 1
 C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
@@ -7613,7 +7613,7 @@ C $AF47,1 A = *HL
 C $AF48,4 Jump if A == B
 C $AF4C,3 Self modify 'LD HL' @ #R$AECF to load HL
 C $AF4F,1 Return
-@ $AF50 label=dhs_draw_second
+@ $AF50 label=dhs_draw_perp
 C $AF50,3 A = IX[3]
 C $AF53,3 Self modify 'LD A,x' @ #R$B029 to load A
 C $AF56,1 Set flags
@@ -8094,7 +8094,7 @@ C $B2CD,4 Jump if H bit 7 clear
 C $B2D1,4 Jump to mhc_set_cornering if D bit 7 set
 C $B2D5,4 Jump to mhc_set_cornering if H bit 7 clear  -- bug? already tested above
 C $B2D9,2 Jump to mhc_is_cornering
-@ $B2DB label=mhc_check_overshoot
+@ $B2DB label=mhc_shift_positive
 C $B2DB,4 Jump to mhc_set_cornering if D bit 7 clear
 C $B2DF,4 Jump to mhc_set_cornering if H bit 7 set
 @ $B2E3 label=mhc_is_cornering
@@ -9190,7 +9190,7 @@ C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A  -- ($FFF0..$FFFF)
 C $BADE,1 HL += DE  -- fork_distance + DE
 N $BADF Lanes byte & 4 is non-zero. Hit when the road forks (as it becomes visible).
-@ $BADF label=lr_badf
+@ $BADF label=lr_fork_visible
 C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
@@ -10710,7 +10710,7 @@ C $C78A,1 A += C
 C $C78B,5 Jump if zero or negative
 C $C790,1 C = A
 C $C791,3 Jump
-@ $C794 label=dr_check_height
+@ $C794 label=dr_rising_road
 C $C794,1 C = A
 C $C795,2 Compare to $50
 C $C797,3 Jump if A < $50
@@ -10736,7 +10736,7 @@ C $C7C2,1 A += C
 C $C7C3,3 Jump if no carry
 C $C7C6,3 Jump if zero
 C $C7C9,1 C = A
-@ $C7CA label=dr_backdrop_calc
+@ $C7CA label=dr_set_sky_rows
 C $C7CA,1 A = C
 C $C7CB,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7CE,1 A += B
@@ -10744,7 +10744,7 @@ C $C7CF,3 Jump if positive
 C $C7D2,5 A = -(A - 127) + C
 C $C7D7,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7DA,1 C = A
-@ $C7DB label=dr_backdrop_offset
+@ $C7DB label=dr_backdrop_row_offset
 C $C7DB,12 BC = (24 - C) * 3  -- assuming no overflow from calc of C
 C $C7E7,2 Load <self modified> horizon's horizontal shift value (ranges 0..19)
 N $C7E9 Decide whether to use the pre-shifted or the non-shifted version of the backdrop bitmap.
@@ -10880,7 +10880,7 @@ C $C90C,3 Self modify 'ADD A,x' @ #R$CABB
 C $C90F,3 Read 'LD A,x' @ #R$C6BC  -- read road stripe fill pattern
 C $C912,3 Self modify 'LD A,x' @ #R$CB40
 N $C915 This entry point is used by the routines at #R$CBA4 and #R$CBC5.
-@ $C915 label=dfr_check_half
+@ $C915 label=dfr_choose_fill
 C $C915,1 A = B
 C $C916,1 Set flags
 C $C917,3 Jump if non-zero
@@ -10890,7 +10890,7 @@ C $C921,1 Bank
 C $C923,4 A = (D - 1) & 15
 C $C927,2 Jump if zero
 N $C929 This entry point is used by the routine at #R$C94C.
-@ $C929 label=dfr_left_scanline
+@ $C929 label=dfr_plain_scanline
 C $C929,4 Self modify 'LD DE,x' @ #R$C92E (just below) to load current DE  -- start of current scanline
 C $C92D,1 Unbank
 C $C92E,3 Load <self modified> address of start of current scanline
@@ -10901,23 +10901,23 @@ C $C937,3 HL = 0  [not self modified apparently]
 C $C93A,1 C = L
 C $C93B,3 Jump into a sequence of 15 PUSH HLs
 N $C93E Scanline advance then jump somewhere.
-@ $C93E label=dfr_next_scanline_right
+@ $C93E label=dfr_next_zoned_scanline
 C $C93E,4 E -= 32
 C $C942,3 Jump if E < 32
 C $C945,4 D -= 16
 N $C94C Another scanline advance then jump.
-@ $C94C label=dfr_next_scanline_left
+@ $C94C label=dfr_next_plain_scanline
 C $C94C,4 E -= 32
 C $C950,3 Jump if E < 32
 C $C953,4 D -= 16
-@ $C95A label=dfr_right_half
+@ $C95A label=dfr_set_zoned_fill
 C $C95A,1 Unbank
 C $C95B,6 Self modify 'JP NZ,x' @ #R$CB31 to be #R$C963
 C $C963,1 A = D
 C $C964,1 D--
 C $C965,2 A &= $0F
 C $C967,2 Jump if zero
-@ $C969 label=dfr_right_scanline
+@ $C969 label=dfr_zoned_scanline
 C $C969,4 Self modify 'LD DE,x' @ #R$CA00 to load current DE  -- start of current scanline
 C $C96D,1 A = L
 C $C96E,1 Bank/unbank
@@ -11060,7 +11060,7 @@ C $CA8C,1 E++
 C $CA8D,2 *DE++ = *HL++, BC--
 C $CA8F,1 Bank/unbank
 N $CA90 Similar chunk to above
-@ $CA90 label=dfr_edge_1
+@ $CA90 label=dfr_marking_2
 C $CA90,1 H++
 C $CA91,1 A = *HL
 C $CA92,1 Set flags
@@ -11081,7 +11081,7 @@ C $CAAA,1 A = *HL
 C $CAAB,1 *DE = A
 C $CAAC,1 Bank/unbank
 N $CAAD Similar chunk again to above... different rotates
-@ $CAAD label=dfr_caad
+@ $CAAD label=dfr_marking_3
 C $CAAD,1 H++
 C $CAAE,1 A = *HL
 C $CAAF,1 Set flags
@@ -11105,7 +11105,7 @@ C $CACB,1 A |= *HL
 C $CACC,1 *DE = A
 C $CACD,1 Bank/unbank
 N $CACE Similar chunk again
-@ $CACE label=dfr_cace
+@ $CACE label=dfr_marking_4
 C $CACE,1 H++
 C $CACF,1 A = *HL
 C $CAD0,1 Set flags
@@ -11131,7 +11131,7 @@ C $CAEE,1 E++
 C $CAEF,2 *DE++ = *HL++, BC--
 C $CAF1,1 Bank/unbank
 N $CAF2 Similar chunk again
-@ $CAF2 label=dfr_edge_2
+@ $CAF2 label=dfr_marking_5
 C $CAF2,1 H++
 C $CAF3,1 A = *HL
 C $CAF4,1 Set flags
@@ -11152,7 +11152,7 @@ C $CB0C,1 A = *HL
 C $CB0D,1 *DE = A
 C $CB0E,1 Bank/unbank
 N $CB0F Similar chunk again
-@ $CB0F label=dfr_edge_3
+@ $CB0F label=dfr_marking_6
 C $CB0F,3 A = HL[-1]
 C $CB12,1 Set flags
 C $CB13,2 Jump if non-zero
@@ -11398,7 +11398,7 @@ C $CCE9,1 A < C ?
 C $CCEA,2 Jump if A < C
 C $CCEC,1 A -= C
 C $CCED,1 Self modified: could be INC DE or DEC DE
-@ $CCEE label=bct_ccee
+@ $CCEE label=bct_store_step
 C $CCEE,1 Store the current state of #REGde to table
 C $CCEF,2 Loop to bct_step_loop while #REGb > 0
 C $CCF1,1 Unbank
@@ -11410,7 +11410,7 @@ N $CCF8 #REGa is opcode of instruction (INC DE/DEC DE) #REGb is max iterations #
 @ $CCF8 label=bct_endbit_A
 C $CCF8,3 Self modify instruction below
 C $CCFB,1 Initialise total to zero
-@ $CCFC label=bct_loop_ccfc
+@ $CCFC label=bct_count_loop
 C $CCFC,1 Self modified: could be INC DE or DEC DE
 C $CCFD,1 Increment total by #REGc
 C $CCFE,2 Jump if overflow
@@ -11418,7 +11418,7 @@ C $CD00,3 Otherwise, loop if A < L
 @ $CD03 label=bct_carried_or_a_ge_l
 C $CD03,1 Decrement A by L
 C $CD04,1 Push the current state of #REGde to table
-C $CD05,2 Loop to bct_loop_ccfc while #REGb > 0
+C $CD05,2 Loop to bct_count_loop while #REGb > 0
 C $CD07,1 Unbank
 C $CD08,2 Loop to bct_depth_loop while #REGb > 0
 C $CD0A,2 Exit via bct_exit
@@ -11507,7 +11507,7 @@ C $CD95,5 Repeat
 C $CD9A,5 Repeat
 @ $CDA3 label=bht_bit0
 C $CD9F,5 Repeat
-@ $CDA8 label=bht_add_base
+@ $CDA8 label=bht_final_shift
 C $CDA4,5 Repeat
 C $CDA9,1 A = H  -- top byte of result
 @ $CDAA label=bht_continue
