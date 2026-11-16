@@ -101,10 +101,10 @@ C $C0BD,2 A third full stop with bit 7 set, terminating the row's 3-character na
 C $C0BF,1 Restore the row counter (banked at $C06F)
 C $C0C0,3 Save the row counter
 C $C0C3,1 B = row counter
-N $C0C4 Address = $C401 + (10 - row_counter) * 33: locates this row's entry in a 33-byte-per-row table (screen or attribute positions for the 10-row name-entry table), used below to scroll the display to the new entry. The multiply is done as (10-row)*32 (5x ADD A,A, overflow captured in D via RL D) plus one more (10-row) added back in (ADD A,C) -- i.e. x*32 + x = x*33.
-C $C0D8,3 Save the computed address
-N $C0DB Border-flash colour = $A0 - clamp(7 - row_counter, 0..7) * 16: fades from bright ($A0) for early rows to darker for rows further down the table, giving the flashing highlight a position-dependent brightness.
-C $C0E9,3 Save the computed flash colour (read back at $C13C)
+N $C0C4 Address = $C401 + (10 - row_counter) * 33: locates this row's entry in a 33-byte-per-row table (each row's screen address then its text), stored as the operand of $C155 so the entry loop blinks the new entry's row. The multiply is done as (10-row)*32 (5x ADD A,A, overflow captured in D via RL D) plus one more (10-row) added back in (ADD A,C) -- i.e. x*32 + x = x*33.
+C $C0D8,3 Patch the operand of $C155 LD HL,$C422
+N $C0DB Intro scroll length = $A0 - clamp(7 - row_counter, 0..7) * 16 frames, stored as the countdown operand at $C13D: 160 frames for ranks 1-4, 16 fewer per rank below that, so the new entry's row stops on the bottom line of the table.
+C $C0E9,3 Seed the intro countdown at #R$C133
 C $C0EC,3 See #R$C890
 N $C0EF Clear/prepare screen buffers for the name-entry display ($C0EF-$C132). Not traced instruction-by-instruction here.
 C $C104,6 Zero two 32-byte blocks at $59E0 and $5AE0 in lockstep
@@ -120,7 +120,7 @@ C $C130,3 Clear a flag/self-modified byte at $C2F2
 C $C133,3 See #R$F82F
 C $C136,3 See #R$C2B1
 C $C139,3 See #R$C16A
-C $C13C,8 Recomputes to a constant $9F every pass, so JR NZ is always taken here -- this loop can only actually end via a side effect inside one of the three CALLs above (e.g. popping this return address), not via this test
+C $C13C,8 Count down the intro: the operand is seeded at $C0E9 and rewritten here each pass, so the scroll runs for that many frames before name entry proper begins
 C $C144,2 $C9 = RET opcode
 C $C146,3 Self-modify $C2F2 to RET, ending the entry loop
 @ $C149 label=ihe_entry_loop
@@ -130,8 +130,8 @@ C $C14F,3 See #R$F82F
 C $C152,3 Loop -- exits via a side effect inside a callee
 N $C155 This entry point is used by the routine at #R$C16A.
 @ $C155 label=name_entry_frame
-C $C155,3 HL -> a saved (DE) pair, likely the current cursor/
-C $C158,1 letter-selection state
+C $C155,3 HL -> the new entry's row-address slot (operand set at
+C $C158,1 $C0D8); DE = that row's current screen address
 C $C15C,1 Swap in DE (bank what was the caller's shadow set)
 C $C15D,3 Preserve the caller's shadow BC/DE/HL on the stack, in case #R$C2FB uses EXX itself
 C $C160,1 Swap back -- main regs include DE (the loaded state)

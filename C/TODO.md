@@ -4,8 +4,6 @@
 - Bug: 48K mode drum timing is off (lack of interrupts?)
 - Bug: Highscore: Characters vanish
 - Bug: Highscore: Flicker at bottom when scrolling
-- Bug: Highscore: Hard to enter name
-- Bug: Highscore: Scrolls too far beyond the entry row
 - Bug: Highscore: Some characters collide (check against the original)
 - Bug: Highscore: Test: non-highest score
 - Bug: Success tune cut short?

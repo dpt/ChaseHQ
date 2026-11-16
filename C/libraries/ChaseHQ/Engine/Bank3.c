@@ -4140,7 +4140,7 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   const high_score_row_t *entry,
                                   int                     blink,
                                   u8                      attrs);
-static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen);
+static void erase_letter_cursor(chqstate_t *state, u8 D_screen, u8 E_screen);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 tune_no);
 static void load_drum_script(chqstate_t *state, u8 A_tune);
@@ -4480,7 +4480,12 @@ static void name_entry_setup_screen(chqstate_t *state)
   state->bank3->hiscore.blink_offset      = 0;
   state->bank3->hiscore.cursor_addr       = HISCORE_CURSOR_ADDR_INIT;
   state->bank3->hiscore.complete          = 0;
-  state->bank3->hiscore.intro_timer       = 0xA0; /* $C13D reset value */
+  /* $C0DB-$C0E9: intro length = $A0 - clamp(7 - row_counter, 0..7) * 16,
+   * with row_counter = 10 - row. Ranks 5-10 scroll for less time so their
+   * row parks on the bottom visible line instead of scrolling past it. */
+  state->bank3->hiscore.intro_timer = 0xA0;
+  if (state->bank3->hiscore.row > 3)
+    state->bank3->hiscore.intro_timer -= (u8) ((state->bank3->hiscore.row - 3) * 16);
 }
 
 /**
@@ -4491,19 +4496,16 @@ static void name_entry_setup_screen(chqstate_t *state)
  * - ihe_flash_loop ($C133-$C142): the row scroll-in intro. Calls
  *   scroll_score_rows every frame while hiscore.intro_timer is nonzero.
  * - ihe_entry_loop ($C149-$C152): the interactive typing loop, entered once
- *   the intro timer reaches zero. Calls name_entry_frame (the current
- *   letter's blink) instead -- scroll_score_rows is never called again, so
- *   the rows stop scrolling for the rest of name entry, but hiscore.row's
- *   text keeps blinking via a direct blink_hiscore_row call alongside
- *   name_entry_frame (matching the real $C155/$C2FB call, which continues
- *   to redraw hiscore.row's text every frame after the row has parked).
+ *   the intro timer reaches zero. Calls name_entry_frame (the entry row's
+ *   blink) instead -- scroll_score_rows is never called again, so the rows
+ *   stop scrolling for the rest of name entry.
  *
  * Both phases call name_entry_input and run until hiscore_finalise sets
  * hiscore.complete.
  *
  * Conv: the Z80's $C133 loop condition ($C13C-$C142) tests a self-modified
  *       operand ("LD A,$A0 / DEC A / LD ($C13D),A") that counts down once from
- *       160 over 160 frames; the skool's own comment ("always recomputes to a
+ *       its seeded value; the skool's own comment ("always recomputes to a
  *       constant $9F, so JR NZ is always taken") only holds for a single static
  *       read of the bytes and misses the self-modification -- see
  *       hiscore.intro_timer's own comment (Bank3State.h). This port models the
@@ -4531,7 +4533,6 @@ static void ihe_flash_loop(chqstate_t *state)
     else
     {
       name_entry_frame(state);
-      blink_hiscore_row(state, 0);
     }
 
     name_entry_input(state);
@@ -4570,29 +4571,17 @@ static void cursor_cell_addr(u8 char_index, u8 *D_out, u8 *E_out)
 }
 
 /**
- * $C155: Advance the currently-typed letter's blink and redraw it
+ * $C155: Blink the entry row in the high-score table
  *
- * Rotates the draw/erase phase (see blink_hiscore_row's comment for why this
- * is an 8-bit RLC rotation, not a per-frame flip) and redraws the
- * currently-selected letter cell, called once per frame from ihe_flash_loop.
- *
- * Conv: the Z80 reads a live 2-byte scratch value from $C422 (statically part
- *       of row 1's template padding in ROM data) to locate the cell; its real
- *       runtime purpose could not be recovered from static disassembly. This
- *       computes the same cell directly from hiscore.char_index via
- *       cursor_cell_addr instead.
+ * Called once per frame from ihe_flash_loop after the intro scroll. The
+ * operand of $C155 LD HL,$C422 is patched at $C0D8 to the entry row's slot
+ * in the row-address table ($C401 + row * 33), so this loads that row's
+ * live screen address and calls $C2FB, which rotates the draw/erase phase
+ * and draws or erases the row's text there.
  */
 static void name_entry_frame(chqstate_t *state)
 {
-  u8 D_screen; /* target cell screen address high byte (was D) */
-  u8 E_screen; /* target cell screen address low byte (was E) */
-
-  cursor_cell_addr(state->bank3->hiscore.char_index, &D_screen, &E_screen);
-
-  state->bank3->hiscore.draw_erase_toggle =
-    (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-           (state->bank3->hiscore.draw_erase_toggle >> 7));
-  redraw_name_frame(state, D_screen, E_screen);
+  blink_hiscore_row(state, 1);
 }
 
 /* Conv: added -- redraws whichever of the 3 cells hiscore.char_index
@@ -4643,8 +4632,9 @@ static void set_marquee_attr(chqstate_t *state, u8 L_attr, u8 value)
  * into (cursor_addr) between bright red and off, by rotating flash_phase_a
  * and using the bit rotated out as the blink state. Runs every frame,
  * unlike name_entry_dispatch's own once-per-sweep promote-to-solid step;
- * see name_entry_dispatch's prologue for how the two combine. */
-static void fast_blink_best_officers_cell(chqstate_t *state)
+ * see name_entry_dispatch's prologue for how the two combine. Returns the
+ * bit rotated out, which the caller also uses to blank the letter cell. */
+static u8 fast_blink_best_officers_cell(chqstate_t *state)
 {
   u8 carry_a;      /* MSB rotated out of flash_phase_a this frame (was Cy after RLC $C59A) */
   u8 C_blink_attr; /* fast-blink colour for the cell in progress (was C) */
@@ -4661,8 +4651,7 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
   set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
                           (u8) (C_blink_attr & ~ATTR_BRIGHT));
 
-  state->bank3->hiscore.flash_phase_b =
-    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
+  return carry_a;
 }
 
 /**
@@ -4692,16 +4681,21 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
  * what actually makes the row look like it is "cycling" one letter at a
  * time. Rendered here as fast_blink_best_officers_cell.
  *
- * Conv: $C1C7/$C1D2's JP C,$C291/JP C,$C278 (taken from the flash_phase_a/
- *       flash_phase_b rotations) are alternate entry points into this same
- *       input-read code, an optimisation the real hardware uses to skip
- *       redundant work -- not a distinct visual or behavioural effect. This
- *       port always falls through to the unconditional RIGHT/LEFT/FIRE dispatch
- *       below instead, so flash_phase_b is rotated for fidelity only and has no
- *       visible effect here.
+ * $C1C7/$C1D2 gate the rest on the two flash phases. When flash_phase_a's
+ * bit is set, the letter cell is blanked (JP C,$C291 with HL at the zero
+ * bytes at $C579). Otherwise flash_phase_b rotates; when its bit is set, the
+ * letter is redrawn (JP C,$C278). Only when neither is set is input acted
+ * on, which with the $F0/$EE seeds is one frame in eight. This paces the
+ * letter cycling and gives the letter cell its blink. Every path that acts
+ * on input also ends by redrawing the letter.
  */
 static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 {
+  u8 carry_a; /* bit rotated out of flash_phase_a (was Cy via EX AF,AF') */
+  u8 carry_b; /* bit rotated out of flash_phase_b (was Cy after RLC $C59B) */
+  u8 D_screen; /* letter cell screen address high byte (was D) */
+  u8 E_screen; /* letter cell screen address low byte (was E) */
+
   if (--state->bank3->hiscore.blink_timer == 0)
   {
     u8 L_attr; /* selector cell column before advancing (was L via $C596) */
@@ -4738,40 +4732,62 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     set_marquee_attr(state, L_attr, attribute_BLACK_OVER_BLACK);
   }
 
-  fast_blink_best_officers_cell(state);
+  carry_a = fast_blink_best_officers_cell(state);
+  if (carry_a)
+  {
+    /* $C1C7 JP C,$C291: blank the letter cell. */
+    cursor_cell_addr(state->bank3->hiscore.char_index, &D_screen, &E_screen);
+    erase_letter_cursor(state, D_screen, E_screen);
+    return;
+  }
+
+  /* $C1CA-$C1D2 */
+  carry_b = (u8) (state->bank3->hiscore.flash_phase_b >> 7);
+  state->bank3->hiscore.flash_phase_b =
+    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | carry_b);
+  if (carry_b)
+  {
+    redraw_letter_cursor(state); /* JP C,$C278 */
+    return;
+  }
 
   if (A_input & USERINPUTFLAG_FIRE)
   {
     high_score_row_t *DE_entry; /* row being written (was DE) */
     u8                A_code;   /* current candidate letter code (was A) */
 
-    if (state->bank3->hiscore.fire_locked)
-      return;
-    state->bank3->hiscore.fire_locked = 1;
-
-    if (state->bank3->hiscore.char_index == 2)
+    if (!state->bank3->hiscore.fire_locked)
     {
-      /* hiscore_finalise stores this last letter itself -- no need to write
-       * DE_entry->name here first. */
-      hiscore_finalise(state);
+      state->bank3->hiscore.fire_locked = 1;
+
+      if (state->bank3->hiscore.char_index == 2)
+      {
+        /* hiscore_finalise stores this last letter itself -- no need to
+         * write DE_entry->name here first. */
+        hiscore_finalise(state);
+        return;
+      }
+
+      DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
+      A_code   = state->bank3->hiscore.letter_code;
+      DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
+
+      state->bank3->hiscore.char_index++;
+      state->bank3->hiscore.letter_code = '@';
+    }
+  }
+  else
+  {
+    state->bank3->hiscore.fire_locked = 0;
+
+    if (A_input & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT))
+    {
+      cycle_and_draw_letter(state, A_input);
       return;
     }
-
-    DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
-    A_code   = state->bank3->hiscore.letter_code;
-    DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
-
-    state->bank3->hiscore.char_index++;
-    state->bank3->hiscore.letter_code = '@';
-
-    redraw_letter_cursor(state);
-    return;
   }
 
-  state->bank3->hiscore.fire_locked = 0;
-
-  if (A_input & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT))
-    cycle_and_draw_letter(state, A_input);
+  redraw_letter_cursor(state); /* $C278 */
 }
 
 /**
@@ -4779,7 +4795,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
  *
  * Stores the current candidate letter (or '.' for the blank marker) into
  * the row's name[], marks name entry complete, plays the confirm sound,
- * redraws the confirmed cell one last time, then cues the finishing tune.
+ * blinks the entry row one last time, then cues the finishing tune.
  *
  * Conv: the Z80 falls into an unbounded "service sound, loop" tail ($C258-
  *       $C25B) reached by discarding its own caller's return address
@@ -4804,7 +4820,8 @@ static void hiscore_finalise(chqstate_t *state)
   state->bank3->hiscore.complete = 1;
 
   stop_music_and_silence(state); /* $ED0B -- confirm sound */
-  name_entry_frame(state);       /* final redraw of the confirmed cell */
+  if (state->bank3->hiscore.intro_timer == 0)
+    name_entry_frame(state); /* $C237-$C23B: one more entry-row blink */
   titlescr_start_tune(state, 2);
 }
 
@@ -4897,7 +4914,7 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
  * correctly for 7 out of 8 steps, but on the 8th (low 3 bits wrap 7 -> 0)
  * the carry must land in E's cell-row bits instead -- the same
  * third-boundary-wrap idiom documented in cad_draw_glyph and
- * redraw_name_frame's own draw/erase loops. Shared by scroll_score_rows
+ * redraw_score_name's own draw/erase loops. Shared by scroll_score_rows
  * (one step per row per frame) and draw_table_field_scrolling (up to 8
  * steps per glyph, to walk down one character cell). */
 static void advance_screen_scanline(u8 *D, u8 *E)
@@ -5268,39 +5285,22 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
 }
 
 /**
- * $C2FB: Draw or erase the currently-selected letter cell
+ * $C291 with HL = $C579: Blank the letter cell
  *
- * Toggles hiscore.draw_erase_toggle and redraws the currently-selected letter
- * cell at (D_screen, E_screen) accordingly, giving the letter being typed
- * its blink. draw_erase_toggle is shared with scroll_score_rows/
- * redraw_score_name's own draw/erase loops in the original; this port only
- * needs it for the single cell currently being typed.
+ * name_entry_dispatch's $C1C7 JP C,$C291 enters the glyph blitter with HL at
+ * the zero bytes at $C579, so the double-height letter cell is cleared. This
+ * gives the letter being typed its blink.
  *
- * Conv: reduced scope -- the real $C2FB is an entry point into
- *       redraw_score_name's row loop (rsn_char_loop/rsn_char_loop2), which
- *       alternates every already-confirmed name across all 10 ranks. This only
- *       drives the single cell the player is currently typing, since that is
- *       the only text this port's redraw_score_name (the full-row version,
- *       above) does not already keep in view once revealed.
- *
- * \param[in] D_screen Screen address high byte of the currently-selected cell.
- * \param[in] E_screen Screen address low byte of the currently-selected cell.
+ * \param[in] D_screen Letter cell screen address high byte (was D).
+ * \param[in] E_screen Letter cell screen address low byte (was E).
  */
-static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
+static void erase_letter_cursor(chqstate_t *state, u8 D_screen, u8 E_screen)
 {
   u8 *DE_screen;  /* erase-blit cursor (was DE) */
   int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
   int scan_row;   /* erase-blit row counter (Conv: rolled) */
 
-  if (!(state->bank3->hiscore.draw_erase_toggle & 1))
-  {
-    hiscore_draw_glyph(state, D_screen, E_screen);
-    return;
-  }
-
-  /* Conv: blanks 14 scanlines (two character rows), matching the
-   * double-height glyph hiscore_draw_glyph now draws -- see its own
-   * comment for why this cell is double-height, not single. */
+  /* 14 scanlines, each zero byte written twice as $C294-$C2AC does. */
   glyph_addr = (D_screen << 8) | E_screen;
   DE_screen  = ADDRTOSCREEN(glyph_addr);
   for (scan_row = 0; scan_row < 4; scan_row++)

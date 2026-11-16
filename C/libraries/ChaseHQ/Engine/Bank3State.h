@@ -373,17 +373,17 @@ struct chq_bank3_state
      * key does not repeatedly confirm. */
     u8 fire_locked;
 
-    /* $C59A: first blink-phase toggle, flipped each time the 12-frame blink
-     * timer reloads; selects attribute $46/$00 on the underline cursor
-     * cell. */
+    /* $C59A: rotated left every frame by name_entry_dispatch. The bit
+     * rotated out blinks the "BEST OFFICERS" cell and, when set, blanks the
+     * letter cell and skips the input read for that frame. */
     u8 flash_phase_a;
 
-    /* $C59B: second blink-phase toggle, flipped on the alternate half of
-     * the cycle from flash_phase_a; selects which of the two cursor-cell
-     * highlight colours ($00/$42) is written back. */
+    /* $C59B: rotated left on frames where flash_phase_a's bit was clear.
+     * When the bit rotated out is set, the letter is redrawn and input is
+     * not read, so input is read on only one frame in eight. */
     u8 flash_phase_b;
 
-    /* $C58D: alternated each frame by redraw_score_name/redraw_name_frame;
+    /* $C58D: alternated each frame by redraw_score_name/blink_hiscore_row;
      * selects between drawing (rsn_char_loop) and erasing (rsn_char_loop2)
      * a row's name text, giving the row's letters their own independent
      * blink. */
@@ -424,12 +424,13 @@ struct chq_bank3_state
      * LD ($C13D),A" countdown. The skool's own static-disassembly comment
      * calls this "always recomputes to a constant $9F" -- true only of the
      * literal bytes on a single read; because the instruction rewrites its
-     * own operand each pass, it actually counts down from $A0 (160) once,
-     * over 160 frames. While nonzero, ihe_flash_loop calls scroll_score_rows
-     * every frame (the row scroll-in intro); once it reaches zero, control
-     * falls through to ihe_entry_loop, which never calls scroll_score_rows
-     * again -- this is what stops the row scroll for the rest of name
-     * entry. Reset to 160 each session by name_entry_setup_screen. */
+     * own operand each pass, it actually counts down once from its seeded
+     * value. While nonzero, ihe_flash_loop calls scroll_score_rows every
+     * frame (the row scroll-in intro); once it reaches zero, control falls
+     * through to ihe_entry_loop, which never calls scroll_score_rows again
+     * -- this is what stops the row scroll for the rest of name entry.
+     * Seeded each session by name_entry_setup_screen: 160 frames for ranks
+     * 1-4, falling by 16 per rank to 64 for rank 10 ($C0DB-$C0E9). */
     u8 intro_timer;
 
     /* $C401-$C528 (31-byte stride): per-row screen-address pair used by
