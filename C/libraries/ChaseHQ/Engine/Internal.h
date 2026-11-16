@@ -132,12 +132,20 @@
  * byte-boundary overhead and plays speech ~5% too fast. */
 #define SPEECH_NIBBLE_TSTATES      (447) // Calibrated from skool T-states
 
-/* $E256 loop body (es_handler_draw_score, Bank7.c): one bonus-tally
+/* $E25A loop body (es_handler_draw_score, Bank7.c): one bonus-tally
  * increment, comprising increment_score, ptad_led_digits and a sfx_bipbow(2,
- * 2) tone. Dominated by sfx_bipbow's DJNZ delay loops (~37200 T-states of
- * the total); a single stamp/sleep models the whole per-increment body, not
- * just the beeper delay. */
-#define SCORE_TALLY_TSTATES      (38000) // TODO: Calibrate
+ * 2) tone. A single stamp/sleep models the whole per-increment body, not just
+ * the beeper delay. Summed from the skool:
+ *
+ *   loop overhead ($E25A-$E26F, including the three CALLs)    122
+ *   increment_score ($9D17)                                   125
+ *   ptad_led_digits ($9F12): 574 with no digit plotted, plus
+ *     499 per ledfont_plot; adding 50 plots 1.56 on average  1352
+ *   sfx_bipbow ($8A36): 385 per step whatever C is, x100
+ *     steps, plus loop control                              40422
+ *
+ * Interrupt service time is not included. */
+#define SCORE_TALLY_TSTATES      (42020) // Summed from skool T-states
 
 /* 48K beeper drums timing. The Z80 pitches its bit-banged speaker output with
  * busy-wait delay loops; the C translations do no busy-waiting and instead
@@ -145,7 +153,8 @@
  * can reconstruct the pulse spacing. Costs are summed from the skool
  * listings and exclude the OUT ($FE) itself (11 T-states, accounted
  * centrally in zx_out). */
-/* TODO: Calibrate these against the original beeper drums. */
+/* The loop macros are exact Z80 timings: DJNZ is 13 T-states taken and 8 on
+ * exit; DEC r is 4 and JR NZ is 12 taken and 7 on exit. */
 #define DJNZ_LOOP_TSTATES(b)  (((b) - 1) * 13 + 8)  /* DJNZ-to-self, b >= 1 iterations */
 #define DECJR_LOOP_TSTATES(n) (((n) - 1) * 16 + 11) /* DEC r; JR NZ,-3 self-loop, n >= 1 iterations */
 #define RNG_TSTATES                (143) /* CALL $961B (17) + rng body (126) */

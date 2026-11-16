@@ -21574,7 +21574,10 @@ pm_reset_pattern:
     if (B_instrument)
     {
       A_param = D >> 3; // general parameter
-      // TODO: the call-return setup needs analysing here
+      /* $EEF4-$EEFD: instruments 1-3 are JPs, not CALLs. Each routine
+       * rejoins at pm_wait_for_interrupt ($EF13), so it skips the extra
+       * delay and drum resume steps. Instruments 4-7 match no case and fall
+       * through to those steps, as pm_zero_or_456 ($EF00) does. */
       switch (B_instrument)
       {
       case NOTE_DRUM2_VAL: playdrum_2(state, A_param); goto pm_wait_for_interrupt;

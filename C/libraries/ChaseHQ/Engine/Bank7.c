@@ -396,9 +396,9 @@ void show_end_screen(chqstate_t *state)
 /**
  * $E01E: Set up bank 7's own interrupt handler and 48K music engine
  *
- * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
- * (es_setup_interrupts onward in the skool), relocated into the copied
- * $F300 buffer.
+ * Not yet ported (tracked in TODO.md). Bank 7 carries its own copy of the 48K
+ * sound code (es_setup_interrupts onward in the skool), relocated into the
+ * copied $F300 buffer.
  */
 static void es_setup_interrupts(chqstate_t *state)
 {
@@ -542,7 +542,7 @@ static void es_handler_draw_score(chqstate_t *state)
 
   for (tally = 1000; tally != 0; tally--)
   {
-    /* Conv: the tally runs for ~11s; without this the window stays up for the
+    /* Conv: the tally runs for ~12s; without this the window stays up for the
      * remainder of it after the host asks to quit. */
     CHECK_HOST_QUIT(state);
 

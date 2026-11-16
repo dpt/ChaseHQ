@@ -6240,24 +6240,23 @@ static void titlescr_credit_inserted(chqstate_t *state)
 /**
  * $C69A: Refresh the high-score name table
  *
- * Copies the 3 preset high-score name/rank rows from $C403 into the work
- * buffer pointed to by ($800A), each row split into 15+7+6 byte segments
- * with 2-byte gaps skipped between segments.
+ * Stops any playing tune and silences the AY chip, then copies the top 3 rows
+ * of the live high-score table at $C403 into the "BEST OFFICERS" overlay
+ * buffer pointed to by ($800A), each row split into 15+7+6 byte segments with
+ * 2-byte gaps skipped between segments.
  *
- * Conv: stubbed per scope decision -- nothing in the C port yet models the
- *       destination buffer or a $800A-equivalent state field, and this task's
- *       State.h changes are handled separately. Reached both directly from
- *       titlescr_wait_loop's ~180-frame tune wait and via
- *       titlescr_credit_inserted; in the Z80 both paths end in a RET back to
- *       run_title_screen's own caller, which this function models simply by
- *       returning normally.
+ * Reached both directly from titlescr_wait_loop's ~180-frame tune wait and via
+ * titlescr_credit_inserted. In the Z80 both paths end in a RET back to
+ * run_title_screen's own caller, which this function models by returning
+ * normally.
+ *
+ * Conv: the row copy is not done here. Main.c's refresh_best_officers patches
+ *       the same rows into attract_mode_128k.best_officers just before the
+ *       overlay is shown, which is the only place the copy is read.
  */
 static void titlescr_refresh_name_table(chqstate_t *state)
 {
-  /* TODO: copy 3 rows of high-score name/rank data from $C403 into the
-   * buffer pointed to by ($800A) -- needs a destination buffer/state field,
-   * out of scope for this task. */
-  NOT_USED(state);
+  stop_music_and_silence(state); /* $C69B-$C69C DI; CALL $ED0B */
 }
 
 /**

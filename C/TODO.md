@@ -7,6 +7,8 @@
 - Bug: Highscore: Hard to enter name
 - Bug: Highscore: Test: non-highest score
 - Bug: Success tune cut short?
+- End screen: port bank 7's own 48K interrupt handler and music engine
+  (`es_setup_interrupts`, `$E01E`); `Bank7.c` stubs it
 - Continue backporting changes to the disasm
 - Flush out this 'it's a custom level' germ of an idea that keeps reappearing
 - Investigate Claude fixes in case they've made the C diverge from the asm
@@ -16,19 +18,6 @@
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - RISC OS: Sound support (...how?)
 - Graphics import/export still needs work
-
-### Authority sweep (comments that read as guesswork)
-
-Each item below is a comment that admits doubt, talks about the porting process
-rather than the code, or leaves skool markup in place. Resolve the question
-against the skool then rewrite the comment as a statement — or delete it.
-
-- Outstanding `TODO:` markers not already tracked above: `Bank3.c:6257` (copy
-  hi-score name/rank rows), `Bank7.c:399` (48K sound code in bank 7 not
-  ported), `Main.c:21556` ("the call-return setup needs analysing"),
-  `SDLMain.c:2109` (border colour), and the `TODO: Calibrate` cluster in
-  `Internal.h`
-
 
 ## FOR WRITEUP / NOTES
 
