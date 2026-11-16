@@ -106,8 +106,8 @@ C $C0D8,3 Patch the operand of $C155 LD HL,$C422
 N $C0DB Intro scroll length = $A0 - clamp(7 - row_counter, 0..7) * 16 frames, stored as the countdown operand at $C13D: 160 frames for ranks 1-4, 16 fewer per rank below that, so the new entry's row stops on the bottom line of the table.
 C $C0E9,3 Seed the intro countdown at #R$C133
 C $C0EC,3 See #R$C890
-N $C0EF Clear/prepare screen buffers for the name-entry display ($C0EF-$C132). Not traced instruction-by-instruction here.
-C $C104,6 Zero two 32-byte blocks at $59E0 and $5AE0 in lockstep
+N $C0EF Set the table attributes. #R$C890 leaves HL=$57FF and DE=$5800, so this fills $5A00 onwards with $47 (bright white on black) for 512 bytes, running past the attributes into $5B00-$5BFF. Rows 15 and 23 are then set to black on black, so the table rows are hidden as they scroll in and out of the band between them.
+C $C104,6 Zero attribute rows 15 ($59E0) and 23 ($5AE0) in lockstep
 C $C110,2 A = 10 (rows)
 C $C112,13 Copy 2 bytes per row from the table at $C54B into the row-offset table at $C401 (31-byte stride)
 C $C11F,3 HL -> #R$C3AF data block

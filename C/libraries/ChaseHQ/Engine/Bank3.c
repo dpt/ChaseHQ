@@ -4138,8 +4138,7 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   u8                      E,
                                   u8                      row,
                                   const high_score_row_t *entry,
-                                  int                     blink,
-                                  u8                      attrs);
+                                  int                     blink);
 static void erase_letter_cursor(chqstate_t *state, u8 D_screen, u8 E_screen);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 tune_no);
@@ -4445,6 +4444,16 @@ static void name_entry_setup_screen(chqstate_t *state)
                                              * full-width dirty rect, not
                                              * just update_whole_playfield's
                                              * driving-playfield inset */
+
+  /* $C0EF-$C108: rows 16-23 get the table colour, then rows 15 and 23 (the
+   * rows above and below the table's visible band) are set to black on
+   * black, hiding rows as they scroll in and out. Rows 8-14 stay black from
+   * clear_playfield_and_attrs. Conv: the original LDIR fills 512 bytes from
+   * $5A00, running on past the attributes into $5B00-$5BFF; only the 256
+   * attribute bytes are filled here. */
+  memset(ADDRTOATTRS(0x5A00), TABLE_ROW_COLOUR, 256);
+  memset(ADDRTOATTRS(0x59E0), 0, 32);
+  memset(ADDRTOATTRS(0x5AE0), 0, 32);
 
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
   {
@@ -5020,7 +5029,7 @@ static void scroll_score_rows(chqstate_t *state)
 
     DE_entry = &state->bank3->high_score_table[row];
 
-    draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1, TABLE_ROW_COLOUR);
+    draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1);
   }
 }
 
@@ -5095,11 +5104,6 @@ static const u8 *font_glyph_for_char(u8 A_char)
  *                  bits (0xE0) are used -- the column comes from x/i.
  * \param[in] text  Raw ASCII bytes to draw.
  * \param[in] len   Number of characters in [text].
- * \param[in] attrs Conv: added -- no Z80 equivalent. Attribute byte written for
- *                  this field's cells, in place of the fixed TABLE_ROW_COLOUR.
- *                  Lets scroll_score_rows set the FLASH bit on the rank 1 row
- *                  so it blinks via real ZX hardware FLASH (see Screen.c's
- *                  WRITE8PIX/WRITE8PIX_16) instead of a software toggle.
  * \param[in] erase Zero to draw (rsn_char_loop, $C304): a leading 1-row erase
  *                  then a 7-row glyph blit, offset one row below it. Non-zero
  *                  to erase (rsn_char_loop2, $C37B): 8 rows of zero at the
@@ -5112,7 +5116,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
                                        u8          E_row,
                                        const u8   *text,
                                        int         len,
-                                       u8          attrs,
                                        int         erase)
 {
   int       i;         /* character index within text (Conv: added) */
@@ -5121,7 +5124,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
   const u8 *HL_font;   /* this glyph's 7-byte font[] entry, NULL for space */
   int       row;       /* scanline index within the glyph's rows (Conv: added) */
   u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
-  u16       attr_addr; /* this glyph's attribute address (Conv: added) */
 
   for (i = 0; i < len; i++)
   {
@@ -5129,10 +5131,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
     E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
 
     HL_font = font_glyph_for_char(text[i]);
-
-    attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
-    *ADDRTOATTRS(attr_addr) = attrs;
-    update_attrs(state, attr_addr, 8, 8);
 
     if (HL_font == NULL)
       continue;
@@ -5205,8 +5203,7 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   u8                      E,
                                   u8                      row,
                                   const high_score_row_t *entry,
-                                  int                     blink,
-                                  u8                      attrs)
+                                  int                     blink)
 {
   /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed
    * beside each high-score row (fixed to screen position, never shifted --
@@ -5216,13 +5213,13 @@ static void draw_score_row_fields(chqstate_t             *state,
     "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
   };
 
-  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
+  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             !blink);
   /* Columns follow the row record at $C403: suffix 0-4, score 5-12, stage
    * 17-19, retry 25, name 28-30. */
-  draw_table_field_scrolling(state,   5 * 8, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
-  draw_table_field_scrolling(state,  17 * 8, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
-  draw_table_field_scrolling(state,  25 * 8, D, E, &entry->retry_digit, 1,                       attrs, !blink);
-  draw_table_field_scrolling(state,  28 * 8, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
+  draw_table_field_scrolling(state,   5 * 8, D, E, entry->score, NELEMS(entry->score),           !blink);
+  draw_table_field_scrolling(state,  17 * 8, D, E, entry->stage_code, NELEMS(entry->stage_code), !blink);
+  draw_table_field_scrolling(state,  25 * 8, D, E, &entry->retry_digit, 1,                       !blink);
+  draw_table_field_scrolling(state,  28 * 8, D, E, entry->name, NELEMS(entry->name),             !blink);
 }
 
 /**
@@ -5283,7 +5280,7 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
              (state->bank3->hiscore.draw_erase_toggle >> 7));
   blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
-  draw_score_row_fields(state, D, E, row, DE_entry, blink, TABLE_ROW_COLOUR);
+  draw_score_row_fields(state, D, E, row, DE_entry, blink);
 }
 
 /**

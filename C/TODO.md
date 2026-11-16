@@ -2,10 +2,6 @@
 
 - Audit "Conv: added" vars
 - Bug: 48K mode drum timing is off (lack of interrupts?)
-- Bug: Highscore: Characters vanish
-- Bug: Highscore: Flicker at bottom when scrolling
-- Bug: Highscore: Some characters collide (check against the original)
-- Bug: Highscore: Test: non-highest score
 - Bug: Success tune cut short?
 - End screen: port bank 7's own 48K interrupt handler and music engine
   (`es_setup_interrupts`, `$E01E`); `Bank7.c` stubs it
