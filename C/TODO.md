@@ -7,7 +7,6 @@
 - Bug: Highscore: Hard to enter name
 - Bug: Highscore: Test: non-highest score
 - Bug: Success tune cut short?
-- Compare the demo level with stage 4
 - Continue backporting changes to the disasm
 - Flush out this 'it's a custom level' germ of an idea that keeps reappearing
 - Investigate Claude fixes in case they've made the C diverge from the asm
