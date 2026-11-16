@@ -11817,7 +11817,7 @@ static void advance_hazard(chqstate_t *state,
     zero   = (A_lane == 0);
     A_dist = C_dist;
     if (zero)
-      goto dhs_adfa;
+      goto ah_adfa;
     IX_hazard->distance = A_dist;
     return;
   }
@@ -11829,7 +11829,7 @@ static void advance_hazard(chqstate_t *state,
     return;
   }
 
-dhs_adfa:
+ah_adfa:
   IX_hazard->distance = A_dist;
   if (A_dist >= 20)
     return;
@@ -11954,9 +11954,9 @@ dhs_adfa:
       if (D_distance >= (int)(u8) HL_word0)
       {
         if (D_distance != (int)(u8) HL_word0)
-          goto dhs_insert;
+          goto ah_insert;
         if (E_dist_frac < (int)(u8) (HL_word0 >> 8))
-          goto dhs_insert;
+          goto ah_insert;
       }
       HL_table += 2;
     }
@@ -11966,9 +11966,9 @@ dhs_adfa:
   /* $AE9F-$AEAA: append (distance,dist_frac) pair then hazard slot index */
   *HL_table++ = D_distance | (E_dist_frac << 8);
   *HL_table++ = IX_hazard - &state->hazards[0]; /* Conv: slot index, not ptr */
-  goto dhs_call_handler;
+  goto ah_call_handler;
 
-dhs_insert:
+ah_insert:
   /* $AEAB-$AEC7: PUSH DE; BC=B*4; LDDR; POP DE — shift the remaining
    * B_iterations records (this one and all after it) up by one record to
    * make room, then write the new record into the freed slot.
@@ -11984,7 +11984,7 @@ dhs_insert:
   HL_start[0] = D_distance | (E_dist_frac << 8);
   HL_start[1] = IX_hazard - &state->hazards[0]; /* Conv: slot index, not ptr */
 
-dhs_call_handler:
+ah_call_handler:
   IX_hazard->hit_handler(state, IX_hazard);
 }
 

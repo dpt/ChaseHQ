@@ -7533,7 +7533,7 @@ C $AE9F,4 wordat(HL) = DE; HL += 2
 C $AEA3,3 DE = IX
 C $AEA6,3 wordat(HL) = DE; HL++
 C $AEA9,2 Jump
-@ $AEAB label=ah_aeab
+@ $AEAB label=ah_insert
 C $AEAB,1 Preserve DE
 C $AEAC,3 A = B * 4
 C $AEAF,3 BC = A
@@ -7752,9 +7752,9 @@ B $B051,2,2 Pitch Down,  Delta  -4
 B $B053,2,2 Pitch Down,  Delta  -7
 B $B055,2,2 Pitch Down,  Delta -10
 B $B057,2,2 Pitch Down,  Delta -13
-w $B059 Sub-table (another byte pair)
+w $B059 Car jump parameters: five (jump_arc_offset, y_height) pairs
 D $B059 Note: $B057 is used to refer to this table
-@ $B059 label=table_b059
+@ $B059 label=car_jump_params
 W $B059,10,2
 c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment; turning
 D $B063 Called every frame to advance the hero car's physical state. While the car is airborne the jump counter feeds the pitch and the vertical position from the jump table. The boost timer, the smoke counter and the gear change lockout are counted down here too.
@@ -8990,8 +8990,8 @@ C $B94D,6 D = ~(A & 3) + 4
 C $B953,2 A = B - D
 C $B955,4 Jump if <=
 C $B959,1 Preserve HL
-@ $B95E ssub=LD HL,(table_b059 - 2)
-C $B95A,8 HL = #R$B057 + A*2  -- 1-indexed pointer into table_b059 [sampled A: 3,2,4]
+@ $B95E ssub=LD HL,(car_jump_params - 2)
+C $B95A,8 HL = #R$B057 + A*2  -- 1-indexed pointer into car_jump_params [sampled A: 3,2,4]
 C $B962,2 E = *HL++  (loads one of 2/4/6/8/10)
 C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
 C $B965,3 Set jump counter
@@ -9857,7 +9857,7 @@ C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C13F,2 A = 2
 C $C141,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel below)
-@ $C144 label=pt_c144
+@ $C144 label=pt_arm_hooks
 C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' @ #R$C2B8
 N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
@@ -9893,7 +9893,7 @@ C $C180,3 Jump if zero
 N $C183 This path is hit only when the tunnel is entered.
 C $C183,2 D = 16 = jump table target
 C $C185,3 Jump if positive
-@ $C188 label=dt_c188
+@ $C188 label=dt_max_fill
 C $C188,2 D = 22 = jump table target
 C $C18A,2 L = 31
 C $C18C,2 Jump
@@ -9904,7 +9904,7 @@ C $C196,2 A >>= 1
 C $C198,2 Rotate C
 C $C19A,1 A++
 C $C19B,1 D = A
-@ $C19C label=dt_c19c
+@ $C19C label=dt_check_left
 C $C19C,2 H = $E8
 C $C19E,1 A = *HL
 C $C19F,1 Set flags
@@ -9912,23 +9912,23 @@ C $C1A0,2 Jump if zero
 C $C1A2,2 E = 16
 C $C1A4,3 Jump if negative
 C $C1A7,3 Jump
-@ $C1AA label=dt_c1aa
+@ $C1AA label=dt_left_at_zero
 C $C1AA,1 L--
 C $C1AB,3 A = *HL + 8
 C $C1AE,2 Jump if carry
 C $C1B0,5 Divide by 8
 C $C1B5,1 B = A
 C $C1B6,6 E = 16 - (A >> 1)
-@ $C1BC label=dt_c1bc
+@ $C1BC label=dt_compute_fill_bounds
 C $C1BC,3 A = 32 - B
 C $C1BF,2 L = 32
 C $C1C1,2 Rotate left
 C $C1C3,2 Jump if carry
 C $C1C5,1 L--
 C $C1C6,1 A--
-@ $C1C7 label=dt_c1c7
+@ $C1C7 label=dt_set_fill_c
 C $C1C7,1 C = A
-@ $C1C8 label=dt_c1c8
+@ $C1C8 label=dt_start_fill
 C $C1C8,1 A = D
 C $C1C9,3 Self modify 'JR x' @ #R$C221 -- jump table target
 C $C1CC,1 A = E
@@ -10667,7 +10667,7 @@ C $C73F,1 A = C
 C $C740,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
 C $C743,3 Jump
 N $C746 Variation:
-@ $C746 label=dr_c746
+@ $C746 label=dr_decreasing
 C $C746,3 C = IX[0]
 C $C749,2 Bit 6 of C set?
 C $C74B,3 Jump if clear
@@ -10768,7 +10768,7 @@ C $C80E,1 A = L
 C $C80F,1 Swap
 C $C810,3 Jump
 N $C813 Scanline advance pattern.
-@ $C813 label=dr_c813
+@ $C813 label=dr_backdrop_fill_advance
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16

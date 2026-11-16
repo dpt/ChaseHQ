@@ -1384,9 +1384,11 @@ D $F8EB The tail end of #R$F82F's sample playback path.
 D $F8EB Used by the routine at #R$F82F.
 @ $F8EB label=finish_sample_playback
 b $F8F2 1-bit digitised sample (104 bytes)
+@ $F8F2 label=drum_sample_1
 D $F8F2 See #R$F8B6, D=$68=104; each byte one playback "row" of 8 bits, played back by #R$F82F/#R$F8CD.
 B $F8F2,104,8
 b $F95A 1-bit digitised sample (224 bytes)
+@ $F95A label=drum_sample_2
 D $F95A See #R$F8BD, D=$E0=224; played back the same way as #R$F8F2.
 B $F95A,224,8
 c $FA3A Procedural drum-noise burst generator (variable duty-cycle square wave)
