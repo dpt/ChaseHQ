@@ -29,11 +29,6 @@ against the skool then rewrite the comment as a statement — or delete it.
   `SDLMain.c:2109` (border colour), and the `TODO: Calibrate` cluster in
   `Internal.h`
 
-- Name the numbered `chqstate` SM field groups after what distinguishes them,
-  the way `dr_{left,right}_{markings,fill}_page` now are: `dr_backbuf_1/_2`,
-  `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each numbers
-  genuinely parallel SM sites, so this needs the consumers traced first — the
-  rest of the naming pass is done
 
 ## FOR WRITEUP / NOTES
 

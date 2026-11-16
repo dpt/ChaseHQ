@@ -730,7 +730,7 @@ middle of the next one.
 - The second-phase loop (`$C287`) and far-wall loop (`$C2C1`) look structurally
   identical to the first but contain **no jump table**: 15 unconditional
   `PUSH`es, a full-width fill every row. The C copied the first loop's
-  `dt.fill_start_b` gating into both, drawing partial bands, or nothing when the
+  `dt.fill_start_left` gating into both, drawing partial bands, or nothing when the
   stored index was 16.
 
 **Rule:** For every value the code can store into a jump-table `JR` operand,

@@ -3285,9 +3285,9 @@ static void set_up_stage(chqstate_t *state, const scenedata_t *scene_data)
   state->horizon_attr[1] = state->horizon_attr[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_scene_objects
-  state->dee.draw_tunnel_1   = 0;
+  state->dee.draw_tunnel_far_slot   = 0;
   state->dee.draw_helicopter = 0;
-  state->dee.draw_tunnel_2   = 0;
+  state->dee.draw_tunnel_each_slot   = 0;
 
   state->rm.hazard_byte = 0; // clear current hazard command
   state->mhc.y_offset   = 0; // reset car jump counter
@@ -4814,7 +4814,7 @@ static void draw_scene_objects(chqstate_t *state)
 
   IY_height_table = &state->height_table[ROAD_SLOT_COUNT];
   assert(IY_height_table == &state->height_table[ROAD_SLOT_COUNT]);
-  if (state->dee.draw_tunnel_1)
+  if (state->dee.draw_tunnel_far_slot)
     draw_tunnel(state, IY_height_table);
   IY_height_table--;
   assert(IY_height_table == &state->height_table[20]);
@@ -4844,7 +4844,7 @@ static void draw_scene_objects(chqstate_t *state)
     if (state->dee.draw_helicopter)
       draw_helicopter(state, B_iterations, IY_height_table);
 
-    if (state->dee.draw_tunnel_2)
+    if (state->dee.draw_tunnel_each_slot)
       draw_tunnel(state, IY_height_table);
 
     A_obj = *HL_roadbuf; // fetch right side object from road buffer
@@ -17043,7 +17043,7 @@ rm_restart_hazards_read: // $BFF3
  * 3. Tunnel already visible (dt.tunnel_visible != 0): skips the scan and falls
  * straight through to arm the hooks.
  *
- * Sets the draw_tunnel hooks by patching dee.draw_tunnel_1 / dee.draw_tunnel_2
+ * Sets the draw_tunnel hooks by patching dee.draw_tunnel_far_slot / dee.draw_tunnel_each_slot
  * with Z80_CALL_NN, and writes dt.far_wall_mode = dr.in_tunnel ^ 1.
  */
 static void prepare_tunnel(chqstate_t *state)
@@ -17071,8 +17071,8 @@ static void prepare_tunnel(chqstate_t *state)
   {
     /* not in tunnel; NOP out the CALL hooks */
     state->tunnel_sfx        = 0;
-    state->dee.draw_tunnel_1 = 0;
-    state->dee.draw_tunnel_2 = 0;
+    state->dee.draw_tunnel_far_slot = 0;
+    state->dee.draw_tunnel_each_slot = 0;
     return;
   }
 
@@ -17128,7 +17128,7 @@ pt_arm_hooks:
   state->dt.far_wall_mode = A_in_tunnel ^ 1;
 
   /* $C149-$C157: patch $8F82/$8FA7 with Z80_CALL_NN to arm draw_tunnel hooks */
-  state->dee.draw_tunnel_1 = state->dee.draw_tunnel_2 = Z80_CALL_NN;
+  state->dee.draw_tunnel_far_slot = state->dee.draw_tunnel_each_slot = Z80_CALL_NN;
 }
 
 /**
@@ -17140,10 +17140,12 @@ pt_arm_hooks:
  * active.
  *
  * Three fill phases are drawn back-to-front using the PUSH-table mechanism (the
- * Z80 uses SP for speed; modelled here with a fall-through switch): 1. Main
- * body: left-edge fill (dt.fill_start_a) + right fill (dt.fill_start_b) 2.
- * Transition rows: right fill only (C = $0F masks every row) 3. Far wall: right
- * fill only (dt.far_wall_mode controls depth)
+ * Z80 uses SP for speed; modelled here with memset):
+ *
+ * 1. Main body: right wall fill (dt.fill_start_right) then left wall fill
+ *    (dt.fill_start_left)
+ * 2. Transition rows: right fill only (C = $0F masks every row)
+ * 3. Far wall: right fill only (dt.far_wall_mode controls depth)
  *
  * The horizontal fill extents are derived from the road centre-right and left
  * x-position tables, giving the left and right tunnel wall column positions.
@@ -17171,13 +17173,13 @@ static void draw_tunnel(chqstate_t *state, u8 *IY_height)
   u8       *SP_output;  /* per-scanline write pointer; simulates Z80 SP (was SP) */
   int       Adash;      /* A' = running row sum, banked via EX AF,AF' at $C1E5/$C21A/$C27B (was A') */
   u8        Bdash;      /* B' = 16 - IYl + E, banked via EXX at $C208 (was B') */
-  int       n_a;        /* PUSH count for first fill: (16 - dt.fill_start_a) (Conv: added) */
-  int       n_b;        /* PUSH count for second fill: (16 - dt.fill_start_b) (Conv: added) */
+  int       n_a;        /* PUSH count for first fill: (16 - dt.fill_start_right) (Conv: added) */
+  int       n_b;        /* PUSH count for second fill: (16 - dt.fill_start_left) (Conv: added) */
 
   /* Conv: dt_max_fill ($C188) and the $C1A4 JP M,$C1BC path leave E and B
    * unset in the Z80 too — both are genuine stale-register reads there.
-   * For E, every path into dt_max_fill also sets dt.fill_start_a == 22,
-   * which makes dt_start_fill's consumer skip dt.fill_start_b entirely, so
+   * For E, every path into dt_max_fill also sets dt.fill_start_right == 22,
+   * which makes dt_start_fill's consumer skip dt.fill_start_left entirely, so
    * the stale value is never actually read. For B, dt_compute_fill_bounds
    * does use it (to derive C, the fill-width correction) — that path reads
    * whatever B held on entry to draw_tunnel, and we haven't traced callers
@@ -17263,8 +17265,8 @@ dt_set_fill_c:
   C = A;
 
 dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer address */
-  state->dt.fill_start_a = D;
-  state->dt.fill_start_b = E;
+  state->dt.fill_start_right = D;
+  state->dt.fill_start_left = E;
 
   A = IY_height[0x35];
   B = A;
@@ -17317,7 +17319,7 @@ dt_clamp_rows:
     /* Conv: read the live pointer low byte — the tracked L
      * variable misses prev_buf_row's row-boundary adjustments. */
     A = BACKBUFTOADDR(HL_backbuf) & 0xFF;
-    if (state->dt.fill_start_a == 22)
+    if (state->dt.fill_start_right == 22)
     {
       /* Conv: $C221 JR with offset 22 lands at $C239, midway into the
        * *second* PUSH chain: 15 PUSHes from the original SP, skipping the
@@ -17329,7 +17331,7 @@ dt_clamp_rows:
     {
       /* Conv: Z80 JR jump table indexed 0-16 where entry N executes (16-N)
        * PUSHes backward from SP. C computes the count and uses memset. */
-      n_a        = 16 - state->dt.fill_start_a;
+      n_a        = 16 - state->dt.fill_start_right;
       SP_output -= n_a * 2;
       memset(SP_output, (u8)DE_fill, (size_t)(n_a * 2));
       A -= C;
@@ -17338,7 +17340,7 @@ dt_clamp_rows:
        * header), not the frozen initial H variable. */
       SP_output = ADDRTOBACKBUF((BACKBUFTOADDR(HL_backbuf) & 0xFF00) | A);
       /* Conv: Z80 second fill JR table indexed 0-16; entry 16 → 0 PUSHes. */
-      n_b = (state->dt.fill_start_b <= 15) ? (16 - state->dt.fill_start_b) : 0;
+      n_b = (state->dt.fill_start_left <= 15) ? (16 - state->dt.fill_start_left) : 0;
       SP_output -= n_b * 2;
       memset(SP_output, (u8)DE_fill, (size_t)(n_b * 2));
     }
@@ -18217,7 +18219,7 @@ dr_advance_unfilled:
    *
    * Clamps [DE_backbuf] to the last valid back-buffer row when it is out of range
    * (the Z80 would silently write to unintended low memory). Stores [DE_backbuf]
-   * in dr.backbuf_1, then computes the rightmost byte address of the row and
+   * in dr.unfilled_backbuf, then computes the rightmost byte address of the row and
    * calls dr_fill_left_stripe with a zero fill value and zero jump index (15 zero
    * bytes written per scanline).
    *
@@ -18242,12 +18244,12 @@ dr_write_scanline_unfilled:
     if (DE_backbuf < BACKBUFFER_START_ADDRESS ||
         DE_backbuf > BACKBUFFER_END_ADDRESS)
       DE_backbuf = 0xFFE0;
-    state->dr.backbuf_1 = (u16)DE_backbuf;
+    state->dr.unfilled_backbuf = (u16)DE_backbuf;
     B_neg_lane_count    = -1;
 
     // EXX - BANK
 
-    DEdash_backbuf = state->dr.backbuf_1;
+    DEdash_backbuf = state->dr.unfilled_backbuf;
     Ldash = (DEdash_backbuf & 0xFF) + 31; // screen address of row's rightmost byte
     Hdash = DEdash_backbuf >> 8;
     SP_output = ADDRTOBACKBUF((Hdash << 8) | Ldash);
@@ -18381,7 +18383,7 @@ dr_fill:
         DE_backbuf > BACKBUFFER_END_ADDRESS)
       DE_backbuf = 0xFFE0;
 
-    state->dr.backbuf_2 = DE_backbuf;
+    state->dr.filled_backbuf = DE_backbuf;
     A_row = L_row; // byte offset within road table page (0xFF = bottom scanline)
     B_neg_lane_count = state->dr.neg_lane_count;
     assert(B_neg_lane_count >= -4 && B_neg_lane_count <= -1);
@@ -18436,7 +18438,7 @@ dr_fill:
     state->dr.road_width = ~A_right_stripe_width + Bdash_holds_16 + Edash_left_stripe_width; // another (15 - x + ...)
     assert(state->dr.right_stripe_width <= 15);
     assert(state->dr.left_stripe_width  <= 15);
-    DEdash_backbuf = state->dr.backbuf_2;
+    DEdash_backbuf = state->dr.filled_backbuf;
     Ldash_backbuf  = (DEdash_backbuf & 0xFF) + 31;
     Hdash_backbuf  = DEdash_backbuf >> 8;
     SP_output      = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
