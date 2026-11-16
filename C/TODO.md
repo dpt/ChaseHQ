@@ -4,7 +4,6 @@
   copy of the engine (`es_playdrum_go`, bank 7) has the same gap
 - Continue backporting changes to the disasm
 - Flush out this 'it's a custom level' germ of an idea that keeps reappearing
-- Investigate Claude fixes in case they've made the C diverge from the asm
 - New video
 - Optimisations
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)

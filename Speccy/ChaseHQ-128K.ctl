@@ -7386,7 +7386,7 @@ C $AD7F,1 Return if positive
 C $AD80,3 A = (horizontal position) & $F8
 C $AD83,3 Return if A >= 144
 C $AD86,3 A += IX[8]  -- from hazard data table
-C $AD89,3 Return if A <= 112
+C $AD89,3 Return if A < 112
 C $AD8C,3 A -= IX[8]
 C $AD8F,4 Jump if A < 104
 C $AD93,1 E--
