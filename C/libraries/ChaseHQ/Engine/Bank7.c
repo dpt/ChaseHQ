@@ -20,12 +20,10 @@
  * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
- * See show_end_screen() below. es_setup_interrupts remains a stub -- see its
- * own prologue. es_play_music_48k drives the beatbox each frame (relocated
- * to $F340 -- the real target of that call, not speech as originally
- * guessed) but its drum/noise instruments (es_playdrum_2/1, es_play_noise)
- * remain unported stubs, so playback is currently silent on instrument
- * notes.
+ * See show_end_screen() below. es_play_music_48k drives the beatbox each
+ * frame (relocated to $F340 -- the real target of that call, not speech as
+ * originally guessed), playing its drum and noise instruments through
+ * es_playdrum_2/1 and es_play_noise.
  */
 
 #include <setjmp.h>
@@ -394,14 +392,23 @@ void show_end_screen(chqstate_t *state)
 }
 
 /**
- * $E01E: Set up bank 7's own interrupt handler and 48K music engine
+ * $F7D1 (called from $E01E): Configure the Z80 mode-2 interrupt vector table
  *
- * Not yet ported (tracked in TODO.md). Bank 7 carries its own copy of the 48K
- * sound code (es_setup_interrupts onward in the skool), relocated into the
- * copied $F300 buffer.
+ * Bank 7's copy of Main.c's setup_interrupts. Fills the 257-byte vector table
+ * at $FD00 with $FE, writes JP $F3C1 at $FEFE, then sets I=$FD and IM 2. The
+ * handler at $F3C1 (relocated from $F8B0) sets the frame flag that
+ * es_play_music_48k waits on and lets a drum sample cut short by the
+ * interrupt resume on the next frame.
+ *
+ * Conv: Z80 interrupt wiring has no equivalent in C; show_end_screen paces
+ *       each frame with speccy->sleep and drum samples always play to
+ *       completion (see es_playdrum_go). This function is a no-op in the C
+ *       port, as is setup_interrupts. The I=$80 restore at $E064 is dropped
+ *       for the same reason.
  */
 static void es_setup_interrupts(chqstate_t *state)
 {
+  /* Conv: no equivalent in C -- SDL owns interrupt delivery */
   NOT_USED(state);
 }
 
@@ -2092,8 +2099,8 @@ pm_reset_pattern:
   }
 
   /* Conv: b7pm_start_drums/b7pm_wait_for_interrupt -- resuming a drum sample
-   * suspended by a real Z80 interrupt has no equivalent here; playdrum
-   * playback (once ported) will always run to completion within one call.
+   * suspended by a real Z80 interrupt has no equivalent here; drum playback
+   * always runs to completion within one call.
    */
 }
 
@@ -2147,9 +2154,6 @@ static void es_play_noise(chqstate_t *state, int A_param)
 
 /**
  * $F8C5: Output bank 7 PCM drum sample
- *
- * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
- * sample tables were decoded this pass.
  *
  * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
  * sample byte, an inner loop runs drum_speed iterations; each iteration

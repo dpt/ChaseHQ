@@ -1,8 +1,7 @@
 # TODO
 
-- Bug: 48K mode drum timing is off (lack of interrupts?)
-- End screen: port bank 7's own 48K interrupt handler and music engine
-  (`es_setup_interrupts`, `$E01E`); `Bank7.c` stubs it
+- Bug: 48K mode drum timing is off (lack of interrupts?). The end screen's
+  copy of the engine (`es_playdrum_go`, bank 7) has the same gap
 - Continue backporting changes to the disasm
 - Flush out this 'it's a custom level' germ of an idea that keeps reappearing
 - Investigate Claude fixes in case they've made the C diverge from the asm
