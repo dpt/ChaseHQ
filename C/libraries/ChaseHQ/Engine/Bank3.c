@@ -5217,10 +5217,12 @@ static void draw_score_row_fields(chqstate_t             *state,
   };
 
   draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
-  draw_table_field_scrolling(state,  64, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
-  draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
-  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1,                       attrs, !blink);
-  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
+  /* Columns follow the row record at $C403: suffix 0-4, score 5-12, stage
+   * 17-19, retry 25, name 28-30. */
+  draw_table_field_scrolling(state,   5 * 8, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
+  draw_table_field_scrolling(state,  17 * 8, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
+  draw_table_field_scrolling(state,  25 * 8, D, E, &entry->retry_digit, 1,                       attrs, !blink);
+  draw_table_field_scrolling(state,  28 * 8, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
 }
 
 /**
