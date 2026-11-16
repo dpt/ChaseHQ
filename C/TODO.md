@@ -1,6 +1,5 @@
 # TODO
 
-- Audit "Conv: added" vars
 - Bug: 48K mode drum timing is off (lack of interrupts?)
 - End screen: port bank 7's own 48K interrupt handler and music engine
   (`es_setup_interrupts`, `$E01E`); `Bank7.c` stubs it

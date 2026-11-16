@@ -6329,8 +6329,7 @@ static u8 titlescr_animate_frame(chqstate_t *state)
     compute_glyph_blit_params_bg(state, rec->y, rec->x, rec->row);
   }
 
-  /* Conv: added */
-  update_whole_playfield(state);
+  update_whole_playfield(state); /* Conv: added */
   state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
 
   if (object_script_step(state))

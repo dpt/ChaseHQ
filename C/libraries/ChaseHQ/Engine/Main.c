@@ -7039,7 +7039,7 @@ clear:
   drive_noise_effect(state, 4); /* tail call */
 
 exit:
-  ;//state->speccy->draw(state->speccy, NULL); /* Conv: added */
+  return;
 }
 
 /**
@@ -7758,7 +7758,7 @@ pmf_have_ascii:
       bm2   = bm & 0xff;
     }
 
-    screen2    = ADDRTOSCREEN(HL_screen); // Conv: added
+    screen2    = ADDRTOSCREEN(HL_screen); // Conv: Z80 address to host pointer
     screen2[0] = (mask & screen2[0]) | bm1;
     screen2[1] = bm2;
     fontdata++;
@@ -8030,7 +8030,7 @@ static void speed_score(chqstate_t *state)
 
   speed = state->speed;
   A     = speed & 0xFF;
-  H     = speed >> 8; // Conv: added
+  H     = speed >> 8;
   RR(H);
   RL(A);
   SRL(A);
@@ -11154,7 +11154,7 @@ set_centre:
   }
   else
   {
-    newhelipos = helipos; // Conv: added
+    newhelipos = helipos; // Conv: one register in the Z80; copy across the split
   }
 
 set_newpos:
@@ -15684,7 +15684,7 @@ static void update_road_level(chqstate_t *state)
   }
   else
   {
-    A_x_scroll = A_curvature_byte; // Conv: added
+    A_x_scroll = A_curvature_byte; // Conv: both are A in the Z80; copy across the split
   }
   state->horizon_x_scroll = A_x_scroll;
 
@@ -21333,7 +21333,7 @@ dak_loop1:
   /* POP BC,DE
    * PUSH BC,DE
    */
-  state->messages_key_string[0] = 0xC7; // Conv: added
+  state->messages_key_string[0] = 0xC7; // Conv: $EADC is a fixed $C7 in the original; set here as nothing initialises it
   setwordat(&state->messages_key_string[1], DE_screen);
   state->messages_key_string[3] = *HL_keynames++;
   state->messages_key_string[4] = *HL_keynames | EOS;
