@@ -9939,7 +9939,7 @@ C $C1D4,5 H = (A & 15) + $F0
 C $C1D9,5 A = ((B & $70) << 1) + L
 C $C1DE,2 Jump if no carry
 C $C1E0,1 A--
-@ $C1E1 label=dt_compute_pattern
+@ $C1E1 label=dt_count_body_rows
 C $C1E1,1 L = A
 C $C1E2,3 A = 128 - B
 C $C1E5,1 Bank/unbank
@@ -9969,7 +9969,7 @@ C $C215,2 A = -A
 C $C217,1 A += D
 C $C218,1 D = A
 C $C219,1 A = E
-@ $C21A label=dt_draw_rows
+@ $C21A label=dt_draw_body
 C $C21A,1 Bank/unbank
 C $C21B,1 B = D
 N $C21C Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom byte, E, affects whole pattern. The LD E,D later would explain that.
@@ -10019,7 +10019,7 @@ C $C276,2 A = -A
 C $C278,1 A = B
 C $C279,1 B = A
 C $C27A,1 A = E
-@ $C27B label=dt_draw_lower
+@ $C27B label=dt_draw_transition
 C $C27B,1 Bank/unbank
 C $C27C,1 A = B
 C $C27D,1 Bank/unbank
@@ -10028,7 +10028,7 @@ C $C27F,1 A = L
 C $C280,2 A &= 15
 C $C282,2 Jump if non-zero
 C $C284,1 L--
-@ $C285 label=dt_lower_row
+@ $C285 label=dt_transition_fill
 C $C285,2 C = 15
 N $C287 Loop
 @ $C287 label=dt_jump_table_3

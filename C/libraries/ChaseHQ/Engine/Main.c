@@ -17298,13 +17298,13 @@ dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer add
   A  = Adash;
   A += D;
   if ((s8) A >= 0)
-    goto dt_clamp_rows;
+    goto dt_draw_body;
 
   E  = A;
   D -= A - 0x81;
   A  = E;
 
-dt_clamp_rows:
+dt_draw_body:
   // EX AF,AF' — bank the running row sum
   Adash = A; /* A → A'; retrieved at $C26A */
   B     = D;
@@ -17366,7 +17366,7 @@ dt_clamp_rows:
 
   A += B;
   if ((s8) A >= 0)
-    goto dt_second_phase;
+    goto dt_draw_transition;
 
   E  = A;
   A -= 0x81;
@@ -17375,7 +17375,7 @@ dt_clamp_rows:
   B  = A;
   A  = E;
 
-dt_second_phase:
+dt_draw_transition:
   // EX AF,AF' — bank the updated row sum
   Adash = A; /* A → A'; retrieved at $C2AC */
   A     = B;
@@ -17393,7 +17393,7 @@ dt_second_phase:
     HL_backbuf = ADDRTOBACKBUF((BACKBUFTOADDR(HL_backbuf) & 0xFF00) | L);
   }
 
-  /* $C285: dt_second_loop */
+  /* $C285: dt_transition_fill */
   C = 0x0F;
   do
   {
