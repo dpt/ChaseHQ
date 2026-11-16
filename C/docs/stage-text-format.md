@@ -14,8 +14,7 @@ python3 stage_compile.py --selftest
 `compile` writes a C _fragment_ to stdout — `#define`s, six arrays per section
 and the goto-table rows. Paste it into the stage file by hand. Like
 `convert_stage.py`, this script never edits committed data in place, and it has
-no CMake target for the same reason `convert_stages` is documented as
-destructive.
+no CMake target: its output is a fragment for hand-pasting, not a file.
 
 `C/maps/stage1.map` is the committed worked example.
 

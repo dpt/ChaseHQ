@@ -7,7 +7,6 @@
 - Investigate Claude fixes in case they've made the C diverge from the asm
 - New video
 - Optimisations
-- Slap warnings on the level converter now it's finished?
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)
 - RISC OS: Sound support (...how?)
 - Graphics import/export still needs work

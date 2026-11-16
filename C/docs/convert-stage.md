@@ -4,7 +4,7 @@
 data skeleton for one stage. It is the starting point for every stage data file
 beyond stage 1 (which is hand-crafted).
 
-> **The output is a skeleton, not a build product.** It compiles, but the
+> **The output is a skeleton, not a build product.** It does not compile, and the
 > committed `Stage{2-5}Data.c` files contain hand-work the script cannot
 > reproduce — decoded `overhead_span_t` tables, resolved helicopter pointers,
 > named `STAGE{N}_MAP_*_ADDR` macros, a Doxygen prologue on every table.
@@ -32,11 +32,11 @@ stage number and ignores sections belonging to other stages.
 
 The CMake `convert_stages` target
 (`cmake --build <dir> --target convert_stages`) runs all four invocations
-automatically. It **overwrites the committed `Stage{2-5}Data.c` files with
-skeletons that do not compile** — it is a scaffolding tool kept for reference,
-not part of the normal build. Commit or stash your work before running it, and
-`git checkout` the `Data/` directory afterwards unless you intend to redo the
-manual completion by hand.
+automatically and writes the skeletons to `<build>/convert_stages/`, never
+over the committed `Stage{2-5}Data.c` files. The skeletons do not compile; use
+them to scaffold a new stage or to compare with the committed files, which hold
+manual completion the script cannot reproduce. The script also prints a
+warning to stderr and marks its output header as a skeleton.
 
 ### Options
 
@@ -50,19 +50,19 @@ repository root:
 ```bash
 python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-1.skool 2 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8 \
-    > C/libraries/ChaseHQ/Data/Stage2Data.c
+    > /tmp/Stage2Data.c
 
 python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-6.skool 3 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7 \
-    > C/libraries/ChaseHQ/Data/Stage3Data.c
+    > /tmp/Stage3Data.c
 
 python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-6.skool 4 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT \
-    > C/libraries/ChaseHQ/Data/Stage4Data.c
+    > /tmp/Stage4Data.c
 
 python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-7.skool 5 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE \
-    > C/libraries/ChaseHQ/Data/Stage5Data.c
+    > /tmp/Stage5Data.c
 ```
 
 ## What the script generates
@@ -84,8 +84,16 @@ python3 C/scripts/convert_stage.py Speccy/ChaseHQ-128K-bank-7.skool 5 \
 
 ## What requires manual completion
 
-The output compiles as generated, but the following items cannot be decoded
-automatically and are left as `/* TODO */` comments or raw `u8[]` placeholders:
+The output does not compile as generated. With the project's include paths
+each stage fails on the same four errors:
+
+- `Z80ATTRS` and `Z80BACKBUF` are not defined
+- one initialiser is not a compile-time constant (a consequence of the above)
+- `stageN_map_goto_table` is emitted as an anonymous struct array, which
+  conflicts with its `map_goto_entry_t` declaration
+
+The following items also cannot be decoded automatically and are left as
+`/* TODO */` comments or raw `u8[]` placeholders:
 
 - `overhead_span_t` tables, emitted as raw `stageN_bitmap_XXXX` byte arrays
 - `stretchy_t` / `depthset_t` tables when pointer targets are unresolvable

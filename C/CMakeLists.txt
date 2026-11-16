@@ -173,35 +173,34 @@ if(CHQ_ENABLE_TEST_STAGE)
 endif()
 
 # ---- Stage data generation --------------------------------------------------
-# Regenerate committed .c files from their skool sources.
+# Convert the stage 2-5 skool sources to skeletons under
+# <build>/convert_stages/, for comparison with the committed files.
 # Usage: cmake --build <dir> --target convert_stages
 #
-# WARNING: destructive, and not part of any build. convert_stage.py emits a
-# skeleton that does NOT compile: MAP_LANES_* transition macros are undefined,
-# lookup_map_goto's signature conflicts with its forward declaration, and the
-# obj_t/overhead_span_t/helicopter tables come back as raw bytes and NULL
-# TODOs. The committed Stage{2-5}Data.c files hold that manual completion, so
-# running this discards it. Scaffold a new stage with it; edit an existing one
-# by hand. See docs/convert-stage.md.
+# convert_stage.py emits a skeleton that does NOT compile. The committed
+# Stage{2-5}Data.c files hold the manual completion, so this target never
+# writes over them. Scaffold a new stage with it; edit an existing one by
+# hand. See "What requires manual completion" in docs/convert-stage.md.
 
 set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/convert_stage.py)
 set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/../Speccy)
-set(DATA_DIR       ${CMAKE_SOURCE_DIR}/libraries/ChaseHQ/Data)
+set(CONVERT_OUT    ${CMAKE_BINARY_DIR}/convert_stages)
 
 add_custom_target(convert_stages
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CONVERT_OUT}
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-1.skool 2\
  --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8\
- > ${DATA_DIR}/Stage2Data.c"
+ > ${CONVERT_OUT}/Stage2Data.c"
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-6.skool 3\
  --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7\
- > ${DATA_DIR}/Stage3Data.c"
+ > ${CONVERT_OUT}/Stage3Data.c"
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-6.skool 4\
  --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT\
- > ${DATA_DIR}/Stage4Data.c"
+ > ${CONVERT_OUT}/Stage4Data.c"
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-7.skool 5\
  --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE\
- > ${DATA_DIR}/Stage5Data.c"
-  COMMENT "Regenerating stage 2-5 data from bank skool files - WARNING: overwrites the committed files with skeletons that do not compile; see docs/convert-stage.md"
+ > ${CONVERT_OUT}/Stage5Data.c"
+  COMMENT "Converting stage 2-5 skool data to skeletons in ${CONVERT_OUT} (they do not compile; see docs/convert-stage.md)"
   VERBATIM)
 
 # ---- Formatting -------------------------------------------------------------
