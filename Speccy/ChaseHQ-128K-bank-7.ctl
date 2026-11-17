@@ -2177,7 +2177,7 @@ C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
 D $F8B9 Used by #R$F82F.
-R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+R $F8B9 I:A Speed value: the bits played from each sample byte. The end-screen music data only uses 8
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
 C $F8BC,2 94 sample bytes
