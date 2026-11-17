@@ -541,8 +541,8 @@ C $C903,3 so skip straight to the blit dispatch
 C $C906,1 Otherwise skip (excess / 2) source row pairs of C * 2 bytes,
 C $C907,1 counting down the row pairs to draw; if none remain the glyph is
 C $C908,2 wholly off-screen and #R$C935 draws nothing
-N $C917 Masked-sprite blit dispatch: HL/DE hold the destination screen address (from the caller), the popped HL/DE here hold the source glyph address and its mask width in C. Dispatches to one of 6 width-specific unrolled OR-blit routines (#R$C9D5 .. #R$CBC5) which draw the glyph into the bitmap by treating the source address as a stack pointer (LD SP,HL) and POPping two rows of one column at a time and ORing them in, with no mask -- see the project's known "LD SP,HL; POP x N sprite copy" translation pitfall. The real SP is saved at $C93D and restored by each blit routine (or by #R$C93C on early abort) before returning.
-@ $C917 label=blit_masked_sprite_dispatch
+N $C917 Glyph blit dispatch: HL/DE hold the destination screen address (from the caller), the popped HL/DE here hold the source glyph address and its mask width in C. Dispatches to one of 6 width-specific unrolled OR-blit routines (#R$C9D5 .. #R$CBC5) which draw the glyph into the bitmap by treating the source address as a stack pointer (LD SP,HL) and POPping two rows of one column at a time and ORing them in, with no mask -- see the project's known "LD SP,HL; POP x N sprite copy" translation pitfall. The real SP is saved at $C93D and restored by each blit routine (or by #R$C93C on early abort) before returning.
+@ $C917 label=blit_glyph_dispatch
 C $C918,4 Save the real stack pointer
 C $C91C,1 SP now points at the glyph source data
 C $C91D,1 HL = destination screen address
@@ -556,9 +556,9 @@ C $C93C,3 (operand self-modified by #R$C918/#R$C9B4)
 N $C94F Second glyph blit-parameter computation, structurally identical to #R$C8C5 above but feeding the alternate dispatch table at #R$C9AF. Used for the 3 "background" objects (see #R$C6F0).
 @ $C94F label=compute_glyph_blit_params_b
 @ $C990 label=cgbb_row_offset_loop
-N $C9AF Alternate masked-sprite blit dispatch used by the background-object draw path (#R$C6F0 via #R$C94F). Identical width-selection logic to #R$C917, but preserves B (via an extra push/pop) as a small fixed delay count, and its early-exit tail (#R$C9D3) simply restores DE rather than aborting via #R$C93C.
-@ $C9AF label=blit_masked_sprite_dispatch_b
-N $C9D5 Width-1 (mask-only, no fill byte) unrolled OR-blit. #R$C917/#R$C9AF dispatch here when the width selector (C, decremented to 0) picks this variant. Draws 2 scanlines per POP DE: E blits into the current HL byte (LD A,(HL) / OR E / LD (HL),A -- a masked, non-overwriting sprite draw), then INC H steps to the next screen row; if that crosses a third boundary (H AND $07 = 0), the SUB $08 / ADD A,$20 / carry-adjust pattern at #R$C9F3 fixes up H/L, otherwise the row falls straight through. D then blits the same way into the following row, with its own boundary fix-up at #R$CA05. A short fixed delay (#R$C9E8, a 30-iteration DEC-A loop) pads out the timing before DJNZ repeats for the next row-pair (B counts row-pairs); once B reaches 0, execution falls into #R$C93C, which restores the real SP and returns.
+N $C9AF Alternate glyph blit dispatch used by the background-object draw path (#R$C6F0 via #R$C94F). Identical width-selection logic to #R$C917, but preserves B (via an extra push/pop) as a small fixed delay count, and its early-exit tail (#R$C9D3) simply restores DE rather than aborting via #R$C93C.
+@ $C9AF label=blit_glyph_dispatch_b
+N $C9D5 Width-1 unrolled OR-blit. #R$C917/#R$C9AF dispatch here when the width selector (C, decremented to 0) picks this variant. Draws 2 scanlines per POP DE: E blits into the current HL byte (LD A,(HL) / OR E / LD (HL),A -- an unmasked OR, so set pixels are never cleared), then INC H steps to the next screen row; if that crosses a third boundary (H AND $07 = 0), the SUB $08 / ADD A,$20 / carry-adjust pattern at #R$C9F3 fixes up H/L, otherwise the row falls straight through. D then blits the same way into the following row, with its own boundary fix-up at #R$CA05. A short fixed delay (#R$C9E8, a 30-iteration DEC-A loop) pads out the timing before DJNZ repeats for the next row-pair (B counts row-pairs); once B reaches 0, execution falls into #R$C93C, which restores the real SP and returns.
 @ $C9D5 label=blit_width1
 @ $C9F3 label=advance_glyph_scanline
 N $CA17 Width-2 unrolled OR-blit variant (see #R$C9D5 for the general pattern).
