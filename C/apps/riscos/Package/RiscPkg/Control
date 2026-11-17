@@ -1,0 +1,10 @@
+Package: ChaseHQ
+Version: 0.10-1
+Section: Games
+Priority: Optional
+Maintainer: David Thomas <dave@davespace.co.uk>
+Standards-Version: 0.6.0
+Environment: arm
+Licence: Free
+Description: Car chase game from ZX Spectrum
+Components: Apps.Games.!ChaseHQ (Movable)

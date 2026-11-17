@@ -1,0 +1,26 @@
+Chase H.Q. - Instructions
+=========================
+Drive after the criminals' car, catch up and ram it until it
+stops, before time runs out.
+
+The keys are the original game's defaults, which the in-game
+redefine option can change:
+
+    K / L      steer left / right
+    A / Z      accelerate / brake
+    N          change gear
+    Space      turbo boost
+
+The cursor keys emulate a Kempston joystick. Keypad Enter is
+its fire button.
+
+Window keys
+-----------
+    F10        full screen (Escape to leave)
+    F11        scale the view
+    Ctrl-N     monochrome
+    Ctrl-O     sound on or off
+    Ctrl-P     pause
+    F5 / F6    slower / 100% speed
+    F7         faster
+    Ctrl-V     scaled to fit

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
+            <connections>
+                <outlet property="delegate" destination="gx9-ry-PZj" id="nZQ-Iz-eN3"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customObject id="gx9-ry-PZj" userLabel="Delegate" customClass="AppDelegate"/>
+        <menu title="AMainMenu" systemMenu="main" id="29">
+            <items>
+                <menuItem title="Chase H.Q." id="56">
+                    <menu key="submenu" title="Chase H.Q." systemMenu="apple" id="57">
+                        <items>
+                            <menuItem title="About Chase H.Q." id="58">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="orderFrontStandardAboutPanel:" target="-2" id="142"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="236">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Preferences…" keyEquivalent="," id="129"/>
+                            <menuItem isSeparatorItem="YES" id="143">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Services" id="131">
+                                <menu key="submenu" title="Services" systemMenu="services" id="130"/>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="144">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Hide Chase H.Q." keyEquivalent="h" id="134">
+                                <connections>
+                                    <action selector="hide:" target="-1" id="367"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Hide Others" keyEquivalent="h" id="145">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="hideOtherApplications:" target="-1" id="368"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show All" id="150">
+                                <connections>
+                                    <action selector="unhideAllApplications:" target="-1" id="370"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="149">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Quit Chase H.Q." keyEquivalent="q" id="136">
+                                <connections>
+                                    <action selector="terminate:" target="-3" id="449"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Game" id="2KU-r5-uLg">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Game" id="WfA-JN-hHu">
+                        <items>
+                            <menuItem title="New Game" keyEquivalent="n" id="16Y-WM-myU">
+                                <connections>
+                                    <action selector="newGame:" target="gx9-ry-PZj" id="InU-aq-y6M"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="ueJ-Ft-2JA"/>
+                            <menuItem title="Open..." keyEquivalent="o" id="iHQ-sL-chV">
+                                <connections>
+                                    <action selector="open:" target="-1" id="Ix4-LO-AFS"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Close" keyEquivalent="w" id="GDn-TE-mAy">
+                                <connections>
+                                    <action selector="performClose:" target="-1" id="rgx-sR-69F"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="e5l-kI-QIy"/>
+                            <menuItem title="Save As..." keyEquivalent="S" id="KLg-KC-p0L">
+                                <connections>
+                                    <action selector="saveDocumentAs:" target="-1" id="jIA-SF-y4N"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="ytq-v3-CqP"/>
+                            <menuItem title="Duplicate" keyEquivalent="s" id="QRl-nU-mcF">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="duplicateDocument:" target="-1" id="9kh-rq-eXc"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="View" id="aDI-j4-0MZ">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="View" systemMenu="window" id="YtR-rd-vL7">
+                        <items>
+                            <menuItem title="Enter Full Screen" tag="-1" keyEquivalent="f" id="YkS-aq-HCh">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleFullScreen:" target="-1" id="vvh-SM-FWm"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="mF1-0u-dOv">
+                                <connections>
+                                    <action selector="setZoomLevel:" target="-1" id="U7N-kS-F36"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom In" tag="1" keyEquivalent="+" id="yMO-Hw-sjq">
+                                <connections>
+                                    <action selector="setZoomLevel:" target="-1" id="f9M-Oc-gLC"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" tag="2" keyEquivalent="-" id="iki-we-UHt">
+                                <connections>
+                                    <action selector="setZoomLevel:" target="-1" id="NiK-MP-D4u"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Qn4-9a-5uv"/>
+                            <menuItem title="Monochromatic" tag="2" keyEquivalent="m" id="9Bg-ec-qWH">
+                                <connections>
+                                    <action selector="toggleMonochromatic:" target="-1" id="fax-ef-n29"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="W0S-uf-Qes"/>
+                            <menuItem title="Snap to Whole Pixels" state="on" tag="-1" keyEquivalent="n" id="QC2-v8-HZj">
+                                <connections>
+                                    <action selector="toggleSnap:" target="-1" id="xpJ-pP-VHj"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Sound" id="AbV-Vo-7s9">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Sound" id="tkF-wC-aOq">
+                        <items>
+                            <menuItem title="Enabled" keyEquivalent="u" id="Von-cc-Hw0">
+                                <connections>
+                                    <action selector="toggleSound:" target="-1" id="LNE-1Y-uCr"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Speed" id="HeK-po-uS9" userLabel="Speed">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Speed" id="3hW-Ob-ROY">
+                        <items>
+                            <menuItem title="Pause" keyEquivalent="p" id="qOr-pu-Obp">
+                                <connections>
+                                    <action selector="setSpeed:" target="-1" id="Mq3-0J-dQZ"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="mat-6x-6rh"/>
+                            <menuItem title="100%" tag="100" keyEquivalent="" id="hvk-Sm-oMC">
+                                <connections>
+                                    <action selector="setSpeed:" target="-1" id="Cdc-pM-rlc"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Maximum" tag="-1" keyEquivalent="" id="RbD-x3-pLf">
+                                <connections>
+                                    <action selector="setSpeed:" target="-1" id="EBB-PE-Qpe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="tmV-v2-PIo"/>
+                            <menuItem title="Faster" tag="1" keyEquivalent="" id="aIM-kk-uf7">
+                                <connections>
+                                    <action selector="setSpeed:" target="-1" id="XjA-Qb-Zhb"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Slower" tag="2" keyEquivalent="" id="wlM-Rt-uEM">
+                                <connections>
+                                    <action selector="setSpeed:" target="-1" id="JPB-ck-ZDa"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Window" id="19">
+                    <menu key="submenu" title="Window" systemMenu="window" id="24">
+                        <items>
+                            <menuItem title="Minimize" keyEquivalent="m" id="23">
+                                <connections>
+                                    <action selector="performMiniaturize:" target="-1" id="37"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom" id="trl-nx-dCJ">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="performZoom:" target="-1" id="e58-Dv-awO"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="92">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Bring All to Front" id="5">
+                                <connections>
+                                    <action selector="arrangeInFront:" target="-1" id="39"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Help" id="490">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Help" systemMenu="help" id="491">
+                        <items>
+                            <menuItem title="Chase H.Q. Help" keyEquivalent="?" id="492">
+                                <connections>
+                                    <action selector="showHelp:" target="-1" id="493"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+            </items>
+            <point key="canvasLocation" x="139" y="-376"/>
+        </menu>
+    </objects>
+</document>

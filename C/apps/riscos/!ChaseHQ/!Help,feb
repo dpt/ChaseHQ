@@ -1,0 +1,8 @@
+| >!Help for Chase H.Q.
+| by David Thomas, © 2020-2026
+
+Obey <Obey$Dir>.!Boot
+
+Run <ChaseHQ$Dir>.Resources.ResFind ChaseHQ
+
+Filer_Run ChaseHQRes:!Help

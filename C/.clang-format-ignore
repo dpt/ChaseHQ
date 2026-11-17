@@ -1,0 +1,5 @@
+# Ported third-party-derived code with its own hand-tuned formatting
+# (value-aligned #define columns, packed initialiser tables, long
+# expressions kept on one line). Not a Z80 translation, so the project's
+# 80-column K&R style does not apply; clang-format would otherwise
+# reflow it against the author's intent.

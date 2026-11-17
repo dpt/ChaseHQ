@@ -68,12 +68,6 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-## [`apps/riscos/`](apps/riscos/README.md) — native RISC OS application
-
-A self-contained 32-bit `!ChaseHQ` desktop application, built from the same
-engine sources by @gerph. See that directory's README for build instructions and
-host shortcuts.
-
 ## Controls
 
 Driving uses the original game's default key definitions, which the in-game
