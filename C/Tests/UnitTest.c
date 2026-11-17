@@ -1013,7 +1013,7 @@ static void test_draw_overhead_stops_at_right_edge(void)
  * advance_hazards: when three hazards are advanced in slot order with
  * strictly increasing distance (5, 10, 15), each later hazard must be
  * inserted *before* the earlier ones already in the depth-sorted draw list
- * (state->xpos.centre_left), forcing the dhs_insert shift path with a
+ * (state->xpos.centre_left), forcing the ah_insert shift path with a
  * growing number of records to move (B=1, then B=2).
  *
  * Regression check for a reversed source/destination copy in the shift

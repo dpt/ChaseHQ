@@ -19,13 +19,13 @@ tracked in `C/TODO.md` — check it before assuming an issue is new.
 `C/scripts/convert_stage.py` turns a bank skool file into a C stage data
 skeleton. See `C/docs/convert-stage.md` for full usage, options and what
 requires manual completion afterwards. The `convert_stages` CMake target in
-`C/CMakeLists.txt` drives it for stages 2-5.
+`C/CMakeLists.txt` drives it for stages 2-5, writing to
+`<build>/convert_stages/`.
 
-**Do not run `convert_stages` to "refresh" stage data.** The script's output is
-a skeleton that does not compile, and the committed `Stage{2-5}Data.c` files
-contain hand-completion the script cannot reproduce. The target overwrites them
-and discards that work. It is for scaffolding a new stage only; edit existing
-stage data by hand.
+**Never redirect its output over a committed `Stage{2-5}Data.c`.** The output
+is a skeleton that does not compile, and the committed files contain
+hand-completion the script cannot reproduce. It is for scaffolding a new stage
+only; edit existing stage data by hand.
 
 ### Road map text format
 

@@ -20,12 +20,10 @@
  * C translation of ZX Spectrum 128K "bank 7" -- the end-of-game
  * results/credits sequence. Paged into $C000-$FFFF and reached via an inner
  * relocation from $F7EF to $F300, driven by a script interpreter at $E20A.
- * See show_end_screen() below. es_setup_interrupts remains a stub -- see its
- * own prologue. es_play_music_48k drives the beatbox each frame (relocated
- * to $F340 -- the real target of that call, not speech as originally
- * guessed) but its drum/noise instruments (es_playdrum_2/1, es_play_noise)
- * remain unported stubs, so playback is currently silent on instrument
- * notes.
+ * See show_end_screen() below. es_play_music_48k drives the beatbox each
+ * frame (relocated to $F340 -- the real target of that call, not speech as
+ * originally guessed), playing its drum and noise instruments through
+ * es_playdrum_2/1 and es_play_noise.
  */
 
 #include <setjmp.h>
@@ -394,14 +392,23 @@ void show_end_screen(chqstate_t *state)
 }
 
 /**
- * $E01E: Set up bank 7's own interrupt handler and 48K music engine
+ * $F7D1 (called from $E01E): Configure the Z80 mode-2 interrupt vector table
  *
- * TODO: not yet ported. Bank 7 carries its own copy of the 48K sound code
- * (es_setup_interrupts onward in the skool), relocated into the copied
- * $F300 buffer.
+ * Bank 7's copy of Main.c's setup_interrupts. Fills the 257-byte vector table
+ * at $FD00 with $FE, writes JP $F3C1 at $FEFE, then sets I=$FD and IM 2. The
+ * handler at $F3C1 (relocated from $F8B0) sets the frame flag that
+ * es_play_music_48k waits on and lets a drum sample cut short by the
+ * interrupt resume on the next frame.
+ *
+ * Conv: Z80 interrupt wiring has no equivalent in C; show_end_screen paces
+ *       each frame with speccy->sleep and drum samples always play to
+ *       completion (see es_playdrum_go). This function is a no-op in the C
+ *       port, as is setup_interrupts. The I=$80 restore at $E064 is dropped
+ *       for the same reason.
  */
 static void es_setup_interrupts(chqstate_t *state)
 {
+  /* Conv: no equivalent in C -- SDL owns interrupt delivery */
   NOT_USED(state);
 }
 
@@ -542,7 +549,7 @@ static void es_handler_draw_score(chqstate_t *state)
 
   for (tally = 1000; tally != 0; tally--)
   {
-    /* Conv: the tally runs for ~11s; without this the window stays up for the
+    /* Conv: the tally runs for ~12s; without this the window stays up for the
      * remainder of it after the host asks to quit. */
     CHECK_HOST_QUIT(state);
 
@@ -600,11 +607,12 @@ static void es_handler_draw_score(chqstate_t *state)
 /**
  * Resolve a script-embedded argument word to its C data array.
  *
- * Conv: as with z80addrtoendshot, es_script only ever encodes one literal value
- *       here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E via
- *       the bank's uniform +0x8400 rule), so a small lookup replaces pointer
+ * Conv: as with z80addrtoendshot, es_script only ever encodes two literal
+ *       values here ($5C6E and $5C78, the relocated addresses of the chatter
+ *       blocks at $E06E and $E078), so a small lookup replaces pointer
  *       arithmetic into relocated bank memory the C port does not model
- *       byte-for-byte.
+ *       byte-for-byte. The Z80 blocks hold message string pointers; these C
+ *       copies hold the equivalent CHATTERSTR indices.
  *
  * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
  *                 at $E2B7).
@@ -652,20 +660,8 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * pointer. Runs immediately (loops back into run_script rather than
  * returning).
  *
- * Conv: data_e06e (the only live target) is NOT a standard {CHATTERCHR,
- *       CHATTERSTR, CHATTERCMD} chatterblk -- see
- *       CHATTERBLK_NANCY_CONGRATULATES_ADDR above. Byte 2 of that block ($3F =
- *       63) would be consumed as a CHATTERSTR index by pc_chatter_message
- *       (Main.c, the "assert(*chatterblk < CHATTERSTR__LIMIT)" guard around
- *       line 5871) and fail that bounds check immediately -- CHATTERSTR__LIMIT
- *       is 36. In a release build without asserts this reads
- *       common_chatter_strings[63] out of its 36-entry array and dereferences
- *       whatever garbage pointer turns up, i.e. every single playthrough would
- *       crash on reaching the end screen. The original Z80 has the same
- *       malformed data, so this path is presumed unreached in practice (the
- *       skool marks it "unproven, dead end"); rather than risk that
- *       byte-for-byte here, the start_chatter call is skipped whenever the
- *       resolved target does not look like a well-formed chatterblk.
+ * The resolved target is a chatter block from $E06E-$E07B: a face number,
+ * message strings and a terminator, in the format print_chatter reads.
  *
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
  *                      read and advanced past the word consumed.
@@ -2092,8 +2088,8 @@ pm_reset_pattern:
   }
 
   /* Conv: b7pm_start_drums/b7pm_wait_for_interrupt -- resuming a drum sample
-   * suspended by a real Z80 interrupt has no equivalent here; playdrum
-   * playback (once ported) will always run to completion within one call.
+   * suspended by a real Z80 interrupt has no equivalent here; drum playback
+   * always runs to completion within one call.
    */
 }
 
@@ -2147,9 +2143,6 @@ static void es_play_noise(chqstate_t *state, int A_param)
 
 /**
  * $F8C5: Output bank 7 PCM drum sample
- *
- * Only the es_playdrum_2/es_playdrum_1 entry points at $F3CA/$F3D1 and the
- * sample tables were decoded this pass.
  *
  * Outputs a PCM drum sample byte-by-byte to the speaker port. For each
  * sample byte, an inner loop runs drum_speed iterations; each iteration

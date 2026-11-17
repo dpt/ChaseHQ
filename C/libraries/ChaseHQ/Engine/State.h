@@ -539,16 +539,16 @@ struct chqstate
   /* $8F82-$8FA7: (SM in draw_scene_objects) Per-frame scenery draw enables */
   struct
   {
-    /* $8F82: (SM in draw_scene_objects) Enables drawing of the first tunnel
-     * mouth */
-    u8        draw_tunnel_1;
+    /* $8F82: (SM in draw_scene_objects) Enables the draw_tunnel call made
+     * once for the farthest slot, before the per-slot object loop */
+    u8        draw_tunnel_far_slot;
 
     /* $8FA4: (SM in draw_scene_objects) Enables drawing of the helicopter */
     u8        draw_helicopter;
 
-    /* $8FA7: (SM in draw_scene_objects) Enables drawing of the second tunnel
-     * mouth */
-    u8        draw_tunnel_2;
+    /* $8FA7: (SM in draw_scene_objects) Enables the draw_tunnel call made for
+     * every slot inside the object loop */
+    u8        draw_tunnel_each_slot;
   }
   dee;
 
@@ -1282,12 +1282,13 @@ struct chqstate
     /* $C21C: (SM in draw_tunnel) Byte pair the tunnel interior is filled with */
     u16       fill_pattern;
 
-    /* $C221: (SM in draw_tunnel) Jump table entry the first fill run starts at */
-    u8        fill_start_a;
+    /* $C221: (SM in draw_tunnel) Jump table entry the right wall fill run
+     * starts at; 22 merges both runs into one 30-byte fill */
+    u8        fill_start_right;
 
-    /* $C236: (SM in draw_tunnel) Jump table entry the second fill run starts
-     * at */
-    u8        fill_start_b;
+    /* $C236: (SM in draw_tunnel) Jump table entry the left wall fill run
+     * starts at */
+    u8        fill_start_left;
 
     /* $C2B8: (SM in draw_tunnel) Selects how the far wall of the tunnel is
      * drawn */
@@ -1302,9 +1303,9 @@ struct chqstate
    */
   struct
   {
-    /* $C56C: (SM in draw_road) Back buffer address the first road span is drawn
-     * to */
-    u16       backbuf_1;
+    /* $C56C: (SM in draw_road) Back buffer address of the row being drawn
+     * unfilled (zeroed) */
+    u16       unfilled_backbuf;
 
     /* $C5AC: (SM in draw_road) Negated count of lanes to draw */
     s8        neg_lane_count;
@@ -1316,9 +1317,9 @@ struct chqstate
      * pattern */
     u8        right_fill_page;
 
-    /* $C5F9: (SM in draw_road) Back buffer address the second road span is drawn
-     * to */
-    u16       backbuf_2;
+    /* $C5F9: (SM in draw_road) Back buffer address of the row being drawn
+     * filled with road and verges */
+    u16       filled_backbuf;
 
     /* $C60A: (SM in draw_road) Width of the right-hand road stripe */
     u8        right_stripe_width;

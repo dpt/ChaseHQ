@@ -8,13 +8,16 @@ SectionPrefix=Fact
 [Fact:Secrets:Secrets]
 Redefine keys to "SHOCKED&lt;ENTER&gt;" to activate test/cheat mode.
 
-[Fact:HiddenInstruction:A disguised instruction hiding inside "unused" data]
-The eight bytes at #R$8008 are labelled unused, but three of them
-($C3,$D6,$A0) decode as <code>JP $A0D6</code> (the keyscan routine) starting
-at $800E, six bytes into the block. <code>CALL $800E</code> is therefore equivalent to
-<code>CALL $A0D6</code> — the disassembly has to spot this by decoding the
-data as code, since nothing points at $800E directly. Two call sites use
-it this way, at $C647 (in #R$C59E@bank3) and $C1D7 (in #R$C16A@bank3).
+[Fact:HiddenInstruction:Disguised instructions hiding inside data]
+The twelve bytes at #R$8008 look like junk, but bank 3 uses them as a link
+table into main memory: three pointers, then two instructions stored as
+data. The bytes $C3,$D6,$A0 at $800E decode as <code>JP $A0D6</code> (the
+keyscan routine), so <code>CALL $800E</code> is equivalent to
+<code>CALL $A0D6</code>. The disassembly has to spot this by decoding the
+data as code, since nothing in main memory points at $800E. Two call sites
+use it this way, at $C647 (in #R$C59E@bank3) and $C1D7 (in #R$C16A@bank3).
+Likewise $8011 holds <code>JP $9C79</code>, which bank 3 reaches by pushing
+$8011 and returning to it.
 
 [Fact:DeadCode:A block of code that can never be reached]
 The three instructions at #R$85DD (labelled <code>rps_dead_code</code>) can't

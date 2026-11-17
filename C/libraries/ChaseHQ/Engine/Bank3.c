@@ -4007,8 +4007,7 @@ static const u8 title_tune23_data[203] = {
 /* ----------------------------------------------------------------------- */
 
 /* 180 frames, ~3.6s at 50Hz. This is the Z80's own $C627-$C637 tune-4 wait
- * count in titlescr_wait_loop; play_success_music borrows it as a heuristic
- * bound for a loop the Z80 never exits (see its Conv: note). */
+ * count in titlescr_wait_loop. */
 #define ATTRACT_TUNE_WAIT_FRAMES (0xB4)
 
 /* titlescr_wait_loop / run_title_screen outcomes. TITLESCR_START_GAME and
@@ -4073,22 +4072,22 @@ static void compute_glyph_geometry(u8                     B_y,
                                    u8                     C_x,
                                    u8                     L_row,
                                    glyph_blit_geometry_t *out);
-static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
-                                           int         H,
-                                           int         L,
-                                           const u8   *src,
-                                           int         B_height_pairs,
-                                           int         C_width_select);
+static void blit_glyph_dispatch_fg(chqstate_t *state,
+                                   int         H,
+                                   int         L,
+                                   const u8   *src,
+                                   int         B_height_pairs,
+                                   int         C_width_select);
 static void compute_glyph_blit_params_bg(chqstate_t *state,
                                          u8          B_y,
                                          u8          C_x,
                                          u8          L_row);
-static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
-                                           int         H,
-                                           int         L,
-                                           const u8   *src,
-                                           int         B_height_pairs,
-                                           int         C_width_select);
+static void blit_glyph_dispatch_bg(chqstate_t *state,
+                                   int         H,
+                                   int         L,
+                                   const u8   *src,
+                                   int         B_height_pairs,
+                                   int         C_width_select);
 static void blit_glyph_rows(chqstate_t *state,
                             int         H,
                             int         L,
@@ -4138,9 +4137,8 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   u8                      E,
                                   u8                      row,
                                   const high_score_row_t *entry,
-                                  int                     blink,
-                                  u8                      attrs);
-static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen);
+                                  int                     blink);
+static void erase_letter_cursor(chqstate_t *state, u8 D_screen, u8 E_screen);
 static void play_success_music(chqstate_t *state);
 static void titlescr_start_tune(chqstate_t *state, u8 tune_no);
 static void load_drum_script(chqstate_t *state, u8 A_tune);
@@ -4446,6 +4444,16 @@ static void name_entry_setup_screen(chqstate_t *state)
                                              * just update_whole_playfield's
                                              * driving-playfield inset */
 
+  /* $C0EF-$C108: rows 16-23 get the table colour, then rows 15 and 23 (the
+   * rows above and below the table's visible band) are set to black on
+   * black, hiding rows as they scroll in and out. Rows 8-14 stay black from
+   * clear_playfield_and_attrs. Conv: the original LDIR fills 512 bytes from
+   * $5A00, running on past the attributes into $5B00-$5BFF; only the 256
+   * attribute bytes are filled here. */
+  memset(ADDRTOATTRS(0x5A00), TABLE_ROW_COLOUR, 256);
+  memset(ADDRTOATTRS(0x59E0), 0, 32);
+  memset(ADDRTOATTRS(0x5AE0), 0, 32);
+
   for (row = 0; row < HIGH_SCORE_TABLE_ROWS; row++)
   {
     state->bank3->hiscore.row_addr[row][0] = name_entry_row_offsets[row][0];
@@ -4480,7 +4488,12 @@ static void name_entry_setup_screen(chqstate_t *state)
   state->bank3->hiscore.blink_offset      = 0;
   state->bank3->hiscore.cursor_addr       = HISCORE_CURSOR_ADDR_INIT;
   state->bank3->hiscore.complete          = 0;
-  state->bank3->hiscore.intro_timer       = 0xA0; /* $C13D reset value */
+  /* $C0DB-$C0E9: intro length = $A0 - clamp(7 - row_counter, 0..7) * 16,
+   * with row_counter = 10 - row. Ranks 5-10 scroll for less time so their
+   * row parks on the bottom visible line instead of scrolling past it. */
+  state->bank3->hiscore.intro_timer = 0xA0;
+  if (state->bank3->hiscore.row > 3)
+    state->bank3->hiscore.intro_timer -= (u8) ((state->bank3->hiscore.row - 3) * 16);
 }
 
 /**
@@ -4491,19 +4504,16 @@ static void name_entry_setup_screen(chqstate_t *state)
  * - ihe_flash_loop ($C133-$C142): the row scroll-in intro. Calls
  *   scroll_score_rows every frame while hiscore.intro_timer is nonzero.
  * - ihe_entry_loop ($C149-$C152): the interactive typing loop, entered once
- *   the intro timer reaches zero. Calls name_entry_frame (the current
- *   letter's blink) instead -- scroll_score_rows is never called again, so
- *   the rows stop scrolling for the rest of name entry, but hiscore.row's
- *   text keeps blinking via a direct blink_hiscore_row call alongside
- *   name_entry_frame (matching the real $C155/$C2FB call, which continues
- *   to redraw hiscore.row's text every frame after the row has parked).
+ *   the intro timer reaches zero. Calls name_entry_frame (the entry row's
+ *   blink) instead -- scroll_score_rows is never called again, so the rows
+ *   stop scrolling for the rest of name entry.
  *
  * Both phases call name_entry_input and run until hiscore_finalise sets
  * hiscore.complete.
  *
  * Conv: the Z80's $C133 loop condition ($C13C-$C142) tests a self-modified
  *       operand ("LD A,$A0 / DEC A / LD ($C13D),A") that counts down once from
- *       160 over 160 frames; the skool's own comment ("always recomputes to a
+ *       its seeded value; the skool's own comment ("always recomputes to a
  *       constant $9F, so JR NZ is always taken") only holds for a single static
  *       read of the bytes and misses the self-modification -- see
  *       hiscore.intro_timer's own comment (Bank3State.h). This port models the
@@ -4531,7 +4541,6 @@ static void ihe_flash_loop(chqstate_t *state)
     else
     {
       name_entry_frame(state);
-      blink_hiscore_row(state, 0);
     }
 
     name_entry_input(state);
@@ -4570,29 +4579,17 @@ static void cursor_cell_addr(u8 char_index, u8 *D_out, u8 *E_out)
 }
 
 /**
- * $C155: Advance the currently-typed letter's blink and redraw it
+ * $C155: Blink the entry row in the high-score table
  *
- * Rotates the draw/erase phase (see blink_hiscore_row's comment for why this
- * is an 8-bit RLC rotation, not a per-frame flip) and redraws the
- * currently-selected letter cell, called once per frame from ihe_flash_loop.
- *
- * Conv: the Z80 reads a live 2-byte scratch value from $C422 (statically part
- *       of row 1's template padding in ROM data) to locate the cell; its real
- *       runtime purpose could not be recovered from static disassembly. This
- *       computes the same cell directly from hiscore.char_index via
- *       cursor_cell_addr instead.
+ * Called once per frame from ihe_flash_loop after the intro scroll. The
+ * operand of $C155 LD HL,$C422 is patched at $C0D8 to the entry row's slot
+ * in the row-address table ($C401 + row * 33), so this loads that row's
+ * live screen address and calls $C2FB, which rotates the draw/erase phase
+ * and draws or erases the row's text there.
  */
 static void name_entry_frame(chqstate_t *state)
 {
-  u8 D_screen; /* target cell screen address high byte (was D) */
-  u8 E_screen; /* target cell screen address low byte (was E) */
-
-  cursor_cell_addr(state->bank3->hiscore.char_index, &D_screen, &E_screen);
-
-  state->bank3->hiscore.draw_erase_toggle =
-    (u8) ((state->bank3->hiscore.draw_erase_toggle << 1) |
-           (state->bank3->hiscore.draw_erase_toggle >> 7));
-  redraw_name_frame(state, D_screen, E_screen);
+  blink_hiscore_row(state, 1);
 }
 
 /* Conv: added -- redraws whichever of the 3 cells hiscore.char_index
@@ -4643,8 +4640,9 @@ static void set_marquee_attr(chqstate_t *state, u8 L_attr, u8 value)
  * into (cursor_addr) between bright red and off, by rotating flash_phase_a
  * and using the bit rotated out as the blink state. Runs every frame,
  * unlike name_entry_dispatch's own once-per-sweep promote-to-solid step;
- * see name_entry_dispatch's prologue for how the two combine. */
-static void fast_blink_best_officers_cell(chqstate_t *state)
+ * see name_entry_dispatch's prologue for how the two combine. Returns the
+ * bit rotated out, which the caller also uses to blank the letter cell. */
+static u8 fast_blink_best_officers_cell(chqstate_t *state)
 {
   u8 carry_a;      /* MSB rotated out of flash_phase_a this frame (was Cy after RLC $C59A) */
   u8 C_blink_attr; /* fast-blink colour for the cell in progress (was C) */
@@ -4661,8 +4659,7 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
   set_marquee_attr(state, (u8) (state->bank3->hiscore.cursor_addr + 0x20),
                           (u8) (C_blink_attr & ~ATTR_BRIGHT));
 
-  state->bank3->hiscore.flash_phase_b =
-    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | (state->bank3->hiscore.flash_phase_b >> 7));
+  return carry_a;
 }
 
 /**
@@ -4692,16 +4689,21 @@ static void fast_blink_best_officers_cell(chqstate_t *state)
  * what actually makes the row look like it is "cycling" one letter at a
  * time. Rendered here as fast_blink_best_officers_cell.
  *
- * Conv: $C1C7/$C1D2's JP C,$C291/JP C,$C278 (taken from the flash_phase_a/
- *       flash_phase_b rotations) are alternate entry points into this same
- *       input-read code, an optimisation the real hardware uses to skip
- *       redundant work -- not a distinct visual or behavioural effect. This
- *       port always falls through to the unconditional RIGHT/LEFT/FIRE dispatch
- *       below instead, so flash_phase_b is rotated for fidelity only and has no
- *       visible effect here.
+ * $C1C7/$C1D2 gate the rest on the two flash phases. When flash_phase_a's
+ * bit is set, the letter cell is blanked (JP C,$C291 with HL at the zero
+ * bytes at $C579). Otherwise flash_phase_b rotates; when its bit is set, the
+ * letter is redrawn (JP C,$C278). Only when neither is set is input acted
+ * on, which with the $F0/$EE seeds is one frame in eight. This paces the
+ * letter cycling and gives the letter cell its blink. Every path that acts
+ * on input also ends by redrawing the letter.
  */
 static void name_entry_dispatch(chqstate_t *state, u8 A_input)
 {
+  u8 carry_a; /* bit rotated out of flash_phase_a (was Cy via EX AF,AF') */
+  u8 carry_b; /* bit rotated out of flash_phase_b (was Cy after RLC $C59B) */
+  u8 D_screen; /* letter cell screen address high byte (was D) */
+  u8 E_screen; /* letter cell screen address low byte (was E) */
+
   if (--state->bank3->hiscore.blink_timer == 0)
   {
     u8 L_attr; /* selector cell column before advancing (was L via $C596) */
@@ -4738,40 +4740,62 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
     set_marquee_attr(state, L_attr, attribute_BLACK_OVER_BLACK);
   }
 
-  fast_blink_best_officers_cell(state);
+  carry_a = fast_blink_best_officers_cell(state);
+  if (carry_a)
+  {
+    /* $C1C7 JP C,$C291: blank the letter cell. */
+    cursor_cell_addr(state->bank3->hiscore.char_index, &D_screen, &E_screen);
+    erase_letter_cursor(state, D_screen, E_screen);
+    return;
+  }
+
+  /* $C1CA-$C1D2 */
+  carry_b = (u8) (state->bank3->hiscore.flash_phase_b >> 7);
+  state->bank3->hiscore.flash_phase_b =
+    (u8) ((state->bank3->hiscore.flash_phase_b << 1) | carry_b);
+  if (carry_b)
+  {
+    redraw_letter_cursor(state); /* JP C,$C278 */
+    return;
+  }
 
   if (A_input & USERINPUTFLAG_FIRE)
   {
     high_score_row_t *DE_entry; /* row being written (was DE) */
     u8                A_code;   /* current candidate letter code (was A) */
 
-    if (state->bank3->hiscore.fire_locked)
-      return;
-    state->bank3->hiscore.fire_locked = 1;
-
-    if (state->bank3->hiscore.char_index == 2)
+    if (!state->bank3->hiscore.fire_locked)
     {
-      /* hiscore_finalise stores this last letter itself -- no need to write
-       * DE_entry->name here first. */
-      hiscore_finalise(state);
+      state->bank3->hiscore.fire_locked = 1;
+
+      if (state->bank3->hiscore.char_index == 2)
+      {
+        /* hiscore_finalise stores this last letter itself -- no need to
+         * write DE_entry->name here first. */
+        hiscore_finalise(state);
+        return;
+      }
+
+      DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
+      A_code   = state->bank3->hiscore.letter_code;
+      DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
+
+      state->bank3->hiscore.char_index++;
+      state->bank3->hiscore.letter_code = '@';
+    }
+  }
+  else
+  {
+    state->bank3->hiscore.fire_locked = 0;
+
+    if (A_input & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT))
+    {
+      cycle_and_draw_letter(state, A_input);
       return;
     }
-
-    DE_entry = &state->bank3->high_score_table[state->bank3->hiscore.row];
-    A_code   = state->bank3->hiscore.letter_code;
-    DE_entry->name[state->bank3->hiscore.char_index] = (A_code == '@') ? '.' : A_code;
-
-    state->bank3->hiscore.char_index++;
-    state->bank3->hiscore.letter_code = '@';
-
-    redraw_letter_cursor(state);
-    return;
   }
 
-  state->bank3->hiscore.fire_locked = 0;
-
-  if (A_input & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT))
-    cycle_and_draw_letter(state, A_input);
+  redraw_letter_cursor(state); /* $C278 */
 }
 
 /**
@@ -4779,7 +4803,7 @@ static void name_entry_dispatch(chqstate_t *state, u8 A_input)
  *
  * Stores the current candidate letter (or '.' for the blank marker) into
  * the row's name[], marks name entry complete, plays the confirm sound,
- * redraws the confirmed cell one last time, then cues the finishing tune.
+ * blinks the entry row one last time, then cues the finishing tune.
  *
  * Conv: the Z80 falls into an unbounded "service sound, loop" tail ($C258-
  *       $C25B) reached by discarding its own caller's return address
@@ -4804,7 +4828,8 @@ static void hiscore_finalise(chqstate_t *state)
   state->bank3->hiscore.complete = 1;
 
   stop_music_and_silence(state); /* $ED0B -- confirm sound */
-  name_entry_frame(state);       /* final redraw of the confirmed cell */
+  if (state->bank3->hiscore.intro_timer == 0)
+    name_entry_frame(state); /* $C237-$C23B: one more entry-row blink */
   titlescr_start_tune(state, 2);
 }
 
@@ -4897,7 +4922,7 @@ static void hiscore_draw_glyph(chqstate_t *state, u8 D_screen, u8 E_screen)
  * correctly for 7 out of 8 steps, but on the 8th (low 3 bits wrap 7 -> 0)
  * the carry must land in E's cell-row bits instead -- the same
  * third-boundary-wrap idiom documented in cad_draw_glyph and
- * redraw_name_frame's own draw/erase loops. Shared by scroll_score_rows
+ * redraw_score_name's own draw/erase loops. Shared by scroll_score_rows
  * (one step per row per frame) and draw_table_field_scrolling (up to 8
  * steps per glyph, to walk down one character cell). */
 static void advance_screen_scanline(u8 *D, u8 *E)
@@ -5003,7 +5028,7 @@ static void scroll_score_rows(chqstate_t *state)
 
     DE_entry = &state->bank3->high_score_table[row];
 
-    draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1, TABLE_ROW_COLOUR);
+    draw_score_row_fields(state, D, E, (u8) row, DE_entry, 1);
   }
 }
 
@@ -5078,11 +5103,6 @@ static const u8 *font_glyph_for_char(u8 A_char)
  *                  bits (0xE0) are used -- the column comes from x/i.
  * \param[in] text  Raw ASCII bytes to draw.
  * \param[in] len   Number of characters in [text].
- * \param[in] attrs Conv: added -- no Z80 equivalent. Attribute byte written for
- *                  this field's cells, in place of the fixed TABLE_ROW_COLOUR.
- *                  Lets scroll_score_rows set the FLASH bit on the rank 1 row
- *                  so it blinks via real ZX hardware FLASH (see Screen.c's
- *                  WRITE8PIX/WRITE8PIX_16) instead of a software toggle.
  * \param[in] erase Zero to draw (rsn_char_loop, $C304): a leading 1-row erase
  *                  then a 7-row glyph blit, offset one row below it. Non-zero
  *                  to erase (rsn_char_loop2, $C37B): 8 rows of zero at the
@@ -5095,7 +5115,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
                                        u8          E_row,
                                        const u8   *text,
                                        int         len,
-                                       u8          attrs,
                                        int         erase)
 {
   int       i;         /* character index within text (Conv: added) */
@@ -5104,7 +5123,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
   const u8 *HL_font;   /* this glyph's 7-byte font[] entry, NULL for space */
   int       row;       /* scanline index within the glyph's rows (Conv: added) */
   u8       *DE_screen; /* pixel destination for this scanline (Conv: added) */
-  u16       attr_addr; /* this glyph's attribute address (Conv: added) */
 
   for (i = 0; i < len; i++)
   {
@@ -5112,10 +5130,6 @@ static void draw_table_field_scrolling(chqstate_t *state,
     E = (u8) ((E_row & 0xE0) | ((x >> 3) + i));
 
     HL_font = font_glyph_for_char(text[i]);
-
-    attr_addr = (u16) (((0x58 + ((D >> 3) & 0x03)) << 8) | E);
-    *ADDRTOATTRS(attr_addr) = attrs;
-    update_attrs(state, attr_addr, 8, 8);
 
     if (HL_font == NULL)
       continue;
@@ -5188,8 +5202,7 @@ static void draw_score_row_fields(chqstate_t             *state,
                                   u8                      E,
                                   u8                      row,
                                   const high_score_row_t *entry,
-                                  int                     blink,
-                                  u8                      attrs)
+                                  int                     blink)
 {
   /* 128K bank 3: $C403-$C52C, the 10 static rank-suffix strings printed
    * beside each high-score row (fixed to screen position, never shifted --
@@ -5199,11 +5212,13 @@ static void draw_score_row_fields(chqstate_t             *state,
     "6TH  ", "7TH  ", "8TH  ", "9TH  ", "10TH ",
   };
 
-  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             attrs, !blink);
-  draw_table_field_scrolling(state,  64, D, E, entry->score, NELEMS(entry->score),           attrs, !blink);
-  draw_table_field_scrolling(state, 120, D, E, entry->stage_code, NELEMS(entry->stage_code), attrs, !blink);
-  draw_table_field_scrolling(state, 176, D, E, &entry->retry_digit, 1,                       attrs, !blink);
-  draw_table_field_scrolling(state, 224, D, E, entry->name, NELEMS(entry->name),             attrs, !blink);
+  draw_table_field_scrolling(state,   0, D, E, high_score_rank_suffixes[row], 5,             !blink);
+  /* Columns follow the row record at $C403: suffix 0-4, score 5-12, stage
+   * 17-19, retry 25, name 28-30. */
+  draw_table_field_scrolling(state,   5 * 8, D, E, entry->score, NELEMS(entry->score),           !blink);
+  draw_table_field_scrolling(state,  17 * 8, D, E, entry->stage_code, NELEMS(entry->stage_code), !blink);
+  draw_table_field_scrolling(state,  25 * 8, D, E, &entry->retry_digit, 1,                       !blink);
+  draw_table_field_scrolling(state,  28 * 8, D, E, entry->name, NELEMS(entry->name),             !blink);
 }
 
 /**
@@ -5264,43 +5279,26 @@ static void blink_hiscore_row(chqstate_t *state, int do_toggle)
              (state->bank3->hiscore.draw_erase_toggle >> 7));
   blink = !(state->bank3->hiscore.draw_erase_toggle & 1);
 
-  draw_score_row_fields(state, D, E, row, DE_entry, blink, TABLE_ROW_COLOUR);
+  draw_score_row_fields(state, D, E, row, DE_entry, blink);
 }
 
 /**
- * $C2FB: Draw or erase the currently-selected letter cell
+ * $C291 with HL = $C579: Blank the letter cell
  *
- * Toggles hiscore.draw_erase_toggle and redraws the currently-selected letter
- * cell at (D_screen, E_screen) accordingly, giving the letter being typed
- * its blink. draw_erase_toggle is shared with scroll_score_rows/
- * redraw_score_name's own draw/erase loops in the original; this port only
- * needs it for the single cell currently being typed.
+ * name_entry_dispatch's $C1C7 JP C,$C291 enters the glyph blitter with HL at
+ * the zero bytes at $C579, so the double-height letter cell is cleared. This
+ * gives the letter being typed its blink.
  *
- * Conv: reduced scope -- the real $C2FB is an entry point into
- *       redraw_score_name's row loop (rsn_char_loop/rsn_char_loop2), which
- *       alternates every already-confirmed name across all 10 ranks. This only
- *       drives the single cell the player is currently typing, since that is
- *       the only text this port's redraw_score_name (the full-row version,
- *       above) does not already keep in view once revealed.
- *
- * \param[in] D_screen Screen address high byte of the currently-selected cell.
- * \param[in] E_screen Screen address low byte of the currently-selected cell.
+ * \param[in] D_screen Letter cell screen address high byte (was D).
+ * \param[in] E_screen Letter cell screen address low byte (was E).
  */
-static void redraw_name_frame(chqstate_t *state, u8 D_screen, u8 E_screen)
+static void erase_letter_cursor(chqstate_t *state, u8 D_screen, u8 E_screen)
 {
   u8 *DE_screen;  /* erase-blit cursor (was DE) */
   int glyph_addr; /* Z80 screen address of this cell (Conv: added) */
   int scan_row;   /* erase-blit row counter (Conv: rolled) */
 
-  if (!(state->bank3->hiscore.draw_erase_toggle & 1))
-  {
-    hiscore_draw_glyph(state, D_screen, E_screen);
-    return;
-  }
-
-  /* Conv: blanks 14 scanlines (two character rows), matching the
-   * double-height glyph hiscore_draw_glyph now draws -- see its own
-   * comment for why this cell is double-height, not single. */
+  /* 14 scanlines, each zero byte written twice as $C294-$C2AC does. */
   glyph_addr = (D_screen << 8) | E_screen;
   DE_screen  = ADDRTOSCREEN(glyph_addr);
   for (scan_row = 0; scan_row < 4; scan_row++)
@@ -6240,31 +6238,30 @@ static void titlescr_credit_inserted(chqstate_t *state)
 /**
  * $C69A: Refresh the high-score name table
  *
- * Copies the 3 preset high-score name/rank rows from $C403 into the work
- * buffer pointed to by ($800A), each row split into 15+7+6 byte segments
- * with 2-byte gaps skipped between segments.
+ * Stops any playing tune and silences the AY chip, then copies the top 3 rows
+ * of the live high-score table at $C403 into the "BEST OFFICERS" overlay
+ * buffer pointed to by ($800A), each row split into 15+7+6 byte segments with
+ * 2-byte gaps skipped between segments.
  *
- * Conv: stubbed per scope decision -- nothing in the C port yet models the
- *       destination buffer or a $800A-equivalent state field, and this task's
- *       State.h changes are handled separately. Reached both directly from
- *       titlescr_wait_loop's ~180-frame tune wait and via
- *       titlescr_credit_inserted; in the Z80 both paths end in a RET back to
- *       run_title_screen's own caller, which this function models simply by
- *       returning normally.
+ * Reached both directly from titlescr_wait_loop's ~180-frame tune wait and via
+ * titlescr_credit_inserted. In the Z80 both paths end in a RET back to
+ * run_title_screen's own caller, which this function models by returning
+ * normally.
+ *
+ * Conv: the row copy is not done here. Main.c's refresh_best_officers patches
+ *       the same rows into attract_mode_128k.best_officers just before the
+ *       overlay is shown, which is the only place the copy is read.
  */
 static void titlescr_refresh_name_table(chqstate_t *state)
 {
-  /* TODO: copy 3 rows of high-score name/rank data from $C403 into the
-   * buffer pointed to by ($800A) -- needs a destination buffer/state field,
-   * out of scope for this task. */
-  NOT_USED(state);
+  stop_music_and_silence(state); /* $C69B-$C69C DI; CALL $ED0B */
 }
 
 /**
  * $C6C4: Per-frame title-screen animation driver
  *
  * Syncs to the next interrupt, draws the six foreground objects ($BB00-$BB2C)
- * via the masked blitter ($C8C5), steps every object's animation script by
+ * via the glyph blitter ($C8C5), steps every object's animation script by
  * one frame ($C705), clears the playfield bitmap ($CC04), then draws the three
  * background objects ($BB36-$BB4A) via the alternate blitter ($C94F). In the
  * Z80 this block ends with an unconditional jump back to its own top
@@ -6332,8 +6329,7 @@ static u8 titlescr_animate_frame(chqstate_t *state)
     compute_glyph_blit_params_bg(state, rec->y, rec->x, rec->row);
   }
 
-  /* Conv: added */
-  update_whole_playfield(state);
+  update_whole_playfield(state); /* Conv: added */
   state->speccy->sleep(state->speccy, TITLE_ANIM_TSTATES);
 
   if (object_script_step(state))
@@ -6907,7 +6903,7 @@ static void compute_glyph_blit_params_fg(chqstate_t *state,
     while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
   }
 
-  blit_masked_sprite_dispatch_fg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
+  blit_glyph_dispatch_fg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                               g.C_width_select);
 }
 
@@ -7119,7 +7115,7 @@ static void compute_glyph_geometry(u8                     B_y,
 }
 
 /**
- * $C917: Masked-sprite blit dispatch (foreground objects)
+ * $C917: Glyph blit dispatch (foreground objects)
  *
  * Selects one of the 7 width-specific OR-blit routines by C_width_select,
  * decremented against 1..5 with an explicit test; anything else (6 or more)
@@ -7132,12 +7128,12 @@ static void compute_glyph_geometry(u8                     B_y,
  * \param[in] B_height_pairs Number of row-pairs to draw.
  * \param[in] C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
-                                           int         H,
-                                           int         L,
-                                           const u8   *src,
-                                           int         B_height_pairs,
-                                           int         C_width_select)
+static void blit_glyph_dispatch_fg(chqstate_t *state,
+                                   int         H,
+                                   int         L,
+                                   const u8   *src,
+                                   int         B_height_pairs,
+                                   int         C_width_select)
 {
   switch (C_width_select)
   {
@@ -7155,7 +7151,7 @@ static void blit_masked_sprite_dispatch_fg(chqstate_t *state,
  *
  * Structurally identical to compute_glyph_blit_params_fg above (see its Conv
  * notes for the SP-as-pointer and frame-timing decisions, which apply here
- * unchanged), but feeds blit_masked_sprite_dispatch_bg, and its row-offset
+ * unchanged), but feeds blit_glyph_dispatch_bg, and its row-offset
  * skip loop computes the per-row-pair source stride differently for the
  * "width-6"/"width-7" quirk routines (4 bytes for width 6, 2 bytes for
  * width 7, matching blit_width6/blit_width7's real 2-byte/1-byte-per-row
@@ -7197,14 +7193,14 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
     while (--A_skip_pairs != 0);
   }
 
-  blit_masked_sprite_dispatch_bg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
+  blit_glyph_dispatch_bg(state, g.H, g.L, g.HL_src, g.B_height_pairs,
                                 g.C_width_select);
 }
 
 /**
- * $C9AF: Masked-sprite blit dispatch (background objects)
+ * $C9AF: Glyph blit dispatch (background objects)
  *
- * Structurally identical to blit_masked_sprite_dispatch_fg but tests widths
+ * Structurally identical to blit_glyph_dispatch_fg but tests widths
  * 1..6 explicitly, so blit_width7 (unreachable from the foreground
  * dispatcher above) is reached here as the default case.
  *
@@ -7214,12 +7210,12 @@ static void compute_glyph_blit_params_bg(chqstate_t *state,
  * \param[in] B_height_pairs Number of row-pairs to draw.
  * \param[in] C_width_select Width selector, 1-7.
  */
-static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
-                                           int         H,
-                                           int         L,
-                                           const u8   *src,
-                                           int         B_height_pairs,
-                                           int         C_width_select)
+static void blit_glyph_dispatch_bg(chqstate_t *state,
+                                   int         H,
+                                   int         L,
+                                   const u8   *src,
+                                   int         B_height_pairs,
+                                   int         C_width_select)
 {
   switch (C_width_select)
   {
@@ -7234,7 +7230,7 @@ static void blit_masked_sprite_dispatch_bg(chqstate_t *state,
 }
 
 /**
- * $C9D5: Masked-sprite OR-blit, row_bytes wide
+ * $C9D5: Glyph OR-blit, row_bytes wide
  *
  * Also covers the identically-shaped copies at $CA17, $CA64, $CABC, $CB17,
  * $CB7B, $CBC5.
@@ -7314,7 +7310,7 @@ static void blit_glyph_rows(chqstate_t *state,
 }
 
 /**
- * $C9D5: Width-1 masked-sprite OR-blit (1 byte per scanline).
+ * $C9D5: Width-1 glyph OR-blit (1 byte per scanline).
  *
  * Thin wrapper around blit_glyph_rows with row_bytes fixed at 1.
  *
@@ -7367,7 +7363,7 @@ static void advance_glyph_scanline(int *H, int *L)
 }
 
 /**
- * $CA17: Width-2 masked-sprite OR-blit (2 bytes per scanline).
+ * $CA17: Width-2 glyph OR-blit (2 bytes per scanline).
  *
  * Thin wrapper around blit_glyph_rows with row_bytes fixed at 2.
  *
@@ -7383,7 +7379,7 @@ static void blit_width2(
 }
 
 /**
- * $CA64: Width-3 masked-sprite OR-blit (3 bytes per scanline).
+ * $CA64: Width-3 glyph OR-blit (3 bytes per scanline).
  *
  * Thin wrapper around blit_glyph_rows with row_bytes fixed at 3.
  *
@@ -7399,7 +7395,7 @@ static void blit_width3(
 }
 
 /**
- * $CABC: Width-4 masked-sprite OR-blit (4 bytes per scanline).
+ * $CABC: Width-4 glyph OR-blit (4 bytes per scanline).
  *
  * Thin wrapper around blit_glyph_rows with row_bytes fixed at 4.
  *
@@ -7415,7 +7411,7 @@ static void blit_width4(
 }
 
 /**
- * $CB17: Width-5 masked-sprite OR-blit (5 bytes per scanline).
+ * $CB17: Width-5 glyph OR-blit (5 bytes per scanline).
  *
  * Thin wrapper around blit_glyph_rows with row_bytes fixed at 5.
  *
@@ -7431,7 +7427,7 @@ static void blit_width5(
 }
 
 /**
- * $CB7B: "Width-6" masked-sprite OR-blit
+ * $CB7B: "Width-6" glyph OR-blit
  *
  * Conv/bug preserved literally: despite its position in the dispatch chain
  * (reached when the glyph's width selector is 6 or more), this routine's
@@ -7456,10 +7452,10 @@ static void blit_width6(
 }
 
 /**
- * $CBC5: "Width-7" masked-sprite OR-blit
+ * $CBC5: "Width-7" glyph OR-blit
  *
  * Conv/bug preserved literally: only reachable via
- * blit_masked_sprite_dispatch_bg's default case. Byte-for-byte identical in
+ * blit_glyph_dispatch_bg's default case. Byte-for-byte identical in
  * shape to blit_width1 -- draws only 1 byte per scanline despite its
  * position at the end of the width-7 dispatch chain. See blit_width6's note
  * above; the same quirk applies here one width class down.
@@ -9300,17 +9296,18 @@ exit:
 }
 
 /**
- * $F3B6: Page in bank 3 and call a banked routine
+ * $F3B6: Swap in bank 3 and call a banked routine
  *
  * Patches a CALL instruction at $81C5 with [routine], backs up the 4 KB at
- * $B000 to $F000, sets up a temporary stack, pages in bank 3 via page_128k,
- * executes the patched CALL, then pages bank 3 back out, restores SP and
- * refills $B000 from $F000.
+ * $B000 to $F000 (swap_bank_3_128k uses it as a buffer), sets up a temporary
+ * stack below $C000, swaps bank 3's contents into $C000..$FFFF via
+ * swap_bank_3_128k, executes the patched CALL, then swaps them back out,
+ * restores SP and refills $B000 from $F000.
  *
  * In C, a switch on [routine] dispatches each Z80 entry-point address constant
- * to its C implementation. page_128k (relocated to $81D6) still brackets the
- * dispatch, page in before and page out after, matching the Z80 CALL pair at
- * $F3CE/$F3D5, even though it is a no-op in the C port.
+ * to its C implementation. swap_bank_3_128k (relocated to $81D6) still
+ * brackets the dispatch, swap in before and swap out after, matching the Z80
+ * CALL pair at $F3CE/$F3D5, even though it is a no-op in the C port.
  *
  * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
@@ -9327,7 +9324,7 @@ u8 bank3_call(chqstate_t *state, int routine)
 {
   u8 A_result; /* value to return to caller (was A) */
 
-  page_128k(state); /* $F3CE: page in */
+  swap_bank_3_128k(state); /* $F3CE: swap in */
 
   switch (routine)
   {
@@ -9351,7 +9348,7 @@ u8 bank3_call(chqstate_t *state, int routine)
     break;
   }
 
-  page_128k(state); /* $F3D5: page out */
+  swap_bank_3_128k(state); /* $F3D5: swap out */
 
   return A_result;
 }
@@ -9382,40 +9379,30 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * $F7C7: Set up interrupts and run the success jingle
  *
  * Calls setup_im2_interrupt_table, starts tune 1 (via titlescr_start_tune,
- * which also arms tune 1's drum-sample cue script), then falls into
- * basl_service_loop ($F7D1), which calls titlescr_music once per 50Hz
- * interrupt via HALT synchronisation. In the Z80 this loop is unconditional
- * (`CALL $F82F` / `JR $F7D1`) and never returns to its caller (was RET never
- * reached).
+ * which also arms tune 1's drum-sample cue script), then calls
+ * titlescr_music once per 50Hz interrupt ($F7D1). The loop itself is
+ * unconditional: it ends when tune 1's cue script reaches its $FE
+ * end-of-script byte, whose handler at $F829 discards two return addresses
+ * and jumps to stop_music_and_silence, so its RET returns straight to this
+ * routine's caller.
  *
- * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
- *       bank3_call, whose caller (handle_perp_caught_128k, and in turn its own
- *       caller's phase4 state machine) expects a normal return so scoring and
- *       fading can proceed on the same call — an infinite loop here would
- *       permanently hang the game thread. Per explicit scope decision, the
- *       Z80's unconditional loop is quantised into a bounded run of
- *       ATTRACT_TUNE_WAIT_FRAMES frames (the same 0xB4/180-frame, ~3.6s count
- *       the Z80 uses for the tune-4 wait in titlescr_wait_loop) and then
- *       returns normally. The frame count is a guess at the jingle's real
- *       duration.
+ * Conv: load_drum_op cannot unwind the C call stack, so it stops the tune and
+ *       returns normally; the loop here ends once that clears
+ *       title_music.tune_active.
  */
 static void play_success_music(chqstate_t *state)
 {
-  int B_wait; /* jingle frame countdown (was B, unbounded in the Z80) */
-
   setup_im2_interrupt_table(state);
   titlescr_start_tune(state, 1);
 
-  B_wait = ATTRACT_TUNE_WAIT_FRAMES;
-  do
+  while (state->bank3->title_music.tune_active)
   {
-    /* Conv: ~3.6s of jingle; without this the window stays up that long after
-     * the host asks to quit. */
+    /* Conv: without this the window stays up for the rest of the jingle
+     * after the host asks to quit. */
     CHECK_HOST_QUIT(state);
 
     titlescr_music(state);
   }
-  while (--B_wait);
 }
 
 /**

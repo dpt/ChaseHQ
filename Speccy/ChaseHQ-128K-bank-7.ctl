@@ -1845,27 +1845,33 @@ C $E05E,4 Loop while key pressed
 C $E062,2 Loop
 C $E065,4 Set interrupt vector table base to $8000
 C $E069,3 Call drive_chatter_stop
-b $E06C End-screen trigger flags and congratulations text pointers
-N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
-@ $E06C label=data_e06c
+b $E06C End-screen fade trigger flags
+N $E06C $E06C ($5C6C) and $E06D ($5C6D) are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
+@ $E06C label=es_fade_gates
 B $E06C,2,1 Trigger flags (see note above)
-N $E06E Still unidentified (3 bytes, values $01,$3F,$96) -- confirmed dead end: grepped for literal $5C6E/$5C6F/$5C70 operands across the full static bank-7 disassembly and the entire trace-end-screen.log execution capture, zero hits either way. Not reached by any direct-addressed instruction in the code disassembled so far; either accessed only via computed/indexed addressing not yet spotted, read by common-RAM code outside bank 7, or genuinely unused padding
-@ $E06E label=data_e06e
-B $E06E,3,1
-N $E071 Pointer table for the congratulations text: three pointers packed tight ($E071-$E076), then a 2-byte gap, then a fourth pointer ($E079-$E07A), then a trailing byte. Bytes at $E071-$E072, $E073-$E074, $E075-$E076, $E079-$E07A are little-endian relocated pointers $5C7C/$5CA5/$5CD0/$5CE8 -- relocating back (+$8400) gives $E07C/$E0A5/$E0D0/$E0E8, an exact match to the four text strings below
-W $E071,6,2 Pointers 1-3 (tight-packed)
-N $E077 Gap between pointer 3 and pointer 4 ($FF,$03) -- same confirmed dead end as $E06E: no literal $5C77/$5C78 operand anywhere in bank 7's static disassembly or trace-end-screen.log. $FF matches the terminator convention seen elsewhere (see $F8F5 SFX table), possibly a record separator/duration byte rather than table padding, but unproven
-B $E077,2,1
-W $E079,2,2 Pointer 4
+
+b $E06E End-screen chatter blocks
+D $E06E Two chatter blocks in the format print_chatter ($99EC) reads: a face number, then pointers to message strings, then a $FF terminator. The script's CHATTER commands pass their relocated addresses ($5C6E and $5C78) to start_chatter. Their pointers to the congratulations text are relocated too: add $8400 to find the strings below.
+@ $E06E label=chatterblk_nancy_congratulates
+B $E06E,1,1 Face 1: Nancy
+W $E06F,2,2 "THIS IS NANCY AT CHASE H.Q." in main memory
+W $E071,6,2 The three congratulations lines
+B $E077,1,1 Terminator
+@ $E078 label=chatterblk_press_gear
+B $E078,1,1 Face 3: Tony
+W $E079,2,2 "PRESS GEAR TO CONTINUE"
 B $E07B,1,1 Terminator
+
+b $E07C Congratulations text
 T $E07C,41,40:n1 "I WOULD LIKE TO CONGRATULATE YOU FOR YOUR"
 T $E0A5,43,42:n1 "HEROISM AND BRAVERY. YOU WILL BE REMEMBERED"
 T $E0D0,24,23:n1 "FOR A LONG TIME TO COME."
 T $E0E8,22,21:n1 "PRESS GEAR TO CONTINUE"
+
 b $E0FE Script data
 @ $E0FE label=script_data
 B $E0FE,1,1
-W $E0FF,2,2 -> data_e06e
+W $E0FF,2,2 -> chatterblk_nancy_congratulates
 B $E101,3,2,1
 W $E104,2,2 bitmap_endshot_1
 B $E106,7,7
@@ -1882,7 +1888,7 @@ B $E132,6,6
 W $E138,2,2 bitmap_endshot_3
 B $E13A,6,6
 W $E140,2,2 bitmap_endshot_4
-@ $E1E3 label=possible_data_block_e1e3
+@ $E1E3 label=es_script_congrats
 B $E142,200,13,8*18,4*2,8*4,3
 c $E20A Command interpreter
 D $E20A Confirmed live by trace-end-screen.log: reads script bytes via $A16D and dispatches on a DEC A/JP Z chain. Self-modifies the CALL operand at $E030 (live address $5C31, patched by LD ($5C31),DE at $E2D4) to repoint the main loop's per-frame handler call based on which command last ran.
@@ -1956,13 +1962,13 @@ c $E42E Sweep the playfield attributes toward their target colours
 D $E42E Called via the interpreter's self-modified $E030 dispatch. The gate byte at $E06C only lets it run on alternate calls. When it does run it walks all 512 attribute cells of $5900..$5AFF against the matching backbuffer bytes at $F000..$F1FF, which other code has rasterised the glyph shapes into: cells with BRIGHT set are left alone, cells whose masked colour already matches the backbuffer are copied verbatim, and the rest step their ink and paper fields one unit toward the target. Repeated over several frames this reveals the glyphs as a gradual colour change.
 D $E42E The ink increment at #R$E45D and the paper increment at #R$E468 are not masked back into their 3-bit fields, so a field that reaches its target exactly on the last step carries into the next one.
 @ $E42E label=es_attribute_fade_in
-C $E42E,3 HL -> data_e06c [$E06C]
+C $E42E,3 HL -> es_fade_gates [$E06C]
 C $E431,2 50-50 pattern, rotate in place
 C $E433,1 Return when bit set
 C $E434,3 Middle band of attributes
 C $E437,3 Backbuffer
 C $E43A,4 Leave the cell alone if BRIGHT is set
-@ $E452 label=e452
+@ $E452 label=es_fade_in_step
 c $E46D Fade the glyph attribute band out
 D $E46D Two thin wrappers over one tail: #R$E46D gates on $5C6D and #R$E472 on $5C6C. The tail rotates the gate byte and returns unless the bit rotated out was set, so each gate runs the fade on alternate calls. When it does run it sweeps the same 512 attribute cells es_attribute_fade_in covers, taking one off each cell's ink and one unit off its paper, both stopping at zero.
 D $E46D The bytes are masked down to their ink and paper fields and re-combined, so BRIGHT and FLASH are dropped from every cell the fade touches.
@@ -1978,6 +1984,7 @@ C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
+D $E4A9 Copies a 13-byte-wide, 64-row bitmap to the screen a row at a time, then its 13 by 8 block of attributes to the matching back buffer attribute address.
 R $E4A9 I:HL Address of image to plot
 R $E4A9 I:DE Destination address in the screen
 @ $E4A9 label=draw_endshot
@@ -1994,7 +2001,7 @@ C $E4C5,2 Loop while counter
 C $E4C7,1 Restore destination
 C $E4C8,9 Turn the destination's high byte into the matching backbuffer attribute address
 C $E4D1,2 8 rows of attributes
-@ $E4D3 label=e4d3_loop
+@ $E4D3 label=de_attribute_loop
 C $E4D3,5 Copy 13 attribute bytes
 C $E4D8,5 DE += 19  (a gap value - 13+19 = 32)
 C $E4DD,1 A--
@@ -2066,7 +2073,7 @@ C $F7F0,3 Self modify #R$F8A4 -- clear the <drum is playing> flag
 C $F7F3,3 Self modify #R$F897 -- clear the extra delay counter
 C $F7F6,3 Self modify #R$F839 -- clear the <playback started> flag
 C $F7F9,3 Load address of music patterns
-C $F7FC,3 Jump to (np_start_at_hl)
+C $F7FC,3 Jump to the relocated b7np_start_at_hl
 c $F7FF Setup the next music pattern
 D $F7FF Almost the same as #R$EE6E@main
 N $F7FF Keep playing current pattern until this counter becomes zero.
@@ -2171,7 +2178,7 @@ C $F8B7,1 Enable interrupts
 C $F8B8,1 Return
 c $F8B9 Drum sample players
 D $F8B9 Used by #R$F82F.
-R $F8B9 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+R $F8B9 I:A Speed value: the bits played from each sample byte. The end-screen music data only uses 8
 @ $F8B9 label=b7_playdrum_X
 C $F8B9,3 Load address of drum X data
 C $F8BC,2 94 sample bytes
@@ -2198,10 +2205,10 @@ C $F8DD,2 Rotate sample byte in-place
 C $F8DF,2 Loop to pd_loop while #REGb
 C $F8E1,1 Move to next sample byte
 C $F8E2,1 Decrement sample bytes remaining
-C $F8E3,2 Jump to pd_end_of_sample if no bytes remain
+C $F8E3,2 Jump to b7pd_end_of_sample if no bytes remain
 C $F8E5,3 Read A from the <interrupt flag> at #R$F8AA
 C $F8E8,1 Set flags
-C $F8E9,3 Loop to pd_go if clear
+C $F8E9,3 Loop to the relocated b7pd_go if clear
 C $F8EC,1 Otherwise unbank
 C $F8ED,1 Return
 @ $F8EE label=b7pd_end_of_sample

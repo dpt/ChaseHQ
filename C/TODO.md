@@ -1,43 +1,19 @@
 # TODO
 
-- Audit "Conv: added" vars
-- Bug: 48K mode drum timing is off (lack of interrupts?)
-- Bug: Highscore: Characters vanish
-- Bug: Highscore: Flicker at bottom when scrolling
-- Bug: Highscore: Hard to enter name
-- Bug: Highscore: Test: non-highest score
-- Bug: Success tune cut short?
-- Compare the demo level with stage 4
-- Continue backporting changes to the disasm
-- Flush out this 'it's a custom level' germ of an idea that keeps reappearing
-- Investigate Claude fixes in case they've made the C diverge from the asm
-- New video
-- Optimisations
-- Slap warnings on the level converter now it's finished?
+- Finish zxgame branch work (just merging?)
+- Bug: 48K mode drum timing is off (lack of interrupts?). The end screen's
+  copy of the engine (`es_playdrum_go`, bank 7) has the same gap
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)
-- RISC OS: Sound support (...how?)
 - Graphics import/export still needs work
+- Explore Optimisations
 
-### Authority sweep (comments that read as guesswork)
+- Implement RISC OS sound support.
+- RO build could disable libpng/libjpeg when using DPTLib.
 
-Each item below is a comment that admits doubt, talks about the porting process
-rather than the code, or leaves skool markup in place. Resolve the question
-against the skool then rewrite the comment as a statement — or delete it.
-
-- Outstanding `TODO:` markers not already tracked above: `Bank3.c:6257` (copy
-  hi-score name/rank rows), `Bank7.c:399` (48K sound code in bank 7 not
-  ported), `Main.c:21556` ("the call-return setup needs analysing"),
-  `SDLMain.c:2109` (border colour), and the `TODO: Calibrate` cluster in
-  `Internal.h`
-
-- Name the numbered `chqstate` SM field groups after what distinguishes them,
-  the way `dr_{left,right}_{markings,fill}_page` now are: `dr_backbuf_1/_2`,
-  `dt_fill_start_a/_b`, `dee_draw_tunnel_1/_2`, `meter_1/2_level`. Each numbers
-  genuinely parallel SM sites, so this needs the consumers traced first — the
-  rest of the naming pass is done
 
 ## FOR WRITEUP / NOTES
 
+- New video
 - Document the game from start until its first frame is built
 - Also it omits unneeded ops - it should be efficient (but nowhere near the
   original)

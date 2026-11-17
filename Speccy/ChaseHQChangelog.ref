@@ -5,6 +5,30 @@
 [Page:Changelog]
 SectionType=BulletPoints
 
+[Changelog:20261117]
+Sixth release
+
+- Every label now has a descriptive name: address-suffixed and guessed labels
+  replaced, with names backported from the C port
+
+- Resolved all remaining uncertain, '??' and placeholder comments across the
+  main disassembly and bank 3
+
+- Every code block now has a description and every bare data byte a comment
+
+- Decoded the bank 3 music driver's command table and the $8008 link table
+
+- Identified the end screen's chatter blocks and recorded its drum speed
+
+- Replaced debugger sample notes with explanations derived from the code
+
+- Gave decoded graphics size-specific filenames and fixed the marquee image
+
+- Added a ref file of facts about the demo build
+
+- Corrected register lists, block titles and stale label references in
+  comments
+
 [Changelog:20260817]
 Fifth release
 
