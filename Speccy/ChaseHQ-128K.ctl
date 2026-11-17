@@ -5304,6 +5304,7 @@ C $9D4A,2 Loop while #REGb > 0
 C $9D4C,4 Clear overtake_bonus_counter
 C $9D50,1 Return
 c $9D51 Update scoreboard and flashing lights
+D $9D51 Opens with the strings it draws: the bonus digits, "HI" and "LO", and "STAGE n". The code at #R$9D62 redraws the stage number when it changes, clears and draws the bonus digits when a bonus is triggered and then flashes their attributes red and yellow for eight frames, redraws the gear when it changes, and toggles the brightness of the two lights while the perp is in sight. It exits through #R$9E11.
 @ $9D51 label=bonus_string
 T $9D51,6,5:n1 Bonus digits buffer
 @ $9D57 label=hi
@@ -5754,6 +5755,7 @@ C $A0C9,1 Restore screen pointer
 C $A0CA,1 Move to next column
 C $A0CB,1 Return
 c $A0CC Keyscan
+D $A0CC Opens with the input settings: the Kempston flag, the eight key definitions and the user_input byte. The code at #R$A0D6 reads the controls into user_input. With Kempston chosen, the joystick supplies the fire and direction bits and only the first three key definitions (quit, pause and boost) are read from the keyboard; otherwise all eight keys are read. Opposing directions pressed together cancel out.
 @ $A0CC label=kempston_flag
 B $A0CC,1,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
 @ $A0CD label=keydefs

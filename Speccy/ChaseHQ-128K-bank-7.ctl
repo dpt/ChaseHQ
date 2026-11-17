@@ -1984,6 +1984,7 @@ C $E499,3 Call clear_playfield
 C $E49C,12 Zero first 512 bytes of the (backbuffer)
 C $E4A8,1 Return
 c $E4A9 Draws an end-game montage shot to the screen (attrs -> screen)
+D $E4A9 Copies a 13-byte-wide, 64-row bitmap to the screen a row at a time, then its 13 by 8 block of attributes to the matching back buffer attribute address.
 R $E4A9 I:HL Address of image to plot
 R $E4A9 I:DE Destination address in the screen
 @ $E4A9 label=draw_endshot

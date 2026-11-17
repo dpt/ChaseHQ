@@ -10,6 +10,7 @@
 @ $C000 remote=bank1:$F05A,$F225
 @ $C000 remote=bank4:$E9CC,$EFBC
 c $C000 Entry points
+D $C000 Four JP instructions at fixed addresses. Main memory enters the bank through #R$F3B6@main with HL set to one of them.
 C $C000,3 Title animations
 C $C003,3 Check high score
 C $C006,3 Plays success music
