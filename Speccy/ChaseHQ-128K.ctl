@@ -2164,13 +2164,13 @@ C $803C,3 Call tape_load_at_ix subroutine
 C $803F,2 Loop to ls_load_header while failed
 C $8041,3 #REGhl = &hazards[1]
 @ $8045 refs=:$E810
-C $8044,3 Are the two loaded bytes equal? [seems odd]
+C $8044,3 Both header bytes must hold the same stage number, a simple integrity check
 C $8047,2 Loop to ls_load_header if not
 C $8049,2 Make it ASCII and terminate it by adding 48+128
 @ $804B ssub=LD (found_n + 6),A
 C $804B,3 Set x in "FOUND x"
 C $8050,3 #REGa = wanted_stage_number
-C $8053,1 equal?
+C $8053,1 Is it the wanted stage?
 C $8054,2 not the wanted stage
 C $8056,3 Call ls_print_start_tape
 C $8059,3 Call tape_load_to_5c00
@@ -2200,16 +2200,16 @@ C $808F,2 Jump if > 0
 @ $8091 refs=:$E810,$F32E
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_print_twice
-C $8095,3 why call adjacent instr? to exec this func twice?
+C $8095,3 Call the routine below, then fall into it, so it runs twice
 @ $8098 label=ls_print_message
 C $8098,1 preserve counter
 C $8099,1 preserve message pointer
 @ $809A label=ls_809A
 C $809A,2 flags byte for print_message
-C $809C,1 why dec here?
+C $809C,1 Step back one byte: print_message skips a flags byte these messages lack
 @ $809D refs=:$F2A2
 C $809D,3 Call print_message
-C $80A0,2 printing a whole set by looping?
+C $80A0,2 Print #REGb consecutive messages
 C $80A2,3 Call transition
 C $80A5,3 Call send_playfield
 C $80A8,1 restore message pointer
@@ -2245,7 +2245,7 @@ C $80D3,1 Always sets Z (A compared to itself)
 C $80D5,3 Call tl_edge_1
 C $80DA,3 Delay time
 @ $80DD label=tl_delay
-C $80DD,2 Delay for B iterations -- is B not initialised?
+C $80DD,2 Delay for B iterations; B is whatever the edge test left, so the delay is only approximate
 C $80DF,1 HL--
 C $80E0,4 Loop while HL > 0
 C $80E4,3 Call tl_edge_2
@@ -2267,9 +2267,9 @@ C $8113,2 Odd/Bug: Doubled JR NZ
 C $8115,2 Odd/Bug: Jump to next instr
 @ $8117 label=tl_store
 @ $811C label=tl_flag
-C $811C,2 Shift into carry?
+C $811C,2 Keep the carry (the load/verify flag) in bit 0 of C
 C $811E,1 A ^= L
-C $8120,3 RR C and copy to A?
+C $8120,3 Restore C, putting the flag back in carry
 C $8123,1 DE++
 @ $8126 label=tl_next
 @ $8128 label=tl_dec
@@ -2283,8 +2283,8 @@ C $813C,2 A = H ^ L
 C $813E,1 Save A
 C $813F,4 Loop while DE > 0
 C $8143,1 Restore A
-C $8144,2 Is it 1?
-C $8146,1 Return (with flags?)
+C $8144,2 Carry set if the checksum in H is zero
+C $8146,1 Return, carry set for success
 @ $8147 label=tl_edge_2
 C $8147,3 Call tl_edge_1
 @ $814B label=tl_edge_1
@@ -2292,7 +2292,7 @@ C $8147,3 Call tl_edge_1
 C $814B,5 Delay loop of 22 iterations
 C $8150,1 Clear carry flag
 @ $8151 label=tl_sample
-C $8151,1 what's in B?
+C $8151,1 Count the edge timing in B; wrapping to zero is a timeout
 C $8152,1 Return if zero (failure)
 C $8153,2 %01111111
 C $8155,2 Read from port
@@ -2399,7 +2399,7 @@ C $826B,3 Return if fire was pressed
 C $826E,3 Call drive_attract_demo
 N $8271 This entry point is used by the routine at #R$F220.
 C $8271,3 #REGhl -> attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
-C $8274,2 Number of messages?
+C $8274,2 Number of messages to print: 1, or 2 when the blink below shows PRESS GEAR TO PLAY
 N $8276 Blink "PRESS GEAR TO PLAY".
 C $8276,2 A = <initially $F0, self modified>
 C $8278,1 Rotate
@@ -2433,13 +2433,13 @@ W $82B8,2,2 Attribute address
 T $82BA,18,17:n1 "PRESS GEAR TO PLAY"  (this blinks)
 @ $82CC label=credits_messages
 B $82CC,1,1 Frame delay until the following messages start being shown (0 = 256)
-B $82CD,1,1 Frame delay until next message?
+B $82CD,1,1 Frame delay before the next message appears
 B $82CE,1,1 Flags (single)
 B $82CF,1,1 Attribute (red)
 W $82D0,2,2 Back buffer address
 W $82D2,2,2 Attribute address
 T $82D4,20,19:n1 "PROGRAM      JOBBEEE"
-B $82E8,1,1 Frame delay?
+B $82E8,1,1 Frame delay before the next message appears
 B $82E9,1,1 Flags (single)
 B $82EA,1,1 Attribute (red)
 W $82EB,2,2 Back buffer address
@@ -2459,7 +2459,7 @@ B $8323,1,1 Attribute (red)
 W $8324,2,2 Back buffer address
 W $8326,2,2 Attribute address
 T $8328,23,22:n1 "(C) 1989 OCEAN SOFTWARE"
-B $833F,1,1 Frame delay?
+B $833F,1,1 Frame delay before the next message appears
 B $8340,1,1 Flags (single)
 B $8341,1,1 Attribute (red)
 W $8342,2,2 Back buffer address
@@ -2721,7 +2721,7 @@ C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise (will RET for us)
 @ $85D6 label=rps_start_game
 C $85D6,2 Forward transition
-N $85D8 We can only arrive here if no carry... so why the conditional CALL?
+N $85D8 Only reached by the JR NC at #R$85C7, so carry is always clear and the conditional CALL always runs.
 C $85D8,3 If no carry (A was >= 3) call setup_transition
 C $85DB,2 Loop to run_pregame_screen_loop
 N $85DD Since nothing can arrive here this can only be dead code.
@@ -2867,9 +2867,9 @@ C $86CB,2 Jump if horizontal
 @ $86CD label=dp_direction_vertical
 C $86CD,3 Get bits 0..3 of Y
 C $86D0,2 Jump to dp_nextone if non-zero
-N $86D2 #REGh is incremented by 1 earlier. So if it was 0b11111111 it's now 0b00000000 so make it 0b11110000. Does this happen in any other case?
+N $86D2 #REGh was incremented earlier. When its low four bits wrap to zero the carry has spilled into the top nibble, so undo it and step to the next 16-scanline chunk instead.
 C $86D2,4 H -= 16
-C $86D6,4 Increment bits 4..6 of Y (visually downwards by 16?)
+C $86D6,4 Next chunk of 16 scanlines (bits 5-7 of L), visually downwards
 C $86DA,2 Jump to dp_nextone
 @ $86DC label=dp_direction_horizontal
 C $86DC,3 Move one character to the right
@@ -2996,7 +2996,7 @@ N $883F Run the map reader 32 times.
 C $883F,2 32 iterations
 @ $8841 label=sus_loop
 C $8841,1 Preserve BC
-C $8842,3 Load address of fast_counter (== road_buffer_offset - 1) since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
+C $8842,3 HL = &fast_counter: rm_cycle_buffer_offset starts with INC HL to reach road_buffer_offset
 C $8845,3 Call rm_cycle_buffer_offset
 C $8848,1 Restore BC
 C $8849,2 Loop
@@ -3177,7 +3177,7 @@ C $8A1B,2 Isolate bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
 N $8A1F Delay for (24 - #REGd) iterations.
 @ $8A23 label=sfx_cornering_delay1
-N $8A25 I'm unsure why they're setting both of the EAR and MIC bits here. Is it louder?
+N $8A25 Set both EAR (bit 4) and MIC (bit 3). MIC adds slightly to the speaker level on real hardware, so this pulse is a little louder than EAR alone.
 C $8A25,2 Set EAR and MIC bits
 C $8A27,2 Set output
 N $8A29 Delay for #REGd iterations.
@@ -3246,7 +3246,7 @@ N $8A8F Move the car up and left.
 C $8A8F,5 car_y += 4
 C $8A94,7 HL = road_pos + 12  -- move the car left by 12
 C $8A9B,1 Preserve #REGhl
-C $8A9C,5 HL -= $126  -- are we at $126 yet?
+C $8A9C,5 HL -= $126 to test whether the car has reached road_pos $126
 C $8AA1,1 Restore #REGhl
 C $8AA2,2 Jump to #R$8AA5 if #REGhl < $126
 N $8AA4 Otherwise the car's in the correct position now.
@@ -3331,9 +3331,9 @@ C $8B48,1 Unbank low digit
 C $8B49,2 Make it ASCII
 C $8B4B,3 Store as y in "TIME BONUS   xy X 5000"
 N $8B4E Display score.
-C $8B4E,3 Iterations = 4; Clear #REGc flag byte (set if seen a digit?)
+C $8B4E,3 Iterations = 4; C = 0, the "seen a digit" flag that blanks leading zeros
 C $8B51,3 Point DE at last digit of score_bcd (big end)
-C $8B54,3 Point HL at x in "SCORE         x       " - the ten millions?
+C $8B54,3 Point HL at x in "SCORE         x       ", the ten millions digit
 @ $8B57 label=hpc_score_loop
 C $8B57,1 Fetch a pair of digits from score_bcd
 C $8B58,6 Extract the high digit
@@ -3393,7 +3393,7 @@ C $8BB8,2 Set input ACCELERATE
 C $8BBA,1 Move input into #REGc for the moment
 C $8BBB,2 Isolate LEFT and RIGHT flags
 C $8BBD,2 Jump to #R$8BE5 if either is set
-N $8BBF Not turning. Are we within distance?
+N $8BBF Not turning. Is the perp within 3 units?
 @ $8BBF label=hpc_check_distance
 C $8BBF,3 Load perp's distance (low byte)
 C $8BC2,4 Jump if distance >= 3
@@ -3874,7 +3874,7 @@ N $8FF8 Right hand object handling.
 C $8FF8,1 E = A
 C $8FF9,3 A = IX[1]  -- buffer offset/distance
 C $8FFC,1 Set flags
-C $8FFD,2 Loop or exit?
+C $8FFD,2 Back to dee_continue_after_right_hand_done if non-zero
 C $8FFF,4 Preserve IX, HL, BC
 C $9003,8 DE = E * 7
 C $900B,4 Set return address to #R$901C (below)
@@ -3894,7 +3894,7 @@ N $9028 A != 2
 @ $9028 label=dee_left__a_isnt_2
 C $9028,3 A = IX[1]  -- buffer offset/distance
 C $902B,1 Set flags
-C $902C,2 Loop or exit?
+C $902C,2 Back to dee_continue_after_left_hand_done if non-zero
 @ $902E label=dee_left__a_is_2
 C $902E,4 Preserve IX, HL, BC
 C $9032,8 DE = E * 7
@@ -4344,7 +4344,7 @@ C $9431,3 BC = $9503
 C $9436,4 IX = $B729
 C $943A,3 (~#REGa + 9) is (8 - #REGa)
 C $943D,9 IX += A * 6
-C $9446,8 *$946D = *$9413  -- Self modify LD HL at $946C to load ?
+C $9446,8 *$946D = *$9413  -- copy the bitmap pointer from 'LD HL' @ #R$9412 into 'LD HL' @ #R$946C
 C $944E,6 *$9470 = *$9416
 C $9454,6 *$9460 = *$9405
 C $945A,3 B' = $0F  -- Set mask used by scanline calc in plot_masked_sprite
@@ -4806,7 +4806,7 @@ N $997F This is the flashing cursor.
 @ $997F label=drive_chatter_idle
 C $997F,2 Plot a space character
 C $9981,6 Alternating bit generator: $AA rotated 1 becomes $55, $55 rotated 1 becomes $AA, and so on, result in carry flag
-C $9987,2 (flag?)
+C $9987,2 A = $FF, the idle cursor column
 C $9989,3 Exit via plot_mini_font_cursor_on if carry set
 C $998C,3 Otherwise exit via plot_mini_font_cursor_off
 @ $998F label=drive_chatter_do_noise_effect
@@ -4885,7 +4885,7 @@ C $9A20,3 Call plot_face
 C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
 @ $9A24 label=pc_chatter_message
-C $9A24,4 Load address of message (set/block?) to start showing
+C $9A24,4 Load the address of the message string to show
 C $9A28,3 Save current chatter block pointer
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
@@ -4918,7 +4918,7 @@ C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
 @ $9A5C label=draw_noise_effect
 C $9A5C,1 Shift A's bottom bit into carry
-C $9A5D,2 A = 255  -- plot_mini_font_cursor_off flag?
+C $9A5D,2 A = $FF, the idle cursor column
 C $9A5F,2 D = 32  -- ASCII character for plot_mini_font*
 C $9A61,5 If A on input was odd then jump
 C $9A66,2 else call plot_mini_font_cursor_on and continue at $9a6b
@@ -4975,7 +4975,7 @@ N $9ACE This entry point is used by the routine at #R$8EB7.
 @ $9ACE label=plot_face_attributes
 C $9ACE,1 Restore current screen address
 C $9ACF,6 Extract line bits (0..3)
-C $9AD5,3 Turn it into an attribute address (works for first band only?)
+C $9AD5,3 D = $58 + screen third: the attribute row (E carries over unchanged for a character-aligned address)
 C $9AD8,2 Byte length of attributes - counter
 @ $9ADA label=pf_attrs_loop
 C $9ADA,8 Transfer four attributes
@@ -5013,7 +5013,7 @@ C $9B21,3 General multiplier by A
 C $9B24,3 Self modify #R$9B88 which is a mask
 C $9B27,1 Get ASCII character
 N $9B28 Turn ASCII into glyph IDs
-C $9B28,2 likely the screen addr top
+C $9B28,2 D = $45, the screen address high byte for the message line
 C $9B2A,6 Is it '.'? glyph ID = 26; goto have_glyph_id
 C $9B30,5 Is it ','? glyph ID = 27; goto have_glyph_id
 C $9B35,5 Is it '!'? glyph ID = 28; goto have_glyph_id
@@ -5033,7 +5033,7 @@ C $9B66,2 Jump table (self modified)
 C $9B88,2 This must be self modified
 C $9B8A,4 *scr++ = (*scr AND A) OR B
 C $9B8E,2 *scr-- = C
-C $9B90,1 Next source byte ?
+C $9B90,1 Next glyph byte
 C $9B91,16 Move to next scanline
 @ $9BA1 label=pmf_next_row
 C $9BA1,2 Decrement row counter
@@ -5068,7 +5068,7 @@ C $9BDD,6 Jump to #R$9C0D if time_up_state was 1 - out of time
 C $9BE3,3 Jump to #R$9C31 if time_up_state was 2 - show "TIME UP" message
 C $9BE6,3 Jump to #R$9C50 if time_up_state was 3 - show "CONTINUE" message & run countdown
 C $9BE9,2 Return if it was 4 - countdown elapsed
-N $9BEB Otherwise it's zero?
+N $9BEB Otherwise time_up_state is 0: the clock is running.
 C $9BEB,1 A = time_bcd
 C $9BEC,1 Set flags
 C $9BED,2 Jump to tick_update_remaining_time if non-zero
@@ -5108,7 +5108,7 @@ C $9C4C,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9C4F,1 Return
 @ $9C50 label=tick_check_restart
 C $9C50,5 Is fire pressed?
-C $9C55,2 Jump if not (?)
+C $9C55,2 Jump if not
 N $9C57 Resetting mission code.
 C $9C57,4 Reset time_up_state to zero
 C $9C5B,5 Reset smash_level to zero
@@ -5416,14 +5416,14 @@ C $9E8F,2 Loop
 N $9E91 Count 10,000s.
 C $9E91,3 10000
 C $9E94,3 Initialise #REGd and #REGe counters to -1
-C $9E97,1 ?Clear carry flag?
+C $9E97,1 Clear carry for the SBC below
 @ $9E98 label=ptad_speed_10000s_loop
 C $9E98,1 Increment counter
 C $9E99,2 Decrease total by 10,000
 C $9E9B,2 Loop until #REGhl goes negative
 C $9E9D,1 Correct for overshoot
 N $9E9E Count 1,000s.
-C $9E9E,1 ?Clear carry flag?
+C $9E9E,1 Clear carry: the overshoot correction can set it
 C $9E9F,3 1000
 @ $9EA2 label=plot_speed_1000s_loop
 C $9EA2,1 Increment counter
@@ -5477,11 +5477,11 @@ C $9EF0,1 Correct for starting early
 C $9EF1,1 distance_bcd[1] = counter
 N $9EF2 Count 10s
 C $9EF2,2 10 (#REGb's already zero)
-C $9EF4,1 ?Clear carry flag?
+C $9EF4,1 Clear carry for the SBC below
 C $9EF5,2 #REGa = $F0 (BCD)
 @ $9EF7 label=ptad_scores_distance_10s_loop
 C $9EF7,2 Increment counter
-C $9EF9,1 ?Clear carry flag?
+C $9EF9,1 Clear carry: ADD A,$10 sets it on the first pass
 C $9EFA,2 Decrease total by 10
 C $9EFC,3 Loop until total goes negative
 C $9EFF,1 Correct for overshoot
