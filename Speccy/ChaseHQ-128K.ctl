@@ -3171,7 +3171,7 @@ c $8A0F Cornering sound effect
 D $8A0F The game only ever uses a duty factor of 100 and a count of 1.
 R $8A0F I:D Duty factor and outer loop count
 R $8A0F I:E Inner loop count
-R $8A0F Half duty cycle: only run on every other call.
+D $8A0F Half duty cycle: only run on every other call.
 @ $8A0F label=sfx_cornering
 C $8A0F,7 Toggle static flag
 C $8A16,1 Return if flag became non-zero
@@ -4511,7 +4511,7 @@ D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
 R $9542 I:HL Address in back buffer to plot at
 R $9542 I:B' Height in rows
-R $9542 I:DE' Stride of bitmap data in bytes
+R $9542 I:E' Stride of bitmap data in bytes (#REGd' is zeroed at #R$9563)
 R $9542 I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
 C $9542,4 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
@@ -4527,12 +4527,12 @@ C $9562,1 Bank
 E $9542 FALLTHROUGH
 c $9565 Plot a horizontally flipped sprite, even byte widths
 D $9565 The even-width half of #R$9542, reached by falling through it; nothing else calls it. Each row is read as byte pairs through #REGsp, bit reversed through the flip table and stored right to left, then #REGhl steps back a row and #REGde advances the bitmap pointer by the stride. #R$9553 has already picked the entry point into the unrolled table at #R$9575, skipping (4 - #REGa) of its five 9-byte plot operations so that exactly the sprite's width is written. The caller's #REGsp is restored from the operand self modified at #R$954B.
+R $9565 I:B Height in rows
+R $9565 I:DE Stride of bitmap data in bytes (#REGd is zero)
+R $9565 I:HL Address of bitmap data
 R $9565 I:IX Entry point into the plot operation table at #R$9575
-R $9565 I:DE Flip table of bit-reversed bytes, high byte only
-R $9565 I:HL Address in back buffer to plot at, already advanced to the end of the first row
-R $9565 I:B' Height in rows
-R $9565 I:DE' Stride of bitmap data in bytes
-R $9565 I:HL' Address of bitmap data
+R $9565 I:DE' Flip table of bit-reversed bytes, high byte only
+R $9565 I:HL' Address in back buffer to plot at, already advanced to the end of the first row
 @ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
@@ -6973,6 +6973,7 @@ D $A9DE Draws one stone or dirt particle a call, from the positions #R$A97E work
 D $A9DE It reads the current entry through the particle pointer. A zero type byte means the slot is inactive and only advances the pointer. Otherwise the type byte picks the stones or the dust sprite table, #REGb is clamped to 10 and halved for a level of detail index, and the particle is drawn at the x position in the entry.
 D $A9DE Used by the routine at #R$8F5F.
 R $A9DE I:B Distance counter, clamped to 10 and halved to pick the level of detail
+R $A9DE I:IY Pointer into the height table, passed on to #R$929A or #R$9309
 @ $A9DE label=draw_dirt_and_stones
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
@@ -7390,9 +7391,9 @@ c $AD51 Hazard collision
 D $AD51 Returns 1, and arms the hazard's hit timer, only if all of these hold: the hit timer is zero, so this hazard is not still in its cooldown; the horizontal clip is zero, so the hazard is fully on screen; the distance is under the threshold, 2 or 3 depending on the hazard's flags; the sign of fast_counter passes the speed gate for that distance; and the horizontal position overlaps the car's zone, $68 to $8F.
 D $AD51 The hit timer written is the severity: 1 for a glancing blow at close range, up to 4 for a strike dead centre.
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
-R $AD51 I:D Initialised to zero (when return value is required)
+R $AD51 I:D Returned unchanged when there is no collision, so #R$AD37 sets it to zero first
 R $AD51 I:IX Address of a hazard structure
-R $AD51 O:D Return value
+R $AD51 O:D 1 if there was a collision, otherwise unchanged
 R $AD51 O:L Hazard[2]. #R$AE7A, the only caller that could use it, discards it: it writes horz_pos and horz_clip before the CALL and never reads them back
 R $AD51 O:H Hazard[3]. Discarded likewise
 @ $AD51 label=check_collision
@@ -8583,7 +8584,7 @@ D $B648 Draws one cloud of turbo exhaust smoke, at vertical position 119 and cen
 D $B648 Used by the routine at #R$B318.
 R $B648 I:A Index 0..3 of car turbo smoke animation
 R $B648 I:A' Non-zero to draw flipped, for the left hand exhaust
-R $B648 Calculate address of hero_car_turbo smoke[#REGa]
+N $B648 Calculate the address of hero_car_turbo_smoke[#REGa]; entries are six bytes.
 @ $B648 label=draw_smoke
 N $B653 Don't draw smoke if car's mid-jump
 C $B653,3 Read jump counter in move_hero_car
@@ -9906,10 +9907,10 @@ C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by #R$8F82 etc. when that's self modified to call here.
 D $C15B It draws the entrance, the interior and the far wall into the back buffer for the current road scanline, in three fill phases from back to front, each using the PUSH table trick. The main body fills from the left edge and from the right; the transition rows fill from the right only, with #REGc set to $0F so every row is masked; and the far wall fills from the right only, at a depth set by the far wall mode. The horizontal extents of the fills come from the centre right and left x-position tables, which give the columns of the two tunnel walls.
-R $C15B I:IY e.g. $E315 buffer
+R $C15B I:IY Height table pointer; its low byte is compared with the tunnel's offset at #R$C15D
 @ $C15B label=draw_tunnel
-C $C15B,2 Load #REGiy's low byte -- it's a size/distance value
-N $C15D This is set to ~20 then counts down to ~9 as the tunnel is entered. (I've noted 15..6 elsewhere).
+C $C15B,2 Load the low byte of the height table pointer
+N $C15D Draw only on the row whose height table offset matches the tunnel's, which #R$C4F2 and #R$C72E self modify into the CP below.
 C $C15D,2 Compare to <self modified>
 C $C15F,1 Return if not equal
 C $C160,2 Load <self modified>
@@ -10114,8 +10115,13 @@ c $C2E7 Subroutine of draw_road
 D $C2E7 Fills the road edge position tables for a section where the road is narrowing or widening, interpolating the edge x positions between two height table entries in Bresenham fashion and writing them through an SP-based pointer.
 D $C2E7 It is called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
-R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
-R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
+R $C2E7 I:H High byte of the left hand road position table ($E8 to $ED)
+R $C2E7 I:IX Road buffer lanes pointer
+R $C2E7 I:IY Height table pointer
+R $C2E7 I:B' Fill pattern, passed on to draw_road
+R $C2E7 I:C' Horizon scanline counter, passed on to draw_road
+R $C2E7 I:DE' Back buffer address, passed on to draw_road
+R $C2E7 I:L' Row index, passed on to draw_road
 @ $C2E7 label=draw_road_lanes_change
 C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
@@ -10896,6 +10902,10 @@ D $C8E3 The EXX on entry banks draw_road's own #REGd, #REGe, #REGb, #REGc and #R
 D $C8E3 Used by the routine at #R$C452.
 R $C8E3 I:IX Road buffer lanes pointer
 R $C8E3 I:IY Height table pointer; advanced once per block
+R $C8E3 I:B' Fill pattern; zero selects the plain fill path
+R $C8E3 I:C' Horizon scanline counter
+R $C8E3 I:DE' Back buffer address
+R $C8E3 I:L' Row index
 @ $C8E3 label=draw_forked_road
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
@@ -11582,9 +11592,9 @@ C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplies C by the top three bits of A, then divides by 8 with rounding
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
-R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
-R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
-R $CDD6 O:A Result                              e.g. $03, $02, $01, $02, $FE
+R $CDD6 I:A Multiplier; only its top three bits are used
+R $CDD6 I:C Multiplicand (signed)
+R $CDD6 O:A #REGc * (#REGa >> 5) / 8, rounded
 @ $CDD6 label=scale_curvature_or_height
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
@@ -13024,6 +13034,7 @@ D $EC2C Used by the routine at #R$EBFF.
 R $EC2C I:A The character to plot (ASCII)
 R $EC2C I:F' Carry flag set to draw single height characters
 R $EC2C I:DE' Screen address (UDG aligned)
+R $EC2C I:C' Attribute byte
 R $EC2C I:HL' Attribute address
 @ $EC2C label=menu_draw_char
 C $EC2C,6 Handle space
