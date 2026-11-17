@@ -2224,7 +2224,7 @@ C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
-R $80B9 O:F Carry set on return likely signals success.
+R $80B9 O:F Carry set on success (see #R$8146).
 @ $80B9 label=tape_load_to_5c00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
@@ -3155,7 +3155,7 @@ C $89DF,1 Read a byte (a delay)
 C $89E0,2 Output
 @ $89E3 label=sfx_thud_delay
 C $89E2,4 Delay/hold for #REGd iterations
-N $89E6 This will jump back and re-do the OUT again, but #REGa will not have changed value in the meanwhile... however it might be this way for timing reasons.
+N $89E6 DJNZ jumps back to repeat the OUT with the same #REGa. Rewriting the port is harmless and keeps every pass the same length, so #REGb counts units of hold time.
 C $89E6,2 Loop for #REGb iterations
 C $89E8,2 Toggle the EAR bit
 C $89EA,1 Advance to next effect data byte
@@ -9026,7 +9026,7 @@ C $B99A,3 Jump if positive
 N $B99D Otherwise negative
 C $B99F,2 A = -A  -- make positive
 @ $B9A1 label=url_set_curve_index
-C $B9A1,1 D = A -- this doesn't appear to be used
+C $B9A1,1 D = A. Nothing reads #REGd before the return, so this is redundant
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_curve_index = A
 C $B9A7,1 B = A
@@ -11360,7 +11360,7 @@ C $CC95,1 Write back to (DE)
 C $CC96,1 Increment entry address in persp_x_delta_left
 C $CC97,1 Increment entry address in curvature_table
 C $CC98,2 Loop while #REGb > 0
-N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left... Consider that this is $127 but $109 is the centre.
+N $CC9A #REGde starts at road_pos - $127 (295) and is stepped and pushed for each row below, so this constant sets where the boundary sits horizontally. $109 is the road centre.
 C $CC9A,7 HL = road_pos - 295
 C $CCA1,1 Swap result to #REGde
 C $CCA2,2 Initialise total/counter
@@ -12132,7 +12132,6 @@ D $DFF8 #HTML[#CALL(graphic($DFF8,8,31*6,0,0))]
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
 D $E0B2 Note: The definitions may use subsections of graphic data.
-N $E0B2 TODO: Ensure these graphic calls don't clash with other emissions.
 N $E0B2 Regular: #HTML[#CALL(graphic($7AB1,16,16,0,1))]
 @ $E0B2 label=fire1_defns
 B $E0B2,1,1 Width (bytes)

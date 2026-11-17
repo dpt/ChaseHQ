@@ -829,10 +829,14 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             bank_tag = f"{self.code_id}-"
         else:
             bank_tag = ""
+        # The size is part of the name because some bitmaps are drawn at more
+        # than one size from the same address (e.g. the fire graphics at
+        # $7AB1), and those would otherwise overwrite each other.
+        size_tag = f"-{width}x{height}"
         if nframes == 1:
-            fname = f"{{ScreenshotImagePath}}/graphic-{bank_tag}{bitmapbase:4x}"
+            fname = f"{{ScreenshotImagePath}}/graphic-{bank_tag}{bitmapbase:4x}{size_tag}"
         else:
-            fname = f"{{ScreenshotImagePath}}/anim-{bank_tag}{bitmapbase:4x}"
+            fname = f"{{ScreenshotImagePath}}/anim-{bank_tag}{bitmapbase:4x}{size_tag}"
         return self.handle_image(frames, fname, cwd)
 
     def anim(self, cwd, bitmapbase, width, height, interleaved, invert, nframes):
