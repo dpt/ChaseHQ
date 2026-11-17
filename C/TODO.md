@@ -1,17 +1,19 @@
 # TODO
 
+- Finish zxgame branch work (just merging?)
 - Bug: 48K mode drum timing is off (lack of interrupts?). The end screen's
   copy of the engine (`es_playdrum_go`, bank 7) has the same gap
-- Continue backporting changes to the disasm
-- Flush out this 'it's a custom level' germ of an idea that keeps reappearing
-- New video
-- Optimisations
 - Timing: Properly calibrate the game against the original (needs emulator T-state recording)
-- RISC OS: Sound support (...how?)
 - Graphics import/export still needs work
+- Explore Optimisations
+
+- Implement RISC OS sound support.
+- RO build could disable libpng/libjpeg when using DPTLib.
+
 
 ## FOR WRITEUP / NOTES
 
+- New video
 - Document the game from start until its first frame is built
 - Also it omits unneeded ops - it should be efficient (but nowhere near the
   original)
