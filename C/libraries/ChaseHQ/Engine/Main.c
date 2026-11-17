@@ -3106,7 +3106,7 @@ static void escape_scene(chqstate_t *state)
     if (state->hazards[0].distance == 5)
       state->hazards[1].hit_timer =
         state->hazards[2].hit_timer =
-          state->hazards[3].hit_timer = 0xFF;
+          state->hazards[3].hit_timer = -1; // $FF
 
     state->speed = 0; // Set speed to zero [speed of camera]
 
