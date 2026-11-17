@@ -2175,7 +2175,7 @@ C $8050,3 #REGa = wanted_stage_number
 C $8053,1 Is it the wanted stage?
 C $8054,2 not the wanted stage
 C $8056,3 Call ls_print_start_tape
-C $8059,3 Call tape_load_to_5c00
+C $8059,3 Call tape_load_stage
 C $805C,2 Jump to ls_loop if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
@@ -2206,7 +2206,7 @@ C $8095,3 Call the routine below, then fall into it, so it runs twice
 @ $8098 label=ls_print_message
 C $8098,1 preserve counter
 C $8099,1 preserve message pointer
-@ $809A label=ls_809A
+@ $809A label=ls_print_loop
 C $809A,2 flags byte for print_message
 C $809C,1 Step back one byte: print_message skips a flags byte these messages lack
 @ $809D refs=:$F2A2
@@ -2225,7 +2225,7 @@ C $80B7,2 Loop
 c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
 R $80B9 O:F Carry set on success (see #R$8146).
-@ $80B9 label=tape_load_to_5c00
+@ $80B9 label=tape_load_stage
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
 @ $80C0 label=tape_load_at_ix
@@ -3917,7 +3917,7 @@ C $9012,1 Index right_hand_handlers
 C $9013,4 Read argument for routine into #REGde & advance
 C $9017,4 Read address of routine into #REGhl
 C $901B,1 Indirect jump
-@ $901C label=dee_right__return_901C
+@ $901C label=dee_right__return
 C $901C,4 Restore IX, HL, BC
 C $9020,3 Continue
 N $9023 Left hand object handling.

@@ -1968,7 +1968,7 @@ C $E433,1 Return when bit set
 C $E434,3 Middle band of attributes
 C $E437,3 Backbuffer
 C $E43A,4 Leave the cell alone if BRIGHT is set
-@ $E452 label=e452
+@ $E452 label=es_fade_in_step
 c $E46D Fade the glyph attribute band out
 D $E46D Two thin wrappers over one tail: #R$E46D gates on $5C6D and #R$E472 on $5C6C. The tail rotates the gate byte and returns unless the bit rotated out was set, so each gate runs the fade on alternate calls. When it does run it sweeps the same 512 attribute cells es_attribute_fade_in covers, taking one off each cell's ink and one unit off its paper, both stopping at zero.
 D $E46D The bytes are masked down to their ink and paper fields and re-combined, so BRIGHT and FLASH are dropped from every cell the fade touches.

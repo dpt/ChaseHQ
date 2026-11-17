@@ -1338,7 +1338,7 @@ static void load_stage(chqstate_t *state)
   state->stage = stages[wanted - 1]; /* stages[] has no pregame [0] entry */
 }
 
-// $80B9 tape_load_to_5c00
+// $80B9 tape_load_stage
 
 // $81DD start_stage_chatter - was hoisted
 
