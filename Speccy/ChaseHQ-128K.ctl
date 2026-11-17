@@ -9778,7 +9778,7 @@ C $C0A2,3 Load distance high byte
 C $C0A5,3 Jump to rm_hazard_loop_continue if non-zero
 N $C0A8 Both low and high bytes were zero - player has caught up with the perp. This will bump the perp forward so the player can never actually overtake them.
 C $C0A8,4 Set perp to be just one unit away
-C $C0AC,4 Set distance high byte to 255  -- how's that work?
+C $C0AC,4 Set the fractional distance to $FF: the perp sits just under 2 units away
 C $C0B0,2 Jump to rm_hazard_loop_continue
 @ $C0B2 label=rm_decrement_distance_high_byte
 C $C0B2,7 Decrement the high byte of the distance
@@ -9789,7 +9789,7 @@ C $C0BD,4 Jump to rm_allow_car_spawning if zero
 N $C0C1 Some sort of block copy.
 C $C0C1,3 HL = $ED73  -- Source+2. This must be a buffer pointer at this point
 C $C0C4,3 DE = $ED77  -- Destination+2
-C $C0C7,3 BC = 38  -- Bytes?
+C $C0C7,3 BC = 38: two LDDs per pass, so 19 passes
 @ $C0CA label=rm_shift_loop
 C $C0CA,2 HL -= 2
 C $C0CC,2 DE -= 2
@@ -9972,17 +9972,17 @@ C $C219,1 A = E
 @ $C21A label=dt_draw_body
 C $C21A,1 Bank/unbank
 C $C21B,1 B = D
-N $C21C Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom byte, E, affects whole pattern. The LD E,D later would explain that.
-C $C21C,3 DE = <self modified>  -- pixels of tunnel
+N $C21C Tunnel wall pattern. It is a constant: nothing modifies it. Each row pushes DE, then #R$C25B rotates D left and copies it to E, so the rows run $EE, $DD, $BB, $77 for a diagonal stipple.
+C $C21C,3 DE = $EEEE  -- tunnel wall pattern
 N $C21F Loop
 @ $C21F label=dt_fill_loop
 C $C21F,1 Put destination in #REGsp so we can use PUSH for speed
-C $C220,1 Preserve destination?
+C $C220,1 A = L, the low byte of the row address
 @ $C221 label=dt_jump_table_1
 C $C221,2 Jump table (self modified)
 C $C223,16 Store up to 16 words / 256 pixels
 C $C233,1 A -= C
-C $C234,1 Restore destination?
+C $C234,1 L = that low byte - C: back up for the second fill
 C $C235,1 Put destination in #REGsp so we can use PUSH for speed
 @ $C236 label=dt_jump_table_2
 C $C236,2 Jump table (self modified)
@@ -10069,7 +10069,7 @@ C $C2DB,2 Carry set if CCC field was zero - don't compensate 1111 field and cont
 N $C2DD Otherwise have to compensate 1111 field.
 C $C2DD,4 Put back the bit stolen since BAAA field was zero
 @ $C2E1 label=dt_next
-C $C2E1,2 Next scanline ?
+C $C2E1,2 Loop for the next scanline
 @ $C2E3 label=dt_exit
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
@@ -10116,7 +10116,7 @@ C $C325,6 Jump if A was <= C
 C $C32B,1 C = A
 C $C32C,2 B = A * 2
 C $C32E,8 L = ~(($60 - IY[0]) << 1)
-C $C336,1 -- why are we copying to SP with no push/pop nearby?
+C $C336,1 Point #REGsp at the table entry: the PUSH DE loop at #R$C436 fills it downwards (#R$C407 adjusts it first)
 C $C337,3 DE = wordat(HL - 1);
 C $C33A,2 L = A - B
 C $C33C,1 H--
@@ -10139,7 +10139,7 @@ C $C363,6 Jump if IY[0] was <= IY[2]
 C $C369,1 C = A
 C $C36A,2 B = A * 2
 C $C36C,8 L = ~(($60 - IY[0]) << 1)
-C $C374,1 -- this pattern again
+C $C374,1 Point #REGsp at the table entry, as at #R$C336
 C $C375,1 D = *HL
 C $C376,1 L--
 C $C377,1 E = *HL
@@ -10251,7 +10251,7 @@ C $C436,1 Stack DE
 C $C437,2 Loop
 @ $C439 label=drlc_15
 C $C439,2 IY++
-N $C43B Four lane highway?
+N $C43B Default to drawing a four lane highway.
 @ $C43B label=drlc_16
 C $C43B,3 Set instruction #R$C4B2 to call dr_four_lane_highway/#R$C534
 C $C43E,3 Jump
@@ -10288,12 +10288,12 @@ C $C474,5 Load address of $EE00[#REGa]
 C $C479,1 Copy lanes data offset to #REGb
 C $C47A,5 Self modify 'LD A,x' @ #R$C6B2 (below) to load <lanes data offset> & 1
 C $C47F,4 Shift bit 1 of <lanes data offset> into carry
-C $C483,3 Set #REGh to $D0 (table offset?); Set #REGl to 16 (stripe height?)
+C $C483,3 H = $D0: lane markings at $E4D0; L = $10: the widest edge marking at $E410
 C $C486,1 Copy $D0 to #REGa (XOR base)
 N $C487 Alter this and the landscape uses that fill pattern, but only half the time.
-C $C487,2 Set #REGb to $55  -- "on" fill pattern?
+C $C487,2 Set #REGb to $55, the stripe's "on" fill pattern
 C $C489,2 If #REGb carried out (earlier) then jump
-C $C48B,3 Set #REGh to $00 (table offset?); Set #REGl to 48
+C $C48B,3 H = $00: no lane markings (the blank bytes at $E400); L = $30: the next edge marking
 C $C48E,1 Copy $00 to #REGb  -- "off" fill pattern
 @ $C48F label=dr_stripe_state_set
 C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be x = $D0
@@ -10360,7 +10360,7 @@ C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 @ $C502 label=dr_set_inside_flag
 C $C502,1 Set #REGa to 0 (from #REGh)
 C $C503,3 Self modify 'LD A,x' @ #R$C88F (inside tunnel flag)
-C $C506,2 Set #REGa to $EB  -- top byte of table?
+C $C506,2 Set #REGa to $EB, the high byte of the road centre right table
 C $C508,3 Self modify 'LD H,x' @ #R$C5D9
 C $C50B,3 Self modify 'LD H,x' @ #R$C68A
 C $C50E,2 Set #REGa to -1
@@ -10376,7 +10376,7 @@ N $C51B If bit 5 was set then it's a forked road.
 C $C51B,3 because shifted) of lanes byte is set}
 N $C51E If bit 5 was clear then it's a dirt track section.
 C $C51E,3 Set flags of (#REGl & 24)
-C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A?)
+C $C521,2 Set new on_dirt_track value to 0  -- LD, not XOR A, to keep the flags from the AND
 C $C523,2 Jump if flags non-zero
 C $C525,1 Set new on_dirt_track value to 1
 @ $C526 label=dr_set_dirt_track
@@ -10478,12 +10478,12 @@ C $C5D3,1 E = A
 C $C5D4,2 A = ~E + B  -- B is 16
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
 C $C5D9,2 Set high byte of table address to <self modified> e.g. $EC
-C $C5DB,1 Read from table  -- is this 8-bit or a partial 16-bit value?
+C $C5DB,1 Read the high byte of the 16-bit edge position (the low byte is at L-1)
 C $C5DC,1 Set flags
 C $C5DD,3 Jump if zero  -- jump to calc bit
-C $C5E0,2 Set righthand jump table target to 15 (just plots 16 pixels?)
+C $C5E0,2 Edge beyond the right of the screen: set the righthand jump table target to 15
 C $C5E2,3 Jump if positive
-C $C5E5,1 Otherwise set it to zero (plots 15*16 pixels?)
+C $C5E5,1 Edge beyond the left of the screen: set it to zero
 C $C5E6,3 Jump
 N $C5E9 Same pattern again
 @ $C5E9 label=dr_calc_righthand_width
@@ -10557,7 +10557,7 @@ C $C66A,1 H++
 C $C66B,1 Read from road left drawing table e.g $E89F
 C $C66C,1 Set flags
 C $C66D,2 Loop if non-zero
-C $C66F,3 A = HL[-1]  (with wraparound?)
+C $C66F,3 A = HL[-1], the low byte of the 16-bit edge position
 C $C672,1 Bank
 C $C673,1 E = A  -- save A
 C $C674,6 L = ((A & 7) << 1) + <self modified>
@@ -10641,15 +10641,15 @@ C $C715,2 L -= 2
 N $C717 Sampled IX = $EE2C ... EE39 EE45
 C $C717,3 Load the lanes flags byte
 C $C71A,2 Bit 6 indicates tunnel or dirt track
-C $C71C,3 Jump (loop?) if clear (neither tunnel nor dirt track)
+C $C71C,3 Loop back to #R$C6B2 if clear (neither tunnel nor dirt track)
 N $C71F Tunnel or dirt track.
 C $C71F,2 Bit 7 indicates dirt track
-C $C721,3 Jump (loop?) if set (dirt track only)
+C $C721,3 Loop back to #R$C6B2 if set (dirt track only)
 N $C724 Tunnel.
 C $C724,2 Load 255
 C $C726,2 Bit 2 indicates tunnel start
 C $C728,2 Load 1  -- value for (tunnel related)
-C $C72A,2 Jump if clear (tunnel cont/end?)
+C $C72A,2 Jump if clear: inside the tunnel, not at its start
 C $C72C,2 Load #REGiy.low (distance)
 C $C72E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C731,2 A = 1
@@ -10791,7 +10791,7 @@ C $C82D,18 18 instructions/lines filled in by earlier code
 @ $C86C label=dr_backdrop_ldi_jump
 C $C86C,2 Self modified - jump table
 C $C881,1 A += C
-C $C882,2 Loop?
+C $C882,2 Loop back to #R$C821 while #REGb > 0
 C $C884,1 Bank/unbank
 C $C885,1 Swap
 C $C886,1 E = A
@@ -10823,7 +10823,7 @@ C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
 @ $C8A7 label=dr_sky_fill_fix_address
 C $C8A7,4 Didn't carry so fix #REGh from earlier DEC H (1110xxxx -> 1111xxxx)
-N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper part of the sky. DE must always be zero? or what about tunnels?
+N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper part of the sky. #REGde is $0000 for open sky or $FFFF in a tunnel (#R$C895).
 @ $C8AB label=dr_sky_fill_scanline
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C8AC,15 Write 30 bytes of sky pixels
@@ -10898,7 +10898,7 @@ C $C92E,3 Load <self modified> address of start of current scanline
 C $C931,4 Calculate final byte of scanline (start + 31)
 C $C935,1 H = D
 C $C936,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C937,3 HL = 0  [not self modified apparently]
+C $C937,3 HL = 0  -- the blank fill (constant)
 C $C93A,1 C = L
 C $C93B,3 Jump into a sequence of 15 PUSH HLs
 N $C93E Scanline advance then jump somewhere.
@@ -10933,7 +10933,7 @@ C $C97A,2 A = 0 (not self modified)
 C $C97C,3 Jump if negative
 C $C97F,2 A = 15
 C $C981,3 Jump
-N $C984 Variation 1?
+N $C984 The $E8xx edge is on screen (high byte zero): convert its low byte to a column.
 @ $C984 label=dfr_byte_before_1
 C $C984,3 A = HL[-1]
 C $C987,1 A &= C  -- C is the mask $F8 here
@@ -10955,7 +10955,7 @@ C $C9A0,2 A = 0 (not self modified)
 C $C9A2,3 Jump if negative
 C $C9A5,2 A = 15
 C $C9A7,3 Jump
-N $C9AA Variation 2?  [hit when left turn at fork]
+N $C9AA As above for the $EAxx edge (seen when turning left at a fork).
 @ $C9AA label=dfr_byte_before_2
 C $C9AA,3 A = HL[-1]
 C $C9AD,1 A &= C  -- C is the mask $F8 here
@@ -10973,7 +10973,7 @@ C $C9BF,2 A = 0 (not self modified)
 C $C9C1,3 Jump if negative
 C $C9C4,2 A = 15
 C $C9C6,3 Jump
-N $C9C9 Variation 3?
+N $C9C9 As above for the $EBxx edge.
 @ $C9C9 label=dfr_byte_before_3
 C $C9C9,3 A = HL[-1]
 C $C9CC,1 A &= C  -- C is the mask $F8 here
@@ -11375,7 +11375,7 @@ C $CCB3,1 Bank
 C $CCB4,11 A = B - 2 + IY[0] - IY[1]; IY++
 C $CCBF,3 Jump to bct_endbit_negative if M
 C $CCC2,2 A += 2
-C $CCC4,3 IY[$4E] = A -- in curvature_table?
+C $CCC4,3 IY[$4E] = A  -- this slice's entry in the object position table at $E34F
 C $CCC7,1 A -= B
 C $CCC8,1 C = A
 C $CCC9,1 B = A
@@ -11409,7 +11409,7 @@ C $CCF2,2 Loop to bct_depth_loop while #REGb > 0
 @ $CCF4 label=bct_exit
 C $CCF4,3 Restore original #REGsp (self modified by #R$CCAE)
 C $CCF7,1 Return
-N $CCF8 #REGa is opcode of instruction (INC DE/DEC DE) #REGb is max iterations #REGc is ? #REGl is ? #REGde is ?
+N $CCF8 Steep case. #REGa is the opcode to plant (INC DE or DEC DE), #REGb the number of entries, #REGc the row span, #REGl the absolute curvature step and #REGde the running position. Each entry steps #REGde until the total of #REGc reaches #REGl, Bresenham style.
 @ $CCF8 label=bct_endbit_A
 C $CCF8,3 Self modify instruction below
 C $CCFB,1 Initialise total to zero
@@ -11434,12 +11434,12 @@ C $CD14,1 B = A
 C $CD15,3 A = IY[$1F]
 C $CD18,1 L = A
 C $CD19,1 A <<= 1
-C $CD1A,2 H = A - A - carry  -- sign extend?
+C $CD1A,2 H = $FF if L is negative, else 0: sign extend
 C $CD1C,1 HL += DE
 C $CD1D,1 swap
-C $CD1E,1 push result?
-C $CD1F,1 Bank/Unbank?
-C $CD20,1 Decrement loop counter  -- Why not using DJNZ?
+C $CD1E,1 Store #REGde to the table
+C $CD1F,1 Back to the outer loop's registers
+C $CD20,1 Decrement the outer loop counter
 C $CD21,3 Loop to bct_depth_loop while #REGb > 0
 C $CD24,3 Exit via bct_exit
 N $CD27 This is identical to the preceding sequence starting at #R$CD14, so could be removed if #R$CD11 instead just jumped over #R$CD13.
@@ -11492,7 +11492,7 @@ C $CD7C,5 E = -E; D = $FF  -- negate multiplier
 C $CD81,3 A = -C  -- negate multiplicand
 N $CD84 Multiplier.
 @ $CD84 label=bht_multiplier
-C $CD84,1 Throw sign bit away?
+C $CD84,1 Discard bit 7, the sign (clear after the negation)
 @ $CD85 label=bht_bit6
 C $CD85,1 Shift out a high bit of multiplicand
 C $CD86,4 Copy multiplier (from #REGde) if a bit shifted out
@@ -11523,10 +11523,10 @@ C $CDAF,1 Increment address of entry in table (wrapping around)
 C $CDB0,2 IYl++ (wrapping around)
 C $CDB2,2 Loop to bht_loop while #REGb
 C $CDB4,3 Final byte is always $A0
-N $CDB7 Copy the table to $E336 while setting negative values to 96[?]
+N $CDB7 Copy the table to $E336, clamping each entry to the running minimum (starting at 96).
 C $CDB7,3 Load address of destination
-C $CDBA,3 Load address of source (height table?)
-C $CDBD,3 B = 21 iterations, C = 96 limit/minimum?
+C $CDBA,3 Load address of source, height_table[1]
+C $CDBD,3 B = 21 iterations, C = 96, the initial running minimum
 @ $CDC0 label=bht_loop2
 C $CDC0,1 Read from table just built
 C $CDC1,4 Jump to bht_write_it if (A - C) is positive
