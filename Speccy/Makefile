@@ -94,11 +94,11 @@ skool: $(SKOOL)
 $(SKOOL): $(PRISTINEZ80) $(CTL) $(CTLBANK1) $(CTLBANK3) $(CTLBANK4) $(CTLBANK6) $(CTLBANK7)
 	mkdir -p $(BUILD)
 	sna2skool.py $(OPTIONS) --ctl $(CTL) --page 0 $(PRISTINEZ80) > $@
-	sna2skool.py $(OPTIONS) --ctl $(CTLBANK1) --page 1 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK1)
-	sna2skool.py $(OPTIONS) --ctl $(CTLBANK3) --page 3 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK3)
-	sna2skool.py $(OPTIONS) --ctl $(CTLBANK4) --page 4 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK4)
-	sna2skool.py $(OPTIONS) --ctl $(CTLBANK6) --page 6 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK6)
-	sna2skool.py $(OPTIONS) --ctl $(CTLBANK7) --page 7 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK7)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK1) --page 1 --start 49152 $(PRISTINEZ80) > $(SKOOLBANK1)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK3) --page 3 --start 49152 $(PRISTINEZ80) > $(SKOOLBANK3)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK4) --page 4 --start 49152 $(PRISTINEZ80) > $(SKOOLBANK4)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK6) --page 6 --start 49152 $(PRISTINEZ80) > $(SKOOLBANK6)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK7) --page 7 --start 49152 $(PRISTINEZ80) > $(SKOOLBANK7)
 
 .PHONY: disasm
 disasm: $(SKOOL) $(SKOOLBANK1) $(SKOOLBANK3) $(SKOOLBANK4) $(SKOOLBANK6) $(SKOOLBANK7)
