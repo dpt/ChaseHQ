@@ -2125,7 +2125,7 @@ N $7F85 #HTML[#CALL(graphic($7F85,16,2,1,1))]
 B $7F85,8,8 Masked bitmap data
 u $7F8D Unused
 B $7F8D,115,8*14,3
-g $8000 Game status buffer entry at 8000
+g $8000 Game progress: test mode, score, retries and wanted stage
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
 @ $8001 label=controls_selected
@@ -2202,7 +2202,7 @@ C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
 @ $8091 refs=:$E810,$F32E
-C $8092,3 Point #REGhl at tape_messsages
+C $8092,3 Point #REGhl at the rewind_tape messages
 @ $8095 label=ls_print_twice
 C $8095,3 Call the routine below, then fall into it, so it runs twice
 @ $8098 label=ls_print_message
@@ -2500,7 +2500,7 @@ N $83C1 This entry point is used by the routine at #R$8876.
 C $83C1,3 No-op when in 48K mode
 N $83C4 This entry point is used by the routine at #R$8903.
 @ $83C4 label=play_engine_sfx_hook
-C $83C4,3 Call setup_engine_sfx when in 48K mode
+C $83C4,3 Call setup_engine_sfx_48k when in 48K mode
 N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
 @ $83C7 label=play_speech_hook
 C $83C7,3 No-op when in 48K mode
@@ -2609,7 +2609,7 @@ C $84B9,3 Call play_regular_sfx_hook
 C $84BC,3 Call send_playfield
 C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
-C $84C5,3 If not, goto not_test_mode
+C $84C5,3 If not, goto ml_not_test_mode
 N $84C8 Test mode handling
 @ $84C8 label=ml_handle_test_mode
 C $84C8,4 Read keys 1/2/3/4/5
@@ -3033,8 +3033,8 @@ C $8880,2 Clear user_input
 C $8882,1 Return
 C $8883,5 AND user_input with user input mask
 C $8888,3 AND with mask for (Quit+Pause+Turbo), return if none
-C $888B,3 Quit bit set? Jump to quit_key if so
-C $888E,3 Pause bit set? Jump to pause_key if so
+C $888B,3 Quit bit set? Jump to check_user_input_quit_key if so
+C $888E,3 Pause bit set? Jump to cui_pause_key if so
 N $8891 Turbo was pressed
 C $8891,3 Load address of boost timer
 C $8894,3 Return if a turbo boost is in effect
@@ -3701,7 +3701,7 @@ C $8E6F,2 Load attribute byte into #REGa
 C $8E71,4 Load back buffer address into #REGde
 C $8E75,4 Load attribute address into #REGbc
 N $8E79 #REGhl now points at the string.
-C $8E79,3 Call alt draw_string_screen entry point
+C $8E79,3 Call draw_string_with_style
 C $8E7C,1 Restore #REGbc
 C $8E7D,1 Return
 c $8E7E Setup overlay messages
@@ -4357,18 +4357,18 @@ C $93E3,2 A >>= 1
 C $93E8,4 #REGix = Base of jump table
 C $93EC,3 (~#REGa + 5) is (4 - #REGa)
 C $93EF,9 IX += A * 5
-C $93F8,3 BC = &plot_sprite_even_entry
+C $93F8,3 BC = &plot_sprite_even
 @ $93FB label=do_set_callbacks
 C $93FB,4 Self modify CALL at $940F
 C $93FF,4 Self modify JP at $941D
 C $9404,3 A = <self modified> - B
 C $940B,3 Self modify 'LD A,x' @ #R$9404
-C $940F,3 Call <self modified> [e.g. plot_sprite_even_entry]
+C $940F,3 Call <self modified> [e.g. plot_sprite_even]
 C $9412,3 HL = <self modified by $93A1>
 C $9415,2 B = <self modified by $9239>
 C $941A,1 A += B
 C $941B,1 B = A
-C $941D,3 Exit via <self modified> [e.g. plot_sprite_even_entry]
+C $941D,3 Exit via <self modified> [e.g. plot_sprite_even]
 @ $9420 label=plot_sprite_xxx_odd
 C $9420,1 Increment #REGa for upcoming calculation
 C $9421,4 Point #REGix at start of plot instructions
@@ -5050,12 +5050,12 @@ C $9B24,3 Self modify #R$9B88 which is a mask
 C $9B27,1 Get ASCII character
 N $9B28 Turn ASCII into glyph IDs
 C $9B28,2 D = $45, the screen address high byte for the message line
-C $9B2A,6 Is it '.'? glyph ID = 26; goto have_glyph_id
-C $9B30,5 Is it ','? glyph ID = 27; goto have_glyph_id
-C $9B35,5 Is it '!'? glyph ID = 28; goto have_glyph_id
-C $9B3A,5 Is it ' '? glyph ID = 29; goto have_glyph_id
-C $9B3F,5 Is it '''? glyph ID = 30; goto have_glyph_id
-C $9B44,4 Is it >= ';'? goto have_ascii
+C $9B2A,6 Is it '.'? glyph ID = 26; goto pmf_have_glyph_id
+C $9B30,5 Is it ','? glyph ID = 27; goto pmf_have_glyph_id
+C $9B35,5 Is it '!'? glyph ID = 28; goto pmf_have_glyph_id
+C $9B3A,5 Is it ' '? glyph ID = 29; goto pmf_have_glyph_id
+C $9B3F,5 Is it '''? glyph ID = 30; goto pmf_have_glyph_id
+C $9B44,4 Is it >= ';'? goto pmf_have_ascii
 C $9B48,4 C += A - 47 -- assigns glyph IDs 31-40 to '0'-'9'. No chatter message string contains a digit and the scoreboard uses #R$9FA3 instead, so this path is dead
 @ $9B4C label=pmf_have_glyph_id
 C $9B4C,3 Turn the glyph ID in #REGc into ASCII in #REGa
@@ -5121,7 +5121,7 @@ C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
 C $9C0A,3 Exit via start_chatter. #REGa still holds the BCD time $15, so the priority is 21
 @ $9C0D label=tick_check_time_up
-C $9C0D,4 Is time_bcd zero? Jump to time_up if so
+C $9C0D,4 Is time_bcd zero? Jump to tick_time_is_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
 C $9C19,2 Loop back to #R$9BF9
@@ -5387,7 +5387,7 @@ c $9E11 Draws the turbo sprites and updates the displayed speed, time, distance 
 D $9E11 Three parts. First one 2 by 14 back buffer sprite per remaining turbo boost, at successive column offsets; the last one uses the current frame of the spin animation and the rest use frame 0, the resting position. Then the speed, which is scaled from the internal 0 to 511 by 82% before the ten thousands, thousands and hundreds digits are extracted and plotted. Last the time, distance and score digit groups, each drawn by the same shared routine.
 D $9E11 Used by the routine at #R$9D51.
 @ $9E11 label=plot_turbos_and_digits
-C $9E11,6 If no turbo boosts remain, jump to plot_scores_only
+C $9E11,6 If no turbo boosts remain, jump to plot_speed_only
 C $9E17,1 Preserve number of turbo boosts in #REGc
 C $9E18,4 Read boost time remaining and set flags
 C $9E1C,3 Point #REGhl at base of turbo sprites
@@ -5584,7 +5584,7 @@ C $9F77,31 Transfer eight more rows
 C $9F96,1 Move to next column
 C $9F97,1 Bank
 C $9F98,1 Return
-c $9F99 Draw a NUL-terminated string with a specified style
+c $9F99 Draw a string with a specified style
 D $9F99 Adapter entry point: it reorders the registers into the layout the string loop expects and supplies the constant attribute stride of 32 bytes, one attribute row.
 D $9F99 Used by the routine at #R$8E6C.
 R $9F99 I:A Attribute byte written at each character cell
@@ -5783,7 +5783,7 @@ C $A12D,5 A = $FE ROR B
 C $A132,2 Read the keyboard half-row selected by the high byte in #REGa. This is the main keyboard access
 C $A134,4 C = A ROR C
 C $A138,1 Return
-g $A139 Game status buffer entry at A139
+g $A139 Game state variables
 @ $A139 label=mode_128k
 B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
@@ -6748,7 +6748,7 @@ C $A831,4 If the top bit is clear then it's not a vehicle, continue to next haza
 C $A835,2 Shift is-a-vehicle flag into #REGc
 @ $A837 label=sc_continue
 C $A837,2 Advance to next hazard
-C $A839,2 Loop to sc_loop while #REGb > 0
+C $A839,2 Loop to sc_find_unused_hazard_loop while #REGb > 0
 C $A83B,1 Return
 N $A83C Don't spawn if there are three or more cars already spawned.
 @ $A83C label=sc_fill_in
@@ -9286,7 +9286,7 @@ C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
 c $BB69 Handle exiting from a road fork
 D $BB69 Returns at once unless the high byte of fork_distance is non-zero, so nothing happens until the fork has been travelled far enough.
-D $BB69 fork_taken then picks the left or the right exit: the five road data stream pointers - curvature, height, lanes, hazards and side objects - are pointed at that branch's exit tables and the per-command handlers for each stream are wired up through lookup_map_goto. 32 curvature bytes are filled with the turn type, 32 lane bytes with the lane type and 32 object bytes are zeroed. All the fork and road counters are reset last, so the engine goes back to rendering a single road.
+D $BB69 fork_taken then picks the left or the right exit: the five road data stream pointers - curvature, height, lanes, hazards and side objects - are pointed at that branch's exit tables, with the hazard, curvature and height pointers taken from operands that the map reader patched in earlier (#R$C035, #R$BF73, #R$BE5C and #R$BEAE). 32 curvature bytes are filled with the turn type, 32 lane bytes with the lane type and 32 object bytes are zeroed. All the fork and road counters are reset last, so the engine goes back to rendering a single road.
 D $BB69 Used by the routine at #R$8401.
 N $BB69 When fork_distance exceeds 255 we can proceed.
 @ $BB69 label=exit_fork
@@ -9889,7 +9889,7 @@ C $C131,2 Jump if #REGhl < BC
 C $C133,1 Swap
 C $C134,2 #REGde = #REGbc
 C $C136,1 A--
-C $C137,2 Loop to tunnel_loop
+C $C137,2 Loop to pt_tunnel_loop
 @ $C139 label=pt_set_tunnel_size
 C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
@@ -11486,7 +11486,7 @@ c $CD3A Build the per-row height tables at $E300 and $E336
 D $CD3A Called once a frame from the main loop. It reads the road buffer's height channel and the perspective Y scale table, and produces three things.
 D $CD3A The loop at #R$CD64 walks 21 rows of the height channel, accumulating the incline seen so far in #REGc. Each row's perspective scale is multiplied by the magnitude of that accumulator using the shift-and-add routine at #R$CD84, negating the multiplier when the accumulator is negative, and added to the row's base scale entry. The results are written to $E300 onwards, with $A0 left as a sentinel after the twenty-first.
 D $CD3A The loop at #R$CDC0 copies those 21 entries to $E336, tracking a running minimum that starts at 96, so the copy never rises above the closest road point seen so far.
-D $CD3A Finally the accumulator is rounded down to a multiple of 8 and stored at $E34B, and the difference from the previous frame's value at $E34C. The latter is written by walking the pointer off the end of the height table rather than by a direct store, so it is invisible to a search for $E34C. update_screen scrolls the sky and ground colour boundary from $E34D, which lags that delta by a frame.
+D $CD3A Finally the accumulator is rounded down to a multiple of 8 and stored at $E34B, and the difference from the previous frame's value at $E34C. The latter is written by walking the pointer off the end of the height table rather than by a direct store, so it is invisible to a search for $E34C. #R$BD5A scrolls the sky and ground colour boundary from $E34D, which lags that delta by a frame.
 D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
 N $CD3A Point #REGiy at the road buffer's height data.
 @ $CD3A label=build_height_table

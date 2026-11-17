@@ -2073,7 +2073,7 @@ C $F7F0,3 Self modify #R$F8A4 -- clear the <drum is playing> flag
 C $F7F3,3 Self modify #R$F897 -- clear the extra delay counter
 C $F7F6,3 Self modify #R$F839 -- clear the <playback started> flag
 C $F7F9,3 Load address of music patterns
-C $F7FC,3 Jump to (np_start_at_hl)
+C $F7FC,3 Jump to the relocated b7np_start_at_hl
 c $F7FF Setup the next music pattern
 D $F7FF Almost the same as #R$EE6E@main
 N $F7FF Keep playing current pattern until this counter becomes zero.
@@ -2205,10 +2205,10 @@ C $F8DD,2 Rotate sample byte in-place
 C $F8DF,2 Loop to pd_loop while #REGb
 C $F8E1,1 Move to next sample byte
 C $F8E2,1 Decrement sample bytes remaining
-C $F8E3,2 Jump to pd_end_of_sample if no bytes remain
+C $F8E3,2 Jump to b7pd_end_of_sample if no bytes remain
 C $F8E5,3 Read A from the <interrupt flag> at #R$F8AA
 C $F8E8,1 Set flags
-C $F8E9,3 Loop to pd_go if clear
+C $F8E9,3 Loop to the relocated b7pd_go if clear
 C $F8EC,1 Otherwise unbank
 C $F8ED,1 Return
 @ $F8EE label=b7pd_end_of_sample
