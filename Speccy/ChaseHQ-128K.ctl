@@ -4998,15 +4998,15 @@ C $9AF1,3 values to self modify with
 C $9AF4,1 Preserve A
 C $9AF5,8 self modify LD C and OR 7 later
 C $9AFD,1 Restore A
-C $9AFE,4 If not string terminator, goto pmf_regular_char  -- or is this a flag?
-N $9B02 String terminator?
-C $9B02,2 $BF / 8?
+C $9AFE,4 If A is not $FF (slot -1, the idle cursor) goto pmf_regular_char
+N $9B02 Slot -1 would put the cursor at pixel -3, which the unsigned division below cannot handle. Instead, start the loop part-way with A = 5 (-3 mod 8) and E one lower, so it ends as it would for x = -3: column byte $C0 with A = 3.
+C $9B02,2 E = $BF, one less than column byte $C0
 @ $9B08 label=pmf_regular_char
-C $9B08,6 A = A*5+2
+C $9B08,6 A = pixel x = slot*5+2 (5-pixel cells, 2-pixel margin)
 @ $9B10 label=pmf_divider
-C $9B0E,4 8 - $C0 / 8 ??
+C $9B0E,4 E = $C0, low byte of the message line's screen row; C = 8
 @ $9B12 label=pmf_divide_loop
-C $9B12,7 divider / rounding?
+C $9B12,7 Divide x by 8: E = $C1 + x / 8, the left of the two bytes the glyph spans, and A = 8 - x mod 8 (the glyph is shifted right by x mod 8)
 C $9B19,8 Modify jump table - A * 4 - 4 bytes per sequence
 @ $9B21 label=pmf_multiplier
 C $9B21,3 General multiplier by A
@@ -10417,12 +10417,12 @@ N $C565 This entry point is used by the routine at #R$C58A.
 C $C565,4 Self modify 'LD DE,x' @ #R$C56C (below)
 C $C569,2 Set #REGb to $FF
 C $C56B,1 Bank/unbank
-N $C56C Calculate address of next bitmap scanline ??
-C $C56C,3 DE = <self modified>
+N $C56C Clear the unfilled scanline: fetch its back-buffer address saved above into DE', point SP at the row's byte 31 and enter the PUSH HL chain with HL = 0.
+C $C56C,3 DE = back-buffer scanline address <self modified>
 C $C56F,4 L = E + 31
 C $C573,1 H = D
 C $C574,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C575,3 HL = 0  [not self modified apparently] -- fill value
+C $C575,3 HL = 0, the fill value (never modified)
 C $C578,1 C = 0
 C $C579,3 Jump into a sequence of 15 PUSH HLs
 N $C57C This is scanline/buffer pointer movement
