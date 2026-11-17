@@ -2000,7 +2000,7 @@ C $E4C5,2 Loop while counter
 C $E4C7,1 Restore destination
 C $E4C8,9 Turn the destination's high byte into the matching backbuffer attribute address
 C $E4D1,2 8 rows of attributes
-@ $E4D3 label=e4d3_loop
+@ $E4D3 label=de_attribute_loop
 C $E4D3,5 Copy 13 attribute bytes
 C $E4D8,5 DE += 19  (a gap value - 13+19 = 32)
 C $E4DD,1 A--

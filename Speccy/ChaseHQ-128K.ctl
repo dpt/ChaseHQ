@@ -13768,7 +13768,7 @@ D $F3E2 Not a paging routine, despite the label and the call sites' comments. It
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
 C $F3E7,1 E = 0
-@ $F3E8 label=f3e8_loop
+@ $F3E8 label=pg_window_loop
 C $F3E8,1 Preserve iterations
 C $F3E9,2 DE = $B000
 C $F3EB,3 4096 bytes
@@ -13778,18 +13778,18 @@ C $F3F2,2 A = 3
 C $F3F4,3 Jump into setup_engine_sfx with engine speed setup
 C $F3F7,4 Retrieve from stack
 C $F3FB,2 DE = $B000
-@ $F3FD label=f3fd_loop
+@ $F3FD label=pg_swap_loop
 C $F3FD,1 A = *DE
 C $F3FE,2 Transfer a byte
 C $F400,3 HL[-1] = A
-C $F403,3 Loop if (parity even) to f3fd_loop
+C $F403,3 Loop if (parity even) to pg_swap_loop
 C $F406,3 Call relocated reset_paging_128k
 C $F409,2 Restore
 C $F40B,2 HL = $B000
 C $F40D,2 Copy
 C $F40F,1 H = D
 C $F410,1 Restore iterations
-C $F411,2 Loop to f3e8_loop
+C $F411,2 Loop to pg_window_loop
 C $F413,1 Return
 c $F414 Reset the paging register
 D $F414 Lives at $8208 when relocated.
@@ -13814,7 +13814,7 @@ C $F434,3 Call drive_attract_demo
 C $F437,3 Load controls_selected
 C $F43A,1 Set flags
 C $F43B,3 -> enter_for_options_messages
-C $F43E,2 Jump to f44b_key_check
+C $F43E,2 Jump to am1_check_enter
 C $F440,3 Call keyscan
 C $F443,2 Was FIRE pressed?
 C $F445,3 Jump to play_start_noise if so
@@ -13829,27 +13829,27 @@ C $F456,1 #REGhl -> messages
 C $F457,6 Rotate the blink pattern and self modify #R$F457 with it -- $F0 gives four frames on, four off
 C $F45D,2 Skip the message on the blank half of the blink
 C $F460,3 Call print_message
-@ $F463 label=f463_128k
+@ $F463 label=am1_check_transition
 C $F463,6 If transition_control != 0 jump
 C $F469,2 Overlay countdown. Self modified by #R$F42B above and #R$F470 below
 C $F46B,1 Set flags
 C $F46C,3 Restart attract mode once the countdown has gone negative
 C $F46F,1 A--
 C $F470,3 Self modify #R$F469 above
-C $F473,3 Jump to f47d_128k while the countdown is not negative
+C $F473,3 Jump to am1_pick_overlay while the countdown is not negative
 C $F476,2 Forward transition
 C $F478,3 Call setup_transition
-C $F47B,2 Jump to f488_128k
-@ $F47D label=f47d_128k
+C $F47B,2 Jump to am1_transition
+@ $F47D label=am1_pick_overlay
 C $F47D,3 -> credits messages at #R$F4B9
-C $F480,2 Jump to f485_128k unless the countdown reached zero
+C $F480,2 Jump to am1_set_overlay unless the countdown reached zero
 C $F482,3 -> best officers table at $F51B
-@ $F485 label=f485_128k
+@ $F485 label=am1_set_overlay
 C $F485,3 Call setup_overlay_messages
-@ $F488 label=f488_128k
+@ $F488 label=am1_transition
 C $F488,3 Call transition
 C $F48B,3 Call send_playfield
-C $F48E,3 Loop to attract_mode_128k_loop
+C $F48E,3 Loop to relocated am1_loop
 b $F491 Credits / Score messages show in attract mode
 @ $F491 label=press_gear_messages
 B $F491,1,1 Flags (single)
