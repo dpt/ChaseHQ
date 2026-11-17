@@ -7716,7 +7716,7 @@ C $B018,3 Point #REGhl at smoke_defns
 N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
 @ $B01B label=dhs_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
-N $B01C B,C = x,y offset/position? HL -> graphic definition
+N $B01C #REGb is added to the draw position read back from #R$933D and #REGc to the horizontal screen position. #REGhl points at the graphic definition.
 @ $B01C label=dhs_draw_bitmap
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
@@ -7845,9 +7845,9 @@ C $B104,3 Load the off-road flag
 C $B107,3 Jump if zero (fully on-road)
 N $B10A Handle off-road (#REGa can be 1 or 2 here).
 @ $B10A label=mhc_offroad
-C $B10A,3 Set max speed for when one wheel off-road (120 => ~100?)
+C $B10A,3 Set max speed for when one wheel off-road (120, displayed as 98)
 C $B10D,3 Jump if off-road was one
-C $B110,3 Set max speed for when both wheels off-road (110 => ~90?)
+C $B110,3 Set max speed for when both wheels off-road (110, displayed as 90)
 @ $B113 label=mhc_chose_offroad_speed
 C $B113,1 Clear carry
 C $B114,2 16-bit subtract only for result in flags
@@ -7868,19 +7868,19 @@ C $B131,1 Bank with flags
 C $B132,1 Test previously banked copy of gear flag
 C $B133,2 Jump if in high gear
 @ $B135 label=mhc_low_gear
-C $B135,3 BC = 470 -- max speed?
+C $B135,3 BC = 470 (displayed 385)  -- low gear target speed with turbo
 C $B138,1 Unbank turbo boost with flags
 C $B139,2 Jump if turbo boost in effect -- Uses banked flags
 N $B13B No turbo boost.
-C $B13B,3 BC = 230 -- max speed?
+C $B13B,3 BC = 230 (displayed 188)  -- low gear target speed
 @ $B13E label=mhc_low_gear_slowing
 C $B13E,2 HL -= BC
 C $B140,3 Jump if HL was >= BC  -- speed > limit value
 C $B143,7 BC = ~HL + 1 = -HL
 C $B14A,1 A = C
-C $B14B,3 Shift a bit out of B into A?
+C $B14B,3 BC >>= 2, the low byte landing in #REGa
 C $B14E,3 and again  -- B must now be zero
-C $B151,2 Then divide by 4?
+C $B151,2 Two more shifts: with the mask below, C = ((gap >> 4) & $3F) | 1
 C $B153,5 C = (A & $3F) | 1
 C $B158,2 Jump to mhc_check_brake
 @ $B15A label=mhc_low_gear_accelerating
@@ -7890,22 +7890,22 @@ C $B163,6 A = -((A & $1F) | 1)
 C $B169,3 BC = $FF00 | A  -- speed delta (slowing)
 C $B16C,2 Jump to mhc_check_brake
 @ $B16E label=mhc_high_gear
-C $B16E,3 BC = 220 -- max speed?
+C $B16E,3 BC = 220 (displayed 180)  -- below this high gear pulls weakly
 C $B171,2 16-bit subtract only for result in flags
 C $B173,2 Restore current speed saved earlier
 C $B175,2 Jump if current speed (HL) < max speed (DE)
 @ $B177 label=mhc_high_gear_slowing
-C $B177,3 BC = 470 -- max speed?
+C $B177,3 BC = 470 (displayed 385)  -- high gear target speed with turbo below 220
 C $B17A,1 Unbank turbo boost with flags
 C $B17B,2 Jump if turbo boost in effect -- Uses banked flags
 C $B17D,10 A = DE >> 4
 C $B187,5 C = (A | 1) & $1F
 C $B18C,2 Jump to mhc_check_brake
 @ $B18E label=mhc_high_gear_accelerating
-C $B18E,3 BC = 695 -- max speed?
+C $B18E,3 BC = 695 (displayed 569)  -- high gear target speed with turbo
 C $B191,1 Unbank turbo boost with flags
 C $B192,2 Jump if turbo boost in effect -- Uses banked flags
-C $B194,3 BC = 360 -- max speed?
+C $B194,3 BC = 360 (displayed 295)  -- high gear target speed
 C $B197,3 Use mhc_low_gear_slowing
 @ $B19A label=mhc_check_brake
 C $B19A,2 Get modified user input (stored by #R$B0BE)
@@ -7916,7 +7916,7 @@ C $B1A1,3 Speed delta is -20 to slow down
 C $B1A4,2 Jump to mhc_calc_speed
 @ $B1A6 label=mhc_not_braking
 C $B1A6,1 Is ACCELERATE pressed? (bit 3 / up)
-C $B1A7,2 Jump if so {what's in BC? must be the speed delta from earlier}
+C $B1A7,2 Jump if so, keeping the speed delta computed above in #REGbc
 N $B1A9 Not accelerating
 C $B1A9,3 Speed delta is -10 to gradually slow
 @ $B1AC label=mhc_calc_speed
@@ -7941,7 +7941,7 @@ C $B1D1,3 Jump if result is positive
 C $B1D4,1 BC = $FF00 | A  -- otherwise widen as negative
 @ $B1D5 label=mhc_positive
 C $B1D5,2 Copy speed from HL to DE
-C $B1D7,1 Increment speed ... by a value computed from car's pitch ... accelerating slowly when going upwards?
+C $B1D7,1 Add the pitch adjustment: -1 nose up (climbing), +1 nose down
 C $B1D8,3 Speed threshold 695
 C $B1DB,1 Save it
 C $B1DC,2 Reduce speed by threshold
@@ -8007,7 +8007,7 @@ C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B242,1 Halve speed, shifting carry in as MSB
-N $B243 Divide by 2.666 but not quite right? Or is it twice that?
+N $B243 Turning force limit: speed / 8 + speed / 16 = speed * 3 / 16
 C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
@@ -8063,7 +8063,7 @@ C $B293,2 A = -A
 C $B295,1 C = A
 C $B296,1 Bank the scroll amount just copied to #REGc into #REGa'. #R$B854 in scroll_horizon reads it back; nothing between here and there executes EX AF,AF', so it survives. Only written when this path is reached, i.e. curvature is non-zero and ticks have elapsed
 C $B297,3 horizon_scroll_sub = A  [the value unbanked by the EX above]
-N $B29A No curvature - No scroll required?
+N $B29A No curvature: #REGbc stays zero, so the road adds no sideways drift.
 @ $B29A label=mhc_straight_road
 C $B29A,4 HL = horizontal_adjust + BC
 C $B29E,7 horizontal_adjust = 0
@@ -8092,7 +8092,7 @@ C $B2C9,2 A = 0  -- cornering = 0
 C $B2CB,2 Jump to mhc_set_cornering if A < 17
 C $B2CD,4 Jump if H bit 7 clear
 C $B2D1,4 Jump to mhc_set_cornering if D bit 7 set
-C $B2D5,4 Jump to mhc_set_cornering if H bit 7 clear  -- bug? already tested above
+C $B2D5,4 Jump to mhc_set_cornering if H bit 7 clear  -- never taken: #R$B2CD only reaches here when it is set
 C $B2D9,2 Jump to mhc_is_cornering
 @ $B2DB label=mhc_shift_positive
 C $B2DB,4 Jump to mhc_set_cornering if D bit 7 clear
@@ -8172,8 +8172,8 @@ C $B36B,3 Load road_pos
 C $B36E,2 Load flip_flag, self modified by #R$A4C0 in check_scenery_collisions
 C $B370,6 flip_car = (flip_flag & 1)
 C $B376,3 Jump if flip_flag is 1
-C $B379,3 Jump if flip_flag is 2  -- is this ever taken?
-N $B37C Flip flag was zero?
+C $B379,3 Jump if flip_flag is 2  -- never taken: scenery_hit only stores 0 or 1
+N $B37C flip_flag was 0.
 @ $B37C label=ahc_increase_road_pos
 C $B37C,1 Increment road position by #REGde
 C $B37D,2 Jump to set road_pos
@@ -8195,7 +8195,7 @@ C $B392,3 Load road_pos
 C $B395,3 DE = <self modified>
 C $B398,1 A = H
 C $B399,1 Set flags
-C $B39A,3 Jump if top bit is set?
+C $B39A,3 Jump if road_pos is negative
 C $B39D,2 Jump if non-zero
 N $B39F Otherwise it was zero.
 C $B39F,1 A = L
@@ -8280,11 +8280,11 @@ C $B446,3 Return if not fully off-road
 N $B449 Otherwise we're off-road.
 N $B449 Draw the smoke.
 @ $B449 label=ahc_do_draw_smoke
-C $B449,2 A' = 0  -- no flip?
+C $B449,2 A' = 0  -- draw unflipped
 C $B44B,1 A = B  -- smoke anim index
 C $B44C,1 Preserve smoke anim index
 C $B44D,3 Call draw_smoke - for the right hand side
-C $B450,3 A' = 1  -- flip?
+C $B450,3 A' = 1  -- draw flipped
 C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
 c $B457 Draws the "stop" hand shown when the perp is caught
@@ -8300,7 +8300,7 @@ N $B45F Show the "stop" hand.
 C $B45F,1 Bank
 C $B460,3 BC' = A
 C $B463,1 Unbank
-N $B464 Avoid the hand animation if turning hard?
+N $B464 Pick the hand frame: 36 normally, 37 + flip_car when turning hard.
 C $B464,5 Is turn_speed 2? (turn hard)
 C $B469,2 A = 36
 C $B46B,3 Exit via #R$B69E if turn_speed != 2
@@ -8361,7 +8361,7 @@ N $B4D0 Starts the animation that puts the cherry light on the roof
 C $B4D0,4 Set hand_flag to 1
 N $B4D4 Enable flashing lights and smash bar
 C $B4D4,3 Set sighted_flag to 1
-N $B4D7 This is animation frame related?
+N $B4D7 Start the hand animation's frame delay.
 C $B4D7,4 Self modify 'LD A' @ #R$B478 to load 2
 C $B4DB,6 Set time_sixteenths to 15 and time_bcd to $60
 C $B4E1,6 Toggle the left light's brightness
@@ -8652,7 +8652,7 @@ N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
 C $B6DD,7 Divide #REGe by 8
 C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
-C $B6EC,1 Preserve A & save carry flag?
+C $B6EC,1 Restore #REGa = D, banked at #R$B6E4
 C $B6ED,5 E += (A & $70) * 2
 C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
@@ -8866,8 +8866,8 @@ C $B877,2 A = -A
 C $B879,3 Load address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
-N $B880 Otherwise negative (or zero?).
-C $B880,2 A += 20  -- wrap around?
+N $B880 Otherwise negative: wrap into 0-19.
+C $B880,2 A += 20
 @ $B882 label=sh_reduce
 C $B882,6 If A >= 20 then A -= 20
 @ $B888 label=sh_set_hz_shift
@@ -8933,7 +8933,7 @@ C $B8E5,2 C is 0 or 1, so put into carry
 C $B8E7,2 BC = C
 C $B8E9,2 Jump if no carry (positive value)
 N $B8EB Otherwise negative value.
-C $B8EB,2 A = -A  -- invert incline again?
+C $B8EB,2 A = -A  -- restore the climbing sign recorded in C
 C $B8ED,1 B = $FF
 @ $B8EE label=url_alter_horizon_level
 C $B8EE,3 Load #REGhl from horizon_level
@@ -8946,11 +8946,11 @@ C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
 C $B8FE,7 Zero horizon_y_step and horizon_y_accum
 C $B905,3 A = (height byte) >> 1
-C $B908,3 Jump if positive (or zero?)
+C $B908,3 Jump if zero or positive; otherwise round towards zero
 C $B90B,1 A++
 @ $B90C label=url_positive
 C $B90C,3 incline = A
-C $B90F,2 Step back 2 in the height data (frontmost height byte?)
+C $B90F,2 Step back 2 in the height data
 C $B911,1 Read height byte
 C $B912,1 Copy to #REGc
 C $B913,1 Set flags
@@ -8977,7 +8977,7 @@ C $B935,2 Jump if non-zero
 N $B937 Else unset.
 C $B937,4 A = -A - 2
 C $B93B,2 Jump if carry  (-A < 2)
-N $B93D Else ?
+N $B93D Otherwise the previous height was at least 2 below zero and the current one is not negative: a crest, so consider a jump.
 C $B93D,1 B = A
 C $B93E,3 Load jump counter
 C $B941,1 Set flags
@@ -8997,7 +8997,7 @@ C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
 C $B965,3 Set jump counter
 C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
 C $B96C,3 Self modify #R$B079 (mhc_midair)
-C $B96F,1 Restore HL (which is what?)
+C $B96F,1 Restore HL, the address of prev_road_height
 @ $B970 label=url_potato
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
@@ -9156,7 +9156,7 @@ C $BA95,2 Jump to lr_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
 @ $BA99 ssub=LD (hazard_0 + 13),A
 C $BA97,5 Set the speed of the perp's car to 95 (normally 60)
-N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way (eh?)
+N $BA9C Even the wrong fork earns a bonus of (40,000 + 10,000 * level number).
 C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
 C $BAA2,1 Clear low digit
@@ -9199,16 +9199,16 @@ C $BAE6,3 Call build_curve_table
 C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
 C $BAED,1 Stack it
-C $BAEE,1 DE must be a road position delta?
+C $BAEE,1 Shift road_pos by the fork offset
 C $BAEF,3 Set road position
 C $BAF2,3 Call build_curve_table_forked
 N $BAF7 Right fork was taken.
 @ $BAF7 label=lr_right_fork_taken
 C $BAF7,3 Call build_curve_table_forked
-C $BAFA,1 Pop result?
+C $BAFA,1 DE = fork offset, pushed at #R$BADF
 C $BAFB,3 Get road position
 C $BAFE,1 Stack it
-C $BAFF,2 DE must be a road position delta?
+C $BAFF,2 Shift road_pos the other way by the fork offset
 C $BB01,3 Set road position
 C $BB04,3 Call build_curve_table
 @ $BB07 label=lr_restore_road_pos
@@ -9234,11 +9234,11 @@ C $BB32,5 (Right + Left) / 2  == new road centre
 C $BB37,3 *$EAxx = HL (xx = self modified) (store road centre)
 C $BB3A,5 (Centre + Left) / 2  == new road centre left
 C $BB3F,3 *$E9xx = HL (xx = self modified) store (road centre left)
-C $BB42,4 DE = *$EDxx (xx = self modified) (?)
+C $BB42,4 DE = *$EDxx (xx = self modified) (right fork's right outer edge)
 C $BB46,3 HL = *$EBxx (xx = self modified) (road centre right)
-C $BB49,5 (Centre-right + ?) / 2  == new road centre right
+C $BB49,5 (Centre-right + fork right edge) / 2  == new road centre right
 C $BB4E,3 *$EBxx = HL (xx = self modified) store (road centre right)
-C $BB51,5 (Centre-right) + ?) / 2 == new road right
+C $BB51,5 (Centre-right + fork right edge) / 2 == new road right
 C $BB56,3 *$ECxx = HL (xx = self modified) (road right)
 C $BB59,2 A += 2
 C $BB5B,1 Unbank
@@ -9259,7 +9259,7 @@ C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
 N $BB74 Set up left route.
 @ $BB74 label=ef_left
-C $BB74,3 D,E = $FC,$01  (curvature byte -4 => super hard (?) left turn, lanes byte = 1)
+C $BB74,3 D,E = $FC,$01  (curvature byte -4 => hard left turn, lanes byte = 1)
 C $BB77,1 Save for later
 @ $BB78 ssub=LD HL,forked_road_exit_leftobjs - 1
 C $BB78,6 road_leftside_ptr  = $E2D9
@@ -9278,7 +9278,7 @@ C $BB9D,2 A = 64  -- added to the lanes offset below, so the stream cleared at #
 C $BB9F,2 Jump to ef_set_handlers
 N $BBA1 Set up right route.
 @ $BBA1 label=ef_right
-C $BBA1,3 D,E = $04,$03  (curvature byte +4 => super hard (?) right turn, lanes byte = 3)
+C $BBA1,3 D,E = $04,$03  (curvature byte +4 => hard right turn, lanes byte = 3)
 C $BBA4,1 Save for later
 N $BBA5 Note the switch around here.
 @ $BBA5 ssub=LD HL,forked_road_exit_rightobjs - 1
@@ -9371,8 +9371,8 @@ C $BC81,28 Transfer another 16 bytes (128 pixels)
 C $BC9D,28 Transfer another 16 bytes (128 pixels)
 C $BCB9,2 If bit 2 of backbufptr is set then we're on the first pass
 C $BCBB,3 Loop if so
-C $BCBE,5 Advance back buffer pointer (backwards) by a half row?
-C $BCC3,5 Advance screen pointer (backwards) by half a row?
+C $BCBE,5 Back 8 scanlines (H -= 8) and on 16 bytes in the back buffer
+C $BCC3,5 Back 8 scanlines and on 14 bytes on the screen
 N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
 @ $BCC8 label=ds_loop_14bytes
 C $BCC8,1 Point #REGsp at the back buffer
@@ -9406,7 +9406,7 @@ C $BD64,2 E = last frame's delta, the one this call acts on
 C $BD66,1 Hold this frame's delta over for the next call
 C $BD67,4 Jump to exit check if E is zero
 C $BD6B,3 E = A * 4
-C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
+C $BD6E,1 D = $FF if the delta is negative: carry holds its bit 6, which matches bit 7 for these small multiples of 8
 C $BD6F,1 D = A
 C $BD70,3 Load the address of the first line of ground attributes (+ 31)
 C $BD73,3 Set the sky colour screen attributes by default (always bright, black over cyan)
@@ -9478,7 +9478,7 @@ C $BE28,7 Set trigger_right_hand_passed_object_sfx
 C $BE2F,4 Point HL at first byte of left hand object data
 C $BE33,7 Set trigger_left_hand_passed_object_sfx
 N $BE3A -- CURVATURE --
-C $BE3A,4 Step back 96 bytes to the now-end of curvature?
+C $BE3A,4 Step back 96 bytes to the curvature stream
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
 C $BE3E,5 Decrement down the counter nibble
 C $BE43,2 Jump to rm_save_curvature_byte if curvature_byte >= 16
@@ -9599,7 +9599,7 @@ C $BF2C,2 A = <self modified value>  -- Self modified above AND below
 C $BF2E,1 C = A  -- Save temporarily
 C $BF2F,4 Jump to rm_store_lanes if (A & $0C) is zero
 N $BF33 (bottom two bits significant)  $F3 is complement of $0C
-C $BF33,3 A = C & $F3  -- discard bit 3 only?
+C $BF33,3 A = C & $F3  -- clear bits 2 and 3 so later rows store the lanes without them
 C $BF36,3 Self modify 'LD A,$xx' @ #R$BF2C (above)
 @ $BF39 label=rm_store_lanes
 C $BF39,1 Store to cyclic road buffer (HL)
