@@ -4265,7 +4265,7 @@ C $9347,4 A = IY[$35] + D {A=clip_rows}
 C $934D,1 A++
 C $934E,1 Load bitmap.height {D=bitmap_height}
 C $934F,1 A -= D (height)
-C $9352,1 A = 0 {A=something}
+C $9352,1 A = 0, so the add below gives D: the row count is MIN(A + 1, height)
 @ $9353 label=doc_potato
 C $9353,1 A += D
 C $9354,1 HL++
@@ -5590,7 +5590,7 @@ R $9FB4 O:DE Screen address moved to next column
 C $9FB4,4 If it's not a space character, goto dc_not_space with #REGa reduced
 N $9FB8 It's a space
 C $9FB8,1 Move screen address to the next column
-C $9FBA,1 <move something else that's banked>
+C $9FBA,1 Advance the banked attribute pointer to the next cell
 C $9FBC,1 Return
 N $9FBD Map ASCII to glyph IDs
 @ $9FBD label=dc_not_space
@@ -9545,7 +9545,7 @@ C $BEB6,3 Self modify 'LD DE,$xxxx' @ #R$BBC4 to load the address
 C $BEB9,3 HL = #R$E2CC -> forked road height data
 C $BEBC,2 Jump to rm_read_height
 @ $BEBE label=rm_height_one_command
-C $BEBE,3 HL = <something>  -- Self modified by #R$BBCF
+C $BEBE,3 HL = <map height address> -- the right route's height data, self modified by #R$BBCF at a fork
 C $BEC1,2 Jump to rm_read_height
 @ $BEC3 label=rm_height_jump_command
 C $BEC3,4 HL = wordat(HL)
