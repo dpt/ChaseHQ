@@ -607,11 +607,12 @@ static void es_handler_draw_score(chqstate_t *state)
 /**
  * Resolve a script-embedded argument word to its C data array.
  *
- * Conv: as with z80addrtoendshot, es_script only ever encodes one literal value
- *       here ($5C6E, pre-relocation for data_e06e at post-relocation $E06E via
- *       the bank's uniform +0x8400 rule), so a small lookup replaces pointer
+ * Conv: as with z80addrtoendshot, es_script only ever encodes two literal
+ *       values here ($5C6E and $5C78, the relocated addresses of the chatter
+ *       blocks at $E06E and $E078), so a small lookup replaces pointer
  *       arithmetic into relocated bank memory the C port does not model
- *       byte-for-byte.
+ *       byte-for-byte. The Z80 blocks hold message string pointers; these C
+ *       copies hold the equivalent CHATTERSTR indices.
  *
  * \param[in] addr Raw address word read from the script (was HL after EX DE,HL
  *                 at $E2B7).
@@ -659,20 +660,8 @@ static const u8 *z80addrtochatterblk(u16 addr)
  * pointer. Runs immediately (loops back into run_script rather than
  * returning).
  *
- * Conv: data_e06e (the only live target) is NOT a standard {CHATTERCHR,
- *       CHATTERSTR, CHATTERCMD} chatterblk -- see
- *       CHATTERBLK_NANCY_CONGRATULATES_ADDR above. Byte 2 of that block ($3F =
- *       63) would be consumed as a CHATTERSTR index by pc_chatter_message
- *       (Main.c, the "assert(*chatterblk < CHATTERSTR__LIMIT)" guard around
- *       line 5871) and fail that bounds check immediately -- CHATTERSTR__LIMIT
- *       is 36. In a release build without asserts this reads
- *       common_chatter_strings[63] out of its 36-entry array and dereferences
- *       whatever garbage pointer turns up, i.e. every single playthrough would
- *       crash on reaching the end screen. The original Z80 has the same
- *       malformed data, so this path is presumed unreached in practice (the
- *       skool marks it "unproven, dead end"); rather than risk that
- *       byte-for-byte here, the start_chatter call is skipped whenever the
- *       resolved target does not look like a well-formed chatterblk.
+ * The resolved target is a chatter block from $E06E-$E07B: a face number,
+ * message strings and a terminator, in the format print_chatter reads.
  *
  * \param[in,out] state Pointer to game state; state->bank7->es_script_ptr is
  *                      read and advanced past the word consumed.

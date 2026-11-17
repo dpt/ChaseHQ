@@ -1845,27 +1845,33 @@ C $E05E,4 Loop while key pressed
 C $E062,2 Loop
 C $E065,4 Set interrupt vector table base to $8000
 C $E069,3 Call drive_chatter_stop
-b $E06C End-screen trigger flags and congratulations text pointers
-N $E06C $E06C ($5C6C) and $E06D ($5C6D) are NOT part of the pointer table below -- they are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
+b $E06C End-screen fade trigger flags
+N $E06C $E06C ($5C6C) and $E06D ($5C6D) are two independent 1-bit trigger flags, each tested/consumed via RLC (HL)+RET C/NC: $5C6C by es_attribute_fade_in ($E42E), $5C6D by the handshake frame-advance code at $E472/handshake_table. RLC both tests bit 7 (into carry) and rotates it into bit 0, so each read self-clears/advances the flag -- confirmed via skool cross-reference (LD HL,$5C6C at $E42E and $E472; LD HL,$5C6D at $E3BA and $E46D)
 @ $E06C label=es_fade_gates
 B $E06C,2,1 Trigger flags (see note above)
-N $E06E Still unidentified (3 bytes, values $01,$3F,$96) -- confirmed dead end: grepped for literal $5C6E/$5C6F/$5C70 operands across the full static bank-7 disassembly and the entire trace-end-screen.log execution capture, zero hits either way. Not reached by any direct-addressed instruction in the code disassembled so far; either accessed only via computed/indexed addressing not yet spotted, read by common-RAM code outside bank 7, or genuinely unused padding
-@ $E06E label=data_e06e
-B $E06E,3,1
-N $E071 Pointer table for the congratulations text: three pointers packed tight ($E071-$E076), then a 2-byte gap, then a fourth pointer ($E079-$E07A), then a trailing byte. Bytes at $E071-$E072, $E073-$E074, $E075-$E076, $E079-$E07A are little-endian relocated pointers $5C7C/$5CA5/$5CD0/$5CE8 -- relocating back (+$8400) gives $E07C/$E0A5/$E0D0/$E0E8, an exact match to the four text strings below
-W $E071,6,2 Pointers 1-3 (tight-packed)
-N $E077 Gap between pointer 3 and pointer 4 ($FF,$03) -- same confirmed dead end as $E06E: no literal $5C77/$5C78 operand anywhere in bank 7's static disassembly or trace-end-screen.log. $FF matches the terminator convention seen elsewhere (see $F8F5 SFX table), possibly a record separator/duration byte rather than table padding, but unproven
-B $E077,2,1
-W $E079,2,2 Pointer 4
+
+b $E06E End-screen chatter blocks
+D $E06E Two chatter blocks in the format print_chatter ($99EC) reads: a face number, then pointers to message strings, then a $FF terminator. The script's CHATTER commands pass their relocated addresses ($5C6E and $5C78) to start_chatter. Their pointers to the congratulations text are relocated too: add $8400 to find the strings below.
+@ $E06E label=chatterblk_nancy_congratulates
+B $E06E,1,1 Face 1: Nancy
+W $E06F,2,2 "THIS IS NANCY AT CHASE H.Q." in main memory
+W $E071,6,2 The three congratulations lines
+B $E077,1,1 Terminator
+@ $E078 label=chatterblk_press_gear
+B $E078,1,1 Face 3: Tony
+W $E079,2,2 "PRESS GEAR TO CONTINUE"
 B $E07B,1,1 Terminator
+
+b $E07C Congratulations text
 T $E07C,41,40:n1 "I WOULD LIKE TO CONGRATULATE YOU FOR YOUR"
 T $E0A5,43,42:n1 "HEROISM AND BRAVERY. YOU WILL BE REMEMBERED"
 T $E0D0,24,23:n1 "FOR A LONG TIME TO COME."
 T $E0E8,22,21:n1 "PRESS GEAR TO CONTINUE"
+
 b $E0FE Script data
 @ $E0FE label=script_data
 B $E0FE,1,1
-W $E0FF,2,2 -> data_e06e
+W $E0FF,2,2 -> chatterblk_nancy_congratulates
 B $E101,3,2,1
 W $E104,2,2 bitmap_endshot_1
 B $E106,7,7
