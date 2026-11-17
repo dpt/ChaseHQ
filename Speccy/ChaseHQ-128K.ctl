@@ -12499,7 +12499,7 @@ N $E2B4 Perp escape scene, lanes
 N $E2B4 #HTML[#CALL(lanes_for_c($E2B4))]
 @ $E2B4 label=perp_escape_lanes
 B $E2B4,2,2 53 units of 3 Lanes L
-B $E2B6,2,2 255 units of Tunnel  -- Is no explicit stop required here since the camera stops?
+B $E2B6,2,2 255 units of Tunnel, more than the scene ever shows, so no stop command follows
 N $E2B8 Fork scene, hazards
 N $E2B8 #HTML[#CALL(hazards_for_c($E2B8))]
 @ $E2B8 label=fork_hazards
@@ -12508,7 +12508,7 @@ B $E2B9,2,2 Escape, Command 10 (Set Floating Arrow Off)
 B $E2BB,1,1 Wait for 255
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2BE,2,2 Loop
-N $E2C0 Fork scene, left and right hand objects This first byte of the data is only used when drawing objects on the left hand side. Perhaps to stop the initial pole drawing twice?
+N $E2C0 Fork scene, left and right hand objects The left-hand side starts reading at #R$E2C0 and the right-hand side at #R$E2C1 (see #R$BF7E and #R$BFC7), so the left-hand poles run one unit behind the right-hand ones.
 N $E2C0 #HTML[#CALL(objects_for_c($E2C0))]
 @ $E2C0 label=fork_leftrightobjs
 B $E2C0,1,1 1 units of Nothing
@@ -12731,7 +12731,7 @@ C $E885,3 Replaces 48K play_engine_sfx_hook
 C $E888,3 Replaces 48K play_speech_hook
 @ $E88B ssub=JP attract_mode_128k - hooks_128k + all_hooks
 C $E88B,3 Replaces 48K attract_mode_hook
-N $E88E Copied to $EC00 - transitions?
+N $E88E Transition animation table, copied to $EC00 at start-up: four three-byte forward entries then four reverse ones.
 @ $E88E label=transition_anims
 B $E88E,1,1 6 frames
 W $E88F,2,2 Address of frames
@@ -12851,12 +12851,12 @@ C $E9B2,2 Jump to do define
 b $E9B4 Messages
 @ $E9B4 label=messages_stop_the_tape
 B $E9B4,1,1 Attribute: Green ink over black
-W $E9B5,2,2 Screen position (80,96) (why is this screen, not attrs?)
+W $E9B5,2,2 Screen position (80,96); menu_draw_string derives the attribute address from it
 T $E9B7,13,12:n1 "STOP THE TAPE"
 B $E9C4,1,1 Attribute: Cyan ink over black
 W $E9C5,2,2 Screen attribute position (4,18)
 T $E9C7,25,24:n1 "PRESS ANY KEY TO CONTINUE"
-B $E9E0,1,1 Stop marker?
+B $E9E0,1,1 Terminator: no more messages in this set
 @ $E9E1 label=messages_input_methods
 B $E9E1,1,1 Attribute: Green ink over black
 W $E9E2,2,2 Screen position (88,80)
@@ -12876,7 +12876,7 @@ T $EA35,11,10:n1 "4. KEYBOARD"
 B $EA40,1,1 Attribute: Cyan ink over black
 W $EA41,2,2 Screen position (48,176)
 T $EA43,14,13:n1 "5. DEFINE KEYS"
-B $EA51,1,1 Stop marker?
+B $EA51,1,1 Terminator: no more messages in this set
 @ $EA52 label=messages_redefine_keys
 B $EA52,1,1 Attribute: Red ink over black
 W $EA53,2,2 Screen position (72,80)
@@ -12976,7 +12976,7 @@ C $EC17,2 Preserve regs
 @ $EC19 label=menu_draw_string_loop
 C $EC19,3 Isolate terminator bit
 C $EC1C,5 Draw character in #REGa
-C $EC21,2 End of string?
+C $EC21,2 Top bit set marks the last character
 C $EC23,1 Advance to next char irrespective
 C $EC24,2 Loop if not
 C $EC27,3 Restore regs
@@ -13027,7 +13027,7 @@ C $EC8B,8 Move to next scanline after boundary (DE += $F81F)
 C $EC93,7 Row 5/7
 C $EC9A,7 Row 6/7
 C $ECA1,7 Row 7/7
-C $ECA8,2 why writing a blank?
+C $ECA8,2 Blank the scanline below the 14 doubled glyph rows
 C $ECAA,1 Bank
 C $ECAB,1 Save #REGl
 C $ECAC,2 Set the BRIGHT bit
@@ -13071,7 +13071,7 @@ C $ECFC,3 Set the screen location (179,112) to where the first defined key is sh
 C $ECFF,3 Loop counter #REGb = 8 iterations, and index #REGc = 1
 @ $ED02 label=rdk_loop_1
 C $ED02,3 Preserve registers
-C $ED05,3 Call play_music_48k  -- does this define a *single* key?
+C $ED05,3 Call play_music_48k while waiting for the keyboard to clear
 C $ED08,3 Restore registers
 N $ED0B Wait for the keyboard to clear.
 C $ED0B,3 Read keyboard port $00FE
@@ -13081,7 +13081,7 @@ C $ED11,2 Jump if any keys are pressed
 N $ED13 Otherwise...
 C $ED13,3 Call define_a_key (passing index in #REGc)
 C $ED16,1 Increment index
-C $ED17,1 HL++  -- what's in HL?
+C $ED17,1 HL++  -- no effect: define_a_key has already overwritten HL
 C $ED18,2 Loop rdk_loop_1 while #REGb > 0
 N $ED1A All keys are now defined.
 C $ED1A,2 B = 20
@@ -13095,7 +13095,7 @@ C $ED23,2 8 iterations
 C $ED25,3 Point #REGde at shocked bytes
 C $ED28,3 Point #REGhl at #R$EE38
 @ $ED2B label=rdk_loop_3
-C $ED2B,2 Matching byte?
+C $ED2B,2 Does this key match the SHOCKED byte?
 C $ED2D,2 Advance
 C $ED2F,1 Return if no match
 C $ED30,2 Loop rdk_loop_3 while #REGb > 0
@@ -13118,7 +13118,7 @@ D $ED4D Used by the routine at #R$ED6D.
 R $ED4D O:D Key half-row number in bits 0..2, key in bits 3 and up, the same packing the key definition table uses, so the result can be stored straight into it. $FF if no key was down. Only meaningful when Z is set
 R $ED4D O:F Z set when at most one key was identified, so #REGd can be trusted. Z clear when the scan was ambiguous: two half-rows active, or two keys in one half-row
 @ $ED4D label=redefine_keyscan
-C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
+C $ED4D,3 #REGd = $FF (no key found yet); #REGe = $2F, the key counter (5) in bits 3-7 and the half-row counter (7) in bits 0-2, both counting down
 C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
 N $ED53 Start loop.
 @ $ED53 label=ka_loop
@@ -13180,7 +13180,7 @@ C $EDA6,1 A += B
 C $EDA7,1 A += A
 C $EDA8,1 DE = A  (D is zero)
 C $EDA9,1 HL += DE
-C $EDAA,4 Retrieve DE and index?
+C $EDAA,4 Retrieve the index (BC) and the screen address (DE), stacking them again with DE on top
 C $EDAE,4 Poke screen address into key string
 C $EDB2,1 A = *HL  -- read a byte of key name
 C $EDB3,3 Poke first byte of key name
@@ -13189,7 +13189,7 @@ C $EDB7,1 A = *HL  -- read another byte of key name
 C $EDB8,2 Terminate the second byte
 C $EDBA,3 Poke into key string
 C $EDBD,6 Draw the key string
-C $EDC4,3 Advance to next? character row
+C $EDC4,3 Move DE down one character row
 C $EDC8,4 Return if B != 4
 @ $EDCC label=dak_move_down
 C $EDCC,4 E += 32
@@ -13293,7 +13293,7 @@ C $EEA5,2 Jump to #R$EEAD if non-zero
 C $EEA7,4 Otherwise increment and self modify #R$EEA2
 C $EEAB,2 Jump to #R$EEC9
 @ $EEAD label=pm_delay_1
-C $EEAD,2 Self modified by #R$EEBB, cycles 5,4?,3,2,1  (set to first music data byte)
+C $EEAD,2 Delay countdown, self modified by #R$EEB3, #R$EEBB, #R$EEDE and #R$EF05; reloaded from the first music data byte
 C $EEAF,1 Decrement and set flags
 C $EEB0,3 Jump to pm_delay_complete if zero
 C $EEB3,3 Self modify 'LD A' @ #R$EEAD above  (store decremented)
@@ -13330,7 +13330,7 @@ C $EEE8,2 Extract bottom 3 instrument bits  -- must be the command
 C $EEEA,2 Jump to pm_zero_or_456 if they're zero
 C $EEEC,1 Save the instrument
 C $EEED,7 Extract the four argument bits
-N $EEF4 If NOPped this call seems to make the music halt... not firing interrupts?
+N $EEF4 Dispatch on the instrument number.
 C $EEF4,4 Jump to #R$EF22 if instrument is 1  -- drum 2
 C $EEF8,4 Jump to #R$EF29 if instrument is 2  -- drum 1
 C $EEFC,4 Jump to #R$F0C6 if instrument is 3  -- noise
@@ -13343,7 +13343,7 @@ C $EF09,4 Self modify 'LD A' @ #R$EF00 above
 @ $EF0D label=pm_start_drums
 C $EF0D,2 Load <drum is playing flag>  -- Self modified by #R$EF33
 C $EF0F,1 Decrement
-C $EF10,3 Jump to playdrum_bank_go if zero  -- resuming?
+C $EF10,3 Jump to playdrum_bank_go to resume a drum sample that the last interrupt cut short
 N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 @ $EF13 label=pm_wait_for_interrupt
 C $EF13,5 Loop while waiting for this <interrupt flag> to be set
@@ -13438,7 +13438,7 @@ C $F0ED,3 Clear EAR + MIC bits
 @ $F0F0 label=n_continue
 C $F0F0,1 Decrement inner counter
 C $F0F1,2 Jump to n_loop if non-zero
-N $F0F3 This whole interrupt check is redundant since AND A + RET C results in the return never being taken. Should it be RET NZ instead? (RET Z messed things up when I tried it.)
+N $F0F3 This interrupt check is dead code. AND A clears carry, so the RET C is never taken and the noise always runs its full duration. The drum player at #R$EF4E tests the same flag with JP Z.
 C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- <interrupt flag>
 C $F0F6,1 Set flags
 C $F0F7,1 Bug: Carry is cleared by AND A so this makes no sense
@@ -13597,7 +13597,7 @@ D $F2F1 Lives at $8035 when relocated.
 N $F2F1 Note that this sets a 5-bit field to 60. The playing routine below uses this value to set the channel C pitch too.
 @ $F2F1 label=setup_turbo_sfx_128k
 C $F2F1,2 Initial noise pitch value
-C $F2F3,3 Set AY noise pitch -- this is a 5-bit field so is it masked and becomes 28?
+C $F2F3,3 Set the AY noise pitch soft copy; register 6 is five bits wide, so the chip sees 60 AND 31 = 28
 C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
 c $F2FA Play turbo sound effect
@@ -13720,7 +13720,7 @@ C $F3C7,4 Self modify 'LD SP,xxxx' @ $81CD (#R$F3D9 here - below)
 C $F3CB,3 Set stack pointer
 C $F3CE,3 Call page_128k to page in
 C $F3D1,3 Call the entry point requested. Self modified by #R$F3B6
-C $F3D4,1 Preserve (why?)
+C $F3D4,1 Preserve the called routine's AF result across the page switch
 C $F3D5,3 Call page_128k to page out
 C $F3D8,1 Restore
 C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
