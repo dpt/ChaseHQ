@@ -67,7 +67,9 @@
 > $4000 ; - C = Y position row bits 4..6
 > $4000 ;
 > $4000 ; There's a column spare at either side of the back buffer (same as the main
-> $4000 ; screen). This seems to be to avoid full clipping.
+> $4000 ; screen). #R$BC3E copies only columns 1 to 30, so the drawing routines can
+> $4000 ; overrun either side by a byte without clipping and nothing they write there
+> $4000 ; is shown.
 > $4000 ;
 > $4000 ;
 > $4000 ; 128K MEMORY MAP
@@ -223,7 +225,7 @@ W $5BCD,2,2
 B $5BCF,2,2
 W $5BD1,4,2 Start game at entry_128k
 @ $5BD5 label=loader_scratch
-B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
+B $5BD5,2,2 #R$5B31 loads a two-byte block here. Nothing reads it back, so the block is discarded.
 u $5BD7 Padding bytes
 D $5BD7 Bytes to pad this section out to $5C00. These bytes do get touched by e.g. #R$C861.
 S $5BD7,31,$1F
@@ -5915,7 +5917,7 @@ B $A234,1,1 Cycles 0-1-2-3 as the game runs. Used to animate turbo smoke and hel
 B $A235,1,1 Cycles 0-1 as the game runs (used to flash the red/blue lights)
 @ $A236 label=counter_C
 B $A236,1,1 Cycles 0-1-2-3 as the game runs - at half rate
-N $A237 These seem to get altered even when no sound is being produced.
+N $A237 Sound effect request state. #R$88F2 writes the index and priority on every request and #R$8903 clears them the next frame, so they change whether or not the hooks produce any sound.
 @ $A237 label=sfx_index
 B $A237,1,1 Current sound effect index
 @ $A238 label=sfx_priority
@@ -6482,7 +6484,7 @@ N $A68B So the lanes match.
 C $A68B,2 Restore #REGiy pushed at #R$A650
 C $A68D,2 Jump to pb_random_move_left_or_right
 @ $A68F label=pb_check_changing_lane_flag
-C $A68F,2 A = <self modified>  -- load "changing lane" flag that appears to be set to 1 when the perp changes lane
+C $A68F,2 A = <self modified>  -- "changing lane" flag, written at #R$A73B: 1 while the perp is still sliding towards its target lane, 0 once it has arrived
 C $A691,3 Jump to pb_check_lane if non-zero
 N $A694 Not mid lane-change, so a new one may be started -- but only once the perp is within 7 slots of the player.
 C $A694,3 A = perp's distance (IX+1)
@@ -6550,7 +6552,7 @@ C $A70C,2 Move left by two lanes
 C $A70E,3 Update current_lane
 N $A711 current_lane is 1/2/3/4
 @ $A711 label=pb_reread_current_lane
-C $A711,3 Re-read current_lane [not convinced this is required]
+C $A711,3 Re-read current_lane. Redundant: #REGa already holds it on every path here
 @ $A714 ssub=LD HL,hazard_pos_speed - 1
 C $A714,5 Load address of hazard_pos_speed[current_lane]
 C $A719,4 Compare horizontal position IX[5] with table value
@@ -6821,7 +6823,7 @@ C $A900,2 Stash this comparison's carry in #REGb's bottom bit. #REGb's own value
 C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
 C $A905,1 C = A  -- copy chosen lane to C
 C $A906,2 Compute HL[A]
-N $A908 breakpoint hit here seemingly when the right hand side narrows and there's a barrier
+N $A908 Slide the horizontal position 5 units towards the target lane's table position. Once within 5 it snaps to that position and the target lane becomes the current lane.
 C $A908,3 A = IX[5]  e.g. $A19C[5]
 C $A90B,2 Recover the carry stashed at #R$A900: set when the target lane is left of the current one
 C $A90D,2 Jump to slide right if it is to the right
@@ -7252,7 +7254,7 @@ D $AC3C IX[15] is a three-state machine. 0 is the untouched state: return unless
 D $AC3C If IX[15] is non-zero then jump forward.
 R $AC3C I:IX Address of hazard structure ($A188+)
 @ $AC3C label=hazard_hit
-C $AC3C,3 IX[15] appears to be a delay of some sort
+C $AC3C,3 IX[15] is the hit state: 0 untouched, 2 wobbling, 1 finished
 C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
 N $AC42 IX[15] is zero.
 C $AC42,5 If IX[7] (hit counter) == 0 then return
@@ -9576,7 +9578,7 @@ C $BF01,3 Self modify 'LD BC,$xxxx' @ #R$BBC7 to load the address
 C $BF04,3 HL = #R$E2D1 -> forked road lanes data
 C $BF07,2 Jump to rm_read_lanes
 @ $BF09 label=rm_lanes_one_command
-C $BF09,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+C $BF09,3 HL = <self modified>  -- the right route's lanes data, set by #R$BBD3 at a fork
 C $BF0C,2 Jump to rm_read_lanes
 @ $BF0E label=rm_lanes_jump_command
 C $BF0E,4 HL = wordat(HL)
@@ -9636,7 +9638,7 @@ C $BF7B,3 Self modify 'LD DE,$xxxx' @ #R$BBBA to load the address
 C $BF7E,3 HL = fork_leftrightobjs_loop
 C $BF81,2 Jump to rm_read_rightside
 @ $BF83 label=rm_rightside_one_command
-C $BF83,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+C $BF83,3 HL = <self modified>  -- the right route's rightside data, set by #R$BBDC at a fork
 C $BF86,2 Jump to rm_read_rightside
 @ $BF88 label=rm_rightside_jump_command
 C $BF88,4 HL = wordat(HL)
@@ -9669,7 +9671,7 @@ C $BFC4,3 Self modify 'LD BC,$xxxx' @ #R$BBBD
 C $BFC7,3 HL = fork_leftrightobjs
 C $BFCA,2 Jump to rm_read_leftside
 @ $BFCC label=rm_leftside_one_command
-C $BFCC,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+C $BFCC,3 HL = <self modified>  -- the right route's leftside data, set by #R$BBD8 at a fork
 C $BFCF,2 Jump to rm_read_leftside
 @ $BFD1 label=rm_leftside_jump_command
 C $BFD1,4 HL = wordat(HL)
@@ -13359,7 +13361,7 @@ C $EF21,1 Return
 c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
 D $EF22 Two entry points share one loop: #R$EF22 plays drum 2 (108 bytes at #R$F05A) and playdrum_1 (#R$EF29) plays drum 1 (252 bytes at #R$EF5E). playdrum_start stores #REGa into the loop counter operand at #R$EF39 and raises the drum-playing flag at #R$EF0D. Each sample byte is played most significant bit first as a speaker level on port $FE, rotating in place -- but only #REGa bits are taken from a byte before the pointer moves on, so the speed value is both the bit count and the resampling step, and 1 runs through the sample eight times faster than 8. The loop hands control back to the music driver as soon as the interrupt flag at #R$EF13 is set, and clears the drum-playing flag when the sample runs out.
-R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
+R $EF22 I:A Speed value: the bits played from each sample byte. The music data uses 8, 3 and 1
 @ $EF22 label=playdrum_2
 C $EF22,3 Load address of drum 2 data
 C $EF25,2 108 sample bytes
@@ -13378,7 +13380,7 @@ N $EF38 This entry point is used by the routine at #R$EE9E.
 C $EF38,1 Bank
 N $EF39 Output a byte.
 @ $EF39 label=playdrum_go
-C $EF39,2 <speed value> iterations -- Self modified by #R$EF2E (sampled: 8, 3, 1)
+C $EF39,2 <speed value> iterations -- Self modified by #R$EF2E
 @ $EF3B label=pd_loop
 C $EF3B,2 Set speaker flag
 C $EF3D,1 Delay
