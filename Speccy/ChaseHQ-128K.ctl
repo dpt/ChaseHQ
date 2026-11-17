@@ -78,7 +78,7 @@
 > $4000 ;
 > $4000 ; Bank 1 @ $C000..$DAEF is stage 1's data
 > $4000 ; Bank 1 @ $E000..$FAEF is stage 2's data
-> $4000 ; Bank 3 @ $C000..$FFFF? is the animated title screen
+> $4000 ; Bank 3 @ $C000..$FFFF is the animated title screen
 > $4000 ; Bank 4 @ $C000..$FF66 is sampled speech
 > $4000 ; Bank 6 @ $C000..$DAEF is stage 3's data
 > $4000 ; Bank 6 @ $E000..$FAEF is stage 4's data
@@ -101,7 +101,6 @@
 > $4000 ; ----
 > $4000 ; - Decode all stages' level data (see CHQStage.py)
 > $4000 ; - Disassemble the Chase HQ demo version
-> $4000 ; - Is the $8008 area used at all?
 > $4000 ; - Stripy tunnel fills
 > $4000 ;
 @ $4000 org
@@ -2137,10 +2136,13 @@ B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 0 for first attempt, 1 if second, 2 if final. Used only to cut the level-clear and "Break?" bonuses to a tenth on a retry.
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
-u $8008 Unused, apart from a disguised JP hidden at $800E-$8010
-D $8008 Those three bytes ($C3,$D6,$A0) decode as `JP $A0D6` (keyscan) -- a disguised instruction hiding inside this "unused" data block. CALL $800E is therefore equivalent to CALL $A0D6; see bank 3's $C647 and $C1D7 for its two callers.
-B $8008,8,8 Can't see any consistent use of these.
-B $8010,4,4
+b $8008 Bank 3 link table
+D $8008 Bank 3 reaches main memory through these twelve bytes rather than by fixed addresses: three pointers, then two JP instructions stored as data. Nothing in main memory uses them.
+W $8008,2,2 -> #R$A0CC kempston_flag. Bank 3's redefine keys code ($FBE4) stores the joystick choice here and the eight key definitions after it
+W $800A,2,2 $834E, the first "BEST OFFICERS" row once #R$F55A is relocated. Bank 3's $C69F copies its high score rows here
+W $800C,2,2 -> #R$A27A font, read by bank 3 at $C28D, $C349 and $FE09
+B $800E,3,3 $C3,$D6,$A0: JP #R$A0D6 (keyscan), CALLed by bank 3 at $C1D7 and $C647
+B $8011,3,3 $C3,$79,$9C: JP #R$9C79 (play_start_noise). Bank 3 pushes $8011 at $C696 so that a credit ends by returning here
 c $8014 Load a stage
 D $8014 Returns at once if the wanted stage is already loaded. Otherwise it records the new stage number, clears the playfield and starts a reverse transition, then reads two-byte headers into #R$A19C until one arrives whose two bytes agree; that byte is the stage number. When it is the wanted stage, #R$80B9 loads $1AF0 (6896) bytes of stage data to $5C00.
 D $8014 Used by the routine at #R$8401.
@@ -11595,7 +11597,7 @@ C $CDE0,2 While iterations remain, goto mult_loop
 C $CDE2,1 Undo final doubling
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
-b $CDEC Data block at CDEC
+b $CDEC Floating arrow offsets
 @ $CDEC label=arrow_offsets
 B $CDEC,2,2 4 pairs of (x,y)
 B $CDEE,6,6 The other three (x,y) pairs
@@ -11607,7 +11609,7 @@ W $CDF8,2,2 32x11, frame A
 W $CDFA,2,2 32x11, frame B
 W $CDFC,2,2 32x16, frame A
 W $CDFE,2,2 32x16, frame B
-b $CE00 Data block at CE00
+b $CE00 Smoke offsets
 @ $CE00 label=smoke_offsets
 B $CE00,12,2 Six (x,y) smoke offsets, indexed by the operand at #R$AFFB
 b $CE0C Smoke tables
@@ -12624,10 +12626,10 @@ D $E300 #R$CD3A writes 21 entries here each frame, from $E301, with $A0 left as 
 @ $E300 label=height_table
 B $E300,1,1 Sentinel, always $60
 S $E301,31,$1F
-g $E320 Data block at E320
+g $E320 Curvature adjustment table
 @ $E320 label=curvature_table
 S $E320,22,$16 22 entries. Used by $CC8E
-g $E336 Data block at E336
+g $E336 Clamped height table
 @ $E336 label=clamped_heights
 S $E336,21,$15 21 entries. Used by $8F6E
 g $E34B Horizon values
@@ -12639,7 +12641,7 @@ B $E34C,1,1 This frame's delta, set to 0 by #R$8810
 B $E34D,1,1 Last frame's delta, set to 0 by #R$8812
 u $E34E Unused
 B $E34E,1,1
-b $E34F Data block at E34F
+b $E34F Object positions per road slice
 @ $E34F label=object_positions
 S $E34F,21,$15 21 entries
 b $E364 Transition masks
