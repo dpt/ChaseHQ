@@ -199,30 +199,30 @@ N $5B87 Loader commands for 128K mode.
 W $5B87,6,2,4 Load stage 1 at $5C00 ($1AF0 bytes)
 M $5B8D,4 Set bank 1 (second byte is unused in Set Bank commands)
 W $5B8D,2,2
-B $5B8F,2,2
+B $5B8F,2,2 Bank number, then an unused byte
 W $5B91,2,2 Copy $5C00..$76EF to $C000
 W $5B93,6,2,4 Load stage 2 at $E000 ($1AF0 bytes)
 M $5B99,4 Set bank 6
 W $5B99,2,2
-B $5B9B,2,2
+B $5B9B,2,2 Bank number, then an unused byte
 W $5B9D,6,2,4 Load stage 3 at $C000 ($1AF0 bytes)
 W $5BA3,6,2,4 Load stage 4 at $E000 ($1AF0 bytes)
 M $5BA9,4 Set bank 7
 W $5BA9,2,2
-B $5BAB,2,2
+B $5BAB,2,2 Bank number, then an unused byte
 W $5BAD,6,2,4 Load stage 5 at $C000 ($1AF0 bytes)
 W $5BB3,6,2,4 Load end screen at $E000 ($1AF0 bytes)
 M $5BB9,4 Set bank 3
 W $5BB9,2,2
-B $5BBB,2,2
+B $5BBB,2,2 Bank number, then an unused byte
 W $5BBD,6,2,4 (Headerless) Load animated title screen at $C000 ($4000 bytes)
 M $5BC3,4 Set bank 4
 W $5BC3,2,2
-B $5BC5,2,2
+B $5BC5,2,2 Bank number, then an unused byte
 W $5BC7,6,2,4 (Headerless) Load sampled speech at $C000 ($4000 bytes)
 M $5BCD,4 Set bank 0
 W $5BCD,2,2
-B $5BCF,2,2
+B $5BCF,2,2 Bank number, then an unused byte
 W $5BD1,4,2 Start game at entry_128k
 @ $5BD5 label=loader_scratch
 B $5BD5,2,2 #R$5B31 loads a two-byte block here. Nothing reads it back, so the block is discarded.
@@ -880,7 +880,7 @@ B $6AF8,20,2 Read by #R$928D and #R$92F6
 N $6B0C Referenced by graphic entry 8 and 17
 @ $6B0C label=turn_sign_left
 W $6B0C,2,2 -> turn_sign_lods
-B $6B0E,20,2
+B $6B0E,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 N $6B22 Turn sign LOD 1
 @ $6B22 label=turn_sign_lods
 B $6B22,1,1 Width (bytes)
@@ -1107,10 +1107,10 @@ W $6EE8,2,2
 B $6EEA,1,1 Terminator
 @ $6EEB label=streetlamptop_right
 W $6EEB,2,2 Address of another LOD table
-B $6EED,20,2
+B $6EED,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $6F01 label=streetlamptop_left
 W $6F01,2,2 Address of another LOD table
-B $6F03,20,2
+B $6F03,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 N $6F17 Street lamp LOD 1
 @ $6F17 label=streetlamptop_lods
 B $6F17,1,1 Width (bytes)
@@ -1225,10 +1225,10 @@ W $6FED,2,2
 B $6FEF,1,1 Terminator
 @ $6FF0 label=telegraphpoletop_left
 W $6FF0,2,2
-B $6FF2,20,2
+B $6FF2,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7006 label=telegraphpoletop_right
 W $7006,2,2
-B $7008,20,2
+B $7008,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $701C label=telegraphpoletop_lods
 B $701C,1,1 Width (bytes)
 B $701D,1,1 Flags
@@ -1317,19 +1317,19 @@ W $710D,2,2
 B $710F,1,1 Terminator
 @ $7110 label=stage1_tree_bottom
 W $7110,2,2 -> tree_lods
-B $7112,20,2
+B $7112,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7126 label=stage1_tree_bottommiddle
 W $7126,2,2 -> tree_lods
-B $7128,20,2
+B $7128,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $713C label=stage1_tree_middle
 W $713C,2,2 -> tree_lods
-B $713E,20,2
+B $713E,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7152 label=stage1_tree_topmiddle
 W $7152,2,2 -> tree_lods
-B $7154,20,2
+B $7154,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7168 label=stage1_tree_top
 W $7168,2,2 -> tree_lods
-B $716A,20,2
+B $716A,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 N $717E LOD
 @ $717E label=tree_lods
 B $717E,1,1 Width (bytes)
@@ -1951,28 +1951,28 @@ W $7E09,2,2
 B $7E0B,1,1 Terminator
 @ $7E0C label=shortpole_bottom
 W $7E0C,2,2 -> streetlampbody_bitmaps
-B $7E0E,20,2
+B $7E0E,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E22 label=shortpole_middle
 W $7E22,2,2
-B $7E24,20,2
+B $7E24,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E38 label=streetlampbottom_left
 W $7E38,2,2
-B $7E3A,20,2
+B $7E3A,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E4E label=streetlampbottom_right
 W $7E4E,2,2
-B $7E50,20,2
+B $7E50,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E64 label=streetlampmiddle2_left
 W $7E64,2,2
-B $7E66,20,2
+B $7E66,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E7A label=streetlampmiddle2_right
 W $7E7A,2,2
-B $7E7C,20,2
+B $7E7C,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7E90 label=streetlampmiddle_left
 W $7E90,2,2
-B $7E92,20,2
+B $7E92,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7EA6 label=streetlampmiddle_right
 W $7EA6,2,2
-B $7EA8,20,2
+B $7EA8,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $7EBC label=streetlampbody_bitmaps
 B $7EBC,1,1 Width (bytes)
 B $7EBD,1,1 Flags (masked)
@@ -2915,11 +2915,11 @@ W $8726,2,2 Set road_hazard_ptr to #R$E2A4 - 1
 N $8728 20 bytes copied to hazards[0]
 @ $8728 label=escape_scene_perp
 B $8728,1,1 Hazard used flag (true)
-B $8729,8,8
+B $8729,8,8 +1 distance (1), +2 to +4 zero, +5 road position ($4C), +6 and +7 zero, +8 collision width
 W $8731,2,2 Car LOD
 W $8733,2,2 Routine at #R$ADF9 (it's just a RET). Set to perp_behaviour in other places
 W $8735,2,2 Speed
-B $8737,5,5
+B $8737,5,5 +15 to +19 zero (flags, wobble, lane, target lane, plot mode)
 c $873C Escape scene
 D $873C This runs the scene shown when the perp has escaped.
 D $873C It silences audio, loads the escape scene data, fixes the camera speed, respawns the perp as hazard 0, inhibits collision detection and starts the "failed" chatter. The loop at #R$8767 then runs the road, hazard and object pipeline until the tunnel has swallowed the perp and the chatter has finished. When the perp reaches distance 5 the three barriers at $A1A3, $A1B7 and $A1CB are activated as a last obstacle.
@@ -3465,79 +3465,109 @@ C $8C53,3 #REGde = $190 (perp speed)
 C $8C56,2 Exit via hpc_set_perp_speed
 b $8C58 End of stage bonus/score messages
 @ $8C58 label=score_messages
-B $8C58,3,3
+B $8C58,1,1 Frame delay until the following messages start being shown
+B $8C59,1,1 Frame delay before the next message appears
+B $8C5A,1,1 Flags (double height)
 B $8C5B,1,1 Attribute (red)
 W $8C5C,2,2 Back buffer address
 W $8C5E,2,2 Attribute address
 T $8C60,22,21:n1 "CLEAR BONUS      0,000" -- double height
-B $8C76,2,2
+B $8C76,1,1 Frame delay before the next message appears
+B $8C77,1,1 Flags (double height)
 B $8C78,1,1 Attribute (red)
 W $8C79,2,2 Back buffer address
 W $8C7B,2,2 Attribute address
 T $8C7D,22,21:n1 "TIME BONUS      X 5000" -- double height
-B $8C93,2,2
+B $8C93,1,1 Frame delay before the next message appears
+B $8C94,1,1 Flags (double height)
 B $8C95,1,1 Attribute (red)
 W $8C96,2,2 Back buffer address
 W $8C98,2,2 Attribute address
 T $8C9A,22,21:n1 "SCORE                 " -- double height
 @ $8CB2 label=sighting_message
-B $8CB0,5,2,3
+B $8CB0,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (3)
+B $8CB1,1,1 Zero flags byte: end of the messages
+B $8CB2,1,1 Frame delay until the following messages start being shown
+B $8CB3,1,1 Frame delay before the next message appears
+B $8CB4,1,1 Flags (single)
 B $8CB5,1,1 Attribute (black)
 W $8CB6,2,2 Back buffer address
 W $8CB8,2,2 Attribute address
 T $8CBA,26,25:n1 "SIGHTING OF TARGET VEHICLE"
 @ $8CD6 label=pull_over_message
-B $8CD4,5,2,3
+B $8CD4,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (0)
+B $8CD5,1,1 Zero flags byte: end of the messages
+B $8CD6,1,1 Frame delay until the following messages start being shown
+B $8CD7,1,1 Frame delay before the next message appears
+B $8CD8,1,1 Flags (single)
 B $8CD9,1,1 Attribute (black)
 W $8CDA,2,2 Back buffer address
 W $8CDC,2,2 Attribute address
 T $8CDE,20,19:n1 "OK! PULL OVER CREEP!"
 @ $8CF4 label=game_over_message
-B $8CF2,5,2,3
+B $8CF2,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (0)
+B $8CF3,1,1 Zero flags byte: end of the messages
+B $8CF4,1,1 Frame delay until the following messages start being shown
+B $8CF5,1,1 Frame delay before the next message appears
+B $8CF6,1,1 Flags (double height)
 B $8CF7,1,1 Attribute (black)
 W $8CF8,2,2 Back buffer address
 W $8CFA,2,2 Attribute address
 T $8CFC,9,8:n1 "GAME OVER"
 @ $8D07 label=time_up_message
-B $8D05,5,2,3
+B $8D05,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (3)
+B $8D06,1,1 Zero flags byte: end of the messages
+B $8D07,1,1 Frame delay until the following messages start being shown
+B $8D08,1,1 Frame delay before the next message appears
+B $8D09,1,1 Flags (double height)
 B $8D0A,1,1 Attribute (black)
 W $8D0B,2,2 Back buffer address
 W $8D0D,2,2 Attribute address
 T $8D0F,7,6:n1 "TIME UP"
 @ $8D18 label=continue_messages
-B $8D16,5,2,3
+B $8D16,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (0)
+B $8D17,1,1 Zero flags byte: end of the messages
+B $8D18,1,1 Frame delay until the following messages start being shown
+B $8D19,1,1 Frame delay before the next message appears
+B $8D1A,1,1 Flags (double height)
 B $8D1B,1,1 Attribute (black)
 W $8D1C,2,2 Back buffer address
 W $8D1E,2,2 Attribute address
 T $8D20,9,8:n1 "CONTINUE "
-B $8D29,2,2
+B $8D29,1,1 Frame delay before the next message appears
+B $8D2A,1,1 Flags (double height)
 B $8D2B,1,1 Attribute (black)
 W $8D2C,2,2 Back buffer address
 W $8D2E,2,2 Attribute address
 T $8D30,12,11:n1 "THIS MISSION"
-B $8D3C,2,2
+B $8D3C,1,1 Frame delay before the next message appears
+B $8D3D,1,1 Flags (single)
 B $8D3E,1,1 Attribute (red)
 W $8D3F,2,2 Back buffer address
 W $8D41,2,2 Attribute address
 T $8D43,16,15:n1 "PUSH GEAR BUTTON"
-B $8D53,2,2
+B $8D53,1,1 Frame delay before the next message appears
+B $8D54,1,1 Flags (single)
 B $8D55,1,1 Attribute (red)
 W $8D56,2,2 Back buffer address
 W $8D58,2,2 Attribute address
 T $8D5A,22,21:n1 "BEFORE TIMER REACHES 0"
-B $8D70,2,2
+B $8D70,1,1 Frame delay before the next message appears
+B $8D71,1,1 Flags (single)
 B $8D72,1,1 Attribute (black)
 W $8D73,2,2 Back buffer address
 W $8D75,2,2 Attribute address
 @ $8D77 label=time_n
 T $8D77,7,6:n1 "TIME 10"
-B $8D7E,2,2
+B $8D7E,1,1 Frame delay before the next message appears
+B $8D7F,1,1 Flags (single)
 B $8D80,1,1 Attribute (black)
 W $8D81,2,2 Back buffer address
 W $8D83,2,2 Attribute address
 @ $8D85 label=credit_n
 T $8D85,8,7:n1 "CREDIT  "
-B $8D8D,2,2
+B $8D8D,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (3)
+B $8D8E,1,1 Zero flags byte: end of the messages
 c $8D8F Drives transitions (the fade between scenes)
 D $8D8F Dispatches on transition_control: 1, 2 and 3 hand straight over to #R$8E91, #R$8E42 and #R$8E29 respectively. 4 is the fade proper, which draws eight pairs of back-buffer stripes per frame by ORing a mask into the pixels, stepping the mask pointer on by the per-frame stride until the frame count runs out.
 D $8D8F Three self-modified operands hold the state: the frame count at $8DA1, the mask pointer at $8DBB and the stride at $8DB1. All three are set up by #R$8DF9.
@@ -3656,7 +3686,7 @@ C $8E64,2 Loop to dom_loop
 C $8E66,5 transition_control = HL[-1]
 C $8E6B,1 Return
 c $8E6C Print a message
-D $8E6C The six byte header holds the attribute byte, the back buffer destination and the screen attribute address; the NUL terminated string follows it and is rendered by #R$9F99. The pointer returned is the byte after the NUL, so callers can chain one message block onto the next.
+D $8E6C The six byte header holds the attribute byte, the back buffer destination and the screen attribute address; the string follows it, ended by bit 7 of its last character, and is rendered by #R$9F99. The pointer returned is the byte after the last character, so callers can chain one message block onto the next.
 D $8E6C Used by the routines at #R$8014, #R$8258, #R$865A, #R$8E42 and #R$F220.
 R $8E6C I:A Flags byte
 R $8E6C I:HL -> as yet unnamed message structure
@@ -4659,14 +4689,14 @@ B $98A9,1,1 Pilot ($00)
 W $98AA,2,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98AC,2,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98AE,2,2 -> "LEFT UP AHEAD... OVER."
-B $98B0,1,1
+B $98B0,1,1 $FE: pause, then run the block named by the next word
 W $98B1,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 @ $98B3 label=pilot_turn_right_chatter
 B $98B3,1,1 Pilot ($00)
 W $98B4,2,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98B6,2,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98B8,2,2 -> "RIGHT UP AHEAD... OVER."
-B $98BA,1,1
+B $98BA,1,1 $FE: pause, then run the block named by the next word
 W $98BB,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 @ $98BD label=acknowledge_chatter
 B $98BD,1,1 Three-way random choice ($FC)
@@ -5557,7 +5587,7 @@ D $9F99 Used by the routine at #R$8E6C.
 R $9F99 I:A Attribute byte written at each character cell
 R $9F99 I:BC Attribute address
 R $9F99 I:DE Back buffer address of the first character cell
-R $9F99 I:HL String data, NUL terminated
+R $9F99 I:HL String data, ended by bit 7 of the last character
 R $9F99 I:A' Draw style, as taken by #R$9FB4
 R $9F99 O:HL Address of the byte after the NUL terminator
 @ $9F99 label=draw_string_with_style
@@ -6428,11 +6458,11 @@ b $A623 Hazard template
 D $A623 $A845 copies these 20 bytes to hazards array.
 @ $A623 label=hazard_template
 B $A623,1,1 Used flag
-B $A624,8,8
+B $A624,8,8 +1 distance (21), +2 to +7 zero (position, clip, fraction, road position, column, hit timer), +8 collision width
 W $A62C,2,2
 W $A62E,2,2 Routine at #R$A8CD
 W $A630,2,2
-B $A632,5,5
+B $A632,5,5 +15 flags ($80), +16 to +19 zero (wobble, lane, target lane, plot mode)
 c $A637 Perp car behaviour
 D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
 D $A637 IX[7], the hit timer, picks one of three paths on entry. Positive means the perp has just been hit: apply the crash penalty, add the bonus and set the timer to $FC. Negative means the post-hit cooldown is still running: count it up towards zero and return, ignoring input. Zero is the normal frame.
@@ -11477,7 +11507,7 @@ N $CD5D Multiplicand is the height byte from the map (7 max downslope, 0 level, 
 C $CD5D,3 Call multiply (A = multiplier, C = multiplicand) result in A
 C $CD60,3 Negate result and copy to C
 C $CD63,1 Bank
-N $CD64 This builds the look-up table at $E301. Assuming it's a height table.
+N $CD64 This builds the per-row height table at $E301.
 C $CD64,2 21 iterations
 C $CD66,3 DE = $E301
 @ $CD69 label=bht_loop
@@ -11568,7 +11598,7 @@ C $CDEB,1 Return
 b $CDEC Data block at CDEC
 @ $CDEC label=arrow_offsets
 B $CDEC,2,2 4 pairs of (x,y)
-B $CDEE,6,6
+B $CDEE,6,6 The other three (x,y) pairs
 w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
 W $CDF4,2,2 32x6, frame A
@@ -11579,7 +11609,7 @@ W $CDFC,2,2 32x16, frame A
 W $CDFE,2,2 32x16, frame B
 b $CE00 Data block at CE00
 @ $CE00 label=smoke_offsets
-B $CE00,12,2
+B $CE00,12,2 Six (x,y) smoke offsets, indexed by the operand at #R$AFFB
 b $CE0C Smoke tables
 D $CE0C first byte of each of the following is a counter
 @ $CE0C label=smoke_burst_1
@@ -12418,7 +12448,7 @@ b $E1E9 Referenced by graphic entry 1 and 10
 D $E1E9 A depth set: the address of a level-of-detail table (#R$E1FF here) followed by ten (depth, offset) pairs running from nearest to furthest. The offset is a byte offset into that table, which holds 7-byte entries of width, flags, height and the two bitmap addresses -- so $00, $07 and $0E select the first, second and third level of detail.
 @ $E1E9 label=tunnellight
 W $E1E9,2,2
-B $E1EB,20,2
+B $E1EB,20,2 Ten (depth, offset) pairs, nearest to furthest (see #R$E1E9)
 @ $E1FF label=tunnellight_lods
 B $E1FF,1,1 Width (bytes)
 B $E200,1,1 Flags
@@ -12592,7 +12622,7 @@ B $E2FE,2,2 Escape, Command 1 (Fork End)
 g $E300 Per-row height table
 D $E300 #R$CD3A writes 21 entries here each frame, from $E301, with $A0 left as a sentinel after the last. Each is the screen row that road slice is drawn at.
 @ $E300 label=height_table
-B $E300,1,1
+B $E300,1,1 Sentinel, always $60
 S $E301,31,$1F
 g $E320 Data block at E320
 @ $E320 label=curvature_table
@@ -12933,7 +12963,7 @@ T $EB4A,20,19:n1 "3....... END SCREEN."
 B $EB5E,1,1 Attribute: Bright green ink over black + Single height bit
 W $EB5F,2,2 Screen position (56,168)
 T $EB61,22,21:n1 "4....... EXTRA CREDIT."
-B $EB77,1,1
+B $EB77,1,1 Zero byte: end of the messages
 @ $EB78 label=messages_cannot_be_remodified
 B $EB78,1,1 Attribute: Red
 W $EB79,2,2 Screen position (88,80)
@@ -12950,7 +12980,7 @@ T $EBBF,31,30:n1 "ARE YOU HAPPY WITH YOUR CHOICE."
 B $EBDE,1,1 Attribute: White
 W $EBDF,2,2 Screen position (40,160)
 T $EBE1,21,20:n1 "PRESS YES(Y) OR NO(N)"
-B $EBF6,1,1
+B $EBF6,1,1 Zero byte: end of the messages
 c $EBF7 Renders strings until it hits a NUL byte
 D $EBF7 Calls #R$EBFF repeatedly, each call returning the address of the next record, until the byte at the start of the next record is zero. The check follows the draw, so a list always renders at least one string.
 D $EBF7 Used by the routines at #R$E90F and #R$ECF3.
@@ -13820,31 +13850,78 @@ C $F48B,3 Call send_playfield
 C $F48E,3 Loop to attract_mode_128k_loop
 b $F491 Credits / Score messages show in attract mode
 @ $F491 label=press_gear_messages
-B $F491,6,6
+B $F491,1,1 Flags (single)
+B $F492,1,1 Attribute (black)
+W $F493,2,2 Back buffer address
+W $F495,2,2 Attribute address
 T $F497,11,10:n1 "PRESS GEAR" (blinks)
 @ $F4A2 label=enter_for_options_messages
-B $F4A2,6,6
+B $F4A2,1,1 Flags (single)
+B $F4A3,1,1 Attribute (black)
+W $F4A4,2,2 Back buffer address
+W $F4A6,2,2 Attribute address
 T $F4A8,17,16:n1 "ENTER FOR OPTIONS" (blinks)
-B $F4B9,8,8
+B $F4B9,1,1 Frame delay until the following messages start being shown
+B $F4BA,1,1 Frame delay before the next message appears
+B $F4BB,1,1 Flags (double height)
+B $F4BC,1,1 Attribute (black)
+W $F4BD,2,2 Back buffer address
+W $F4BF,2,2 Attribute address
 T $F4C1,7,6:n1 "CREDITS"
-B $F4C8,7,7
+B $F4C8,1,1 Frame delay before the next message appears
+B $F4C9,1,1 Flags (single)
+B $F4CA,1,1 Attribute (red)
+W $F4CB,2,2 Back buffer address
+W $F4CD,2,2 Attribute address
 T $F4CF,20,19:n1 "PROGRAM      JOBBEEE"
-B $F4E3,7,7
+B $F4E3,1,1 Frame delay before the next message appears
+B $F4E4,1,1 Flags (single)
+B $F4E5,1,1 Attribute (red)
+W $F4E6,2,2 Back buffer address
+W $F4E8,2,2 Attribute address
 T $F4EA,20,19:n1 "GRAPHICS        BILL"
-B $F4FE,7,7
+B $F4FE,1,1 Frame delay before the next message appears
+B $F4FF,1,1 Flags (single)
+B $F500,1,1 Attribute (red)
+W $F501,2,2 Back buffer address
+W $F503,2,2 Attribute address
 T $F505,20,19:n1 "MUSIC       JON DUNN"
-B $F519,10,8,2
+B $F519,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (3)
+B $F51A,1,1 Zero flags byte: end of the messages
+B $F51B,1,1 Frame delay until the following messages start being shown
+B $F51C,1,1 Frame delay before the next message appears
+B $F51D,1,1 Flags (double height)
+B $F51E,1,1 Attribute (black)
+W $F51F,2,2 Back buffer address
+W $F521,2,2 Attribute address
 T $F523,13,12:n1 "BEST OFFICERS"
-B $F530,7,7
+B $F530,1,1 Frame delay before the next message appears
+B $F531,1,1 Flags (single)
+B $F532,1,1 Attribute (red)
+W $F533,2,2 Back buffer address
+W $F535,2,2 Attribute address
 N $F537 scores and names are updated somewhere
 T $F537,28,27:n1 "RANK  SCORE  STAGE PLAY NAME"
-B $F553,7,7
+B $F553,1,1 Frame delay before the next message appears
+B $F554,1,1 Flags (single)
+B $F555,1,1 Attribute (red)
+W $F556,2,2 Back buffer address
+W $F558,2,2 Attribute address
 T $F55A,28,27:n1 "1ST  56784010  ALL    1  JOB"
-B $F576,7,7
+B $F576,1,1 Frame delay before the next message appears
+B $F577,1,1 Flags (single)
+B $F578,1,1 Attribute (red)
+W $F579,2,2 Back buffer address
+W $F57B,2,2 Attribute address
 T $F57D,28,27:n1 "2ND  35678000   4     1  ABC"
-B $F599,7,7
+B $F599,1,1 Frame delay before the next message appears
+B $F59A,1,1 Flags (single)
+B $F59B,1,1 Attribute (red)
+W $F59C,2,2 Back buffer address
+W $F59E,2,2 Attribute address
 T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
-B $F5BC,2,2
+B $F5BC,1,1 Frame delay, then read back by #R$8E66 as the transition_control value (3)
+B $F5BD,1,1 Zero flags byte: end of the messages
 b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
 D $F5BE #HTML[#SCR2,0,0,32,8,$F5BE,$FDBE]
