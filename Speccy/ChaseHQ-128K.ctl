@@ -5736,10 +5736,10 @@ C $A111,1 Return
 @ $A112 label=keyscan_keydefs
 C $A112,1 Outer keyboard loop
 C $A117,1 invert carry
-C $A11A,2 loop while top bit set?
+C $A11A,2 Loop until the stop bit preloaded in E rotates out into carry
 C $A11D,1 Return
 @ $A11E label=keyscan_inner
-C $A11E,1 Inner keyboard loop.... what's in #REGa?
+C $A11E,1 Test one key. #REGa is a key definition byte %RRRRRPPP: P selects the half-row port, R the key's bit within it
 C $A11F,14 B=(A&7)+1, C=5-(C>>3)
 C $A12D,5 A = $FE ROR B
 C $A132,2 Port $FE is the AND of all columns/rows? This is the main keyboard access
@@ -6076,8 +6076,8 @@ D $A399 If the fork is visible and the fork countdown has reached zero the whole
 D $A399 Last, the right and then the left object IDs are read from the road buffer, their collision widths looked up, and #R$A4B8 is called if the car's horizontal position falls inside the object's zone.
 D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_scenery_collisions
-C $A399,3 HL = $0048
-C $A39C,3 DE = $01D8  -- constant indicates road centre?
+C $A399,3 HL = 72, the default road_pos lower limit for animate_hero_car
+C $A39C,3 DE = 472, the default road_pos upper limit
 C $A39F,1 Bank
 C $A3A0,3 Load fork_visible
 C $A3A3,1 Set flags
@@ -6088,7 +6088,7 @@ C $A3A9,1 Set flags
 C $A3AA,3 Exit via check_fork_scenery_collisions if zero
 N $A3AD Currently forking.
 C $A3AD,1 Decrement the fork_countdown value
-C $A3AE,1 Return if zero  -- can't collide immediately before fork?
+C $A3AE,1 Return if fork_countdown is 1: no collision checks on the frame before the fork takes over
 N $A3AF Check left hand side of car. $EAFE and $EAFC are the last two words of the page #R$A579 fills: the left and right hand x-positions for the nearest road slice, pushed in that order from $EB00 downwards. They are rewritten every frame, which is why they vibrate in the debugger. They say where a roadside object on each side would stand, not that one is there.
 @ $A3AF label=csc_fork_not_visible_or_fork_in_progress
 C $A3AF,3 Read signed word at $EAFE
@@ -6172,7 +6172,7 @@ C $A452,3 Load road_buffer_offset.lo into #REGa
 C $A455,1 Top bit -> carry
 C $A456,1 Read a right side object data byte
 C $A457,2 Jump if top bit was clear
-C $A459,1 L++  -- so if the top bit of the road buffer offset is set we take next byte?
+C $A459,1 L++ so the next entry is ORed in too
 @ $A45A label=csc_read_right_obj
 C $A45A,1 OR in the (next) byte
 C $A45B,2 Jump if it's zero -- no object
@@ -6469,12 +6469,12 @@ N $A673 Calculate distance between current hazard and the perp.
 C $A673,4 A = IY[1] - <perp distance>
 C $A677,3 Jump to pb_check_range if car/hazard further than perp
 N $A67A Otherwise car is behind perp...
-C $A67A,2 A += 2  -- move it two lanes away?
+C $A67A,2 Carry if the vehicle is at most 2 steps nearer than the perp
 C $A67C,2 Jump to pb_range_test
 @ $A67E label=pb_check_range
-C $A67E,2 A -= 3
+C $A67E,2 Carry if the vehicle is 0-2 steps further than the perp
 @ $A680 label=pb_range_test
-C $A680,2 Jump if (out of range?) - continue to next hazard
+C $A680,2 Continue to next hazard unless the vehicle is within 2 steps of the perp
 C $A682,3 A = IY[17]  -- lane
 C $A685,3 Compare to IX[18]  -- compare to perp's lane
 C $A688,3 Jump if not equal - continue to next hazard
@@ -6528,7 +6528,7 @@ C $A6E5,1 Copy current_lane
 C $A6E6,1 Set flags
 C $A6E7,2 Delta = 2
 C $A6E9,3 Jump if current_lane is zero  -- new current_lane will be 2
-C $A6EC,4 Jump if A < 5  -- lane is reasonable?
+C $A6EC,4 Jump if current_lane < 5: lanes 1-4 need no change
 N $A6F0 Arrive here if the updated current_lane is >= 5.
 C $A6F0,2 Delta = -2  -- new current_lane will be 3+
 @ $A6F2 label=pb_change_lane_by_delta
@@ -6540,12 +6540,12 @@ C $A6F6,3 Read buffer offset/distance
 C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 Read current_lane from IX[18]
 C $A6FF,3 Jump to pb_min_lane_set/#R$A707 if current_lane >= min_lane
-N $A702 Otherwise the (perp?) needs to move right to stay on the road.
+N $A702 Otherwise the perp needs to move right to stay on the road.
 C $A702,2 Move right by two lanes: stepping two lands the perp inside the legal band rather than on its boundary, where the next random walk could step straight back out
 C $A704,3 Update current_lane
 @ $A707 label=pb_min_lane_set
 C $A707,5 Jump to pb_reread_current_lane/#R$A711 if current_lane <= max_lane
-N $A70C Otherwise the (perp?) needs to move left to stay on the road.
+N $A70C Otherwise the perp needs to move left to stay on the road.
 C $A70C,2 Move left by two lanes
 C $A70E,3 Update current_lane
 N $A711 current_lane is 1/2/3/4
@@ -6558,7 +6558,7 @@ N $A71D #REGc is the changing-lane flag: 1 while the perp is still moving toward
 C $A71D,2 Set flag indicating we're changing lane
 @ $A71F label=pb_check_low
 C $A71F,4 Jump with C==1 if horizontal position <= table value Carry means horizontal position < table value, i.e. we're left of target; A72E checks moving right
-C $A723,4 Jump with C==1 if horizontal position - 10 carried -- at lower limit?
+C $A723,4 Move 10 left, but snap to the table value if that would underflow
 C $A727,1 Compare with table value (again)
 C $A728,2 Jump with C==1 if (horizontal position - 10) was >= table value
 N $A72A Redundant code path; jump to pb_set_lane_from_table_2 instead.
@@ -6567,7 +6567,7 @@ C $A72A,1 Decrement 1 to 0 so we're not changing lane
 C $A72B,1 Read table value
 C $A72C,2 Jump to pb_set_horz_pos
 @ $A72E label=pb_check_high
-C $A72E,4 Jump with C==1 if horizontal position + 10 carried -- at upper limit?
+C $A72E,4 Move 10 right, but snap to the table value if that would overflow
 C $A732,1 Compare with table value
 C $A733,2 Jump with C==1 if (horizontal position + 10) was < table value
 @ $A735 label=pb_set_lane_from_table_2
@@ -6642,7 +6642,7 @@ C $A7B1,4 Put a call to 'smash' on the stack
 C $A7B5,2 Jump if no carry
 C $A7B7,4 Jump if A == 2
 C $A7BB,1 Put another call to smash on the stack
-N $A7BC Break?
+N $A7BC Otherwise queue a second smash and use 4 for the bonus high digit.
 C $A7BC,2 Set bonus high digit to 4
 @ $A7BE label=pb_add_stage_bonus
 C $A7BE,5 Add wanted_stage_number to #REGd (could be 0 or 4)
@@ -6655,7 +6655,7 @@ C $A7D1,1 Set middle digits of bonus
 @ $A7D2 label=pb_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
 C $A7D3,3 Call add_bonus
-C $A7D6,2 Set delay to 5 turns?
+C $A7D6,2 Make the next 5 calls skip the approach countdown at #R$A749
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A  -- delay counter
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
@@ -6804,8 +6804,8 @@ R $A8CD I:IX Hazard slot to update
 C $A8CD,6 Jump if perp_caught_phase > 0
 C $A8D3,6 Check dont_spawn_cars flag
 @ $A8D9 label=hzh_perp_caught_or_no_car_spawning
-C $A8D9,4 IX[14] = $01  -- horizontal position or accel?
-C $A8DD,4 IX[13] = $FF
+C $A8D9,4 IX[14] = $01  -- approach rate, whole units
+C $A8DD,4 IX[13] = $FF  -- approach rate, fraction: $01FF in all
 @ $A8E1 label=hzh_clamp_lanes
 C $A8E1,3 Load buffer offset (distance from camera) required for next call
 C $A8E4,3 Call get_spawn_lanes
@@ -7002,7 +7002,7 @@ C $AA4F,3 If it was set then HL += DE
 @ $AA52 label=dhl_mul_shift
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop #R$AA4E while #REGb > 0
-C $AA55,2 A = H / 2  -- is this undoing overshoot?
+C $AA55,2 A = H / 2, undoing the extra doubling after the last loop pass: delta * (fast_counter >> 5) / 8
 C $AA57,3 Self modify 'LD A' @ #R$AA8C (below)
 C $AA5A,2 A = <self modified>  -- Self modified by #R$AAEE (in move_helicopter)
 C $AA5C,3 A -= IY[$4E]
@@ -7067,7 +7067,7 @@ C $AAD7,2 A = <self modified>  -- Self modified below [counts 0..3]
 C $AAD9,3 A = (A + 1) & 3
 C $AADC,3 Self modify #R$AAD7 above
 C $AADF,2 A = <self modified> -- Self modified by #R$AAE5 below [direction 1 or $FF]
-C $AAE1,2 what are we testing here?
+C $AAE1,2 Jump unless the frame counter just wrapped to 0 (flags from the AND above); on a wrap the swing direction reverses
 C $AAE3,2 A = -A
 C $AAE5,3 Self modify #R$AADF above
 C $AAE8,2 A += <self modified>  -- Increment by old amount -- Self modified below
@@ -7076,7 +7076,7 @@ C $AAED,1 A += C
 C $AAEE,3 Self modify 'LD A' @ #R$AA5A
 C $AAF1,3 HL = road_pos
 C $AAF4,2 DE = HL
-C $AAF6,3 BC = <self modified>  -- Self modified by #R$AAFC below, #R$AB60  -- prev road pos?
+C $AAF6,3 BC = last frame's road_pos <self modified> by #R$AAFC below and #R$AB60
 C $AAF9,1 Set flags
 C $AAFA,2 HL -= BC
 C $AAFC,4 Self modify 'LD BC' above to load DE
@@ -7169,26 +7169,26 @@ C $ABA6,2 Add 160 for the hazards data offset
 C $ABA8,1 Add spawn distance
 C $ABA9,3 Point #REGhl at road buffer hazards data
 N $ABAC Do we have a hazard?
-C $ABAC,1 Load the hazard byte  -- what's in this byte?
+C $ABAC,1 Load the hazard byte: 0 none, 1-3 tumbleweeds, 4-6 barriers
 C $ABAD,1 Set flags
-C $ABAE,1 Return if zero - no hazard?
-C $ABAF,2 Otherwise is it 4?
-C $ABB1,3 DE = 0  -- D used as hazard later?
-C $ABB4,2 Jump if < 4  -- stop spawning barriers is the only case?
-C $ABB6,2 DE = 3  -- used as flag later?
-C $ABB8,1 A -= 3
-N $ABB9 A is 1/2/3 here?
+C $ABAE,1 Return if zero: no hazard
+C $ABAF,2 Barrier codes are 4 or more
+C $ABB1,3 DE = 0: tumbleweed. D stays zero for clearing hazard bytes below
+C $ABB4,2 Jump if < 4: a tumbleweed code
+C $ABB6,2 DE = 3: barrier (the hittable offset)
+C $ABB8,1 A -= 3, folding barrier codes onto the tumbleweed placements
+N $ABB9 A is 1, 2 or 3 here: left, right or both.
 @ $ABB9 label=sh_select_hazard
 C $ABB9,2 X coordinate = 50
-C $ABBB,3 If #REGa was 1 exit via sh_add_hazards_done, adding one barrier? (left case?)
+C $ABBB,3 If #REGa was 1 exit via sh_add_hazards_done, adding one obstacle on the left
 C $ABBE,2 X coordinate = 220
-C $ABC0,3 If #REGa was 2 exit via sh_add_hazards_done, adding one barrier? (right case?)
-C $ABC3,2 L += 2  -- step to next hazards?
+C $ABC0,3 If #REGa was 2 exit via sh_add_hazards_done, adding one obstacle on the right
+C $ABC3,2 L += 2 to the next hazard byte to clear
 C $ABC5,1 *HL = 0  -- D is zero here
 C $ABC6,2 L += 2
 C $ABC8,1 *HL = 0  -- D is zero here
 C $ABC9,1 A = E
-C $ABCA,2 Is it 3?
+C $ABCA,2 Is it a barrier?
 C $ABCC,2 Jump if non-zero
 N $ABCE Three barriers rather than two whenever collision detection is switched off. $875C sets inhibit_collision_detection for the perp escape sequence, so the three-barrier arrangement is only ever placed when none of them can be driven into.
 C $ABCE,3 Load inhibit_collision_detection
@@ -7267,34 +7267,34 @@ C $AC56,1 A = D  -- top part of speed
 C $AC57,2 E ROL 1  -- double speed
 C $AC59,1 A ROL 1
 C $AC5A,2 A &= 3  -- mask top part to 3 (for ref. turbo speed = $1FF)
-C $AC5C,2 RR D  -- halve D to carry?
+C $AC5C,2 RR D  -- bit 0 of the speed's high byte into carry, added below
 C $AC5E,2 D = 0
 C $AC60,2 A = (A + D + carry) * 2  -- scale for element size of 2
 C $AC62,1 E = A  -- it's now an offset into #R$AD03
 C $AC63,1 HL += DE
 N $AC64 Copy two bytes to IX+17 from table
-C $AC6A,3 -- usually current lane
-C $AC6D,4 double BC?  adjusted speed retained from earlier
-C $AC71,8 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
+C $AC6A,3 -- IX[18] is the wobble countdown during a hit
+C $AC6D,4 BC = speed * 2
+C $AC71,8 If that is $200 or more cap it at 350
 @ $AC79 label=hh_set_horz_pos
-C $AC79,3 Set bottom byte of horizontal position
+C $AC79,3 Set the approach rate's low byte
 C $AC7C,3 Increment hit counter
 C $AC7F,2 If counter is zero then don't store it
-C $AC81,3 Set top byte of horizontal position
+C $AC81,3 Set the approach rate's high byte
 @ $AC84 label=hh_start_sfx
 C $AC84,3 Increment IX[1]  -- distance/buffer offset
 C $AC87,3 Effect 5 (hazard hit), Priority 3
 C $AC8A,3 Call start_sfx
 C $AC8D,2 A = 2        [set this to 1 and the hazard drives off like a car]
-C $AC8F,3 Set IX[15] to 2  -- a delay value?
+C $AC8F,3 Set IX[15] to 2  -- hit state: wobbling
 @ $AC92 label=hh_dec_test
 C $AC92,2 If --A == 0 return
 @ $AC94 label=hh_set_wobble_amplitude
 C $AC94,13 IX[16] = #R$ACDB[IX[17]]
 C $ACA1,3 Increment IX[17]
-C $ACA4,6 Load horizontal position (or accel?) into #REGhl
+C $ACA4,6 Load the approach rate into #REGhl
 C $ACAA,2 #REGde = #REGhl
-C $ACAC,4 Divide horizontal position by 2?
+C $ACAC,4 Divide the approach rate by 2
 C $ACB0,8 Then by 16 once it's 8 bits
 C $ACB8,2 Then subtract from the previous position
 C $ACBA,6 Set horizontal position
@@ -7325,21 +7325,21 @@ C $AD21,1 Bank
 N $AD22 Push address of the end of the loop on the stack so any RETs below will return there.
 C $AD22,3 Load address of #R$AD4B
 C $AD25,1 Stack it
-C $AD26,4 A = IX[15] + 1  -- a delay of some sort used for hits
+C $AD26,4 A = IX[15] + 1  -- zero only for the perp ($FF)
 C $AD2A,2 Jump if non-zero
-N $AD2C Otherwise it was zero (IX[15] was $FF => unused/unset?)
-C $AD2C,3 A = IX[17]  -- read min lane?
+N $AD2C Otherwise it's the perp.
+C $AD2C,3 A = IX[17]  -- the perp's distance high byte
 C $AD2F,1 Set flags
 C $AD30,1 End this iteration if non-zero
 @ $AD31 label=chc_check_distance
 C $AD31,3 A = IX[1]  -- buffer offset/distance
-C $AD34,3 End this iteration if distance >= 20  -- too far away?
+C $AD34,3 End this iteration if distance >= 20: not drawn, so it cannot be hit
 N $AD37 Distance is < 20.
 C $AD37,2 Initialise #REGd
 C $AD39,3 Call check_collision (returns #REGd)
 C $AD3C,3 End this iteration if no collision
 N $AD3F There was a collision.
-C $AD3F,4 A = IX[15] + 1  -- increment delay
+C $AD3F,4 A = IX[15] + 1  -- zero only for the perp
 C $AD43,1 End this iteration if zero
 C $AD44,6 Load address of hit handler into #REGhl
 C $AD4A,1 Jump to it (it will return to the next instr)
@@ -7360,10 +7360,10 @@ R $AD51 O:L Hazard[2]. #R$AE7A, the only caller that could use it, discards it: 
 R $AD51 O:H Hazard[3]. Discarded likewise
 @ $AD51 label=check_collision
 C $AD51,5 Return if hit counter is non-zero
-N $AD56 Otherwise we're... ?
-C $AD56,6 L = horizontal position, H = ?
+N $AD56 No hit in progress.
+C $AD56,6 HL = horizontal screen position; H is the clip flag
 C $AD5C,3 Return if top byte of #REGhl was non-zero
-C $AD5F,4 A = IX[15] + 1 and set flags  -- hazard anim counter thing
+C $AD5F,4 A = IX[15] + 1 and set flags  -- zero only for the perp
 C $AD63,3 A = IX[1]  -- buffer offset/distance
 C $AD66,2 C = 3
 C $AD68,2 Jump if (IX[15] + 1) was non-zero
@@ -7376,7 +7376,7 @@ C $AD71,3 Load fast_counter
 C $AD74,2 Jump if A-- was non-zero
 C $AD76,1 Set flags for fast_counter
 C $AD77,3 Jump if positive
-N $AD7A Otherwise zero or negative?
+N $AD7A fast_counter's bit 7 is set.
 C $AD7A,2 E = 1
 C $AD7C,2 Jump
 @ $AD7E label=ccl_2
@@ -7415,20 +7415,20 @@ C $ADB9,2 Advance to next hazard
 C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
 @ $ADBE label=advance_hazard
-C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
+C $ADBE,3 C = IX[14]  -- approach rate, whole units
 N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which is the perp's speed
 C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of speed
 C $ADCA,3 If IX[4] was < IX[13] then C++
 @ $ADCD label=ah_add_distance
 C $ADCD,5 C += IX[1]  -- buffer offset/distance
-C $ADD2,4 A = IX[15] + 1  -- counter?
+C $ADD2,4 A = IX[15] + 1  -- zero only for the perp
 C $ADD6,2 Jump to ah_check_visible if non-zero
 C $ADD8,3 A = IX[17]  -- byte that indexes #R$ACDB
 C $ADDB,2 Jump if no carry (carry not set by INC A, but ADD A,C)
 C $ADDD,5 Jump if ++A < 4
 C $ADE2,1 A--
 C $ADE3,2 C = $FF  -- gets put in distance related field
-C $ADE5,3 IX[17] = A  -- set lane?
+C $ADE5,3 IX[17] = A  -- the perp's distance high byte, capped at 3
 C $ADE8,1 Set flags
 C $ADE9,1 A = C
 C $ADEA,2 Jump if zero
@@ -7436,7 +7436,7 @@ C $ADEC,3 IX[1] = A  -- buffer offset/distance
 C $ADEF,1 Return
 @ $ADF0 label=ah_check_visible
 C $ADF0,1 A = C
-C $ADF1,4 Jump if A < 23  -- still visible?
+C $ADF1,4 Jump if A < 23; otherwise the object has passed the camera
 N $ADF5 Wipe the hazard
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
 @ $ADF9 label=no_op
@@ -7450,7 +7450,7 @@ C $AE03,6 A = ~(fast_counter & $E0)
 C $AE09,5 Jump if A >= IX[4]
 C $AE0E,4 B = IX[15] + 1
 C $AE12,2 Jump if zero
-N $AE14 Wipe the hazard because car overtaken?
+N $AE14 Not the perp: the object has passed the camera, so free its slot. A vehicle ($80, so B = $81) also counts as overtaken.
 C $AE14,4 IX[0] = 0  -- hazard slot now spare
 C $AE1A,1 Return if no carry
 C $AE1B,4 Increment overtake_bonus_counter
@@ -7508,11 +7508,11 @@ C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
 C $AE7A,3 Call check_collision (result ignored)
 C $AE7D,3 D = IX[1]  -- buffer offset/distance
-C $AE80,3 E = IX[4]  -- possibly a distance low byte?
+C $AE80,3 E = IX[4]  -- fractional distance
 C $AE83,3 Load address of n_hazards
 C $AE86,1 Load n_hazards
 C $AE87,1 Increment n_hazards
-C $AE88,3 Load address of (road centre left?) table
+C $AE88,3 Point HL at the depth-sorted draw list at $E900 (4 bytes per entry: distance word, hazard address)
 C $AE8B,3 Jump to ah_no_hazards if n_hazards was zero
 C $AE8E,1 Iterations
 N $AE8F Loop starts (loop for all hazards)
@@ -7567,7 +7567,7 @@ C $AED6,4 Jump if A < 11
 C $AEDA,2 A = 10
 @ $AEDC label=dhs_depth_clamped
 C $AEDC,2 A >>= 1
-C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
+C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- halved depth, also the smoke's base frame
 C $AEE1,1 E = A
 C $AEE2,3 A <<= 3
 C $AEE5,1 A -= E
@@ -7579,7 +7579,7 @@ C $AEF3,3 Preserve HL, BC, DE
 C $AEF6,6 HL = wordat(IX + 9)
 C $AEFC,1 HL += DE
 C $AEFD,1 E = *HL
-C $AEFE,6 E <<= 3 ?
+C $AEFE,6 E *= 8 (RLC acts as a shift for values below 32)
 C $AF04,6 A = IX[6] - IX[16]
 C $AF0A,3 Self modify 'LD D,x' @ #R$933D to load A
 C $AF0D,3 A = IX[19]
@@ -7607,7 +7607,7 @@ C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $AF41,3 Load address of n_hazards
 C $AF44,1 Decrement n_hazards
-C $AF45,1 Restore HL (which?)
+C $AF45,1 Restore HL, the draw list pointer pushed at #R$AEF3
 C $AF46,1 Return if zero
 C $AF47,1 A = *HL
 C $AF48,4 Jump if A == B
@@ -7626,7 +7626,7 @@ C $AF68,1 A = E
 C $AF69,3 Jump
 @ $AF6C label=dhs_clip_left_2
 C $AF6C,1 A = E
-C $AF6D,2 -- checking result of test at #R$AF56?
+C $AF6D,2 Skip drawing unless the sprite reaches back on screen (carry)
 @ $AF6F label=dhs_draw_left_2
 C $AF6F,3 Call draw_object_left_width_entrypt
 C $AF72,3 Jump
@@ -7686,7 +7686,7 @@ C $AFE5,3 Call #R$AFF1
 C $AFE8,3 Smoke data
 C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
-N $AFF1 Decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
+N $AFF1 Step one smoke particle's frame counter, cycling 5 down to 0, then draw it unless its frame index is past 5.
 @ $AFF1 label=dhs_smoke
 C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
