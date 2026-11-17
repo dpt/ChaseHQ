@@ -1123,8 +1123,8 @@ D $EC71 If no tune is active, does nothing (falls straight through to #R$ECCA wh
 D $EC71 Used by the routine at #R$F82F.
 @ $EC71 label=ts_music_service
 C $EC71,3 Tune-active flag
-C $EC78,2 Clear a driver-internal flag (consumed elsewhere
-C $EC7A,3 in the pattern processing, not traced here)
+C $EC78,2 Reset this frame's noise pitch ($ECC6, the operand at
+C $EC7A,3 #R$ECC5) to the last note echoed by a noise channel (#R$EDF6)
 C $EC7D,3 Decrement the tempo counter; only re-process the
 C $EC80,1 tracker patterns when it reaches zero
 C $EC83,1 B = 0 (post-decrement)
@@ -1149,7 +1149,7 @@ C $ECD4,2 its data byte written via port $BFFD
 C $ECD8,2 Select AY register A
 C $ECDC,2 Write (HL) to the data port, HL--
 C $ECDE,1 Next (lower) register
-N $ECE3 Helper: write a single AY register (D = register number, E = value). Not directly referenced elsewhere in this bank -- may be dead code or called from another bank.
+N $ECE3 Helper: write a single AY register (D = register number, E = value). Nothing calls it: other code reaches bank 3 only through the entry points at $C000, so this is dead code.
 N $ECED Silence the AY chip: write 0 to every register 13 downto 0 (in particular the 3 volume registers 8-10), then write register 7 (mixer) a second time for good measure.
 @ $ECED label=ay_silence_all
 C $ECEF,3 D = register 13 (downto 0), E = 0 (dummy)
@@ -1161,63 +1161,88 @@ C $ECFF,3 Belt-and-braces: rewrite register 7 (mixer) = 0
 N $ED0B Stop any playing tune and silence the AY chip. This entry point is used by the routines at #R$C16A, #R$C59E, #R$F7D6 and #R$FBC8.
 @ $ED0B label=stop_music_and_silence
 C $ED0C,3 Clear the tune-active flag
-C $ED12,1 Clear the per-channel mixer/noise register cache
-N $ED1D Not traced (structural pass) -- nothing in this bank jumps or calls into $ED1D-$ED32; the instruction stream here does not obviously cohere (an SBC/ADD/ADC/SUB chain feeding register loads with no clear purpose before falling into a POP HL/JP). Likely either dead code or a misdisassembled data table. Ruled out as related to #R$F1AE: that routine is a self-contained phrase-pointer table walker, fully traced, and does not fall through from or into this range.
-N $ED36 Pattern command/effect opcode handlers ($ED36-$EDD1), reached only via the computed jump at #R$EE96 (never by a direct CALL/JP visible to the disassembler, hence no entry-point markers below). Each handler consumes a fixed number of further bytes from the pattern stream (DE) and stores them into fields of the current channel's 37-byte tracker record (see #R$EC01), then rejoins the main interpreter at #R$EDE4 or #R$EE22. Traced mechanically below; the AY-level meaning of $EF7A and +$1D/+$1F is inferred (marked "likely"), not confirmed against a working build. Handlers 1-3 all bit-merge P = (IX+$24) into the shared byte $EF7A using the "A XOR M; A AND mask; A XOR M" replace-bits-under-mask idiom; $EF7A is likely a per-channel AY mixer (tone/noise enable) bit cache, given $EEA0 onward outputs a mixer byte to the AY.
+C $ED12,1 Clear the three volume registers in the cache
+N $ED1D Displacement table for #R$EE96. The command byte ($80-$91) is added to $EC9D, which lands in this table, and the byte found there is added again to give the handler's address.
+@ $ED1D label=pattern_command_offsets
+B $ED1D,1 $80: #R$EDBC rest
+B $ED1E,1 $81: #R$EDA5 vibrato off
+B $ED1F,1 $82: #R$EDAA vibrato on
+B $ED20,1 $83: #R$EDB0 half-rate vibrato on
+B $ED21,1 $84: #R$ED6F pitch slide
+B $ED22,1 $85: #R$ED9F note slide down
+B $ED23,1 $86: #R$ED9B note slide up
+B $ED24,1 $87: #R$ED33 next phrase
+B $ED25,1 $88: #R$ED8C vibrato parameters
+B $ED26,1 $89: #R$ED85 global transpose
+B $ED27,1 $8A: #R$ED4B tone only
+B $ED28,1 $8B: #R$ED36 noise only
+B $ED29,1 $8C: #R$ED5F tone and noise
+B $ED2A,1 $8D: #R$EDB6 alternate frames with noise
+B $ED2B,1 $8E: #R$ED2F end of tune
+B $ED2C,1 $8F: #R$EDC5 tie
+B $ED2D,1 $90: #R$EDCB noise click on
+B $ED2E,1 $91: #R$EDD1 noise click off
+N $ED2F Command $8E: end of tune.
+@ $ED2F label=pcmd_end_of_tune
+C $ED2F,1 Discard the return address into #R$EC71, so the music stops and control returns to its caller
+C $ED30,3 Exit via stop_music_and_silence
+N $ED33 Command $87: move on to the channel's next phrase.
+C $ED33,3 Exit via #R$F1AE
+N $ED36 Pattern command handlers, reached through the table at #R$ED1D. Each one consumes any operand bytes from the pattern stream (DE), updates the channel's 37-byte tracker record (see #R$EC01) and rejoins the interpreter at #R$EDE4, or at #R$EE22 to end the row. P is the channel's mixer mask (+$24): the AY register 7 bits that belong to this channel. $EF7A is the operand of 'LD A,$00' at #R$EF79, the mixer setting merged into the register 7 cache each frame. AY mixer bits are active low: a set bit turns that tone or noise source off. +$1E bit 0 makes each new note set the noise pitch too (#R$EDF0).
 @ $ED36 label=pcmd_set_mixer_bits_low3
-C $ED36,3 Merge (P AND $07) into $EF7A under mask P; likely
-C $ED39,1 sets this channel's tone-enable bit(s)
-C $ED43,2 Set +$1E (slide/portamento-active flag) = 1
+C $ED36,3 Command $8B, noise only: set this channel's tone bits and clear
+C $ED39,1 its noise bits in $EF7A
+C $ED43,2 Noise pitch follows the note: +$1E = 1
 @ $ED4B label=pcmd_set_mixer_bits_high3
-C $ED4B,3 Merge (P AND $38) into $EF7A under mask P; likely
-C $ED4E,1 sets this channel's noise-enable bit(s)
-C $ED58,1 Clear +$1E (slide/portamento-active flag) = 0
+C $ED4B,3 Command $8A, tone only: set this channel's noise bits and clear
+C $ED4E,1 its tone bits in $EF7A
+C $ED58,1 Noise pitch no longer follows the note: +$1E = 0
 @ $ED5F label=pcmd_clear_mixer_bits
-C $ED5F,3 Clear the bits of $EF7A that are set in P (AND
-C $ED62,3 with the complement of P)
-C $ED68,2 Set +$1E (slide/portamento-active flag) = 1
+C $ED5F,3 Command $8C, tone and noise: clear all of this channel's bits
+C $ED62,3 in $EF7A
+C $ED68,2 Noise pitch follows the note: +$1E = 1
 @ $ED6F label=pcmd_set_slide_target
-C $ED6F,1 Read 2 operand bytes: clear +$07/+$08 (the
-C $ED70,1 per-frame X/Y-style step accumulators used
-C $ED71,3 elsewhere for object motion, reused here as
-C $ED74,3 slide step accumulators), store operand 1 into
-C $ED77,3 +$0D (slide target) and operand 2 into +$0E
-C $ED7A,4 (slide speed), then set status bit 2 (slide
-C $ED7E,1 active)
+C $ED6F,1 Command $84, pitch slide. Read 2 operand bytes:
+C $ED70,1 reset the accumulated tone-period offset
+C $ED71,3 (+$07/+$08), store operand 1 as the signed
+C $ED74,3 per-frame step (+$0D) and operand 2 as the
+C $ED77,3 delay before the slide starts (+$0E), then set
+C $ED7A,4 status bit 2 (slide active, applied by
+C $ED7E,1 #R$EF4B)
 @ $ED85 label=pcmd_set_driver_flag
-C $ED85,1 Read 1 operand byte and store it to the
-C $ED86,1 driver-internal flag at $EED1 (cleared to 0 by
-C $ED87,3 #R$EB9E on tune start)
+C $ED85,1 Command $89. Read 1 operand byte and store it
+C $ED86,1 as the global transpose at $EED1, the operand of
+C $ED87,3 'LD A,$00' at #R$EED0 (zeroed by #R$EB9E)
 @ $ED8C label=pcmd_set_envelope_params
-C $ED8C,1 Read 2 operand bytes: operand 1 -> +$1B, operand
-C $ED8D,3 2 -> both +$1A and +$1C (likely an envelope/pitch
-C $ED90,1 curve's current and target value sharing one
-C $ED91,1 initial value)
+C $ED8C,1 Command $88. Read 2 operand bytes: operand 1 is
+C $ED8D,3 the vibrato step (+$1B); operand 2 is the depth
+C $ED90,1 (+$1A) and also the starting phase (+$1C), the
+C $ED91,1 centre of the 0 to 2 x depth swing
 @ $ED9B label=pcmd_set_status_bits_3_7
-C $ED9B,4 Set status bits 7 and 3 of +$00 (no operand
-C $ED9F,4 bytes); likely a note-release/end-of-note marker
+C $ED9B,4 Command $86: set status bit 7 (slide upwards) then fall into
+C $ED9F,4 command $85: set status bit 3, so #R$EE38 slides the note by one each frame until the next row
 @ $EDA5 label=pcmd_vibrato_off
 C $EDA5,3 +$1D = 0 (B is 0 here): clears bit 6 (vibrato
-C $EDA8,2 enable, tested at #R$EEFF) and bit 7/5 (mode/ direction, tested at #R$EF09/#R$EF14)
+C $EDA8,2 enable, tested at #R$EEFF) and bits 7 and 5 (half-rate and direction, tested at #R$EF09/#R$EF14)
 @ $EDAA label=pcmd_vibrato_on
 C $EDAA,4 +$1D = $40: sets bit 6 only -- enables vibrato
 C $EDAE,2 (see #R$EEFC phase 3), direction/mode bits clear
 @ $EDB0 label=pcmd_vibrato_on_mode2
-C $EDB0,4 +$1D = $C0: sets bits 6 and 7 -- enables vibrato in the alternate mode selected at #R$EF09
+C $EDB0,4 +$1D = $C0: sets bits 6 and 7 -- enables vibrato with the phase updated only every other frame (#R$EF09)
 @ $EDB6 label=pcmd_set_status_bit1
-C $EDB6,4 Set status bit 1 of +$00 (no operand bytes)
+C $EDB6,4 Set status bit 1 of +$00 (no operand bytes): until the next row, every other frame switches the channel to noise only with a pitch from the note (#R$EF76)
 @ $EDBC label=pcmd_reset_row_counter_clear13
-C $EDBC,3 +$13 = 0 (B is 0 here), clear status bit 5, then
-C $EDBF,4 rejoin at #R$EE22 (acp_reset_row_counter) rather
-C $EDC3,2 than #R$EDE4 -- likely a pattern-loop/jump effect
+C $EDBC,3 Command $80, rest: volume (+$13) = 0 (B is 0 here), stop the
+C $EDBF,4 volume envelope (status bit 5), then end the row at #R$EE22
+C $EDC3,2 without starting a note
 @ $EDC5 label=pcmd_reset_row_counter
-C $EDC5,4 Clear status bit 5 only, then rejoin at #R$EE22
-C $EDC9,2 -- likely the no-parameter variant of the above
+C $EDC5,4 Command $8F, tie: stop the volume envelope but keep the current
+C $EDC9,2 volume, then end the row without starting a note
 @ $EDCB label=pcmd_mute_channel
-C $EDCB,4 +$1F = $FF; likely mutes this channel
+C $EDCB,4 +$1F = $FF: each new row then plays a one-frame noise click at the highest pitch (#R$EF90); despite the label it does not silence the channel
 @ $EDD1 label=pcmd_unmute_channel
-C $EDD1,3 +$1F = 0 (B is 0 here); likely unmutes this
-C $EDD4,2 channel
+C $EDD1,3 +$1F = 0 (B is 0 here): stop the per-row noise
+C $EDD4,2 click
 N $EDD6 Advance one channel's pattern by one tracker row. Decrements the per-row wait counter (+$10); while it is still counting down, only #R$EE38 (envelope/portamento upkeep) runs. Once it reaches zero, reads and processes the next byte(s) from the pattern stream via #R$EDE4.
 @ $EDD6 label=advance_channel_pattern
 N $EDE4 This entry point is used by the routine at #R$F1AE.
@@ -1230,12 +1255,12 @@ N $EE49 Command/effect byte decode: range-tests the byte against a cascade of th
 @ $EE49 label=decode_pattern_command
 N $EE71 In-song tempo command: self modifies 'LD A,x' at #R$EC99 to set the tempo-counter reload value
 C $EE71,3 Self modify 'LD A,x' at #R$EC99
-N $EE96 Jump-table dispatch into the fixed-length opcode handlers at #R$ED36-$EDD1, indexed by the remaining low bits of the command byte (A, with B assumed 0 as throughout this driver). Rather than storing a full 2-byte address per entry, the table at $EC9D stores a 1-byte displacement from the table slot itself to the handler: HL is first set to the table slot ($EC9D + A), then the displacement byte at that slot is added back onto HL, giving the handler's address. This works because every handler lies within 256 bytes of its table slot.
+N $EE96 Jump-table dispatch into the fixed-length opcode handlers at #R$ED36-$EDD1, indexed by the whole command byte $80-$91 (A, with B 0 as throughout this driver). Rather than storing a full 2-byte address per entry, the table at #R$ED1D stores a 1-byte displacement from the table slot itself to the handler: HL is first set to the table slot ($EC9D + A, which is $ED1D-$ED2E), then the displacement byte at that slot is added back onto HL, giving the handler's address. This works because every handler lies within 256 bytes of its table slot.
 @ $EE96 label=dispatch_pattern_command
 C $EE96,3 HL = table slot for this command
 C $EE9B,1 C = displacement to the handler
 C $EE9C,1 HL = table slot + displacement = handler address
-N $EE9E Recompute this channel's AY tone-period and volume/envelope register values from its current tracker state (note, envelope index, effect flags) for the per-frame register cache write at #R$EC71. Returns the tone period in HL and the volume/mixer byte in A (see the callers at #R$ECA2/$ECAF/$ECBC). Five phases, in order: 1. #R$EEA1-$EED0: envelope amplitude advance. If status bit 5 (+$00) is set, decrements the envelope-step counter (+$19); on underflow, reloads it from the speed value (+$0F) and reads the next byte from the envelope-shape table pointer (+$16/+$17, advanced by 1 unless the byte read has bit 7 set, an end-of-table marker that halts the pointer), storing that byte as the current amplitude (+$18). Either way, +$18 is copied into +$13, the volume value this call returns. 2. #R$EED0-$EEFC: tone-period lookup. Note index = (+$12) [set by #R$EDEA from the pattern's raw note + transpose (+$20)] plus a pitch-offset byte read from a per-channel offset sequence at +$0B/+$0C (default/loop start +$09/+$0A): if the byte's bit 7 is clear it is used as-is and the pointer advances; if set, it is a 7-bit end-of-sequence delta and the pointer resets to +$09/+$0A for next time. (note + offset) indexes the 2-byte-per-note tone-period table at #R$EFBC@bank4, giving the base tone period in DE. 3. #R$EEFC-$EF4B: vibrato. Only runs if +$1D bit 6 is set (skips to phase 4 otherwise). +$1C is a triangle-wave phase counter that ping-pongs between 0 and (+$1A)*2 by +/-(+$1B) each call, direction tracked in +$1D bit 5 (bit 7 and status bit 0 gate whether the phase updates this call at all, at #R$EF09-$EF12 -- not fully resolved). The phase is centred (-depth..+depth), sign-extended, then left-shifted a note-dependent number of times (the $EF3D-$EF47 loop, incrementing a counter seeded from the note index by $18 until it overflows) to scale a linear vibrato depth into the tone-period domain, where pitch and period are inversely related. The scaled offset is added onto the phase-2 tone period. 4. #R$EF4B-$EF76: portamento/slide. Status bit 0 (+$00) is unconditionally toggled every call. If status bit 2 was set (slide active, #R$ED6F), a countdown in +$0E ticks down; when it reaches zero it reloads and the signed step (+$0D) is sign-extended into BC and accumulated into +$07/+$08, which is then added onto the tone period. 5. #R$EF76-$EFAE: mixer/volume finalisation. Every 4th call (via the bit-0 toggle from phase 4), XORs bit 3 of a global byte ($EC79) into $ECC6 (purpose not established elsewhere in this bank). Merges this channel's tone-enable bits into the shared mixer cache at $EFB6 using the same replace-bits-under-mask idiom as #R$ED36 (mask = +$24). If +$1F was just set to $FF (#R$EDCB, "mute"), handles the one-shot mute transition: clears bit 7 of +$1F (so this only fires once), clears this channel's noise-enable bits in the $EFB6 cache, and forces $ECC6 to $41. Returns the phase-3/4 tone period in HL and the phase-1 volume (+$13) in A.
+N $EE9E Recompute this channel's AY tone-period and volume/envelope register values from its current tracker state (note, envelope index, effect flags) for the per-frame register cache write at #R$EC71. Returns the tone period in HL and the volume/mixer byte in A (see the callers at #R$ECA2/$ECAF/$ECBC). Five phases, in order: 1. #R$EEA1-$EED0: envelope amplitude advance. If status bit 5 (+$00) is set, decrements the envelope-step counter (+$19); on underflow, reloads it from the speed value (+$0F) and reads the next byte from the envelope-shape table pointer (+$16/+$17, advanced by 1 unless the byte read has bit 7 set, an end-of-table marker that halts the pointer), storing that byte as the current amplitude (+$18). Either way, +$18 is copied into +$13, the volume value this call returns. 2. #R$EED0-$EEFC: tone-period lookup. Note index = (+$12) [set by #R$EDEA from the pattern's raw note + transpose (+$20)] plus a pitch-offset byte read from a per-channel offset sequence at +$0B/+$0C (default/loop start +$09/+$0A): if the byte's bit 7 is clear it is used as-is and the pointer advances; if set, it is a 7-bit end-of-sequence delta and the pointer resets to +$09/+$0A for next time. (note + offset) indexes the 2-byte-per-note tone-period table at #R$EFBC@bank4, giving the base tone period in DE. 3. #R$EEFC-$EF4B: vibrato. Only runs if +$1D bit 6 is set (skips to phase 4 otherwise). +$1C is a triangle-wave phase counter that ping-pongs between 0 and (+$1A)*2 by +/-(+$1B) each call, direction tracked in +$1D bit 5 (with bit 7 set, the half-rate mode, the phase is left alone on calls where status bit 0 is set, at #R$EF09-$EF12). The phase is centred (-depth..+depth), sign-extended, then left-shifted a note-dependent number of times (the $EF3D-$EF47 loop, incrementing a counter seeded from the note index by $18 until it overflows) to scale a linear vibrato depth into the tone-period domain, where pitch and period are inversely related. The scaled offset is added onto the phase-2 tone period. 4. #R$EF4B-$EF76: portamento/slide. Status bit 0 (+$00) is unconditionally toggled every call. If status bit 2 was set (slide active, #R$ED6F), a countdown in +$0E ticks down; when it reaches zero it reloads and the signed step (+$0D) is sign-extended into BC and accumulated into +$07/+$08, which is then added onto the tone period. 5. #R$EF76-$EFAE: mixer finalisation. When status bits 0 and 1 are both set (bit 1 from command $8D, bit 0 alternating, so every other frame), sets the noise pitch ($ECC6) to the echoed note ($EC79) XOR 8 and merges $07 (noise only) into the shared mixer cache at $EFB6 under this channel's mask (+$24); otherwise merges the mixer setting from $EF7A, as set by #R$ED36-#R$ED5F. If +$1F has bit 7 set (#R$EDCB, renewed at each row end by #R$EE2E), plays a one-frame noise click: clears bit 7 so it fires once per row, enables this channel's noise in the $EFB6 cache and sets the noise pitch to $41 (register 6 keeps five bits, so 1). Returns the phase-3/4 tone period in HL and the phase-1 volume (+$13) in A.
 @ $EE9E label=compute_channel_ay_registers
 b $EFAF Per-frame AY register cache and tone-period lookup table
 D $EFAF $EFAF-$EFBA (12 bytes): the per-frame AY register cache, refreshed each frame by #R$EC71/#R$EE9E and flushed to the AY chip by #R$ECCA (registers 0-11: 3 channels' tone-period pairs, noise period, mixer, 3 channels' volumes, envelope-period-fine). Initial contents here are just start-up defaults, overwritten before first use.
