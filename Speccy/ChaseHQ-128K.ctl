@@ -2231,11 +2231,11 @@ R $80B9 O:F Carry set on success (see #R$8146).
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
 @ $80C0 label=tape_load_at_ix
-C $80C0,1 D++
+C $80C0,1 D++ only to clear the Zero flag, since #REGd is never $FF; the flags are banked with #REGa below
 C $80C1,2 A = 152
 C $80C3,1 Set carry flag
 C $80C4,1 bank
-C $80C5,1 D--  -- weird inc then dec
+C $80C5,1 D-- to undo the INC at #R$80C0
 C $80C6,1 Disable interrupts
 C $80C7,2 Set MIC bit (deactivates MIC)
 C $80C9,2 output
@@ -3924,7 +3924,7 @@ C $901C,4 Restore IX, HL, BC
 C $9020,3 Continue
 N $9023 Left hand object handling.
 @ $9023 label=dee_left_hand_stuff
-C $9023,1 E = A  -- sampled = 5 (only)
+C $9023,1 E = A, the non-zero left side object type read at #R$8FB9
 C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
 @ $9028 label=dee_left__a_isnt_2
@@ -3947,7 +3947,6 @@ C $904F,3 Continue
 c $9052 Draws overhead graphics
 D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
 D $9052 #R$916C is called first if the second x-position entry is zero. The perspective y-scale for the current row gives the vertical offset, and the depth set pair index is the depth less one, capped at 9. The x-position entries either side of the current position then say whether the object is visible and how far it is clipped. The deck itself is drawn a row at a time: each depth has a row count and one solid fill byte per row, and every row is a single colour fill across the clipped width.
-D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (Stage 3)
 R $9052 I:B Depth scale index, which also picks the pair entry, 0 to 9
 R $9052 I:DE Address of the stretchy object descriptors
 R $9052 I:IX Pointer into the centre x-position table for this object slot
@@ -4083,7 +4082,7 @@ C $91B6,1 Swap
 C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_bitmaps
 N $91BA The self modified value is the byte offset of one (depth, offset) pair within the depth set's table of ten, computed at #R$919A as min(depth, 10) * 2 - 1.
 C $91BA,4 HL += <self modified>  -- by $91A0, this is the table offset from earlier
-N $91BE HL now points to an entry in the table. Load it. sampled DE = $717E (-> tree_lods), HL = $713E (first of a byte pair)
+N $91BE #REGhl now points at this depth's pair: a byte kept for the dispatch at #R$91DA, then an offset into the bitmaps #REGde points at.
 C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
 C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_bitmaps
@@ -6636,8 +6635,8 @@ N $A762 Count down outer delay loop.
 C $A762,1 A--
 C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
 C $A766,2 Jump to pb_close_range if zero
-N $A768 sampled IX = $A188 (hazards)
-C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
+N $A768 #REGix still points at the perp's slot, hazard[0] at $A188.
+C $A768,3 A = IX[1], the perp's distance
 C $A76B,4 Jump if A >= 13 -- too far
 N $A76F Distance to perp is 12 or less.
 N $A76F HL += (13 - A) * DE    HL is 230, DE is 30
@@ -7276,7 +7275,7 @@ C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
 C $AC16,3 Load address of #R$AC3C routine
 C $AC19,6 Store to #REGix+11
-N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
+N $AC1F #REGde is the hazard type offset chosen at #R$ABB1: 0 for a tumbleweed, 3 for a barrier.
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
 C $AC23,5 Copy the collision box width, IX[8], used by the bounding box overlap test in check_collision
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
@@ -7680,7 +7679,7 @@ C $AF88,5 Jump if A >= 4
 C $AF8D,1 Double A to make it an index
 C $AF8E,3 BC = A
 C $AF91,4 HL = #R$CDEC + BC
-N $AF95 I see this getting hit only when in smash mode.
+N $AF95 Reached only for the perp while smash_level is under 5 and the halved depth is under 4, so the "HERE!" arrow marks a nearby perp.
 C $AF95,1 Load x offset
 C $AF96,1 Advance
 C $AF97,1 Load y offset
@@ -9029,9 +9028,9 @@ C $B953,2 A = B - D
 C $B955,4 Jump if <=
 C $B959,1 Preserve HL
 @ $B95E ssub=LD HL,(car_jump_params - 2)
-C $B95A,8 HL = #R$B057 + A*2  -- 1-indexed pointer into car_jump_params [sampled A: 3,2,4]
+C $B95A,8 HL = #R$B057 + A*2  -- A is 1-based, so this addresses pair A of car_jump_params
 C $B962,2 E = *HL++  (loads one of 2/4/6/8/10)
-C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
+C $B964,1 Load the pair's second byte, one of 8/6/4/2/0, as the new jump value
 C $B965,3 Set jump counter
 C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
 C $B96C,3 Self modify #R$B079 (mhc_midair)
