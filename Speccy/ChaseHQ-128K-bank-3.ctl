@@ -225,7 +225,7 @@ N $C2F2 This entry point is used by the routine at #R$C2F6.
 @ $C2F2 label=ssr_continue
 C $C2F2,1 Self-modified to RET by #R$C16A to stop the scroll
 c $C2F6 Redraw a high-score row's name text, letter by letter
-D $C2F6 Reached from #R$C2B1 when a row's scroll position hits the bottom of its window, and from #R$C06E (via the #R$C2FB entry point) once per name-entry frame. Draws each character of the row's name field (terminated by a byte with bit 7 set) using the shadow register set, so the caller's main BC/DE/HL (the #R$C2B1 row loop, or the caller's own state) survive the call unharmed. The per-character glyph offset/address arithmetic here mirrors #R$C25D and is not traced line-by-line.
+D $C2F6 Reached from #R$C2B1 when a row's scroll position hits the bottom of its window, and from #R$C06E (via the #R$C2FB entry point) once per name-entry frame. Draws each character of the row's name field (terminated by a byte with bit 7 set) using the shadow register set, so the caller's main BC/DE/HL (the #R$C2B1 row loop, or the caller's own state) survive the call unharmed. A space just advances a column. Any other character is classified into a font index ($C319-$C33D) and its bitmap is found at index * 7 into the font table at $800C, the same arithmetic as #R$C25D.
 D $C2F6 Used by the routine at #R$C2B1.
 @ $C2F6 label=redraw_score_name
 N $C2FB This entry point is used by the routine at #R$C06E.
@@ -431,7 +431,7 @@ C $C6C9,3 Object record stride (9 bytes)
 @ $C6D0 label=ts_draw_fg_objects
 C $C6D0,1 Bank in shadow BC/DE/HL for the blitter call
 C $C6DD,1 Restore main BC/DE/HL (IX/DE loop state)
-C $C6E2,1 (unbalanced EXX vs. the loop above -- swaps back to the blitter's shadow set one more time before the object-script step, effect not fully traced)
+C $C6E2,1 Switch to the shadow set so the script step and the clear below cannot disturb the main #REGde stride; #R$C6E9 switches back
 C $C6E3,3 Step every object's animation script by one frame
 C $C6E6,3 Clear the playfield bitmap ready for the next frame
 C $C6EA,4 Background objects start at record 6 ($BB00 + 6*9)
@@ -531,17 +531,17 @@ C $C8AF,2 16 columns
 C $C8B2,1 2 black rows
 C $C8B6,2 28 rows of attribute $45
 C $C8BD,1 2 more black rows
-N $C8C5 Compute the screen address and masked-sprite blitter parameters for a single title-screen glyph/object, then dispatch to a width-specific unrolled OR-blit routine (#R$C917 onward) which draws it into the playfield bitmap. Called (via EXX-banked BC/L, see #R$C6D0) once per foreground object per frame. B = object Y screen position (+$08, clamped to a max of $6F -- the overflow past $6F is banked via #R$C8CD and used later as a row-skip count), C = object X screen position (+$07), L = the object's screen row/height byte (+$06, set by the script's $C8 opcode). #R$C8C5- #R$C8CC clamp B; #R$C8CD-#R$C8EC then build a masked-sprite screen destination address in D/E from B and C, using the same "rotate through carry, XOR, mask $F8, XOR" idiom the ROM uses to interleave a pixel row into the non-linear screen-third layout (not traced bit- exactly here: getting each rotate/XOR wrong silently corrupts only the row within a third, which is easy to get subtly wrong without emulator verification -- flag for later verification against a working build). #R$C8ED-#R$C8FE then use C (object X) and L (screen row/height byte) to index the 4-byte-per-entry glyph table at #R$D296 (mask width, byte-count, source address), giving B/C/HL = mask width, byte count, and source glyph address. #R$C902 restores the row-clamp flag banked at #R$C8CD: if set, the source address is used as-is; otherwise #R$C906-#R$C916 (cgb_row_offset_loop) walks the source pointer forward row-by-row (stride = C<<1, i.e. mask-width*2 bytes/row) for the overflow-past-$6F row count, before falling into the blit dispatch at #R$C917.
+N $C8C5 Compute the screen address and blitter parameters for a single title-screen glyph/object, then dispatch to a width-specific unrolled OR-blit routine (no mask) (#R$C917 onward) which draws it into the playfield bitmap. Called (via EXX-banked BC/L, see #R$C6D0) once per foreground object per frame. B = object Y screen position (+$08, clamped to a max of $6F -- the overflow past $6F is banked via #R$C8CD and used later as a row-skip count), C = object X screen position (+$07), L = the object's screen row/height byte (+$06, set by the script's $C8 opcode). #R$C8C5- #R$C8CC clamp B; #R$C8CD-#R$C8EC then build a screen destination address in D/E from B and C, using the usual "rotate, XOR, mask, XOR" idiom for interleaving a pixel row into the non-linear screen layout (D = 010TTPPP and E = RRRXXXXX for pixel row $AF - B and column C / 8). #R$C8ED-#R$C8FE then use C (object X) and L (screen row/height byte) to index the 4-byte-per-entry glyph table at #R$D296 (row-pair count, width in bytes, source address), giving B/C/HL = row-pair count, width and source glyph address. #R$C902 restores the row-clamp flag banked at #R$C8CD: if set, the source address is used as-is; otherwise #R$C906-#R$C916 (cgb_row_offset_loop) walks the source pointer forward row-by-row (stride = C<<1, i.e. width * 2 bytes per row pair) for the overflow-past-$6F row count, before falling into the blit dispatch at #R$C917.
 @ $C8C5 label=compute_glyph_blit_params
-C $C8FA,1 B/C/HL = mask width, byte-count, source address
+C $C8FA,1 B/C/HL = row-pair count, width in bytes, source address
 C $C8FB,1 from the #R$D296 glyph table entry
-C $C902,1 Restore the flag from the earlier RRA (row clamp)
-C $C903,3 -- if set, skip straight to the blit dispatch
+C $C902,1 Restore A and the carry banked at #R$C8CD: carry set means Y was not clamped,
+C $C903,3 so skip straight to the blit dispatch
 @ $C906 label=cgb_row_offset_loop
-C $C906,1 Otherwise walk the source pointer forward by one
-C $C907,1 row at a time (not traced bit-for-bit here) until
-C $C908,2 the row-clamp countdown reaches zero
-N $C917 Masked-sprite blit dispatch: HL/DE hold the destination screen address (from the caller), the popped HL/DE here hold the source glyph address and its mask width in C. Dispatches to one of 6 width-specific unrolled OR-blit routines (#R$C9D5 .. #R$CBC5) which draw the glyph into the bitmap by treating the source address as a stack pointer (LD SP,HL) and POPping pixel/mask byte pairs -- see the project's known "LD SP,HL; POP x N sprite copy" translation pitfall. The real SP is saved at $C93D and restored by each blit routine (or by #R$C93C on early abort) before returning.
+C $C906,1 Otherwise skip (excess / 2) source row pairs of C * 2 bytes,
+C $C907,1 counting down the row pairs to draw; if none remain the glyph is
+C $C908,2 wholly off-screen and #R$C935 draws nothing
+N $C917 Masked-sprite blit dispatch: HL/DE hold the destination screen address (from the caller), the popped HL/DE here hold the source glyph address and its mask width in C. Dispatches to one of 6 width-specific unrolled OR-blit routines (#R$C9D5 .. #R$CBC5) which draw the glyph into the bitmap by treating the source address as a stack pointer (LD SP,HL) and POPping two rows of one column at a time and ORing them in, with no mask -- see the project's known "LD SP,HL; POP x N sprite copy" translation pitfall. The real SP is saved at $C93D and restored by each blit routine (or by #R$C93C on early abort) before returning.
 @ $C917 label=blit_masked_sprite_dispatch
 C $C918,4 Save the real stack pointer
 C $C91C,1 SP now points at the glyph source data
@@ -1338,14 +1338,14 @@ D $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and 
 @ $F7D6 label=titlescr_start_tune
 N $F7DB This entry point is used by the routine at #R$C59E.
 @ $F7DB label=load_drum_script
-N $F7F4 SFX script byte-code reader: reads opcode bytes from the script pointer at $F7FC, with $FE meaning "jump to a new script pointer read from the following 2 bytes" ($F823) and $FF meaning "end of script, disable interrupts and stop the tune" (#R$ED0B via $F829). Any other byte is a delay/repeat value (stored to $F7F5 and used to throttle #R$F7F4's own re-entry -- it decrements $F7F5 and returns early via RET NZ until it counts down to 0). The *following* script byte is a raw byte offset (not a scaled index) into the table at $FAA4: each entry there is 3 bytes -- a selector byte (copied to both $F84E and $F842, read back by #R$F82F) followed by a 2-byte pointer (stored to $F85E, the reload source for #R$F82F's sample-selector-stream pointer at $F853). This entry point is used by the routine at #R$F82F.
+N $F7F4 SFX script byte-code reader: reads opcode bytes from the script pointer at $F7FC, with $FF meaning "jump to a new script pointer read from the following 2 bytes" ($F823) and $FE meaning "end of script, disable interrupts and stop the tune" (#R$ED0B via $F829). Any other byte is a delay/repeat value (stored to $F7F5 and used to throttle #R$F7F4's own re-entry -- it decrements $F7F5 and returns early via RET NZ until it counts down to 0). The *following* script byte is a raw byte offset (not a scaled index) into the table at $FAA4: each entry there is a tempo byte (the frames each stream byte lasts, copied to both $F84E and $F842 and read back by #R$F82F) followed inline by the selector stream itself, terminated by a 1. The stream's address is stored to $F85E, the reload source for #R$F82F's stream pointer at $F853. This entry point is used by the routine at #R$F82F.
 @ $F7F4 label=titlescr_drum_advance
 @ $F7FE label=load_drum_op
 c $F82F Per-frame SFX/music service: drives the AY driver and the three sample players
 D $F82F Runs the AY music driver (#R$EC71), then dispatches the current sound effect's parameter byte (set up by #R$F7DB/#R$F7FE) to one of three 1-bit "digitised sample" bit-bang players: two fixed 8-row sample tables (#R$F8F2, #R$F95A, played via the shared loop at $F8CD which pulses port $FE from bitmap data clocked out with RLC (HL)/DJNZ) or the procedural routine at #R$FA3A. $F8AD (installed as the IM2 handler by #R$F7AA) just sets a "frame occurred" flag ($F8A8) consumed here and re-enables interrupts.
 D $F82F All the "LD A,$00" / "LD HL,$0000" instructions below are self-modified: the operand byte(s) immediately following each opcode double as a persistent state variable, written directly (not via the instruction) by this routine and by #R$F7D6/$F7DB/$F7FE. Three such state bytes are the SFX "busy" flags named at #R$F7D6: $F837 (SFX slot 1), $F895 (SFX slot 2), $F8A2 (1-bit sample playback active).
-D $F82F Slot 1 ($F836-$F894): if $F837 = 0 (idle), arms it (=1) and reloads the sample-selector-stream read pointer ($F853) from the reload source at $F85E (set by #R$F7DB/$F7FE) before falling into the stream-reading loop at #R$F855. If already armed, $F842 (a countdown, also the selector byte copied by #R$F7FE) is decremented; only when it reaches 1 does #R$F84D re-enter the stream-reading loop -- otherwise slot 1 is skipped this frame and control falls to slot 2.
-D $F82F Stream-reading loop (#R$F855): reads a byte from the selector stream; a byte of exactly 1 calls #R$F7F4 (titlescr_drum_advance's own re-entry, throttled by its own $F7F5 countdown) to pull in a fresh selector byte and restarts the loop with the reload pointer. Any other byte is the entry to act on this frame: bit 7 marks it as also arming slot 2 ($F842 and $895 both set to 1, banked via AF' so it doesn't disturb the byte being decoded); the low 3 bits (1/2/3) select which of the three 1-bit-sample engines to trigger this frame (#R$F8B6 = sample table #R$F8F2, #R$F8BD = sample table #R$F95A, or #R$FA3A the procedural generator), with the byte's upper 5 bits stashed via $F8CE as a playback-rate/pitch parameter for the two fixed samples. A low-3-bits value of 0 triggers nothing and falls through to slot 2. Slot 2 ($F894-$F8A1): if $F895 is set, decrements both $F842 and $F895 (companion countdowns for whatever slot 1 armed via the bit-7 path above); purpose of the parallel countdown not established further. Tail ($F8A1-$F8A6): if $F8A2 (sample-playback-active) is exactly 1, falls into #R$F8CC/#R$F8CD to pulse out the next row of whichever fixed sample was armed above; otherwise returns without playing anything this frame. Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7 and #R$FBC8.
+D $F82F Slot 1 ($F836-$F894): if $F837 = 0 (idle), arms it (=1) and reloads the sample-selector-stream read pointer ($F853) from the reload source at $F85E (set by #R$F7DB/$F7FE) before falling into the stream-reading loop at #R$F855. If already armed, $F842 (a countdown, loaded with the tempo byte by #R$F7FE and #R$F84D) is decremented; only when it reaches 1 does #R$F84D re-enter the stream-reading loop -- otherwise slot 1 is skipped this frame and control falls to slot 2.
+D $F82F Stream-reading loop (#R$F855): reads a byte from the selector stream; a byte of exactly 1 calls #R$F7F4 (titlescr_drum_advance's own re-entry, throttled by its own $F7F5 countdown) to pull in a fresh selector byte and restarts the loop with the reload pointer. Any other byte is the entry to act on this frame: bit 7 marks it as also arming slot 2 ($F842 and $F895 both set to 1, banked via AF' so it doesn't disturb the byte being decoded); the low 3 bits (1/2/3) select which of the three 1-bit-sample engines to trigger this frame (#R$F8B6 = sample table #R$F8F2, #R$F8BD = sample table #R$F95A, or #R$FA3A the procedural generator), with the byte's upper 5 bits stashed via $F8CE as a playback-rate/pitch parameter for the two fixed samples. A low-3-bits value of 0 triggers nothing and falls through to slot 2. Slot 2 ($F894-$F8A1): if $F895 is set, decrements both $F842 and $F895. Together with the bit-7 path this makes a grace note: the bit-7 entry lasts one frame, because $F842 = 1 makes the next frame read the following entry, and slot 2 then takes one extra frame off that entry so the pair still fills one tempo period. Every bit-7 entry in the data also selects an engine, so slot 2 never runs in the same frame that armed it. Tail ($F8A1-$F8A6): if $F8A2 (sample-playback-active) is exactly 1, falls into #R$F8CC/#R$F8CD to pulse out the next row of whichever fixed sample was armed above; otherwise returns without playing anything this frame. Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7 and #R$FBC8.
 @ $F82F label=titlescr_music
 C $F82F,3 Run the AY music driver for this frame
 C $F832,1 Clear the "frame occurred" flag consumed by
@@ -1356,13 +1356,13 @@ C $F839,2 Busy -> $F841 to tick the countdown
 C $F83B,1 Idle -> arm slot 1 (busy = 1)
 C $F83F,2 Reload the read pointer and enter the loop
 @ $F841 label=sfx1_tick_countdown
-C $F841,2 A = slot 1 countdown/selector byte ($F842)
+C $F841,2 A = slot 1 countdown ($F842)
 C $F844,3 Reached 1 -> re-enter the stream-reading loop
 C $F847,3 Else store the decremented countdown and skip
 C $F84A,3 slot 1 entirely this frame
 @ $F84D label=sfx1_reenter_stream
-C $F84D,2 Reset the countdown to 0 (about to be replaced by
-C $F84F,3 the next entry read from the stream)
+C $F84D,2 Reload the countdown from the tempo byte ($F84E, set
+C $F84F,3 by #R$F7FE) before reading the next stream entry
 C $F852,3 HL = current stream read pointer ($F853)
 @ $F855 label=sfx_read_stream_byte
 C $F855,1 A = next byte from the selector stream
@@ -1439,7 +1439,7 @@ C $FA6F,3 Done: wait for the next frame
 b $FA72 Self-modifying drum-noise state, SFX tables and pattern data
 D $FA72 $FA72-$FA74: self-modifying counter/pitch state read and rewritten by #R$FA3A on every call (the procedural drum-noise generator).
 D $FA72 $FA75 onward: the per-tune SFX trigger-script pointer table indexed by tune-number*2, referenced by #R$F7DB.
-D $FA72 $FAA4 onward: the per-sound-ID parameter table read by #R$F7FE's script interpreter (3 bytes/entry: 1 selector byte + a 2-byte pointer -- see #R$F7F4), giving each triggered sound its sample table selector and pointer. The remainder of this block is raw pattern/parameter data consumed by the SFX scripts and not decoded byte-by-byte here.
+D $FA72 $FAA4 onward: the per-sound-ID parameter table read by #R$F7FE's script interpreter (each entry a tempo byte followed by its selector stream, terminated by a 1 -- see #R$F7F4 and #R$F82F).
 B $FA72,295,8*36,7
 c $FB99 Options menu driver: draws the control-select screen and dispatches on keypress
 D $FB99 Reached from the title screen's "PRESS ENTER FOR OPTIONS" prompt (see the text block at #R$CC50). Boots interrupts and tune 0, then loops: draws the control-select screen text (#R$FC29 via #R$FD9C -- "ENTER OPTION" / P1. SINCLAIR JOYSTICK / P2. CURSOR JOYSTICK / P3. KEMPSTON JOYSTICK / P4. KEYBOARD / P5. DEFINE KEYS) and polls the keyboard (port $FE, keys 1-5 read as a 5-bit mask) to dispatch into one of the five listed choices.
