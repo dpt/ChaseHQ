@@ -49,18 +49,24 @@ make commit      # Commit changes back to control file
 
 ### RISC OS
 
-The old native RISC OS app was removed. A RISC OS front-end will come from the
-shared ZXGame library (`hosts/riscos`), with a ChaseHQ app bundle still to be
-written.
+The RISC OS app is `C/apps/riscos/!ChaseHQ`: the ChaseHQ app bundle around
+ZXGame's RISC OS host (`hosts/riscos`). Cross-compile it with GCCSDK, from `C/`:
+
+```bash
+docker run -it --rm -v "$PWD:/work" -w /work riscosdotinfo/riscos-gccsdk-4.7:latest ./riscos-ci-build.sh
+```
+
+This installs the app to `build-riscos/install/Apps/Games/!ChaseHQ`. The `riscos`
+CI job then zips it with `rozipfile`.
 
 ### C implementation (C/ directory)
 
 CMake is the canonical build system. SDL3 is required for the `ChaseHQ` app
-target; configuring without it still builds `ChaseHQ_Tests`. On Linux,
-`glslangValidator` (package `glslang-tools` on Debian/Ubuntu) is needed to build
-the CRT shader (compiles `apps/sdl3/shaders/crt.{vert,frag}` to SPIR-V at build
-time); without it the `ChaseHQ` target still builds, just falls back to the
-plain renderer (see `CRTShader.c`).
+target; configuring without it still builds `ChaseHQ_Tests`. The SDL3 front-end
+and its CRT effect come from ZXGame (`hosts/sdl3`), which takes the effect from
+DPTLib. On Linux, `glslangValidator` (package `glslang-tools` on Debian/Ubuntu)
+is needed to compile that effect's shaders to SPIR-V at build time; without it
+the `ChaseHQ` target still builds, just with the plain renderer only.
 
 ```bash
 # From C/
