@@ -22189,20 +22189,22 @@ static void handle_perp_caught_128k(chqstate_t *state)
 }
 
 /**
- * $F3E2: Copy 128K memory banks for audio playback
+ * $F3E2: Swap bank 3 with the top 16K of bank 0
  *
- * Iterates across four 4 KB windows starting at $C000. For each window, copies
- * 4096 bytes to $B000, calls setup_engine_sfx, then replays the window
- * byte-by-byte via LDI with a write-back before calling reset_paging_128k to
- * restore the memory pager. Driven entirely by 128K hardware memory-bank
- * switching.
+ * Exchanges the contents of $C000..$FFFF in banks 0 and 3, 4 KB at a time
+ * through a buffer at $B000. Each window is copied to the buffer, bank 3 is
+ * paged in, the buffer and the window are exchanged byte by byte, bank 0 is
+ * paged back in and the buffer, now holding bank 3's bytes, is copied into the
+ * window. Bank 3 is paged in by calling the relocated reset_paging_128k one
+ * instruction in ($8209), skipping its XOR A so the OUT uses A = 3. Running
+ * the routine a second time undoes the swap.
  *
- * Conv: Removed. C has no 128K memory-paging hardware to drive. Still called
- *       from bank3_call (Bank3.c), matching call_bank_3_128k's CALL $81D6
- *       page-in/page-out pair, so the correspondence is visible even though
+ * Conv: Removed. C has no 128K memory banks to swap. Still called from
+ *       bank3_call (Bank3.c), matching call_bank_3_128k's CALL $81D6
+ *       swap-in/swap-out pair, so the correspondence is visible even though
  *       the body is a no-op.
  */
-void page_128k(chqstate_t *state)
+void swap_bank_3_128k(chqstate_t *state)
 {
   // Conv: Removed
   NOT_USED(state);

@@ -13745,6 +13745,7 @@ C $F3B0,3 Self modify #R$8E49 - reset overlay frame delay
 C $F3B3,3 Entry point for success music in bank 3
 E $F39F FALLTHROUGH
 c $F3B6 Call a routine in RAM bank 3
+D $F3B6 Lives at $81AA when relocated. Saves $B000..$BFFF to $F000, since #R$F3E2 uses it as a buffer, moves the stack to $A214, below the swapped area, then calls the entry point with bank 3's contents swapped into $C000..$FFFF. The saved copy at $F000 travels to bank 3 and back with the swap, and is restored to $B000 afterwards.
 R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
 @ $F3B6 label=call_bank_3_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 (#R$F3D1 here - below)
@@ -13753,43 +13754,45 @@ C $F3C2,3 Preserve registers for later
 C $F3C5,2 Copy 4096 bytes from $B000 to $F000
 C $F3C7,4 Self modify 'LD SP,xxxx' @ $81CD (#R$F3D9 here - below)
 C $F3CB,3 Set stack pointer
-C $F3CE,3 Call page_128k to page in
+C $F3CE,3 Call swap_bank_3_128k to swap bank 3 in
 C $F3D1,3 Call the entry point requested. Self modified by #R$F3B6
 C $F3D4,1 Preserve the called routine's AF result across the page switch
-C $F3D5,3 Call page_128k to page out
+C $F3D5,3 Call swap_bank_3_128k again to swap it back out
 C $F3D8,1 Restore
 C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
 C $F3DC,3 Restore registers but swap source and destination around
 C $F3DF,2 Copy 4096 bytes from $F000 to $B000
 C $F3E1,1 Return
-c $F3E2 Replay the four 4K windows at $C000 through the engine sound routine
-D $F3E2 Not a paging routine, despite the label and the call sites' comments. It walks four 4096-byte windows from $C000 up. Each window is copied down to $B000, setup_engine_sfx is entered at $8209 with the engine speed set up, the window is replayed a byte at a time by the LDI loop at #R$F3FD with a write back to the source, the relocated reset_paging_128k at $8208 restores the pager, and the window is copied back from $B000.
-@ $F3E2 label=page_128k
+c $F3E2 Swap bank 3 with the top 16K of bank 0
+D $F3E2 Lives at $81D6 when relocated.
+D $F3E2 Exchanges the contents of $C000..$FFFF in banks 0 and 3, 4K at a time through a buffer at $B000. Each window is copied to the buffer, bank 3 is paged in, the buffer and the window are exchanged byte by byte, bank 0 is paged back in, and the buffer, now holding bank 3's bytes, is copied into the window. Running it a second time undoes the swap.
+D $F3E2 The CALL to $8209 enters the relocated #R$F414 one instruction in, skipping its XOR A, so the OUT pages in the bank number held in #REGa.
+@ $F3E2 label=swap_bank_3_128k
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
 C $F3E7,1 E = 0
-@ $F3E8 label=pg_window_loop
+@ $F3E8 label=sb_window_loop
 C $F3E8,1 Preserve iterations
 C $F3E9,2 DE = $B000
 C $F3EB,3 4096 bytes
 C $F3EE,2 Preserve
-C $F3F0,2 Copy
-C $F3F2,2 A = 3
-C $F3F4,3 Jump into setup_engine_sfx with engine speed setup
+C $F3F0,2 Copy bank 0's window to the buffer
+C $F3F2,2 Bank 3
+C $F3F4,3 Page it in through the relocated #R$F415
 C $F3F7,4 Retrieve from stack
 C $F3FB,2 DE = $B000
-@ $F3FD label=pg_swap_loop
-C $F3FD,1 A = *DE
-C $F3FE,2 Transfer a byte
-C $F400,3 HL[-1] = A
-C $F403,3 Loop if (parity even) to pg_swap_loop
-C $F406,3 Call relocated reset_paging_128k
+@ $F3FD label=sb_swap_loop
+C $F3FD,1 A = bank 0's byte from the buffer
+C $F3FE,2 Move bank 3's byte to the buffer
+C $F400,3 Store bank 0's byte in bank 3's window
+C $F403,3 Loop to the relocated sb_swap_loop until #REGbc is zero
+C $F406,3 Call the relocated reset_paging_128k to page bank 0 back in
 C $F409,2 Restore
 C $F40B,2 HL = $B000
-C $F40D,2 Copy
+C $F40D,2 Copy bank 3's window from the buffer
 C $F40F,1 H = D
 C $F410,1 Restore iterations
-C $F411,2 Loop to pg_window_loop
+C $F411,2 Loop to sb_window_loop
 C $F413,1 Return
 c $F414 Reset the paging register
 D $F414 Lives at $8208 when relocated.

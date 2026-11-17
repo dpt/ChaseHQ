@@ -9296,17 +9296,18 @@ exit:
 }
 
 /**
- * $F3B6: Page in bank 3 and call a banked routine
+ * $F3B6: Swap in bank 3 and call a banked routine
  *
  * Patches a CALL instruction at $81C5 with [routine], backs up the 4 KB at
- * $B000 to $F000, sets up a temporary stack, pages in bank 3 via page_128k,
- * executes the patched CALL, then pages bank 3 back out, restores SP and
- * refills $B000 from $F000.
+ * $B000 to $F000 (swap_bank_3_128k uses it as a buffer), sets up a temporary
+ * stack below $C000, swaps bank 3's contents into $C000..$FFFF via
+ * swap_bank_3_128k, executes the patched CALL, then swaps them back out,
+ * restores SP and refills $B000 from $F000.
  *
  * In C, a switch on [routine] dispatches each Z80 entry-point address constant
- * to its C implementation. page_128k (relocated to $81D6) still brackets the
- * dispatch, page in before and page out after, matching the Z80 CALL pair at
- * $F3CE/$F3D5, even though it is a no-op in the C port.
+ * to its C implementation. swap_bank_3_128k (relocated to $81D6) still
+ * brackets the dispatch, swap in before and swap out after, matching the Z80
+ * CALL pair at $F3CE/$F3D5, even though it is a no-op in the C port.
  *
  * \param[in] routine Z80 address of the bank 3 routine to invoke. (was HL)
  *
@@ -9323,7 +9324,7 @@ u8 bank3_call(chqstate_t *state, int routine)
 {
   u8 A_result; /* value to return to caller (was A) */
 
-  page_128k(state); /* $F3CE: page in */
+  swap_bank_3_128k(state); /* $F3CE: swap in */
 
   switch (routine)
   {
@@ -9347,7 +9348,7 @@ u8 bank3_call(chqstate_t *state, int routine)
     break;
   }
 
-  page_128k(state); /* $F3D5: page out */
+  swap_bank_3_128k(state); /* $F3D5: swap out */
 
   return A_result;
 }
